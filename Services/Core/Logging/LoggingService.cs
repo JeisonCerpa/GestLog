@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Events;
 using System.IO;
 using GestLog.Services.Core.Error;
+using GestLog.Models.Configuration;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -78,7 +79,10 @@ public static class LoggingService
                     config.EnableSsl = dbSection.GetValue<bool>("EnableSsl", true);
                     config.TrustServerCertificate = dbSection.GetValue<bool>("TrustServerCertificate", true);
                     config.ConnectionString = dbSection["ConnectionString"] ?? "";
-                }
+                }            });            // Configuración de resiliencia de base de datos
+            services.Configure<DatabaseResilienceConfiguration>(options =>
+            {
+                configuration.GetSection("DatabaseResilience").Bind(options);
             });
             
             // Servicio de conexión a base de datos

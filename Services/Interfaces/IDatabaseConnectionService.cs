@@ -1,23 +1,35 @@
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
 using GestLog.Models.Events;
+using GestLog.Models.Enums;
 
 namespace GestLog.Services.Interfaces;
 
 /// <summary>
-/// Interfaz para gestión de conexiones a base de datos con monitoreo y reconexión automática
+/// Servicio para gestión de conexiones a base de datos con resiliencia avanzada
 /// </summary>
-public interface IDatabaseConnectionService
+public interface IDatabaseConnectionService : IDisposable
 {
     /// <summary>
-    /// Evento que se dispara cuando el estado de conexión cambia
+    /// Evento que se dispara cuando cambia el estado de conexión
     /// </summary>
     event EventHandler<DatabaseConnectionStateChangedEventArgs>? ConnectionStateChanged;
+    
+    /// <summary>
+    /// Evento que se dispara cuando cambia el estado del Circuit Breaker
+    /// </summary>
+    event EventHandler<CircuitBreakerStateChangedEventArgs>? CircuitBreakerStateChanged;
+    
+    /// <summary>
+    /// Evento que se dispara cuando cambia la conectividad de red
+    /// </summary>
+    event EventHandler<NetworkConnectivityChangedEventArgs>? NetworkConnectivityChanged;
 
     /// <summary>
-    /// Indica si la conexión está actualmente activa
+    /// Indica si la conexión está activa
     /// </summary>
     bool IsConnected { get; }
 
@@ -25,75 +37,78 @@ public interface IDatabaseConnectionService
     /// Estado actual de la conexión
     /// </summary>
     DatabaseConnectionState CurrentState { get; }
+    
+    /// <summary>
+    /// Estado actual del Circuit Breaker
+    /// </summary>
+    CircuitBreakerState CircuitBreakerState { get; }
+    
+    /// <summary>
+    /// Estado actual de conectividad de red
+    /// </summary>
+    NetworkConnectivityState NetworkState { get; }
 
     /// <summary>
-    /// Indica si el servicio está configurado para reconexión automática
+    /// Indica si la reconexión automática está habilitada
     /// </summary>
     bool AutoReconnectEnabled { get; set; }
 
     /// <summary>
-    /// Intervalo de monitoreo de conexión en millisegundos (por defecto 30000ms = 30s)
+    /// Obtiene una conexión a la base de datos con resiliencia
     /// </summary>
-    int MonitoringIntervalMs { get; set; }
-
-    /// <summary>
-    /// Inicia el servicio de conexión con monitoreo automático
-    /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Task que representa la operación asíncrona</returns>
-    Task StartAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Detiene el servicio de conexión y monitoreo
-    /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Task que representa la operación asíncrona</returns>
-    Task StopAsync(CancellationToken cancellationToken = default);
-    /// <summary>
-    /// Obtiene una conexión a la base de datos
-    /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Conexión SQL abierta</returns>
     Task<SqlConnection> GetConnectionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Prueba la conexión a la base de datos
     /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>True si la conexión es exitosa</returns>
     Task<bool> TestConnectionAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Ejecuta una consulta SQL y retorna el número de filas afectadas
-    /// </summary>
-    /// <param name="sql">Consulta SQL</param>
-    /// <param name="parameters">Parámetros de la consulta</param>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Número de filas afectadas</returns>
-    Task<int> ExecuteNonQueryAsync(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Ejecuta una consulta SQL y retorna un valor escalar
-    /// </summary>
-    /// <param name="sql">Consulta SQL</param>
-    /// <param name="parameters">Parámetros de la consulta</param>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Valor escalar resultado de la consulta</returns>
-    Task<T?> ExecuteScalarAsync<T>(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ejecuta una consulta SQL y retorna un DataTable
     /// </summary>
-    /// <param name="sql">Consulta SQL</param>
-    /// <param name="parameters">Parámetros de la consulta</param>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>DataTable con los resultados</returns>
     Task<DataTable> ExecuteQueryAsync(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Obtiene información del servidor de base de datos
+    /// Ejecuta una consulta SQL y retorna un valor escalar
     /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Información del servidor</returns>
-    Task<string> GetServerInfoAsync(CancellationToken cancellationToken = default);
+    Task<T?> ExecuteScalarAsync<T>(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Inicia el servicio de conexión y monitoreo
+    /// </summary>
+    Task StartAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Detiene el servicio de conexión y monitoreo
+    /// </summary>
+    Task StopAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Fuerza una verificación inmediata de la conexión
+    /// </summary>
+    Task<bool> ForceHealthCheckAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Reinicia el Circuit Breaker (para testing/recovery manual)
+    /// </summary>
+    void ResetCircuitBreaker();
+    
+    /// <summary>
+    /// Obtiene métricas de la conexión
+    /// </summary>
+    Task<ConnectionMetrics> GetMetricsAsync();
 }
+
+/// <summary>
+/// Métricas de conexión
+/// </summary>
+public record ConnectionMetrics(
+    TimeSpan Uptime,
+    int TotalConnections,
+    int SuccessfulConnections,
+    int FailedConnections,
+    double SuccessRate,
+    TimeSpan AverageConnectionTime,
+    DateTime LastSuccessfulConnection,
+    DateTime LastFailedConnection,
+    int CircuitBreakerTrips);
