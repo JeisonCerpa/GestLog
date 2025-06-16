@@ -61,6 +61,28 @@ public static class LoggingService
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
             services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
+            
+            // Configuración de base de datos
+            services.Configure<Models.Configuration.DatabaseConfiguration>(config =>
+            {
+                var dbSection = configuration.GetSection("Database");
+                if (dbSection.Exists())
+                {
+                    config.Server = dbSection["Server"] ?? "";
+                    config.Database = dbSection["Database"] ?? "";
+                    config.UserId = dbSection["UserId"] ?? "";
+                    config.Password = dbSection["Password"] ?? "";
+                    config.UseIntegratedSecurity = dbSection.GetValue<bool>("IntegratedSecurity");
+                    config.ConnectionTimeout = dbSection.GetValue<int>("ConnectionTimeout", 30);
+                    config.CommandTimeout = dbSection.GetValue<int>("CommandTimeout", 30);
+                    config.EnableSsl = dbSection.GetValue<bool>("EnableSsl", true);
+                    config.TrustServerCertificate = dbSection.GetValue<bool>("TrustServerCertificate", true);
+                    config.ConnectionString = dbSection["ConnectionString"] ?? "";
+                }
+            });
+            
+            // Servicio de conexión a base de datos
+            services.AddSingleton<Interfaces.IDatabaseConnectionService, DatabaseConnectionService>();
               // Servicios del dominio
             services.AddTransient<Modules.DaaterProccesor.Services.IResourceLoaderService, 
                 Modules.DaaterProccesor.Services.ResourceLoaderService>();
@@ -81,9 +103,7 @@ public static class LoggingService
             
             // Servicios de Envío de Catálogo
             services.AddTransient<Modules.EnvioCatalogo.Services.IEnvioCatalogoService, 
-                Modules.EnvioCatalogo.Services.EnvioCatalogoService>();
-            
-            // ViewModels
+                Modules.EnvioCatalogo.Services.EnvioCatalogoService>();            // ViewModels
             services.AddTransient<Modules.GestionCartera.ViewModels.DocumentGenerationViewModel>();
             services.AddTransient<Modules.EnvioCatalogo.ViewModels.EnvioCatalogoViewModel>();
 

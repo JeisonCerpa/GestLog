@@ -26,10 +26,11 @@ public partial class App : System.Windows.Application
               _logger.Logger.LogInformation("🚀 Aplicación GestLog iniciada");
             _logger.LogConfiguration("Version", "1.0.0");
             _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
-            _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
-
-            // CORRECCIÓN: Cargar configuración automáticamente al inicio
+            _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);            // CORRECCIÓN: Cargar configuración automáticamente al inicio
             await LoadApplicationConfigurationAsync();
+
+            // Inicializar conexión a base de datos automáticamente
+            await InitializeDatabaseConnectionAsync();
 
             // Configurar manejo global de excepciones
             SetupGlobalExceptionHandling();
@@ -51,9 +52,7 @@ public partial class App : System.Windows.Application
                 System.Windows.Application.Current.Shutdown(1);
                 return;
             }        }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Carga la configuración de la aplicación al inicio
     /// </summary>
     private async Task LoadApplicationConfigurationAsync()
@@ -77,11 +76,74 @@ public partial class App : System.Windows.Application
         }
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    /// <summary>
+    /// Inicializa la conexión a base de datos automáticamente
+    /// </summary>
+    private async Task InitializeDatabaseConnectionAsync()
+    {
+        try
+        {
+            _logger?.Logger.LogInformation("💾 Inicializando conexión a base de datos...");
+            
+            // Obtener el servicio de base de datos
+            var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            
+            // Iniciar el servicio con monitoreo automático
+            await databaseService.StartAsync();
+            
+            // Suscribirse a cambios de estado para logging
+            databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
+            
+            _logger?.Logger.LogInformation("✅ Servicio de base de datos inicializado");
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error al inicializar la conexión a base de datos");
+            // No es crítico, la aplicación puede continuar sin BD
+        }
+    }
+
+    /// <summary>
+    /// Maneja los cambios de estado de la conexión a base de datos
+    /// </summary>
+    private void OnDatabaseConnectionStateChanged(object? sender, GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs e)
+    {
+        var statusIcon = e.CurrentState switch
+        {
+            GestLog.Models.Events.DatabaseConnectionState.Connected => "✅",
+            GestLog.Models.Events.DatabaseConnectionState.Connecting => "🔄",
+            GestLog.Models.Events.DatabaseConnectionState.Reconnecting => "🔄",
+            GestLog.Models.Events.DatabaseConnectionState.Disconnected => "⏸️",
+            GestLog.Models.Events.DatabaseConnectionState.Error => "❌",
+            _ => "❓"
+        };
+
+        _logger?.Logger.LogInformation("{Icon} Base de datos: {PreviousState} → {CurrentState} | {Message}",
+            statusIcon, e.PreviousState, e.CurrentState, e.Message ?? "Sin detalles");
+
+        if (e.Exception != null)
+        {
+            _logger?.Logger.LogDebug(e.Exception, "Detalles del error de conexión a BD");
+        }
+    }    protected override void OnExit(ExitEventArgs e)
     {
         try
         {
             _logger?.Logger.LogInformation("🛑 Aplicación GestLog cerrándose");
+            
+            // Detener servicio de base de datos de forma síncrona
+            try
+            {
+                var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                // Usar GetAwaiter().GetResult() para llamada síncrona
+                databaseService.StopAsync().GetAwaiter().GetResult();
+                _logger?.Logger.LogInformation("💾 Servicio de base de datos detenido");
+            }
+            catch (Exception dbEx)
+            {
+                _logger?.Logger.LogWarning(dbEx, "Error al detener servicio de base de datos");
+            }
+            
             LoggingService.Shutdown();
         }
         catch (Exception ex)

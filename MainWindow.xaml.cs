@@ -14,9 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly Stack<(System.Windows.Controls.UserControl view, string title)> _navigationStack;
     private System.Windows.Controls.UserControl? _currentView;
-    private readonly IGestLogLogger _logger;
-
-    public MainWindow()
+    private readonly IGestLogLogger _logger;    public MainWindow()
     {
         try
         {
@@ -27,6 +25,9 @@ public partial class MainWindow : Window
             _logger = LoggingService.GetLogger<MainWindow>();
             
             _logger.LogApplicationStarted("MainWindow inicializada correctamente");
+            
+            // Suscribirse a cambios de estado de la base de datos
+            SubscribeToDatabaseStatusChanges();
             
             // Cargar la vista Home por defecto
             LoadHomeView();
@@ -115,8 +116,7 @@ public partial class MainWindow : Window
         catch (System.Exception ex)
         {
             _logger.LogError(ex, "Error al procesar clic en botón Configuración");
-        }
-    }
+        }    }
     
     private void LoadConfigurationView()
     {
@@ -241,12 +241,117 @@ public partial class MainWindow : Window
         {
             _logger.LogApplicationStarted("MainWindow cerrada por el usuario");
             base.OnClosed(e);
-        }
-        catch (System.Exception ex)
+        }        catch (System.Exception ex)
         {
             // En caso de error al cerrar, registrar pero no lanzar excepción
             var fallbackLogger = LoggingService.GetLogger<MainWindow>();
             fallbackLogger.LogError(ex, "Error al cerrar MainWindow");
         }
     }
+
+    #region Database Status Management
+
+    /// <summary>
+    /// Suscribe a los cambios de estado de la base de datos para actualizar el indicador visual
+    /// </summary>
+    private void SubscribeToDatabaseStatusChanges()
+    {
+        try
+        {
+            var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
+            
+            // Actualizar estado inicial
+            UpdateDatabaseStatusIndicator(databaseService.CurrentState, "Inicial");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al suscribirse a cambios de estado de base de datos");
+            // Mostrar estado desconocido si no se puede conectar al servicio
+            UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState.Unknown, "Error de servicio");
+        }
+    }
+
+    /// <summary>
+    /// Maneja los cambios de estado de conexión a base de datos
+    /// </summary>
+    private void OnDatabaseConnectionStateChanged(object? sender, GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs e)
+    {
+        // Asegurar que la actualización se ejecute en el hilo de UI
+        Dispatcher.BeginInvoke(() =>
+        {
+            UpdateDatabaseStatusIndicator(e.CurrentState, e.Message ?? "");
+        });
+    }
+
+    /// <summary>
+    /// Actualiza el indicador visual de estado de base de datos
+    /// </summary>
+    private void UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState state, string message)
+    {
+        try
+        {
+            string icon, text, backgroundColor, tooltip;
+
+            switch (state)
+            {
+                case GestLog.Models.Events.DatabaseConnectionState.Connected:
+                    icon = "✅";
+                    text = "Conectado";
+                    backgroundColor = "#27AE60"; // Verde
+                    tooltip = $"Conectado a base de datos - {message}";
+                    break;
+
+                case GestLog.Models.Events.DatabaseConnectionState.Connecting:
+                    icon = "🔄";
+                    text = "Conectando...";
+                    backgroundColor = "#F39C12"; // Naranja
+                    tooltip = $"Conectando a base de datos - {message}";
+                    break;
+
+                case GestLog.Models.Events.DatabaseConnectionState.Reconnecting:
+                    icon = "🔄";
+                    text = "Reconectando...";
+                    backgroundColor = "#E67E22"; // Naranja oscuro
+                    tooltip = $"Reconectando a base de datos - {message}";
+                    break;
+
+                case GestLog.Models.Events.DatabaseConnectionState.Disconnected:
+                    icon = "⏸️";
+                    text = "Desconectado";
+                    backgroundColor = "#7F8C8D"; // Gris
+                    tooltip = $"Desconectado de base de datos - {message}";
+                    break;
+
+                case GestLog.Models.Events.DatabaseConnectionState.Error:
+                    icon = "❌";
+                    text = "Error";
+                    backgroundColor = "#E74C3C"; // Rojo
+                    tooltip = $"Error de conexión a base de datos - {message}";
+                    break;
+
+                default:
+                    icon = "❓";
+                    text = "Desconocido";
+                    backgroundColor = "#95A5A6"; // Gris claro
+                    tooltip = $"Estado desconocido de base de datos - {message}";
+                    break;
+            }
+
+            // Actualizar los elementos de UI
+            DatabaseStatusIcon.Text = icon;
+            DatabaseStatusText.Text = text;
+            DatabaseStatusBorder.Background = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(backgroundColor));
+            DatabaseStatusBorder.ToolTip = tooltip;
+
+            _logger.LogDebug("🔄 Indicador de BD actualizado: {State} - {Message}", state, message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar indicador de estado de base de datos");
+        }
+    }
+
+    #endregion
 }

@@ -6,7 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-  </PropertyGroup>  <ItemGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <!-- Suprimir advertencias CA1416 - GestLog es específicamente una aplicación de Windows -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
     <!-- Include Assets and Data files -->
     <Resource Include="Assets\*" />
     <Content Include="Assets\*">
@@ -15,23 +21,30 @@
     <EmbeddedResource Include="Data\*.xlsx" />
     <Content Include="Data\*" Exclude="Data\*.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="appsettings.json">
+    </Content>    <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>  </ItemGroup>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Exclude old DaaterProccesor files to avoid conflicts -->
     <Compile Remove="Modules\DaaterProccesor\Views\**" />
     <Compile Remove="Modules\DaaterProccesor\App.xaml.cs" />
     <Page Remove="Modules\DaaterProccesor\Views\**" />
     <ApplicationDefinition Remove="Modules\DaaterProccesor\App.xaml" />
-    
-    <!-- Exclude MiProyectoWPF files - only used as reference -->
+      <!-- Exclude MiProyectoWPF files - only used as reference -->
     <Compile Remove="Implementaciones\MiProyectoWPF\**" />
     <Page Remove="Implementaciones\MiProyectoWPF\**" />
     <ApplicationDefinition Remove="Implementaciones\MiProyectoWPF\App.xaml" />
     <Content Remove="Implementaciones\MiProyectoWPF\**" />
     <Resource Remove="Implementaciones\MiProyectoWPF\**" />
+    
+    <!-- Exclude ConexionDB files - only used as reference -->
+    <Compile Remove="Implementaciones\ConexionDB\**" />
+    <Page Remove="Implementaciones\ConexionDB\**" />
+    <ApplicationDefinition Remove="Implementaciones\ConexionDB\App.xaml" />
+    <Content Remove="Implementaciones\ConexionDB\**" />
+    <Resource Remove="Implementaciones\ConexionDB\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
@@ -46,10 +59,12 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" /><PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageReference Include="itext7" Version="8.0.2" />
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.2" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
 </Project>
