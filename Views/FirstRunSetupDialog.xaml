@@ -1,0 +1,271 @@
+<Window x:Class="GestLog.Views.FirstRunSetupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:GestLog.Converters"
+        mc:Ignorable="d"
+        Title="Configuración Automática Inicial - GestLog"
+        Height="400"
+        Width="550"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="SingleBorderWindow"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <!-- Convertidores -->
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        
+        <!-- Estilos -->
+        <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2E7D8A"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="SubtitleTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="LineHeight" Value="20"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2E7D8A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="MinWidth" Value="180"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3A9AA8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#256B77"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#CCC"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#2E7D8A"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="BorderBrush" Value="#2E7D8A"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F8FA"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#E1F4F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ErrorTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#D32F2F"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,10,0,15"/>
+        </Style>
+
+        <Style x:Key="SuccessTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#388E3C"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,10,0,15"/>
+        </Style>
+
+        <Style x:Key="ConfigBoxStyle" TargetType="Border">
+            <Setter Property="Background" Value="#F8F9FA"/>
+            <Setter Property="BorderBrush" Value="#E9ECEF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,15,0,20"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F8F9FA" Padding="30,25">
+            <StackPanel>
+                <TextBlock Text="🚀 Configuración Automática Inicial" 
+                          Style="{StaticResource TitleTextStyle}"/>
+                <TextBlock Style="{StaticResource SubtitleTextStyle}">
+                    <Run Text="GestLog configurará automáticamente la conexión a la base de datos usando los valores predeterminados seguros."/>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
+            <StackPanel>
+                <!-- Configuration Info Box -->
+                <Border Style="{StaticResource ConfigBoxStyle}">
+                    <StackPanel>
+                        <TextBlock Text="📋 Configuración que se aplicará:" 
+                                  FontWeight="SemiBold" 
+                                  FontSize="16"
+                                  Margin="0,0,0,15"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="🖥️ Servidor:" FontWeight="SemiBold" Margin="0,0,15,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="localhost" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="💾 Base de datos:" FontWeight="SemiBold" Margin="0,0,15,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="GestLog" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="👤 Usuario:" FontWeight="SemiBold" Margin="0,0,15,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="gestlog_user" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="🔐 Autenticación:" FontWeight="SemiBold" Margin="0,0,15,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="SQL Server Authentication" Margin="0,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Test Connection Button -->
+                <Button Command="{Binding TestConnectionCommand}"
+                       Style="{StaticResource SecondaryButtonStyle}"
+                       IsEnabled="{Binding IsTestingConnection, Converter={StaticResource InverseBooleanConverter}}"
+                       HorizontalAlignment="Left"
+                       Margin="0,0,0,10">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔍" Margin="0,0,8,0" Visibility="{Binding IsTestingConnection, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"/>
+                            <TextBlock Text="⏳" Margin="0,0,8,0" Visibility="{Binding IsTestingConnection, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <TextBlock Text="{Binding IsTestingConnection, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Probando Conexión...|Probar Conexión'}"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+
+                <!-- Error Message -->
+                <TextBlock Text="{Binding ErrorMessage}" 
+                          Style="{StaticResource ErrorTextStyle}"
+                          Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"/>                <!-- Success Message -->
+                <TextBlock Text="{Binding ErrorMessage}" 
+                          Foreground="#388E3C"
+                          FontSize="13"
+                          TextWrapping="Wrap"
+                          Margin="0,10,0,15"
+                          Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Info Text -->
+                <TextBlock Text="💡 Esta configuración creará variables de entorno seguras en su sistema. No se almacenarán credenciales en archivos de texto plano."
+                          FontSize="12"
+                          Foreground="#6C757D"
+                          TextWrapping="Wrap"
+                          Margin="0,20,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#F8F9FA" Padding="30,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                          Text="🔒 Las credenciales se almacenarán de forma segura en variables de entorno del usuario."
+                          FontSize="11"
+                          Foreground="#888"
+                          VerticalAlignment="Center"/>
+
+                <Button Grid.Column="1" 
+                       Content="Cancelar" 
+                       Command="{Binding CancelCommand}"
+                       Style="{StaticResource SecondaryButtonStyle}"
+                       Margin="0,0,15,0"/>
+
+                <Button Grid.Column="2" 
+                       Command="{Binding ConfigureCommand}"
+                       Style="{StaticResource PrimaryButtonStyle}"
+                       IsEnabled="{Binding IsConfiguring, Converter={StaticResource InverseBooleanConverter}}">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙️" Margin="0,0,8,0" Visibility="{Binding IsConfiguring, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"/>
+                            <TextBlock Text="⏳" Margin="0,0,8,0" Visibility="{Binding IsConfiguring, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <TextBlock Text="{Binding IsConfiguring, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Configurando...|Configurar Automáticamente'}"/>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

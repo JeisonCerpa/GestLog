@@ -1,0 +1,19 @@
+{
+  "Database": {
+    "Server": "SIMICSGROUPWKS1\\SIMICSBD",
+    "Database": "BD_ Pruebas", 
+    "Username": "sa",
+    "Password": "REMOVED_SECRET",
+    "UseIntegratedSecurity": false,
+    "ConnectionTimeout": 30,
+    "CommandTimeout": 30,
+    "TrustServerCertificate": true,
+    "EnableSsl": false
+  },
+  "Metadata": {
+    "Environment": "Production",
+    "Version": "1.0",
+    "LastUpdated": "2025-06-17",
+    "Description": "Configuración de producción para SIMICS Group"
+  }
+}

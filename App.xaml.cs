@@ -4,6 +4,8 @@ using System.Windows;
 using GestLog.Services.Core.Logging;
 using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
+using GestLog.Services;
+using GestLog.Services.Interfaces;
 
 namespace GestLog;
 
@@ -27,7 +29,11 @@ public partial class App : System.Windows.Application
             _logger.LogConfiguration("Version", "1.0.0");
             _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
             _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);            // CORRECCIÓN: Cargar configuración automáticamente al inicio
-            await LoadApplicationConfigurationAsync();
+            await LoadApplicationConfigurationAsync();            // 🔒 VALIDAR SEGURIDAD AL STARTUP
+            await ValidateSecurityConfigurationAsync();
+
+            // 🚀 VERIFICAR FIRST RUN SETUP
+            await CheckFirstRunSetupAsync();
 
             // Inicializar conexión a base de datos automáticamente
             await InitializeDatabaseConnectionAsync();
@@ -73,6 +79,40 @@ public partial class App : System.Windows.Application
         {
             _logger?.Logger.LogError(ex, "❌ Error al cargar la configuración de la aplicación");
             // No es crítico, la aplicación puede continuar con configuración por defecto
+        }
+    }
+
+    /// <summary>
+    /// Valida la configuración de seguridad al inicio de la aplicación
+    /// </summary>
+    private async Task ValidateSecurityConfigurationAsync()
+    {
+        try
+        {
+            _logger?.Logger.LogInformation("🔒 Validando configuración de seguridad...");
+            
+            // Obtener el servicio de validación de seguridad
+            var securityValidationService = LoggingService.GetService<SecurityStartupValidationService>();
+            
+            // Ejecutar validación completa
+            var isValid = await securityValidationService.ValidateAllSecurityAsync();
+            
+            if (isValid)
+            {
+                _logger?.Logger.LogInformation("✅ Validación de seguridad completada exitosamente");
+            }
+            else
+            {
+                _logger?.Logger.LogWarning("⚠️ Se encontraron problemas en la configuración de seguridad");
+                
+                // Mostrar guía de configuración al usuario
+                await securityValidationService.ShowSecurityGuidanceAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error durante la validación de seguridad");
+            // No es crítico, la aplicación puede continuar
         }
     }
 
@@ -198,6 +238,70 @@ public partial class App : System.Windows.Application
             // Por ejemplo, actualizar un contador de errores en la interfaz de usuario
             _logger?.Logger.LogDebug("Error registrado: {ErrorId} en {Context}", e.Error.Id, e.Error.Context);
         };
+    }
+      /// <summary>
+    /// Verifica si es necesario ejecutar el First Run Setup
+    /// </summary>
+    private async Task CheckFirstRunSetupAsync()
+    {
+        try
+        {
+            _logger?.Logger.LogInformation("🚀 Verificando necesidad de First Run Setup...");
+            
+            // Obtener el servicio de First Run Setup
+            var firstRunSetupService = LoggingService.GetService<IFirstRunSetupService>();
+            
+            // Verificar si es la primera ejecución
+            var isFirstRun = await firstRunSetupService.IsFirstRunAsync();
+            
+            if (isFirstRun)
+            {
+                _logger?.Logger.LogInformation("🔧 Primera ejecución detectada, configurando automáticamente...");
+                
+                // Configurar automáticamente usando valores de appsettings.json
+                await firstRunSetupService.ConfigureAutomaticEnvironmentVariablesAsync();
+                
+                _logger?.Logger.LogInformation("✅ First Run Setup automático completado exitosamente");
+            }
+            else
+            {
+                _logger?.Logger.LogInformation("✅ Configuración existente encontrada, omitiendo First Run Setup");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error durante la verificación del First Run Setup");
+            
+            // Mostrar error al usuario pero no cerrar la aplicación
+            System.Windows.MessageBox.Show(
+                $"Error durante la configuración automática de base de datos:\n{ex.Message}\n\n" +
+                "La aplicación continuará pero es posible que tenga problemas de conectividad.\n" +
+                "Verifique que SQL Server esté corriendo y revise los logs para más detalles.",
+                "Error de Configuración Automática",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+    }/// <summary>
+    /// Muestra el dialog de First Run Setup
+    /// </summary>
+    /// <returns>True si el setup se completó exitosamente, False si se canceló</returns>
+    private bool ShowFirstRunSetup()
+    {
+        try
+        {
+            // Crear el dialog usando el factory method
+            var setupDialog = Views.FirstRunSetupDialog.Create(LoggingService.GetServiceProvider());
+            
+            // Mostrar el dialog como modal
+            var result = setupDialog.ShowDialog();
+            
+            return result == true;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error al mostrar First Run Setup Dialog");
+            return false;
+        }
     }
 }
 

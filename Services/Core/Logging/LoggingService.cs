@@ -6,6 +6,8 @@ using Serilog.Events;
 using System.IO;
 using GestLog.Services.Core.Error;
 using GestLog.Models.Configuration;
+using GestLog.Services.Interfaces;
+using GestLog.ViewModels;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -61,7 +63,13 @@ public static class LoggingService
             services.AddSingleton<IGestLogLogger, GestLogLogger>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
-            services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
+            services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();            // 🔒 SERVICIOS DE SEGURIDAD
+            services.AddSingleton<ISecureDatabaseConfigurationService, SecureDatabaseConfigurationService>();
+            services.AddSingleton<SecurityStartupValidationService>();
+            
+            // 🚀 SERVICIOS DE FIRST RUN SETUP
+            services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
+            services.AddTransient<FirstRunSetupViewModel>();
             
             // Configuración de base de datos
             services.Configure<Models.Configuration.DatabaseConfiguration>(config =>

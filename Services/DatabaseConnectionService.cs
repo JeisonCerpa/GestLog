@@ -23,6 +23,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     private readonly DatabaseConfiguration _config;
     private readonly DatabaseResilienceConfiguration _resilienceConfig;
     private readonly IGestLogLogger _logger;
+    private readonly ISecureDatabaseConfigurationService _secureConfig;
     
     // Servicios de resiliencia
     private readonly CircuitBreakerService _circuitBreaker;
@@ -36,16 +37,16 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     private DatabaseConnectionState _currentState;
     private readonly ConnectionMetricsCollector _metricsCollector;
     private CancellationTokenSource? _serviceTokenSource;
-    private bool _disposed;
-
-    public DatabaseConnectionService(
+    private bool _disposed;    public DatabaseConnectionService(
         IOptions<DatabaseConfiguration> config,
         IOptions<DatabaseResilienceConfiguration> resilienceConfig,
-        IGestLogLogger logger)
+        IGestLogLogger logger,
+        ISecureDatabaseConfigurationService secureConfig)
     {
         _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         _resilienceConfig = resilienceConfig.Value ?? throw new ArgumentNullException(nameof(resilienceConfig));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _secureConfig = secureConfig ?? throw new ArgumentNullException(nameof(secureConfig));
         
         // Inicializar servicios de resiliencia
         _circuitBreaker = new CircuitBreakerService(resilienceConfig, logger);
@@ -137,28 +138,29 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
             _logger.LogError(ex, "❌ Error obteniendo conexión tras {Duration}ms", stopwatch.ElapsedMilliseconds);
             throw;
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Crea una conexión interna sin resiliencia (para uso del Circuit Breaker)
     /// </summary>
     private async Task<SqlConnection> CreateConnectionInternalAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var connection = new SqlConnection(_config.ConnectionString);
+            // Obtener la cadena de conexión segura
+            var connectionString = await _secureConfig.GetConnectionStringAsync(cancellationToken);
+            
+            var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(cancellationToken);
             return connection;
         }
         catch (SqlException ex)
         {
             var errorMessage = GetSqlErrorMessage(ex);
-            throw new DatabaseConnectionException(errorMessage, _config.ConnectionString, _config.Server, ex);
+            throw new DatabaseConnectionException(errorMessage, "[SECURE_CONNECTION]", _secureConfig.GetDatabaseServer(), ex);
         }
         catch (Exception ex)
         {
             throw new DatabaseConnectionException("Error inesperado al conectar con la base de datos", 
-                _config.ConnectionString, _config.Server, ex);
+                "[SECURE_CONNECTION]", _secureConfig.GetDatabaseServer(), ex);
         }
     }
 
@@ -538,23 +540,32 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
 
     #endregion
 
-    #region Utilidades
-
-    /// <summary>
+    #region Utilidades    /// <summary>
     /// Valida la configuración al inicializar
     /// </summary>
     private void ValidateConfiguration()
     {
-        if (string.IsNullOrWhiteSpace(_config.ConnectionString))
-            throw new DatabaseConfigurationException("ConnectionString no puede estar vacío", "ConnectionString");
-        
-        if (string.IsNullOrWhiteSpace(_config.Server))
-            throw new DatabaseConfigurationException("Server no puede estar vacío", "Server");
-        
-        if (string.IsNullOrWhiteSpace(_config.Database))
-            throw new DatabaseConfigurationException("Database no puede estar vacío", "Database");
+        try
+        {
+            // Validar usando el servicio de configuración segura
+            var server = _secureConfig.GetDatabaseServer();
+            var database = _secureConfig.GetDatabaseName();
+            
+            if (string.IsNullOrWhiteSpace(server))
+                throw new DatabaseConfigurationException("Server no puede estar vacío", "Server");
+            
+            if (string.IsNullOrWhiteSpace(database))
+                throw new DatabaseConfigurationException("Database no puede estar vacío", "Database");
 
-        _logger.LogDebug("✅ Configuración de base de datos validada exitosamente");
+            _logger.LogDebug("✅ Configuración de base de datos validada exitosamente usando configuración segura");
+        }
+        catch (EnvironmentVariableException ex)
+        {
+            throw new DatabaseConfigurationException($"Error de configuración segura: {ex.Message}", ex.VariableName, ex);
+        }        catch (SecurityConfigurationException ex)
+        {
+            throw new DatabaseConfigurationException($"Error de configuración de seguridad: {ex.Message}", ex.SecurityContext, ex);
+        }
     }
 
     /// <summary>
