@@ -273,7 +273,7 @@ public partial class DocumentGenerationViewModel : ObservableObject
     private async Task SelectEmailExcelFile() 
     {
         await _mainViewModel.AutomaticEmail.SelectEmailExcelFileAsync();
-    }    [RelayCommand(CanExecute = nameof(CanSendAutomatically))]
+    }    [RelayCommand(CanExecute = nameof(CanSendAutomaticallyMethod))]
     private async Task SendDocumentsAutomatically() 
     {
         await _mainViewModel.SendDocumentsAutomaticallyCommand.ExecuteAsync(null);
@@ -293,13 +293,16 @@ public partial class DocumentGenerationViewModel : ObservableObject
 
     private bool CanOpenOutputFolder() => 
         !string.IsNullOrWhiteSpace(OutputFolderPath) && 
-        Directory.Exists(OutputFolderPath);
-
-    private bool CanConfigureSmtp() => 
+        Directory.Exists(OutputFolderPath);    private bool CanConfigureSmtp() => 
         !IsProcessing && 
         !IsSendingEmail && 
         !string.IsNullOrWhiteSpace(SmtpServer) && 
         !string.IsNullOrWhiteSpace(SmtpUsername);
+
+    /// <summary>
+    /// Determina si se puede enviar automáticamente - método para el RelayCommand
+    /// </summary>
+    private bool CanSendAutomaticallyMethod() => _mainViewModel.AutomaticEmail.CanSendAutomatically;
 
     #endregion
 
