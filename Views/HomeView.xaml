@@ -53,34 +53,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </UserControl.Resources>
-    <Grid Background="#FAFAFA">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        
-        <!-- Header -->
-        <Border Grid.Row="0" Padding="30,20">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#0F7A30" Offset="0"/>
-                    <GradientStop Color="#0D6B28" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>            <TextBlock Text="Sistema de Gestión" 
-                      FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" 
-                      Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock.Effect>
-                    <DropShadowEffect Color="#000000" 
-                                    BlurRadius="1" 
-                                    ShadowDepth="1" 
-                                    Opacity="0.2"/>
-                </TextBlock.Effect>
-            </TextBlock>
-        </Border>
-        
+    </UserControl.Resources>    <Grid Background="#FAFAFA">        
         <!-- Main Content -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="50,40">
                   <!-- Welcome Section -->
                 <Border Background="#F8F9FA" Padding="30,20" CornerRadius="12" Margin="0,0,0,30">
@@ -114,10 +89,8 @@
                                             BlurRadius="12" 
                                             ShadowDepth="3" 
                                             Opacity="0.10"/>
-                        </Border.Effect>
-                        <StackPanel>                            <Border Background="#118938" Width="70" Height="70" CornerRadius="35" HorizontalAlignment="Center" Margin="0,0,0,18">
-                                <TextBlock Text="🛠️" FontFamily="Segoe UI" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        </Border.Effect>                        <StackPanel>
+                            <TextBlock Text="🛠️" FontFamily="Segoe UI" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                             <TextBlock Text="Herramientas" FontFamily="Segoe UI" FontSize="20" FontWeight="Bold" 
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Accede a las herramientas de gestión empresarial" 
@@ -137,10 +110,8 @@
                                             BlurRadius="12" 
                                             ShadowDepth="3" 
                                             Opacity="0.10"/>
-                        </Border.Effect>
-                        <StackPanel>                            <Border Background="#2B8E3F" Width="70" Height="70" CornerRadius="35" HorizontalAlignment="Center" Margin="0,0,0,18">
-                                <TextBlock Text="ℹ️" FontFamily="Segoe UI" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        </Border.Effect>                        <StackPanel>
+                            <TextBlock Text="ℹ️" FontFamily="Segoe UI" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                             <TextBlock Text="Información" FontFamily="Segoe UI" FontSize="20" FontWeight="Bold" 
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Estado del sistema y estadísticas de módulos" 
