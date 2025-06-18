@@ -6,6 +6,36 @@ using GestLog.Models.Validation.Attributes;
 namespace GestLog.Models.Configuration.Modules;
 
 /// <summary>
+/// Modos de manejo de registros duplicados en DaaterProcessor
+/// </summary>
+public enum DuplicateHandlingMode
+{
+    /// <summary>
+    /// Omitir registros duplicados (comportamiento por defecto)
+    /// </summary>
+    [Description("Omitir duplicados")]
+    Skip = 0,
+    
+    /// <summary>
+    /// Reemplazar el registro existente con el nuevo
+    /// </summary>
+    [Description("Reemplazar duplicados")]
+    Replace = 1,
+    
+    /// <summary>
+    /// Lanzar una excepción cuando se encuentre un duplicado
+    /// </summary>
+    [Description("Error en duplicados")]
+    Error = 2,
+    
+    /// <summary>
+    /// Permitir duplicados (no validar)
+    /// </summary>
+    [Description("Permitir duplicados")]
+    Allow = 3
+}
+
+/// <summary>
 /// Configuraciones específicas del módulo DaaterProcessor
 /// </summary>
 public class DaaterProcessorSettings : INotifyPropertyChanged
@@ -21,10 +51,13 @@ public class DaaterProcessorSettings : INotifyPropertyChanged
     private int _maxRowsPerFile = 1000000; // 1M filas
     private bool _includeHeaderRow = true;
     private string _dateFormat = "yyyy-MM-dd";
-    private string _decimalSeparator = ".";
-    private string _thousandsSeparator = ",";
+    private string _decimalSeparator = ".";    private string _thousandsSeparator = ",";
     private bool _enableProgressReporting = true;
-    private bool _enableErrorRecovery = true;    /// <summary>
+    private bool _enableErrorRecovery = true;
+    private bool _enableDuplicateValidation = true;
+    private DuplicateHandlingMode _duplicateHandlingMode = DuplicateHandlingMode.Skip;
+
+    /// <summary>
     /// Ruta de entrada por defecto para archivos a procesar
     /// </summary>
     [DirectoryExists(AllowEmpty = true, CreateIfNotExists = false)]
@@ -161,15 +194,33 @@ public class DaaterProcessorSettings : INotifyPropertyChanged
     {
         get => _enableProgressReporting;
         set => SetProperty(ref _enableProgressReporting, value);
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Habilitar recuperación automática de errores
     /// </summary>
     public bool EnableErrorRecovery
     {
         get => _enableErrorRecovery;
         set => SetProperty(ref _enableErrorRecovery, value);
+    }
+
+    /// <summary>
+    /// Habilitar validación de registros duplicados
+    /// </summary>
+    [Display(Name = "Validar Duplicados", Description = "Habilitar la detección y manejo de registros duplicados basados en partida arancelaria y número de declaración")]
+    public bool EnableDuplicateValidation
+    {
+        get => _enableDuplicateValidation;
+        set => SetProperty(ref _enableDuplicateValidation, value);
+    }
+
+    /// <summary>
+    /// Modo de manejo de registros duplicados
+    /// </summary>
+    [Display(Name = "Manejo de Duplicados", Description = "Define cómo se manejan los registros duplicados encontrados durante el procesamiento")]
+    public DuplicateHandlingMode DuplicateHandlingMode
+    {
+        get => _duplicateHandlingMode;
+        set => SetProperty(ref _duplicateHandlingMode, value);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

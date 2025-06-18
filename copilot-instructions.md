@@ -11,6 +11,7 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 - **Efectos**: `DropShadowEffect` en navbar, cartas y botones con `CornerRadius="8"`
 - **Navbar**: Gradiente verde con logo en esquina inferior derecha
 - **Botones**: Hover states con colores más oscuros y sombras dinámicas
+- **Barra de Progreso**: Control `SimpleProgressBar` con fondo blanco `#FFFFFF`, barra verde `#118938`, bordes redondeados, títulos en gris oscuro `#504F4E`, porcentajes en verde y mensajes de estado personalizables
 
 ## ⚡ **Reglas Fundamentales**
 1. **SRP**: Una responsabilidad por clase → **Si viola SRP → Refactorizar inmediatamente**

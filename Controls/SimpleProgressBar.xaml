@@ -9,21 +9,24 @@
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
-    
-    <Border Background="#F5F5F5" CornerRadius="5" Padding="15">
+      <Border Background="{Binding BackgroundColor, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+            CornerRadius="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+            Padding="15">
         <StackPanel>
             <!-- Encabezado con título y porcentaje -->
             <DockPanel Margin="0,0,0,8"
                       Visibility="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                 
                 <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                          FontFamily="Segoe UI"
                           FontWeight="SemiBold" 
-                          Foreground="#2C3E50"
+                          Foreground="{Binding TitleColor, RelativeSource={RelativeSource AncestorType=UserControl}}"
                           DockPanel.Dock="Left"
                           VerticalAlignment="Center"/>
                 
                 <TextBlock Text="{Binding ProgressValue, RelativeSource={RelativeSource AncestorType=UserControl}, StringFormat='{}{0:F0}%'}" 
-                          Foreground="#27AE60"
+                          Foreground="{Binding PercentageColor, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          FontFamily="Segoe UI"
                           FontWeight="Bold"
                           HorizontalAlignment="Right"
                           VerticalAlignment="Center"
@@ -33,16 +36,17 @@
             <!-- Barra de progreso -->
             <ProgressBar Value="{Binding ProgressValue, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}" 
                         Maximum="100" 
-                        Height="12"
-                        Background="#E0E0E0"
-                        Foreground="#27AE60"
+                        Height="{Binding BarHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Background="{Binding BarBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Foreground="{Binding BarForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         BorderThickness="0"/>
             
             <!-- Mensaje de estado -->
             <TextBlock Text="{Binding StatusMessage, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                       Margin="0,8,0,0"
-                      Foreground="#7F8C8D"
-                      FontSize="12"
+                      Foreground="{Binding MessageColor, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      FontFamily="Segoe UI"
+                      FontSize="{Binding MessageFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                       TextTrimming="CharacterEllipsis"
                       Visibility="{Binding ShowMessage, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </StackPanel>

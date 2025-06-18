@@ -210,9 +210,7 @@
                 <ContentControl.Background>
                     <SolidColorBrush Color="#FAFAFA"/>
                 </ContentControl.Background>
-            </ContentControl>
-            
-            <!-- Logo en esquina inferior derecha del body -->
+            </ContentControl>            <!-- Logo en esquina inferior derecha del body -->
             <Image Source="/Assets/logo.png" 
                    Width="180" Height="48" 
                    HorizontalAlignment="Right" 

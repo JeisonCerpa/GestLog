@@ -2,40 +2,110 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="🔍 Filtrar Consolidado - Productos de Acero" Height="550" Width="1000" 
-        Background="#F8F9FA" WindowStartupLocation="CenterScreen">
+        Background="#FAFAFA" WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <!-- Estilo para botones del DaaterProcessor -->
+        <Style x:Key="FilterButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" 
+                                                BlurRadius="4" 
+                                                ShadowDepth="1" 
+                                                Opacity="0.12"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2B8E3F"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0F7A30"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#706F6F"/>
+                                <Setter Property="Foreground" Value="#C0C0C0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
-        <!-- Header Section -->
-        <Border Grid.Row="0" Background="#2C3E50" Padding="20,15">
+          <!-- Header Section -->
+        <Border Grid.Row="0" Padding="25,20">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#118938" Offset="0"/>
+                    <GradientStop Color="#0F7A30" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" 
+                                BlurRadius="8" 
+                                ShadowDepth="2" 
+                                Opacity="0.15"/>
+            </Border.Effect>
             <StackPanel>
-                <TextBlock Text="🔍 Filtrar Datos Consolidados" FontSize="18" FontWeight="Bold" 
+                <TextBlock Text="🔍 Filtrar Datos Consolidados" 
+                          FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" 
                           Foreground="White" HorizontalAlignment="Center"/>
                 <TextBlock Text="Filtros especializados para productos de acero y perfiles metálicos" 
-                          FontSize="12" Foreground="#BDC3C7" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                          FontFamily="Segoe UI" FontSize="14" Foreground="#E8F5E8" 
+                          HorizontalAlignment="Center" TextAlignment="Center" Margin="0,8,0,0"/>
             </StackPanel>
         </Border>
-        
-        <!-- Data Grid -->
-        <DataGrid x:Name="FilteredDataGrid" Grid.Row="1" AutoGenerateColumns="True" 
-                 Margin="15" Background="White" BorderBrush="#DEE2E6" BorderThickness="1"
-                 GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                 AlternatingRowBackground="#F8F9FA" RowBackground="White"/>
-        
-        <!-- Actions Panel -->
-        <Border Grid.Row="2" Background="White" Padding="15" BorderBrush="#DEE2E6" BorderThickness="0,1,0,0">
+          <!-- Data Grid -->
+        <Border Grid.Row="1" Background="White" Margin="20" CornerRadius="8" BorderBrush="#E5E5E5" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" 
+                                BlurRadius="8" 
+                                ShadowDepth="2" 
+                                Opacity="0.10"/>
+            </Border.Effect>
+            <DataGrid x:Name="FilteredDataGrid" AutoGenerateColumns="True" 
+                     Margin="15" Background="Transparent" BorderThickness="0"
+                     GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                     AlternatingRowBackground="#F8F9FA" RowBackground="Transparent"
+                     FontFamily="Segoe UI" FontSize="13"/>
+        </Border>
+          <!-- Actions Panel -->
+        <Border Grid.Row="2" Background="White" Padding="20,15" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" 
+                                BlurRadius="4" 
+                                ShadowDepth="1" 
+                                Opacity="0.08"/>
+            </Border.Effect>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock x:Name="txtRecordCount" Text="Registros: 0" FontSize="12" 
-                          Foreground="#6C757D" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                <Button Content="🔄 Aplicar Filtros" Background="#17A2B8" Foreground="White" 
-                       Padding="12,8" BorderThickness="0" FontWeight="SemiBold" Margin="0,0,10,0"
+                <TextBlock x:Name="txtRecordCount" Text="Registros: 0" 
+                          FontFamily="Segoe UI" FontSize="14" 
+                          Foreground="#706F6F" VerticalAlignment="Center" Margin="0,0,25,0"/>
+                <Button Content="🔄 Aplicar Filtros" 
+                       Style="{StaticResource FilterButtonStyle}"
+                       Margin="0,0,12,0"
                        Click="ApplyFilters_Click"/>
-                <Button x:Name="btnExportExcel" Content="📊 Exportar a Excel" Background="#28A745" Foreground="White" 
-                       Padding="12,8" BorderThickness="0" FontWeight="SemiBold"
+                <Button x:Name="btnExportExcel" Content="📊 Exportar a Excel" 
+                       Style="{StaticResource FilterButtonStyle}"
                        Click="ExportToExcel_Click" IsEnabled="False"/>
             </StackPanel>
         </Border>

@@ -8,15 +8,29 @@ using System.Threading;
 using ClosedXML.Excel;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.DaaterProccesor.Exceptions;
+using GestLog.Models.Configuration.Modules;
 
 namespace GestLog.Modules.DaaterProccesor.Services;
 
 public class DataConsolidationService : IDataConsolidationService
 {
-    private readonly IGestLogLogger _logger;    public DataConsolidationService(IGestLogLogger logger)
+    private readonly IGestLogLogger _logger;
+
+    /// <summary>
+    /// Estructura para rastrear registros duplicados
+    /// </summary>
+    private class DuplicateInfo
+    {
+        public string FileName { get; set; } = string.Empty;
+        public int RowNumber { get; set; }
+        public long PartidaArancelaria { get; set; }
+        public long NumeroDeclaracion { get; set; }
+    }
+
+    public DataConsolidationService(IGestLogLogger logger)
     {
         _logger = logger;
-    }public DataTable ConsolidarDatos(
+    }    public DataTable ConsolidarDatos(
         string folderPath,
         Dictionary<string, string> paises,
         Dictionary<long, string[]> partidas,
@@ -24,9 +38,27 @@ public class DataConsolidationService : IDataConsolidationService
         System.IProgress<double> progress,
         CancellationToken cancellationToken = default)
     {
-        return _logger.LoggedOperation("Consolidación de datos Excel", () =>
+        // Usar configuraciones por defecto para mantener compatibilidad hacia atrás
+        var defaultSettings = new DaaterProcessorSettings();
+        return ConsolidarDatos(folderPath, paises, partidas, proveedores, defaultSettings, progress, cancellationToken);
+    }
+
+    public DataTable ConsolidarDatos(
+        string folderPath,
+        Dictionary<string, string> paises,
+        Dictionary<long, string[]> partidas,
+        Dictionary<string, string> proveedores,
+        DaaterProcessorSettings settings,
+        System.IProgress<double> progress,
+        CancellationToken cancellationToken = default)
+    {        return _logger.LoggedOperation("Consolidación de datos Excel", () =>
         {
-            _logger.LogDebug("📊 Iniciando consolidación de datos desde: {FolderPath}", folderPath);            // Verificar que la carpeta existe
+            _logger.LogDebug("📊 Iniciando consolidación de datos desde: {FolderPath}", folderPath);
+
+            // Estructuras para validación de duplicados
+            var seenRecords = new HashSet<(long partidaArancelaria, long numeroDeclaracion)>();
+            var duplicatesList = new List<DuplicateInfo>();
+            var duplicatesCount = 0;// Verificar que la carpeta existe
             if (!Directory.Exists(folderPath))
             {
                 var ex = new FileValidationException("La carpeta seleccionada no existe", folderPath, "FOLDER_EXISTS");
@@ -278,9 +310,67 @@ public class DataConsolidationService : IDataConsolidationService
                     {
                         valorFobUsd = valorFobUsd.Replace(",", "");
                         if (double.TryParse(valorFobUsd, out var parsedValorFobUsd))
-                            valorFobUsdValue = parsedValorFobUsd;
-                    }
+                            valorFobUsdValue = parsedValorFobUsd;                    }
                     double fobPorTonValue = pesoTonValue > 0 ? valorFobUsdValue / pesoTonValue : 0;
+                      // Validación de duplicados basada en partida arancelaria y número de declaración
+                    var recordKey = (numeroPartidaArancelaria, numeroDeclaracion);
+                    
+                    if (settings.EnableDuplicateValidation && seenRecords.Contains(recordKey))
+                    {
+                        duplicatesCount++;
+                        var duplicateInfo = new DuplicateInfo
+                        {
+                            FileName = fileName,
+                            RowNumber = rowIndex + 2, // +2 porque rowIndex empieza en 0 y hay header
+                            PartidaArancelaria = numeroPartidaArancelaria,
+                            NumeroDeclaracion = numeroDeclaracion
+                        };
+                        duplicatesList.Add(duplicateInfo);
+                        
+                        _logger.LogWarning("⚠️ Duplicado detectado en {FileName}, fila {RowNumber}: " +
+                            "Partida {PartidaArancelaria} + Declaración {NumeroDeclaracion}", 
+                            fileName, duplicateInfo.RowNumber, numeroPartidaArancelaria, numeroDeclaracion);
+                        
+                        // Manejar duplicado según configuración
+                        switch (settings.DuplicateHandlingMode)
+                        {
+                            case DuplicateHandlingMode.Skip:
+                                _logger.LogDebug("🔄 Omitiendo registro duplicado según configuración");
+                                continue; // Omitir el registro duplicado
+                                
+                            case DuplicateHandlingMode.Replace:
+                                _logger.LogDebug("🔄 Reemplazando registro duplicado según configuración");
+                                // Buscar y eliminar el registro existente
+                                var existingRows = consolidatedData.AsEnumerable()
+                                    .Where(r => r.Field<long>("PARTIDA ARANCELARIA") == numeroPartidaArancelaria && 
+                                               r.Field<long>("Número Declaración") == numeroDeclaracion)
+                                    .ToList();
+                                foreach (var existingRow in existingRows)
+                                {
+                                    consolidatedData.Rows.Remove(existingRow);
+                                }
+                                // Continuar para agregar el nuevo registro
+                                break;                            case DuplicateHandlingMode.Error:
+                                _logger.LogWarning("❌ Error por duplicado según configuración en {FileName}, fila {RowNumber}",
+                                    fileName, duplicateInfo.RowNumber);
+                                throw new ExcelDataException(
+                                    $"Registro duplicado encontrado en '{fileName}', fila {duplicateInfo.RowNumber}: " +
+                                    $"Partida {numeroPartidaArancelaria} + Declaración {numeroDeclaracion}",
+                                    file);
+                                    
+                            case DuplicateHandlingMode.Allow:
+                                _logger.LogDebug("✅ Permitiendo registro duplicado según configuración");
+                                // No hacer nada, permitir el duplicado
+                                break;
+                        }
+                    }
+                    
+                    // Marcar este registro como visto (solo si la validación está habilitada)
+                    if (settings.EnableDuplicateValidation)
+                    {
+                        seenRecords.Add(recordKey);
+                    }
+                    
                     consolidatedData.Rows.Add(
                         fechaValida, mes, numeroDeclaracion, numeroNitImportador, nombreImportador, nombreProveedor,
                         direccionProveedor, datoContactoProveedor, paisExportador, paisDeOrigen, nombrePaisDeOrigen,
@@ -324,12 +414,34 @@ public class DataConsolidationService : IDataConsolidationService
                 return !string.IsNullOrEmpty(mes)
                     ? DateTime.ParseExact(mes, "MMMM", new CultureInfo("es-ES")).Month
                     : 0;
-            })
-            .ThenBy(row => row.Field<long>("PARTIDA ARANCELARIA"))
+            })            .ThenBy(row => row.Field<long>("PARTIDA ARANCELARIA"))
             .CopyToDataTable();
+        
+        // Logging de resumen de duplicados
+        if (duplicatesCount > 0)
+        {
+            _logger.LogWarning("⚠️ Se encontraron {DuplicateCount} registros duplicados que fueron omitidos", duplicatesCount);
             
-        _logger.LogDebug("✅ Consolidación completada: {TotalFiles} archivos, {TotalRows} filas, {ConsolidatedRows} filas consolidadas", 
-            fileCount, totalRowsProcessed, sortedData.Rows.Count);
+            // Log detallado de los primeros 5 duplicados para debugging
+            var topDuplicates = duplicatesList.Take(5);
+            foreach (var duplicate in topDuplicates)
+            {
+                _logger.LogDebug("Duplicado: {FileName}:{RowNumber} - Partida {PartidaArancelaria}, Declaración {NumeroDeclaracion}",
+                    duplicate.FileName, duplicate.RowNumber, duplicate.PartidaArancelaria, duplicate.NumeroDeclaracion);
+            }
+            
+            if (duplicatesCount > 5)
+            {
+                _logger.LogDebug("... y {RemainingCount} duplicados adicionales", duplicatesCount - 5);
+            }
+        }
+        else
+        {
+            _logger.LogDebug("✅ No se encontraron registros duplicados");
+        }
+            
+        _logger.LogDebug("✅ Consolidación completada: {TotalFiles} archivos, {TotalRows} filas procesadas, {ConsolidatedRows} filas únicas consolidadas, {DuplicatesOmitted} duplicados omitidos", 
+            fileCount, totalRowsProcessed, sortedData.Rows.Count, duplicatesCount);
             
         return sortedData;
         });

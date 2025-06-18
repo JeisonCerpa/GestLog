@@ -5,137 +5,234 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:GestLog.Controls"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Background="White">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <Grid Margin="40,30">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#FAFAFA">
+             
+    <UserControl.Resources>
+        <!-- Estilo para botones del DaaterProcessor -->
+        <Style x:Key="DaaterButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" 
+                                                BlurRadius="4" 
+                                                ShadowDepth="1" 
+                                                Opacity="0.12"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2B8E3F"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0F7A30"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Estilo para botón de cancelar -->
+        <Style x:Key="CancelButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#A93226"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#922B21"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    
+    <Grid Background="#FAFAFA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Contenido principal -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="40,30,40,20">
+            <StackPanel>
                 
                 <!-- Header -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-                    <Image Source="/Assets/logo.png" Height="60" Width="60" Margin="0,0,15,0" 
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <StackPanel>
-                        <TextBlock Text="📊 DaaterProccesor" FontSize="28" FontWeight="SemiBold" 
-                                  Foreground="#E67E22" Margin="0,0,0,5"/>
-                        <TextBlock Text="Procesamiento avanzado de archivos Excel" FontSize="16" 
-                                  Foreground="#34495E"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                    <Border Background="White" Width="80" Height="80" CornerRadius="40" 
+                            HorizontalAlignment="Center" Margin="0,0,20,0"
+                            BorderBrush="#E5E5E5" BorderThickness="2">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#000000" 
+                                            BlurRadius="8" 
+                                            ShadowDepth="2" 
+                                            Opacity="0.10"/>
+                        </Border.Effect>
+                        <TextBlock Text="📊" FontFamily="Segoe UI" FontSize="40" 
+                                  Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="DaaterProccesor" 
+                                  FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" 
+                                  Foreground="#118938" Margin="0,0,0,8"/>
+                        <TextBlock Text="Procesamiento avanzado de archivos Excel" 
+                                  FontFamily="Segoe UI" FontSize="16" 
+                                  Foreground="#706F6F"/>
                     </StackPanel>
                 </StackPanel>
-                  <!-- Main Content Card -->
-                <Border Grid.Row="1" Background="#F8F9FA" Padding="30" 
-                       BorderBrush="#E9ECEF" BorderThickness="1">
+
+                <!-- Main Content Card -->
+                <Border Background="White" Padding="30" CornerRadius="8" BorderBrush="#E5E5E5" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" 
+                                        BlurRadius="12" 
+                                        ShadowDepth="3" 
+                                        Opacity="0.10"/>
+                    </Border.Effect>
                     <StackPanel>
                         
                         <!-- Action Buttons -->
-                        <TextBlock Text="Funciones Principales:" FontSize="18" FontWeight="SemiBold" 
-                                  Foreground="#2C3E50" Margin="0,0,0,20"/>
+                        <TextBlock Text="Funciones Principales:" 
+                                  FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" 
+                                  Foreground="#504F4E" Margin="0,0,0,25"/>
                         
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="25"/>
                                 <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>                            <!-- Process Files Card -->
-                            <Border Grid.Column="0" Background="White" Padding="20" 
-                                   BorderBrush="#DEE2E6" BorderThickness="1">
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Process Files Card -->
+                            <Border Grid.Column="0" Background="White" Padding="25" CornerRadius="8"
+                                   BorderBrush="#E5E5E5" BorderThickness="1">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" 
+                                                    BlurRadius="8" 
+                                                    ShadowDepth="2" 
+                                                    Opacity="0.08"/>
+                                </Border.Effect>
                                 <StackPanel>
-                                    <TextBlock Text="📁" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Procesar Archivos Excel" FontWeight="SemiBold" FontSize="16" 
-                                              HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,10"/>
+                                    <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                                    <TextBlock Text="Procesar Archivos Excel" 
+                                              FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="18" 
+                                              HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,12"/>
                                     <TextBlock Text="Selecciona una carpeta y procesa todos los archivos Excel contenidos" 
-                                              FontSize="12" Foreground="#6C757D" TextWrapping="Wrap" 
-                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,15"/>
+                                              FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap"
+                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                                     <Button Content="Seleccionar Carpeta y Procesar" 
-                                           Background="#17A2B8" Foreground="White" 
-                                           Padding="12,8" BorderThickness="0" 
-                                           FontWeight="SemiBold"
+                                           Style="{StaticResource DaaterButtonStyle}"
                                            Command="{Binding ProcessExcelFilesCommand}"/>
                                 </StackPanel>
                             </Border>
                             
                             <!-- Filter Data Card -->
-                            <Border Grid.Column="2" Background="White" Padding="20" 
-                                   BorderBrush="#DEE2E6" BorderThickness="1">
+                            <Border Grid.Column="2" Background="White" Padding="25" CornerRadius="8"
+                                   BorderBrush="#E5E5E5" BorderThickness="1">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" 
+                                                    BlurRadius="8" 
+                                                    ShadowDepth="2" 
+                                                    Opacity="0.08"/>
+                                </Border.Effect>
                                 <StackPanel>
-                                    <TextBlock Text="🔍" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Filtrar Consolidado" FontWeight="SemiBold" FontSize="16" 
-                                              HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,10"/>
+                                    <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                                    <TextBlock Text="Filtrar Consolidado" 
+                                              FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="18" 
+                                              HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,12"/>
                                     <TextBlock Text="Aplicar filtros avanzados a los datos consolidados y exportar resultados" 
-                                              FontSize="12" Foreground="#6C757D" TextWrapping="Wrap" 
-                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,15"/>
+                                              FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
+                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                                     <Button Content="Abrir Filtros" 
-                                           Background="#28A745" Foreground="White"
-                                           Padding="12,8" BorderThickness="0" 
-                                           FontWeight="SemiBold"
+                                           Style="{StaticResource DaaterButtonStyle}"
                                            Click="OnOpenFilteredDataViewClick"/>
                                 </StackPanel>
                             </Border>
-                        </Grid>                        <!-- Progress Section -->
-                        <Grid Margin="0,25,0,0" 
-                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="15"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="15"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Barra de progreso simple -->
-                            <controls:SimpleProgressBar Grid.Row="0"
-                                                       ProgressValue="{Binding Progress}"
-                                                       Title="🔄 Procesando Archivos Excel"
-                                                       StatusMessage="{Binding StatusMessage}"
-                                                       BackgroundColor="#2C3E50"
-                                                       TitleColor="White"
-                                                       PercentageColor="#1ABC9C"
-                                                       MessageColor="#BDC3C7"
-                                                       BarForeground="#27AE60"
-                                                       BarBackground="#34495E"
-                                                       BarHeight="20"/>
-                            
-                            <!-- Información adicional -->
-                            <TextBlock Grid.Row="2"
-                                      HorizontalAlignment="Center"
-                                      Foreground="#BDC3C7"
-                                      FontSize="12"
-                                      Text="{Binding ExecutablePath}"
-                                      TextTrimming="CharacterEllipsis"/>
-                            
-                            <!-- Botón de cancelar dentro del panel -->
-                            <Button Grid.Row="4" 
-                                   Content="❌ Cancelar Operación" 
-                                   Background="#DC3545" Foreground="White" 
-                                   Padding="12,8" BorderThickness="0" 
-                                   FontWeight="SemiBold" FontSize="12"
-                                   HorizontalAlignment="Center"
-                                   Command="{Binding CancelProcessingCommand}"/>
                         </Grid>
                         
                     </StackPanel>
                 </Border>
                 
-                <!-- Instructions -->
-                <Border Grid.Row="2" Background="#D1ECF1" Padding="20" Margin="0,20,0,0"
-                       BorderBrush="#BEE5EB" BorderThickness="1">
-                    <StackPanel>
-                        <TextBlock Text="ℹ️ Instrucciones de Uso:" FontWeight="SemiBold" FontSize="16" 
-                                  Foreground="#0C5460" Margin="0,0,0,10"/>
-                        <TextBlock Text="1. Procesar Archivos: Selecciona una carpeta que contenga archivos Excel (.xlsx) para procesarlos automáticamente" 
-                                  FontSize="13" Foreground="#0C5460" Margin="0,2" TextWrapping="Wrap"/>
-                        <TextBlock Text="2. Filtrar Consolidado: Una vez procesados los archivos, puedes aplicar filtros a los datos consolidados" 
-                                  FontSize="13" Foreground="#0C5460" Margin="0,2" TextWrapping="Wrap"/>
-                        <TextBlock Text="3. Los resultados se guardarán en la carpeta 'Output' dentro del directorio seleccionado" 
-                                  FontSize="13" Foreground="#0C5460" Margin="0,2" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
-                
-            </Grid>
+            </StackPanel>
         </ScrollViewer>
+        
+        <!-- Progress Section fija en la parte inferior -->
+        <Border Grid.Row="1" Background="White" Padding="25,20" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
+               Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" 
+                                BlurRadius="6" 
+                                ShadowDepth="1" 
+                                Opacity="0.08"/>
+            </Border.Effect>
+            <StackPanel>
+                
+                <!-- Barra de progreso simple -->
+                <controls:SimpleProgressBar ProgressValue="{Binding Progress}"
+                                           Title="🔄 Procesando Archivos Excel"
+                                           StatusMessage="{Binding StatusMessage}"
+                                           BackgroundColor="Transparent"
+                                           TitleColor="#118938"
+                                           PercentageColor="#2B8E3F"
+                                           MessageColor="#706F6F"
+                                           BarForeground="#118938"
+                                           BarBackground="#E5E5E5"
+                                           BarHeight="18"
+                                           CornerRadius="0"
+                                           Margin="0,0,0,15"/>
+                  <!-- Información y botón en línea horizontal -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="200"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                              Foreground="#706F6F"
+                              FontFamily="Segoe UI" FontSize="12"
+                              Text="{Binding ExecutablePath}"
+                              TextTrimming="CharacterEllipsis"/>
+                    
+                    <Button Grid.Column="1" Content="❌ Cancelar" 
+                           Style="{StaticResource CancelButtonStyle}"
+                           Command="{Binding CancelProcessingCommand}"/>
+                    
+                    <!-- Columna reservada para evitar superposición con logo -->
+                </Grid>
+            </StackPanel>
+        </Border>
+        
     </Grid>
 </UserControl>

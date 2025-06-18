@@ -20,21 +20,48 @@
                 <ResourceDictionary Source="../../Controls/Validation/ValidationStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
               <!-- Convertidores -->
-            <conv:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-            
-            <!-- Estilo para botón de acento -->
+            <conv:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>            <!-- Estilo para botón de acento verde -->
             <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Background" Value="#007ACC"/>
+                <Setter Property="Background" Value="#118938"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#1C87CC"/>
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="Background" Value="#0063A5"/>
-                    </Trigger>
-                </Style.Triggers>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    CornerRadius="8"
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" 
+                                                    BlurRadius="4" 
+                                                    ShadowDepth="1" 
+                                                    Opacity="0.12"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#2B8E3F"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Background" Value="#0F7A30"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <!-- Estilo para GroupBox con tema verde -->
+            <Style x:Key="GreenGroupBoxStyle" TargetType="GroupBox">
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="#118938"/>
+                <Setter Property="BorderBrush" Value="#E5E5E5"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Background" Value="White"/>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -44,21 +71,21 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <!-- Título -->
+        </Grid.RowDefinitions>        <!-- Título -->
         <TextBlock Grid.Row="0" 
-                   Text="Configuración del Procesador de Datos" 
+                   Text="⚙️ Configuración del Procesador de Datos" 
+                   FontFamily="Segoe UI"
                    FontSize="24" 
                    FontWeight="SemiBold" 
+                   Foreground="#118938"
                    Margin="0,0,0,20"/>
 
         <!-- Panel de configuración -->
         <ScrollViewer Grid.Row="1" 
                       VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <!-- Rutas -->
-                <GroupBox Header="Rutas de Archivos" 
+            <StackPanel>                <!-- Rutas -->
+                <GroupBox Header="📁 Rutas de Archivos" 
+                          Style="{StaticResource GreenGroupBoxStyle}"
                           Margin="0,0,0,15" 
                           Padding="10">
                     <Grid>
@@ -109,10 +136,9 @@
                                 Width="30" 
                                 Margin="5,5,0,5"/>
                     </Grid>
-                </GroupBox>
-
-                <!-- Opciones de procesamiento -->
-                <GroupBox Header="Opciones de Procesamiento" 
+                </GroupBox>                <!-- Opciones de procesamiento -->
+                <GroupBox Header="⚙️ Opciones de Procesamiento" 
+                          Style="{StaticResource GreenGroupBoxStyle}"
                           Margin="0,0,0,15" 
                           Padding="10">
                     <Grid>
@@ -157,18 +183,61 @@
                         <CheckBox Grid.Row="4" Grid.ColumnSpan="2" 
                                   Content="Habilitar reporte de progreso" 
                                   IsChecked="{Binding EnableProgressReporting}" 
-                                  Margin="0,5"/>
-
-                        <!-- Recuperación de errores -->
+                                  Margin="0,5"/>                        <!-- Recuperación de errores -->
                         <CheckBox Grid.Row="5" Grid.ColumnSpan="2" 
                                   Content="Habilitar recuperación de errores" 
                                   IsChecked="{Binding EnableErrorRecovery}" 
                                   Margin="0,5"/>
                     </Grid>
-                </GroupBox>
+                </GroupBox>                <!-- Validación de Duplicados -->
+                <GroupBox Header="🔍 Validación de Duplicados" 
+                          Style="{StaticResource GreenGroupBoxStyle}"
+                          Margin="0,0,0,15" 
+                          Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                <!-- Formato -->
-                <GroupBox Header="Formato de Datos" 
+                        <!-- Habilitar validación de duplicados -->
+                        <CheckBox Grid.Row="0" Grid.ColumnSpan="2" 
+                                  Content="🔍 Habilitar detección de registros duplicados" 
+                                  IsChecked="{Binding EnableDuplicateValidation}" 
+                                  Margin="0,5"/>                        <!-- Modo de manejo de duplicados -->
+                        <Label Grid.Row="1" Grid.Column="0" 
+                               Content="Acción con duplicados:" 
+                               VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" 
+                                  SelectedIndex="{Binding DuplicateHandlingModeIndex}" 
+                                  IsEnabled="{Binding EnableDuplicateValidation}"
+                                  Margin="0,5">
+                            <ComboBoxItem Content="🚫 Omitir duplicados (conservar primero)"/>
+                            <ComboBoxItem Content="🔄 Reemplazar duplicados (conservar último)"/>
+                            <ComboBoxItem Content="❌ Error al encontrar duplicados"/>
+                            <ComboBoxItem Content="✅ Permitir duplicados (sin validación)"/>
+                        </ComboBox>
+
+                        <!-- Descripción informativa -->
+                        <TextBlock Grid.Row="2" Grid.ColumnSpan="2" 
+                                   Margin="0,8,0,5" 
+                                   TextWrapping="Wrap" 
+                                   FontSize="11" 
+                                   Foreground="#706F6F">
+                            <Run Text="💡 "/>
+                            <Run Text="Los duplicados se detectan por combinación única de "/>
+                            <Run Text="Partida Arancelaria + Número de Declaración. " FontWeight="SemiBold"/>
+                            <Run Text="El sistema mostrará estadísticas detalladas en el log de procesamiento."/>
+                        </TextBlock>
+                    </Grid>
+                </GroupBox>                <!-- Formato -->
+                <GroupBox Header="📊 Formato de Datos" 
+                          Style="{StaticResource GreenGroupBoxStyle}"
                           Margin="0,0,0,15" 
                           Padding="10">
                     <Grid>
@@ -216,24 +285,34 @@
                                                     Margin="0,5"/>
                     </Grid>
                 </GroupBox>                <!-- Resumen de validación -->
-                <Border Background="#FFF4F4F4" 
-                        BorderBrush="#FFE74C3C" 
+                <Border Background="#FFF8F8F8" 
+                        BorderBrush="#C0392B" 
                         BorderThickness="1" 
-                        CornerRadius="4" 
-                        Padding="10"
-                        Margin="0,10"
+                        CornerRadius="8" 
+                        Padding="15"
+                        Margin="0,15"
                         Visibility="{Binding HasErrors, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" 
+                                        BlurRadius="4" 
+                                        ShadowDepth="1" 
+                                        Opacity="0.08"/>
+                    </Border.Effect>
                     <StackPanel>
-                        <TextBlock Text="Errores de validación:" 
-                                  FontWeight="Bold" 
-                                  Foreground="#FFE74C3C" 
-                                  Margin="0,0,0,5"/>
+                        <TextBlock Text="⚠️ Errores de validación:" 
+                                  FontFamily="Segoe UI"
+                                  FontWeight="SemiBold" 
+                                  FontSize="14"
+                                  Foreground="#C0392B" 
+                                  Margin="0,0,0,8"/>
                         <!-- Lista de errores -->
                         <ItemsControl ItemsSource="{Binding AllErrors}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" 
-                                            Foreground="#FFE74C3C" 
+                                            FontFamily="Segoe UI"
+                                            FontSize="12"
+                                            Foreground="#C0392B" 
                                             Margin="0,2" 
                                             TextWrapping="Wrap"/>
                                 </DataTemplate>

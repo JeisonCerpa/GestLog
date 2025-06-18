@@ -314,14 +314,10 @@ public partial class MainViewModel : ObservableObject
                 
             _logger.Logger.LogDebug("🏁 Finalizando ProcessExcelFilesAsync después de {Duration:mm\\:ss}", stopwatch.Elapsed);
         }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanCancelProcessing))]
+    }    [RelayCommand(CanExecute = nameof(CanCancelProcessing))]
     public void CancelProcessing()
     {
         _logger.Logger.LogInformation("⏹️ Usuario solicitó cancelación de operación");
-        System.Diagnostics.Debug.WriteLine("CancelProcessing ejecutado");
-        System.Diagnostics.Debug.WriteLine($"Estado antes de cancelar: IsProcessing={IsProcessing}, TokenSource={_cancellationTokenSource != null}");
         
         // Cancelar la operación
         _cancellationTokenSource?.Cancel();
@@ -332,7 +328,6 @@ public partial class MainViewModel : ObservableObject
         // Dejar que la barra de progreso se quede donde está para mostrar 
         // visualmente dónde se detuvo el proceso
         
-        System.Diagnostics.Debug.WriteLine("Token de cancelación activado");
         _logger.Logger.LogDebug("🔄 Token de cancelación activado");
     }
 
@@ -340,8 +335,6 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanCancelProcessing() 
     {
-        var canCancel = IsProcessing && _cancellationTokenSource != null;
-        System.Diagnostics.Debug.WriteLine($"CanCancelProcessing: IsProcessing={IsProcessing}, CancellationTokenSource={_cancellationTokenSource != null}, Result={canCancel}");
-        return canCancel;
+        return IsProcessing && _cancellationTokenSource != null;
     }
 }
