@@ -67,9 +67,8 @@
                     <GradientStop Color="#0F7A30" Offset="0"/>
                     <GradientStop Color="#0D6B28" Offset="1"/>
                 </LinearGradientBrush>
-            </Border.Background>
-            <TextBlock Text="Sistema de Gestión" 
-                      FontFamily="Myriad Pro" FontSize="20" FontWeight="SemiBold" 
+            </Border.Background>            <TextBlock Text="Sistema de Gestión" 
+                      FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" 
                       Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="#000000" 
@@ -91,13 +90,12 @@
                                         ShadowDepth="2" 
                                         Opacity="0.08"/>
                     </Border.Effect>
-                    <StackPanel>
-                        <TextBlock Text="Bienvenido a GestLog" 
-                                  FontFamily="Myriad Pro" FontSize="24" FontWeight="SemiBold" 
+                    <StackPanel>                        <TextBlock Text="Bienvenido a GestLog" 
+                                  FontFamily="Segoe UI" FontSize="24" FontWeight="SemiBold" 
                                   Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                         
                         <TextBlock Text="Sistema modular de gestión empresarial con interfaz unificada" 
-                                  FontFamily="Myriad Pro" FontSize="16" Foreground="#5D6D7E" 
+                                  FontFamily="Segoe UI" FontSize="16" Foreground="#5D6D7E" 
                                   TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -118,16 +116,16 @@
                                             Opacity="0.10"/>
                         </Border.Effect>
                         <StackPanel>                            <Border Background="#118938" Width="70" Height="70" CornerRadius="35" HorizontalAlignment="Center" Margin="0,0,0,18">
-                                <TextBlock Text="🛠️" FontFamily="Myriad Pro" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="🛠️" FontFamily="Segoe UI" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock Text="Herramientas" FontFamily="Myriad Pro" FontSize="20" FontWeight="Bold" 
+                            <TextBlock Text="Herramientas" FontFamily="Segoe UI" FontSize="20" FontWeight="Bold" 
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Accede a las herramientas de gestión empresarial" 
-                                      FontFamily="Myriad Pro" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
+                                      FontFamily="Segoe UI" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
                                       HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/><Button Name="btnIrHerramientas" Content="Ir a Herramientas" 
                                    Background="#118938" Foreground="White" 
                                    Padding="20,12" BorderThickness="0"
-                                   FontFamily="Myriad Pro" FontWeight="SemiBold" FontSize="16"
+                                   FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16"
                                    Click="btnIrHerramientas_Click"
                                    Style="{StaticResource CardButtonStyle}"/>
                         </StackPanel>
@@ -141,16 +139,16 @@
                                             Opacity="0.10"/>
                         </Border.Effect>
                         <StackPanel>                            <Border Background="#2B8E3F" Width="70" Height="70" CornerRadius="35" HorizontalAlignment="Center" Margin="0,0,0,18">
-                                <TextBlock Text="ℹ️" FontFamily="Myriad Pro" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="ℹ️" FontFamily="Segoe UI" FontSize="32" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock Text="Información" FontFamily="Myriad Pro" FontSize="20" FontWeight="Bold" 
+                            <TextBlock Text="Información" FontFamily="Segoe UI" FontSize="20" FontWeight="Bold" 
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Estado del sistema y estadísticas de módulos" 
-                                      FontFamily="Myriad Pro" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
+                                      FontFamily="Segoe UI" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
                                       HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/><Button Name="btnInfo" Content="Ver Información" 
                                    Background="#2B8E3F" Foreground="White" 
                                    Padding="20,12" BorderThickness="0"
-                                   FontFamily="Myriad Pro" FontWeight="SemiBold" FontSize="16"
+                                   FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16"
                                    Click="btnInfo_Click"
                                    Style="{StaticResource CardButtonStyle}"/>
                         </StackPanel>
