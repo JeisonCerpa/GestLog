@@ -63,7 +63,9 @@ public static class LoggingService
             services.AddSingleton<IGestLogLogger, GestLogLogger>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
-            services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();            // 🔒 SERVICIOS DE SEGURIDAD
+            services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
+            
+            // 🔒 SERVICIOS DE SEGURIDAD
             services.AddSingleton<ISecureDatabaseConfigurationService, SecureDatabaseConfigurationService>();
             services.AddSingleton<SecurityStartupValidationService>();
             

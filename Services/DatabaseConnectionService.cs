@@ -331,27 +331,51 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
                 _healthCheckTimer.Change(interval, interval);
             }
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Detiene el servicio de conexión y monitoreo
     /// </summary>
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("🛑 Deteniendo servicio de resiliencia...");
         
-        // Detener health checks
-        _healthCheckTimer.Change(Timeout.Infinite, Timeout.Infinite);
-        
-        // Cancelar operaciones en curso
-        _serviceTokenSource?.Cancel();
-        
-        // Cambiar estado
-        ChangeState(DatabaseConnectionState.Disconnected, "Servicio detenido manualmente");
-        
-        await Task.Delay(100, cancellationToken); // Dar tiempo a operaciones pendientes
-        
-        _logger.LogInformation("✅ Servicio de resiliencia detenido");
+        try
+        {
+            // 1. Detener health checks inmediatamente
+            _logger.LogDebug("🔄 Deteniendo health check timer");
+            _healthCheckTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+            
+            // 2. Cancelar operaciones en curso
+            _logger.LogDebug("🚫 Cancelando operaciones pendientes");
+            _serviceTokenSource?.Cancel();
+              // 3. Esperar a que el semáforo de health check se libere (máximo 1 segundo)
+            if (_healthCheckSemaphore != null)
+            {
+                _logger.LogDebug("⏳ Esperando liberación de semáforo de health check");
+                var acquired = await _healthCheckSemaphore.WaitAsync(1000, cancellationToken); // Reducido de 2000 a 1000ms
+                if (acquired)
+                {
+                    _healthCheckSemaphore.Release();
+                    _logger.LogDebug("✅ Semáforo de health check liberado");
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ Timeout esperando liberación de semáforo de health check");
+                }
+            }
+            
+            // 4. Cambiar estado
+            ChangeState(DatabaseConnectionState.Disconnected, "Servicio detenido manualmente");
+              // 5. Dar tiempo adicional para que las operaciones terminen
+            await Task.Delay(100, cancellationToken); // Reducido de 200 a 100ms
+            
+            _logger.LogInformation("✅ Servicio de resiliencia detenido correctamente");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error durante StopAsync del servicio de BD");
+            // Aún así cambiar el estado
+            ChangeState(DatabaseConnectionState.Disconnected, $"Servicio detenido con errores: {ex.Message}");
+        }
     }
 
     #endregion

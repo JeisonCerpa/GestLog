@@ -233,19 +233,25 @@ public partial class MainWindow : Window
             _logger.LogError(ex, "Error al establecer contenido");
             throw;
         }
-    }    
-
-    protected override void OnClosed(System.EventArgs e)
+    }        protected override void OnClosed(System.EventArgs e)
     {
         try
         {
             _logger.LogApplicationStarted("MainWindow cerrada por el usuario");
+            
+            // Forzar cierre de la aplicación cuando se cierra la MainWindow
+            System.Windows.Application.Current.Shutdown();
+            
             base.OnClosed(e);
-        }        catch (System.Exception ex)
+        }
+        catch (System.Exception ex)
         {
             // En caso de error al cerrar, registrar pero no lanzar excepción
             var fallbackLogger = LoggingService.GetLogger<MainWindow>();
             fallbackLogger.LogError(ex, "Error al cerrar MainWindow");
+            
+            // Aún así, forzar cierre
+            System.Windows.Application.Current.Shutdown();
         }
     }
 
