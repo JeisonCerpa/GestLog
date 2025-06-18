@@ -297,49 +297,46 @@ public partial class MainWindow : Window
     {
         try
         {
-            string icon, text, backgroundColor, tooltip;
-
-            switch (state)
-            {
-                case GestLog.Models.Events.DatabaseConnectionState.Connected:
+            string icon, text, backgroundColor, tooltip;            switch (state)
+            {                case GestLog.Models.Events.DatabaseConnectionState.Connected:
                     icon = "✅";
                     text = "Conectado";
-                    backgroundColor = "#27AE60"; // Verde
+                    backgroundColor = "#2B8E3F"; // Verde unificado con botones de navegación
                     tooltip = $"Conectado a base de datos - {message}";
                     break;
 
                 case GestLog.Models.Events.DatabaseConnectionState.Connecting:
                     icon = "🔄";
                     text = "Conectando...";
-                    backgroundColor = "#F39C12"; // Naranja
+                    backgroundColor = "#E67E22"; // Naranja 
                     tooltip = $"Conectando a base de datos - {message}";
                     break;
 
                 case GestLog.Models.Events.DatabaseConnectionState.Reconnecting:
                     icon = "🔄";
                     text = "Reconectando...";
-                    backgroundColor = "#E67E22"; // Naranja oscuro
+                    backgroundColor = "#D68910"; // Naranja oscuro
                     tooltip = $"Reconectando a base de datos - {message}";
                     break;
 
                 case GestLog.Models.Events.DatabaseConnectionState.Disconnected:
                     icon = "⏸️";
                     text = "Desconectado";
-                    backgroundColor = "#7F8C8D"; // Gris
+                    backgroundColor = "#706F6F"; // Gris medio de la paleta
                     tooltip = $"Desconectado de base de datos - {message}";
                     break;
 
                 case GestLog.Models.Events.DatabaseConnectionState.Error:
                     icon = "❌";
                     text = "Error";
-                    backgroundColor = "#E74C3C"; // Rojo
+                    backgroundColor = "#C0392B"; // Rojo de la paleta
                     tooltip = $"Error de conexión a base de datos - {message}";
                     break;
 
                 default:
                     icon = "❓";
                     text = "Desconocido";
-                    backgroundColor = "#95A5A6"; // Gris claro
+                    backgroundColor = "#9D9D9C"; // Gris claro de la paleta
                     tooltip = $"Estado desconocido de base de datos - {message}";
                     break;
             }
