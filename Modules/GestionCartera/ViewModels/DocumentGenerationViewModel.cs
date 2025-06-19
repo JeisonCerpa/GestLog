@@ -221,13 +221,16 @@ public partial class DocumentGenerationViewModel : ObservableObject
     { 
         get => _mainViewModel.AutomaticEmail.EmailBcc; 
         set => _mainViewModel.AutomaticEmail.EmailBcc = value; 
-    }
-
-    public bool UseHtmlEmail 
+    }    public bool UseHtmlEmail 
     { 
         get => _mainViewModel.AutomaticEmail.UseHtmlEmail; 
         set => _mainViewModel.AutomaticEmail.UseHtmlEmail = value; 
     }
+
+    // ✨ Nuevas propiedades agregadas para la UI modernizada del tab "Envío Automático"
+    public string CompaniesStatusText => _mainViewModel.AutomaticEmail.CompaniesStatusText;
+    public string DocumentStatusWarning => _mainViewModel.AutomaticEmail.DocumentStatusWarning;
+    public bool HasDocumentsGenerated => _mainViewModel.AutomaticEmail.HasDocumentsGenerated;
 
     #endregion
 

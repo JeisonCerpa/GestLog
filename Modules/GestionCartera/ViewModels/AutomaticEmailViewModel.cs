@@ -22,10 +22,14 @@ public partial class AutomaticEmailViewModel : ObservableObject
     private readonly IExcelEmailService? _excelEmailService;
     private readonly IGestLogLogger _logger;    [ObservableProperty] private string _selectedEmailExcelFilePath = string.Empty;
     [ObservableProperty] private bool _hasEmailExcel = false;
-    [ObservableProperty] private bool _isSendingEmail = false;
-    [ObservableProperty] private int _companiesWithEmail = 0;
+    [ObservableProperty] private bool _isSendingEmail = false;    [ObservableProperty] private int _companiesWithEmail = 0;
     [ObservableProperty] private int _companiesWithoutEmail = 0;
     [ObservableProperty] private string _logText = string.Empty;
+    
+    // Nuevas propiedades para mejorar la experiencia de usuario
+    [ObservableProperty] private string _companiesStatusText = "Sin archivo Excel";
+    [ObservableProperty] private bool _hasDocumentsGenerated = false;
+    [ObservableProperty] private string _documentStatusWarning = string.Empty;
       // Propiedades de progreso para envío de emails
     [ObservableProperty] private double _emailProgressValue = 0.0;
     [ObservableProperty] private string _emailStatusMessage = string.Empty;
@@ -64,6 +68,19 @@ public partial class AutomaticEmailViewModel : ObservableObject
         
         // Inicializar servicio de progreso suavizado
         _smoothProgress = new SmoothProgressService(value => EmailProgressValue = value);
+        
+        // ✨ INICIALIZAR estados por defecto
+        CompaniesStatusText = "Sin archivo Excel";
+        DocumentStatusWarning = string.Empty;
+        HasDocumentsGenerated = false;
+        
+        // 🔍 DEBUG: Verificar valores iniciales
+        _logger.LogInformation("🔍 DEBUG - Constructor AutomaticEmailViewModel:");
+        _logger.LogInformation("   CompaniesWithEmail: {CompaniesWithEmail}", CompaniesWithEmail);
+        _logger.LogInformation("   CompaniesStatusText: '{CompaniesStatusText}'", CompaniesStatusText);
+        _logger.LogInformation("   DocumentStatusWarning: '{DocumentStatusWarning}'", DocumentStatusWarning);
+        _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
+        _logger.LogInformation("   HasDocumentsGenerated: {HasDocumentsGenerated}", HasDocumentsGenerated);
     }[RelayCommand]
     public async Task SelectEmailExcelFileAsync()
     {
@@ -114,54 +131,116 @@ public partial class AutomaticEmailViewModel : ObservableObject
     /// Analiza el matching entre documentos generados y correos del Excel
     /// </summary>
     private async Task AnalyzeEmailMatchingAsync()
-    {
-        if (_excelEmailService == null || string.IsNullOrWhiteSpace(SelectedEmailExcelFilePath) || !HasEmailExcel)
+    {        if (_excelEmailService == null || string.IsNullOrWhiteSpace(SelectedEmailExcelFilePath) || !HasEmailExcel)
         {
             CompaniesWithEmail = 0;
             CompaniesWithoutEmail = 0;
+            CompaniesStatusText = "Sin archivo Excel";
+            DocumentStatusWarning = string.Empty;
+            HasDocumentsGenerated = false;
+            
+            // ✨ CORRECCIÓN: Notificar cambios cuando se resetean valores
+            OnPropertyChanged(nameof(CompaniesWithEmail));
+            OnPropertyChanged(nameof(CompaniesStatusText));
+            OnPropertyChanged(nameof(DocumentStatusWarning));
+            OnPropertyChanged(nameof(HasDocumentsGenerated));
             return;
         }
 
         try
         {
-            // Si no hay documentos generados, cargarlos primero
+            LogText += $"\n🎯 Analizando archivo de correos...";
+            
+            // Obtener información básica del archivo de correos
+            var validationInfo = await _excelEmailService.GetValidationInfoAsync(SelectedEmailExcelFilePath);
+              if (!validationInfo.IsValid)
+            {
+                LogText += "\n❌ No se puede analizar: archivo de correos no válido";
+                CompaniesWithEmail = 0;
+                CompaniesWithoutEmail = 0;
+                CompaniesStatusText = "Archivo inválido";
+                DocumentStatusWarning = string.Empty;
+                HasDocumentsGenerated = false;
+                
+                // ✨ CORRECCIÓN: Notificar cambios cuando hay archivo inválido
+                OnPropertyChanged(nameof(CompaniesWithEmail));
+                OnPropertyChanged(nameof(CompaniesStatusText));
+                OnPropertyChanged(nameof(DocumentStatusWarning));
+                OnPropertyChanged(nameof(HasDocumentsGenerated));
+                return;
+            }
+
+            // Obtener el conteo real de empresas con correos a través del diccionario completo
+            // Esto fuerza la construcción del índice completo y nos da el conteo real
+            var emailMappings = await _excelEmailService.GetEmailsFromExcelAsync(SelectedEmailExcelFilePath);
+            var realCompaniesWithEmail = emailMappings.Count;
+            
+            LogText += $"\n📋 Archivo de correos: {realCompaniesWithEmail} empresas con correos válidos";
+              // Mostrar información básica del archivo Excel independientemente de los documentos generados
+            CompaniesWithEmail = realCompaniesWithEmail; // Conteo real basado en el índice completo
+            
+            // ✨ CORRECCIÓN: Notificar cambio de CompaniesWithEmail
+            OnPropertyChanged(nameof(CompaniesWithEmail));
+            
+            // Si no hay documentos generados, cargarlos para análisis completo
             if (GeneratedDocuments.Count == 0)
             {
-                LogText += "\n📄 Cargando documentos generados...";
+                LogText += "\n📄 Cargando documentos generados para análisis de efectividad...";
                 var loadedDocuments = await LoadGeneratedDocuments();
                 UpdateGeneratedDocuments(loadedDocuments);
             }
 
             if (GeneratedDocuments.Count == 0)
             {
-                LogText += "\n❌ No hay documentos generados para analizar";
-                LogText += "\n💡 Genere documentos primero y luego seleccione el archivo de correos";
+                LogText += "\n💡 Información mostrada basada en el archivo Excel";
+                LogText += "\n💡 Genere documentos primero para ver análisis de efectividad completo";
+                  // ✨ MEJORA: Indicar claramente que es información del Excel, no análisis de documentos
+                CompaniesStatusText = $"📊 En archivo Excel: {realCompaniesWithEmail}";
+                DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
+                HasDocumentsGenerated = false;
+                CompaniesWithoutEmail = 0; // No sabemos cuántos están sin correo hasta que generemos documentos
+                
+                // ✨ IMPORTANTE: Notificar cambios de propiedades
+                OnPropertyChanged(nameof(CompaniesStatusText));
+                OnPropertyChanged(nameof(DocumentStatusWarning));
+                OnPropertyChanged(nameof(HasDocumentsGenerated));
+                
+                _logger.LogInformation("📊 Mostrando info del Excel - StatusText: {StatusText}, Warning: {Warning}", 
+                    CompaniesStatusText, DocumentStatusWarning);
                 return;
             }
 
             LogText += $"\n🎯 Analizando efectividad para {GeneratedDocuments.Count} documentos generados...";
+              // ✨ MEJORA: Indicar que ahora sí tenemos análisis de documentos real
+            CompaniesStatusText = $"📄 Con email: {CompaniesWithEmail} de {GeneratedDocuments.Count}";
+            DocumentStatusWarning = string.Empty;
+            HasDocumentsGenerated = true;
             
-            // Obtener información básica del archivo de correos
-            var validationInfo = await _excelEmailService.GetValidationInfoAsync(SelectedEmailExcelFilePath);
-            
-            if (!validationInfo.IsValid)
-            {
-                LogText += "\n❌ No se puede analizar: archivo de correos no válido";
-                return;
-            }
-
-            LogText += $"\n📋 Archivo de correos: {validationInfo.ValidNitRows} NITs con {validationInfo.ValidEmailRows} emails válidos";
+            // ✨ IMPORTANTE: Notificar cambios de propiedades
+            OnPropertyChanged(nameof(CompaniesStatusText));
+            OnPropertyChanged(nameof(DocumentStatusWarning));
+            OnPropertyChanged(nameof(HasDocumentsGenerated));
             
             // ANÁLISIS PRINCIPAL: ¿Cuántos documentos generados tienen email disponible?
             await AnalyzeDocumentEmailMatchingAsync();
             
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
             _logger.LogError(ex, "Error analizando matching de correos");
             LogText += $"\n❌ Error en análisis: {ex.Message}";
+              // ✨ MEJORA: Estado de error claro
+            CompaniesWithEmail = 0; // ✨ CORRECCIÓN: Resetear también la propiedad original
+            CompaniesStatusText = "❌ Error en análisis";
+            DocumentStatusWarning = "Error procesando información";
+            HasDocumentsGenerated = false;
+            
+            // ✨ IMPORTANTE: Notificar cambios de propiedades
+            OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Notificar el reset!
+            OnPropertyChanged(nameof(CompaniesStatusText));
+            OnPropertyChanged(nameof(DocumentStatusWarning));
+            OnPropertyChanged(nameof(HasDocumentsGenerated));
         }
-    }    /// <summary>
+    }/// <summary>
     /// Analiza el matching específico entre documentos generados y correos disponibles
     /// ENFOQUE CORRECTO: Partir de los documentos y verificar cuáles tienen email
     /// </summary>
@@ -222,11 +301,17 @@ public partial class AutomaticEmailViewModel : ObservableObject
             var totalDocuments = GeneratedDocuments.Count;
             var effectivenessPercentage = totalDocuments > 0 
                 ? (documentsWithEmail * 100.0 / totalDocuments) 
-                : 0;
-
-            // Actualizar propiedades para la UI
+                : 0;            // Actualizar propiedades para la UI
             CompaniesWithEmail = documentsWithEmail;
-            CompaniesWithoutEmail = documentsWithoutEmail;
+            CompaniesWithoutEmail = documentsWithoutEmail;            // ✨ MEJORA: Actualizar texto de estado para mostrar efectividad real
+            CompaniesStatusText = $"📄 Con email: {documentsWithEmail} de {totalDocuments}";
+            DocumentStatusWarning = effectivenessPercentage < 50 ? "⚠️ Baja efectividad de envío" : string.Empty;
+            HasDocumentsGenerated = true;
+            
+            // ✨ IMPORTANTE: Notificar cambios de propiedades
+            OnPropertyChanged(nameof(CompaniesStatusText));
+            OnPropertyChanged(nameof(DocumentStatusWarning));
+            OnPropertyChanged(nameof(HasDocumentsGenerated));
 
             // Resumen enfocado en documentos generados
             LogText += $"\n";
@@ -482,10 +567,49 @@ public partial class AutomaticEmailViewModel : ObservableObject
                     validationResult.ValidNitRows, validationResult.ValidEmailRows);
                   LogText += $"\n✅ Archivo válido:";
                 LogText += $"\n   📊 {validationResult.TotalRows} filas de datos";
-                LogText += $"\n   🏢 {validationResult.ValidNitRows} registros NIT válidos";
-                LogText += $"\n   📧 {validationResult.ValidEmailRows} emails válidos";
+                LogText += $"\n   🏢 {validationResult.ValidNitRows} registros NIT válidos";                LogText += $"\n   📧 {validationResult.ValidEmailRows} emails válidos";
                 
                 HasEmailExcel = true;
+                  // ✨ MEJORA: Establecer estado inicial correcto al validar archivo Excel
+                // ✅ CORRECCIÓN CRÍTICA: Mantener funcionalidad original de CompaniesWithEmail
+                CompaniesWithEmail = validationResult.ValidNitRows; // Esto es lo que faltaba!
+                
+                if (GeneratedDocuments.Count == 0)
+                {                    CompaniesStatusText = $"📊 En archivo Excel: {validationResult.ValidNitRows}";
+                    DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
+                    HasDocumentsGenerated = false;
+                    
+                    // 🔍 DEBUG: Verificar valores antes de notificar
+                    _logger.LogInformation("🔍 DEBUG - Antes de notificar cambios:");
+                    _logger.LogInformation("   CompaniesWithEmail: {CompaniesWithEmail}", CompaniesWithEmail);
+                    _logger.LogInformation("   CompaniesStatusText: '{CompaniesStatusText}'", CompaniesStatusText);
+                    _logger.LogInformation("   DocumentStatusWarning: '{DocumentStatusWarning}'", DocumentStatusWarning);
+                    _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
+                    _logger.LogInformation("   HasDocumentsGenerated: {HasDocumentsGenerated}", HasDocumentsGenerated);
+                    
+                    // ✨ IMPORTANTE: Notificar cambios de propiedades
+                    OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Agregar esta notificación!
+                    OnPropertyChanged(nameof(CompaniesStatusText));
+                    OnPropertyChanged(nameof(DocumentStatusWarning));
+                    OnPropertyChanged(nameof(HasDocumentsGenerated));
+                    
+                    // 🔍 DEBUG: Confirmar notificaciones enviadas
+                    _logger.LogInformation("🔍 DEBUG - Notificaciones enviadas para: CompaniesWithEmail, CompaniesStatusText, DocumentStatusWarning, HasDocumentsGenerated");
+                    
+                    _logger.LogInformation("📊 Estado actualizado: CompaniesWithEmail={CompaniesWithEmail}, StatusText: {StatusText}, Warning: {Warning}", 
+                        CompaniesWithEmail, CompaniesStatusText, DocumentStatusWarning);
+                }                else
+                {
+                    CompaniesStatusText = "📄 Analizando documentos generados...";
+                    DocumentStatusWarning = string.Empty;
+                    HasDocumentsGenerated = true;
+                    
+                    // ✨ IMPORTANTE: Notificar cambios de propiedades (mantener CompaniesWithEmail)
+                    OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Mantener la funcionalidad original!
+                    OnPropertyChanged(nameof(CompaniesStatusText));
+                    OnPropertyChanged(nameof(DocumentStatusWarning));
+                    OnPropertyChanged(nameof(HasDocumentsGenerated));
+                }
             }            else
             {
                 _logger.LogWarning("❌ Archivo Excel de correos no válido: {Message}", validationResult.Message);
@@ -500,20 +624,40 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 {
                     LogText += $"\n   📋 Columnas encontradas: {string.Join(", ", validationResult.FoundColumns)}";
                 }
-                
-                LogText += "\n   ℹ️ Formato esperado: TIPO_DOC, NUM_ID, DIGITO_VER, EMPRESA, EMAIL";
+                  LogText += "\n   ℹ️ Formato esperado: TIPO_DOC, NUM_ID, DIGITO_VER, EMPRESA, EMAIL";
                 
                 HasEmailExcel = false;
                 SelectedEmailExcelFilePath = string.Empty;
+                  // ✨ RESETEAR estados cuando archivo no es válido
+                CompaniesWithEmail = 0; // ¡Resetear también la propiedad original!
+                CompaniesStatusText = "Archivo inválido";
+                DocumentStatusWarning = "Seleccione un archivo Excel válido";
+                HasDocumentsGenerated = false;
+                
+                // ✨ IMPORTANTE: Notificar cambios de propiedades
+                OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Notificar el reset!
+                OnPropertyChanged(nameof(CompaniesStatusText));
+                OnPropertyChanged(nameof(DocumentStatusWarning));
+                OnPropertyChanged(nameof(HasDocumentsGenerated));
             }
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
             _logger.LogError(ex, "Error al validar archivo Excel de correos");
             LogText += $"\n❌ Error inesperado: {ex.Message}";
             LogText += "\n   💡 Verifique que el archivo no esté abierto en otra aplicación";
             HasEmailExcel = false;
             SelectedEmailExcelFilePath = string.Empty;
+              // ✨ RESETEAR estados en caso de error
+            CompaniesWithEmail = 0; // ¡Resetear también la propiedad original!
+            CompaniesStatusText = "❌ Error validando archivo";
+            DocumentStatusWarning = "Error procesando archivo Excel";
+            HasDocumentsGenerated = false;
+            
+            // ✨ IMPORTANTE: Notificar cambios de propiedades
+            OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Notificar el reset!
+            OnPropertyChanged(nameof(CompaniesStatusText));
+            OnPropertyChanged(nameof(DocumentStatusWarning));
+            OnPropertyChanged(nameof(HasDocumentsGenerated));
         }
     }private async Task ConfigureSmtpFromConfigAsync(SmtpConfigurationViewModel config)
     {
@@ -677,17 +821,27 @@ public partial class AutomaticEmailViewModel : ObservableObject
         }
 
         return emailsSent > 0 || orphansSent > 0;
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Determina si se puede enviar automáticamente
     /// </summary>
     private bool CanSendDocumentsAutomatically()
     {
-        return !IsSendingEmail && 
-               IsEmailConfigured && 
-               HasEmailExcel && 
-               GeneratedDocuments.Count > 0;
+        var canSend = !IsSendingEmail && 
+                     IsEmailConfigured && 
+                     HasEmailExcel && 
+                     GeneratedDocuments.Count > 0;
+
+        // ✨ MEJORA: Actualizar mensajes de estado según las condiciones
+        if (!canSend && HasEmailExcel && !HasDocumentsGenerated)
+        {
+            DocumentStatusWarning = "⚠️ Genere documentos primero para habilitar envío";
+        }
+        else if (!canSend && !IsEmailConfigured && HasDocumentsGenerated)
+        {
+            DocumentStatusWarning = "⚠️ Configure SMTP para habilitar envío";
+        }
+        
+        return canSend;
     }
 
     /// <summary>
@@ -697,16 +851,29 @@ public partial class AutomaticEmailViewModel : ObservableObject
     {
         IsEmailConfigured = isConfigured;
         OnPropertyChanged(nameof(CanSendAutomatically));
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Actualiza la lista de documentos generados
     /// </summary>
     public void UpdateGeneratedDocuments(IReadOnlyList<GeneratedPdfInfo> documents)
     {
         GeneratedDocuments = documents;
+        HasDocumentsGenerated = documents.Count > 0;
+        
+        // ✨ MEJORA: Actualizar estado cuando cambian los documentos
+        if (HasDocumentsGenerated && HasEmailExcel)
+        {
+            // Disparar re-análisis automático cuando tenemos tanto documentos como archivo Excel
+            _ = Task.Run(async () => await AnalyzeEmailMatchingAsync());
+        }
+        else if (!HasDocumentsGenerated && HasEmailExcel)
+        {
+            // Solo tenemos archivo Excel, mostrar información básica
+            CompaniesStatusText = $"📊 En archivo Excel: {CompaniesWithEmail}";
+            DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
+        }
+        
         OnPropertyChanged(nameof(CanSendAutomatically));
-    }    /// <summary>
+    }/// <summary>
     /// Limpia recursos
     /// </summary>
     public void Cleanup()

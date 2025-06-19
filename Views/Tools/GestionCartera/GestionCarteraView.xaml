@@ -7,8 +7,7 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
-    
-    <UserControl.Resources>
+      <UserControl.Resources>
         <converters:PathToFileNameConverter x:Key="PathToFileNameConverter"/>
         <converters:FileSizeConverter x:Key="FileSizeConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -16,6 +15,7 @@
         <converters:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter"/>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <converters:ProgressToWidthConverter x:Key="ProgressToWidthConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         
         <!-- Estilo para botón de acento verde -->
         <Style x:Key="AccentButtonStyle" TargetType="Button">
@@ -83,7 +83,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>        <!-- Estilo para GroupBox con tema verde -->
+        </Style>        <!-- Estilo para GroupBox con tema verde más compacto -->
         <Style x:Key="GreenGroupBoxStyle" TargetType="GroupBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -91,8 +91,8 @@
             <Setter Property="BorderBrush" Value="#E5E5E5"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="12"/>
         </Style>
         
         <!-- Estilo para botones de cancelar -->
@@ -133,48 +133,46 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </UserControl.Resources><Grid Background="#FAFAFA">
+    </UserControl.Resources>    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <!-- Contenido principal con scroll -->
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="40,30,40,20">
+        <!-- Contenido principal con scroll optimizado -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="30,20,30,15">
             <StackPanel>
                 
-                <!-- Header -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
-                    <Border Background="White" Width="80" Height="80" CornerRadius="40" 
-                            HorizontalAlignment="Center" Margin="0,0,20,0"
+                <!-- Header más compacto -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <Border Background="White" Width="60" Height="60" CornerRadius="30" 
+                            HorizontalAlignment="Center" Margin="0,0,15,0"
                             BorderBrush="#E5E5E5" BorderThickness="2">
                         <Border.Effect>
                             <DropShadowEffect Color="#000000" 
-                                            BlurRadius="8" 
-                                            ShadowDepth="2" 
-                                            Opacity="0.10"/>
+                                            BlurRadius="6" 
+                                            ShadowDepth="1" 
+                                            Opacity="0.08"/>
                         </Border.Effect>
-                        <TextBlock Text="📧" FontFamily="Segoe UI" FontSize="40" 
+                        <TextBlock Text="📧" FontFamily="Segoe UI" FontSize="30" 
                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Gestión de Cartera" 
-                                  FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" 
-                                  Foreground="#118938" Margin="0,0,0,8"/>
+                                  FontFamily="Segoe UI" FontSize="24" FontWeight="SemiBold" 
+                                  Foreground="#118938" Margin="0,0,0,5"/>
                         <TextBlock Text="Envío de correos electrónicos de cartera vencida" 
-                                  FontFamily="Segoe UI" FontSize="16" 
+                                  FontFamily="Segoe UI" FontSize="14" 
                                   Foreground="#706F6F"/>
                     </StackPanel>
-                </StackPanel>
-
-          <!-- Contenido principal con pestañas -->
+                </StackPanel>        <!-- Contenido principal con pestañas más compacto -->
         <TabControl x:Name="mainTabControl" Background="Transparent" BorderThickness="0">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
                     <Setter Property="FontFamily" Value="Segoe UI"/>
-                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="FontSize" Value="13"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
-                    <Setter Property="Padding" Value="20,12"/>
+                    <Setter Property="Padding" Value="18,10"/>
                     <Setter Property="Foreground" Value="#504F4E"/>
                     <Setter Property="Background" Value="White"/>
                     <Setter Property="BorderBrush" Value="#E5E5E5"/>
@@ -183,7 +181,7 @@
                             <ControlTemplate TargetType="TabItem">
                                 <Border Name="Border" Background="{TemplateBinding Background}" 
                                         BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0" 
-                                        Margin="2,0" CornerRadius="8,8,0,0">
+                                        Margin="2,0" CornerRadius="6,6,0,0">
                                     <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" 
                                                      HorizontalAlignment="Center" ContentSource="Header" 
                                                      Margin="{TemplateBinding Padding}"/>
@@ -202,73 +200,72 @@
                     </Setter>
                 </Style>
             </TabControl.Resources>
-            
-            <!-- Primera pestaña: Generación de Documentos -->
+              <!-- Primera pestaña: Generación de Documentos más compacta -->
             <TabItem Header="📄 Generación de Documentos">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="20">
+                    <StackPanel Margin="15">
                           <!-- Configuración de Archivos -->
                         <GroupBox Header="📁 Configuración de Archivos" 
                                   Style="{StaticResource GreenGroupBoxStyle}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="25"/>
+                                    <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 
-                                <!-- Archivo Excel Card -->
-                                <Border Grid.Column="0" Background="White" Padding="25" CornerRadius="8"
+                                <!-- Archivo Excel Card más compacto -->
+                                <Border Grid.Column="0" Background="White" Padding="20" CornerRadius="6"
                                        BorderBrush="#E5E5E5" BorderThickness="1">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="8" 
-                                                        ShadowDepth="2" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
                                                         Opacity="0.08"/>
                                     </Border.Effect>
                                     <StackPanel>
-                                        <TextBlock Text="📊" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,15" Foreground="#118938"/>
+                                        <TextBlock Text="📊" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
                                         <TextBlock Text="Archivo Excel de Cartera" 
-                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
                                                   HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8"/>
                                         <TextBlock Text="{Binding SelectedExcelFilePath, Converter={StaticResource PathToFileNameConverter}, TargetNullValue='Ningún archivo seleccionado'}" 
-                                                  FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap"
-                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,15"/>
+                                                  FontFamily="Segoe UI" FontSize="11" Foreground="#706F6F" TextWrapping="Wrap"
+                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
                                         <Button Content="📂 Seleccionar Archivo" 
                                                Style="{StaticResource AccentButtonStyle}"
-                                               Padding="15,10"
-                                               FontSize="13"
+                                               Padding="12,8"
+                                               FontSize="12"
                                                Command="{Binding SelectExcelFileCommand}"/>
                                     </StackPanel>
                                 </Border>
                                 
-                                <!-- Carpeta Destino Card -->
-                                <Border Grid.Column="2" Background="White" Padding="25" CornerRadius="8"
+                                <!-- Carpeta Destino Card más compacto -->
+                                <Border Grid.Column="2" Background="White" Padding="20" CornerRadius="6"
                                        BorderBrush="#E5E5E5" BorderThickness="1">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="8" 
-                                                        ShadowDepth="2" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
                                                         Opacity="0.08"/>
                                     </Border.Effect>
                                     <StackPanel>
-                                        <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,15" Foreground="#118938"/>
+                                        <TextBlock Text="📁" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
                                         <TextBlock Text="Carpeta de Destino" 
-                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
                                                   HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8"/>
                                         <TextBlock Text="{Binding OutputFolderPath, TargetNullValue='Carpeta por defecto'}" 
-                                                  FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap"
-                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,15"/>
+                                                  FontFamily="Segoe UI" FontSize="11" Foreground="#706F6F" TextWrapping="Wrap"
+                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Button Content="📂 Seleccionar" 
                                                    Style="{StaticResource AccentButtonStyle}"
-                                                   Padding="12,8"
-                                                   FontSize="12"
+                                                   Padding="10,6"
+                                                   FontSize="11"
                                                    Margin="0,0,8,0"
                                                    Command="{Binding SelectOutputFolderCommand}"/>
                                             <Button Content="🗂️" 
                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                   Width="35" Height="35"
+                                                   Width="30" Height="30"
                                                    ToolTip="Abrir carpeta"
                                                    Command="{Binding OpenOutputFolderCommand}"/>                                        </StackPanel>
                                     </StackPanel>
@@ -278,152 +275,151 @@
                           <!-- Botón de Generación -->
                         <Button Content="🚀 Generar Estados de Cuenta" 
                                Style="{StaticResource AccentButtonStyle}"
-                               Padding="25,15"
-                               FontSize="16"
+                               Padding="20,12"
+                               FontSize="14"
                                HorizontalAlignment="Center"
-                               Margin="0,10,0,20"
+                               Margin="0,8,0,15"
                                Command="{Binding GenerateDocumentsCommand}"/>
 
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
-            
-            <!-- Segunda pestaña: Envío Automático -->
+            </TabItem>            <!-- Segunda pestaña: Envío Automático más compacta -->
             <TabItem Header="🚀 Envío Automático">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="20">
+                    <StackPanel Margin="15">
                         
-                        <!-- Configuración SMTP -->
-                        <GroupBox Header="⚙️ Configuración SMTP" 
+                        <!-- Configuración de Archivos de Envío -->
+                        <GroupBox Header="📁 Configuración de Archivos de Envío" 
                                   Style="{StaticResource GreenGroupBoxStyle}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- Información de Estado SMTP -->
-                                <StackPanel Grid.Column="0">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                        <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center">
-                                            <Ellipse.Fill>
-                                                <SolidColorBrush Color="{Binding IsEmailConfigured, Converter={StaticResource BooleanToColorConverter}}"/>
-                                            </Ellipse.Fill>
-                                        </Ellipse>
-                                        <TextBlock Text="{Binding IsEmailConfigured, Converter={StaticResource BooleanToStatusTextConverter}}" 
-                                                  FontFamily="Segoe UI"
-                                                  FontWeight="SemiBold" 
-                                                  VerticalAlignment="Center"/>
+                                
+                                <!-- Card de Excel de Correos más compacto -->
+                                <Border Grid.Column="0" Background="White" Padding="20" CornerRadius="6"
+                                       BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
+                                                        Opacity="0.08"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="📊" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
+                                        <TextBlock Text="Excel de Correos" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
+                                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{Binding SelectedEmailExcelFilePath, Converter={StaticResource PathToFileNameConverter}, TargetNullValue='Ningún archivo seleccionado'}" 
+                                                  FontFamily="Segoe UI" FontSize="11" Foreground="#706F6F" TextWrapping="Wrap"
+                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>                                        <!-- Estado del archivo integrado y más compacto con información clara -->
+                                        <StackPanel Visibility="{Binding HasEmailExcel, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                   Margin="0,0,0,10">
+                                            <!-- Información principal del estado -->
+                                            <TextBlock FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" 
+                                                      Foreground="#118938" FontWeight="SemiBold" Text="{Binding CompaniesStatusText}"/>
+                                            
+                                            <!-- Alerta cuando no hay documentos generados -->
+                                            <TextBlock FontFamily="Segoe UI" FontSize="10" HorizontalAlignment="Center" 
+                                                      Foreground="#FF9800" FontStyle="Italic" FontWeight="SemiBold"
+                                                      Text="{Binding DocumentStatusWarning}"
+                                                      Visibility="{Binding DocumentStatusWarning, Converter={StaticResource StringToVisibilityConverter}}"
+                                                      Margin="0,2,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+                                        </StackPanel>
+                                        
+                                        <Button Content="📂 Seleccionar Archivo" 
+                                               Style="{StaticResource AccentButtonStyle}"
+                                               Padding="12,8"
+                                               FontSize="12"
+                                               Command="{Binding SelectEmailExcelFileCommand}"/>
                                     </StackPanel>
-
-                                    <!-- Información detallada cuando está configurado -->
-                                    <Grid Visibility="{Binding IsEmailConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                                </Border>
+                                
+                                <!-- Card de Configuración SMTP más compacto -->
+                                <Border Grid.Column="2" Background="White" Padding="20" CornerRadius="6"
+                                       BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
+                                                        Opacity="0.08"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="📧" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
+                                        <TextBlock Text="Configuración SMTP" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
+                                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
                                         
-                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Usuario:" 
-                                                  FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                                  FontSize="12" Margin="0,0,10,2"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SmtpUsername}" 
-                                                  FontFamily="Segoe UI" FontSize="12"/>
+                                        <!-- Indicador de estado más compacto -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                                            <Ellipse Width="10" Height="10" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                <Ellipse.Fill>
+                                                    <SolidColorBrush Color="{Binding IsEmailConfigured, Converter={StaticResource BooleanToColorConverter}}"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <TextBlock Text="{Binding IsEmailConfigured, Converter={StaticResource BooleanToStatusTextConverter}}" 
+                                                      FontFamily="Segoe UI"
+                                                      FontWeight="SemiBold" 
+                                                      FontSize="12"
+                                                      VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- Información detallada cuando está configurado más compacta -->
+                                        <StackPanel Visibility="{Binding IsEmailConfigured, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                   Margin="0,0,0,10">
+                                            <TextBlock FontFamily="Segoe UI" FontSize="10" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,1">
+                                                <Run Text="Usuario: " FontWeight="SemiBold"/>
+                                                <Run Text="{Binding SmtpUsername}"/>
+                                            </TextBlock>
+                                            <TextBlock FontFamily="Segoe UI" FontSize="10" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,1">
+                                                <Run Text="Servidor: " FontWeight="SemiBold"/>
+                                                <Run Text="{Binding SmtpServer}"/>
+                                                <Run Text=":"/>
+                                                <Run Text="{Binding SmtpPort}" FontWeight="SemiBold"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <TextBlock Text="Configure el servidor SMTP para habilitar el envío automático"
+                                                  FontFamily="Segoe UI"
+                                                  FontSize="10" 
+                                                  FontStyle="Italic"
+                                                  HorizontalAlignment="Center"
+                                                  TextAlignment="Center"
+                                                  TextWrapping="Wrap"
+                                                  Foreground="#706F6F"
+                                                  Margin="0,0,0,10"
+                                                  Visibility="{Binding IsEmailConfigured, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}"/>
                                         
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Servidor:" 
-                                                  FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                                  FontSize="12" Margin="0,0,10,2"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="1" FontFamily="Segoe UI" FontSize="12">
-                                            <Run Text="{Binding SmtpServer}"/>
-                                            <Run Text=":"/>
-                                            <Run Text="{Binding SmtpPort}" FontWeight="SemiBold"/>
-                                        </TextBlock>
-                                    </Grid>
-
-                                    <TextBlock Text="Configure el servidor SMTP para habilitar el envío automático"
-                                              FontFamily="Segoe UI"
-                                              FontSize="12" 
-                                              FontStyle="Italic"
-                                              Visibility="{Binding IsEmailConfigured, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}"/>
-                                </StackPanel>
-
-                                <!-- Botones de configuración -->
-                                <StackPanel Grid.Column="1" Orientation="Vertical">
-                                    <Button Content="⚙️ Configurar" 
-                                           Style="{StaticResource AccentButtonStyle}"
-                                           Padding="20,12"
-                                           FontSize="14"
-                                           Margin="0,0,0,10"
-                                           Click="ConfigureSmtp_Click"/>
-                                    <Button Content="🧪 Probar" 
-                                           Style="{StaticResource SecondaryButtonStyle}"
-                                           Padding="15,8"
-                                           FontSize="12"
-                                           IsEnabled="{Binding IsEmailConfigured}"
-                                           Command="{Binding SendTestEmailCommand}"/>
-                                </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="⚙️ Configurar" 
+                                                   Style="{StaticResource AccentButtonStyle}"
+                                                   Padding="10,6"
+                                                   FontSize="11"
+                                                   Margin="0,0,6,0"
+                                                   Click="ConfigureSmtp_Click"/>
+                                            <Button Content="🧪" 
+                                                   Style="{StaticResource SecondaryButtonStyle}"
+                                                   Width="30" Height="30"
+                                                   ToolTip="Enviar email de prueba"
+                                                   IsEnabled="{Binding IsEmailConfigured}"
+                                                   Command="{Binding SendTestEmailCommand}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </GroupBox>
 
-                        <!-- Configuración de Envío -->
-                        <GroupBox Header="📊 Configuración de Envío" 
-                                  Style="{StaticResource GreenGroupBoxStyle}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Label Grid.Column="0" 
-                                       Content="Excel de Correos:" 
-                                       FontFamily="Segoe UI"
-                                       VerticalAlignment="Center"/>
-                                <TextBox Grid.Column="1" 
-                                         Text="{Binding SelectedEmailExcelFilePath, TargetNullValue='No se ha seleccionado archivo'}" 
-                                         IsReadOnly="True"
-                                         FontFamily="Segoe UI"
-                                         Margin="5,0"/>
-                                <Button Grid.Column="2" 
-                                        Content="..." 
-                                        Style="{StaticResource AccentButtonStyle}"
-                                        Width="30" Height="30"
-                                        Margin="5,0,0,0"
-                                        Command="{Binding SelectEmailExcelFileCommand}"/>
-                            </Grid>
-                        </GroupBox>
-
-                        <!-- Estado del archivo -->
-                        <GroupBox Header="📈 Estado del Archivo" 
-                                  Style="{StaticResource GreenGroupBoxStyle}"
-                                  Visibility="{Binding HasEmailExcel, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center" Fill="#118938"/>
-                                    <TextBlock Text="Archivo válido" 
-                                              FontFamily="Segoe UI"
-                                              FontWeight="SemiBold" 
-                                              VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock FontFamily="Segoe UI" FontSize="12">
-                                    <Run Text="Empresas con correo: "/>
-                                    <Run Text="{Binding CompaniesWithEmail, Mode=OneWay}" FontWeight="Bold"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </GroupBox>                        <!-- Acción de Envío -->
-                        <GroupBox Header="🚀 Envío Automático" 
-                                  Style="{StaticResource GreenGroupBoxStyle}">
-                            <Button Content="🚀 Enviar Documentos Automáticamente"
-                                   Style="{StaticResource AccentButtonStyle}"
-                                   Padding="25,12"
-                                   FontSize="14"
-                                   HorizontalAlignment="Center"
-                                   IsEnabled="{Binding CanSendAutomatically}"
-                                   Command="{Binding SendDocumentsAutomaticallyCommand}"/>
-                        </GroupBox>
+                        <!-- Botón de Envío -->
+                        <Button Content="🚀 Enviar Documentos Automáticamente"
+                               Style="{StaticResource AccentButtonStyle}"
+                               Padding="20,12"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               Margin="0,8,0,15"
+                               IsEnabled="{Binding CanSendAutomatically}"
+                               Command="{Binding SendDocumentsAutomaticallyCommand}"/>
 
                     </StackPanel>
                 </ScrollViewer>
@@ -431,15 +427,14 @@
             
             </StackPanel>
         </ScrollViewer>
-        
-        <!-- Sección de Progreso Fija (Generación) -->
-        <Border Grid.Row="1" Background="White" Padding="25,20" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
+          <!-- Sección de Progreso Fija (Generación) - más compacta -->
+        <Border Grid.Row="1" Background="White" Padding="20,15" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
                Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" 
-                                BlurRadius="6" 
+                                BlurRadius="4" 
                                 ShadowDepth="1" 
-                                Opacity="0.08"/>
+                                Opacity="0.06"/>
             </Border.Effect>
             <StackPanel>
                 <controls:SimpleProgressBar ProgressValue="{Binding ProgressValue}"
@@ -451,60 +446,60 @@
                                            MessageColor="#706F6F"
                                            BarForeground="#118938"
                                            BarBackground="#E5E5E5"
-                                           BarHeight="20"/>                <Button Content="❌ Cancelar Generación" 
+                                           BarHeight="16"/>                <Button Content="❌ Cancelar Generación" 
                         Style="{StaticResource CancelButtonStyle}"
-                        Padding="15,10" 
-                        FontSize="13"
+                        Padding="12,8" 
+                        FontSize="12"
                         HorizontalAlignment="Center"
-                        Margin="0,15,0,0"
+                        Margin="0,12,0,0"
                         Command="{Binding CancelGenerationCommand}"/>
             </StackPanel>
         </Border>
-          <!-- Panel de Finalización Fijo -->
-        <Border Grid.Row="1" Background="White" Padding="25,20" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
+          <!-- Panel de Finalización Fijo - más compacto -->
+        <Border Grid.Row="1" Background="White" Padding="20,15" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
                Visibility="{Binding ShowCompletionPanel, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" 
-                                BlurRadius="6" 
+                                BlurRadius="4" 
                                 ShadowDepth="1" 
-                                Opacity="0.08"/>
+                                Opacity="0.06"/>
             </Border.Effect>
             <StackPanel>
                 <TextBlock Text="{Binding CompletionMessage}" 
                           FontFamily="Segoe UI"
-                          FontSize="16" 
+                          FontSize="14" 
                           FontWeight="SemiBold"
                           TextWrapping="Wrap" 
                           HorizontalAlignment="Center"
                           TextAlignment="Center"
                           Foreground="#118938"
-                          Margin="0,0,0,20"/>
+                          Margin="0,0,0,15"/>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="🚀 Ir a Envío de Correos" 
                            Style="{StaticResource AccentButtonStyle}"
-                           Padding="25,15" 
-                           FontSize="16" 
-                           Margin="10"
+                           Padding="20,12" 
+                           FontSize="14" 
+                           Margin="8"
                            Click="GoToEmailTab_Click"/>
                     <Button Content="📂 Ver Documentos" 
                            Style="{StaticResource SecondaryButtonStyle}"
-                           Padding="20,15" 
-                           FontSize="14" 
-                           Margin="10"
+                           Padding="16,12" 
+                           FontSize="13" 
+                           Margin="8"
                            Command="{Binding OpenOutputFolderCommand}"/>
                 </StackPanel>
             </StackPanel>
         </Border>
         
-        <!-- Sección de Progreso Fija (Envío de Emails) -->
-        <Border Grid.Row="1" Background="White" Padding="25,20" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
+        <!-- Sección de Progreso Fija (Envío de Emails) - más compacta -->
+        <Border Grid.Row="1" Background="White" Padding="20,15" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0"
                Visibility="{Binding IsSendingEmail, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" 
-                                BlurRadius="6" 
+                                BlurRadius="4" 
                                 ShadowDepth="1" 
-                                Opacity="0.08"/>
+                                Opacity="0.06"/>
             </Border.Effect>
             <StackPanel>
                 <controls:SimpleProgressBar ProgressValue="{Binding EmailProgressValue}"
@@ -516,13 +511,13 @@
                                            MessageColor="#706F6F"
                                            BarForeground="#118938"
                                            BarBackground="#E5E5E5"
-                                           BarHeight="20"/>
+                                           BarHeight="16"/>
                   <Button Content="❌ Cancelar Envío" 
                         Style="{StaticResource CancelButtonStyle}"
-                        Padding="15,10" 
-                        FontSize="13"
+                        Padding="12,8" 
+                        FontSize="12"
                         HorizontalAlignment="Center"
-                        Margin="0,15,0,0"
+                        Margin="0,12,0,0"
                         Command="{Binding CancelEmailSendingCommand}"/>
             </StackPanel>
         </Border>
