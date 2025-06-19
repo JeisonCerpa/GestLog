@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using GestLog.Services;
 using GestLog.Services.Interfaces;
 using System.Threading;
+using System.Net.Sockets;
 
 namespace GestLog;
 
@@ -274,11 +275,40 @@ public partial class App : System.Windows.Application
                 _logger?.Logger.LogCritical("💥 La aplicación se está cerrando debido a una excepción no manejada");
                 LoggingService.Shutdown();
             }
-        };
-
-        // Excepciones no observadas en Tasks
+        };        // Excepciones no observadas en Tasks
         TaskScheduler.UnobservedTaskException += (sender, e) =>
         {
+            // Filtrar excepciones de red que son comunes y no críticas
+            var innerException = e.Exception.GetBaseException();
+            
+            if (innerException is SocketException socketEx)
+            {
+                // Error 995: Operación de E/S cancelada - común en cancelaciones de red
+                if (socketEx.ErrorCode == 995)
+                {
+                    _logger?.Logger.LogDebug("🌐 Operación de red cancelada (Error 995) - esto es normal: {Message}", socketEx.Message);
+                    e.SetObserved(); // Marcar como observada
+                    return;
+                }
+                
+                // Error 10054: Conexión cerrada por el servidor remoto
+                if (socketEx.ErrorCode == 10054)
+                {
+                    _logger?.Logger.LogDebug("🌐 Conexión cerrada por servidor remoto (Error 10054): {Message}", socketEx.Message);
+                    e.SetObserved();
+                    return;
+                }
+            }
+            
+            // Para otras excepciones de cancelación
+            if (innerException is OperationCanceledException || innerException is TaskCanceledException)
+            {
+                _logger?.Logger.LogDebug("⏹️ Tarea cancelada no observada: {Message}", innerException.Message);
+                e.SetObserved();
+                return;
+            }
+            
+            // Para errores serios, usar el manejador normal
             errorHandler.HandleException(e.Exception, "TaskScheduler.UnobservedTaskException");
             e.SetObserved(); // Marcar como observada para evitar el cierre de la aplicación
         };

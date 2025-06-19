@@ -1,0 +1,32 @@
+{
+  "NetworkErrorHandling": {
+    "Description": "Configuración para manejo de errores de red",
+    "IgnoredSocketErrors": [
+      {
+        "ErrorCode": 995,
+        "Description": "Operación de E/S cancelada por solicitud de aplicación",
+        "Action": "Ignorar - Normal en cancelaciones"
+      },
+      {
+        "ErrorCode": 10054,
+        "Description": "Conexión cerrada por el servidor remoto",
+        "Action": "Ignorar - Normal en desconexiones"
+      },
+      {
+        "ErrorCode": 10060,
+        "Description": "Timeout de conexión",
+        "Action": "Log como warning"
+      }
+    ],
+    "LoggingSettings": {
+      "LogIgnoredErrors": false,
+      "LogAsDebugLevel": true,
+      "IncludeStackTrace": false
+    },
+    "RetrySettings": {
+      "MaxRetries": 3,
+      "BaseDelayMs": 1000,
+      "BackoffMultiplier": 2.0
+    }
+  }
+}

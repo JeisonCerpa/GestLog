@@ -1044,6 +1044,11 @@ public class PdfGeneratorService : IPdfGeneratorService
         {
             _logger.LogInformation("🔍 Verificando si el archivo pertenece a otro módulo del sistema...");
             
+            // Contadores para determinar la probabilidad de que sea de otro módulo
+            int otherModuleIndicators = 0;
+            int gestionCarteraIndicators = 0;
+            int totalCellsChecked = 0;
+
             // Buscar indicadores específicos de otros módulos en las primeras filas
             for (int rowNum = 1; rowNum <= Math.Min(10, worksheet.LastRowUsed()?.RowNumber() ?? 0); rowNum++)
             {
@@ -1051,32 +1056,80 @@ public class PdfGeneratorService : IPdfGeneratorService
                 foreach (var cell in row.CellsUsed())
                 {
                     var cellValue = cell.Value.ToString()?.ToUpperInvariant() ?? "";
+                    if (string.IsNullOrWhiteSpace(cellValue)) continue;
                     
-                    // Indicadores de otros módulos
-                    string[] otherModuleIndicators = {
-                        "FACTURACIÓN", "FACTURACION", "INVENTARIO", "CONTABILIDAD",
-                        "VENTAS", "COMPRAS", "NOMINA", "NÓMINA", "PRESUPUESTO",
-                        "KARDEX", "ACTIVOS FIJOS", "BANCOS", "TESORERÍA", "TESORERIA"
+                    totalCellsChecked++;
+
+                    // Indicadores específicos de otros módulos (más restrictivos)
+                    string[] strongOtherModuleIndicators = {
+                        "MODULO DE FACTURACIÓN", "MODULO FACTURACION", "SISTEMA FACTURACIÓN",
+                        "MODULO DE INVENTARIO", "SISTEMA INVENTARIO", "KARDEX COMPLETO",
+                        "MODULO CONTABILIDAD", "SISTEMA CONTABLE", "PLAN DE CUENTAS",
+                        "MODULO NOMINA", "SISTEMA NOMINA", "LIQUIDACION NOMINA",
+                        "MODULO PRESUPUESTO", "PRESUPUESTO ANUAL", "EJECUCION PRESUPUESTAL",
+                        "ACTIVOS FIJOS SISTEMA", "DEPRECIACION ACTIVOS", "MODULO ACTIVOS",
+                        "MODULO BANCOS", "CONCILIACION BANCARIA", "MOVIMIENTOS BANCARIOS",
+                        "MODULO TESORERIA", "FLUJO DE CAJA", "PAGOS Y RECAUDOS"
                     };
-                    
-                    foreach (var indicator in otherModuleIndicators)
+
+                    // Indicadores de Gestión de Cartera
+                    string[] gestionCarteraKeywords = {
+                        "CARTERA", "ESTADOS DE CUENTA", "FACTURAS VENCIDAS", "DIAS DE MORA",
+                        "CLIENTES MOROSOS", "EDAD DE CARTERA", "SALDOS PENDIENTES"
+                    };
+
+                    // Verificar indicadores fuertes de otros módulos
+                    foreach (var indicator in strongOtherModuleIndicators)
                     {
                         if (cellValue.Contains(indicator))
                         {
-                            _logger.LogInformation("Detectado indicador de otro módulo: {Indicator} en celda {Address}",
+                            otherModuleIndicators += 3; // Peso alto
+                            _logger.LogInformation("Detectado indicador fuerte de otro módulo: {Indicator} en celda {Address}",
                                 indicator, cell.Address);
-                            return true;
+                        }
+                    }
+
+                    // Verificar indicadores de Gestión de Cartera
+                    foreach (var keyword in gestionCarteraKeywords)
+                    {
+                        if (cellValue.Contains(keyword))
+                        {
+                            gestionCarteraIndicators += 2;
+                            _logger.LogDebug("Detectado indicador de Gestión de Cartera: {Keyword}", keyword);
+                        }
+                    }
+
+                    // Indicadores débiles de otros módulos (solo si no hay indicadores de cartera)
+                    if (gestionCarteraIndicators == 0)
+                    {
+                        string[] weakOtherModuleIndicators = {
+                            "FACTURACIÓN", "FACTURACION", "INVENTARIO", "CONTABILIDAD",
+                            "VENTAS", "COMPRAS", "NOMINA", "NÓMINA"
+                        };
+
+                        foreach (var indicator in weakOtherModuleIndicators)
+                        {
+                            if (cellValue.Contains(indicator) && cellValue.Length < 50) // Solo palabras sueltas
+                            {
+                                otherModuleIndicators += 1; // Peso bajo
+                            }
                         }
                     }
                 }
             }
+
+            // Decisión basada en pesos
+            bool belongsToOtherModule = otherModuleIndicators > gestionCarteraIndicators && otherModuleIndicators >= 3;
             
-            return false;
+            _logger.LogInformation("📊 Análisis de módulo - Otros: {OtherScore}, Cartera: {CarteraScore}, Total Celdas: {TotalCells}, Decisión: {Decision}",
+                otherModuleIndicators, gestionCarteraIndicators, totalCellsChecked, belongsToOtherModule ? "Otro módulo" : "Gestión de Cartera");
+
+            return belongsToOtherModule;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al verificar módulo del archivo");
-            return false;
+            _logger.LogError(ex, "Error al verificar módulo del archivo - Asumiendo es válido para Gestión de Cartera");
+            return false; // En caso de error, permitir el procesamiento
         }
     }
 

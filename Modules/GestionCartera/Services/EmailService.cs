@@ -394,9 +394,7 @@ namespace GestLog.Modules.GestionCartera.Services
         {
             if (!IsConfigured)
                 throw new SmtpConfigurationException("El servicio SMTP no está configurado. Llame ConfigureSmtpAsync primero.");
-        }
-
-        private async Task ValidateSmtpConfigurationAsync(SmtpConfiguration configuration, CancellationToken cancellationToken)
+        }        private async Task ValidateSmtpConfigurationAsync(SmtpConfiguration configuration, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(configuration.SmtpServer))
                 throw new SmtpConfigurationException("El servidor SMTP es requerido");
@@ -408,7 +406,28 @@ namespace GestLog.Modules.GestionCartera.Services
                 throw new SmtpConfigurationException("El nombre de usuario es requerido");
 
             if (string.IsNullOrWhiteSpace(configuration.Password))
-                throw new SmtpConfigurationException("La contraseña es requerida");
+            {
+                _logger.LogWarning("⚠️ Configuración SMTP incompleta: UseAuthentication=true pero Password está vacío para usuario '{Username}'", 
+                    configuration.Username);
+                throw new SmtpConfigurationException("La contraseña es requerida para la autenticación SMTP");
+            }
+
+            // Validar formato de email
+            try
+            {
+                var emailAddress = new System.Net.Mail.MailAddress(configuration.Username);
+                if (emailAddress.Address != configuration.Username)
+                {
+                    throw new SmtpConfigurationException($"El formato del email '{configuration.Username}' no es válido");
+                }
+            }
+            catch (Exception ex) when (!(ex is SmtpConfigurationException))
+            {
+                throw new SmtpConfigurationException($"El formato del email '{configuration.Username}' no es válido");
+            }
+
+            _logger.LogDebug("✅ Validación SMTP completada - Server: {Server}, User: {User}", 
+                configuration.SmtpServer, configuration.Username);
 
             await Task.CompletedTask; // Para mantener la signatura async
         }

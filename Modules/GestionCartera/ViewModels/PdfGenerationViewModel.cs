@@ -172,14 +172,25 @@ public partial class PdfGenerationViewModel : BaseDocumentGenerationViewModel
                 // Opcionalmente, validar la estructura del Excel
                 try
                 {
-                    StatusMessage = "Validando estructura del Excel...";
-                    // Solo validar si el servicio está disponible
+                    StatusMessage = "Validando estructura del Excel...";                    // Solo validar si el servicio está disponible
                     if (_pdfGenerator != null)
                     {
                         // Usar cancellation token nuevo para permitir cancelar solo esta operación
-                        using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30)); // 30 segundos máximo
-                        await _pdfGenerator.ValidateExcelStructureAsync(SelectedExcelFilePath);
-                        StatusMessage = $"Archivo Excel válido: {Path.GetFileName(SelectedExcelFilePath)}";
+                        using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(45)); // Aumentar timeout a 45 segundos
+                        try
+                        {
+                            await _pdfGenerator.ValidateExcelStructureAsync(SelectedExcelFilePath);
+                            StatusMessage = $"Archivo Excel válido: {Path.GetFileName(SelectedExcelFilePath)}";
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            _logger.LogWarning("⏰ Validación de Excel cancelada por timeout");
+                            StatusMessage = "La validación del archivo Excel tardó demasiado y fue cancelada";
+                            throw new DocumentValidationException(
+                                "La validación del archivo Excel tardó demasiado tiempo. El archivo puede ser muy grande o estar dañado.",
+                                SelectedExcelFilePath,
+                                "VALIDATION_TIMEOUT");
+                        }
                     }
                 }
                 catch (Exception validateEx)
