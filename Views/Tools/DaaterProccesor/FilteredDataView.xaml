@@ -26,9 +26,9 @@
                                                 BlurRadius="4" 
                                                 ShadowDepth="1" 
                                                 Opacity="0.12"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>                        <ControlTemplate.Triggers>
+                            </Border.Effect>                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#2B8E3F"/>
                             </Trigger>
@@ -73,8 +73,7 @@
                           FontFamily="Segoe UI" FontSize="14" Foreground="#E8F5E8" 
                           HorizontalAlignment="Center" TextAlignment="Center" Margin="0,8,0,0"/>
             </StackPanel>
-        </Border>
-          <!-- Data Grid -->
+        </Border>        <!-- Data Grid -->
         <Border Grid.Row="1" Background="White" Margin="20" CornerRadius="8" BorderBrush="#E5E5E5" BorderThickness="1">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" 
@@ -82,13 +81,38 @@
                                 ShadowDepth="2" 
                                 Opacity="0.10"/>
             </Border.Effect>
-            <DataGrid x:Name="FilteredDataGrid" AutoGenerateColumns="True" 
-                     Margin="15" Background="Transparent" BorderThickness="0"
-                     GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                     AlternatingRowBackground="#F8F9FA" RowBackground="Transparent"
-                     FontFamily="Segoe UI" FontSize="13"/>
-        </Border>
-          <!-- Actions Panel -->
+            <Grid>
+                <DataGrid x:Name="FilteredDataGrid" AutoGenerateColumns="True" 
+                         Margin="15" Background="Transparent" BorderThickness="0"
+                         GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                         AlternatingRowBackground="#F8F9FA" RowBackground="Transparent"
+                         FontFamily="Segoe UI" FontSize="12" 
+                         CanUserAddRows="False" CanUserDeleteRows="False" 
+                         IsReadOnly="True" SelectionMode="Extended"
+                         AutoGeneratingColumn="FilteredDataGrid_AutoGeneratingColumn">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#118938"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="10,8"/>
+                            <Setter Property="BorderBrush" Value="#0F7A30"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                </DataGrid>
+                
+                <!-- Mensaje cuando no hay datos -->
+                <TextBlock x:Name="txtNoData" 
+                          Text="📊 Los datos consolidados se mostrarán aquí una vez aplicados los filtros especializados"
+                          FontFamily="Segoe UI" FontSize="16" 
+                          Foreground="#9E9E9E" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"
+                          TextAlignment="Center"
+                          Visibility="Visible"/>
+            </Grid>
+        </Border><!-- Actions Panel -->
         <Border Grid.Row="2" Background="White" Padding="20,15" BorderBrush="#E5E5E5" BorderThickness="0,1,0,0">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" 
@@ -96,17 +120,13 @@
                                 ShadowDepth="1" 
                                 Opacity="0.08"/>
             </Border.Effect>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock x:Name="txtRecordCount" Text="Registros: 0" 
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Name="txtRecordCount" Text="Cargue datos consolidados para aplicar filtros especializados" 
                           FontFamily="Segoe UI" FontSize="14" 
-                          Foreground="#706F6F" VerticalAlignment="Center" Margin="0,0,25,0"/>
-                <Button Content="🔄 Aplicar Filtros" 
+                          Foreground="#706F6F" VerticalAlignment="Center" Margin="0,0,25,0"/>                <Button Content="🏗️ Filtros Productos Acero" 
                        Style="{StaticResource FilterButtonStyle}"
-                       Margin="0,0,12,0"
-                       Click="ApplyFilters_Click"/>
-                <Button x:Name="btnExportExcel" Content="📊 Exportar a Excel" 
-                       Style="{StaticResource FilterButtonStyle}"
-                       Click="ExportToExcel_Click" IsEnabled="False"/>
+                       Click="ExportAcerosEspeciales_Click"
+                       ToolTip="Generar 7 hojas Excel: CONSOLIDADO (todos los datos), ACEROS ESPECIALES (7225400000), LÁMINAS, ROLLOS, ÁNGULOS, CANALES y VIGAS con filtros específicos por categoría"/>
             </StackPanel>
         </Border>
     </Grid>
