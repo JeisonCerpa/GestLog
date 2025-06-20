@@ -284,14 +284,12 @@ namespace GestLog.Modules.EnvioCatalogo.Services
                 _logger.LogError(ex, "❌ Error durante envío masivo de catálogo");
                 return CatalogoSendResult.Error($"Error durante envío: {ex.Message}", emailInfo.Recipients?.Count ?? 0);
             }
-        }
-
-        public async Task<bool> SendTestEmailAsync(string recipient, CancellationToken cancellationToken = default)
+        }        public async Task<bool> SendTestEmailAsync(string recipient, CancellationToken cancellationToken = default)
         {
             try
             {
                 EnsureConfigured();
-                  if (!IsValidEmail(recipient))
+                if (!IsValidEmail(recipient))
                     throw new CatalogoEmailSendException($"Email inválido: {recipient}", recipient);
 
                 _logger.LogInformation("🧪 Enviando email de prueba a: {Recipient}", recipient);
@@ -307,7 +305,34 @@ namespace GestLog.Modules.EnvioCatalogo.Services
                     IsBodyHtml = true
                 };
 
-                message.To.Add(recipient);
+                message.To.Add(recipient);                // Embebir logo de la empresa en email de prueba si existe
+                var logoPath = GetCompanyLogoPath();
+                if (!string.IsNullOrEmpty(logoPath))
+                {
+                    var logoAttachment = new Attachment(logoPath);
+                    logoAttachment.ContentId = "company-logo";
+                    if (logoAttachment.ContentDisposition != null)
+                    {
+                        logoAttachment.ContentDisposition.Inline = true;
+                        logoAttachment.ContentDisposition.DispositionType = System.Net.Mime.DispositionTypeNames.Inline;
+                    }
+                    message.Attachments.Add(logoAttachment);
+                    _logger.LogInformation("✅ Logo embebido en email de prueba");
+                }
+
+                // Embebir icono para viñetas en email de prueba si existe
+                var iconPath = GetBulletIconPath();
+                if (!string.IsNullOrEmpty(iconPath))
+                {
+                    var iconAttachment = new Attachment(iconPath);
+                    iconAttachment.ContentId = "bullet-icon";
+                    if (iconAttachment.ContentDisposition != null)
+                    {
+                        iconAttachment.ContentDisposition.Inline = true;
+                        iconAttachment.ContentDisposition.DispositionType = System.Net.Mime.DispositionTypeNames.Inline;
+                    }
+                    message.Attachments.Add(iconAttachment);
+                }
 
                 await client.SendMailAsync(message);
 
@@ -338,12 +363,42 @@ namespace GestLog.Modules.EnvioCatalogo.Services
             {
                 return false;
             }
-        }
-
-        public string GetDefaultCatalogPath()
+        }        public string GetDefaultCatalogPath()
         {
             var dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
             return Path.Combine(dataPath, "Catalogo Productos y Servicios Simics Group SAS.pdf");
+        }        /// <summary>
+        /// Obtiene la ruta del logo de la empresa desde la carpeta Assets
+        /// </summary>
+        private string? GetCompanyLogoPath()
+        {
+            var assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets");
+            var logoPath = Path.Combine(assetsPath, "Simics.png");
+            
+            if (!File.Exists(logoPath))
+            {
+                _logger.LogWarning("⚠️ Logo no encontrado en: {LogoPath}", logoPath);
+                return null;
+            }
+            
+            return logoPath;
+        }
+
+        /// <summary>
+        /// Obtiene la ruta del icono para viñetas desde la carpeta Assets
+        /// </summary>
+        private string? GetBulletIconPath()
+        {
+            var assetsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets");
+            var iconPath = Path.Combine(assetsPath, "image001.ico");
+            
+            if (!File.Exists(iconPath))
+            {
+                _logger.LogWarning("⚠️ Icono de viñeta no encontrado en: {IconPath}", iconPath);
+                return null;
+            }
+            
+            return iconPath;
         }
 
         #region Métodos Privados
@@ -415,7 +470,39 @@ namespace GestLog.Modules.EnvioCatalogo.Services
                 message.Bcc.Add(emailInfo.BccRecipient);
 
             if (!string.IsNullOrWhiteSpace(emailInfo.CcRecipient))
-                message.CC.Add(emailInfo.CcRecipient);
+                message.CC.Add(emailInfo.CcRecipient);            // Embebir logo de la empresa si existe
+            var logoPath = GetCompanyLogoPath();
+            if (!string.IsNullOrEmpty(logoPath))
+            {
+                var logoAttachment = new Attachment(logoPath);
+                logoAttachment.ContentId = "company-logo";
+                if (logoAttachment.ContentDisposition != null)
+                {
+                    logoAttachment.ContentDisposition.Inline = true;
+                    logoAttachment.ContentDisposition.DispositionType = System.Net.Mime.DispositionTypeNames.Inline;
+                }
+                message.Attachments.Add(logoAttachment);
+                _logger.LogInformation("✅ Logo embebido en el email con ContentId: company-logo");
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No se pudo embebir el logo - archivo no encontrado");
+            }
+
+            // Embebir icono para viñetas si existe
+            var iconPath = GetBulletIconPath();
+            if (!string.IsNullOrEmpty(iconPath))
+            {
+                var iconAttachment = new Attachment(iconPath);
+                iconAttachment.ContentId = "bullet-icon";
+                if (iconAttachment.ContentDisposition != null)
+                {
+                    iconAttachment.ContentDisposition.Inline = true;
+                    iconAttachment.ContentDisposition.DispositionType = System.Net.Mime.DispositionTypeNames.Inline;
+                }
+                message.Attachments.Add(iconAttachment);
+                _logger.LogInformation("✅ Icono de viñeta embebido con ContentId: bullet-icon");
+            }
 
             // Adjuntar catálogo
             var attachment = new Attachment(emailInfo.CatalogFilePath);
@@ -474,137 +561,192 @@ namespace GestLog.Modules.EnvioCatalogo.Services
 <html>
 <head>
     <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Prueba SMTP - Envío de Catálogo</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
-    </style>
 </head>
-<body style='font-family: ""Myriad Pro"", ""Source Sans Pro"", -apple-system, BlinkMacSystemFont, ""Segoe UI"", Arial, sans-serif; margin: 20px; background-color: #f5f5f5;'>
-    <div style='background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-        <h2 style='color: #2c3e50; margin-bottom: 20px;'>🧪 Prueba de Configuración SMTP</h2>
-        
-        <p style='color: #34495e; line-height: 1.6;'>
-            Este es un email de prueba del módulo <strong>Envío de Catálogo</strong> de GestLog.
-        </p>
-        
-        <p style='color: #34495e; line-height: 1.6;'>
-            Si recibe este mensaje, significa que la configuración SMTP está funcionando correctamente.
-        </p>
-        
-        <div style='background-color: #27ae60; color: white; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-            <strong>✅ Configuración SMTP validada exitosamente</strong>
-        </div>
-        
-        <hr style='border: none; border-top: 1px solid #ecf0f1; margin: 20px 0;'>
-        
-        <p style='color: #7f8c8d; font-size: 12px; text-align: center;'>
-            <strong>SIMICS GROUP SAS</strong><br>
-            Sistema GestLog - Módulo de Envío de Catálogo
-        </p>
-    </div>
+<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;'>
+    <table cellpadding='0' cellspacing='0' border='0' width='100%' style='background-color: #f5f5f5; padding: 20px 0;'>
+        <tr>
+            <td align='center'>
+                <table cellpadding='0' cellspacing='0' border='0' width='100%' style='max-width: 600px; background-color: white; border-radius: 8px;'>                    <!-- Header with Logo -->
+                    <tr>                        <td style='background-color: white; color: #2c3e50; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 4px solid #118938;'>
+                            <img src='cid:company-logo' alt='SIMICS GROUP S.A.S.' style='max-width: 200px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto;' />
+                            <p style='margin: 10px 0 0 0; font-size: 14px; font-family: Arial, sans-serif; color: #8e8e8e; font-weight: normal;'>
+                                Sistema GestLog - Módulo de Envío de Catálogo
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style='padding: 30px;'>
+                            <h2 style='color: #2c3e50; margin: 0 0 20px 0; font-family: Arial, sans-serif;'>PRUEBA DE CONFIGURACIÓN SMTP</h2>
+                            
+                            <p style='color: #34495e; line-height: 1.6; margin: 0 0 15px 0; font-family: Arial, sans-serif;'>
+                                Este es un email de prueba del módulo <strong>Envío de Catálogo</strong> de GestLog.
+                            </p>
+                            
+                            <p style='color: #34495e; line-height: 1.6; margin: 0 0 20px 0; font-family: Arial, sans-serif;'>
+                                Si recibe este mensaje, significa que la configuración SMTP está funcionando correctamente.
+                            </p>
+                            
+                            <table cellpadding='0' cellspacing='0' border='0' width='100%' style='background-color: #27ae60; border-radius: 5px; margin: 20px 0;'>
+                                <tr>
+                                    <td style='padding: 15px; color: white; font-family: Arial, sans-serif;'>
+                                        <strong>✓ Configuración SMTP validada exitosamente</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <hr style='border: none; border-top: 1px solid #ecf0f1; margin: 20px 0;'>
+                            
+                            <p style='color: #7f8c8d; font-size: 12px; text-align: center; margin: 0; font-family: Arial, sans-serif;'>
+                                <strong>SIMICS GROUP SAS</strong><br>
+                                Sistema GestLog - Módulo de Envío de Catálogo
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>";
-        }        /// <summary>
-        /// Genera el cuerpo personalizado del email con la plantilla comercial
+        }/// <summary>
+        /// Genera el cuerpo personalizado del email con la plantilla comercial (versión compatible)
         /// </summary>
         private string GeneratePersonalizedEmailBody(string clientName)
-        {            var template = @"
+        {
+            var template = @"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Importadores y Comercializadores de Aceros y Servicios - Simics Group SAS</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
-        * {
-            font-family: ""Myriad Pro"", ""Source Sans Pro"", -apple-system, BlinkMacSystemFont, ""Segoe UI"", Arial, sans-serif !important;
-        }
-    </style>
 </head>
-<body style='font-family: ""Myriad Pro"", ""Source Sans Pro"", -apple-system, BlinkMacSystemFont, ""Segoe UI"", Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa;'>
-    <div style='max-width: 800px; margin: 0 auto; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
-        
-        <!-- Header -->
-        <div style='background: linear-gradient(135deg, #118938, #37AB4E); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;'>
-            <h1 style='margin: 0; font-size: 24px; font-weight: bold;'>SIMICS GROUP S.A.S.</h1>
-            <p style='margin: 5px 0 0 0; font-size: 16px; opacity: 0.9;'>Importadores y Comercializadores de Aceros y Servicios</p>
-        </div>
-        
-        <!-- Content -->
-        <div style='padding: 40px;'>
-            <p style='font-size: 16px; color: #2c3e50; margin-bottom: 20px; line-height: 1.6;'>
-                <strong>Buenos días Señores {CLIENT_NAME}</strong>
-            </p>
-            
-            <p style='font-size: 14px; color: #34495e; margin-bottom: 20px; line-height: 1.6;'>
-                Nos dirigimos a ustedes para presentarles <strong>SIMICS GROUP S.A.S.</strong>, una empresa dedicada a la importación y comercialización de todo tipo de aceros. Contamos con personal técnico y profesional con más de <strong>40 años de experiencia</strong> en el sector, lo que nos permite ofrecer soluciones que se adaptan a las necesidades específicas de cada cliente.
-            </p>
-            
-            <p style='font-size: 14px; color: #34495e; margin-bottom: 25px; line-height: 1.6;'>
-                Hemos participado en proyectos representando a las siderúrgicas más importantes de China, Japón, Turquía entre otros países. Nuestra empresa se destaca por la calidad de los materiales y por brindar una atención rápida y oportuna a nuestros clientes, no solo en el suministro de materiales sino también por el acompañamiento técnico que brindamos en cada proyecto.
-            </p>
-            
-            <!-- Productos Section -->
-            <div style='background-color: white; padding: 25px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #118938; border: 1px solid #e0e0e0;'>
-                <h3 style='margin: 0 0 15px 0; font-size: 18px; color: #000000; font-weight: bold;'>Productos</h3>
-                
-                <ul style='font-size: 14px; color: #34495e; line-height: 1.7; margin: 0; padding-left: 20px;'>
-                    <li><strong>Láminas:</strong> A-36, A-283, A-131, A-572, A-516 GR 70</li>
-                    <li><strong>Lámina Antidesgaste</strong> 400-450HB</li>
-                    <li><strong>Lámina Inoxidable</strong></li>
-                    <li><strong>Perfilería:</strong> Ángulos, Canales UPN, Vigas H, I, HEA, HEB, IPE, WF</li>
-                    <li><strong>Duraluminios</strong> en barra o platina</li>
-                    <li><strong>Redondos:</strong> SAE 4140, 4340, 1045, 1020</li>
-                    <li><strong>Barras perforadas</strong></li>
-                    <li><strong>Aceros especiales</strong> (Importamos según la necesidad del cliente)</li>
-                    <li><strong>Materiales de ferretería,</strong> soldaduras, repuestos para mantenimientos de plantas industriales</li>
-                </ul>
-            </div>
-              <!-- Servicios Section -->
-            <div style='background-color: white; padding: 25px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #37AB4E; border: 1px solid #e0e0e0;'>
-                <h3 style='margin: 0 0 15px 0; font-size: 18px; color: #000000; font-weight: bold;'>Servicios</h3>
-                
-                <ul style='font-size: 14px; color: #34495e; line-height: 1.7; margin: 0; padding-left: 20px;'>
-                    <li><strong>Oxicorte</strong></li>
-                    <li><strong>Corte por láser</strong></li>
-                    <li><strong>Corte por plasma</strong></li>
-                    <li><strong>Soldadura</strong></li>
-                    <li><strong>Sandblasting</strong></li>
-                    <li><strong>Pintura</strong></li>
-                    <li><strong>Torneado, fresado, taladrado</strong></li>
-                    <li><strong>Doblez, biselado, rolado</strong></li>
-                </ul>
-            </div>
-            
-            <p style='font-size: 14px; color: #34495e; margin: 25px 0; line-height: 1.6;'>
-                Adjuntamos nuestro catálogo de productos y servicios, si le interesa conocer más detalles sobre nuestra empresa o programar una reunión, no dude en responder a este correo o llamarnos al <strong>+57 XXXXXXX</strong>. Queremos hacernos visibles para ustedes y que encuentren en nosotros un apoyo para cada una de sus operaciones.
-            </p>
-            
-            <p style='font-size: 14px; color: #2c3e50; margin: 25px 0; line-height: 1.6; font-weight: 500;'>
-                Gracias por su atención. Esperamos tener la oportunidad de colaborar con ustedes.
-            </p>            <!-- Contact Info -->
-            <div style='background: linear-gradient(135deg, #706F6F, #9D9D9C); color: white; padding: 25px; border-radius: 6px; margin: 30px 0;'>                <h3 style='margin: 0 0 15px 0; font-size: 18px; color: white;'>☰ Datos de Contacto</h3>                <p style='margin: 8px 0; font-size: 14px; line-height: 1.6;'>
-                    <span style='color: #e8e8e8; margin-right: 8px;'>✉</span><strong>Email:</strong> <a href='mailto:contactenos@simicsgroup.com' style='color: white !important; text-decoration: none;'>contactenos@simicsgroup.com</a>
-                </p>
-                <p style='margin: 8px 0; font-size: 14px; line-height: 1.6;'>
-                    <span style='color: #e8e8e8; margin-right: 8px;'>☏</span><strong>Celular:</strong> 315 224 05 20
-                </p>
-                <p style='margin: 8px 0; font-size: 14px; line-height: 1.6;'>
-                    <span style='color: #e8e8e8; margin-right: 8px;'>☎</span><strong>Teléfono fijo:</strong> 605 329 55 05
-                </p>
-            </div>
-            
-        </div>
-        
-        <!-- Footer -->
-        <div style='background-color: #ecf0f1; padding: 20px; border-radius: 0 0 8px 8px; text-align: center;'>
-            <p style='margin: 0; font-size: 12px; color: #7f8c8d;'>
-                <strong>SIMICS GROUP S.A.S.</strong> - Más de 40 años de experiencia en el sector<br>
-                Este mensaje fue enviado desde nuestro sistema automatizado de comunicaciones comerciales.
-            </p>
-        </div>
-        
-    </div>
+<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8f9fa;'>
+    <table cellpadding='0' cellspacing='0' border='0' width='100%' style='background-color: #f8f9fa; padding: 20px 0;'>
+        <tr>
+            <td align='center'>
+                <table cellpadding='0' cellspacing='0' border='0' width='100%' style='max-width: 800px; background-color: white; border-radius: 8px;'>                    <!-- Header -->
+                    <tr>                        <td style='background-color: white; color: #2c3e50; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; border-bottom: 4px solid #118938;'>
+                            <img src='cid:company-logo' alt='SIMICS GROUP S.A.S.' style='max-width: 280px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto;' />
+                            <p style='margin: 10px 0 0 0; font-size: 16px; font-family: Arial, sans-serif; color: #8e8e8e; font-weight: normal;'>
+                                Importadores y Comercializadores de Aceros y Servicios
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style='padding: 40px;'>
+                            <p style='font-size: 16px; color: #2c3e50; margin: 0 0 20px 0; line-height: 1.6; font-family: Arial, sans-serif;'>
+                                <strong>Buenos días Señores {CLIENT_NAME}</strong>
+                            </p>
+                            
+                            <p style='font-size: 14px; color: #34495e; margin: 0 0 20px 0; line-height: 1.6; font-family: Arial, sans-serif;'>
+                                Nos dirigimos a ustedes para presentarles <strong>SIMICS GROUP S.A.S.</strong>, una empresa dedicada a la importación y comercialización de todo tipo de aceros. Contamos con personal técnico y profesional con más de <strong>40 años de experiencia</strong> en el sector, lo que nos permite ofrecer soluciones que se adaptan a las necesidades específicas de cada cliente.
+                            </p>
+                            
+                            <p style='font-size: 14px; color: #34495e; margin: 0 0 25px 0; line-height: 1.6; font-family: Arial, sans-serif;'>
+                                Hemos participado en proyectos representando a las siderúrgicas más importantes de China, Japón, Turquía entre otros países. Nuestra empresa se destaca por la calidad de los materiales y por brindar una atención rápida y oportuna a nuestros clientes, no solo en el suministro de materiales sino también por el acompañamiento técnico que brindamos en cada proyecto.
+                            </p>
+                              <!-- Productos Section -->
+                            <table cellpadding='0' cellspacing='0' border='0' width='100%' style='margin: 25px 0; border: 1px solid #e0e0e0; border-radius: 6px;'>
+                                <tr>
+                                    <td style='background-color: #f8f9fa; padding: 15px; border-bottom: 1px solid #e0e0e0;'>                                        <h3 style='margin: 0; font-size: 18px; color: #118938; font-weight: bold; font-family: Arial, sans-serif;'>
+                                            <img src='cid:bullet-icon' alt='•' style='width: 16px; height: 16px; margin-right: 8px; vertical-align: middle;' />
+                                            PRODUCTOS
+                                        </h3>
+                                    </td>
+                                </tr>                                <tr>
+                                    <td style='padding: 20px;'>
+                                        <table cellpadding='0' cellspacing='0' border='0' width='100%'>                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Láminas:</strong> A-36, A-283, A-131, A-572, A-516 GR 70</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Lámina Antidesgaste</strong> 400-450HB</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Lámina Inoxidable</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Perfilería:</strong> Ángulos, Canales UPN, Vigas H, I, HEA, HEB, IPE, WF</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Duraluminios</strong> en barra o platina</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Redondos:</strong> SAE 4140, 4340, 1045, 1020</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Barras perforadas</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Aceros especiales</strong> (Importamos según la necesidad del cliente)</td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Materiales de ferretería,</strong> soldaduras, repuestos para mantenimientos de plantas industriales</td></tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                              <!-- Servicios Section -->
+                            <table cellpadding='0' cellspacing='0' border='0' width='100%' style='margin: 25px 0; border: 1px solid #e0e0e0; border-radius: 6px;'>
+                                <tr>
+                                    <td style='background-color: #f8f9fa; padding: 15px; border-bottom: 1px solid #e0e0e0;'>                                        <h3 style='margin: 0; font-size: 18px; color: #118938; font-weight: bold; font-family: Arial, sans-serif;'>
+                                            <img src='cid:bullet-icon' alt='•' style='width: 16px; height: 16px; margin-right: 8px; vertical-align: middle;' />
+                                            SERVICIOS
+                                        </h3>
+                                    </td>
+                                </tr>                                <tr>
+                                    <td style='padding: 20px;'>
+                                        <table cellpadding='0' cellspacing='0' border='0' width='100%'>                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Oxicorte</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Corte por láser</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Corte por plasma</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Soldadura</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Sandblasting</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Pintura</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Torneado, fresado, taladrado</strong></td></tr>
+                                            <tr><td style='font-size: 14px; color: #34495e; line-height: 1.7; font-family: Arial, sans-serif; padding: 3px 0;'>• <strong>Doblez, biselado, rolado</strong></td></tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style='font-size: 14px; color: #34495e; margin: 25px 0; line-height: 1.6; font-family: Arial, sans-serif;'>
+                                Adjuntamos nuestro catálogo de productos y servicios, si le interesa conocer más detalles sobre nuestra empresa o programar una reunión, no dude en responder a este correo o llamarnos al <strong>+57 XXXXXXX</strong>. Queremos hacernos visibles para ustedes y que encuentren en nosotros un apoyo para cada una de sus operaciones.
+                            </p>
+                            
+                            <p style='font-size: 14px; color: #2c3e50; margin: 25px 0; line-height: 1.6; font-weight: bold; font-family: Arial, sans-serif;'>
+                                Gracias por su atención. Esperamos tener la oportunidad de colaborar con ustedes.
+                            </p>                              <!-- Contact Info -->
+                            <table cellpadding='0' cellspacing='0' border='0' width='100%' style='margin: 30px 0; background-color: #b8b8b8; border-radius: 6px;'>
+                                <tr>
+                                    <td style='padding: 25px; color: white;'>                                        <h3 style='margin: 0 0 15px 0; font-size: 18px; color: white; font-family: Arial, sans-serif;'>
+                                            DATOS DE CONTACTO
+                                        </h3>
+                                        
+                                        <table cellpadding='0' cellspacing='0' border='0' width='100%'>
+                                            <tr>                                                <td style='font-size: 14px; line-height: 1.6; padding: 4px 0; font-family: Arial, sans-serif; color: white;'>
+                                                    <strong>Email:</strong> <a href='mailto:contactenos@simicsgroup.com' style='color: white; text-decoration: none;'>contactenos@simicsgroup.com</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style='font-size: 14px; line-height: 1.6; padding: 4px 0; font-family: Arial, sans-serif; color: white;'>
+                                                    <strong>Celular:</strong> 315 224 05 20
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style='font-size: 14px; line-height: 1.6; padding: 4px 0; font-family: Arial, sans-serif; color: white;'>
+                                                    <strong>Teléfono fijo:</strong> 605 329 55 05
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background-color: #ecf0f1; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;'>
+                            <p style='margin: 0; font-size: 12px; color: #7f8c8d; font-family: Arial, sans-serif;'>
+                                <strong>SIMICS GROUP S.A.S.</strong> - Más de 40 años de experiencia en el sector<br>
+                                Este mensaje fue enviado desde nuestro sistema automatizado de comunicaciones comerciales.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>";
 
