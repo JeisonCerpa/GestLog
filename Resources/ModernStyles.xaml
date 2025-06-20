@@ -1,11 +1,10 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ==================== PALETA DE COLORES ==================== -->
-    <!-- Verde principal: #118938 -->
+    <!-- ==================== PALETA DE COLORES ==================== -->    <!-- Verde principal: #118938 -->
     <SolidColorBrush x:Key="PrimaryGreenBrush" Color="#118938"/>
-    <!-- Verde secundario: #37AB4E -->
-    <SolidColorBrush x:Key="SecondaryGreenBrush" Color="#37AB4E"/>
+    <!-- Verde secundario: #2B8E3F -->
+    <SolidColorBrush x:Key="SecondaryGreenBrush" Color="#2B8E3F"/>
     <!-- Gris claro: #9D9D9C -->
     <SolidColorBrush x:Key="LightGrayBrush" Color="#9D9D9C"/>
     <!-- Gris medio: #706F6F -->
@@ -95,15 +94,13 @@
         <Setter Property="MinHeight" Value="44"/>
         <Setter Property="MinWidth" Value="160"/>
         <Setter Property="Padding" Value="24,12"/>
-    </Style>
-
-    <!-- Botón Secundario -->
+    </Style>    <!-- Botón Secundario -->
     <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
-        <Setter Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
+        <Setter Property="Background" Value="{StaticResource SecondaryGreenBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
         <Setter Property="MinHeight" Value="44"/>
         <Setter Property="MinWidth" Value="160"/>
-        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="Padding" Value="20,10"/>
     </Style>
 
     <!-- Botón Outline -->

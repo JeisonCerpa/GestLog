@@ -138,34 +138,33 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
-        <!-- Contenido principal con scroll optimizado -->
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="30,20,30,15">
+          <!-- Contenido principal -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="40,30,40,20">
             <StackPanel>
                 
-                <!-- Header más compacto -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                    <Border Background="White" Width="60" Height="60" CornerRadius="30" 
-                            HorizontalAlignment="Center" Margin="0,0,15,0"
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                    <Border Background="White" Width="80" Height="80" CornerRadius="40" 
+                            HorizontalAlignment="Center" Margin="0,0,20,0"
                             BorderBrush="#E5E5E5" BorderThickness="2">
                         <Border.Effect>
                             <DropShadowEffect Color="#000000" 
-                                            BlurRadius="6" 
-                                            ShadowDepth="1" 
-                                            Opacity="0.08"/>
+                                            BlurRadius="8" 
+                                            ShadowDepth="2" 
+                                            Opacity="0.10"/>
                         </Border.Effect>
-                        <TextBlock Text="📧" FontFamily="Segoe UI" FontSize="30" 
+                        <TextBlock Text="📧" FontFamily="Segoe UI" FontSize="40" 
                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Gestión de Cartera" 
-                                  FontFamily="Segoe UI" FontSize="24" FontWeight="SemiBold" 
-                                  Foreground="#118938" Margin="0,0,0,5"/>
+                                  FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" 
+                                  Foreground="#118938" Margin="0,0,0,8"/>
                         <TextBlock Text="Envío de correos electrónicos de cartera vencida" 
-                                  FontFamily="Segoe UI" FontSize="14" 
+                                  FontFamily="Segoe UI" FontSize="16" 
                                   Foreground="#706F6F"/>
                     </StackPanel>
-                </StackPanel>        <!-- Contenido principal con pestañas más compacto -->
+                </StackPanel><!-- Contenido principal con pestañas más compacto -->
         <TabControl x:Name="mainTabControl" Background="White" BorderThickness="0" Padding="0">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
