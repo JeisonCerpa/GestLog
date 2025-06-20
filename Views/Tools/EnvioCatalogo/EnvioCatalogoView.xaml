@@ -7,8 +7,7 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
-    
-    <UserControl.Resources>
+      <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Resources/ModernStyles.xaml"/>
@@ -17,8 +16,9 @@
             <converters:PathToFileNameConverter x:Key="PathToFileNameConverter"/>
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
         </ResourceDictionary>
-    </UserControl.Resources>      <Grid Background="{StaticResource OffWhiteBrush}">
+    </UserControl.Resources><Grid Background="{StaticResource OffWhiteBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -50,201 +50,210 @@
                                   FontFamily="Segoe UI" FontSize="16" 
                                   Foreground="#706F6F"/>
                     </StackPanel>
-                </StackPanel>                <!-- Main Content -->
-                <TabControl Background="{StaticResource WhiteBrush}" BorderThickness="0" 
-                           FontFamily="Segoe UI">
-                    
-                    <!-- Tab: Configuración y Envío -->
-                    <TabItem Header="📤 Configurar y Enviar" FontSize="14" Padding="15,8">
-                        <Grid Margin="24">                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Panel de Configuración de Archivos con sombras -->
-                        <Border Grid.Row="0" Background="{StaticResource WhiteBrush}" 
-                               Padding="20" CornerRadius="8" Margin="0,0,0,16">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="315" ShadowDepth="2" Opacity="0.1" BlurRadius="8"/>
-                            </Border.Effect>
-                            <Grid>
+                </StackPanel>                <!-- Main Content con sistema de cartas -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F5F5F5">
+                    <StackPanel Margin="0" Background="#F5F5F5">
+                          <!-- Configuración de Archivos -->
+                        <Border Background="#F5F5F5" 
+                                BorderBrush="Transparent" 
+                                BorderThickness="0" 
+                                Margin="0,0,0,10"
+                                Padding="20,20,20,20">                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="10"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="10"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>                                <!-- Archivo Excel -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="📊 Archivo Excel con Emails:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>
-                                  <StackPanel Grid.Row="2" Grid.Column="0">
-                                    <Button Content="📁 Seleccionar Excel" 
-                                           Style="{StaticResource PrimaryButtonStyle}"
-                                           Command="{Binding SelectExcelFileCommand}"
-                                           ToolTip="Seleccionar archivo Excel que contiene los emails de destinatarios">
-                                        <Button.Effect>
-                                            <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.15" BlurRadius="4"/>
-                                        </Button.Effect>
-                                    </Button>
-                                    
-                                    <TextBlock Text="{Binding ExcelFileName}" 
-                                              VerticalAlignment="Center" Margin="0,8,0,0"
-                                              Foreground="{StaticResource MediumGrayBrush}" 
-                                              FontFamily="Segoe UI" FontStyle="Italic" FontSize="11"
-                                              TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>                                <!-- Archivo del Catálogo -->
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="📄 Archivo del Catálogo:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>
                                 
-                                <StackPanel Grid.Row="2" Grid.Column="2">
-                                    <Button Content="📋 Seleccionar Catálogo" 
-                                           Style="{StaticResource SecondaryButtonStyle}"
-                                           Command="{Binding SelectCatalogoFileCommand}"
-                                           ToolTip="Seleccionar archivo PDF del catálogo a enviar">
-                                        <Button.Effect>
-                                            <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.15" BlurRadius="4"/>
-                                        </Button.Effect>
-                                    </Button>
-                                    
-                                    <TextBlock Text="{Binding CatalogoFileName}" 
-                                              VerticalAlignment="Center" Margin="0,8,0,0"
-                                              Foreground="{StaticResource MediumGrayBrush}" 
-                                              FontFamily="Segoe UI" FontStyle="Italic" FontSize="11"
-                                              TextTrimming="CharacterEllipsis"/>
-                                </StackPanel><!-- Información de archivos -->
-                                <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" 
-                                           Orientation="Horizontal" HorizontalAlignment="Center">
-                                      <!-- Estado Excel -->
-                                    <Border Padding="8,4" CornerRadius="8" Margin="5">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#C0392B"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasExcelFile}" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.1" BlurRadius="3"/>
-                                        </Border.Effect>
-                                        <TextBlock Foreground="White" FontFamily="Segoe UI" FontSize="10" FontWeight="SemiBold">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="❌ Sin Excel"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasExcelFile}" Value="True">
-                                                            <Setter Property="Text" Value="✅ Excel OK"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Border>
-                                    
-                                    <!-- Estado Catálogo -->
-                                    <Border Padding="8,4" CornerRadius="8" Margin="5">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#C0392B"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasCatalogFile}" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.1" BlurRadius="3"/>
-                                        </Border.Effect>
-                                        <TextBlock Foreground="White" FontFamily="Segoe UI" FontSize="10" FontWeight="SemiBold">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="❌ Sin Catálogo"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasCatalogFile}" Value="True">
-                                                            <Setter Property="Text" Value="✅ Catálogo OK"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Border>
-                                </StackPanel>
+                                <!-- Card Archivo Excel -->
+                                <Border Grid.Column="0" Background="White" Padding="20" CornerRadius="6"
+                                       BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
+                                                        Opacity="0.08"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="📊" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
+                                        <TextBlock Text="Archivo Excel con Emails" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
+                                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{Binding ExcelFileName, TargetNullValue='Ningún archivo seleccionado'}" 
+                                                  FontFamily="Segoe UI" FontSize="11" Foreground="#706F6F" TextWrapping="Wrap"
+                                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>                                        <Button Content="📂 Seleccionar Excel" 
+                                               Style="{StaticResource PrimaryButtonStyle}"
+                                               Padding="12,8"
+                                               FontSize="12"
+                                               Command="{Binding SelectExcelFileCommand}"/>
+                                        
+                                        <!-- Estados: Excel y Catálogo -->
+                                        <Grid Margin="0,8,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Estado Excel -->
+                                            <Border Grid.Column="0" Padding="6,4" CornerRadius="6" HorizontalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#C0392B"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasExcelFile}" Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Foreground="White" FontFamily="Segoe UI" FontSize="9" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="❌ Sin Excel"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasExcelFile}" Value="True">
+                                                                    <Setter Property="Text" Value="✅ Excel OK"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                            
+                                            <!-- Estado Catálogo (siempre OK) -->
+                                            <Border Grid.Column="2" Padding="6,4" CornerRadius="6" Background="{StaticResource PrimaryGreenBrush}" HorizontalAlignment="Center">
+                                                <TextBlock Text="✅ Catálogo OK" Foreground="White" FontFamily="Segoe UI" FontSize="9" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>                                </Border>
+                                
+                                <!-- Card Configuración SMTP -->
+                                <Border Grid.Column="2" Background="White" Padding="20" CornerRadius="6"
+                                       BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" 
+                                                        BlurRadius="6" 
+                                                        ShadowDepth="1" 
+                                                        Opacity="0.08"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="📧" FontSize="28" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#118938"/>
+                                        <TextBlock Text="Configuración SMTP" 
+                                                  FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14" 
+                                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                                          <!-- Indicador de estado compacto -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                                            <Ellipse Width="10" Height="10" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                <Ellipse.Fill>
+                                                    <SolidColorBrush Color="{Binding IsSmtpConfigured, Converter={StaticResource BooleanToColorConverter}}"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <TextBlock FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="No configurado"/>
+                                                        <Setter Property="Foreground" Value="#DC3545"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSmtpConfigured}" Value="True">
+                                                                <Setter Property="Text" Value="Configurado"/>
+                                                                <Setter Property="Foreground" Value="#118938"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Información detallada cuando está configurado (compacta) -->
+                                        <StackPanel Visibility="{Binding IsSmtpConfigured, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                   Margin="0,0,0,10">
+                                            <TextBlock FontFamily="Segoe UI" FontSize="10" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,1">
+                                                <Run Text="Usuario: " FontWeight="SemiBold"/>
+                                                <Run Text="{Binding SmtpUsername}"/>
+                                            </TextBlock>
+                                            <TextBlock FontFamily="Segoe UI" FontSize="10" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,1">
+                                                <Run Text="Servidor: " FontWeight="SemiBold"/>
+                                                <Run Text="{Binding SmtpServer}"/>
+                                                <Run Text=":"/>
+                                                <Run Text="{Binding SmtpPort}" FontWeight="SemiBold"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <TextBlock Text="Configure el servidor SMTP para habilitar el envío del catálogo"
+                                                  FontFamily="Segoe UI"
+                                                  FontSize="10" 
+                                                  FontStyle="Italic"
+                                                  HorizontalAlignment="Center"
+                                                  TextAlignment="Center"
+                                                  TextWrapping="Wrap"
+                                                  Foreground="#706F6F"
+                                                  Margin="0,0,0,10"
+                                                  Visibility="{Binding IsSmtpConfigured, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}"/>
+                                          <Button Content="⚙️ Configurar" 
+                                               Style="{StaticResource PrimaryButtonStyle}"
+                                               Padding="12,8"
+                                               FontSize="12"
+                                               HorizontalAlignment="Center"
+                                               Click="ConfigureSmtp_Click"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
-                        </Border>                        <!-- Botones de Acción -->
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
-                            <Button Content="🚀 Enviar Catálogo" 
-                                   Style="{StaticResource PrimaryButtonStyle}"
-                                   FontSize="16" Margin="8"
-                                   Command="{Binding SendCatalogoCommand}"
-                                   IsEnabled="{Binding CanSendCatalogo}"
-                                   ToolTip="Enviar catálogo a todos los emails del Excel">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="Black" Direction="315" ShadowDepth="2" Opacity="0.2" BlurRadius="6"/>
-                                </Button.Effect>
-                            </Button>
-                        </StackPanel><!-- Panel de Progreso -->
-                        <Grid Grid.Row="2" 
-                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="15"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>                            <!-- Barra de progreso actualizada con colores de la paleta -->
-                            <controls:SimpleProgressBar Grid.Row="0"
-                                                       ProgressValue="{Binding ProgressValue}"
-                                                       Title="📧 Enviando Catálogo"
-                                                       StatusMessage="{Binding StatusMessage}"
-                                                       BackgroundColor="#FFFFFF"
-                                                       TitleColor="#504F4E"
-                                                       PercentageColor="#118938"
-                                                       MessageColor="#706F6F"
-                                                       BarForeground="#118938"
-                                                       BarBackground="#F8F9FA"
-                                                       BarHeight="20">
-                                <controls:SimpleProgressBar.Effect>
-                                    <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.1" BlurRadius="4"/>
-                                </controls:SimpleProgressBar.Effect>
-                            </controls:SimpleProgressBar>                            <!-- Botón de cancelar -->
-                            <Button Grid.Row="2"
-                                   Content="❌ Cancelar Envío" 
-                                   Background="#C0392B" Foreground="White" 
-                                   FontFamily="Segoe UI" Padding="12,8" BorderThickness="0" 
-                                   FontWeight="SemiBold" FontSize="12"
-                                   HorizontalAlignment="Center"
-                                   Command="{Binding CancelSendingCommand}"
-                                   ToolTip="Cancelar el envío en curso">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.15" BlurRadius="4"/>
-                                </Button.Effect>
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="#C0392B"/>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#A93226"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </Grid>                        <!-- Panel de Estadísticas -->
-                        <Border Grid.Row="3" Background="{StaticResource WhiteBrush}" 
-                               Padding="20" CornerRadius="8" Margin="0,16,0,0"
+                        </Border>
+                        
+                        <!-- Botón de Envío -->
+                        <Button Content="🚀 Enviar Catálogo" 
+                               Style="{StaticResource PrimaryButtonStyle}"
+                               Padding="20,12"
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               Margin="20,8,20,15"
+                               Command="{Binding SendCatalogoCommand}"
+                               IsEnabled="{Binding CanSendCatalogo}"/>
+                        
+                        <!-- Panel de Progreso -->
+                        <Border Background="White" Padding="20" CornerRadius="6" Margin="20,0,20,15"
+                               BorderBrush="#E5E5E5" BorderThickness="1"
                                Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.1" BlurRadius="6"/>
+                                <DropShadowEffect Color="#000000" 
+                                                BlurRadius="6" 
+                                                ShadowDepth="1" 
+                                                Opacity="0.08"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <!-- Barra de progreso -->
+                                <controls:SimpleProgressBar ProgressValue="{Binding ProgressValue}"
+                                                           Title="📧 Enviando Catálogo"
+                                                           StatusMessage="{Binding StatusMessage}"
+                                                           BackgroundColor="#FFFFFF"
+                                                           TitleColor="#504F4E"
+                                                           PercentageColor="#118938"
+                                                           MessageColor="#706F6F"
+                                                           BarForeground="#118938"
+                                                           BarBackground="#F8F9FA"
+                                                           BarHeight="20"/>
+                                
+                                <!-- Botón de cancelar -->
+                                <Button Content="❌ Cancelar Envío" 
+                                       Background="#C0392B" Foreground="White" 
+                                       FontFamily="Segoe UI" Padding="12,8" BorderThickness="0" 
+                                       FontWeight="SemiBold" FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,15,0,0"
+                                       Command="{Binding CancelSendingCommand}"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Panel de Estadísticas -->
+                        <Border Background="White" Padding="20" CornerRadius="6" Margin="20,0,20,20"
+                               BorderBrush="#E5E5E5" BorderThickness="1"
+                               Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" 
+                                                BlurRadius="6" 
+                                                ShadowDepth="1" 
+                                                Opacity="0.08"/>
                             </Border.Effect>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -256,142 +265,35 @@
 
                                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                                     <TextBlock Text="📊 Total" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12" 
-                                              Foreground="{StaticResource DarkGrayBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#504F4E" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding TotalEmails}" FontFamily="Segoe UI" FontSize="24" FontWeight="Bold" 
-                                              Foreground="{StaticResource PrimaryGreenBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#118938" HorizontalAlignment="Center"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                                     <TextBlock Text="🔄 Procesados" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12" 
-                                              Foreground="{StaticResource DarkGrayBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#504F4E" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding ProcessedEmails}" FontFamily="Segoe UI" FontSize="24" FontWeight="Bold" 
-                                              Foreground="{StaticResource SecondaryGreenBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#2B8E3F" HorizontalAlignment="Center"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                                     <TextBlock Text="✅ Exitosos" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12" 
-                                              Foreground="{StaticResource DarkGrayBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#504F4E" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding SuccessfulSends}" FontFamily="Segoe UI" FontSize="24" FontWeight="Bold" 
-                                              Foreground="{StaticResource PrimaryGreenBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#118938" HorizontalAlignment="Center"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                                     <TextBlock Text="❌ Fallidos" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12" 
-                                              Foreground="{StaticResource DarkGrayBrush}" HorizontalAlignment="Center"/>
+                                              Foreground="#504F4E" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding FailedSends}" FontFamily="Segoe UI" FontSize="24" FontWeight="Bold" 
                                               Foreground="#C0392B" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
-                        </Border>
-                    </Grid>
-                </TabItem>                <!-- Tab: Configuración SMTP -->
-                <TabItem Header="⚙️ Configuración SMTP" FontSize="14" Padding="15,8">
-                    <Grid Margin="24">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Información con efecto de sombra -->
-                        <Border Grid.Row="0" Background="#FFF3CD" BorderBrush="#FFECB5" BorderThickness="1" 
-                               Padding="20" CornerRadius="8" Margin="0,0,0,16">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.08" BlurRadius="6"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <TextBlock Text="⚠️ Configuración SMTP Independiente" 
-                                          FontFamily="Segoe UI" FontWeight="Bold" FontSize="14" Foreground="#856404"/>
-                                <TextBlock Text="Esta configuración es específica para el módulo de Envío de Catálogo y es independiente de la configuración SMTP de Gestión de Cartera." 
-                                          FontFamily="Segoe UI" FontSize="12" Foreground="#856404" TextWrapping="Wrap" Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Configuración SMTP con sombra -->
-                        <Border Grid.Row="1" Background="{StaticResource WhiteBrush}" 
-                               Padding="24" CornerRadius="8">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="315" ShadowDepth="2" Opacity="0.1" BlurRadius="8"/>
-                            </Border.Effect>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="20"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="15"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="15"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="15"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="15"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>                                <!-- Servidor SMTP -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="🌐 Servidor SMTP:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>                                <TextBox Grid.Row="2" Grid.Column="0" Text="{Binding SmtpServer, UpdateSourceTrigger=PropertyChanged}" 
-                                        FontFamily="Segoe UI" Padding="12" FontSize="12"
-                                        BorderBrush="{StaticResource BorderBrush}"/>
-
-                                <!-- Puerto -->
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="🔌 Puerto:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>
-                                <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}" 
-                                        FontFamily="Segoe UI" Padding="12" FontSize="12"
-                                        BorderBrush="{StaticResource BorderBrush}"/>
-
-                                <!-- Email/Usuario -->
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="👤 Email/Usuario:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>
-                                <TextBox Grid.Row="6" Grid.Column="0" Text="{Binding SmtpUsername, UpdateSourceTrigger=PropertyChanged}" 
-                                        FontFamily="Segoe UI" Padding="12" FontSize="12"
-                                        BorderBrush="{StaticResource BorderBrush}"/>
-
-                                <!-- Contraseña -->
-                                <TextBlock Grid.Row="4" Grid.Column="2" Text="🔒 Contraseña:" 
-                                          FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                          Foreground="{StaticResource DarkGrayBrush}"/>
-                                <PasswordBox Grid.Row="6" Grid.Column="2" x:Name="SmtpPasswordBox"
-                                           FontFamily="Segoe UI" Padding="12" FontSize="12"
-                                           PasswordChanged="SmtpPasswordBox_PasswordChanged"/>
-
-                                <!-- SSL -->
-                                <CheckBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" 
-                                         Content="🔐 Usar SSL/TLS (Recomendado)" 
-                                         IsChecked="{Binding EnableSsl}" 
-                                         FontFamily="Segoe UI" FontWeight="SemiBold" 
-                                         Foreground="{StaticResource DarkGrayBrush}" 
-                                         HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                            </Grid>
-                        </Border>                        <!-- Botones de Configuración SMTP -->
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                            <Button Content="💾 Guardar Configuración" 
-                                   Style="{StaticResource PrimaryButtonStyle}"
-                                   Margin="8"
-                                   Command="{Binding SaveSmtpConfigurationCommand}"
-                                   ToolTip="Guardar la configuración SMTP sin enviar email de prueba">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.15" BlurRadius="4"/>
-                                </Button.Effect>
-                            </Button>
-                            
-                            <Button Content="🧪 Probar Configuración" 
-                                   Style="{StaticResource SecondaryButtonStyle}"
-                                   Margin="8"
-                                   Command="{Binding TestSmtpCommand}"
-                                   ToolTip="Enviar un email de prueba para validar la configuración">
-                                <Button.Effect>
-                                    <DropShadowEffect Color="Black" Direction="315" ShadowDepth="1" Opacity="0.15" BlurRadius="4"/>
-                                </Button.Effect>
-                            </Button>                        </StackPanel>
-                    </Grid>
-                </TabItem>
-            </TabControl>
+                        </Border>                        
+                    </StackPanel>
+                </ScrollViewer>
             </StackPanel>
         </ScrollViewer>
     </Grid>

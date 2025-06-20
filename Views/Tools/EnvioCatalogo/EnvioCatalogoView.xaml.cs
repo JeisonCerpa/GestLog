@@ -32,9 +32,7 @@ namespace GestLog.Views.Tools.EnvioCatalogo
                 viewModel.ClientName = "CLIENTE 123";
                 viewModel.ClientNIT = "12345698-3";
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Manejador para el cambio de contraseña SMTP
         /// </summary>
         private void SmtpPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
@@ -47,6 +45,37 @@ namespace GestLog.Views.Tools.EnvioCatalogo
                 viewModel.IsSmtpConfigured = !string.IsNullOrWhiteSpace(viewModel.SmtpServer) &&
                                            !string.IsNullOrWhiteSpace(viewModel.SmtpUsername) &&
                                            !string.IsNullOrWhiteSpace(passwordBox.Password);
+            }
+        }        /// <summary>
+        /// Manejador para abrir la ventana de configuración SMTP
+        /// </summary>
+        private void ConfigureSmtp_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DataContext is EnvioCatalogoViewModel viewModel)
+                {
+                    var configWindow = new SmtpConfigurationWindow(viewModel)
+                    {
+                        Owner = Window.GetWindow(this)
+                    };
+
+                    if (configWindow.ShowDialog() == true)
+                    {
+                        var serviceProvider = LoggingService.GetServiceProvider();
+                        var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
+                        logger.LogInformation("Configuración SMTP actualizada desde ventana de configuración");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                var logger = LoggingService.GetServiceProvider().GetRequiredService<IGestLogLogger>();
+                logger.LogError(ex, "Error al abrir configuración SMTP");
+                System.Windows.MessageBox.Show($"Error al abrir configuración SMTP: {ex.Message}", 
+                               "Error", 
+                               System.Windows.MessageBoxButton.OK, 
+                               System.Windows.MessageBoxImage.Error);
             }
         }
     }
