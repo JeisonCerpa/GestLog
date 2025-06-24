@@ -6,7 +6,9 @@
         xmlns:local="clr-namespace:GestLog"
         mc:Ignorable="d"
         Title="GestLog - Sistema de Gestión" Height="600" Width="1000"
-        WindowStartupLocation="CenterScreen"        WindowState="Maximized">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
       <Window.Resources>        <!-- Estilo para botones simples de la navbar -->
         <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="Template">
