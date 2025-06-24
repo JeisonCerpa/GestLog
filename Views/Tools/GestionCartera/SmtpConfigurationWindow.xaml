@@ -59,12 +59,11 @@
                                    Padding="8" Margin="0,0,5,0" FontWeight="SemiBold"
                                    BorderThickness="0"
                                    Click="GmailPreset_Click"/>
-                            
-                            <Button Grid.Column="1" Content="Outlook" 
+                              <Button Grid.Column="1" Content="Zoho" 
                                    Background="#0078D4" Foreground="White"
                                    Padding="8" Margin="2.5,0,2.5,0" FontWeight="SemiBold"
                                    BorderThickness="0"
-                                   Click="OutlookPreset_Click"/>
+                                   Click="ZohoPreset_Click"/>
                             
                             <Button Grid.Column="2" Content="Office 365" 
                                    Background="#FF8C00" Foreground="White"
@@ -87,7 +86,7 @@
                                 Padding="10" BorderBrush="#BDC3C7" 
                                 FontSize="12" Margin="0,0,0,15"
                                 TextChanged="OnFieldChanged"
-                                ToolTip="Ejemplo: smtp.gmail.com, smtp-mail.outlook.com"/>
+                                ToolTip="Ejemplo: smtp.gmail.com, smtppro.zoho.com"/>
 
                         <!-- Puerto -->
                         <TextBlock Text="Puerto:" FontWeight="SemiBold" Margin="0,0,0,5"/>

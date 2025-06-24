@@ -58,18 +58,16 @@ namespace GestLog.Views.Tools.EnvioCatalogo
             SslCheckBox.IsChecked = true;
             UpdateStatus();
             _logger.LogInformation("Preset Gmail aplicado");
-        }
-
-        /// <summary>
-        /// Preset para Outlook
+        }        /// <summary>
+        /// Preset para Zoho
         /// </summary>
-        private void OutlookPreset_Click(object sender, RoutedEventArgs e)
+        private void ZohoPreset_Click(object sender, RoutedEventArgs e)
         {
-            ServerTextBox.Text = "smtp-mail.outlook.com";
+            ServerTextBox.Text = "smtppro.zoho.com";
             PortTextBox.Text = "587";
             SslCheckBox.IsChecked = true;
             UpdateStatus();
-            _logger.LogInformation("Preset Outlook aplicado");
+            _logger.LogInformation("Preset Zoho aplicado");
         }
 
         /// <summary>

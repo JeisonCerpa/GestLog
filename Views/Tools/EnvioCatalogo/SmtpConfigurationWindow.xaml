@@ -116,13 +116,12 @@
                                    Padding="12,8"
                                    FontSize="11"
                                    Margin="5"
-                                   Click="GmailPreset_Click"/>
-                            <Button Content="📧 Outlook" 
+                                   Click="GmailPreset_Click"/>                            <Button Content="📧 Zoho" 
                                    Style="{StaticResource SecondaryButtonStyle}"
                                    Padding="12,8"
                                    FontSize="11"
                                    Margin="5"
-                                   Click="OutlookPreset_Click"/>
+                                   Click="ZohoPreset_Click"/>
                             <Button Content="📧 Office 365" 
                                    Style="{StaticResource SecondaryButtonStyle}"
                                    Padding="12,8"

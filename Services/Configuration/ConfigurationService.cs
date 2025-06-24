@@ -43,14 +43,20 @@ public class ConfigurationService : IConfigurationService
     /// <summary>
     /// Evento disparado cuando se guarda la configuración
     /// </summary>
-    public event EventHandler<ConfigurationSavedEventArgs>? ConfigurationSaved;
-
-    public ConfigurationService(IGestLogLogger logger)
+    public event EventHandler<ConfigurationSavedEventArgs>? ConfigurationSaved;    public ConfigurationService(IGestLogLogger logger)
     {
         _logger = logger;
-        _configFilePath = Path.Combine(AppContext.BaseDirectory, "config", "app-config.json");
-        _current = new AppConfiguration();
+        
+        // ✅ MEJORA: Usar AppData para configuraciones de usuario (no se pierden al limpiar bin/)
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var configDirectory = Path.Combine(appDataPath, "GestLog");
+        _configFilePath = Path.Combine(configDirectory, "app-config.json");
+          _current = new AppConfiguration();
         _hasUnsavedChanges = false;
+
+        // Log de la nueva ubicación para información del desarrollador
+        _logger.LogInformation("📁 Configuración se guardará en: {ConfigPath}", _configFilePath);
+        _logger.LogInformation("💡 Las configuraciones ahora persisten al limpiar bin/ y obj/");
 
         // Configurar opciones de serialización JSON
         _jsonOptions = new JsonSerializerOptions

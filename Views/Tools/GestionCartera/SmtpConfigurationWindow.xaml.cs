@@ -106,11 +106,9 @@ namespace GestLog.Views.Tools.GestionCartera
         {
             ApplyGmailPreset();
             UpdateUI();
-        }
-
-        private void OutlookPreset_Click(object sender, RoutedEventArgs e)
+        }        private void ZohoPreset_Click(object sender, RoutedEventArgs e)
         {
-            ApplyOutlookPreset();
+            ApplyZohoPreset();
             UpdateUI();
         }
 
@@ -154,9 +152,7 @@ namespace GestLog.Views.Tools.GestionCartera
                 UpdateStatus("Configuración de Gmail aplicada", Colors.Orange);
                 _logger?.LogInformation("Aplicada configuración predefinida: Gmail");
             }
-        }
-
-        private void ApplyOutlookPreset()
+        }        private void ApplyZohoPreset()
         {
             var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
             var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
@@ -164,11 +160,11 @@ namespace GestLog.Views.Tools.GestionCartera
 
             if (hostTextBox != null && portTextBox != null && sslCheckBox != null)
             {
-                hostTextBox.Text = "smtp-mail.outlook.com";
+                hostTextBox.Text = "smtppro.zoho.com";
                 portTextBox.Text = "587";
                 sslCheckBox.IsChecked = true;
-                UpdateStatus("Configuración de Outlook aplicada", Colors.Orange);
-                _logger?.LogInformation("Aplicada configuración predefinida: Outlook");
+                UpdateStatus("Configuración de Zoho aplicada", Colors.Orange);
+                _logger?.LogInformation("Aplicada configuración predefinida: Zoho");
             }
         }
 

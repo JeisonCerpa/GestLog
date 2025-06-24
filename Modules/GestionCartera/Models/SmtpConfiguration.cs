@@ -95,12 +95,10 @@ namespace GestLog.Modules.GestionCartera.Models
                 SmtpServer = "smtp.gmail.com",
                 Port = 587,
                 EnableSsl = true
-            };
-
-            public static SmtpConfiguration Outlook => new()
+            };            public static SmtpConfiguration Zoho => new()
             {
-                Name = "Outlook/Hotmail",
-                SmtpServer = "smtp-mail.outlook.com",
+                Name = "Zoho",
+                SmtpServer = "smtppro.zoho.com",
                 Port = 587,
                 EnableSsl = true
             };
@@ -111,12 +109,10 @@ namespace GestLog.Modules.GestionCartera.Models
                 SmtpServer = "smtp.office365.com",
                 Port = 587,
                 EnableSsl = true
-            };
-
-            public static SmtpConfiguration[] All => new[]
+            };            public static SmtpConfiguration[] All => new[]
             {
                 Gmail,
-                Outlook,
+                Zoho,
                 Office365
             };
         }        /// <summary>
