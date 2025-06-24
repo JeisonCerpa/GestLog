@@ -5,55 +5,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:GestLog.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    
-    <UserControl.Resources>
-        <!-- Estilo para botones de las cards -->
-        <Style x:Key="CardButtonStyle" TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8" 
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#000000" 
-                                                BlurRadius="4" 
-                                                ShadowDepth="1" 
-                                                Opacity="0.12"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="6" 
-                                                        ShadowDepth="2" 
-                                                        Opacity="0.18"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="Cursor" Value="Hand"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="2" 
-                                                        ShadowDepth="0" 
-                                                        Opacity="0.25"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>    <Grid Background="#FAFAFA">        
+             d:DesignHeight="450" d:DesignWidth="800"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+      <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/ModernStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources><Grid Background="#FAFAFA">        
         <!-- Main Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="50,40">
@@ -95,12 +58,9 @@
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Accede a las herramientas de gestión empresarial" 
                                       FontFamily="Segoe UI" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
-                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/><Button Name="btnIrHerramientas" Content="Ir a Herramientas" 
-                                   Background="#118938" Foreground="White" 
-                                   Padding="20,12" BorderThickness="0"
-                                   FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16"
+                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                            <Button Name="btnIrHerramientas" Content="Ir a Herramientas" 
                                    Click="btnIrHerramientas_Click"
-                                   Style="{StaticResource CardButtonStyle}"/>
+                                   Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </Border>
                       <!-- Info Card -->
@@ -116,12 +76,9 @@
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
                             <TextBlock Text="Estado del sistema y estadísticas de módulos" 
                                       FontFamily="Segoe UI" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
-                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/><Button Name="btnInfo" Content="Ver Información" 
-                                   Background="#2B8E3F" Foreground="White" 
-                                   Padding="20,12" BorderThickness="0"
-                                   FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="16"
+                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                            <Button Name="btnInfo" Content="Ver Información" 
                                    Click="btnInfo_Click"
-                                   Style="{StaticResource CardButtonStyle}"/>
+                                   Style="{StaticResource SecondaryButtonStyle}"/>
                         </StackPanel>
                     </Border>
                 </Grid>

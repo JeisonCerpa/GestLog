@@ -4,78 +4,18 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:GestLog.Controls"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800"
-             Background="#FAFAFA">
-             
-    <UserControl.Resources>
-        <!-- Estilo para botones del DaaterProcessor -->
-        <Style x:Key="DaaterButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#000000" 
-                                                BlurRadius="4" 
-                                                ShadowDepth="1" 
-                                                Opacity="0.12"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2B8E3F"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0F7A30"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        
-        <!-- Estilo para botón de cancelar -->
-        <Style x:Key="CancelButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#C0392B"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#A93226"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#922B21"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+             mc:Ignorable="d"             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#FAFAFA"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+               <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Resources/ModernStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </UserControl.Resources>
     
     <Grid Background="#FAFAFA">
@@ -150,9 +90,8 @@
                                               HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,12"/>
                                     <TextBlock Text="Selecciona una carpeta y procesa todos los archivos Excel contenidos" 
                                               FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap"
-                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Button Content="Seleccionar Carpeta y Procesar" 
-                                           Style="{StaticResource DaaterButtonStyle}"
+                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                                    <Button Content="Seleccionar Carpeta y Procesar" 
+                                           Style="{StaticResource PrimaryButtonStyle}"
                                            Command="{Binding ProcessExcelFilesCommand}"/>
                                 </StackPanel>
                             </Border>
@@ -173,9 +112,8 @@
                                               HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,12"/>
                                     <TextBlock Text="Aplicar filtros avanzados a los datos consolidados y exportar resultados" 
                                               FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                                    <Button Content="Abrir Filtros" 
-                                           Style="{StaticResource DaaterButtonStyle}"
+                                              HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                                    <Button Content="Abrir Filtros" 
+                                           Style="{StaticResource PrimaryButtonStyle}"
                                            Click="OnOpenFilteredDataViewClick"/>
                                 </StackPanel>
                             </Border>
@@ -224,9 +162,10 @@
                               FontFamily="Segoe UI" FontSize="12"
                               Text="{Binding ExecutablePath}"
                               TextTrimming="CharacterEllipsis"/>
-                    
-                    <Button Grid.Column="1" Content="❌ Cancelar" 
-                           Style="{StaticResource CancelButtonStyle}"
+                      <Button Grid.Column="1" Content="❌ Cancelar" 
+                           Background="#C0392B" Foreground="White" 
+                           FontFamily="Segoe UI" Padding="12,8" BorderThickness="0" 
+                           FontWeight="SemiBold" FontSize="12"
                            Command="{Binding CancelProcessingCommand}"/>
                     
                     <!-- Columna reservada para evitar superposición con logo -->

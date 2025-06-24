@@ -5,63 +5,40 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800"
-             Background="#FAFAFA">
+             Background="#FAFAFA"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+      <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../Resources/ModernStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>        </ResourceDictionary>
+    </UserControl.Resources>
     
-    <UserControl.Resources>
-        <Style x:Key="ToolCardButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2B8E3F"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0F7A30"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        
-        <Style x:Key="ToolCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="25"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="8" ShadowDepth="2" Direction="270"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>    
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="40,30">
+    <Grid Background="#FAFAFA">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="40,30">
         <StackPanel>
             
             <!-- Header -->
-            <TextBlock Text="🛠️ Herramientas Disponibles" 
-                      FontFamily="Segoe UI"
-                      FontSize="28" FontWeight="SemiBold" 
-                      Foreground="#118938" Margin="0,0,0,15"/>
-            
-            <TextBlock Text="Selecciona la herramienta que deseas utilizar:" 
-                      FontFamily="Segoe UI"
-                      FontSize="16" Foreground="#706F6F" 
-                      Margin="0,0,0,30"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                <Border Background="White" Width="80" Height="80" CornerRadius="40" 
+                        HorizontalAlignment="Center" Margin="0,0,20,0"
+                        BorderBrush="#E5E5E5" BorderThickness="2">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" 
+                                        BlurRadius="8" 
+                                        ShadowDepth="2" 
+                                        Opacity="0.10"/>
+                    </Border.Effect>
+                    <TextBlock Text="🛠️" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Herramientas" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" Foreground="#118938"/>
+                    <TextBlock Text="Selecciona la herramienta que deseas utilizar" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+                </StackPanel>
+            </StackPanel>
             
             <!-- Tools Grid -->
             <Grid>
@@ -79,7 +56,7 @@
                 </Grid.RowDefinitions>
                 
                 <!-- DaaterProccesor Card -->
-                <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource ToolCardStyle}">
+                <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
                     <StackPanel>
                         <TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="DaaterProccesor" 
@@ -90,13 +67,13 @@
                                   FontFamily="Segoe UI"
                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                        <Button Name="btnDaaterProccesor" Content="Abrir DaaterProccesor" 
-                               Style="{StaticResource ToolCardButtonStyle}"
+                               Style="{StaticResource PrimaryButtonStyle}"
                                Click="BtnDaaterProccesor_Click"/>
                     </StackPanel>
                 </Border>
                 
                 <!-- Gestión de Cartera Card -->
-                <Border Grid.Column="2" Grid.Row="0" Style="{StaticResource ToolCardStyle}">
+                <Border Grid.Column="2" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
                     <StackPanel>
                         <TextBlock Text="💼" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Gestión de Cartera" 
@@ -108,12 +85,13 @@
                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                         <Button Name="btnGestionCartera" Content="Abrir Gestión de Cartera" 
-                               Style="{StaticResource ToolCardButtonStyle}"
+                               Style="{StaticResource PrimaryButtonStyle}"
                                Click="BtnGestionCartera_Click"/>
                     </StackPanel>
                 </Border>
-                  <!-- Envío de Catálogo Card -->
-                <Border Grid.Column="4" Grid.Row="0" Style="{StaticResource ToolCardStyle}">
+                
+                <!-- Envío de Catálogo Card -->
+                <Border Grid.Column="4" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
                     <StackPanel>
                         <TextBlock Text="📧" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Envío de Catálogo" 
@@ -124,13 +102,13 @@
                                   FontFamily="Segoe UI"
                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                        <Button Name="btnEnvioCatalogo" Content="Abrir Envío de Catálogo" 
-                               Style="{StaticResource ToolCardButtonStyle}"
+                               Style="{StaticResource PrimaryButtonStyle}"
                                Click="BtnEnvioCatalogo_Click"/>
                     </StackPanel>
                 </Border>
                 
                 <!-- Error Log Card -->
-                <Border Grid.Column="2" Grid.Row="2" Style="{StaticResource ToolCardStyle}">
+                <Border Grid.Column="2" Grid.Row="2" Style="{StaticResource ModernCardStyle}">
                     <StackPanel>
                         <TextBlock Text="⚠️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Registro de Errores" 
@@ -142,13 +120,13 @@
                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                         <Button Name="btnErrorLog" Content="Ver Errores" 
-                               Style="{StaticResource ToolCardButtonStyle}"
+                               Style="{StaticResource SecondaryButtonStyle}"
                                Click="btnErrorLog_Click"/>
                     </StackPanel>
                 </Border>
                 
                 <!-- Configuration Card -->
-                <Border Grid.Column="4" Grid.Row="2" Style="{StaticResource ToolCardStyle}">
+                <Border Grid.Column="4" Grid.Row="2" Style="{StaticResource ModernCardStyle}">
                     <StackPanel>
                         <TextBlock Text="⚙️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Configuración" 
@@ -160,11 +138,11 @@
                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                         <Button Name="btnConfiguration" Content="Abrir Configuración" 
-                               Style="{StaticResource ToolCardButtonStyle}"
+                               Style="{StaticResource SecondaryButtonStyle}"
                                Click="BtnConfiguration_Click"/>
-                    </StackPanel>
-                </Border>            </Grid>
-            
+                    </StackPanel>                </Border>
+            </Grid>            
         </StackPanel>
     </ScrollViewer>
+    </Grid>
 </UserControl>
