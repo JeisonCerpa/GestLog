@@ -31,13 +31,7 @@ public partial class MainWindow : Window
                 // El ConfigurationService ya se inicializa y carga automáticamente
                 bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
                 
-                _logger.LogDebug($"[MainWindow] ConfigService disponible: {configService != null}");
-                _logger.LogDebug($"[MainWindow] Configuración disponible: {configService?.Current != null}");
-                _logger.LogDebug($"[MainWindow] GeneralSettings disponible: {configService?.Current?.General != null}");
-                _logger.LogDebug($"[MainWindow] StartMaximized valor: {startMaximized}");
-                
                 this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
-                
                 _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
             }
             catch (System.Exception ex) 

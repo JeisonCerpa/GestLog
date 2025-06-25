@@ -85,10 +85,6 @@
                      Margin="0,5"
                      Checked="ChkStartMaximized_Checked"
                      Unchecked="ChkStartMaximized_Unchecked"/>
-            <!-- DEBUG: Visualiza el valor actual para depuración -->
-            <TextBlock Text="{Binding StartMaximized, StringFormat='[DEBUG] Valor actual: {0}'}" Foreground="Red" FontSize="11"/>
-            <TextBlock x:Name="txtDataContextDebug" Text="[DEBUG] DataContext: Not Set" Foreground="Blue" FontSize="11"/>
-            
             <CheckBox IsChecked="{Binding RememberWindowState}" 
                      Content="Recordar estado de ventana" 
                      Margin="0,5"/>
