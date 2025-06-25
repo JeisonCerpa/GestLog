@@ -92,16 +92,10 @@ public partial class ConfigurationViewModel : ObservableObject
             StatusMessage = "Cargando configuración...";
             
             _logger.LogDebug("🔄 Cargando configuración desde ViewModel");
-            _logger.LogDebug($"[DEBUG] Configuration ANTES de cargar - InstanceId: {_configuration?.General?.InstanceId}");
             
             await _configurationService.LoadAsync();
             
-            var oldInstanceId = _configuration?.General?.InstanceId;
             Configuration = _configurationService.Current;
-            var newInstanceId = _configuration?.General?.InstanceId;
-            
-            _logger.LogDebug($"[DEBUG] Configuration DESPUÉS de cargar - InstanceId ANTERIOR: {oldInstanceId}, NUEVO: {newInstanceId}");
-            _logger.LogDebug($"[DEBUG] ¿Se actualizó la instancia? {oldInstanceId != newInstanceId}");
             
             HasUnsavedChanges = _configurationService.HasUnsavedChanges;
             

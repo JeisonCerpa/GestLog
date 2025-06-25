@@ -35,7 +35,6 @@ public partial class MainWindow : Window
                 _logger.LogDebug($"[MainWindow] Configuración disponible: {configService?.Current != null}");
                 _logger.LogDebug($"[MainWindow] GeneralSettings disponible: {configService?.Current?.General != null}");
                 _logger.LogDebug($"[MainWindow] StartMaximized valor: {startMaximized}");
-                _logger.LogDebug($"[MainWindow] InstanceId de configuración: {configService?.Current?.General?.InstanceId}");
                 
                 this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
                 
