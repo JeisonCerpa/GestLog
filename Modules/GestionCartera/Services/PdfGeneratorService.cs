@@ -1072,10 +1072,12 @@ public class PdfGeneratorService : IPdfGeneratorService
                         "MODULO TESORERIA", "FLUJO DE CAJA", "PAGOS Y RECAUDOS"
                     };
 
-                    // Indicadores de Gestión de Cartera
+                    // Indicadores de Gestión de Cartera (más amplios)
                     string[] gestionCarteraKeywords = {
                         "CARTERA", "ESTADOS DE CUENTA", "FACTURAS VENCIDAS", "DIAS DE MORA",
-                        "CLIENTES MOROSOS", "EDAD DE CARTERA", "SALDOS PENDIENTES"
+                        "CLIENTES MOROSOS", "EDAD DE CARTERA", "SALDOS PENDIENTES",
+                        "NOMBRES", "IDENTIFICACION", "VALOR TOTAL", "FECHA VENCE", "NUMDIAS",
+                        "VENCIMIENTO", "DEUDA", "SALDO", "CLIENTE", "EMPRESA"
                     };
 
                     // Verificar indicadores fuertes de otros módulos
@@ -1083,7 +1085,7 @@ public class PdfGeneratorService : IPdfGeneratorService
                     {
                         if (cellValue.Contains(indicator))
                         {
-                            otherModuleIndicators += 3; // Peso alto
+                            otherModuleIndicators += 5; // Peso muy alto
                             _logger.LogInformation("Detectado indicador fuerte de otro módulo: {Indicator} en celda {Address}",
                                 indicator, cell.Address);
                         }
@@ -1098,28 +1100,11 @@ public class PdfGeneratorService : IPdfGeneratorService
                             _logger.LogDebug("Detectado indicador de Gestión de Cartera: {Keyword}", keyword);
                         }
                     }
-
-                    // Indicadores débiles de otros módulos (solo si no hay indicadores de cartera)
-                    if (gestionCarteraIndicators == 0)
-                    {
-                        string[] weakOtherModuleIndicators = {
-                            "FACTURACIÓN", "FACTURACION", "INVENTARIO", "CONTABILIDAD",
-                            "VENTAS", "COMPRAS", "NOMINA", "NÓMINA"
-                        };
-
-                        foreach (var indicator in weakOtherModuleIndicators)
-                        {
-                            if (cellValue.Contains(indicator) && cellValue.Length < 50) // Solo palabras sueltas
-                            {
-                                otherModuleIndicators += 1; // Peso bajo
-                            }
-                        }
-                    }
                 }
             }
 
-            // Decisión basada en pesos
-            bool belongsToOtherModule = otherModuleIndicators > gestionCarteraIndicators && otherModuleIndicators >= 3;
+            // Decisión basada en pesos (más permisivo para Gestión de Cartera)
+            bool belongsToOtherModule = otherModuleIndicators > 10 && otherModuleIndicators > (gestionCarteraIndicators * 2);
             
             _logger.LogInformation("📊 Análisis de módulo - Otros: {OtherScore}, Cartera: {CarteraScore}, Total Celdas: {TotalCells}, Decisión: {Decision}",
                 otherModuleIndicators, gestionCarteraIndicators, totalCellsChecked, belongsToOtherModule ? "Otro módulo" : "Gestión de Cartera");
@@ -1131,9 +1116,7 @@ public class PdfGeneratorService : IPdfGeneratorService
             _logger.LogError(ex, "Error al verificar módulo del archivo - Asumiendo es válido para Gestión de Cartera");
             return false; // En caso de error, permitir el procesamiento
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Valida que el Excel tenga la estructura exacta esperada para GestionCartera
     /// </summary>
     /// <param name="worksheet">Hoja de trabajo de Excel</param>
@@ -1149,56 +1132,79 @@ public class PdfGeneratorService : IPdfGeneratorService
             var requiredColumns = new Dictionary<string, string>
             {
                 ["B"] = "Nombres",      // Columna B: Nombres
-                ["C"] = "NIT",          // Columna C: NIT/Identificación
-                ["L"] = "Numero",       // Columna L: Número de factura
+                ["C"] = "Identificacion", // Columna C: Identificación (antes NIT)
+                ["L"] = "Num",           // Columna L: Num (antes Numero)
                 ["M"] = "Fecha",        // Columna M: Fecha
                 ["N"] = "FechaVence",   // Columna N: Fecha de vencimiento
                 ["O"] = "ValorTotal",   // Columna O: Valor total
-                ["U"] = "Dias"          // Columna U: Días
-            };
-
-            var foundColumns = new List<string>();            // Verificar cada columna requerida en su posición exacta
+                ["U"] = "NumDias"       // Columna U: NumDias (antes Dias)
+            };            var foundColumns = new List<string>();
+            
+            // Verificar cada columna requerida en su posición exacta
             foreach (var requiredColumn in requiredColumns)
             {
                 var cell = headerRow.Cell(requiredColumn.Key);
                 var cellValue = cell.Value.ToString().Trim();
                 foundColumns.Add($"{requiredColumn.Key}='{cellValue}'");
                 
-                // Verificar que la columna contiene algo relacionado con lo esperado
+                // Verificar que la columna contiene algo relacionado con lo esperado (más permisivo)
                 bool isValidColumn = cellValue.Contains(requiredColumn.Value, StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Nombres", StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Identificacion", StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Numero", StringComparison.OrdinalIgnoreCase) ||
+                                   cellValue.Contains("Num", StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Fecha", StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Valor", StringComparison.OrdinalIgnoreCase) ||
                                    cellValue.Contains("Dias", StringComparison.OrdinalIgnoreCase) ||
-                                   cellValue.Contains("Total", StringComparison.OrdinalIgnoreCase);
+                                   cellValue.Contains("Total", StringComparison.OrdinalIgnoreCase) ||
+                                   cellValue.Contains("Vence", StringComparison.OrdinalIgnoreCase) ||
+                                   cellValue.Contains("NIT", StringComparison.OrdinalIgnoreCase) ||
+                                   cellValue.Contains("ID", StringComparison.OrdinalIgnoreCase);
+
+                if (!isValidColumn && !string.IsNullOrWhiteSpace(cellValue))
+                {
+                    _logger.LogWarning("Columna {Column} tiene valor inesperado '{Value}', pero continuando validación...", 
+                        requiredColumn.Key, cellValue);
+                }
             }
             
             _logger.LogInformation("Columnas encontradas: {FoundColumns}", string.Join(", ", foundColumns));
             
-            // Validar que hay datos válidos de GestionCartera en las filas
+            // Validar que hay datos válidos de GestionCartera en las filas (más permisivo)
             var dataRows = worksheet.RowsUsed().Where(r => r.RowNumber() > EXCEL_HEADER_ROW).ToList();
             int validRows = 0;
+            int checkedRows = 0;
             
-            foreach (var row in dataRows.Take(5)) // Verificar las primeras 5 filas de datos
+            foreach (var row in dataRows.Take(10)) // Verificar las primeras 10 filas de datos (más filas)
             {
+                checkedRows++;
                 if (IsValidGestionCarteraRow(row))
                 {
                     validRows++;
                 }
             }
             
-            if (validRows == 0)
+            // Ser más permisivo: requerir al menos 1 fila válida de 10 revisadas
+            if (validRows == 0 && checkedRows > 5)
             {
-                string errorMessage = "El archivo no contiene datos válidos de Gestión de Cartera. " +
-                                     "Verifica que el formato del archivo sea correcto.";
-                _logger.LogWarning(errorMessage);
-                throw new DocumentValidationException(errorMessage, "N/A", "GESTION_CARTERA_FORMAT");
+                // Verificar si es realmente de otro módulo antes de rechazar
+                if (IsFromOtherModule(worksheet))
+                {
+                    string errorMessage = "Este archivo Excel pertenece a otro módulo del sistema y no es compatible con Gestión de Cartera";
+                    _logger.LogWarning(errorMessage);
+                    throw new DocumentValidationException(errorMessage, "N/A", "OTHER_MODULE");
+                }
+                else
+                {
+                    string errorMessage = "El archivo no contiene datos válidos de Gestión de Cartera. " +
+                                         "Verifica que el formato del archivo sea correcto.";
+                    _logger.LogWarning(errorMessage);
+                    throw new DocumentValidationException(errorMessage, "N/A", "GESTION_CARTERA_FORMAT");
+                }
             }
             
             _logger.LogInformation("✅ Validación estricta completada exitosamente. {ValidRows} filas válidas de {TotalRows} revisadas",
-                validRows, Math.Min(dataRows.Count, 5));
+                validRows, checkedRows);
         }
         catch (DocumentValidationException)
         {
@@ -1213,9 +1219,7 @@ public class PdfGeneratorService : IPdfGeneratorService
                 "STRICT_VALIDATION_ERROR",
                 ex);
         }
-    }
-
-    /// <summary>
+    }/// <summary>
     /// Verifica si una fila contiene datos válidos de Gestión de Cartera
     /// </summary>
     /// <param name="row">Fila a validar</param>
@@ -1225,7 +1229,8 @@ public class PdfGeneratorService : IPdfGeneratorService
         try
         {
             int rowNum = row.RowNumber();
-              // Verificar que tenga los campos básicos requeridos
+            
+            // Verificar que tenga los campos básicos requeridos
             var nombre = row.Cell("B").Value.ToString().Trim();
             var nit = row.Cell("C").Value.ToString().Trim();
             var numero = row.Cell("L").Value.ToString().Trim();
@@ -1234,16 +1239,14 @@ public class PdfGeneratorService : IPdfGeneratorService
             var valorTotal = row.Cell("O").Value.ToString().Trim();
             var dias = row.Cell("U").Value.ToString().Trim();
             
-            // Una fila válida debe tener al menos nombre, número y valor total
-            if (string.IsNullOrWhiteSpace(nombre) || 
-                string.IsNullOrWhiteSpace(numero) || 
-                string.IsNullOrWhiteSpace(valorTotal))
+            // Una fila válida debe tener al menos nombre (ser más permisivo)
+            if (string.IsNullOrWhiteSpace(nombre) || nombre.Contains("Total", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("Fila {RowNum} rechazada: No tiene número ni valor total", rowNum);
+                _logger.LogDebug("Fila {RowNum} rechazada: No tiene nombre válido o contiene 'Total'", rowNum);
                 return false;
             }
             
-            // Verificar que el valor total sea numérico
+            // Si hay valor total, verificar que sea numérico (pero no rechazar si está vacío)
             if (!string.IsNullOrWhiteSpace(valorTotal))
             {
                 var cleanedValue = valorTotal.Replace("$", "").Replace(",", "").Replace(".", ",");
@@ -1253,43 +1256,50 @@ public class PdfGeneratorService : IPdfGeneratorService
                     return false;
                 }
                 
-                // Verificar que el valor no sea sospechosamente alto (probablemente error)
-                if (valor > 999999999) // Más de 999 millones
+                // Aumentar el límite de valor sospechoso a 99 mil millones (más permisivo)
+                if (valor > 99999999999) // Más de 99 mil millones
                 {
                     _logger.LogDebug("Fila {RowNum} rechazada: Valor total sospechoso {Valor}", rowNum, valor);
                     return false;
                 }
             }
             
-            // Verificar formato de fechas básico
-            if (!string.IsNullOrWhiteSpace(fecha) && !DateTime.TryParse(fecha, out _))
+            // Verificar formato de fechas básico (pero ser más permisivo)
+            if (!string.IsNullOrWhiteSpace(fecha) && fecha.Length > 2 && !DateTime.TryParse(fecha, out _))
             {
                 _logger.LogDebug("Fila {RowNum} rechazada: Fecha inválida '{Fecha}'", rowNum, fecha);
                 return false;
             }
             
-            if (!string.IsNullOrWhiteSpace(fechaVence) && !DateTime.TryParse(fechaVence, out _))
+            if (!string.IsNullOrWhiteSpace(fechaVence) && fechaVence.Length > 2 && !DateTime.TryParse(fechaVence, out _))
             {
                 _logger.LogDebug("Fila {RowNum} rechazada: Fecha vencimiento inválida '{FechaVence}'", rowNum, fechaVence);
                 return false;
             }
-              // Verificar que no contenga indicadores de otros módulos
+            
+            // Verificar que no contenga indicadores FUERTES de otros módulos (más específicos)
             var allCellsText = string.Join(" ", row.CellsUsed().Select(c => c.Value.ToString())).ToUpperInvariant();
-            string[] otherModuleIndicators = {
-                "FACTURACIÓN", "FACTURACION", "INVENTARIO", "CONTABILIDAD",
-                "KARDEX", "ACTIVOS FIJOS", "BANCOS", "TESORERÍA"
+            string[] strongOtherModuleIndicators = {
+                "MODULO DE FACTURACIÓN", "MODULO FACTURACION", "SISTEMA FACTURACIÓN",
+                "MODULO DE INVENTARIO", "SISTEMA INVENTARIO", "KARDEX COMPLETO",
+                "MODULO CONTABILIDAD", "SISTEMA CONTABLE", "PLAN DE CUENTAS",
+                "MODULO NOMINA", "SISTEMA NOMINA", "LIQUIDACION NOMINA",
+                "MODULO PRESUPUESTO", "PRESUPUESTO ANUAL", "EJECUCION PRESUPUESTAL",
+                "ACTIVOS FIJOS SISTEMA", "DEPRECIACION ACTIVOS", "MODULO ACTIVOS",
+                "MODULO BANCOS", "CONCILIACION BANCARIA", "MOVIMIENTOS BANCARIOS",
+                "MODULO TESORERIA", "FLUJO DE CAJA", "PAGOS Y RECAUDOS"
             };
             
-            if (otherModuleIndicators.Any(indicator => allCellsText.Contains(indicator)))
+            if (strongOtherModuleIndicators.Any(indicator => allCellsText.Contains(indicator)))
             {
-                _logger.LogDebug("Fila {RowNum} rechazada: Contiene indicadores de otro módulo", rowNum);
+                _logger.LogDebug("Fila {RowNum} rechazada: Contiene indicadores FUERTES de otro módulo", rowNum);
                 return false;
             }
             
-            // Verificar que el nombre de empresa sea válido
-            if (nombre.Length < 2 || nombre.All(char.IsDigit))
+            // Verificar que el nombre de empresa sea válido (más permisivo)
+            if (nombre.Length < 2)
             {
-                _logger.LogDebug("Fila {RowNum} rechazada: Nombre de empresa no válido '{Nombre}'", rowNum, nombre);
+                _logger.LogDebug("Fila {RowNum} rechazada: Nombre de empresa muy corto '{Nombre}'", rowNum, nombre);
                 return false;
             }
             
