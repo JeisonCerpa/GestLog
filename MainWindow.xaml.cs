@@ -22,7 +22,31 @@ public partial class MainWindow : Window
             _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
             
             // Obtener logger del servicio de logging
-            _logger = LoggingService.GetLogger<MainWindow>();
+            _logger = LoggingService.GetLogger<MainWindow>();            // --- NUEVO: Establecer WindowState según configuración ---
+            try
+            {
+                var configService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
+                
+                // NO CARGAR AQUÍ - solo usar la configuración que ya está disponible
+                // El ConfigurationService ya se inicializa y carga automáticamente
+                bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
+                
+                _logger.LogDebug($"[MainWindow] ConfigService disponible: {configService != null}");
+                _logger.LogDebug($"[MainWindow] Configuración disponible: {configService?.Current != null}");
+                _logger.LogDebug($"[MainWindow] GeneralSettings disponible: {configService?.Current?.General != null}");
+                _logger.LogDebug($"[MainWindow] StartMaximized valor: {startMaximized}");
+                _logger.LogDebug($"[MainWindow] InstanceId de configuración: {configService?.Current?.General?.InstanceId}");
+                
+                this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
+                
+                _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
+            }
+            catch (System.Exception ex) 
+            { 
+                _logger.LogWarning(ex, "⚠️ Error al leer configuración de ventana, usando maximizada por defecto");
+                this.WindowState = WindowState.Maximized; // Fallback
+            }
+            // --- FIN NUEVO ---
             
             _logger.LogApplicationStarted("MainWindow inicializada correctamente");
             

@@ -21,21 +21,20 @@ public partial class App : System.Windows.Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
         try
         {
             // Inicializar el sistema de logging y servicios
             LoggingService.InitializeServices();
             _logger = LoggingService.GetLogger();
-            
+
             _logger.Logger.LogInformation("🚀 Aplicación GestLog iniciada");
+            // CORRECCIÓN: Cargar configuración PRIMERO, antes de crear cualquier ventana
+            await LoadApplicationConfigurationAsync();
+
             _logger.LogConfiguration("Version", "1.0.0");
             _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
             _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
-            
-            // CORRECCIÓN: Cargar configuración automáticamente al inicio
-            await LoadApplicationConfigurationAsync();
-            
+
             // 🔒 VALIDAR SEGURIDAD AL STARTUP
             await ValidateSecurityConfigurationAsync();
 
@@ -47,13 +46,17 @@ public partial class App : System.Windows.Application
 
             // Configurar manejo global de excepciones
             SetupGlobalExceptionHandling();
+
+            // --- CREAR MainWindow MANUALMENTE DESPUÉS DE CARGAR CONFIGURACIÓN ---
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
         }
         catch (Exception ex)
         {
             // Manejo de emergencia si falla la inicialización del logging
-            System.Windows.MessageBox.Show($"Error crítico al inicializar la aplicación:\n{ex.Message}", 
+            System.Windows.MessageBox.Show($"Error crítico al inicializar la aplicación:\n{ex.Message}",
                 "Error de Inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
-            
+
             // Intentar logging de emergencia
             try
             {
@@ -78,13 +81,13 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🔧 Cargando configuración de la aplicación...");
-            
+
             // Obtener el servicio de configuración
             var configurationService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
-            
+
             // Cargar la configuración desde el archivo
             await configurationService.LoadAsync();
-            
+
             _logger?.Logger.LogInformation("✅ Configuración de la aplicación cargada exitosamente");
         }
         catch (Exception ex)
@@ -102,13 +105,13 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🔒 Validando configuración de seguridad...");
-            
+
             // Obtener el servicio de validación de seguridad
             var securityValidationService = LoggingService.GetService<SecurityStartupValidationService>();
-            
+
             // Ejecutar validación completa
             var isValid = await securityValidationService.ValidateAllSecurityAsync();
-            
+
             if (isValid)
             {
                 _logger?.Logger.LogInformation("✅ Validación de seguridad completada exitosamente");
@@ -116,7 +119,7 @@ public partial class App : System.Windows.Application
             else
             {
                 _logger?.Logger.LogWarning("⚠️ Se encontraron problemas en la configuración de seguridad");
-                
+
                 // Mostrar guía de configuración al usuario
                 await securityValidationService.ShowSecurityGuidanceAsync();
             }
@@ -136,16 +139,16 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("💾 Inicializando conexión a base de datos...");
-            
+
             // Obtener el servicio de base de datos
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-            
+
             // Iniciar el servicio con monitoreo automático
             await databaseService.StartAsync();
-            
+
             // Suscribirse a cambios de estado para logging
             databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
-            
+
             _logger?.Logger.LogInformation("✅ Servicio de base de datos inicializado");
         }
         catch (Exception ex)
@@ -184,10 +187,10 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🛑 Aplicación GestLog cerrándose - Iniciando shutdown simplificado");
-            
+
             // Shutdown simplificado directo
             PerformDirectShutdown();
-            
+
             _logger?.Logger.LogInformation("✅ Shutdown simplificado completado");
         }
         catch (Exception ex)
@@ -207,7 +210,7 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🔧 Ejecutando shutdown directo...");
-            
+
             // Paso 1: Detener servicio de base de datos sin await
             try
             {
@@ -215,13 +218,13 @@ public partial class App : System.Windows.Application
                 if (databaseService != null)
                 {
                     _logger?.Logger.LogInformation("🛑 Deteniendo servicio de base de datos...");
-                    
+
                     // Desuscribirse de eventos
                     databaseService.ConnectionStateChanged -= OnDatabaseConnectionStateChanged;
-                    
+
                     // Solo disposar sin StopAsync para evitar bloqueos
                     databaseService.Dispose();
-                    
+
                     _logger?.Logger.LogInformation("✅ Servicio de base de datos dispuesto");
                 }
             }
@@ -229,14 +232,14 @@ public partial class App : System.Windows.Application
             {
                 _logger?.Logger.LogWarning(dbEx, "⚠️ Error deteniendo servicio de BD");
             }
-            
+
             // Paso 2: Dar tiempo mínimo para operaciones pendientes
             Thread.Sleep(100);
-            
+
             // Paso 3: Cerrar sistema de logging
             _logger?.Logger.LogInformation("🔄 Cerrando sistema de logging...");
             LoggingService.Shutdown();
-            
+
             // Paso 4: Forzar terminación del proceso inmediatamente
             Console.WriteLine("🛑 Terminando proceso inmediatamente");
             Environment.Exit(0);
@@ -257,10 +260,10 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += (sender, e) =>
         {
             errorHandler.HandleException(
-                e.Exception, 
+                e.Exception,
                 "DispatcherUnhandledException",
                 showToUser: true);
-            
+
             e.Handled = true; // Permitir que la aplicación continúe
         };
 
@@ -269,7 +272,7 @@ public partial class App : System.Windows.Application
         {
             var exception = e.ExceptionObject as Exception ?? new Exception("Unknown exception");
             errorHandler.HandleException(exception, "AppDomain.UnhandledException");
-            
+
             if (e.IsTerminating)
             {
                 _logger?.Logger.LogCritical("💥 La aplicación se está cerrando debido a una excepción no manejada");
@@ -280,7 +283,7 @@ public partial class App : System.Windows.Application
         {
             // Filtrar excepciones de red que son comunes y no críticas
             var innerException = e.Exception.GetBaseException();
-            
+
             if (innerException is SocketException socketEx)
             {
                 // Error 995: Operación de E/S cancelada - común en cancelaciones de red
@@ -290,7 +293,7 @@ public partial class App : System.Windows.Application
                     e.SetObserved(); // Marcar como observada
                     return;
                 }
-                
+
                 // Error 10054: Conexión cerrada por el servidor remoto
                 if (socketEx.ErrorCode == 10054)
                 {
@@ -299,7 +302,7 @@ public partial class App : System.Windows.Application
                     return;
                 }
             }
-            
+
             // Para otras excepciones de cancelación
             if (innerException is OperationCanceledException || innerException is TaskCanceledException)
             {
@@ -307,12 +310,12 @@ public partial class App : System.Windows.Application
                 e.SetObserved();
                 return;
             }
-            
+
             // Para errores serios, usar el manejador normal
             errorHandler.HandleException(e.Exception, "TaskScheduler.UnobservedTaskException");
             e.SetObserved(); // Marcar como observada para evitar el cierre de la aplicación
         };
-        
+
         // Suscribirse al evento de errores para posibles notificaciones adicionales
         errorHandler.ErrorOccurred += (sender, e) =>
         {
@@ -330,20 +333,20 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🚀 Verificando necesidad de First Run Setup...");
-            
+
             // Obtener el servicio de First Run Setup
             var firstRunSetupService = LoggingService.GetService<IFirstRunSetupService>();
-            
+
             // Verificar si es la primera ejecución
             var isFirstRun = await firstRunSetupService.IsFirstRunAsync();
-            
+
             if (isFirstRun)
             {
                 _logger?.Logger.LogInformation("🔧 Primera ejecución detectada, configurando automáticamente...");
-                
+
                 // Configurar automáticamente usando valores de appsettings.json
                 await firstRunSetupService.ConfigureAutomaticEnvironmentVariablesAsync();
-                
+
                 _logger?.Logger.LogInformation("✅ First Run Setup automático completado exitosamente");
             }
             else
@@ -354,7 +357,7 @@ public partial class App : System.Windows.Application
         catch (Exception ex)
         {
             _logger?.Logger.LogError(ex, "❌ Error durante la verificación del First Run Setup");
-            
+
             // Mostrar error al usuario pero no cerrar la aplicación
             System.Windows.MessageBox.Show(
                 $"Error durante la configuración automática de base de datos:\n{ex.Message}\n\n" +
@@ -376,10 +379,10 @@ public partial class App : System.Windows.Application
         {
             // Crear el dialog usando el factory method
             var setupDialog = Views.FirstRunSetupDialog.Create(LoggingService.GetServiceProvider());
-            
+
             // Mostrar el dialog como modal
             var result = setupDialog.ShowDialog();
-            
+
             return result == true;
         }
         catch (Exception ex)

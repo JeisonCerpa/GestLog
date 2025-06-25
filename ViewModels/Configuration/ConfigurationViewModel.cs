@@ -13,12 +13,28 @@ namespace GestLog.ViewModels.Configuration;
 /// Proporciona interfaz reactiva para todas las configuraciones con validación y persistencia
 /// </summary>
 public partial class ConfigurationViewModel : ObservableObject
-{
-    private readonly IConfigurationService _configurationService;
+{    private readonly IConfigurationService _configurationService;
     private readonly IGestLogLogger _logger;
 
-    [ObservableProperty]
-    private AppConfiguration _configuration;
+    private AppConfiguration _configuration = null!;
+      /// <summary>
+    /// Configuración actual de la aplicación
+    /// </summary>
+    public AppConfiguration Configuration
+    {
+        get => _configuration;
+        set
+        {
+            if (SetProperty(ref _configuration, value))
+            {
+                // Reconfigurar eventos de PropertyChanged para la nueva configuración
+                if (value != null)
+                {
+                    value.PropertyChanged += async (_, _) => await ValidateCurrentConfiguration();
+                }
+            }
+        }
+    }
 
     [ObservableProperty]
     private bool _hasUnsavedChanges;
@@ -30,7 +46,7 @@ public partial class ConfigurationViewModel : ObservableObject
     private bool _isSaving;
 
     [ObservableProperty]
-    private string _statusMessage = "";
+    private string _statusMessage = string.Empty;
 
     [ObservableProperty]
     private ObservableCollection<string> _validationErrors = new();
@@ -49,24 +65,22 @@ public partial class ConfigurationViewModel : ObservableObject
         new("SMTP", "📧", "Configuraciones del servidor de correo"),
         new("DaaterProcessor", "📊", "Configuraciones del procesador de datos"),
         new("ErrorLog", "⚠️", "Configuraciones del registro de errores")
-    };
-
-    public ConfigurationViewModel(IConfigurationService configurationService, IGestLogLogger logger)
+    };    public ConfigurationViewModel(IConfigurationService configurationService, IGestLogLogger logger)
     {
         _configurationService = configurationService;
         _logger = logger;
-        _configuration = _configurationService.Current;
+        
+        // Usar la propiedad en lugar del campo para activar el setter personalizado
+        Configuration = _configurationService.Current;
 
         // Suscribirse a eventos del servicio de configuración
         _configurationService.ConfigurationChanged += OnConfigurationChanged;
-        _configurationService.ConfigurationSaved += OnConfigurationSaved;
-
-        // Inicializar con la configuración actual
-        HasUnsavedChanges = _configurationService.HasUnsavedChanges;        // Configurar validación automática cuando cambien las propiedades
-        _configuration.PropertyChanged += async (_, _) => await ValidateCurrentConfiguration();
-    }
-
-    /// <summary>
+        _configurationService.ConfigurationSaved += OnConfigurationSaved;        // Inicializar con la configuración actual
+        HasUnsavedChanges = _configurationService.HasUnsavedChanges;        
+        
+        // Configurar validación automática cuando cambien las propiedades
+        // (ya se hace en el setter de Configuration)
+    }/// <summary>
     /// Comando para cargar la configuración
     /// </summary>
     [RelayCommand]
@@ -78,9 +92,17 @@ public partial class ConfigurationViewModel : ObservableObject
             StatusMessage = "Cargando configuración...";
             
             _logger.LogDebug("🔄 Cargando configuración desde ViewModel");
+            _logger.LogDebug($"[DEBUG] Configuration ANTES de cargar - InstanceId: {_configuration?.General?.InstanceId}");
             
             await _configurationService.LoadAsync();
+            
+            var oldInstanceId = _configuration?.General?.InstanceId;
             Configuration = _configurationService.Current;
+            var newInstanceId = _configuration?.General?.InstanceId;
+            
+            _logger.LogDebug($"[DEBUG] Configuration DESPUÉS de cargar - InstanceId ANTERIOR: {oldInstanceId}, NUEVO: {newInstanceId}");
+            _logger.LogDebug($"[DEBUG] ¿Se actualizó la instancia? {oldInstanceId != newInstanceId}");
+            
             HasUnsavedChanges = _configurationService.HasUnsavedChanges;
             
             await ValidateCurrentConfiguration();

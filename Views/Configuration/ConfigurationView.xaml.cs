@@ -18,6 +18,7 @@ public partial class ConfigurationView : System.Windows.Controls.UserControl
 {
     private ConfigurationViewModel? _viewModel;
     private System.Windows.Controls.Button? _activeButton;
+    private string _currentSection = "General"; // Rastrear la sección actual
 
     public ConfigurationView()
     {
@@ -34,6 +35,17 @@ public partial class ConfigurationView : System.Windows.Controls.UserControl
                 var logger = LoggingService.GetLogger();
                 _viewModel = new ConfigurationViewModel(configService, logger);
                 DataContext = _viewModel;
+                
+                // Suscribirse a cambios en el Configuration para actualizar las vistas
+                _viewModel.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == nameof(ConfigurationViewModel.Configuration))
+                    {
+                        // Refrescar la vista actual para que use la nueva configuración
+                        RefreshCurrentSection();
+                    }
+                };
+                
                 await _viewModel.LoadConfigurationCommand.ExecuteAsync(null);
             }
         }
@@ -58,10 +70,10 @@ public partial class ConfigurationView : System.Windows.Controls.UserControl
             NavigateToSection(section);
             SetActiveButton(button);
         }
-    }
-
-    private void NavigateToSection(string section)
+    }    private void NavigateToSection(string section)
     {
+        _currentSection = section; // Guardar la sección actual
+        
         System.Windows.Controls.UserControl? sectionView = section switch
         {
             "General" => new GeneralConfigView { DataContext = _viewModel?.Configuration?.General },
@@ -77,6 +89,14 @@ public partial class ConfigurationView : System.Windows.Controls.UserControl
         {
             ConfigContentPresenter.Content = sectionView;
         }
+    }
+    
+    /// <summary>
+    /// Refresca la vista de la sección actual con la nueva configuración
+    /// </summary>
+    private void RefreshCurrentSection()
+    {
+        NavigateToSection(_currentSection);
     }
     
     // Método para navegar directamente a la configuración de DaaterProcessor

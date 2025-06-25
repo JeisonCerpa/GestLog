@@ -124,49 +124,36 @@ public class ConfigurationService : IConfigurationService
     /// Guarda la configuración actual al archivo
     /// </summary>
     public async Task SaveAsync()
-    {
-        try
+    {        try
         {
             _logger.LogDebug("💾 Guardando configuración en {FilePath}", _configFilePath);
-
             // Actualizar timestamp de modificación
-            _current.LastModified = DateTime.Now;            // Validar configuración antes de guardar
-            var validationErrors = await ValidateAsync();            if (validationErrors.Any())
+            _current.LastModified = DateTime.Now;
+            // Validar configuración antes de guardar
+            var validationErrors = await ValidateAsync();
+            if (validationErrors.Any())
             {
                 var errorMessage = $"Configuración inválida: {string.Join(", ", validationErrors)}";
                 _logger.LogInformation("❌ ERRORES DE VALIDACIÓN al guardar configuración: {0}", errorMessage);
-                
-                // Log cada error individualmente para mejor diagnóstico
                 foreach (var error in validationErrors)
                 {
                     _logger.LogInformation("  - {0}", error);
                 }
-                
                 OnConfigurationSaved(new ConfigurationSavedEventArgs(_current, false, errorMessage));
                 return;
             }
-
             // Crear directorio si no existe
             var configDirectory = Path.GetDirectoryName(_configFilePath);
             if (!Directory.Exists(configDirectory))
             {
                 Directory.CreateDirectory(configDirectory!);
+                _logger.LogDebug("📁 Directorio de configuración creado: {Directory}", configDirectory ?? "null");
             }
-
-            // Crear backup del archivo anterior
-            if (File.Exists(_configFilePath))
-            {
-                var backupPath = $"{_configFilePath}.backup";
-                File.Copy(_configFilePath, backupPath, overwrite: true);
-                _logger.LogDebug("🔄 Backup creado en {BackupPath}", backupPath);
-            }
-
-            // Serializar y guardar
+            // Guardar archivo JSON
             var json = JsonSerializer.Serialize(_current, _jsonOptions);
-            await File.WriteAllTextAsync(_configFilePath, json);
-
+            await File.WriteAllTextAsync(_configFilePath, json); // Corregido: sin cancellationToken
             _hasUnsavedChanges = false;
-            _logger.LogInformation("✅ Configuración guardada exitosamente");
+            _logger.LogInformation("✅ Configuración guardada exitosamente en {FilePath}", _configFilePath);
             OnConfigurationSaved(new ConfigurationSavedEventArgs(_current, true));
         }
         catch (Exception ex)

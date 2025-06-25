@@ -16,6 +16,7 @@ public class GeneralSettings : INotifyPropertyChanged
     private int _autoSaveInterval = 5; // minutos
     private string _language = "es-ES";
     private bool _checkForUpdates = true;
+    private bool _startMaximized = true;
 
     /// <summary>
     /// Nombre de la aplicación
@@ -87,6 +88,13 @@ public class GeneralSettings : INotifyPropertyChanged
     {
         get => _checkForUpdates;
         set => SetProperty(ref _checkForUpdates, value);
+    }    /// <summary>
+    /// Iniciar la aplicación maximizada
+    /// </summary>
+    public bool StartMaximized
+    {
+        get => _startMaximized;
+        set => SetProperty(ref _startMaximized, value);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
