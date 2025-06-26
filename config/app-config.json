@@ -3,8 +3,7 @@
     "applicationName": "GestLog",
     "version": "1.0.0",
     "language": "es-ES",
-    "autoSave": true,
-    "autoSaveInterval": 300
+    "autoSave": true
   },
   "ui": {
     "theme": "Default",

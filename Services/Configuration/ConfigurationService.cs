@@ -281,12 +281,6 @@ public class ConfigurationService : IConfigurationService
 
         try
         {
-            // Validar configuraciones generales
-            if (string.IsNullOrWhiteSpace(_current.General.ApplicationName))
-                errors.Add("El nombre de la aplicación no puede estar vacío");
-
-            if (_current.General.AutoSaveInterval < 1)
-                errors.Add("El intervalo de auto-guardado debe ser mayor a 0");
 
             // Validar configuraciones de UI
             if (_current.UI.FontSize < 8 || _current.UI.FontSize > 72)
