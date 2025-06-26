@@ -24,7 +24,7 @@
                   FontSize="24" FontWeight="SemiBold" 
                   Foreground="#2C3E50" Margin="0,0,0,20"/>
         
-        <TextBlock Text="Personalización de la apariencia y comportamiento de la interfaz" 
+        <TextBlock Text="Personalización del tema de la interfaz" 
                   FontSize="14" Foreground="#7F8C8D" 
                   Margin="0,0,0,30"/>
         
@@ -32,7 +32,7 @@
         <StackPanel Margin="0,0,0,20">
             <TextBlock Text="Tema" 
                       FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <ComboBox SelectedValue="{Binding Theme}" 
+            <ComboBox SelectedValue="{Binding Theme, Mode=TwoWay}" 
                      FontSize="14" Padding="10">
                 <ComboBoxItem Content="🌞 Claro" Tag="Light"/>
                 <ComboBoxItem Content="🌙 Oscuro" Tag="Dark"/>
@@ -41,143 +41,6 @@
             <TextBlock Text="El tema automático sigue la configuración del sistema" 
                       FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
         </StackPanel>
-        
-        <!-- Primary Color -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Color Primario" 
-                      FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <StackPanel Orientation="Horizontal">
-                <Rectangle Width="50" Height="30" 
-                          Fill="{Binding PrimaryColor}" 
-                          Stroke="#CCC" StrokeThickness="1"
-                          Margin="0,0,10,0"/>
-                <TextBox Text="{Binding PrimaryColor, UpdateSourceTrigger=PropertyChanged}" 
-                        Width="100" Padding="5" FontSize="14"/>
-                <Button Content="🎨" Padding="8" Margin="10,0,0,0" 
-                       Click="SelectPrimaryColor_Click"/>
-            </StackPanel>
-            <TextBlock Text="Color principal utilizado en la interfaz" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
-        </StackPanel>
-        
-        <!-- Secondary Color -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Color Secundario" 
-                      FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <StackPanel Orientation="Horizontal">
-                <Rectangle Width="50" Height="30" 
-                          Fill="{Binding SecondaryColor}" 
-                          Stroke="#CCC" StrokeThickness="1"
-                          Margin="0,0,10,0"/>
-                <TextBox Text="{Binding SecondaryColor, UpdateSourceTrigger=PropertyChanged}" 
-                        Width="100" Padding="5" FontSize="14"/>
-                <Button Content="🎨" Padding="8" Margin="10,0,0,0" 
-                       Click="SelectSecondaryColor_Click"/>
-            </StackPanel>
-            <TextBlock Text="Color secundario para elementos de apoyo" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
-        </StackPanel>
-        
-        <!-- Font Settings -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Configuración de Fuentes" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-                
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Familia:" 
-                          VerticalAlignment="Center" Margin="0,0,10,5"/>
-                <ComboBox Grid.Row="0" Grid.Column="1" 
-                         SelectedValue="{Binding FontFamily}" 
-                         FontSize="14" Padding="8" Margin="0,0,10,5">
-                    <ComboBoxItem Content="Segoe UI"/>
-                    <ComboBoxItem Content="Arial"/>
-                    <ComboBoxItem Content="Calibri"/>
-                    <ComboBoxItem Content="Tahoma"/>
-                </ComboBox>
-                
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tamaño:" 
-                          VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <Slider Grid.Row="1" Grid.Column="1" 
-                       Value="{Binding FontSize}" 
-                       Minimum="10" Maximum="18" 
-                       TickFrequency="1" TickPlacement="BottomRight"
-                       IsSnapToTickEnabled="True" Margin="0,0,10,0"/>                <TextBlock Grid.Row="1" Grid.Column="2" 
-                          Text="{Binding FontSize, StringFormat={}{0}pt}" 
-                          VerticalAlignment="Center"/>
-            </Grid>
-        </StackPanel>
-        
-        <!-- Animation Settings -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Animaciones" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <CheckBox IsChecked="{Binding EnableAnimations}" 
-                     Content="Habilitar animaciones" 
-                     Margin="0,5"/>
-            
-            <StackPanel IsEnabled="{Binding EnableAnimations}" Margin="20,0,0,0">
-                <TextBlock Text="Velocidad de animación" 
-                          FontWeight="Medium" Margin="0,10,0,5"/>
-                <Slider Value="{Binding AnimationSpeed}" 
-                       Minimum="0.5" Maximum="2.0" 
-                       TickFrequency="0.25" TickPlacement="BottomRight"
-                       IsSnapToTickEnabled="True" Width="300" 
-                       HorizontalAlignment="Left"/>                <TextBlock Text="{Binding AnimationSpeed, StringFormat={}Velocidad: {0:F1}x}" 
-                          FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
-            </StackPanel>
-        </StackPanel>
-        
-        <!-- Window Settings -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Configuración de Ventanas" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <CheckBox IsChecked="{Binding ShowSplashScreen}" 
-                     Content="Mostrar pantalla de bienvenida" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding ShowStatusBar}" 
-                     Content="Mostrar barra de estado" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding ShowToolbar}" 
-                     Content="Mostrar barra de herramientas" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding MinimizeToTray}" 
-                     Content="Minimizar a la bandeja del sistema" 
-                     Margin="0,5"/>
-        </StackPanel>
-        
-        <!-- Accessibility -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Accesibilidad" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <CheckBox IsChecked="{Binding HighContrast}" 
-                     Content="Alto contraste" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding ReduceMotion}" 
-                     Content="Reducir movimiento" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding LargeText}" 
-                     Content="Texto grande" 
-                     Margin="0,5"/>
-        </StackPanel>
-        
     </StackPanel>
     
 </UserControl>

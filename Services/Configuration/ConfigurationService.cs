@@ -283,11 +283,7 @@ public class ConfigurationService : IConfigurationService
         {
 
             // Validar configuraciones de UI
-            if (_current.UI.FontSize < 8 || _current.UI.FontSize > 72)
-                errors.Add("El tamaño de fuente debe estar entre 8 y 72");
-
-            if (_current.UI.WindowOpacity < 0.1 || _current.UI.WindowOpacity > 1.0)
-                errors.Add("La opacidad debe estar entre 0.1 y 1.0");
+            // Eliminado: FontSize y WindowOpacity
 
             // Validar configuraciones de logging
             if (_current.Logging.MaxLogFiles < 1)
