@@ -78,7 +78,7 @@ public partial class ConfigurationView : System.Windows.Controls.UserControl
         {
             "General" => new GeneralConfigView { DataContext = _viewModel?.Configuration?.General },
             "UI" => new UIConfigView { DataContext = _viewModel?.Configuration?.UI },
-            "Logging" => new LoggingConfigView { DataContext = _viewModel?.Configuration?.Logging },
+            // "Logging" => new LoggingConfigView { DataContext = _viewModel?.Configuration?.Logging }, // Eliminado: Logging ya no es accesible
             "Performance" => new PerformanceConfigView { DataContext = _viewModel?.Configuration?.Performance },
             "Modules" => new ModulesConfigView { DataContext = _viewModel?.Configuration?.Modules },
             "DaaterProcessor" => new DaaterProcessorConfigView(),

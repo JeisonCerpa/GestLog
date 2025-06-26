@@ -15,6 +15,7 @@
     "logLevel": "Information",
     "logToFile": true,
     "logToConsole": true,
+    "logDirectory": "Logs",
     "maxLogFiles": 30
   },
   "performance": {

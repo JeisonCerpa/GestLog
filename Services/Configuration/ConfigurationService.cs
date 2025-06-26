@@ -289,8 +289,7 @@ public class ConfigurationService : IConfigurationService
             if (_current.Logging.MaxLogFiles < 1)
                 errors.Add("El número máximo de archivos de log debe ser mayor a 0");
 
-            if (_current.Logging.MaxFileSizeBytes < 1024)
-                errors.Add("El tamaño máximo de archivo debe ser mayor a 1KB");            // Validar configuraciones de rendimiento
+            // Validar configuraciones de rendimiento
             if (_current.Performance.MaxConcurrentOperations < 1)
                 errors.Add("El número de operaciones concurrentes debe ser mayor a 0");
 

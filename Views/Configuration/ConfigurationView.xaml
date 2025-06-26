@@ -44,12 +44,6 @@
                            Click="NavigationButton_Click"
                            Tag="UI"/>
                     
-                    <Button Name="btnLogging" 
-                           Content="📝 Logging" 
-                           Style="{StaticResource ConfigNavButtonStyle}"
-                           Click="NavigationButton_Click"
-                           Tag="Logging"/>
-                    
                     <Button Name="btnPerformance" 
                            Content="⚡ Rendimiento" 
                            Style="{StaticResource ConfigNavButtonStyle}"

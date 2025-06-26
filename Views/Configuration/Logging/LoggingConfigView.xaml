@@ -18,143 +18,15 @@
         </ResourceDictionary>
     </UserControl.Resources>
     
-    <StackPanel>
-        <!-- Header -->
-        <TextBlock Text="📝 Configuración de Logging" 
-                  FontSize="24" FontWeight="SemiBold" 
-                  Foreground="#2C3E50" Margin="0,0,0,20"/>
-        
-        <TextBlock Text="Configuración del sistema de registro de eventos y errores" 
-                  FontSize="14" Foreground="#7F8C8D" 
-                  Margin="0,0,0,30"/>
-        
-        <!-- Log Level -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Nivel de Logging" 
-                      FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <ComboBox SelectedValue="{Binding LogLevel}" 
-                     FontSize="14" Padding="10">
-                <ComboBoxItem Content="🔍 Trace - Información muy detallada" Tag="Trace"/>
-                <ComboBoxItem Content="🐛 Debug - Información de depuración" Tag="Debug"/>
-                <ComboBoxItem Content="ℹ️ Information - Información general" Tag="Information"/>
-                <ComboBoxItem Content="⚠️ Warning - Advertencias" Tag="Warning"/>
-                <ComboBoxItem Content="❌ Error - Solo errores" Tag="Error"/>
-                <ComboBoxItem Content="💥 Critical - Solo errores críticos" Tag="Critical"/>
-            </ComboBox>
-            <TextBlock Text="Determina qué eventos se registran en los archivos de log" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
+    <Grid>
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="📝 Configuración de Logging" 
+                       FontSize="24" FontWeight="SemiBold" 
+                       Foreground="#2C3E50" Margin="0,0,0,20"/>
+            <TextBlock Text="La configuración de logging es automática y no requiere intervención del usuario."
+                       FontSize="16" Foreground="#7F8C8D" TextAlignment="Center"/>
+            <TextBlock Text="Todos los eventos importantes y errores se registran automáticamente en el sistema."
+                       FontSize="14" Foreground="#7F8C8D" Margin="0,20,0,0" TextAlignment="Center"/>
         </StackPanel>
-        
-        <!-- Enable File Logging -->
-        <StackPanel Margin="0,0,0,20">
-            <CheckBox IsChecked="{Binding EnableFileLogging}" 
-                     Content="Habilitar logging a archivos" 
-                     FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <StackPanel IsEnabled="{Binding EnableFileLogging}" Margin="20,0,0,0">
-                <!-- Log Directory -->
-                <TextBlock Text="Directorio de Logs" 
-                          FontWeight="Medium" Margin="0,0,0,5"/>
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0" 
-                            Text="{Binding LogDirectory, UpdateSourceTrigger=PropertyChanged}" 
-                            Padding="10" FontSize="14" Margin="0,0,10,0"/>
-                    <Button Grid.Column="1" Content="📁 Examinar" 
-                           Padding="10,8" Click="BrowseLogDirectory_Click"/>
-                </Grid>
-                
-                <!-- Max File Size -->
-                <TextBlock Text="Tamaño máximo por archivo (MB)" 
-                          FontWeight="Medium" Margin="0,0,0,5"/>
-                <Slider Value="{Binding MaxFileSizeMB}" 
-                       Minimum="1" Maximum="100" 
-                       TickFrequency="5" TickPlacement="BottomRight"
-                       IsSnapToTickEnabled="True" Width="300"                       HorizontalAlignment="Left" Margin="0,0,0,5"/>
-                <TextBlock Text="{Binding MaxFileSizeMB, StringFormat={}{0} MB}" 
-                          FontSize="12" Foreground="#7F8C8D" Margin="0,0,0,15"/>
-                
-                <!-- Max Log Files -->
-                <TextBlock Text="Número máximo de archivos" 
-                          FontWeight="Medium" Margin="0,0,0,5"/>
-                <Slider Value="{Binding MaxLogFiles}" 
-                       Minimum="1" Maximum="30" 
-                       TickFrequency="1" TickPlacement="BottomRight"
-                       IsSnapToTickEnabled="True" Width="300"                       HorizontalAlignment="Left" Margin="0,0,0,5"/>
-                <TextBlock Text="{Binding MaxLogFiles, StringFormat={}{0} archivos}" 
-                          FontSize="12" Foreground="#7F8C8D" Margin="0,0,0,0"/>
-            </StackPanel>
-        </StackPanel>
-        
-        <!-- Console Logging -->
-        <StackPanel Margin="0,0,0,20">
-            <CheckBox IsChecked="{Binding EnableConsoleLogging}" 
-                     Content="Habilitar logging en consola" 
-                     FontWeight="SemiBold"/>
-            <TextBlock Text="Muestra los logs en la ventana de salida de depuración" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="20,5,0,0"/>
-        </StackPanel>
-        
-        <!-- Structured Logging -->
-        <StackPanel Margin="0,0,0,20">
-            <CheckBox IsChecked="{Binding EnableStructuredLogging}" 
-                     Content="Habilitar logging estructurado" 
-                     FontWeight="SemiBold"/>
-            <TextBlock Text="Guarda los logs en formato JSON para análisis avanzado" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="20,5,0,0"/>
-        </StackPanel>
-        
-        <!-- Performance Logging -->
-        <StackPanel Margin="0,0,0,20">
-            <CheckBox IsChecked="{Binding LogPerformanceMetrics}" 
-                     Content="Registrar métricas de rendimiento" 
-                     FontWeight="SemiBold"/>
-            <TextBlock Text="Incluye información sobre tiempo de ejecución y uso de memoria" 
-                      FontSize="12" Foreground="#7F8C8D" Margin="20,5,0,0"/>
-        </StackPanel>
-        
-        <!-- Error Reporting -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Reporte de Errores" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <CheckBox IsChecked="{Binding AutoReportErrors}" 
-                     Content="Reportar errores automáticamente" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding IncludeStackTrace}" 
-                     Content="Incluir stack trace en reportes" 
-                     Margin="0,5"/>
-            
-            <CheckBox IsChecked="{Binding LogUserActions}" 
-                     Content="Registrar acciones del usuario" 
-                     Margin="0,5"/>
-        </StackPanel>
-        
-        <!-- Log Cleanup -->
-        <StackPanel Margin="0,0,0,20">
-            <TextBlock Text="Limpieza de Logs" 
-                      FontWeight="SemiBold" Margin="0,0,0,10"/>
-            
-            <CheckBox IsChecked="{Binding EnableLogCleanup}" 
-                     Content="Habilitar limpieza automática" 
-                     FontWeight="Medium" Margin="0,0,0,10"/>
-            
-            <StackPanel IsEnabled="{Binding EnableLogCleanup}" Margin="20,0,0,0">
-                <TextBlock Text="Eliminar logs más antiguos que (días)" 
-                          FontWeight="Medium" Margin="0,0,0,5"/>
-                <Slider Value="{Binding LogRetentionDays}" 
-                       Minimum="7" Maximum="365" 
-                       TickFrequency="7" TickPlacement="BottomRight"
-                       IsSnapToTickEnabled="True" Width="300"                       HorizontalAlignment="Left"/>
-                <TextBlock Text="{Binding LogRetentionDays, StringFormat={}{0} días}" 
-                          FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,0"/>
-            </StackPanel>
-        </StackPanel>
-        
-    </StackPanel>
-    
+    </Grid>
 </UserControl>
