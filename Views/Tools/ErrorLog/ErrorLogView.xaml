@@ -27,129 +27,206 @@
     <Window.DataContext>
         <vm:ErrorLogViewModel />
     </Window.DataContext>
-    
-    <Grid Margin="10">
+
+    <Grid Background="#FAFAFA" Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <Button Command="{Binding RefreshErrorLogCommand}" 
-                    Content="Actualizar" 
-                    Padding="10,5"
-                    Margin="0,0,10,0"/>
-            <Button Command="{Binding CopyErrorDetailsCommand}" 
-                    Content="Copiar Detalles" 
-                    Padding="10,5"
-                    IsEnabled="{Binding SelectedError, Converter={StaticResource NullToBoolConverter}}"
-                    Margin="0,0,10,0"/>
-            <Button Command="{Binding ClearSelectionCommand}" 
-                    Content="Limpiar Selección" 
-                    Padding="10,5"
-                    IsEnabled="{Binding SelectedError, Converter={StaticResource NullToBoolConverter}}"
-                    Margin="0,0,10,0"/>
+        <!-- Encabezado destacado con icono -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="40,30,0,10" VerticalAlignment="Center">
+            <Border Background="#118938" Width="40" Height="40" CornerRadius="20" VerticalAlignment="Center">
+                <TextBlock Text="📝" FontSize="22" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"/>
+            </Border>
+            <TextBlock Text="Registro de Errores"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Foreground="#118938"
+                       Margin="16,0,0,0"
+                       FontFamily="Segoe UI"
+                       VerticalAlignment="Center"/>
         </StackPanel>
-        
-        <Grid Grid.Row="1" Margin="0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
 
-            <DataGrid Grid.Column="0" 
-                      ItemsSource="{Binding Errors}" 
-                      SelectedItem="{Binding SelectedError}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      BorderThickness="1"
-                      BorderBrush="LightGray">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80" />
-                    <DataGridTextColumn Header="Fecha" Binding="{Binding Timestamp, StringFormat=dd/MM/yyyy HH:mm:ss}" Width="160" />
-                    <DataGridTextColumn Header="Tipo" Binding="{Binding ExceptionType}" Width="120" />
-                    <DataGridTextColumn Header="Contexto" Binding="{Binding Context}" Width="180" />
-                    <DataGridTextColumn Header="Mensaje" Binding="{Binding Message}" Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
+        <!-- Tarjeta principal -->
+        <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="16" Padding="36" Margin="30,0,30,0">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="2" Opacity="0.08"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <GridSplitter Grid.Column="1" 
-                          Width="5" 
-                          ResizeBehavior="PreviousAndNext" 
-                          Background="LightGray"/>
-
-            <ScrollViewer Grid.Column="2" 
-                          VerticalScrollBarVisibility="Auto" 
-                          HorizontalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <TextBlock Text="Detalles de error seleccionado:" 
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="ID:" 
-                               FontWeight="Bold" 
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectedError.Id}" 
-                               Margin="0,0,0,10"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    
-                    <TextBlock Text="Fecha:" 
-                               FontWeight="Bold"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectedError.Timestamp, StringFormat=dd/MM/yyyy HH:mm:ss}" 
-                               Margin="0,0,0,10"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    
-                    <TextBlock Text="Tipo:" 
-                               FontWeight="Bold"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectedError.ExceptionType}" 
-                               Margin="0,0,0,10"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    
-                    <TextBlock Text="Contexto:" 
-                               FontWeight="Bold"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectedError.Context}" 
-                               Margin="0,0,0,10"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    
-                    <TextBlock Text="Mensaje:" 
-                               FontWeight="Bold"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding SelectedError.Message}" 
-                               Margin="0,0,0,10"
-                               TextWrapping="Wrap"
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    
-                    <TextBlock Text="Stack Trace:" 
-                               FontWeight="Bold" 
-                               Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <Border BorderThickness="1" 
-                            BorderBrush="LightGray" 
-                            Padding="5"
-                            Margin="0,0,0,10"
-                            Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}">
-                        <TextBlock Text="{Binding SelectedError.StackTrace}" 
-                                  TextWrapping="NoWrap" 
-                                  FontFamily="Consolas" />
-                    </Border>
+                <!-- Acciones -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,24" HorizontalAlignment="Right">
+                    <Button Command="{Binding RefreshErrorLogCommand}"
+                            Content="🔄 Actualizar"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,0,8,0" />
+                    <Button Command="{Binding CopyErrorDetailsCommand}"
+                            Content="📋 Copiar Detalles"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            IsEnabled="{Binding SelectedError, Converter={StaticResource NullToBoolConverter}}"
+                            Margin="0,0,8,0" />
+                    <Button Command="{Binding ClearSelectionCommand}"
+                            Content="🧹 Limpiar Selección"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            IsEnabled="{Binding SelectedError, Converter={StaticResource NullToBoolConverter}}"
+                            Margin="0,0,0,0" />
                 </StackPanel>
-            </ScrollViewer>
-        </Grid>
 
-        <ProgressBar Grid.Row="2" 
-                     IsIndeterminate="{Binding IsLoading}" 
-                     Height="5" 
-                     Margin="0,0,0,5" />
+                <!-- Contenido principal -->
+                <Grid Grid.Row="1" Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="1.2*" />
+                    </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="3" 
-                   Text="{Binding StatusMessage}" 
+                    <DataGrid Grid.Column="0"
+                              ItemsSource="{Binding Errors}"
+                              SelectedItem="{Binding SelectedError}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              BorderThickness="1"
+                              BorderBrush="#E5E5E5"
+                              Background="#FAFAFA"
+                              RowBackground="#FFFFFF"
+                              AlternatingRowBackground="#F8F9FA"
+                              FontFamily="Segoe UI"
+                              FontSize="14"
+                              Foreground="#504F4E"
+                              Margin="0,0,14,0"
+                              GridLinesVisibility="None"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              EnableRowVirtualization="True"
+                              EnableColumnVirtualization="True">
+                        <DataGrid.Resources>
+                            <!-- Header en verde, más alto y elegante -->
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#118938"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="FontSize" Value="15"/>
+                                <Setter Property="Height" Value="38"/>
+                                <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                                <Setter Property="BorderBrush" Value="#2B8E3F"/>
+                            </Style>
+                            <!-- Selección visual -->
+                            <SolidColorBrush x:Key="DataGridSelectionBrush" Color="#E3FBE3"/>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80" />
+                            <DataGridTextColumn Header="Fecha" Binding="{Binding Timestamp, StringFormat=dd/MM/yyyy HH:mm:ss}" Width="160" />
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding ExceptionType}" Width="120" />
+                            <DataGridTextColumn Header="Contexto" Binding="{Binding Context}" Width="180" />
+                            <DataGridTextColumn Header="Mensaje" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <GridSplitter Grid.Column="1"
+                                  Width="7"
+                                  ResizeBehavior="PreviousAndNext"
+                                  Background="#E5E5E5"
+                                  Margin="0,0,0,0" />
+
+                    <ScrollViewer Grid.Column="2"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Auto">
+                        <Border Background="#F8F9FA" CornerRadius="10" Padding="18" Margin="0,0,0,0" BorderBrush="#E5E5E5" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Detalles de error seleccionado:"
+                                           FontWeight="SemiBold"
+                                           FontSize="16"
+                                           Foreground="#118938"
+                                           Margin="0,0,0,10"
+                                           FontFamily="Segoe UI"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="ID:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding SelectedError.Id}"
+                                           Margin="0,0,0,10"
+                                           Foreground="#504F4E"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="Fecha:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding SelectedError.Timestamp, StringFormat=dd/MM/yyyy HH:mm:ss}"
+                                           Margin="0,0,0,10"
+                                           Foreground="#504F4E"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="Tipo:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding SelectedError.ExceptionType}"
+                                           Margin="0,0,0,10"
+                                           Foreground="#504F4E"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="Contexto:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding SelectedError.Context}"
+                                           Margin="0,0,0,10"
+                                           Foreground="#504F4E"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="Mensaje:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding SelectedError.Message}"
+                                           Margin="0,0,0,10"
+                                           TextWrapping="Wrap"
+                                           Foreground="#504F4E"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <TextBlock Text="Stack Trace:"
+                                           FontWeight="SemiBold"
+                                           Foreground="#706F6F"
+                                           Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}" />
+                                <Border BorderThickness="1"
+                                        BorderBrush="#E5E5E5"
+                                        Background="#FFFFFF"
+                                        Padding="8"
+                                        Margin="0,0,0,10"
+                                        CornerRadius="6"
+                                        Visibility="{Binding SelectedError, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding SelectedError.StackTrace}"
+                                              TextWrapping="NoWrap"
+                                              FontFamily="Consolas"
+                                              Foreground="#504F4E" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Barra de progreso -->
+                <ProgressBar Grid.Row="2"
+                             IsIndeterminate="{Binding IsLoading}"
+                             Height="5"
+                             Margin="0,24,0,0"
+                             Foreground="#118938"
+                             Background="#E5E5E5" />
+            </Grid>
+        </Border>
+
+        <!-- Mensaje de estado -->
+        <TextBlock Grid.Row="2"
+                   Text="{Binding StatusMessage}"
                    TextWrapping="NoWrap"
-                   FontStyle="Italic" />
+                   FontStyle="Italic"
+                   Foreground="#706F6F"
+                   FontFamily="Segoe UI"
+                   Margin="40,0,0,20" />
     </Grid>
 </Window>
