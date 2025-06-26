@@ -11,7 +11,6 @@ public class AppConfiguration : INotifyPropertyChanged
 {    private GeneralSettings _general = new();
     private UISettings _ui = new();
     private LoggingSettings _logging = new();
-    private PerformanceSettings _performance = new();
     private SmtpSettings _smtp = new();
     private ModulesConfiguration _modules = new();
 
@@ -41,15 +40,6 @@ public class AppConfiguration : INotifyPropertyChanged
         get => _logging;
         set => SetProperty(ref _logging, value);
     }    /// <summary>
-    /// Configuraciones de rendimiento
-    /// </summary>
-    public PerformanceSettings Performance
-    {
-        get => _performance;
-        set => SetProperty(ref _performance, value);
-    }
-
-    /// <summary>
     /// Configuraciones del servidor SMTP para envío de emails
     /// </summary>
     public SmtpSettings Smtp

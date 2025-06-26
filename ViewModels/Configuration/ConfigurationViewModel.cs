@@ -61,7 +61,7 @@ public partial class ConfigurationViewModel : ObservableObject
     {
         new("General", "🔧", "Configuraciones generales de la aplicación"),        new("UI", "🎨", "Configuraciones de interfaz de usuario"),
         new("Logging", "📝", "Configuraciones del sistema de logging"),
-        new("Performance", "⚡", "Configuraciones de rendimiento"),
+        new("Modules", "🔧", "Configuraciones de módulos"),
         new("SMTP", "📧", "Configuraciones del servidor de correo"),
         new("DaaterProcessor", "📊", "Configuraciones del procesador de datos"),
         new("ErrorLog", "⚠️", "Configuraciones del registro de errores")

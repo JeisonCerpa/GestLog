@@ -18,11 +18,6 @@
     "logDirectory": "Logs",
     "maxLogFiles": 30
   },
-  "performance": {
-    "maxConcurrentOperations": 3,
-    "cacheEnabled": true,
-    "cacheDuration": 3600
-  },
   "smtp": {
     "server": "smtp.gmail.com",
     "port": 587,

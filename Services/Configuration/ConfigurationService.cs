@@ -237,7 +237,7 @@ public class ConfigurationService : IConfigurationService
             else
             {
                 // Restaurar sección específica
-                switch (section.ToLower())
+                switch (section?.ToLowerInvariant())
                 {
                     case "general":
                         _current.General = new GeneralSettings();
@@ -247,8 +247,6 @@ public class ConfigurationService : IConfigurationService
                         break;
                     case "logging":
                         _current.Logging = new LoggingSettings();
-                        break;                    case "performance":
-                        _current.Performance = new PerformanceSettings();
                         break;
                     case "smtp":
                         _current.Smtp = new SmtpSettings();
@@ -257,7 +255,7 @@ public class ConfigurationService : IConfigurationService
                         _current.Modules = new ModulesConfiguration();
                         break;
                     default:
-                        _logger.LogWarning("⚠️ Sección desconocida: {Section}", section);
+                        _logger.LogWarning("⚠️ Sección desconocida: {Section}", section ?? string.Empty);
                         return;
                 }
             }
@@ -278,7 +276,6 @@ public class ConfigurationService : IConfigurationService
     public Task<IEnumerable<string>> ValidateAsync()
     {
         var errors = new List<string>();
-
         try
         {
 
@@ -288,13 +285,6 @@ public class ConfigurationService : IConfigurationService
             // Validar configuraciones de logging
             if (_current.Logging.MaxLogFiles < 1)
                 errors.Add("El número máximo de archivos de log debe ser mayor a 0");
-
-            // Validar configuraciones de rendimiento
-            if (_current.Performance.MaxConcurrentOperations < 1)
-                errors.Add("El número de operaciones concurrentes debe ser mayor a 0");
-
-            if (_current.Performance.ProgressUpdateInterval < 50)
-                errors.Add("El intervalo de actualización debe ser mayor a 50ms");
 
             // Validar configuraciones SMTP
             if (_current.Smtp.IsConfigured)
@@ -319,8 +309,7 @@ public class ConfigurationService : IConfigurationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error durante la validación de configuración");
-            errors.Add($"Error de validación: {ex.Message}");
+            _logger.LogError(ex, "Error al validar configuración");
         }
 
         return Task.FromResult<IEnumerable<string>>(errors);
@@ -395,11 +384,10 @@ public class ConfigurationService : IConfigurationService
 
     private void SetupPropertyChangeHandlers(AppConfiguration config)
     {
-        // Configurar handlers para detectar cambios en toda la jerarquía
         config.PropertyChanged += OnConfigurationPropertyChanged;
         config.General.PropertyChanged += OnConfigurationPropertyChanged;
-        config.UI.PropertyChanged += OnConfigurationPropertyChanged;        config.Logging.PropertyChanged += OnConfigurationPropertyChanged;
-        config.Performance.PropertyChanged += OnConfigurationPropertyChanged;
+        config.UI.PropertyChanged += OnConfigurationPropertyChanged;
+        config.Logging.PropertyChanged += OnConfigurationPropertyChanged;
         config.Smtp.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.DaaterProcessor.PropertyChanged += OnConfigurationPropertyChanged;

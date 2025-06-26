@@ -44,12 +44,6 @@
                            Click="NavigationButton_Click"
                            Tag="UI"/>
                     
-                    <Button Name="btnPerformance" 
-                           Content="⚡ Rendimiento" 
-                           Style="{StaticResource ConfigNavButtonStyle}"
-                           Click="NavigationButton_Click"
-                           Tag="Performance"/>
-                    
                     <Button Name="btnModules" 
                            Content="🔧 Módulos" 
                            Style="{StaticResource ConfigNavButtonStyle}"
