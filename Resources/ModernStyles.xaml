@@ -192,7 +192,7 @@
             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
             <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
         </Style.Resources>
-        <Setter Property="Background" Value="#2196F3"/>
+        <Setter Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Template">
@@ -208,12 +208,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#1976D2"/>
+                            <Setter Property="Background" Value="{StaticResource PrimaryGreenHoverBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="TextElement.Foreground" Value="White"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#0D47A1"/>
+                            <Setter Property="Background" Value="{StaticResource SecondaryGreenBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="TextElement.Foreground" Value="White"/>
                         </Trigger>
