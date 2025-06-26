@@ -32,7 +32,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>        <!-- Título -->
+        </Grid.RowDefinitions>
+        <!-- Título -->
         <TextBlock Grid.Row="0" 
                    Text="⚙️ Configuración del Procesador de Datos" 
                    FontFamily="Segoe UI"
@@ -40,11 +41,12 @@
                    FontWeight="SemiBold" 
                    Foreground="#118938"
                    Margin="0,0,0,20"/>
-
         <!-- Panel de configuración -->
         <ScrollViewer Grid.Row="1" 
-                      VerticalScrollBarVisibility="Auto">
-            <StackPanel>                <!-- Rutas -->                <GroupBox Header="📁 Rutas de Archivos" 
+                      VerticalScrollBarVisibility="Auto" Background="#FAFAFA">
+            <StackPanel Background="#FFFFFF" Margin="30" Effect="{DynamicResource DropShadowEffect}">
+                <!-- Rutas -->
+                <GroupBox Header="📁 Rutas de Archivos" 
                           Style="{StaticResource ModernGroupBoxStyle}"
                           Margin="0,0,0,15" 
                           Padding="10">

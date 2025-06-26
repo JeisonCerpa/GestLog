@@ -19,14 +19,15 @@
     </UserControl.Resources>
     
     <Grid>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel Background="#FFFFFF" Margin="30" Effect="{DynamicResource DropShadowEffect}">
+            <!-- Header -->
             <TextBlock Text="📝 Configuración de Logging" 
                        FontSize="24" FontWeight="SemiBold" 
-                       Foreground="#2C3E50" Margin="0,0,0,20"/>
+                       Foreground="#118938" Margin="0,0,0,20" FontFamily="Segoe UI"/>
             <TextBlock Text="La configuración de logging es automática y no requiere intervención del usuario."
-                       FontSize="16" Foreground="#7F8C8D" TextAlignment="Center"/>
+                       FontSize="16" Foreground="#706F6F" TextAlignment="Center" FontFamily="Segoe UI"/>
             <TextBlock Text="Todos los eventos importantes y errores se registran automáticamente en el sistema."
-                       FontSize="14" Foreground="#7F8C8D" Margin="0,20,0,0" TextAlignment="Center"/>
+                       FontSize="14" Foreground="#706F6F" Margin="0,20,0,0" TextAlignment="Center" FontFamily="Segoe UI"/>
         </StackPanel>
     </Grid>
 </UserControl>

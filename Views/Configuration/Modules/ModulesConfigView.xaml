@@ -18,43 +18,42 @@
         </ResourceDictionary>
     </UserControl.Resources>
     
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#FAFAFA">
+        <StackPanel Background="#FFFFFF" Margin="30" Effect="{DynamicResource DropShadowEffect}">
             <!-- Header -->
             <TextBlock Text="🔧 Configuración de Módulos" 
                       FontSize="24" FontWeight="SemiBold" 
-                      Foreground="#2C3E50" Margin="0,0,0,20"/>
+                      Foreground="#118938" Margin="0,0,0,20" FontFamily="Segoe UI"/>
             
             <TextBlock Text="Configuración específica de cada módulo de la aplicación" 
-                      FontSize="14" Foreground="#7F8C8D" 
-                      Margin="0,0,0,30"/>
+                      FontSize="14" Foreground="#706F6F" 
+                      Margin="0,0,0,30" FontFamily="Segoe UI"/>
             
             <!-- DaaterProcessor Module -->
-            <Border Background="#F8F9FA" Padding="20" Margin="0,0,0,20" CornerRadius="5">
+            <Border Background="#F8F9FA" Padding="20" Margin="0,0,0,20" CornerRadius="8" BorderBrush="#E5E5E5" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="📊 DaaterProcessor" 
                               FontSize="18" FontWeight="SemiBold" 
-                              Foreground="#2C3E50" Margin="0,0,0,15"/>
+                              Foreground="#118938" Margin="0,0,0,15" FontFamily="Segoe UI"/>
                     
                     <!-- Enable Module -->
                     <CheckBox IsChecked="{Binding DaaterProcessor.IsEnabled}" 
                              Content="Habilitar módulo DaaterProcessor" 
-                             FontWeight="Medium" Margin="0,0,0,15"/>
+                             FontWeight="Medium" Margin="0,0,0,15" FontFamily="Segoe UI"/>
                     
                     <StackPanel IsEnabled="{Binding DaaterProcessor.IsEnabled}">
                         <!-- Max File Size -->
                         <TextBlock Text="Tamaño máximo de archivo (MB)" 
-                                  FontWeight="Medium" Margin="0,0,0,5"/>
+                                  FontWeight="Medium" Margin="0,0,0,5" FontFamily="Segoe UI"/>
                         <Slider Value="{Binding DaaterProcessor.MaxFileSizeMB}" 
                                Minimum="10" Maximum="500" 
-                               TickFrequency="10" TickPlacement="BottomRight"
-                               IsSnapToTickEnabled="True" Width="300" 
-                               HorizontalAlignment="Left"/>                        <TextBlock Text="{Binding DaaterProcessor.MaxFileSizeMB, StringFormat={}{0} MB}" 
+                               TickFrequency="10" TickPlacement="BottomRight"/>
+                        <TextBlock Text="{Binding DaaterProcessor.MaxFileSizeMB, StringFormat={}{0} MB}" 
                                   FontSize="12" Foreground="#7F8C8D" Margin="0,5,0,15"/>
                         
                         <!-- Max Rows -->
                         <TextBlock Text="Número máximo de filas a procesar" 
-                                  FontWeight="Medium" Margin="0,0,0,5"/>
+                                  FontWeight="Medium" Margin="0,0,0,5" FontFamily="Segoe UI"/>
                         <Slider Value="{Binding DaaterProcessor.MaxRowsToProcess}" 
                                Minimum="1000" Maximum="100000" 
                                TickFrequency="5000" TickPlacement="BottomRight"
@@ -81,7 +80,7 @@
                         
                         <!-- Timeout -->
                         <TextBlock Text="Timeout de procesamiento (minutos)" 
-                                  FontWeight="Medium" Margin="0,15,0,5"/>
+                                  FontWeight="Medium" Margin="0,15,0,5" FontFamily="Segoe UI"/>
                         <Slider Value="{Binding DaaterProcessor.ProcessingTimeoutMinutes}" 
                                Minimum="5" Maximum="60" 
                                TickFrequency="5" TickPlacement="BottomRight"
@@ -111,21 +110,21 @@
             </Border>
             
             <!-- ErrorLog Module -->
-            <Border Background="#F8F9FA" Padding="20" Margin="0,0,0,20" CornerRadius="5">
+            <Border Background="#F8F9FA" Padding="20" Margin="0,0,0,20" CornerRadius="8" BorderBrush="#E5E5E5" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="⚠️ Error Log" 
                               FontSize="18" FontWeight="SemiBold" 
-                              Foreground="#2C3E50" Margin="0,0,0,15"/>
+                              Foreground="#118938" Margin="0,0,0,15" FontFamily="Segoe UI"/>
                     
                     <!-- Enable Module -->
                     <CheckBox IsChecked="{Binding ErrorLog.IsEnabled}" 
                              Content="Habilitar módulo de registro de errores" 
-                             FontWeight="Medium" Margin="0,0,0,15"/>
+                             FontWeight="Medium" Margin="0,0,0,15" FontFamily="Segoe UI"/>
                     
                     <StackPanel IsEnabled="{Binding ErrorLog.IsEnabled}">
                         <!-- Max Entries -->
                         <TextBlock Text="Número máximo de entradas" 
-                                  FontWeight="Medium" Margin="0,0,0,5"/>
+                                  FontWeight="Medium" Margin="0,0,0,5" FontFamily="Segoe UI"/>
                         <Slider Value="{Binding ErrorLog.MaxEntries}" 
                                Minimum="100" Maximum="10000" 
                                TickFrequency="500" TickPlacement="BottomRight"
@@ -136,11 +135,11 @@
                         <!-- Auto Clear -->
                         <CheckBox IsChecked="{Binding ErrorLog.AutoClearOldEntries}" 
                                  Content="Limpiar entradas antiguas automáticamente" 
-                                 FontWeight="Medium" Margin="0,0,0,10"/>
+                                 FontWeight="Medium" Margin="0,0,0,10" FontFamily="Segoe UI"/>
                         
                         <StackPanel IsEnabled="{Binding ErrorLog.AutoClearOldEntries}" Margin="20,0,0,15">
                             <TextBlock Text="Retener errores por (días)" 
-                                      FontWeight="Medium" Margin="0,0,0,5"/>
+                                      FontWeight="Medium" Margin="0,0,0,5" FontFamily="Segoe UI"/>
                             <Slider Value="{Binding ErrorLog.RetentionDays}" 
                                    Minimum="7" Maximum="365" 
                                    TickFrequency="7" TickPlacement="BottomRight"
@@ -168,7 +167,7 @@
                         
                         <!-- Export Options -->
                         <TextBlock Text="Opciones de Exportación" 
-                                  FontWeight="Medium" Margin="0,15,0,10"/>
+                                  FontWeight="Medium" Margin="0,15,0,10" FontFamily="Segoe UI"/>
                         
                         <CheckBox IsChecked="{Binding ErrorLog.EnableAutoExport}" 
                                  Content="Exportar automáticamente" 

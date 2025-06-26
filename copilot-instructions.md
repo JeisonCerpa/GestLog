@@ -6,7 +6,6 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 
 ## 🎨 **Tema Visual**
 - **Paleta**: Verde principal `#118938`, verde secundario `#2B8E3F`, grises `#504F4E`, `#706F6F`, `#C0392B`
-- **Fuente**: `Segoe UI` (legible y elegante)
 - **Fondo**: Off-white `#FAFAFA` para contenido, cartas blancas `#FFFFFF`
 - **Efectos**: `DropShadowEffect` en navbar, cartas y botones con `CornerRadius="8"`
 - **Navbar**: Gradiente verde con logo en esquina inferior derecha
