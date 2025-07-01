@@ -57,7 +57,21 @@ public partial class AutomaticEmailViewModel : ObservableObject
     /// <summary>
     /// Determina si se puede cancelar el envío de emails
     /// </summary>
-    public bool CanCancelEmailSending => IsSendingEmail && _emailCancellationTokenSource != null;    public AutomaticEmailViewModel(
+    public bool CanCancelEmailSending 
+    {
+        get
+        {
+            // 🔍 DEBUG: Agregar logging detallado para diagnosticar por qué el botón de cancelar no se habilita
+            _logger.LogInformation("🔍 DEBUG - Evaluando CanCancelEmailSending:");
+            _logger.LogInformation("   IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
+            _logger.LogInformation("   _emailCancellationTokenSource != null: {HasToken}", _emailCancellationTokenSource != null);
+            
+            var canCancel = IsSendingEmail && _emailCancellationTokenSource != null;
+            _logger.LogInformation("   Resultado CanCancel: {CanCancel}", canCancel);
+            
+            return canCancel;
+        }
+    }    public AutomaticEmailViewModel(
         IEmailService? emailService,
         IExcelEmailService? excelEmailService,
         IGestLogLogger logger)
@@ -110,24 +124,36 @@ public partial class AutomaticEmailViewModel : ObservableObject
             _logger.LogError(ex, "Error al seleccionar archivo Excel de correos");
             LogText += $"\n❌ Error: {ex.Message}";
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Cancela el envío de emails en curso
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanCancelEmailSending))]
     public void CancelEmailSending()
     {
+        _logger.LogInformation("🔍 DEBUG - CancelEmailSending ejecutado");
         _logger.LogInformation("⏹️ Usuario solicitó cancelación del envío de emails");
+        _logger.LogInformation("   Estado actual IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
+        _logger.LogInformation("   Token disponible: {HasToken}", _emailCancellationTokenSource != null);
         
         // Cancelar la operación
-        _emailCancellationTokenSource?.Cancel();
+        if (_emailCancellationTokenSource != null)
+        {
+            _emailCancellationTokenSource.Cancel();
+            _logger.LogInformation("🔄 Token de cancelación de emails activado");
+        }
+        else
+        {
+            _logger.LogWarning("⚠️ No hay token de cancelación disponible");
+        }
         
         // Actualizar la UI
         EmailStatusMessage = "Cancelando envío de emails...";
+        _logger.LogInformation("📧 UI actualizada con mensaje de cancelación");
         
-        _logger.LogDebug("🔄 Token de cancelación de emails activado");
-    }    /// <summary>
+        // Notificar cambio en la capacidad de cancelar
+        OnPropertyChanged(nameof(CanCancelEmailSending));
+        _logger.LogDebug("🔔 Notificación enviada para CanCancelEmailSending");
+    }/// <summary>
     /// Analiza el matching entre documentos generados y correos del Excel
     /// </summary>
     private async Task AnalyzeEmailMatchingAsync()
@@ -826,19 +852,30 @@ public partial class AutomaticEmailViewModel : ObservableObject
     /// </summary>
     private bool CanSendDocumentsAutomatically()
     {
+        // 🔍 DEBUG: Agregar logging detallado para diagnosticar por qué el botón no se habilita
+        _logger.LogInformation("🔍 DEBUG - Evaluando CanSendDocumentsAutomatically:");
+        _logger.LogInformation("   IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
+        _logger.LogInformation("   IsEmailConfigured: {IsEmailConfigured}", IsEmailConfigured);
+        _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
+        _logger.LogInformation("   GeneratedDocuments.Count: {Count}", GeneratedDocuments.Count);
+        
         var canSend = !IsSendingEmail && 
                      IsEmailConfigured && 
                      HasEmailExcel && 
                      GeneratedDocuments.Count > 0;
 
+        _logger.LogInformation("   Resultado CanSend: {CanSend}", canSend);
+
         // ✨ MEJORA: Actualizar mensajes de estado según las condiciones
         if (!canSend && HasEmailExcel && !HasDocumentsGenerated)
         {
             DocumentStatusWarning = "⚠️ Genere documentos primero para habilitar envío";
+            _logger.LogInformation("   Estado: Documentos no generados");
         }
         else if (!canSend && !IsEmailConfigured && HasDocumentsGenerated)
         {
             DocumentStatusWarning = "⚠️ Configure SMTP para habilitar envío";
+            _logger.LogInformation("   Estado: SMTP no configurado");
         }
         
         return canSend;
