@@ -9,10 +9,10 @@ namespace GestLog.Modules.DatabaseConnection
     {
         public GestLogDbContext CreateDbContext(string[] args)
         {
-            // Cargar configuración desde config/database-production.json
+            // Cargar configuración desde config/database-development.json
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("config/database-production.json")
+                .AddJsonFile("config/database-development.json")
                 .Build();
 
             var dbSection = configuration.GetSection("Database");

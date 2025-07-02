@@ -182,7 +182,7 @@ public class FirstRunSetupService : IFirstRunSetupService
 
     /// <summary>
     /// Loads production configuration using hybrid strategy:
-    /// 1. Try config/database-production.json file
+    /// 1. Try config/database-development.json file
     /// 2. Fall back to hardcoded production values
     /// 3. Last resort: appsettings.json values
     /// </summary>
@@ -191,7 +191,7 @@ public class FirstRunSetupService : IFirstRunSetupService
         try
         {
             // PRIORIDAD 1: Intentar cargar desde archivo de configuración de producción
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "database-production.json");
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "database-development.json");
             
             if (File.Exists(configPath))
             {

@@ -1,9 +1,9 @@
 {
   "Database": {
-    "Server": "",
-    "Database": "",
-    "Username": "",
-    "Password": "",
+    "Server": "SIMICSGROUPWKS1\\SIMICSBD",
+    "Database": "BD_ Pruebas", 
+    "Username": "sa",
+    "Password": "REMOVED_SECRET",
     "UseIntegratedSecurity": false,
     "ConnectionTimeout": 30,
     "CommandTimeout": 30,
@@ -13,7 +13,7 @@
   "Metadata": {
     "Environment": "Production",
     "Version": "1.0",
-    "LastUpdated": "2025-07-02",
-    "Description": "Configuración de producción pendiente. Definir valores antes de publicar en producción."
+    "LastUpdated": "2025-06-17",
+    "Description": "Configuración de producción para SIMICS Group"
   }
 }
