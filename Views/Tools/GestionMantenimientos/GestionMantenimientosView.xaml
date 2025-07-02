@@ -1,0 +1,22 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionMantenimientos.GestionMantenimientosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:GestLog.Views.Tools.GestionMantenimientos"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1100">
+    <Grid Background="White" Margin="10">
+        <TabControl x:Name="tabMantenimientos" FontSize="15">
+            <TabItem Header="Equipos">
+                <local:EquiposView />
+            </TabItem>
+            <TabItem Header="Cronograma">
+                <local:CronogramaView />
+            </TabItem>
+            <TabItem Header="Seguimiento">
+                <local:SeguimientoView />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

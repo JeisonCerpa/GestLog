@@ -8,5 +8,6 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
     </Application.Resources>
 </Application>

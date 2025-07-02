@@ -95,4 +95,19 @@ public partial class HerramientasView : System.Windows.Controls.UserControl
             errorHandler.HandleException(ex, "Mostrar envío de catálogo desde herramientas");
         }
     }
+
+    private void BtnGestionMantenimientos_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // Ahora navega a la vista contenedora con tabs
+            var gestionMantenimientosView = new Views.Tools.GestionMantenimientos.GestionMantenimientosView();
+            _mainWindow?.NavigateToView(gestionMantenimientosView, "Gestión de Mantenimientos");
+        }
+        catch (System.Exception ex)
+        {
+            var errorHandler = LoggingService.GetErrorHandler();
+            errorHandler.HandleException(ex, "Mostrar gestión de mantenimientos desde herramientas");
+        }
+    }
 }

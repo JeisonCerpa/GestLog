@@ -121,6 +121,19 @@ public static class LoggingService
             services.AddTransient<Modules.GestionCartera.ViewModels.DocumentGenerationViewModel>();
             services.AddTransient<Modules.EnvioCatalogo.ViewModels.EnvioCatalogoViewModel>();
 
+            // Servicios de Gestión de Mantenimientos
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService, GestLog.Modules.GestionMantenimientos.Services.SeguimientoService>();
+
+            // ViewModels de Gestión de Mantenimientos
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
+
+            // Configuración de base de datos EF Core
+            GestLog.Startup.ConfigureDatabase(services, configuration);
+
             _serviceProvider = services.BuildServiceProvider();
             _isInitialized = true;
 
