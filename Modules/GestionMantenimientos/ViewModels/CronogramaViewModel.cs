@@ -32,6 +32,8 @@ public partial class CronogramaViewModel : ObservableObject
     {
         _cronogramaService = cronogramaService;
         _logger = logger;
+        // Cargar datos automáticamente al crear el ViewModel
+        Task.Run(async () => await LoadCronogramasAsync());
     }
 
     [RelayCommand]
@@ -103,5 +105,23 @@ public partial class CronogramaViewModel : ObservableObject
         }
     }
 
-    // TODO: Agregar comandos para eliminar, importar/exportar y backup de cronogramas
+    [RelayCommand]
+    public async Task DeleteCronogramaAsync()
+    {
+        if (SelectedCronograma == null)
+            return;
+        try
+        {
+            await _cronogramaService.DeleteAsync(SelectedCronograma.Codigo!);
+            Cronogramas.Remove(SelectedCronograma);
+            StatusMessage = "Cronograma eliminado correctamente.";
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar cronograma");
+            StatusMessage = "Error al eliminar cronograma.";
+        }
+    }
+
+    // TODO: Agregar comandos para importar/exportar y backup de cronogramas
 }

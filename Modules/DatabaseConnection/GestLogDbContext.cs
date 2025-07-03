@@ -3,6 +3,7 @@ using System;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace GestLog.Modules.DatabaseConnection
 {
@@ -26,9 +27,15 @@ namespace GestLog.Modules.DatabaseConnection
                 v => string.Join(";", v.Select(b => b ? "1" : "0")),
                 v => v.Length == 0 ? new bool[52] : v.Split(new[] {';'}, 52, System.StringSplitOptions.None).Select(s => s == "1").ToArray()
             );
+            var boolArrayComparer = new ValueComparer<bool[]>(
+                (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
+                a => a == null ? 0 : a.Aggregate(0, (hash, b) => hash * 31 + (b ? 1 : 0)),
+                a => a == null ? new bool[52] : a.ToArray()
+            );
             modelBuilder.Entity<CronogramaMantenimiento>()
                 .Property(c => c.Semanas)
-                .HasConversion(boolArrayToStringConverter);
+                .HasConversion(boolArrayToStringConverter)
+                .Metadata.SetValueComparer(boolArrayComparer);
 
             // Configuración explícita para enums y decimales en Equipo
             modelBuilder.Entity<Equipo>()
@@ -42,6 +49,11 @@ namespace GestLog.Modules.DatabaseConnection
                 .HasConversion<int?>();
             modelBuilder.Entity<Equipo>()
                 .Property(e => e.Precio)
+                .HasPrecision(18, 2);
+
+            // Configuración explícita para decimales en SeguimientoMantenimiento
+            modelBuilder.Entity<SeguimientoMantenimiento>()
+                .Property(s => s.Costo)
                 .HasPrecision(18, 2);
         }
     }

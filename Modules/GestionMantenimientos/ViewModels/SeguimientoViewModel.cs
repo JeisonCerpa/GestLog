@@ -32,6 +32,8 @@ public partial class SeguimientoViewModel : ObservableObject
     {
         _seguimientoService = seguimientoService;
         _logger = logger;
+        // Cargar datos automáticamente al crear el ViewModel
+        Task.Run(async () => await LoadSeguimientosAsync());
     }
 
     [RelayCommand]
@@ -103,5 +105,23 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
-    // TODO: Agregar comandos para eliminar, importar/exportar y backup de seguimientos
+    [RelayCommand]
+    public async Task DeleteSeguimientoAsync()
+    {
+        if (SelectedSeguimiento == null)
+            return;
+        try
+        {
+            await _seguimientoService.DeleteAsync(SelectedSeguimiento.Codigo!);
+            Seguimientos.Remove(SelectedSeguimiento);
+            StatusMessage = "Seguimiento eliminado correctamente.";
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar seguimiento");
+            StatusMessage = "Error al eliminar seguimiento.";
+        }
+    }
+
+    // TODO: Agregar comandos para importar/exportar y backup de seguimientos
 }
