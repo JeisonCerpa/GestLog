@@ -18,31 +18,20 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             if (equipo != null)
             {
                 // Modo edición: clonar para no modificar el original hasta guardar
-                Equipo = new EquipoDto
-                {
-                    Codigo = equipo.Codigo,
-                    Nombre = equipo.Nombre,
-                    Marca = equipo.Marca,
-                    Estado = equipo.Estado,
-                    Sede = equipo.Sede,
-                    FechaCompra = equipo.FechaCompra,
-                    Precio = equipo.Precio,
-                    Observaciones = equipo.Observaciones,
-                    FechaRegistro = equipo.FechaRegistro,
-                    FrecuenciaMtto = equipo.FrecuenciaMtto,
-                    FechaBaja = equipo.FechaBaja,
-                    SemanaInicioMtto = equipo.SemanaInicioMtto
-                };
+                Equipo = new EquipoDto(equipo);
+                Equipo.IsCodigoReadOnly = true;
+                Equipo.IsCodigoEnabled = false;
                 IsEditMode = true;
             }
             else
             {
                 Equipo = new EquipoDto();
+                Equipo.IsCodigoReadOnly = false;
+                Equipo.IsCodigoEnabled = true;
                 IsEditMode = false;
             }
             DataContext = new EquipoDialogViewModel(Equipo)
             {
-                // Exponer listas de enums para los combos
                 EstadosEquipo = System.Enum.GetValues(typeof(EstadoEquipo)) as EstadoEquipo[] ?? new EstadoEquipo[0],
                 Sedes = System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0],
                 FrecuenciasMantenimiento = System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0]
@@ -86,6 +75,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public DateTime? FechaRegistro { get => Equipo.FechaRegistro; set => Equipo.FechaRegistro = value; }
             public DateTime? FechaBaja { get => Equipo.FechaBaja; set => Equipo.FechaBaja = value; }
             public int? SemanaInicioMtto { get => Equipo.SemanaInicioMtto; set => Equipo.SemanaInicioMtto = value; }
+            public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }
+            public bool IsCodigoEnabled { get => Equipo.IsCodigoEnabled; set => Equipo.IsCodigoEnabled = value; }
             public EquipoDialogViewModel(EquipoDto equipo)
             {
                 Equipo = equipo;

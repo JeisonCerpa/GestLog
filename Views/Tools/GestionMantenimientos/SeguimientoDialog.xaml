@@ -24,7 +24,7 @@
                 </Grid.ColumnDefinitions>
                 <!-- Campos principales -->
                 <TextBlock Text="Código:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" Margin="0,4"/>
+                <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" Margin="0,4" IsReadOnly="{Binding Path=IsCodigoReadOnly}" IsEnabled="{Binding Path=IsCodigoEnabled}"/>
                 <TextBlock Text="Nombre:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
                 <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="0,4"/>
                 <TextBlock Text="Fecha:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>

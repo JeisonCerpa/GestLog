@@ -17,16 +17,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
     public class CronogramaService : ICronogramaService
     {
         private readonly IGestLogLogger _logger;
-        private readonly GestLogDbContext _dbContext;
-        public CronogramaService(IGestLogLogger logger, GestLogDbContext dbContext)
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        public CronogramaService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _logger = logger;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<IEnumerable<CronogramaMantenimientoDto>> GetAllAsync()
         {
-            var cronos = await _dbContext.Cronogramas.ToListAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var cronos = await dbContext.Cronogramas.ToListAsync();
             return cronos.Select(c => new CronogramaMantenimientoDto
             {
                 Codigo = c.Codigo,
@@ -41,7 +42,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
         public async Task<CronogramaMantenimientoDto?> GetByCodigoAsync(string codigo)
         {
-            var entity = await _dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == codigo);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == codigo);
             if (entity == null) return null;
             return new CronogramaMantenimientoDto
             {
@@ -53,91 +55,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FrecuenciaMtto = entity.FrecuenciaMtto,
                 Semanas = entity.Semanas.ToArray()
             };
-        }
-
-        public async Task AddAsync(CronogramaMantenimientoDto cronograma)
-        {
-            try
-            {
-                ValidarCronograma(cronograma);
-                var entity = new CronogramaMantenimiento
-                {
-                    Codigo = cronograma.Codigo!,
-                    Nombre = cronograma.Nombre!,
-                    Marca = cronograma.Marca,
-                    Sede = cronograma.Sede,
-                    SemanaInicioMtto = cronograma.SemanaInicioMtto,
-                    FrecuenciaMtto = cronograma.FrecuenciaMtto,
-                    Semanas = cronograma.Semanas.ToArray()
-                };
-                _dbContext.Cronogramas.Add(entity);
-                await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("[CronogramaService] Cronograma agregado correctamente: {Codigo}", cronograma?.Codigo ?? "");
-            }
-            catch (GestionMantenimientosDomainException ex)
-            {
-                _logger.LogWarning(ex, "[CronogramaService] Validation error on add");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[CronogramaService] Unexpected error on add");
-                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al agregar el cronograma. Por favor, contacte al administrador.", ex);
-            }
-        }
-
-        public async Task UpdateAsync(CronogramaMantenimientoDto cronograma)
-        {
-            try
-            {
-                ValidarCronograma(cronograma);
-                var entity = await _dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == cronograma.Codigo);
-                if (entity == null)
-                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a actualizar.");
-                entity.Nombre = cronograma.Nombre!;
-                entity.Marca = cronograma.Marca;
-                entity.Sede = cronograma.Sede;
-                entity.SemanaInicioMtto = cronograma.SemanaInicioMtto;
-                entity.FrecuenciaMtto = cronograma.FrecuenciaMtto;
-                entity.Semanas = cronograma.Semanas.ToArray();
-                await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("[CronogramaService] Cronograma actualizado correctamente: {Codigo}", cronograma?.Codigo ?? "");
-            }
-            catch (GestionMantenimientosDomainException ex)
-            {
-                _logger.LogWarning(ex, "[CronogramaService] Validation error on update");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[CronogramaService] Unexpected error on update");
-                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al actualizar el cronograma. Por favor, contacte al administrador.", ex);
-            }
-        }
-
-        public async Task DeleteAsync(string codigo)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(codigo))
-                    throw new GestionMantenimientosDomainException("El código del cronograma es obligatorio para eliminar.");
-                var entity = await _dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == codigo);
-                if (entity == null)
-                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a eliminar.");
-                _dbContext.Cronogramas.Remove(entity);
-                await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("[CronogramaService] Cronograma eliminado correctamente: {Codigo}", codigo ?? "");
-            }
-            catch (GestionMantenimientosDomainException ex)
-            {
-                _logger.LogWarning(ex, "[CronogramaService] Validation error on delete");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[CronogramaService] Unexpected error on delete");
-                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al eliminar el cronograma. Por favor, contacte al administrador.", ex);
-            }
         }
 
         private void ValidarCronograma(CronogramaMantenimientoDto cronograma)
@@ -158,7 +75,98 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
             if (cronograma.Semanas == null || cronograma.Semanas.Length != 52)
                 throw new GestionMantenimientosDomainException("El cronograma debe tener 52 semanas definidas.");
-            // TODO: Validar duplicados y otras reglas de negocio si aplica
+            // Validar duplicados solo en alta
+        }
+
+        public async Task AddAsync(CronogramaMantenimientoDto cronograma)
+        {
+            try
+            {
+                ValidarCronograma(cronograma);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                if (await dbContext.Cronogramas.AnyAsync(c => c.Codigo == cronograma.Codigo))
+                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}'.");                var entity = new CronogramaMantenimiento
+                {
+                    Codigo = cronograma.Codigo!,
+                    Nombre = cronograma.Nombre!,
+                    Marca = cronograma.Marca,
+                    Sede = cronograma.Sede,
+                    SemanaInicioMtto = cronograma.SemanaInicioMtto,
+                    FrecuenciaMtto = cronograma.FrecuenciaMtto,
+                    Semanas = cronograma.Semanas.ToArray()
+                };
+                dbContext.Cronogramas.Add(entity);
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation("[CronogramaService] Cronograma agregado correctamente: {Codigo}", cronograma?.Codigo ?? "");
+            }
+            catch (GestionMantenimientosDomainException ex)
+            {
+                _logger.LogWarning(ex, "[CronogramaService] Validation error on add");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaService] Unexpected error on add");
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al agregar el cronograma. Por favor, contacte al administrador.", ex);
+            }
+        }
+
+        public async Task UpdateAsync(CronogramaMantenimientoDto cronograma)
+        {
+            try
+            {
+                ValidarCronograma(cronograma);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == cronograma.Codigo);
+                if (entity == null)
+                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a actualizar.");
+                // No permitir cambiar el código
+                // entity.Codigo = cronograma.Codigo; // NO modificar
+                entity.Nombre = cronograma.Nombre!;
+                entity.Marca = cronograma.Marca;
+                entity.Sede = cronograma.Sede;
+                entity.SemanaInicioMtto = cronograma.SemanaInicioMtto;
+                entity.FrecuenciaMtto = cronograma.FrecuenciaMtto;
+                entity.Semanas = cronograma.Semanas.ToArray();
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation("[CronogramaService] Cronograma actualizado correctamente: {Codigo}", cronograma?.Codigo ?? "");
+            }
+            catch (GestionMantenimientosDomainException ex)
+            {
+                _logger.LogWarning(ex, "[CronogramaService] Validation error on update");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaService] Unexpected error on update");
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al actualizar el cronograma. Por favor, contacte al administrador.", ex);
+            }
+        }
+
+        public async Task DeleteAsync(string codigo)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(codigo))
+                    throw new GestionMantenimientosDomainException("El código del cronograma es obligatorio para eliminar.");
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == codigo);
+                if (entity == null)
+                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a eliminar.");
+                dbContext.Cronogramas.Remove(entity);
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation("[CronogramaService] Cronograma eliminado correctamente: {Codigo}", codigo ?? "");
+            }
+            catch (GestionMantenimientosDomainException ex)
+            {
+                _logger.LogWarning(ex, "[CronogramaService] Validation error on delete");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaService] Unexpected error on delete");
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al eliminar el cronograma. Por favor, contacte al administrador.", ex);
+            }
         }
 
         public async Task ImportarDesdeExcelAsync(string filePath)
@@ -304,7 +312,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
         public async Task<List<CronogramaMantenimientoDto>> GetCronogramasAsync()
         {
-            var cronos = await _dbContext.Cronogramas.ToListAsync();
+            var cronos = await _dbContextFactory.CreateDbContext().Cronogramas.ToListAsync();
             return cronos.Select(c => new CronogramaMantenimientoDto
             {
                 Codigo = c.Codigo,

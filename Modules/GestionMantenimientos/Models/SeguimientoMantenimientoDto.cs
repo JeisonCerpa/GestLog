@@ -15,6 +15,10 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public string? Observaciones { get; set; }
         public DateTime? FechaRegistro { get; set; }
 
+        // Propiedades auxiliares para la UI (no persistentes)
+        public bool IsCodigoReadOnly { get; set; } = false;
+        public bool IsCodigoEnabled { get; set; } = true;
+
         public SeguimientoMantenimientoDto() { }
 
         public SeguimientoMantenimientoDto(SeguimientoMantenimientoDto other)
@@ -29,6 +33,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Costo = other.Costo;
             Observaciones = other.Observaciones;
             FechaRegistro = other.FechaRegistro;
+            IsCodigoReadOnly = true;
+            IsCodigoEnabled = false;
         }
     }
 }

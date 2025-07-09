@@ -10,6 +10,17 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         {
             InitializeComponent();
             Cronograma = cronograma != null ? new CronogramaMantenimientoDto(cronograma) : new CronogramaMantenimientoDto();
+            // Deshabilitar edición de Código si es edición
+            if (cronograma != null)
+            {
+                Cronograma.IsCodigoReadOnly = true;
+                Cronograma.IsCodigoEnabled = false;
+            }
+            else
+            {
+                Cronograma.IsCodigoReadOnly = false;
+                Cronograma.IsCodigoEnabled = true;
+            }
             DataContext = Cronograma;
         }
         private void Aceptar_Click(object sender, RoutedEventArgs e)

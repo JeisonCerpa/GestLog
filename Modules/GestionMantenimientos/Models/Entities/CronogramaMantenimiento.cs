@@ -6,6 +6,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
     {
         public int Id { get; set; }
         public string Codigo { get; set; } = null!;
+        // NOTA: El campo Codigo debe ser único e inmutable. No permitir edición ni duplicados.
         public string Nombre { get; set; } = null!;
         public string? Marca { get; set; }
         public string? Sede { get; set; }

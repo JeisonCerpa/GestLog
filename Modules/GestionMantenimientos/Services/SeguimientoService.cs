@@ -18,16 +18,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
     public class SeguimientoService : ISeguimientoService
     {
         private readonly IGestLogLogger _logger;
-        private readonly GestLogDbContext _dbContext;
-        public SeguimientoService(IGestLogLogger logger, GestLogDbContext dbContext)
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        public SeguimientoService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _logger = logger;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
         {
-            var seguimientos = await _dbContext.Seguimientos.ToListAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var seguimientos = await dbContext.Seguimientos.ToListAsync();
             return seguimientos.Select(s => new SeguimientoMantenimientoDto
             {
                 Codigo = s.Codigo,
@@ -44,7 +45,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
         public async Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo)
         {
-            var entity = await _dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == codigo);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == codigo);
             if (entity == null) return null;
             return new SeguimientoMantenimientoDto
             {
@@ -65,6 +67,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarSeguimiento(seguimiento);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                if (await dbContext.Seguimientos.AnyAsync(s => s.Codigo == seguimiento.Codigo))
+                    throw new GestionMantenimientosDomainException($"Ya existe un seguimiento con el código '{seguimiento.Codigo}'.");               
                 var entity = new SeguimientoMantenimiento
                 {
                     Codigo = seguimiento.Codigo!,
@@ -77,8 +82,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Observaciones = seguimiento.Observaciones,
                     FechaRegistro = seguimiento.FechaRegistro
                 };
-                _dbContext.Seguimientos.Add(entity);
-                await _dbContext.SaveChangesAsync();
+                dbContext.Seguimientos.Add(entity);
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo}", seguimiento?.Codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)
@@ -98,9 +103,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarSeguimiento(seguimiento);
-                var entity = await _dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el seguimiento a actualizar.");
+                // No permitir cambiar el código
+                // entity.Codigo = seguimiento.Codigo; // NO modificar
                 entity.Nombre = seguimiento.Nombre!;
                 entity.Fecha = seguimiento.Fecha;
                 entity.TipoMtno = seguimiento.TipoMtno!.Value;
@@ -109,7 +117,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.Costo = seguimiento.Costo;
                 entity.Observaciones = seguimiento.Observaciones;
                 entity.FechaRegistro = seguimiento.FechaRegistro;
-                await _dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo}", seguimiento?.Codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)
@@ -130,11 +138,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 if (string.IsNullOrWhiteSpace(codigo))
                     throw new GestionMantenimientosDomainException("El código del seguimiento es obligatorio para eliminar.");
-                var entity = await _dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == codigo);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == codigo);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el seguimiento a eliminar.");
-                _dbContext.Seguimientos.Remove(entity);
-                await _dbContext.SaveChangesAsync();
+                dbContext.Seguimientos.Remove(entity);
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[SeguimientoService] Seguimiento eliminado correctamente: {Codigo}", codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)

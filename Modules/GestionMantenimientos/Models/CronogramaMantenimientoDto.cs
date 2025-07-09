@@ -13,6 +13,10 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         // S1...S52: Representación semanal del cronograma
         public bool[] Semanas { get; set; } = new bool[52];
 
+        // Propiedades auxiliares para la UI (no persistentes)
+        public bool IsCodigoReadOnly { get; set; } = false;
+        public bool IsCodigoEnabled { get; set; } = true;
+
         public CronogramaMantenimientoDto() { }
 
         public CronogramaMantenimientoDto(CronogramaMantenimientoDto other)
@@ -25,6 +29,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             SemanaInicioMtto = other.SemanaInicioMtto;
             FrecuenciaMtto = other.FrecuenciaMtto;
             Semanas = (bool[])other.Semanas.Clone();
+            IsCodigoReadOnly = true;
+            IsCodigoEnabled = false;
         }
     }
 }

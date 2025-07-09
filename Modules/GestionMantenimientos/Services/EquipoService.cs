@@ -18,16 +18,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
     public class EquipoService : IEquipoService
     {
         private readonly IGestLogLogger _logger;
-        private readonly GestLogDbContext _dbContext;
-        public EquipoService(IGestLogLogger logger, GestLogDbContext dbContext)
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        public EquipoService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _logger = logger;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<IEnumerable<EquipoDto>> GetAllAsync()
         {
-            var equipos = await _dbContext.Equipos.ToListAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipos = await dbContext.Equipos.ToListAsync();
             return equipos.Select(e => new EquipoDto
             {
                 Codigo = e.Codigo,
@@ -47,7 +48,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
         public async Task<EquipoDto?> GetByCodigoAsync(string codigo)
         {
-            var equipo = await _dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipo = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
             if (equipo == null) return null;
             return new EquipoDto
             {
@@ -71,6 +73,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarEquipo(equipo);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                if (await dbContext.Equipos.AnyAsync(e => e.Codigo == equipo.Codigo))
+                    throw new GestionMantenimientosDomainException($"Ya existe un equipo con el código '{equipo.Codigo}'.");               
                 var entity = new Equipo
                 {
                     Codigo = equipo.Codigo!,
@@ -86,8 +91,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     FechaBaja = equipo.FechaBaja,
                     SemanaInicioMtto = equipo.SemanaInicioMtto
                 };
-                _dbContext.Equipos.Add(entity);
-                await _dbContext.SaveChangesAsync();
+                dbContext.Equipos.Add(entity);
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)
@@ -107,9 +112,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarEquipo(equipo);
-                var entity = await _dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == equipo.Codigo);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == equipo.Codigo);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el equipo a actualizar.");
+                // No permitir cambiar el código
+                // entity.Codigo = equipo.Codigo; // NO modificar
                 entity.Nombre = equipo.Nombre!;
                 entity.Marca = equipo.Marca;
                 entity.Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo;
@@ -121,7 +129,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.FrecuenciaMtto = equipo.FrecuenciaMtto;
                 entity.FechaBaja = equipo.FechaBaja;
                 entity.SemanaInicioMtto = equipo.SemanaInicioMtto;
-                await _dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo actualizado correctamente: {Codigo}", equipo.Codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)
@@ -142,11 +150,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 if (string.IsNullOrWhiteSpace(codigo))
                     throw new GestionMantenimientosDomainException("El código del equipo es obligatorio para eliminar.");
-                var entity = await _dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var entity = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el equipo a eliminar.");
-                _dbContext.Equipos.Remove(entity);
-                await _dbContext.SaveChangesAsync();
+                dbContext.Equipos.Remove(entity);
+                await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo eliminado correctamente: {Codigo}", codigo ?? "");
             }
             catch (GestionMantenimientosDomainException ex)

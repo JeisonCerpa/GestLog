@@ -11,7 +11,10 @@ namespace GestLog
         {
             var dbSection = configuration.GetSection("Database");
             string connectionString = BuildConnectionString(dbSection);
-            services.AddGestLogDatabase(connectionString);
+            services.AddDbContextFactory<GestLogDbContext>(options =>
+            {
+                options.UseSqlServer(connectionString);
+            });
         }
 
         private static string BuildConnectionString(IConfiguration dbSection)
