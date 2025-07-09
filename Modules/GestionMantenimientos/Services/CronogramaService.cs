@@ -11,6 +11,7 @@ using ClosedXML.Excel;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -71,7 +72,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("La sede es obligatoria.");
             if (cronograma.SemanaInicioMtto != null && (cronograma.SemanaInicioMtto < 1 || cronograma.SemanaInicioMtto > 52))
                 throw new GestionMantenimientosDomainException("La semana de inicio debe estar entre 1 y 52.");
-            if (cronograma.FrecuenciaMtto != null && cronograma.FrecuenciaMtto <= 0)
+            if (cronograma.FrecuenciaMtto != null && (int)cronograma.FrecuenciaMtto <= 0)
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
             if (cronograma.Semanas == null || cronograma.Semanas.Length != 52)
                 throw new GestionMantenimientosDomainException("El cronograma debe tener 52 semanas definidas.");
@@ -85,7 +86,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 ValidarCronograma(cronograma);
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 if (await dbContext.Cronogramas.AnyAsync(c => c.Codigo == cronograma.Codigo))
-                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}'.");                var entity = new CronogramaMantenimiento
+                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}'.");
+                var entity = new CronogramaMantenimiento
                 {
                     Codigo = cronograma.Codigo!,
                     Nombre = cronograma.Nombre!,
@@ -202,6 +204,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     {
                         try
                         {
+                            var freqInt = worksheet.Cell(row, 6).GetValue<int?>();
                             var dto = new CronogramaMantenimientoDto
                             {
                                 Codigo = worksheet.Cell(row, 1).GetString(),
@@ -209,7 +212,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Marca = worksheet.Cell(row, 3).GetString(),
                                 Sede = worksheet.Cell(row, 4).GetString(),
                                 SemanaInicioMtto = worksheet.Cell(row, 5).GetValue<int?>(),
-                                FrecuenciaMtto = worksheet.Cell(row, 6).GetValue<int?>(),
+                                FrecuenciaMtto = freqInt.HasValue ? (FrecuenciaMantenimiento?)freqInt.Value : null,
                                 Semanas = new bool[52]
                             };
                             for (int s = 0; s < 52; s++)
@@ -286,7 +289,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(row, 3).Value = c.Marca;
                     worksheet.Cell(row, 4).Value = c.Sede;
                     worksheet.Cell(row, 5).Value = c.SemanaInicioMtto;
-                    worksheet.Cell(row, 6).Value = c.FrecuenciaMtto;
+                    worksheet.Cell(row, 6).Value = c.FrecuenciaMtto.HasValue ? (int)c.FrecuenciaMtto.Value : (int?)null;
                     for (int s = 0; s < 52; s++)
                     {
                         worksheet.Cell(row, 7 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✔" : "";
@@ -323,6 +326,28 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FrecuenciaMtto = c.FrecuenciaMtto,
                 Semanas = c.Semanas.ToArray()
             }).ToList();
+        }
+
+        // Genera el array de semanas según la frecuencia y la semana de inicio
+        public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia)
+        {
+            var semanas = new bool[52];
+            if (semanaInicio < 1 || semanaInicio > 52 || frecuencia == null)
+                return semanas;
+            int salto = frecuencia switch
+            {
+                FrecuenciaMantenimiento.Semanal => 1,
+                FrecuenciaMantenimiento.Quincenal => 2,
+                FrecuenciaMantenimiento.Mensual => 4,
+                FrecuenciaMantenimiento.Bimestral => 8,
+                FrecuenciaMantenimiento.Trimestral => 13,
+                FrecuenciaMantenimiento.Semestral => 26,
+                FrecuenciaMantenimiento.Anual => 52,
+                _ => 1
+            };
+            for (int i = semanaInicio - 1; i < 52; i += salto)
+                semanas[i] = true;
+            return semanas;
         }
     }
 }

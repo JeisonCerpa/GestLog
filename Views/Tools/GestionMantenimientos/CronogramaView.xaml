@@ -21,77 +21,58 @@
             <Button Content="Exportar" Command="{Binding ExportarCronogramasCommand}" Margin="0,0,8,0"/>
             <Button Content="Backup" Command="{Binding BackupCronogramasCommand}"/>
         </StackPanel>
-        <!-- DataGrid con Scroll visible siempre y ajuste de columnas al contenido -->
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="#DDD" CornerRadius="4" Margin="0,0,0,10">
-            <DataGrid ItemsSource="{Binding Cronogramas}" SelectedItem="{Binding SelectedCronograma, Mode=TwoWay}"
-                      AutoGenerateColumns="False" IsReadOnly="True"
-                      CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
-                      HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                      ScrollViewer.CanContentScroll="False"
-                      MinWidth="3200">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Semana Inicio" Binding="{Binding SemanaInicioMtto}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="120"/>
-                    <!-- Columnas S1...S52 -->
-                    <DataGridTextColumn Header="S1" Binding="{Binding S1}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S2" Binding="{Binding S2}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S3" Binding="{Binding S3}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S4" Binding="{Binding S4}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S5" Binding="{Binding S5}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S6" Binding="{Binding S6}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S7" Binding="{Binding S7}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S8" Binding="{Binding S8}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S9" Binding="{Binding S9}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S10" Binding="{Binding S10}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S11" Binding="{Binding S11}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S12" Binding="{Binding S12}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S13" Binding="{Binding S13}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S14" Binding="{Binding S14}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S15" Binding="{Binding S15}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S16" Binding="{Binding S16}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S17" Binding="{Binding S17}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S18" Binding="{Binding S18}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S19" Binding="{Binding S19}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S20" Binding="{Binding S20}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S21" Binding="{Binding S21}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S22" Binding="{Binding S22}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S23" Binding="{Binding S23}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S24" Binding="{Binding S24}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S25" Binding="{Binding S25}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S26" Binding="{Binding S26}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S27" Binding="{Binding S27}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S28" Binding="{Binding S28}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S29" Binding="{Binding S29}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S30" Binding="{Binding S30}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S31" Binding="{Binding S31}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S32" Binding="{Binding S32}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S33" Binding="{Binding S33}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S34" Binding="{Binding S34}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S35" Binding="{Binding S35}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S36" Binding="{Binding S36}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S37" Binding="{Binding S37}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S38" Binding="{Binding S38}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S39" Binding="{Binding S39}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S40" Binding="{Binding S40}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S41" Binding="{Binding S41}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S42" Binding="{Binding S42}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S43" Binding="{Binding S43}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S44" Binding="{Binding S44}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S45" Binding="{Binding S45}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S46" Binding="{Binding S46}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S47" Binding="{Binding S47}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S48" Binding="{Binding S48}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S49" Binding="{Binding S49}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S50" Binding="{Binding S50}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S51" Binding="{Binding S51}" MinWidth="60"/>
-                    <DataGridTextColumn Header="S52" Binding="{Binding S52}" MinWidth="60"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+        <!-- Vista semanal tipo calendario -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <!-- Elimino el título para aprovechar el espacio -->
+                <ItemsControl ItemsSource="{Binding Semanas}" Grid.Row="0" Grid.RowSpan="2">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="13" Rows="4" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                            <Setter Property="VerticalAlignment" Value="Stretch"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="8" Padding="2" Margin="2" BorderThickness="2"
+                                    BorderBrush="{Binding TieneMantenimientos, Converter={StaticResource BooleanToColorConverter}}"
+                                    Background="White" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <StackPanel ToolTipService.ShowDuration="15000" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <StackPanel.ToolTip>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding TituloSemana}" FontWeight="Bold" FontSize="13"/>
+                                            <ItemsControl ItemsSource="{Binding Mantenimientos}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="• {Binding Codigo} - {Binding Nombre}"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="Sin mantenimientos programados" Foreground="#C0392B" FontWeight="SemiBold" FontSize="11" Visibility="{Binding Mantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
+                                        </StackPanel>
+                                    </StackPanel.ToolTip>
+                                    <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
+                                    <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
+                                    <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}" FontWeight="SemiBold" FontSize="11" Foreground="#2B8E3F" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
+                                    <Button Content="Ver Detalles" Command="{Binding VerSemanaCommand}" CommandParameter="{Binding}" Margin="0,4,0,0" Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="9"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="No hay mantenimientos programados para mostrar." Foreground="#C0392B" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding Semanas.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" Grid.Row="2"/>
+            </Grid>
+        </ScrollViewer>
         <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
             <controls:SimpleProgressBar ProgressValue="{Binding IsLoading, Converter={StaticResource BooleanToProgressConverter}}"
                                        StatusMessage="{Binding StatusMessage}" Title="Progreso" Height="24" Width="220"/>

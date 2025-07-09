@@ -9,5 +9,6 @@
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
+        <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
     </Application.Resources>
 </Application>

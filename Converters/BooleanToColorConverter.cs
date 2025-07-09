@@ -18,7 +18,7 @@ public class BooleanToColorConverter : IValueConverter
     /// <summary>
     /// Color para el valor false (Rojo)
     /// </summary>
-    public System.Windows.Media.Color FalseColor { get; set; } = Colors.Red;
+    public System.Windows.Media.Color FalseColor { get; set; } = System.Windows.Media.Color.FromRgb(200, 200, 200); // Gris claro
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {

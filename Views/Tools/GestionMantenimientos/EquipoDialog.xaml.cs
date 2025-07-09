@@ -69,12 +69,10 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public EstadoEquipo? Estado { get => Equipo.Estado; set => Equipo.Estado = value; }
             public Sede? Sede { get => Equipo.Sede; set => Equipo.Sede = value; }
             public FrecuenciaMantenimiento? FrecuenciaMtto { get => Equipo.FrecuenciaMtto; set => Equipo.FrecuenciaMtto = value; }
-            public DateTime? FechaCompra { get => Equipo.FechaCompra; set => Equipo.FechaCompra = value; }
             public decimal? Precio { get => Equipo.Precio; set => Equipo.Precio = value; }
             public string? Observaciones { get => Equipo.Observaciones; set => Equipo.Observaciones = value; }
             public DateTime? FechaRegistro { get => Equipo.FechaRegistro; set => Equipo.FechaRegistro = value; }
             public DateTime? FechaBaja { get => Equipo.FechaBaja; set => Equipo.FechaBaja = value; }
-            public int? SemanaInicioMtto { get => Equipo.SemanaInicioMtto; set => Equipo.SemanaInicioMtto = value; }
             public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }
             public bool IsCodigoEnabled { get => Equipo.IsCodigoEnabled; set => Equipo.IsCodigoEnabled = value; }
             public EquipoDialogViewModel(EquipoDto equipo)

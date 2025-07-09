@@ -15,6 +15,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>();
             DataContext = viewModel;
+            this.Loaded += (s, e) => viewModel.AgruparSemanalmenteCommand.Execute(null);
         }
     }
 }

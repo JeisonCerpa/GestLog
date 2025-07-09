@@ -36,13 +36,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Marca = e.Marca,
                 Estado = e.Estado,
                 Sede = e.Sede,
-                FechaCompra = e.FechaCompra,
                 Precio = e.Precio,
                 Observaciones = e.Observaciones,
                 FechaRegistro = e.FechaRegistro,
                 FrecuenciaMtto = e.FrecuenciaMtto,
-                FechaBaja = e.FechaBaja,
-                SemanaInicioMtto = e.SemanaInicioMtto
+                FechaBaja = e.FechaBaja
+                // SemanaInicioMtto eliminado
             });
         }
 
@@ -58,13 +57,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Marca = equipo.Marca,
                 Estado = equipo.Estado,
                 Sede = equipo.Sede,
-                FechaCompra = equipo.FechaCompra,
                 Precio = equipo.Precio,
                 Observaciones = equipo.Observaciones,
                 FechaRegistro = equipo.FechaRegistro,
                 FrecuenciaMtto = equipo.FrecuenciaMtto,
-                FechaBaja = equipo.FechaBaja,
-                SemanaInicioMtto = equipo.SemanaInicioMtto
+                FechaBaja = equipo.FechaBaja
+                // SemanaInicioMtto eliminado
             };
         }
 
@@ -75,7 +73,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 ValidarEquipo(equipo);
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 if (await dbContext.Equipos.AnyAsync(e => e.Codigo == equipo.Codigo))
-                    throw new GestionMantenimientosDomainException($"Ya existe un equipo con el código '{equipo.Codigo}'.");               
+                    throw new GestionMantenimientosDomainException($"Ya existe un equipo con el código '{equipo.Codigo}'.");
+                var now = DateTime.Now;
+                int semanaInicio = CalcularSemanaISO8601(now);
                 var entity = new Equipo
                 {
                     Codigo = equipo.Codigo!,
@@ -83,17 +83,44 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Marca = equipo.Marca,
                     Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo,
                     Sede = equipo.Sede,
-                    FechaCompra = equipo.FechaCompra,
+                    FechaRegistro = now,
                     Precio = equipo.Precio,
                     Observaciones = equipo.Observaciones,
-                    FechaRegistro = equipo.FechaRegistro ?? DateTime.Now,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
-                    FechaBaja = equipo.FechaBaja,
-                    SemanaInicioMtto = equipo.SemanaInicioMtto
+                    FechaBaja = equipo.FechaBaja
+                    // SemanaInicioMtto eliminado
                 };
                 dbContext.Equipos.Add(entity);
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
+
+                // Generar cronograma automáticamente
+                if (equipo.FrecuenciaMtto != null)
+                {
+                    var semanas = CronogramaService.GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                    var cronograma = new CronogramaMantenimientoDto
+                    {
+                        Codigo = equipo.Codigo,
+                        Nombre = equipo.Nombre,
+                        Marca = equipo.Marca,
+                        Sede = equipo.Sede?.ToString(),
+                        SemanaInicioMtto = semanaInicio,
+                        FrecuenciaMtto = equipo.FrecuenciaMtto,
+                        Semanas = semanas
+                    };
+                    using var dbContext2 = _dbContextFactory.CreateDbContext();
+                    dbContext2.Cronogramas.Add(new CronogramaMantenimiento
+                    {
+                        Codigo = cronograma.Codigo!,
+                        Nombre = cronograma.Nombre!,
+                        Marca = cronograma.Marca,
+                        Sede = cronograma.Sede,
+                        SemanaInicioMtto = cronograma.SemanaInicioMtto,
+                        FrecuenciaMtto = cronograma.FrecuenciaMtto,
+                        Semanas = cronograma.Semanas
+                    });
+                    await dbContext2.SaveChangesAsync();
+                }
             }
             catch (GestionMantenimientosDomainException ex)
             {
@@ -122,13 +149,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.Marca = equipo.Marca;
                 entity.Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo;
                 entity.Sede = equipo.Sede;
-                entity.FechaCompra = equipo.FechaCompra;
                 entity.Precio = equipo.Precio;
                 entity.Observaciones = equipo.Observaciones;
                 entity.FechaRegistro = equipo.FechaRegistro ?? entity.FechaRegistro;
                 entity.FrecuenciaMtto = equipo.FrecuenciaMtto;
                 entity.FechaBaja = equipo.FechaBaja;
-                entity.SemanaInicioMtto = equipo.SemanaInicioMtto;
+                // SemanaInicioMtto eliminado
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo actualizado correctamente: {Codigo}", equipo.Codigo ?? "");
             }
@@ -182,8 +208,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("La marca es obligatoria.");
             if (equipo.Sede == null)
                 throw new GestionMantenimientosDomainException("La sede es obligatoria.");
-            if (equipo.FechaCompra != null && equipo.FechaCompra > DateTime.Now)
-                throw new GestionMantenimientosDomainException("La fecha de compra no puede ser futura.");
             if (equipo.Precio != null && equipo.Precio < 0)
                 throw new GestionMantenimientosDomainException("El precio no puede ser negativo.");
             if (equipo.FrecuenciaMtto != null && equipo.FrecuenciaMtto <= 0)
@@ -203,7 +227,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
                     using var workbook = new XLWorkbook(filePath);
                     var worksheet = workbook.Worksheets.First();
-                    var headers = new[] { "Codigo", "Nombre", "Marca", "Estado", "Sede", "FechaCompra", "Precio", "Observaciones", "FechaRegistro", "FrecuenciaMtto", "FechaBaja", "SemanaInicioMtto" };
+                    var headers = new[] { "Codigo", "Nombre", "Marca", "Estado", "Sede", "Precio", "Observaciones", "FechaRegistro", "FrecuenciaMtto", "FechaBaja" };
                     // Validar encabezados
                     for (int i = 0; i < headers.Length; i++)
                     {
@@ -217,6 +241,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     {
                         try
                         {
+                            var freqInt = worksheet.Cell(row, 9).GetValue<int?>();
                             var dto = new EquipoDto
                             {
                                 Codigo = worksheet.Cell(row, 1).GetString(),
@@ -224,13 +249,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Marca = worksheet.Cell(row, 3).GetString(),
                                 Estado = Enum.TryParse<EstadoEquipo>(worksheet.Cell(row, 4).GetString(), out var estado) ? estado : (EstadoEquipo?)null,
                                 Sede = Enum.TryParse<Sede>(worksheet.Cell(row, 5).GetString(), out var sede) ? sede : (Sede?)null,
-                                FechaCompra = worksheet.Cell(row, 6).GetDateTime(),
-                                Precio = worksheet.Cell(row, 7).GetValue<decimal?>(),
-                                Observaciones = worksheet.Cell(row, 8).GetString(),
-                                FechaRegistro = worksheet.Cell(row, 9).GetDateTime(),
-                                FrecuenciaMtto = Enum.TryParse<FrecuenciaMantenimiento>(worksheet.Cell(row, 10).GetValue<int>().ToString(), out var freq) ? freq : (FrecuenciaMantenimiento?)null,
-                                FechaBaja = worksheet.Cell(row, 11).GetDateTime(),
-                                SemanaInicioMtto = worksheet.Cell(row, 12).GetValue<int?>()
+                                Precio = worksheet.Cell(row, 6).GetValue<decimal?>(),
+                                Observaciones = worksheet.Cell(row, 7).GetString(),
+                                FechaRegistro = worksheet.Cell(row, 8).GetDateTime(),
+                                FrecuenciaMtto = freqInt.HasValue ? (FrecuenciaMantenimiento?)freqInt.Value : null,
+                                FechaBaja = worksheet.Cell(row, 10).GetDateTime()
+                                // SemanaInicioMtto eliminado
                             };
                             ValidarEquipo(dto);
                             equipos.Add(dto);
@@ -279,7 +303,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var worksheet = workbook.Worksheets.Add("Equipos");
 
                 // Escribir encabezados
-                var headers = new[] { "Codigo", "Nombre", "Marca", "Estado", "Sede", "FechaCompra", "Precio", "Observaciones", "FechaRegistro", "FrecuenciaMtto", "FechaBaja", "SemanaInicioMtto" };
+                var headers = new[] { "Codigo", "Nombre", "Marca", "Estado", "Sede", "Precio", "Observaciones", "FechaRegistro", "FrecuenciaMtto", "FechaBaja" };
                 for (int i = 0; i < headers.Length; i++)
                 {
                     worksheet.Cell(1, i + 1).Value = headers[i];
@@ -295,13 +319,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(row, 3).Value = eq.Marca;
                     worksheet.Cell(row, 4).Value = eq.Estado?.ToString();
                     worksheet.Cell(row, 5).Value = eq.Sede?.ToString();
-                    worksheet.Cell(row, 6).Value = eq.FechaCompra;
-                    worksheet.Cell(row, 7).Value = eq.Precio;
-                    worksheet.Cell(row, 8).Value = eq.Observaciones;
-                    worksheet.Cell(row, 9).Value = eq.FechaRegistro;
-                    worksheet.Cell(row, 10).Value = eq.FrecuenciaMtto.HasValue ? (int)eq.FrecuenciaMtto.Value : (int?)null;
-                    worksheet.Cell(row, 11).Value = eq.FechaBaja;
-                    worksheet.Cell(row, 12).Value = eq.SemanaInicioMtto;
+                    worksheet.Cell(row, 6).Value = eq.Precio;
+                    worksheet.Cell(row, 7).Value = eq.Observaciones;
+                    worksheet.Cell(row, 8).Value = eq.FechaRegistro;
+                    worksheet.Cell(row, 9).Value = eq.FrecuenciaMtto.HasValue ? (int)eq.FrecuenciaMtto.Value : (int?)null;
+                    worksheet.Cell(row, 10).Value = eq.FechaBaja;
+                    // SemanaInicioMtto eliminado
                     row++;
                 }
 
@@ -326,6 +349,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             // TODO: Implementar lógica real de obtención de equipos
             return Task.FromResult(new List<EquipoDto>());
+        }
+
+        // Calcula la semana ISO 8601 para una fecha dada
+        private int CalcularSemanaISO8601(DateTime fecha)
+        {
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
         }
     }
 }

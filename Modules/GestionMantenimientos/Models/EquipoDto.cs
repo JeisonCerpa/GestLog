@@ -11,12 +11,11 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public EstadoEquipo? Estado { get; set; }
         public Sede? Sede { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
-        public DateTime? FechaCompra { get; set; }
+        public DateTime? FechaRegistro { get; set; } // Usar como fecha de alta y referencia
         public decimal? Precio { get; set; }
         public string? Observaciones { get; set; }
-        public DateTime? FechaRegistro { get; set; }
         public DateTime? FechaBaja { get; set; }
-        public int? SemanaInicioMtto { get; set; }
+        // SemanaInicioMtto eliminado: se calcula a partir de FechaRegistro
 
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;
@@ -34,13 +33,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Marca = other.Marca;
             Estado = other.Estado;
             Sede = other.Sede;
-            FechaCompra = other.FechaCompra;
             Precio = other.Precio;
             Observaciones = other.Observaciones;
             FechaRegistro = other.FechaRegistro;
             FrecuenciaMtto = other.FrecuenciaMtto;
             FechaBaja = other.FechaBaja;
-            SemanaInicioMtto = other.SemanaInicioMtto;
+            // SemanaInicioMtto eliminado
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
         }

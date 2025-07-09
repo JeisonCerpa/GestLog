@@ -5,6 +5,7 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -28,6 +29,9 @@ public partial class CronogramaViewModel : ObservableObject
     [ObservableProperty]
     private string? statusMessage;
 
+    [ObservableProperty]
+    private ObservableCollection<SemanaViewModel> semanas = new();
+
     public CronogramaViewModel(ICronogramaService cronogramaService, IGestLogLogger logger)
     {
         _cronogramaService = cronogramaService;
@@ -44,8 +48,13 @@ public partial class CronogramaViewModel : ObservableObject
         try
         {
             var lista = await _cronogramaService.GetCronogramasAsync();
-            Cronogramas = new ObservableCollection<CronogramaMantenimientoDto>(lista);
-            StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
+            // Asegura que la actualización de colecciones se haga en el hilo de la UI
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                Cronogramas = new ObservableCollection<CronogramaMantenimientoDto>(lista);
+                StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
+                AgruparPorSemana();
+            });
         }
         catch (System.Exception ex)
         {
@@ -123,5 +132,48 @@ public partial class CronogramaViewModel : ObservableObject
         }
     }
 
+    // Utilidad para obtener el primer día de la semana ISO 8601
+    private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+    {
+        var jan1 = new DateTime(year, 1, 1);
+        int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+        var firstThursday = jan1.AddDays(daysOffset);
+        var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+        int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        var weekNum = weekOfYear;
+        if (firstWeek <= 1)
+            weekNum -= 1;
+        var result = firstThursday.AddDays(weekNum * 7);
+        return result.AddDays(-3);
+    }
+
+    // Agrupa los cronogramas por semana del año (ISO 8601)
+    public void AgruparPorSemana()
+    {
+        Semanas.Clear();
+        var añoActual = DateTime.Now.Year;
+        for (int i = 1; i <= 52; i++)
+        {
+            var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
+            var fechaFin = fechaInicio.AddDays(6);
+            var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin);
+            if (Cronogramas != null)
+            {
+                foreach (var c in Cronogramas)
+                {
+                    if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                        semanaVM.Mantenimientos.Add(c);
+                }
+            }
+            Semanas.Add(semanaVM);
+        }
+    }
+
     // TODO: Agregar comandos para importar/exportar y backup de cronogramas
+
+    [RelayCommand]
+    public void AgruparSemanalmente()
+    {
+        AgruparPorSemana();
+    }
 }
