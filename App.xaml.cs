@@ -44,6 +44,23 @@ public partial class App : System.Windows.Application
             // Inicializar conexión a base de datos automáticamente
             await InitializeDatabaseConnectionAsync();
 
+            // Asegurar cronogramas completos para todos los equipos activos
+            try
+            {
+                var cronogramaService = LoggingService.GetService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
+                if (cronogramaService != null)
+                {
+                    _logger?.Logger.LogInformation("⏳ Verificando y generando cronogramas de mantenimiento al inicio...");
+                    await cronogramaService.EnsureAllCronogramasUpToDateAsync();
+                    _logger?.Logger.LogInformation("✅ Cronogramas de mantenimiento verificados/generados correctamente al inicio");
+                }
+            }
+            catch (Exception cronEx)
+            {
+                _logger?.Logger.LogError(cronEx, "❌ Error al verificar/generar cronogramas de mantenimiento al inicio");
+                // No es crítico, la aplicación puede continuar
+            }
+
             // Configurar manejo global de excepciones
             SetupGlobalExceptionHandling();
 

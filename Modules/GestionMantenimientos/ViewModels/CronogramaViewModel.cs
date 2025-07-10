@@ -32,12 +32,34 @@ public partial class CronogramaViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
 
+    [ObservableProperty]
+    private int anioSeleccionado = DateTime.Now.Year;
+
+    [ObservableProperty]
+    private ObservableCollection<int> aniosDisponibles = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();
+
     public CronogramaViewModel(ICronogramaService cronogramaService, IGestLogLogger logger)
     {
         _cronogramaService = cronogramaService;
         _logger = logger;
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => await LoadCronogramasAsync());
+    }
+
+    partial void OnAnioSeleccionadoChanged(int value)
+    {
+        FiltrarPorAnio();
+    }
+
+    private void FiltrarPorAnio()
+    {
+        if (Cronogramas == null) return;
+        var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
+        CronogramasFiltrados = new ObservableCollection<CronogramaMantenimientoDto>(filtrados);
+        AgruparPorSemana();
     }
 
     [RelayCommand]
@@ -48,12 +70,15 @@ public partial class CronogramaViewModel : ObservableObject
         try
         {
             var lista = await _cronogramaService.GetCronogramasAsync();
-            // Asegura que la actualización de colecciones se haga en el hilo de la UI
+            var anios = lista.Select(c => c.Anio).Distinct().OrderByDescending(a => a).ToList();
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 Cronogramas = new ObservableCollection<CronogramaMantenimientoDto>(lista);
+                AniosDisponibles = new ObservableCollection<int>(anios);
+                if (!AniosDisponibles.Contains(AnioSeleccionado))
+                    AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
+                FiltrarPorAnio();
                 StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
-                AgruparPorSemana();
             });
         }
         catch (System.Exception ex)
@@ -151,15 +176,15 @@ public partial class CronogramaViewModel : ObservableObject
     public void AgruparPorSemana()
     {
         Semanas.Clear();
-        var añoActual = DateTime.Now.Year;
+        var añoActual = AnioSeleccionado;
         for (int i = 1; i <= 52; i++)
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
             var fechaFin = fechaInicio.AddDays(6);
             var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin);
-            if (Cronogramas != null)
+            if (CronogramasFiltrados != null)
             {
-                foreach (var c in Cronogramas)
+                foreach (var c in CronogramasFiltrados)
                 {
                     if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
                         semanaVM.Mantenimientos.Add(c);

@@ -1,13 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-
-#nullable disable
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace GestLog.Migrations
 {
-    /// <inheritdoc />
     public partial class RemoveSemanaInicioMttoFromEquipo : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
@@ -15,7 +11,6 @@ namespace GestLog.Migrations
                 table: "Equipos");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(

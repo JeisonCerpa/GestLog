@@ -17,6 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;
         public bool IsCodigoEnabled { get; set; } = true;
+        public int Anio { get; set; } // Año del cronograma
 
         public CronogramaMantenimientoDto() { }
 

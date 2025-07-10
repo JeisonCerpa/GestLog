@@ -35,9 +35,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Nombre = c.Nombre,
                 Marca = c.Marca,
                 Sede = c.Sede,
-                SemanaInicioMtto = c.SemanaInicioMtto,
                 FrecuenciaMtto = c.FrecuenciaMtto,
-                Semanas = c.Semanas.ToArray()
+                Semanas = c.Semanas.ToArray(),
+                Anio = c.Anio > 0 ? c.Anio : DateTime.Now.Year
             });
         }
 
@@ -52,9 +52,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Nombre = entity.Nombre,
                 Marca = entity.Marca,
                 Sede = entity.Sede,
-                SemanaInicioMtto = entity.SemanaInicioMtto,
                 FrecuenciaMtto = entity.FrecuenciaMtto,
-                Semanas = entity.Semanas.ToArray()
+                Semanas = entity.Semanas.ToArray(),
+                Anio = entity.Anio > 0 ? entity.Anio : DateTime.Now.Year
             };
         }
 
@@ -70,8 +70,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("La marca es obligatoria.");
             if (string.IsNullOrWhiteSpace(cronograma.Sede))
                 throw new GestionMantenimientosDomainException("La sede es obligatoria.");
-            if (cronograma.SemanaInicioMtto != null && (cronograma.SemanaInicioMtto < 1 || cronograma.SemanaInicioMtto > 52))
-                throw new GestionMantenimientosDomainException("La semana de inicio debe estar entre 1 y 52.");
             if (cronograma.FrecuenciaMtto != null && (int)cronograma.FrecuenciaMtto <= 0)
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
             if (cronograma.Semanas == null || cronograma.Semanas.Length != 52)
@@ -85,21 +83,21 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 ValidarCronograma(cronograma);
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                if (await dbContext.Cronogramas.AnyAsync(c => c.Codigo == cronograma.Codigo))
-                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}'.");
+                if (await dbContext.Cronogramas.AnyAsync(c => c.Codigo == cronograma.Codigo && c.Anio == cronograma.Anio))
+                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}' para el año {cronograma.Anio}.");
                 var entity = new CronogramaMantenimiento
                 {
                     Codigo = cronograma.Codigo!,
                     Nombre = cronograma.Nombre!,
                     Marca = cronograma.Marca,
                     Sede = cronograma.Sede,
-                    SemanaInicioMtto = cronograma.SemanaInicioMtto,
                     FrecuenciaMtto = cronograma.FrecuenciaMtto,
-                    Semanas = cronograma.Semanas.ToArray()
+                    Semanas = cronograma.Semanas.ToArray(),
+                    Anio = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year
                 };
                 dbContext.Cronogramas.Add(entity);
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[CronogramaService] Cronograma agregado correctamente: {Codigo}", cronograma?.Codigo ?? "");
+                _logger.LogInformation("[CronogramaService] Cronograma agregado correctamente: {Codigo} - {Anio}", cronograma?.Codigo ?? "", entity.Anio);
             }
             catch (GestionMantenimientosDomainException ex)
             {
@@ -119,19 +117,18 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 ValidarCronograma(cronograma);
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == cronograma.Codigo);
+                var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == cronograma.Codigo && c.Anio == cronograma.Anio);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el cronograma a actualizar.");
                 // No permitir cambiar el código
-                // entity.Codigo = cronograma.Codigo; // NO modificar
                 entity.Nombre = cronograma.Nombre!;
                 entity.Marca = cronograma.Marca;
                 entity.Sede = cronograma.Sede;
-                entity.SemanaInicioMtto = cronograma.SemanaInicioMtto;
                 entity.FrecuenciaMtto = cronograma.FrecuenciaMtto;
                 entity.Semanas = cronograma.Semanas.ToArray();
+                entity.Anio = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year;
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[CronogramaService] Cronograma actualizado correctamente: {Codigo}", cronograma?.Codigo ?? "");
+                _logger.LogInformation("[CronogramaService] Cronograma actualizado correctamente: {Codigo} - {Anio}", cronograma?.Codigo ?? "", entity.Anio);
             }
             catch (GestionMantenimientosDomainException ex)
             {
@@ -183,7 +180,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
                     using var workbook = new XLWorkbook(filePath);
                     var worksheet = workbook.Worksheets.First();
-                    var headers = new[] { "Codigo", "Nombre", "Marca", "Sede", "SemanaInicioMtto", "FrecuenciaMtto" };
+                    var headers = new[] { "Codigo", "Nombre", "Marca", "Sede", "FrecuenciaMtto" };
                     // Validar encabezados fijos
                     for (int i = 0; i < headers.Length; i++)
                     {
@@ -211,7 +208,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Nombre = worksheet.Cell(row, 2).GetString(),
                                 Marca = worksheet.Cell(row, 3).GetString(),
                                 Sede = worksheet.Cell(row, 4).GetString(),
-                                SemanaInicioMtto = worksheet.Cell(row, 5).GetValue<int?>(),
                                 FrecuenciaMtto = freqInt.HasValue ? (FrecuenciaMantenimiento?)freqInt.Value : null,
                                 Semanas = new bool[52]
                             };
@@ -267,7 +263,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var worksheet = workbook.Worksheets.Add("Cronogramas");
 
                 // Encabezados
-                var headers = new[] { "Codigo", "Nombre", "Marca", "Sede", "SemanaInicioMtto", "FrecuenciaMtto" };
+                var headers = new[] { "Codigo", "Nombre", "Marca", "Sede", "FrecuenciaMtto" };
                 for (int i = 0; i < headers.Length; i++)
                 {
                     worksheet.Cell(1, i + 1).Value = headers[i];
@@ -288,11 +284,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(row, 2).Value = c.Nombre;
                     worksheet.Cell(row, 3).Value = c.Marca;
                     worksheet.Cell(row, 4).Value = c.Sede;
-                    worksheet.Cell(row, 5).Value = c.SemanaInicioMtto;
+                    // SemanaInicioMtto eliminado de la exportación
                     worksheet.Cell(row, 6).Value = c.FrecuenciaMtto.HasValue ? (int)c.FrecuenciaMtto.Value : (int?)null;
                     for (int s = 0; s < 52; s++)
                     {
-                        worksheet.Cell(row, 7 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✔" : "";
+                        worksheet.Cell(row, 6 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✔" : "";
                     }
                     row++;
                 }
@@ -322,9 +318,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Nombre = c.Nombre,
                 Marca = c.Marca,
                 Sede = c.Sede,
-                SemanaInicioMtto = c.SemanaInicioMtto,
                 FrecuenciaMtto = c.FrecuenciaMtto,
-                Semanas = c.Semanas.ToArray()
+                Semanas = c.Semanas.ToArray(),
+                Anio = c.Anio > 0 ? c.Anio : DateTime.Now.Year
             }).ToList();
         }
 
@@ -345,9 +341,212 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FrecuenciaMantenimiento.Anual => 52,
                 _ => 1
             };
-            for (int i = semanaInicio - 1; i < 52; i += salto)
+            int i = semanaInicio - 1;
+            while (i < 52)
+            {
                 semanas[i] = true;
+                i += salto;
+            }
             return semanas;
+        }
+
+        /// <summary>
+        /// Genera automáticamente los cronogramas del siguiente año para todos los equipos activos si faltan 3 meses para acabar el año y aún no existen.
+        /// </summary>
+        public async Task GenerateNextYearCronogramasIfNeeded()
+        {
+            var now = DateTime.Now;
+            if (now.Month < 10) // Solo ejecutar a partir de octubre
+                return;
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo).ToListAsync();
+            int nextYear = now.Year + 1;
+            foreach (var equipo in equipos)
+            {
+                // Si ya existe cronograma para el siguiente año, omitir
+                bool exists = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == nextYear);
+                if (exists) continue;
+                // Buscar cronograma del año actual
+                var cronogramaActual = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == now.Year);
+                int semanaInicio = 1;                if (cronogramaActual != null)
+                {
+                    // Buscar última semana con mantenimiento programado
+                    int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
+                    {
+                        int salto = equipo.FrecuenciaMtto switch
+                        {
+                            Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                            Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                            Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                            Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                            Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                            Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                            Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                            _ => 1
+                        };                        // lastWeek es el índice (base 0), convertir a número de semana (base 1)
+                        int ultimaSemana = lastWeek + 1;
+                        int proximaSemana = ultimaSemana + salto;
+                        
+                        // LOG DEBUG: para depuración
+                        _logger.LogInformation("[CronogramaService] DEBUG - Equipo: {Codigo}, lastWeek: {lastWeek}, ultimaSemana: {ultimaSemana}, salto: {salto}, proximaSemana: {proximaSemana}", 
+                            equipo.Codigo, lastWeek, ultimaSemana, salto, proximaSemana);
+                        
+                        // Calcular la semana correspondiente del siguiente año
+                        if (proximaSemana > 52)
+                        {
+                            semanaInicio = proximaSemana - 52;
+                            _logger.LogInformation("[CronogramaService] DEBUG - Caso 1: semanaInicio calculada: {semanaInicio}", semanaInicio);
+                        }
+                        else
+                        {
+                            // Si aún no excede 52, significa que necesitamos calcular el siguiente ciclo
+                            // Para el próximo año, agregamos un salto más
+                            semanaInicio = proximaSemana + salto;
+                            if (semanaInicio > 52)
+                            {
+                                semanaInicio = semanaInicio - 52;
+                            }
+                            _logger.LogInformation("[CronogramaService] DEBUG - Caso 2: semanaInicio calculada: {semanaInicio}", semanaInicio);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation("[CronogramaService] DEBUG - Equipo: {Codigo}, lastWeek: {lastWeek}, usando semanaInicio = 1", equipo.Codigo, lastWeek);
+                        semanaInicio = 1;
+                    }
+                }                var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                
+                // LOG DEBUG: mostrar las primeras semanas del cronograma generado
+                var primerasSemanas = string.Join(", ", semanas.Select((s, i) => s ? (i + 1).ToString() : null).Where(s => s != null).Take(5));
+                _logger.LogInformation("[CronogramaService] DEBUG - Equipo: {Codigo}, Cronograma 2025 generado. Primeras semanas: {primeras}", equipo.Codigo, primerasSemanas);
+                
+                var nuevo = new Models.Entities.CronogramaMantenimiento
+                {
+                    // SemanaInicioMtto eliminado de la generación de cronogramas para el próximo año
+                    Codigo = equipo.Codigo!,
+                    Nombre = equipo.Nombre!,
+                    Marca = equipo.Marca,
+                    Sede = equipo.Sede?.ToString(),
+                    FrecuenciaMtto = equipo.FrecuenciaMtto,
+                    Semanas = semanas,
+                    Anio = nextYear
+                };
+                dbContext.Cronogramas.Add(nuevo);
+            }
+            await dbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Asegura que todos los equipos activos tengan cronogramas completos desde su año de registro hasta el actual (y el siguiente si es octubre o más).
+        /// </summary>
+        public async Task EnsureAllCronogramasUpToDateAsync()
+        {
+            var now = DateTime.Now;
+            int anioActual = now.Year;
+            int anioLimite = anioActual;
+            if (now.Month >= 10) // Octubre o más, también crear el del siguiente año
+                anioLimite = anioActual + 1;
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaRegistro != null && e.FrecuenciaMtto != null).ToListAsync();
+            foreach (var equipo in equipos)
+            {
+                int anioRegistro = equipo.FechaRegistro!.Value.Year;
+                int semanaRegistro = CalcularSemanaISO8601(equipo.FechaRegistro.Value);
+                for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                {
+                    bool existe = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
+                    if (existe) continue;
+                    int semanaInicio;
+                    int salto = equipo.FrecuenciaMtto switch
+                    {
+                        Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                        Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                        Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                        Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                        Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                        Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                        Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                        _ => 1
+                    };
+                    if (anio == anioRegistro)
+                    {
+                        semanaInicio = semanaRegistro + salto;
+                        while (semanaInicio > 52) semanaInicio -= 52;
+                    }                    else
+                    {
+                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
+                        
+                        // LOG DEBUG: verificar si encuentra cronograma anterior
+                        _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Equipo: {Codigo}, Año: {anio}, Buscando cronograma del año: {anioAnterior}, Encontrado: {encontrado}", 
+                            equipo.Codigo, anio, anio - 1, cronogramaAnterior != null);
+                        
+                        if (cronogramaAnterior != null)
+                        {
+                            int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);                            if (lastWeek >= 0)
+                            {                                // lastWeek es el índice (base 0), convertir a número de semana (base 1)
+                                int ultimaSemana = lastWeek + 1;
+                                int proximaSemana = ultimaSemana + salto;
+                                
+                                // LOG DEBUG: para depuración EnsureAllCronogramasUpToDateAsync
+                                _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Equipo: {Codigo}, Año: {anio}, lastWeek: {lastWeek}, ultimaSemana: {ultimaSemana}, salto: {salto}, proximaSemana: {proximaSemana}", 
+                                    equipo.Codigo, anio, lastWeek, ultimaSemana, salto, proximaSemana);
+                                
+                                // Calcular la semana correspondiente del siguiente año
+                                if (proximaSemana > 52)
+                                {
+                                    semanaInicio = proximaSemana - 52;
+                                    _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Caso 1: semanaInicio calculada: {semanaInicio}", semanaInicio);
+                                }
+                                else
+                                {
+                                    // Si aún no excede 52, significa que necesitamos calcular el siguiente ciclo
+                                    // Para el próximo año, agregamos un salto más
+                                    semanaInicio = proximaSemana + salto;
+                                    if (semanaInicio > 52)
+                                    {
+                                        semanaInicio = semanaInicio - 52;
+                                    }
+                                    _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Caso 2: semanaInicio calculada: {semanaInicio}", semanaInicio);
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Equipo: {Codigo}, Año: {anio}, lastWeek: {lastWeek}, usando semanaInicio = 1", equipo.Codigo, anio, lastWeek);
+                                semanaInicio = 1;
+                            }
+                        }                        else
+                        {
+                            _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Equipo: {Codigo}, Año: {anio}, No se encontró cronograma anterior, usando semanaInicio = 1", equipo.Codigo, anio);
+                            semanaInicio = 1;
+                        }
+                    }                    var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                    
+                    // LOG DEBUG: mostrar las primeras semanas del cronograma generado en EnsureAllCronogramasUpToDateAsync
+                    var primerasSemanas = string.Join(", ", semanas.Select((s, i) => s ? (i + 1).ToString() : null).Where(s => s != null).Take(5));
+                    _logger.LogInformation("[CronogramaService] DEBUG ENSURE - Equipo: {Codigo}, Año: {anio}, Cronograma generado. Primeras semanas: {primeras}", equipo.Codigo, anio, primerasSemanas);
+                      var nuevo = new CronogramaMantenimiento
+                    {
+                        Codigo = equipo.Codigo!,
+                        Nombre = equipo.Nombre!,
+                        Marca = equipo.Marca,
+                        Sede = equipo.Sede?.ToString(),
+                        FrecuenciaMtto = equipo.FrecuenciaMtto,
+                        Semanas = semanas,
+                        Anio = anio
+                    };
+                    dbContext.Cronogramas.Add(nuevo);
+                    
+                    // Guardar inmediatamente para que esté disponible en la siguiente iteración
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+        }
+
+        // Utilidad para calcular la semana ISO 8601 para una fecha dada
+        private int CalcularSemanaISO8601(DateTime fecha)
+        {
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
         }
     }
 }

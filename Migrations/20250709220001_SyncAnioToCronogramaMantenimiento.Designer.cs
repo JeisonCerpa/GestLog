@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    [Migration("20250709192556_RemoveSemanaInicioMttoFromEquipo")]
-    partial class RemoveSemanaInicioMttoFromEquipo
+    [Migration("20250709220001_SyncAnioToCronogramaMantenimiento")]
+    partial class SyncAnioToCronogramaMantenimiento
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,9 @@ namespace GestLog.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("int");
 
                     b.Property<string>("Codigo")
                         .IsRequired()

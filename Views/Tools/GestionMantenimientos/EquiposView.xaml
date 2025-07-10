@@ -37,6 +37,7 @@
                     <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120"/>
                     <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="120"/>
                     <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="120"/>
+                    <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

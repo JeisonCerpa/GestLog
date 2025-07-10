@@ -74,8 +74,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 if (await dbContext.Equipos.AnyAsync(e => e.Codigo == equipo.Codigo))
                     throw new GestionMantenimientosDomainException($"Ya existe un equipo con el código '{equipo.Codigo}'.");
-                var now = DateTime.Now;
-                int semanaInicio = CalcularSemanaISO8601(now);
+                // Forzar la fecha de registro a la fecha actual
+                var fechaRegistro = DateTime.Now;
+                int semanaInicio = CalcularSemanaISO8601(fechaRegistro);
                 var entity = new Equipo
                 {
                     Codigo = equipo.Codigo!,
@@ -83,7 +84,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Marca = equipo.Marca,
                     Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo,
                     Sede = equipo.Sede,
-                    FechaRegistro = now,
+                    FechaRegistro = fechaRegistro,
                     Precio = equipo.Precio,
                     Observaciones = equipo.Observaciones,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
@@ -94,31 +95,36 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
 
-                // Generar cronograma automáticamente
+                // Generar cronogramas desde el año de registro hasta el año actual
                 if (equipo.FrecuenciaMtto != null)
                 {
-                    var semanas = CronogramaService.GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
-                    var cronograma = new CronogramaMantenimientoDto
-                    {
-                        Codigo = equipo.Codigo,
-                        Nombre = equipo.Nombre,
-                        Marca = equipo.Marca,
-                        Sede = equipo.Sede?.ToString(),
-                        SemanaInicioMtto = semanaInicio,
-                        FrecuenciaMtto = equipo.FrecuenciaMtto,
-                        Semanas = semanas
-                    };
+                    var anioRegistro = fechaRegistro.Year;
+                    var anioActual = DateTime.Now.Year;
+                    var mesActual = DateTime.Now.Month;
+                    int anioLimite = anioActual;
+                    if (mesActual >= 10) // Octubre o más, también crear el del siguiente año
+                        anioLimite = anioActual + 1;
                     using var dbContext2 = _dbContextFactory.CreateDbContext();
-                    dbContext2.Cronogramas.Add(new CronogramaMantenimiento
+                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
                     {
-                        Codigo = cronograma.Codigo!,
-                        Nombre = cronograma.Nombre!,
-                        Marca = cronograma.Marca,
-                        Sede = cronograma.Sede,
-                        SemanaInicioMtto = cronograma.SemanaInicioMtto,
-                        FrecuenciaMtto = cronograma.FrecuenciaMtto,
-                        Semanas = cronograma.Semanas
-                    });
+                        // No duplicar cronogramas si ya existen
+                        bool existe = await dbContext2.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
+                        if (existe) continue;
+                        // Calcular semana de inicio para el primer año, para los siguientes usar semana 1
+                        int semanaIni = (anio == anioRegistro) ? semanaInicio : 1;
+                        var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto);
+                        var cronograma = new CronogramaMantenimiento
+                        {
+                            Codigo = equipo.Codigo!,
+                            Nombre = equipo.Nombre!,
+                            Marca = equipo.Marca,
+                            Sede = equipo.Sede?.ToString(),
+                            FrecuenciaMtto = equipo.FrecuenciaMtto,
+                            Semanas = semanas,
+                            Anio = anio
+                        };
+                        dbContext2.Cronogramas.Add(cronograma);
+                    }
                     await dbContext2.SaveChangesAsync();
                 }
             }

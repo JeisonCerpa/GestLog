@@ -15,6 +15,12 @@
         <TextBlock Text="Cronograma de Mantenimientos" FontSize="22" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Grid.Row="0" HorizontalAlignment="Right">
             <Button Content="Nuevo" Command="{Binding AddCronogramaCommand}" Margin="0,0,8,0"/>
+            <TextBlock Text="Año:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <ComboBox Width="80"
+                      ItemsSource="{Binding AniosDisponibles}"
+                      SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,16,0"/>
             <Button Content="Editar" Command="{Binding EditCronogramaCommand}" Margin="0,0,8,0"/>
             <Button Content="Eliminar" Command="{Binding DeleteCronogramaCommand}" Margin="0,0,8,0"/>
             <Button Content="Importar" Command="{Binding ImportarCronogramasCommand}" Margin="0,0,8,0"/>

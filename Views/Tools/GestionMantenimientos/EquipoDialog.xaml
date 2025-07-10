@@ -43,8 +43,8 @@
                               Grid.Row="4" Grid.Column="1" Margin="0,4"/>
                     <!-- <TextBlock Text="Fecha Compra:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
                     <DatePicker SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged}" Grid.Row="5" Grid.Column="1" Margin="0,4"/> -->
-                    <TextBlock Text="Fecha Registro:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding FechaRegistro, UpdateSourceTrigger=PropertyChanged}" Grid.Row="5" Grid.Column="1" Margin="0,4" IsEnabled="False"/>
+                    <!-- <TextBlock Text="Fecha Registro:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
+                    <DatePicker SelectedDate="{Binding FechaRegistro, UpdateSourceTrigger=PropertyChanged}" Grid.Row="5" Grid.Column="1" Margin="0,4"/> -->
                     <TextBlock Text="Precio:" Grid.Row="6" Grid.Column="0" VerticalAlignment="Center"/>
                     <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged}" Grid.Row="6" Grid.Column="1" Margin="0,4"/>
                     <TextBlock Text="Observaciones:" Grid.Row="7" Grid.Column="0" VerticalAlignment="Center"/>

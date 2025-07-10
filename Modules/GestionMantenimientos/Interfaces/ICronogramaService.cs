@@ -15,5 +15,6 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task ExportarAExcelAsync(string filePath);
         Task BackupAsync();
         Task<List<CronogramaMantenimientoDto>> GetCronogramasAsync();
+        Task EnsureAllCronogramasUpToDateAsync();
     }
 }
