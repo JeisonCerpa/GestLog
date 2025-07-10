@@ -58,6 +58,8 @@ public partial class DocumentGenerationViewModel : ObservableObject
                     e.PropertyName == nameof(_mainViewModel.AutomaticEmail.HasEmailExcel))
                 {
                     SendDocumentsAutomaticallyCommand.NotifyCanExecuteChanged();
+                    // 🔥 Solución: Notificar explícitamente el cambio de CanSendAutomatically en el wrapper
+                    OnPropertyChanged(nameof(CanSendAutomatically));
                 }
             };
             _mainViewModel.SmtpConfiguration.PropertyChanged += (s, e) => 
