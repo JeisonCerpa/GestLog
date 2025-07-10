@@ -471,7 +471,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     if (anio == anioRegistro)
                     {
                         semanaInicio = semanaRegistro + salto;
+                        // Si la semana de inicio supera 52, que empiece en el siguiente ciclo
                         while (semanaInicio > 52) semanaInicio -= 52;
+                        // Si la semana de inicio es menor a 1, ajusta a 1
+                        if (semanaInicio < 1) semanaInicio = 1;
+                        // Si la semana de inicio está muy cerca del final y no cabe el ciclo, que empiece en la primera semana del siguiente año
+                        if (semanaInicio > 52 - salto + 1) semanaInicio = 1;
                     }                    else
                     {
                         var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
