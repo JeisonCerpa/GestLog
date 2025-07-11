@@ -497,13 +497,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         bool existe = dbContext.Seguimientos.Any(s => s.Codigo == cronograma.Codigo && s.Semana == semana && s.Anio == cronograma.Anio);
                         if (!existe)
                         {
+                            // Calcular el lunes de la semana correspondiente
+                            var fechaLunes = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(cronograma.Anio, 1, 1), semana - 1);
                             dbContext.Seguimientos.Add(new Models.Entities.SeguimientoMantenimiento
                             {
                                 Codigo = cronograma.Codigo,
                                 Nombre = cronograma.Nombre,
                                 Semana = semana,
                                 Anio = cronograma.Anio,
-                                TipoMtno = Models.Enums.TipoMantenimiento.Preventivo
+                                TipoMtno = Models.Enums.TipoMantenimiento.Preventivo,
+                                FechaRegistro = fechaLunes
                             });
                             totalAgregados++;
                         }
@@ -696,27 +699,48 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 else
                 {
                     // Realizado
-                    var fechaRealizacion = seguimiento.FechaRegistro.Value;
-                    var fechaInicioSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1);
-                    var fechaFinSemana = fechaInicioSemana.AddDays(6);
-                    if (fechaRealizacion >= fechaInicioSemana && fechaRealizacion <= fechaFinSemana)
+                    DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
+                    if (fechaRealizacion.HasValue)
                     {
-                        estado.Realizado = true;
-                        estado.Atrasado = false;
-                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
-                    }
-                    else if (fechaRealizacion > fechaFinSemana)
-                    {
-                        estado.Realizado = true;
-                        estado.Atrasado = true;
-                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                        var fechaInicioSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1);
+                        var fechaFinSemana = fechaInicioSemana.AddDays(6);
+                        if (fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
+                        {
+                            estado.Realizado = true;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                        }
+                        else if (fechaRealizacion.Value > fechaFinSemana)
+                        {
+                            estado.Realizado = true;
+                            estado.Atrasado = true;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                        }
+                        else
+                        {
+                            // Realizado antes de la semana (caso raro)
+                            estado.Realizado = true;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                        }
                     }
                     else
                     {
-                        // Realizado antes de la semana (caso raro)
-                        estado.Realizado = true;
-                        estado.Atrasado = false;
-                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                        // No hay fecha real de realización, dejar como pendiente/atrasado según la fecha actual
+                        var hoy = DateTime.Now;
+                        var fechaFinSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1).AddDays(6);
+                        if (hoy <= fechaFinSemana)
+                        {
+                            estado.Realizado = false;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                        }
+                        else
+                        {
+                            estado.Realizado = false;
+                            estado.Atrasado = true;
+                            estado.Estado = EstadoSeguimientoMantenimiento.Atrasado;
+                        }
                     }
                     estado.Seguimiento = new SeguimientoMantenimientoDto
                     {
@@ -727,7 +751,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Responsable = seguimiento.Responsable,
                         Costo = seguimiento.Costo,
                         Observaciones = seguimiento.Observaciones,
-                        FechaRegistro = seguimiento.FechaRegistro
+                        FechaRegistro = seguimiento.FechaRegistro,
+                        FechaRealizacion = seguimiento.FechaRealizacion,
+                        Semana = seguimiento.Semana,
+                        Anio = seguimiento.Anio,
+                        Estado = estado.Estado
                     };
                 }
                 estados.Add(estado);

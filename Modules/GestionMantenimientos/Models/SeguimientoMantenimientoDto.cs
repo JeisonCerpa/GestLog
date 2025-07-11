@@ -14,6 +14,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public decimal? Costo { get; set; }
         public string? Observaciones { get; set; }
         public EstadoSeguimientoMantenimiento Estado { get; set; }
+        public int Semana { get; set; } // Semana del año (1-53)
+        public int Anio { get; set; }   // Año del seguimiento
+        public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
 
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;
@@ -33,6 +36,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Costo = other.Costo;
             Observaciones = other.Observaciones;
             Estado = other.Estado;
+            Semana = other.Semana;
+            Anio = other.Anio;
+            FechaRealizacion = other.FechaRealizacion;
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
         }

@@ -10,6 +10,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         {
             InitializeComponent();
             Seguimiento = seguimiento != null ? new SeguimientoMantenimientoDto(seguimiento) : new SeguimientoMantenimientoDto();
+            // Si es registro nuevo y no tiene fecha, prellenar con la fecha actual
+            if (seguimiento == null || Seguimiento.FechaRealizacion == null)
+                Seguimiento.FechaRealizacion = System.DateTime.Now;
             DataContext = Seguimiento;
         }
         private void Aceptar_Click(object sender, RoutedEventArgs e)

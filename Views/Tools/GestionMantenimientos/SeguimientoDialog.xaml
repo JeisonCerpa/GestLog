@@ -35,8 +35,8 @@
                 <TextBox Text="{Binding Codigo}" Grid.Row="0" Grid.Column="1" Margin="0,4" IsReadOnly="True" IsEnabled="False"/>
                 <TextBlock Text="Nombre:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
                 <TextBox Text="{Binding Nombre}" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True" IsEnabled="False"/>
-                <TextBlock Text="Fecha de registro:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding FechaRegistro, StringFormat='dd/MM/yyyy HH:mm'}" Grid.Row="2" Grid.Column="1" Margin="0,4" VerticalAlignment="Center"/>
+                <TextBlock Text="Fecha real de realización:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding FechaRealizacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="0,4" IsEnabled="False"/>
                 <TextBlock Text="Tipo Mtno:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
                 <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" SelectedItem="{Binding TipoMtno, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding Source={StaticResource TipoMantenimientoValues}}"/>
                 <TextBlock Text="Descripción:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center"/>

@@ -78,8 +78,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     Codigo = estado.CodigoEquipo,
                     Nombre = estado.NombreEquipo,
                     FechaRegistro = DateTime.Now,
-                    // Si ya existe seguimiento previo, prellenar TipoMtno
-                    TipoMtno = estado.Seguimiento?.TipoMtno
+                    TipoMtno = estado.Seguimiento?.TipoMtno,
+                    Semana = estado.Semana,
+                    Anio = estado.Anio
                 };
                 // Abrir el diálogo de registro de mantenimiento con el DTO prellenado
                 var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimientoDto);
@@ -91,6 +92,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
                     int semanaActual = cal.GetWeekOfYear(fechaRegistro, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
                     int anioActual = fechaRegistro.Year;
+                    // Asegura que los valores de semana y año sean los correctos
+                    seguimiento.Semana = estado.Semana;
+                    seguimiento.Anio = estado.Anio;
                     // Determinar estado
                     if (estado.Anio == anioActual && estado.Semana == semanaActual)
                         seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;

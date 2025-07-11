@@ -38,7 +38,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Responsable = s.Responsable,
                 Costo = s.Costo,
                 Observaciones = s.Observaciones,
-                FechaRegistro = s.FechaRegistro
+                FechaRegistro = s.FechaRegistro,
+                FechaRealizacion = s.FechaRealizacion,
+                Semana = s.Semana,
+                Anio = s.Anio,
+                Estado = s.Estado
             });
         }
 
@@ -56,7 +60,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Responsable = entity.Responsable,
                 Costo = entity.Costo,
                 Observaciones = entity.Observaciones,
-                FechaRegistro = entity.FechaRegistro
+                FechaRegistro = entity.FechaRegistro,
+                FechaRealizacion = entity.FechaRealizacion,
+                Semana = entity.Semana,
+                Anio = entity.Anio,
+                Estado = entity.Estado
             };
         }
 
@@ -66,22 +74,45 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 ValidarSeguimiento(seguimiento);
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                if (await dbContext.Seguimientos.AnyAsync(s => s.Codigo == seguimiento.Codigo))
-                    throw new GestionMantenimientosDomainException($"Ya existe un seguimiento con el código '{seguimiento.Codigo}'.");               
-                var entity = new SeguimientoMantenimiento
+                // Buscar por clave compuesta: Codigo, Semana, Anio
+                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
+                if (entity != null)
                 {
-                    Codigo = seguimiento.Codigo!,
-                    Nombre = seguimiento.Nombre!,
-                    TipoMtno = seguimiento.TipoMtno!.Value,
-                    Descripcion = seguimiento.Descripcion,
-                    Responsable = seguimiento.Responsable,
-                    Costo = seguimiento.Costo,
-                    Observaciones = seguimiento.Observaciones,
-                    FechaRegistro = seguimiento.FechaRegistro
-                };
-                dbContext.Seguimientos.Add(entity);
-                await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo}", seguimiento?.Codigo ?? "");
+                    // Ya existe: actualizar los campos editables
+                    entity.Nombre = seguimiento.Nombre!;
+                    entity.TipoMtno = seguimiento.TipoMtno!.Value;
+                    entity.Descripcion = seguimiento.Descripcion;
+                    entity.Responsable = seguimiento.Responsable;
+                    entity.Costo = seguimiento.Costo;
+                    entity.Observaciones = seguimiento.Observaciones;
+                    entity.FechaRegistro = seguimiento.FechaRegistro;
+                    entity.FechaRealizacion = seguimiento.FechaRealizacion;
+                    entity.Estado = seguimiento.Estado;
+                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("[SeguimientoService] Seguimiento actualizado (sobrescrito) correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                }
+                else
+                {
+                    // Nuevo seguimiento
+                    var nuevo = new SeguimientoMantenimiento
+                    {
+                        Codigo = seguimiento.Codigo!,
+                        Nombre = seguimiento.Nombre!,
+                        TipoMtno = seguimiento.TipoMtno!.Value,
+                        Descripcion = seguimiento.Descripcion,
+                        Responsable = seguimiento.Responsable,
+                        Costo = seguimiento.Costo,
+                        Observaciones = seguimiento.Observaciones,
+                        FechaRegistro = seguimiento.FechaRegistro,
+                        FechaRealizacion = seguimiento.FechaRealizacion,
+                        Semana = seguimiento.Semana,
+                        Anio = seguimiento.Anio,
+                        Estado = seguimiento.Estado
+                    };
+                    dbContext.Seguimientos.Add(nuevo);
+                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                }
             }
             catch (GestionMantenimientosDomainException ex)
             {
@@ -101,11 +132,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 ValidarSeguimiento(seguimiento);
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo);
+                // Buscar por clave compuesta: Codigo, Semana, Anio
+                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el seguimiento a actualizar.");
                 // No permitir cambiar el código
-                // entity.Codigo = seguimiento.Codigo; // NO modificar
                 entity.Nombre = seguimiento.Nombre!;
                 entity.TipoMtno = seguimiento.TipoMtno!.Value;
                 entity.Descripcion = seguimiento.Descripcion;
@@ -113,8 +144,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.Costo = seguimiento.Costo;
                 entity.Observaciones = seguimiento.Observaciones;
                 entity.FechaRegistro = seguimiento.FechaRegistro;
+                entity.FechaRealizacion = seguimiento.FechaRealizacion;
+                entity.Estado = seguimiento.Estado;
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo}", seguimiento?.Codigo ?? "");
+                _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
             }
             catch (GestionMantenimientosDomainException ex)
             {

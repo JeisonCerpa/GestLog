@@ -17,5 +17,6 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public int Semana { get; set; } // Semana del año (1-53)
         public int Anio { get; set; } // Año del seguimiento
         public EstadoSeguimientoMantenimiento Estado { get; set; } // Estado calculado del seguimiento
+        public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
     }
 }
