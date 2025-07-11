@@ -96,6 +96,27 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Anio = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year
                 };
                 dbContext.Cronogramas.Add(entity);
+                // Generar seguimientos pendientes para cada semana programada
+                for (int i = 0; i < entity.Semanas.Length; i++)
+                {
+                    if (entity.Semanas[i])
+                    {
+                        int semana = i + 1;
+                        // Verificar si ya existe seguimiento para este equipo, semana y año
+                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio);
+                        if (!existe)
+                        {
+                            dbContext.Seguimientos.Add(new SeguimientoMantenimiento
+                            {
+                                Codigo = entity.Codigo,
+                                Nombre = entity.Nombre,
+                                Semana = semana,
+                                Anio = entity.Anio,
+                                TipoMtno = TipoMantenimiento.Preventivo // Por defecto, o puedes ajustar según lógica
+                            });
+                        }
+                    }
+                }
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[CronogramaService] Cronograma agregado correctamente: {Codigo} - {Anio}", cronograma?.Codigo ?? "", entity.Anio);
             }
@@ -127,6 +148,27 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.FrecuenciaMtto = cronograma.FrecuenciaMtto;
                 entity.Semanas = cronograma.Semanas.ToArray();
                 entity.Anio = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year;
+                await dbContext.SaveChangesAsync();
+                // Actualizar seguimientos: crear los que falten para semanas programadas
+                for (int i = 0; i < entity.Semanas.Length; i++)
+                {
+                    if (entity.Semanas[i])
+                    {
+                        int semana = i + 1;
+                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio);
+                        if (!existe)
+                        {
+                            dbContext.Seguimientos.Add(new SeguimientoMantenimiento
+                            {
+                                Codigo = entity.Codigo,
+                                Nombre = entity.Nombre,
+                                Semana = semana,
+                                Anio = entity.Anio,
+                                TipoMtno = TipoMantenimiento.Preventivo // Por defecto, o puedes ajustar según lógica
+                            });
+                        }
+                    }
+                }
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[CronogramaService] Cronograma actualizado correctamente: {Codigo} - {Anio}", cronograma?.Codigo ?? "", entity.Anio);
             }
@@ -433,7 +475,44 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 };
                 dbContext.Cronogramas.Add(nuevo);
             }
+            await dbContext.SaveChangesAsync();        }
+
+        /// <summary>
+                /// <summary>
+        /// Genera los seguimientos faltantes para todos los cronogramas existentes.
+        /// </summary>
+        public async Task GenerarSeguimientosFaltantesAsync()
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var cronogramas = dbContext.Cronogramas.ToList();
+            int totalAgregados = 0;
+            
+            foreach (var cronograma in cronogramas)
+            {
+                for (int i = 0; i < cronograma.Semanas.Length; i++)
+                {
+                    if (cronograma.Semanas[i])
+                    {
+                        int semana = i + 1;
+                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == cronograma.Codigo && s.Semana == semana && s.Anio == cronograma.Anio);
+                        if (!existe)
+                        {
+                            dbContext.Seguimientos.Add(new Models.Entities.SeguimientoMantenimiento
+                            {
+                                Codigo = cronograma.Codigo,
+                                Nombre = cronograma.Nombre,
+                                Semana = semana,
+                                Anio = cronograma.Anio,
+                                TipoMtno = Models.Enums.TipoMantenimiento.Preventivo
+                            });
+                            totalAgregados++;
+                        }
+                    }
+                }
+            }
+            
             await dbContext.SaveChangesAsync();
+            _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
         }
 
         /// <summary>
@@ -547,11 +626,116 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             }
         }
 
-        // Utilidad para calcular la semana ISO 8601 para una fecha dada
         private int CalcularSemanaISO8601(DateTime fecha)
         {
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
             return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        }        /// <summary>
+        /// Devuelve el estado de los mantenimientos programados para una semana y año dados.
+        /// </summary>
+        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            
+            _logger.LogInformation("[CronogramaService] DEBUG - Consultando estados para semana {semana}, año {anio}", semana, anio);
+            
+            // Obtener todos los cronogramas del año y filtrar en memoria
+            // porque EF no puede traducir la indexación de arrays a SQL
+            var cronogramasDelAnio = await dbContext.Cronogramas
+                .Where(c => c.Anio == anio)
+                .ToListAsync();
+            
+            _logger.LogInformation("[CronogramaService] DEBUG - Encontrados {count} cronogramas para el año {anio}", cronogramasDelAnio.Count, anio);
+            
+            // Filtrar en memoria los que tienen mantenimiento en la semana especificada
+            var cronogramasConMantenimiento = cronogramasDelAnio
+                .Where(c => c.Semanas != null && 
+                           c.Semanas.Length >= semana && 
+                           c.Semanas[semana - 1])
+                .ToList();
+            
+            _logger.LogInformation("[CronogramaService] DEBUG - Encontrados {count} cronogramas con mantenimiento en semana {semana}", cronogramasConMantenimiento.Count, semana);
+            
+            var estados = new List<MantenimientoSemanaEstadoDto>();
+            var seguimientos = await dbContext.Seguimientos
+                .Where(s => s.Anio == anio && s.Semana == semana)
+                .ToListAsync();
+
+            foreach (var c in cronogramasConMantenimiento)
+            {
+                var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);                var estado = new MantenimientoSemanaEstadoDto
+                {
+                    CodigoEquipo = c.Codigo,
+                    NombreEquipo = c.Nombre,
+                    Semana = semana,
+                    Anio = anio,
+                    Frecuencia = c.FrecuenciaMtto,
+                    Programado = true,
+                    Seguimiento = null
+                };
+
+                // Determinar el estado según la lógica de negocio
+                if (seguimiento == null || seguimiento.FechaRegistro == null)
+                {
+                    // No realizado
+                    var hoy = DateTime.Now;
+                    var fechaFinSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1).AddDays(6);
+                    if (hoy <= fechaFinSemana)
+                    {
+                        estado.Realizado = false;
+                        estado.Atrasado = false;
+                        estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                    }
+                    else
+                    {
+                        estado.Realizado = false;
+                        estado.Atrasado = true;
+                        estado.Estado = EstadoSeguimientoMantenimiento.Atrasado;
+                    }
+                }
+                else
+                {
+                    // Realizado
+                    var fechaRealizacion = seguimiento.FechaRegistro.Value;
+                    var fechaInicioSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1);
+                    var fechaFinSemana = fechaInicioSemana.AddDays(6);
+                    if (fechaRealizacion >= fechaInicioSemana && fechaRealizacion <= fechaFinSemana)
+                    {
+                        estado.Realizado = true;
+                        estado.Atrasado = false;
+                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                    }
+                    else if (fechaRealizacion > fechaFinSemana)
+                    {
+                        estado.Realizado = true;
+                        estado.Atrasado = true;
+                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                    }
+                    else
+                    {
+                        // Realizado antes de la semana (caso raro)
+                        estado.Realizado = true;
+                        estado.Atrasado = false;
+                        estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                    }
+                    estado.Seguimiento = new SeguimientoMantenimientoDto
+                    {
+                        Codigo = seguimiento.Codigo,
+                        Nombre = seguimiento.Nombre,
+                        TipoMtno = seguimiento.TipoMtno,
+                        Descripcion = seguimiento.Descripcion,
+                        Responsable = seguimiento.Responsable,
+                        Costo = seguimiento.Costo,
+                        Observaciones = seguimiento.Observaciones,
+                        FechaRegistro = seguimiento.FechaRegistro
+                    };
+                }
+                estados.Add(estado);
+                _logger.LogInformation("[CronogramaService] DEBUG - Agregado estado para equipo {codigo} - {nombre}", c.Codigo, c.Nombre);
+            }
+            
+            _logger.LogInformation("[CronogramaService] DEBUG - Retornando {count} estados de mantenimiento", estados.Count);
+            return estados;
         }
     }
 }

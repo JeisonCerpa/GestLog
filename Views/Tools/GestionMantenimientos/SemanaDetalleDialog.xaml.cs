@@ -6,7 +6,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 {
     public partial class SemanaDetalleDialog : Window
     {
-        public SemanaDetalleDialog(SemanaDetalleViewModel vm)
+        public SemanaDetalleDialog(GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel vm)
         {
             InitializeComponent();
             DataContext = vm;
@@ -16,19 +16,6 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         {
             DialogResult = false;
             Close();
-        }
-    }
-
-    public class SemanaDetalleViewModel
-    {
-        public string Titulo { get; set; } = "";
-        public string RangoFechas { get; set; } = "";
-        public ObservableCollection<CronogramaMantenimientoDto> Mantenimientos { get; set; } = new();
-        public SemanaDetalleViewModel(string titulo, string rango, ObservableCollection<CronogramaMantenimientoDto> mantenimientos)
-        {
-            Titulo = titulo;
-            RangoFechas = rango;
-            Mantenimientos = mantenimientos;
         }
     }
 }

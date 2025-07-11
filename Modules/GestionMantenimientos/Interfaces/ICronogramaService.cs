@@ -13,8 +13,9 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task DeleteAsync(string codigo);
         Task ImportarDesdeExcelAsync(string filePath);
         Task ExportarAExcelAsync(string filePath);
-        Task BackupAsync();
-        Task<List<CronogramaMantenimientoDto>> GetCronogramasAsync();
+        Task BackupAsync();        Task<List<CronogramaMantenimientoDto>> GetCronogramasAsync();
         Task EnsureAllCronogramasUpToDateAsync();
+        Task GenerarSeguimientosFaltantesAsync();
+        Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio);
     }
 }

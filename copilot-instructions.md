@@ -21,8 +21,7 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 5. **MVVM**: Cero lógica en code-behind
 6. **Validación**: Antes de procesar
 7. **Errores**: Específicos del dominio + mensajes claros en español
-8. **Backup**: Antes de modificar un archivo, y evitar dañarlo, crear una copia .bak en la misma carpeta para poder compararla si se daña algo (Basicamente crear un archivo .bak inicial con copia del codigo original, y luego de todas las pruebas y funcione todo al 100%, cuando el usuario diga que funciona ya se puede eliminar, no crear uno en cada cambio, solo 1 inicial)
-9. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas van dentro de la carpeta /Views (Siguiendo su estructura).
+8. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas van dentro de la carpeta /Views (Siguiendo su estructura).
 
 ## 🏗️ **Arquitectura Base**
 

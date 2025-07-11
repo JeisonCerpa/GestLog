@@ -33,7 +33,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 Codigo = s.Codigo,
                 Nombre = s.Nombre,
-                Fecha = s.Fecha,
                 TipoMtno = s.TipoMtno,
                 Descripcion = s.Descripcion,
                 Responsable = s.Responsable,
@@ -52,7 +51,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 Codigo = entity.Codigo,
                 Nombre = entity.Nombre,
-                Fecha = entity.Fecha,
                 TipoMtno = entity.TipoMtno,
                 Descripcion = entity.Descripcion,
                 Responsable = entity.Responsable,
@@ -74,7 +72,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 {
                     Codigo = seguimiento.Codigo!,
                     Nombre = seguimiento.Nombre!,
-                    Fecha = seguimiento.Fecha,
                     TipoMtno = seguimiento.TipoMtno!.Value,
                     Descripcion = seguimiento.Descripcion,
                     Responsable = seguimiento.Responsable,
@@ -110,7 +107,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 // No permitir cambiar el código
                 // entity.Codigo = seguimiento.Codigo; // NO modificar
                 entity.Nombre = seguimiento.Nombre!;
-                entity.Fecha = seguimiento.Fecha;
                 entity.TipoMtno = seguimiento.TipoMtno!.Value;
                 entity.Descripcion = seguimiento.Descripcion;
                 entity.Responsable = seguimiento.Responsable;
@@ -166,10 +162,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("El código es obligatorio.");
             if (string.IsNullOrWhiteSpace(seguimiento.Nombre))
                 throw new GestionMantenimientosDomainException("El nombre es obligatorio.");
-            if (seguimiento.Fecha == null)
-                throw new GestionMantenimientosDomainException("La fecha es obligatoria.");
-            if (seguimiento.Fecha > DateTime.Now)
-                throw new GestionMantenimientosDomainException("La fecha no puede ser futura.");
+            if (seguimiento.FechaRegistro == null)
+                throw new GestionMantenimientosDomainException("La fecha de registro es obligatoria.");
+            if (seguimiento.FechaRegistro > DateTime.Now)
+                throw new GestionMantenimientosDomainException("La fecha de registro no puede ser futura.");
             if (seguimiento.TipoMtno == null)
                 throw new GestionMantenimientosDomainException("El tipo de mantenimiento es obligatorio.");
             if (string.IsNullOrWhiteSpace(seguimiento.Descripcion))
@@ -193,7 +189,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
                     using var workbook = new XLWorkbook(filePath);
                     var worksheet = workbook.Worksheets.First();
-                    var headers = new[] { "Codigo", "Nombre", "Fecha", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro" };
+                    var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro" };
                     // Validar encabezados
                     for (int i = 0; i < headers.Length; i++)
                     {
@@ -211,13 +207,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             {
                                 Codigo = worksheet.Cell(row, 1).GetString(),
                                 Nombre = worksheet.Cell(row, 2).GetString(),
-                                Fecha = worksheet.Cell(row, 3).GetDateTime(),
-                                TipoMtno = Enum.TryParse<TipoMantenimiento>(worksheet.Cell(row, 4).GetString(), out var tipo) ? tipo : (TipoMantenimiento?)null,
-                                Descripcion = worksheet.Cell(row, 5).GetString(),
-                                Responsable = worksheet.Cell(row, 6).GetString(),
-                                Costo = worksheet.Cell(row, 7).GetValue<decimal?>(),
-                                Observaciones = worksheet.Cell(row, 8).GetString(),
-                                FechaRegistro = worksheet.Cell(row, 9).GetDateTime()
+                                TipoMtno = Enum.TryParse<TipoMantenimiento>(worksheet.Cell(row, 3).GetString(), out var tipo) ? tipo : (TipoMantenimiento?)null,
+                                Descripcion = worksheet.Cell(row, 4).GetString(),
+                                Responsable = worksheet.Cell(row, 5).GetString(),
+                                Costo = worksheet.Cell(row, 6).GetValue<decimal?>(),
+                                Observaciones = worksheet.Cell(row, 7).GetString(),
+                                FechaRegistro = worksheet.Cell(row, 8).GetDateTime()
                             };
                             ValidarSeguimiento(dto);
                             seguimientos.Add(dto);
@@ -266,7 +261,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var worksheet = workbook.Worksheets.Add("Seguimientos");
 
                 // Encabezados
-                var headers = new[] { "Codigo", "Nombre", "Fecha", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro" };
+                var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro" };
                 for (int i = 0; i < headers.Length; i++)
                 {
                     worksheet.Cell(1, i + 1).Value = headers[i];
@@ -279,13 +274,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 {
                     worksheet.Cell(row, 1).Value = s.Codigo;
                     worksheet.Cell(row, 2).Value = s.Nombre;
-                    worksheet.Cell(row, 3).Value = s.Fecha;
-                    worksheet.Cell(row, 4).Value = s.TipoMtno?.ToString();
-                    worksheet.Cell(row, 5).Value = s.Descripcion;
-                    worksheet.Cell(row, 6).Value = s.Responsable;
-                    worksheet.Cell(row, 7).Value = s.Costo;
-                    worksheet.Cell(row, 8).Value = s.Observaciones;
-                    worksheet.Cell(row, 9).Value = s.FechaRegistro;
+                    worksheet.Cell(row, 3).Value = s.TipoMtno?.ToString();
+                    worksheet.Cell(row, 4).Value = s.Descripcion;
+                    worksheet.Cell(row, 5).Value = s.Responsable;
+                    worksheet.Cell(row, 6).Value = s.Costo;
+                    worksheet.Cell(row, 7).Value = s.Observaciones;
+                    worksheet.Cell(row, 8).Value = s.FechaRegistro;
                     row++;
                 }
                 worksheet.Columns().AdjustToContents();

@@ -39,14 +39,25 @@ public partial class CronogramaViewModel : ObservableObject
     private ObservableCollection<int> aniosDisponibles = new();
 
     [ObservableProperty]
-    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();
-
-    public CronogramaViewModel(ICronogramaService cronogramaService, IGestLogLogger logger)
+    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();    public CronogramaViewModel(ICronogramaService cronogramaService, IGestLogLogger logger)
     {
         _cronogramaService = cronogramaService;
         _logger = logger;
         // Cargar datos automáticamente al crear el ViewModel
-        Task.Run(async () => await LoadCronogramasAsync());
+        Task.Run(async () => 
+        {
+            // Ejecutar migración de seguimientos faltantes al inicializar el módulo
+            try
+            {
+                await _cronogramaService.GenerarSeguimientosFaltantesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaViewModel] Error en migración de seguimientos");
+            }
+            
+            await LoadCronogramasAsync();
+        });
     }
 
     partial void OnAnioSeleccionadoChanged(int value)
@@ -181,7 +192,7 @@ public partial class CronogramaViewModel : ObservableObject
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
             var fechaFin = fechaInicio.AddDays(6);
-            var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin);
+            var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
             if (CronogramasFiltrados != null)
             {
                 foreach (var c in CronogramasFiltrados)

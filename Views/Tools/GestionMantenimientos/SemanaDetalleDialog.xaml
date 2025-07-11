@@ -3,9 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:GestLog.Converters"
         Title="Detalle de la Semana" Height="420" Width="600" WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#FAFAFA" SizeToContent="Height">
-    <Window.Resources>
+        ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#FAFAFA" SizeToContent="Height">    <Window.Resources>
+        <converters:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Realizado" FalseText="Pendiente" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     </Window.Resources>
     <Border Margin="16" Background="White" CornerRadius="8" Padding="20" BorderBrush="#DDD" BorderThickness="1">
         <StackPanel>
@@ -23,7 +26,38 @@
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
                 </DataGrid.Columns>
+            </DataGrid>            <TextBlock Text="Estados de Mantenimiento" FontSize="16" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,16,0,8"/>
+            <DataGrid ItemsSource="{Binding EstadosMantenimientos}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,10">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="120"/>
+                    <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="80"/>
+                    <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="80"/>
+                    <DataGridTextColumn Header="Estado" MinWidth="120">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="Estado" Converter="{StaticResource EnumToDescriptionConverter}" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Acción" MinWidth="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Registrar"
+                                        Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="2"
+                                        Visibility="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}, ConverterParameter=ShowRegistrarButton}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
             </DataGrid>
+            <!-- Mensaje cuando no hay estados de mantenimiento -->
+            <TextBlock Text="No hay estados de mantenimiento para esta semana." 
+                       Foreground="#C0392B" FontWeight="SemiBold" FontSize="12" 
+                       HorizontalAlignment="Center" Margin="0,10,0,10"
+                       Visibility="{Binding EstadosMantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
+            <!-- Feedback visual para mensajes de usuario -->
+            <TextBlock Text="{Binding MensajeUsuario}" Foreground="Red" FontWeight="SemiBold" Margin="0,0,0,8"
+                       Visibility="{Binding MensajeUsuario, Converter={StaticResource StringToVisibilityConverter}}"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cerrar" Width="100" IsCancel="True" Click="OnCerrar_Click"/>
             </StackPanel>
