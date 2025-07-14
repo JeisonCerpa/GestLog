@@ -633,40 +633,46 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
             return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-        }        /// <summary>
-        /// Devuelve el estado de los mantenimientos programados para una semana y año dados.
-        /// </summary>
+        }        // Utilidad para obtener el primer día de la semana ISO 8601
+        private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+            var firstThursday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var weekNum = weekOfYear;
+            if (firstWeek <= 1)
+                weekNum -= 1;
+            var result = firstThursday.AddDays(weekNum * 7);
+            return result.AddDays(-3);
+        }
+
         public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
-            
             _logger.LogInformation("[CronogramaService] DEBUG - Consultando estados para semana {semana}, año {anio}", semana, anio);
-            
-            // Obtener todos los cronogramas del año y filtrar en memoria
-            // porque EF no puede traducir la indexación de arrays a SQL
             var cronogramasDelAnio = await dbContext.Cronogramas
                 .Where(c => c.Anio == anio)
                 .ToListAsync();
-            
             _logger.LogInformation("[CronogramaService] DEBUG - Encontrados {count} cronogramas para el año {anio}", cronogramasDelAnio.Count, anio);
-            
-            // Filtrar en memoria los que tienen mantenimiento en la semana especificada
             var cronogramasConMantenimiento = cronogramasDelAnio
                 .Where(c => c.Semanas != null && 
                            c.Semanas.Length >= semana && 
                            c.Semanas[semana - 1])
                 .ToList();
-            
             _logger.LogInformation("[CronogramaService] DEBUG - Encontrados {count} cronogramas con mantenimiento en semana {semana}", cronogramasConMantenimiento.Count, semana);
-            
             var estados = new List<MantenimientoSemanaEstadoDto>();
             var seguimientos = await dbContext.Seguimientos
                 .Where(s => s.Anio == anio && s.Semana == semana)
                 .ToListAsync();
-
+            // Calcular fechas de inicio y fin de la semana ISO 8601
+            var fechaInicioSemana = FirstDateOfWeekISO8601(anio, semana);
+            var fechaFinSemana = fechaInicioSemana.AddDays(6);
             foreach (var c in cronogramasConMantenimiento)
             {
-                var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);                var estado = new MantenimientoSemanaEstadoDto
+                var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);
+                var estado = new MantenimientoSemanaEstadoDto
                 {
                     CodigoEquipo = c.Codigo,
                     NombreEquipo = c.Nombre,
@@ -676,13 +682,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Programado = true,
                     Seguimiento = null
                 };
-
-                // Determinar el estado según la lógica de negocio
                 if (seguimiento == null || seguimiento.FechaRegistro == null)
                 {
-                    // No realizado
                     var hoy = DateTime.Now;
-                    var fechaFinSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1).AddDays(6);
                     if (hoy <= fechaFinSemana)
                     {
                         estado.Realizado = false;
@@ -698,12 +700,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 }
                 else
                 {
-                    // Realizado
                     DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
                     if (fechaRealizacion.HasValue)
                     {
-                        var fechaInicioSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1);
-                        var fechaFinSemana = fechaInicioSemana.AddDays(6);
                         if (fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
                         {
                             estado.Realizado = true;
@@ -718,7 +717,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         }
                         else
                         {
-                            // Realizado antes de la semana (caso raro)
                             estado.Realizado = true;
                             estado.Atrasado = false;
                             estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
@@ -726,9 +724,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                     else
                     {
-                        // No hay fecha real de realización, dejar como pendiente/atrasado según la fecha actual
                         var hoy = DateTime.Now;
-                        var fechaFinSemana = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(anio, 1, 1), semana - 1).AddDays(6);
                         if (hoy <= fechaFinSemana)
                         {
                             estado.Realizado = false;
@@ -761,7 +757,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 estados.Add(estado);
                 _logger.LogInformation("[CronogramaService] DEBUG - Agregado estado para equipo {codigo} - {nombre}", c.Codigo, c.Nombre);
             }
-            
             _logger.LogInformation("[CronogramaService] DEBUG - Retornando {count} estados de mantenimiento", estados.Count);
             return estados;
         }
