@@ -79,31 +79,31 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 if (entity != null)
                 {
                     // Ya existe: actualizar los campos editables
-                    entity.Nombre = seguimiento.Nombre!;
-                    entity.TipoMtno = seguimiento.TipoMtno!.Value;
-                    entity.Descripcion = seguimiento.Descripcion;
-                    entity.Responsable = seguimiento.Responsable;
-                    entity.Costo = seguimiento.Costo;
-                    entity.Observaciones = seguimiento.Observaciones;
-                    entity.FechaRegistro = seguimiento.FechaRegistro;
+                    entity.Nombre = seguimiento.Nombre ?? string.Empty;
+                    entity.TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo;
+                    entity.Descripcion = seguimiento.Descripcion ?? string.Empty;
+                    entity.Responsable = seguimiento.Responsable ?? string.Empty;
+                    entity.Costo = seguimiento.Costo.HasValue ? seguimiento.Costo.Value : 0m;
+                    entity.Observaciones = seguimiento.Observaciones ?? string.Empty;
+                    entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                     entity.FechaRealizacion = seguimiento.FechaRealizacion;
                     entity.Estado = seguimiento.Estado;
                     await dbContext.SaveChangesAsync();
-                    _logger.LogInformation("[SeguimientoService] Seguimiento actualizado (sobrescrito) correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                    _logger.LogInformation("[SeguimientoService] Seguimiento actualizado (sobrescrito) correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
                 }
                 else
                 {
                     // Nuevo seguimiento
                     var nuevo = new SeguimientoMantenimiento
                     {
-                        Codigo = seguimiento.Codigo!,
-                        Nombre = seguimiento.Nombre!,
-                        TipoMtno = seguimiento.TipoMtno!.Value,
-                        Descripcion = seguimiento.Descripcion,
-                        Responsable = seguimiento.Responsable,
+                        Codigo = seguimiento.Codigo ?? string.Empty,
+                        Nombre = seguimiento.Nombre ?? string.Empty,
+                        TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo,
+                        Descripcion = seguimiento.Descripcion ?? string.Empty,
+                        Responsable = seguimiento.Responsable ?? string.Empty,
                         Costo = seguimiento.Costo,
-                        Observaciones = seguimiento.Observaciones,
-                        FechaRegistro = seguimiento.FechaRegistro,
+                        Observaciones = seguimiento.Observaciones ?? string.Empty,
+                        FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now,
                         FechaRealizacion = seguimiento.FechaRealizacion,
                         Semana = seguimiento.Semana,
                         Anio = seguimiento.Anio,
@@ -111,7 +111,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     };
                     dbContext.Seguimientos.Add(nuevo);
                     await dbContext.SaveChangesAsync();
-                    _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                    _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
                 }
             }
             catch (GestionMantenimientosDomainException ex)
@@ -137,17 +137,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el seguimiento a actualizar.");
                 // No permitir cambiar el código
-                entity.Nombre = seguimiento.Nombre!;
-                entity.TipoMtno = seguimiento.TipoMtno!.Value;
-                entity.Descripcion = seguimiento.Descripcion;
-                entity.Responsable = seguimiento.Responsable;
-                entity.Costo = seguimiento.Costo;
-                entity.Observaciones = seguimiento.Observaciones;
-                entity.FechaRegistro = seguimiento.FechaRegistro;
+                entity.Nombre = seguimiento.Nombre ?? string.Empty;
+                entity.TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo;
+                entity.Descripcion = seguimiento.Descripcion ?? string.Empty;
+                entity.Responsable = seguimiento.Responsable ?? string.Empty;
+                entity.Costo = seguimiento.Costo.HasValue ? seguimiento.Costo.Value : 0m;
+                entity.Observaciones = seguimiento.Observaciones ?? string.Empty;
+                entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                 entity.FechaRealizacion = seguimiento.FechaRealizacion;
                 entity.Estado = seguimiento.Estado;
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento?.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
             }
             catch (GestionMantenimientosDomainException ex)
             {

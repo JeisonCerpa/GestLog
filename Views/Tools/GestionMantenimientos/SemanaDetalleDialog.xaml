@@ -9,6 +9,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+        <converters:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter" />
     </Window.Resources>
     <Border Margin="16" Background="White" CornerRadius="8" Padding="20" BorderBrush="#DDD" BorderThickness="1">
         <StackPanel>
@@ -44,7 +45,7 @@
                                         Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Margin="2"
-                                        Visibility="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}, ConverterParameter=ShowRegistrarButton}"/>
+                                        Visibility="{Binding PuedeRegistrar, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

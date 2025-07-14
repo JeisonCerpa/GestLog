@@ -75,10 +75,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             await VerSemanaAsync();
         }
 
+        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
+        {
+            EstadosMantenimientos.Clear();
+            foreach (var estado in nuevosEstados)
+            {
+                EstadosMantenimientos.Add(estado);
+            }
+        }
+
         public async Task CargarEstadosMantenimientosAsync(int anio, ICronogramaService cronogramaService)
         {
             var estados = await cronogramaService.GetEstadoMantenimientosSemanaAsync(NumeroSemana, anio);
-            EstadosMantenimientos = new ObservableCollection<MantenimientoSemanaEstadoDto>(estados);
+            RefrescarEstados(estados);
         }
 
         public async Task RecargarEstadosAsync(int anio, ICronogramaService cronogramaService)

@@ -21,10 +21,100 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         
         [ObservableProperty]
         private ObservableCollection<MantenimientoSemanaEstadoDto> estadosMantenimientos = new();
+        partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
+        {
+            ActualizarPuedeRegistrarMantenimientos();
+        }
+        
         [ObservableProperty]
         private ObservableCollection<CronogramaMantenimientoDto> mantenimientos = new();        public IRelayCommand<MantenimientoSemanaEstadoDto?> VerSeguimientoCommand { get; }
         public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> RegistrarMantenimientoCommand { get; }
-        public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> MarcarAtrasadoCommand { get; }        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService)
+        public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> MarcarAtrasadoCommand { get; }        [ObservableProperty]
+        private int semanaActual;
+        [ObservableProperty]
+        private int anioActual;
+        
+        public bool PuedeRegistrarMantenimiento(int semana, int anio)
+        {
+            int semanaActual = GetSemanaActual();
+            int anioActual = GetAnioActual();
+            int semanasEnAnioActual = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                new DateTime(anioActual, 12, 31),
+                System.Globalization.CalendarWeekRule.FirstFourDayWeek,
+                DayOfWeek.Monday);
+
+            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
+            logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Semana: {semana}, Año: {anio}, SemanaActual: {semanaActual}, AñoActual: {anioActual}", 
+                semana, anio, semanaActual, anioActual);
+
+            // Permitir siempre para años anteriores
+            if (anio < anioActual) 
+            {
+                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Año anterior, permitido: true");
+                return true;
+            }
+            
+            // Permitir para el año actual si la semana es menor o igual a la actual + 1
+            if (anio == anioActual)
+            {
+                bool resultado = semana <= semanaActual + 1;
+                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Año actual, semana <= actual+1: {resultado}", resultado);
+                return resultado;
+            }
+            
+            // Permitir para el año siguiente solo si la semana es 1 y la semana actual es la última del año actual
+            if (anio == anioActual + 1 && semana == 1 && semanaActual == semanasEnAnioActual)
+            {
+                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Transición de año, permitido: true");
+                return true;
+            }
+            
+            // No permitir en otros casos
+            logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - No permitido: false");
+            return false;
+        }
+        private int GetSemanaActual()
+        {
+            var hoy = DateTime.Now;
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            return cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        }
+        private int GetAnioActual()
+        {
+            return DateTime.Now.Year;
+        }
+        private void ActualizarPuedeRegistrarMantenimientos()
+        {
+            if (EstadosMantenimientos == null) return;
+            
+            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
+            logger.Logger.LogInformation("[SemanaDetalleViewModel] ActualizarPuedeRegistrarMantenimientos - Actualizando {count} estados", EstadosMantenimientos.Count);
+                  foreach (var estado in EstadosMantenimientos.ToList())
+        {
+            // Permitir registro para estados Pendiente y Atrasado en semanas permitidas
+            var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
+                                    estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
+            var nuevoValor = esEstadoRegistrable && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
+            
+            logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - Semana: {semana}, Año: {anio}, EstadoActual: {estadoActual}, EsRegistrable: {esRegistrable}, PuedeRegistrarCalculado: {puedeRegistrar}", 
+                estado.CodigoEquipo, estado.Semana, estado.Anio, estado.Estado, esEstadoRegistrable, nuevoValor);
+            
+            if (estado.PuedeRegistrar != nuevoValor)
+            {
+                estado.PuedeRegistrar = nuevoValor;
+            }
+            else
+            {
+                // Forzar notificación para la UI
+                estado.PuedeRegistrar = !nuevoValor;
+                estado.PuedeRegistrar = nuevoValor;
+            }
+            
+            logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - PuedeRegistrar final: {puedeRegistrarFinal}", 
+                estado.CodigoEquipo, estado.PuedeRegistrar);
+        }
+        }
+        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService)
         {
             Titulo = titulo;
             RangoFechas = rangoFechas;
@@ -36,10 +126,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
             logger.Logger.LogInformation("[SemanaDetalleViewModel] Constructor llamado - Título: {titulo}, Estados: {estadosCount}, Mantenimientos: {mantenimientosCount}", 
                 titulo, estados?.Count ?? 0, mantenimientos?.Count ?? 0);
-              // Inicializar comandos
-            VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
-            RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync);
-            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync);
+                      // Inicializar comandos
+        VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
+        RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync);
+        MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync);
+        
+        ActualizarPuedeRegistrarMantenimientos();
         }
 
         public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos)
@@ -59,20 +151,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             try
             {
                 MensajeUsuario = null;
-                
                 if (estado == null)
                 {
                     MensajeUsuario = "No se ha seleccionado un estado de mantenimiento.";
                     return;
                 }
-                
                 if (_seguimientoService == null)
                 {
                     MensajeUsuario = "El servicio de seguimiento no está disponible.";
                     return;
                 }
-                
-                // Crear DTO prellenado para el formulario
                 var seguimientoDto = new SeguimientoMantenimientoDto
                 {
                     Codigo = estado.CodigoEquipo,
@@ -82,20 +170,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     Semana = estado.Semana,
                     Anio = estado.Anio
                 };
-                // Abrir el diálogo de registro de mantenimiento con el DTO prellenado
                 var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimientoDto);
                 if (dialog.ShowDialog() == true)
                 {
                     var seguimiento = dialog.Seguimiento;
-                    // Calcular semana y año de la fecha actual
                     var fechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                     var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
                     int semanaActual = cal.GetWeekOfYear(fechaRegistro, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
                     int anioActual = fechaRegistro.Year;
-                    // Asegura que los valores de semana y año sean los correctos
                     seguimiento.Semana = estado.Semana;
                     seguimiento.Anio = estado.Anio;
-                    // Determinar estado
                     if (estado.Anio == anioActual && estado.Semana == semanaActual)
                         seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
                     else
@@ -105,7 +189,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     estado.Atrasado = false;
                     estado.Seguimiento = seguimiento;
                     estado.Estado = seguimiento.Estado;
-                    EstadosMantenimientos = new ObservableCollection<MantenimientoSemanaEstadoDto>(EstadosMantenimientos);
+                    RefrescarEstados(EstadosMantenimientos);
                     MensajeUsuario = "Mantenimiento registrado exitosamente.";
                 }
             }
@@ -153,7 +237,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (_seguimientoService == null)
                 {
                     MensajeUsuario = "El servicio de seguimiento no está disponible.";
-                    EstadosMantenimientos = new ObservableCollection<MantenimientoSemanaEstadoDto>(EstadosMantenimientos);
+                    RefrescarEstados(EstadosMantenimientos);
+                    ActualizarPuedeRegistrarMantenimientos();
                     return;
                 }
                 
@@ -163,14 +248,40 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     estado.Seguimiento.Observaciones += " [Marcado como atrasado]";
                     await _seguimientoService.UpdateAsync(estado.Seguimiento);
                 }
-                
-                EstadosMantenimientos = new ObservableCollection<MantenimientoSemanaEstadoDto>(EstadosMantenimientos);
+
+                RefrescarEstados(EstadosMantenimientos);
+                ActualizarPuedeRegistrarMantenimientos();
                 MensajeUsuario = "Mantenimiento marcado como atrasado.";
             }
             catch (Exception ex)
             {
                 MensajeUsuario = $"Error al marcar como atrasado: {ex.Message}";
             }
+        }
+
+        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
+        {
+            EstadosMantenimientos.Clear();
+            foreach (var estado in nuevosEstados)
+            {
+                // Clonar el DTO para forzar refresco de la UI
+                var clon = new MantenimientoSemanaEstadoDto
+                {
+                    CodigoEquipo = estado.CodigoEquipo,
+                    NombreEquipo = estado.NombreEquipo,
+                    Semana = estado.Semana,
+                    Anio = estado.Anio,
+                    Frecuencia = estado.Frecuencia,
+                    Programado = estado.Programado,
+                    Realizado = estado.Realizado,
+                    Atrasado = estado.Atrasado,
+                    Seguimiento = estado.Seguimiento,
+                    Estado = estado.Estado,
+                    PuedeRegistrar = estado.PuedeRegistrar
+                };
+                EstadosMantenimientos.Add(clon);
+            }
+            ActualizarPuedeRegistrarMantenimientos();
         }
     }
 }
