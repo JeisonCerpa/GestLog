@@ -6,45 +6,129 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
-    <Grid Background="White" Margin="10">
+    <UserControl.Resources>
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#2B8E3F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2B8E3F"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#118938" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <Grid Background="#FAFAFA" Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- Título y botones -->
+            <RowDefinition Height="Auto"/> <!-- CheckBox -->
+            <RowDefinition Height="*"/>   <!-- DataGrid -->
+            <RowDefinition Height="Auto"/> <!-- Barra de progreso -->
         </Grid.RowDefinitions>
-        <TextBlock Text="Gestión de Equipos" FontSize="22" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Grid.Row="0" HorizontalAlignment="Right">
-            <Button Content="Nuevo" Command="{Binding AddEquipoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Editar" Command="{Binding EditEquipoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Eliminar" Command="{Binding DeleteEquipoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Importar" Command="{Binding ImportarEquiposCommand}" Margin="0,0,8,0"/>
-            <Button Content="Exportar" Command="{Binding ExportarEquiposCommand}" Margin="0,0,8,0"/>
-            <Button Content="Backup" Command="{Binding BackupEquiposCommand}"/>
-        </StackPanel>
-        <!-- DataGrid con Scroll visible siempre y ajuste de columnas al contenido -->
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="#DDD" CornerRadius="4" Margin="0,0,0,10">
+        <!-- Fila 0: Título y botones -->
+        <Grid Grid.Row="0" Margin="0,0,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Gestión de Equipos" FontSize="22" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
+                <UniformGrid Rows="1" Columns="5" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button Content="Nuevo" Command="{Binding AddEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+                    <Button Content="Editar" Command="{Binding EditEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+                    <Button Content="Dar de baja" Command="{Binding DeleteEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+                    <Button Content="Importar" Command="{Binding ImportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+                    <Button Content="Exportar" Command="{Binding ExportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+                </UniformGrid>
+            </StackPanel>
+        </Grid>
+        <!-- Fila 1: CheckBox discreto -->
+        <CheckBox Grid.Row="1" Content="Mostrar dados de baja" IsChecked="{Binding MostrarDadosDeBaja, Mode=TwoWay}"
+                  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,8"
+                  Foreground="#888" FontSize="13" FontStyle="Italic" Opacity="0.7"
+                  Focusable="False"/>
+        <!-- Fila 2: DataGrid -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
             <DataGrid ItemsSource="{Binding Equipos}" SelectedItem="{Binding SelectedEquipo, Mode=TwoWay}"
                       AutoGenerateColumns="False" IsReadOnly="True"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
-                      HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                      ScrollViewer.CanContentScroll="False"
-                      MinWidth="1200">
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                      RowBackground="White" AlternatingRowBackground="#F5F5F5"
+                      HeadersVisibility="Column" GridLinesVisibility="None"
+                      SnapsToDevicePixels="True" UseLayoutRounding="True"
+                      Margin="0"
+                      Background="Transparent"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="120"/>
-                    <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120"/>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="80" Width="Auto"/>
                 </DataGrid.Columns>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                <Setter Property="Background" Value="#FFEDEDED"/>
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Resources>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                <Setter Property="Foreground" Value="#888"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
             </DataGrid>
         </Border>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
+        <!-- Fila 3: Barra de progreso y estado -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center">
             <controls:SimpleProgressBar ProgressValue="{Binding IsLoading, Converter={StaticResource BooleanToProgressConverter}}"
                                        StatusMessage="{Binding StatusMessage}" Title="Progreso" Height="24" Width="220"/>
-            <TextBlock Text="{Binding StatusMessage}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#666"/>
+            <TextBlock Text="{Binding StatusMessage}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#504F4E" FontWeight="SemiBold"/>
         </StackPanel>
     </Grid>
 </UserControl>

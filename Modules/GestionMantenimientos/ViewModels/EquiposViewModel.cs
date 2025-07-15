@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
+using ClosedXML.Excel;
+using Ookii.Dialogs.Wpf;
+using System.IO;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -18,6 +21,8 @@ public partial class EquiposViewModel : ObservableObject
 {
     private readonly IEquipoService _equipoService;
     private readonly IGestLogLogger _logger;
+    private readonly ICronogramaService _cronogramaService;
+    private readonly ISeguimientoService _seguimientoService;
 
     [ObservableProperty]
     private ObservableCollection<EquipoDto> equipos = new();
@@ -31,10 +36,15 @@ public partial class EquiposViewModel : ObservableObject
     [ObservableProperty]
     private string? statusMessage;
 
-    public EquiposViewModel(IEquipoService equipoService, IGestLogLogger logger)
+    [ObservableProperty]
+    private bool mostrarDadosDeBaja = false;
+
+    public EquiposViewModel(IEquipoService equipoService, IGestLogLogger logger, ICronogramaService cronogramaService, ISeguimientoService seguimientoService)
     {
         _equipoService = equipoService;
         _logger = logger;
+        _cronogramaService = cronogramaService;
+        _seguimientoService = seguimientoService;
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
@@ -48,8 +58,10 @@ public partial class EquiposViewModel : ObservableObject
         try
         {
             var lista = await _equipoService.GetAllAsync();
-            Equipos = new ObservableCollection<EquipoDto>(lista);
-            StatusMessage = $"{Equipos.Count} equipos cargados.";
+            // Filtrar según MostrarDadosDeBaja
+            var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
+            Equipos = new ObservableCollection<EquipoDto>(filtrados);
+            StatusMessage = $"{Equipos.Count} equipos {(MostrarDadosDeBaja ? "(incluye dados de baja)" : "activos")} cargados.";
         }
         catch (System.Exception ex)
         {
@@ -118,71 +130,144 @@ public partial class EquiposViewModel : ObservableObject
     {
         if (SelectedEquipo == null || string.IsNullOrWhiteSpace(SelectedEquipo.Codigo))
         {
-            StatusMessage = "Debe seleccionar un equipo válido para eliminar.";
+            StatusMessage = "Debe seleccionar un equipo válido para dar de baja.";
             return;
         }
         try
         {
-            await _equipoService.DeleteAsync(SelectedEquipo.Codigo!);
+            SelectedEquipo.FechaBaja = DateTime.Now;
+            SelectedEquipo.Estado = EstadoEquipo.DadoDeBaja; // Actualiza el estado explícitamente
+            await _equipoService.UpdateAsync(SelectedEquipo);
+            // Eliminar cronogramas y seguimientos pendientes
+            await _cronogramaService.DeleteByEquipoCodigoAsync(SelectedEquipo.Codigo!);
+            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
+            await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
             await LoadEquiposAsync();
-            StatusMessage = "Equipo eliminado exitosamente.";
+            StatusMessage = "Equipo dado de baja exitosamente. Se eliminaron cronogramas y seguimientos pendientes.";
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "Error al eliminar equipo");
-            StatusMessage = "Error al eliminar equipo.";
+            _logger.LogError(ex, "Error al dar de baja equipo");
+            StatusMessage = "Error al dar de baja equipo.";
         }
     }
 
     [RelayCommand]
-    public Task ImportarEquiposAsync()
+    public async Task ExportarEquiposAsync()
     {
         try
         {
-            // TODO: Abrir diálogo para seleccionar archivo Excel
-            // string filePath = ...
-            // await _equipoService.ImportarDesdeExcelAsync(filePath);
-            // await LoadEquiposAsync();
-            StatusMessage = "Importación completada exitosamente.";
-        }
-        catch (System.Exception ex)
-        {
-            _logger.LogError(ex, "Error al importar equipos");
-            StatusMessage = "Error al importar equipos.";
-        }
-        return Task.CompletedTask;
-    }
-
-    [RelayCommand]
-    public Task ExportarEquiposAsync()
-    {
-        try
-        {
-            // TODO: Abrir diálogo para seleccionar ruta de guardado
-            // string filePath = ...
-            // await _equipoService.ExportarAExcelAsync(filePath);
-            StatusMessage = "Exportación completada exitosamente.";
+            var dialog = new VistaSaveFileDialog
+            {
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                DefaultExt = ".xlsx",
+                Title = "Exportar equipos a Excel",
+                FileName = "Equipos.xlsx"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                await Task.Run(() =>
+                {
+                    using var workbook = new XLWorkbook();
+                    var ws = workbook.Worksheets.Add("Equipos");
+                    // Encabezados
+                    ws.Cell(1, 1).Value = "Código";
+                    ws.Cell(1, 2).Value = "Nombre";
+                    ws.Cell(1, 3).Value = "Marca";
+                    ws.Cell(1, 4).Value = "Estado";
+                    ws.Cell(1, 5).Value = "Sede";
+                    ws.Cell(1, 6).Value = "Frecuencia Mtto";
+                    ws.Cell(1, 7).Value = "Precio";
+                    ws.Cell(1, 8).Value = "Fecha Registro";
+                    int row = 2;
+                    foreach (var eq in Equipos)
+                    {
+                        ws.Cell(row, 1).Value = eq.Codigo ?? "";
+                        ws.Cell(row, 2).Value = eq.Nombre ?? "";
+                        ws.Cell(row, 3).Value = eq.Marca ?? "";
+                        ws.Cell(row, 4).Value = eq.Estado?.ToString() ?? "";
+                        ws.Cell(row, 5).Value = eq.Sede?.ToString() ?? "";
+                        ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
+                        ws.Cell(row, 7).Value = eq.Precio ?? 0;
+                        ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        row++;
+                    }
+                    ws.Columns().AdjustToContents();
+                    workbook.SaveAs(dialog.FileName);
+                });
+                StatusMessage = $"Exportación completada: {Path.GetFileName(dialog.FileName)}";
+            }
         }
         catch (System.Exception ex)
         {
             _logger.LogError(ex, "Error al exportar equipos");
             StatusMessage = "Error al exportar equipos.";
         }
-        return Task.CompletedTask;
+    }
+
+    private TEnum? ParseEnumFlexible<TEnum>(string? value) where TEnum : struct
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Trim().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n").Replace(" ", "").ToLowerInvariant();
+        foreach (var name in Enum.GetNames(typeof(TEnum)))
+        {
+            var normName = name.Trim().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n").Replace(" ", "").ToLowerInvariant();
+            if (normalized == normName)
+            {
+                if (Enum.TryParse<TEnum>(name, out var result))
+                    return result;
+            }
+        }
+        return null;
     }
 
     [RelayCommand]
-    public async Task BackupEquiposAsync()
+    public async Task ImportarEquiposAsync()
     {
         try
         {
-            await _equipoService.BackupAsync();
-            StatusMessage = "Backup realizado exitosamente.";
+            var dialog = new VistaOpenFileDialog
+            {
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                DefaultExt = ".xlsx",
+                Title = "Importar equipos desde Excel"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var ws = workbook.Worksheet(1);
+                var equiposImportados = new List<EquipoDto>();
+                foreach (var row in ws.RowsUsed().Skip(1)) // Saltar encabezado
+                {
+                    var eq = new EquipoDto
+                    {
+                        Codigo = row.Cell(1).GetString(),
+                        Nombre = row.Cell(2).GetString(),
+                        Marca = row.Cell(3).GetString(),
+                        Estado = ParseEnumFlexible<EstadoEquipo>(row.Cell(4).GetString()),
+                        Sede = ParseEnumFlexible<Sede>(row.Cell(5).GetString()),
+                        FrecuenciaMtto = ParseEnumFlexible<FrecuenciaMantenimiento>(row.Cell(6).GetString()),
+                        Precio = row.Cell(7).GetValue<decimal>(),
+                        FechaRegistro = DateTime.TryParse(row.Cell(8).GetString(), out var fecha) ? fecha : null
+                    };
+                    equiposImportados.Add(eq);
+                }
+                foreach (var eq in equiposImportados)
+                {
+                    var existente = Equipos.FirstOrDefault(e => e.Codigo == eq.Codigo);
+                    if (existente != null)
+                        await _equipoService.UpdateAsync(eq);
+                    else
+                        await _equipoService.AddAsync(eq);
+                }
+                await LoadEquiposAsync();
+                StatusMessage = $"Importación completada: {equiposImportados.Count} equipos importados.";
+            }
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "Error al realizar backup de equipos");
-            StatusMessage = "Error al realizar backup de equipos.";
+            _logger.LogError(ex, "Error al importar equipos");
+            StatusMessage = "Error al importar equipos.";
         }
     }
 
@@ -191,6 +276,12 @@ public partial class EquiposViewModel : ObservableObject
     public IEnumerable<TipoMantenimiento> TiposMantenimiento => System.Enum.GetValues(typeof(TipoMantenimiento)) as TipoMantenimiento[] ?? new TipoMantenimiento[0];
     public IEnumerable<Sede> Sedes => System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0];
     public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0];
+
+    partial void OnMostrarDadosDeBajaChanged(bool value)
+    {
+        // Recargar la lista de equipos al cambiar el filtro
+        _ = LoadEquiposAsync();
+    }
 
     // TODO: Implementar métodos para abrir diálogos de alta/edición y conectar con servicios asíncronos
 }

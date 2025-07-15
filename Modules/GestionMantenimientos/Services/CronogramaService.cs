@@ -227,6 +227,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             }
         }
 
+        public async Task DeleteByEquipoCodigoAsync(string codigoEquipo)
+        {
+            if (string.IsNullOrWhiteSpace(codigoEquipo))
+                throw new GestionMantenimientosDomainException("El código del equipo es obligatorio para eliminar cronogramas.");
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var cronogramas = dbContext.Cronogramas.Where(c => c.Codigo == codigoEquipo);
+            dbContext.Cronogramas.RemoveRange(cronogramas);
+            await dbContext.SaveChangesAsync();
+            _logger.LogInformation("[CronogramaService] Cronogramas eliminados para equipo: {Codigo}", codigoEquipo);
+        }
+
         public async Task ImportarDesdeExcelAsync(string filePath)
         {
             await Task.Run(() =>

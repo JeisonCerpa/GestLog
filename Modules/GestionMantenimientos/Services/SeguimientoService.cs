@@ -194,6 +194,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             }
         }
 
+        public async Task DeletePendientesByEquipoCodigoAsync(string codigoEquipo)
+        {
+            if (string.IsNullOrWhiteSpace(codigoEquipo))
+                throw new GestionMantenimientosDomainException("El código del equipo es obligatorio para eliminar seguimientos.");
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var pendientes = dbContext.Seguimientos.Where(s => s.Codigo == codigoEquipo && (s.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || s.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado));
+            dbContext.Seguimientos.RemoveRange(pendientes);
+            await dbContext.SaveChangesAsync();
+            _logger.LogInformation("[SeguimientoService] Seguimientos pendientes eliminados para equipo: {Codigo}", codigoEquipo);
+        }
+
         private void ValidarSeguimiento(SeguimientoMantenimientoDto seguimiento)
         {
             if (seguimiento == null)

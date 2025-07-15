@@ -15,5 +15,6 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task ExportarAExcelAsync(string filePath);
         Task BackupAsync();
         Task<List<SeguimientoMantenimientoDto>> GetSeguimientosAsync();
+        Task DeletePendientesByEquipoCodigoAsync(string codigoEquipo);
     }
 }

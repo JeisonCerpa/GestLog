@@ -17,5 +17,6 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task EnsureAllCronogramasUpToDateAsync();
         Task GenerarSeguimientosFaltantesAsync();
         Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio);
+        Task DeleteByEquipoCodigoAsync(string codigoEquipo);
     }
 }
