@@ -667,6 +667,26 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             return result.AddDays(-3);
         }
 
+        private SeguimientoMantenimientoDto? MapToDto(SeguimientoMantenimiento? s)
+        {
+            if (s == null) return null;
+            return new SeguimientoMantenimientoDto
+            {
+                Codigo = s.Codigo,
+                Nombre = s.Nombre,
+                TipoMtno = s.TipoMtno,
+                Descripcion = s.Descripcion,
+                Responsable = s.Responsable,
+                Costo = s.Costo,
+                Observaciones = s.Observaciones,
+                FechaRegistro = s.FechaRegistro,
+                FechaRealizacion = s.FechaRealizacion,
+                Semana = s.Semana,
+                Anio = s.Anio,
+                Estado = s.Estado
+            };
+        }
+
         public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
@@ -688,6 +708,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             // Calcular fechas de inicio y fin de la semana ISO 8601
             var fechaInicioSemana = FirstDateOfWeekISO8601(anio, semana);
             var fechaFinSemana = fechaInicioSemana.AddDays(6);
+            // Calcular semana y año actual
+            var hoy = DateTime.Now;
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            int anioActual = hoy.Year;
             foreach (var c in cronogramasConMantenimiento)
             {
                 var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);
@@ -699,36 +724,30 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Anio = anio,
                     Frecuencia = c.FrecuenciaMtto,
                     Programado = true,
-                    Seguimiento = null
+                    Seguimiento = MapToDto(seguimiento)
                 };
-                if (seguimiento == null || seguimiento.FechaRegistro == null)
+                int diff = semana - semanaActual;
+                bool puedeRegistrar = (anio == anioActual && (diff == 0 || diff == -1));
+                // Lógica reforzada para el estado visual
+                if (anio < anioActual || (anio == anioActual && diff < -1))
                 {
-                    var hoy = DateTime.Now;
-                    if (hoy <= fechaFinSemana)
+                    // Semanas previas a la anterior
+                    if (seguimiento == null || seguimiento.FechaRegistro == null)
                     {
                         estado.Realizado = false;
                         estado.Atrasado = false;
-                        estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                        estado.Estado = EstadoSeguimientoMantenimiento.NoRealizado;
                     }
                     else
                     {
-                        estado.Realizado = false;
-                        estado.Atrasado = true;
-                        estado.Estado = EstadoSeguimientoMantenimiento.Atrasado;
-                    }
-                }
-                else
-                {
-                    DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
-                    if (fechaRealizacion.HasValue)
-                    {
-                        if (fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
+                        DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
+                        if (fechaRealizacion.HasValue && fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
                         {
                             estado.Realizado = true;
                             estado.Atrasado = false;
                             estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
                         }
-                        else if (fechaRealizacion.Value > fechaFinSemana)
+                        else if (fechaRealizacion.HasValue && fechaRealizacion.Value > fechaFinSemana)
                         {
                             estado.Realizado = true;
                             estado.Atrasado = true;
@@ -736,19 +755,38 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         }
                         else
                         {
+                            // Si existe seguimiento pero no tiene fecha válida, se considera no realizado
+                            estado.Realizado = false;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.NoRealizado;
+                        }
+                    }
+                    estados.Add(estado);
+                    continue;
+                }
+                if (anio == anioActual && diff == -1)
+                {
+                    // Semana anterior
+                    if (seguimiento == null || seguimiento.FechaRegistro == null)
+                    {
+                        estado.Realizado = false;
+                        estado.Atrasado = true;
+                        estado.Estado = EstadoSeguimientoMantenimiento.Atrasado;
+                    }
+                    else
+                    {
+                        DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
+                        if (fechaRealizacion.HasValue && fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
+                        {
                             estado.Realizado = true;
                             estado.Atrasado = false;
                             estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
                         }
-                    }
-                    else
-                    {
-                        var hoy = DateTime.Now;
-                        if (hoy <= fechaFinSemana)
+                        else if (fechaRealizacion.HasValue && fechaRealizacion.Value > fechaFinSemana)
                         {
-                            estado.Realizado = false;
-                            estado.Atrasado = false;
-                            estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                            estado.Realizado = true;
+                            estado.Atrasado = true;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
                         }
                         else
                         {
@@ -757,24 +795,52 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             estado.Estado = EstadoSeguimientoMantenimiento.Atrasado;
                         }
                     }
-                    estado.Seguimiento = new SeguimientoMantenimientoDto
-                    {
-                        Codigo = seguimiento.Codigo,
-                        Nombre = seguimiento.Nombre,
-                        TipoMtno = seguimiento.TipoMtno,
-                        Descripcion = seguimiento.Descripcion,
-                        Responsable = seguimiento.Responsable,
-                        Costo = seguimiento.Costo,
-                        Observaciones = seguimiento.Observaciones,
-                        FechaRegistro = seguimiento.FechaRegistro,
-                        FechaRealizacion = seguimiento.FechaRealizacion,
-                        Semana = seguimiento.Semana,
-                        Anio = seguimiento.Anio,
-                        Estado = estado.Estado
-                    };
+                    estados.Add(estado);
+                    continue;
                 }
-                estados.Add(estado);
-                _logger.LogInformation("[CronogramaService] DEBUG - Agregado estado para equipo {codigo} - {nombre}", c.Codigo, c.Nombre);
+                if (anio == anioActual && diff == 0)
+                {
+                    // Semana actual
+                    if (seguimiento == null || seguimiento.FechaRegistro == null)
+                    {
+                        estado.Realizado = false;
+                        estado.Atrasado = false;
+                        estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                    }
+                    else
+                    {
+                        DateTime? fechaRealizacion = seguimiento.FechaRealizacion;
+                        if (fechaRealizacion.HasValue && fechaRealizacion.Value >= fechaInicioSemana && fechaRealizacion.Value <= fechaFinSemana)
+                        {
+                            estado.Realizado = true;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                        }
+                        else if (fechaRealizacion.HasValue && fechaRealizacion.Value > fechaFinSemana)
+                        {
+                            estado.Realizado = true;
+                            estado.Atrasado = true;
+                            estado.Estado = EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                        }
+                        else
+                        {
+                            estado.Realizado = false;
+                            estado.Atrasado = false;
+                            estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                        }
+                    }
+                    estados.Add(estado);
+                    continue;
+                }
+                // Semana posterior: pendiente, pero no registrable
+                if (anio == anioActual && diff > 0)
+                {
+                    estado.Realizado = false;
+                    estado.Atrasado = false;
+                    estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                    estados.Add(estado);
+                    continue;
+                }
             }
             _logger.LogInformation("[CronogramaService] DEBUG - Retornando {count} estados de mantenimiento", estados.Count);
             return estados;

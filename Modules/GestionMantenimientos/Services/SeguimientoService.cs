@@ -73,6 +73,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarSeguimiento(seguimiento);
+                // Validación de rango de semana permitido
+                var hoy = DateTime.Now;
+                var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+                int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+                int anioActual = hoy.Year;
+                if (!(seguimiento.Anio == anioActual && Math.Abs(seguimiento.Semana - semanaActual) <= 1))
+                    throw new GestionMantenimientosDomainException("Solo se permite registrar mantenimientos en la semana actual, una antes o una después.");
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 // Buscar por clave compuesta: Codigo, Semana, Anio
                 var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);

@@ -11,6 +11,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Enums
         [Description("Realizado fuera de tiempo")]
         RealizadoFueraDeTiempo = 2, // Realizado después de la semana programada
         [Description("Atrasado")]
-        Atrasado = 3 // No realizado y la semana ya terminó
+        Atrasado = 3, // No realizado y la semana anterior ya terminó
+        [Description("No realizado")]
+        NoRealizado = 4 // No realizado y la semana es anterior a la anterior
     }
 }

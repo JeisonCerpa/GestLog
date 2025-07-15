@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
@@ -48,6 +49,21 @@ public partial class SeguimientoViewModel : ObservableObject
         try
         {
             var lista = await _seguimientoService.GetSeguimientosAsync();
+            var hoy = DateTime.Now;
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            int anioActual = hoy.Year;
+            foreach (var s in lista)
+            {
+                var estadoCalculado = CalcularEstadoSeguimiento(s, semanaActual, anioActual, hoy);
+                if (s.Estado != estadoCalculado)
+                {
+                    s.Estado = estadoCalculado;
+                    if (string.IsNullOrWhiteSpace(s.Responsable))
+                        s.Responsable = "Automático";
+                    await _seguimientoService.UpdateAsync(s);
+                }
+            }
             Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
         }
@@ -60,6 +76,62 @@ public partial class SeguimientoViewModel : ObservableObject
         {
             IsLoading = false;
         }
+    }
+
+    private EstadoSeguimientoMantenimiento CalcularEstadoSeguimiento(SeguimientoMantenimientoDto s, int semanaActual, int anioActual, DateTime hoy)
+    {
+        int diff = s.Semana - semanaActual;
+        var fechaInicioSemana = FirstDateOfWeekISO8601(s.Anio, s.Semana);
+        var fechaFinSemana = fechaInicioSemana.AddDays(6);
+        if (s.Anio < anioActual || (s.Anio == anioActual && diff < -1))
+        {
+            if (s.FechaRegistro == null)
+                return EstadoSeguimientoMantenimiento.NoRealizado;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value >= fechaInicioSemana && s.FechaRealizacion.Value <= fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value > fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+            return EstadoSeguimientoMantenimiento.NoRealizado;
+        }
+        if (s.Anio == anioActual && diff == -1)
+        {
+            if (s.FechaRegistro == null)
+                return EstadoSeguimientoMantenimiento.Atrasado;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value >= fechaInicioSemana && s.FechaRealizacion.Value <= fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value > fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+            return EstadoSeguimientoMantenimiento.Atrasado;
+        }
+        if (s.Anio == anioActual && diff == 0)
+        {
+            if (s.FechaRegistro == null)
+                return EstadoSeguimientoMantenimiento.Pendiente;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value >= fechaInicioSemana && s.FechaRealizacion.Value <= fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            if (s.FechaRealizacion.HasValue && s.FechaRealizacion.Value > fechaFinSemana)
+                return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+            return EstadoSeguimientoMantenimiento.Pendiente;
+        }
+        if (s.Anio == anioActual && diff > 0)
+        {
+            return EstadoSeguimientoMantenimiento.Pendiente;
+        }
+        return EstadoSeguimientoMantenimiento.Pendiente;
+    }
+
+    private DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+    {
+        var jan1 = new DateTime(year, 1, 1);
+        int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+        var firstThursday = jan1.AddDays(daysOffset);
+        var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+        int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        var weekNum = weekOfYear;
+        if (firstWeek <= 1)
+            weekNum -= 1;
+        var result = firstThursday.AddDays(weekNum * 7);
+        return result.AddDays(-3);
     }
 
     [RelayCommand]

@@ -40,39 +40,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             int semanaActual = GetSemanaActual();
             int anioActual = GetAnioActual();
-            int semanasEnAnioActual = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                new DateTime(anioActual, 12, 31),
-                System.Globalization.CalendarWeekRule.FirstFourDayWeek,
-                DayOfWeek.Monday);
-
-            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Semana: {semana}, Año: {anio}, SemanaActual: {semanaActual}, AñoActual: {anioActual}", 
-                semana, anio, semanaActual, anioActual);
-
-            // Permitir siempre para años anteriores
-            if (anio < anioActual) 
-            {
-                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Año anterior, permitido: true");
+            // Solo permitir registro en la semana actual, una antes y una después
+            if (anio == anioActual && Math.Abs(semana - semanaActual) <= 1)
                 return true;
-            }
-            
-            // Permitir para el año actual si la semana es menor o igual a la actual + 1
-            if (anio == anioActual)
-            {
-                bool resultado = semana <= semanaActual + 1;
-                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Año actual, semana <= actual+1: {resultado}", resultado);
-                return resultado;
-            }
-            
-            // Permitir para el año siguiente solo si la semana es 1 y la semana actual es la última del año actual
-            if (anio == anioActual + 1 && semana == 1 && semanaActual == semanasEnAnioActual)
-            {
-                logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - Transición de año, permitido: true");
-                return true;
-            }
-            
             // No permitir en otros casos
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] PuedeRegistrarMantenimiento - No permitido: false");
             return false;
         }
         private int GetSemanaActual()
@@ -88,33 +59,32 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         private void ActualizarPuedeRegistrarMantenimientos()
         {
             if (EstadosMantenimientos == null) return;
-            
             var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
             logger.Logger.LogInformation("[SemanaDetalleViewModel] ActualizarPuedeRegistrarMantenimientos - Actualizando {count} estados", EstadosMantenimientos.Count);
-                  foreach (var estado in EstadosMantenimientos.ToList())
-        {
-            // Permitir registro para estados Pendiente y Atrasado en semanas permitidas
-            var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
-                                    estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
-            var nuevoValor = esEstadoRegistrable && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
-            
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - Semana: {semana}, Año: {anio}, EstadoActual: {estadoActual}, EsRegistrable: {esRegistrable}, PuedeRegistrarCalculado: {puedeRegistrar}", 
-                estado.CodigoEquipo, estado.Semana, estado.Anio, estado.Estado, esEstadoRegistrable, nuevoValor);
-            
-            if (estado.PuedeRegistrar != nuevoValor)
+            foreach (var estado in EstadosMantenimientos.ToList())
             {
-                estado.PuedeRegistrar = nuevoValor;
+                // Permitir registro solo para Pendiente y Atrasado (NO para NoRealizado)
+                var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
+                                         estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
+                // No permitir registro si el estado es NoRealizado
+                if (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+                    esEstadoRegistrable = false;
+                var nuevoValor = esEstadoRegistrable && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
+                logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - Semana: {semana}, Año: {anio}, EstadoActual: {estadoActual}, EsRegistrable: {esRegistrable}, PuedeRegistrarCalculado: {puedeRegistrar}", 
+                    estado.CodigoEquipo, estado.Semana, estado.Anio, estado.Estado, esEstadoRegistrable, nuevoValor);
+                if (estado.PuedeRegistrar != nuevoValor)
+                {
+                    estado.PuedeRegistrar = nuevoValor;
+                }
+                else
+                {
+                    // Forzar notificación para la UI
+                    estado.PuedeRegistrar = !nuevoValor;
+                    estado.PuedeRegistrar = nuevoValor;
+                }
+                logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - PuedeRegistrar final: {puedeRegistrarFinal}", 
+                    estado.CodigoEquipo, estado.PuedeRegistrar);
             }
-            else
-            {
-                // Forzar notificación para la UI
-                estado.PuedeRegistrar = !nuevoValor;
-                estado.PuedeRegistrar = nuevoValor;
-            }
-            
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - PuedeRegistrar final: {puedeRegistrarFinal}", 
-                estado.CodigoEquipo, estado.PuedeRegistrar);
-        }
         }
         public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService)
         {
@@ -163,6 +133,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (_seguimientoService == null)
                 {
                     MensajeUsuario = "El servicio de seguimiento no está disponible.";
+                    return;
+                }
+                if (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+                {
+                    MensajeUsuario = "No se puede registrar un mantenimiento para una semana marcada como 'No realizado'.";
                     return;
                 }
                 var seguimientoDto = new SeguimientoMantenimientoDto
