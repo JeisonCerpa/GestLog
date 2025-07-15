@@ -40,8 +40,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             int semanaActual = GetSemanaActual();
             int anioActual = GetAnioActual();
-            // Solo permitir registro en la semana actual, una antes y una después
-            if (anio == anioActual && Math.Abs(semana - semanaActual) <= 1)
+            // Solo permitir registro en la semana actual y la anterior
+            if (anio == anioActual && (semana == semanaActual || semana == semanaActual - 1))
                 return true;
             // No permitir en otros casos
             return false;
