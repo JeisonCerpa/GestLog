@@ -9,6 +9,7 @@
              d:DesignHeight="600" d:DesignWidth="900">
     <UserControl.Resources>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
+        <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
     </UserControl.Resources>
     <Grid Background="White" Margin="10">
         <Grid.RowDefinitions>
@@ -47,6 +48,13 @@
                     </DataGridTextColumn>
                     <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="120"/>
                     <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120"/>
+                    <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80"/>
+                    <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80"/>
+                    <DataGridTextColumn Header="Estado" MinWidth="120">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="Estado" Converter="{StaticResource EnumToDescriptionConverter}" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
