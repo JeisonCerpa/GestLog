@@ -62,6 +62,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             if (cronograma == null)
                 throw new GestionMantenimientosDomainException("El cronograma no puede ser nulo.");
+
+            var context = new System.ComponentModel.DataAnnotations.ValidationContext(cronograma);
+            var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+            bool isValid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(cronograma, context, results, true);
+            if (!isValid)
+            {
+                var mensaje = string.Join("\n", results.Select(r => r.ErrorMessage));
+                throw new GestionMantenimientosDomainException(mensaje);
+            }
+
+            // Validaciones de negocio adicionales
             if (string.IsNullOrWhiteSpace(cronograma.Codigo))
                 throw new GestionMantenimientosDomainException("El código es obligatorio.");
             if (string.IsNullOrWhiteSpace(cronograma.Nombre))
@@ -112,7 +123,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Nombre = entity.Nombre,
                                 Semana = semana,
                                 Anio = entity.Anio,
-                                TipoMtno = TipoMantenimiento.Preventivo // Por defecto, o puedes ajustar según lógica
+                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar según lógica
+                                Descripcion = "Mantenimiento programado",
+                                Responsable = string.Empty,
+                                FechaRegistro = DateTime.Now
                             });
                         }
                     }
@@ -164,7 +178,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Nombre = entity.Nombre,
                                 Semana = semana,
                                 Anio = entity.Anio,
-                                TipoMtno = TipoMantenimiento.Preventivo // Por defecto, o puedes ajustar según lógica
+                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar según lógica
+                                Descripcion = "Mantenimiento programado",
+                                Responsable = string.Empty,
+                                FechaRegistro = DateTime.Now
                             });
                         }
                     }
@@ -506,6 +523,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Semana = semana,
                                 Anio = cronograma.Anio,
                                 TipoMtno = Models.Enums.TipoMantenimiento.Preventivo,
+                                Descripcion = "Mantenimiento programado",
+                                Responsable = string.Empty,
                                 FechaRegistro = fechaLunes
                             });
                             totalAgregados++;

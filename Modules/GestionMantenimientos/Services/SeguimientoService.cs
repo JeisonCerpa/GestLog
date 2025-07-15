@@ -191,20 +191,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             if (seguimiento == null)
                 throw new GestionMantenimientosDomainException("El seguimiento no puede ser nulo.");
-            if (string.IsNullOrWhiteSpace(seguimiento.Codigo))
-                throw new GestionMantenimientosDomainException("El código es obligatorio.");
-            if (string.IsNullOrWhiteSpace(seguimiento.Nombre))
-                throw new GestionMantenimientosDomainException("El nombre es obligatorio.");
-            if (seguimiento.FechaRegistro == null)
-                throw new GestionMantenimientosDomainException("La fecha de registro es obligatoria.");
-            if (seguimiento.FechaRegistro > DateTime.Now)
-                throw new GestionMantenimientosDomainException("La fecha de registro no puede ser futura.");
-            if (seguimiento.TipoMtno == null)
-                throw new GestionMantenimientosDomainException("El tipo de mantenimiento es obligatorio.");
-            if (string.IsNullOrWhiteSpace(seguimiento.Descripcion))
-                throw new GestionMantenimientosDomainException("La descripción es obligatoria.");
-            if (string.IsNullOrWhiteSpace(seguimiento.Responsable))
-                throw new GestionMantenimientosDomainException("El responsable es obligatorio.");
+
+            var context = new System.ComponentModel.DataAnnotations.ValidationContext(seguimiento);
+            var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+            bool isValid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(seguimiento, context, results, true);
+            if (!isValid)
+            {
+                var mensaje = string.Join("\n", results.Select(r => r.ErrorMessage));
+                throw new GestionMantenimientosDomainException(mensaje);
+            }
+
+            // Validaciones de negocio adicionales
             if (seguimiento.Costo != null && seguimiento.Costo < 0)
                 throw new GestionMantenimientosDomainException("El costo no puede ser negativo.");
             // TODO: Validar duplicados y otras reglas de negocio si aplica

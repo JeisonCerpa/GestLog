@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
@@ -7,9 +8,13 @@ namespace GestLog.Modules.GestionMantenimientos.Models
 {
     public class MantenimientoSemanaEstadoDto : INotifyPropertyChanged
     {
+        [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string CodigoEquipo { get; set; } = "";
+        [Required(ErrorMessage = "El nombre del equipo es obligatorio.")]
         public string NombreEquipo { get; set; } = "";
+        [Range(1, 53, ErrorMessage = "La semana debe estar entre 1 y 53.")]
         public int Semana { get; set; }
+        [Range(2000, 2100, ErrorMessage = "El año debe ser válido.")]
         public int Anio { get; set; }
         public FrecuenciaMantenimiento? Frecuencia { get; set; }
         public bool Programado { get; set; }

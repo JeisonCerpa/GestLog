@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
@@ -43,17 +45,22 @@ public partial class CronogramaViewModel : ObservableObject
     {
         _cronogramaService = cronogramaService;
         _logger = logger;
+        // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+        WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
+        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => 
         {
-            // Ejecutar migración de seguimientos faltantes al inicializar el módulo
             try
             {
+                // Primero asegurar cronogramas completos
+                await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
+                // Luego generar seguimientos faltantes
                 await _cronogramaService.GenerarSeguimientosFaltantesAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[CronogramaViewModel] Error en migración de seguimientos");
+                _logger.LogError(ex, "[CronogramaViewModel] Error al actualizar cronogramas y seguimientos");
             }
             
             await LoadCronogramasAsync();
@@ -113,7 +120,7 @@ public partial class CronogramaViewModel : ObservableObject
             try
             {
                 await _cronogramaService.AddAsync(nuevo);
-                Cronogramas.Add(nuevo);
+                WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
                 StatusMessage = "Cronograma agregado correctamente.";
             }
             catch (System.Exception ex)
@@ -136,10 +143,7 @@ public partial class CronogramaViewModel : ObservableObject
             try
             {
                 await _cronogramaService.UpdateAsync(editado);
-                // Actualizar en la colección
-                var idx = Cronogramas.IndexOf(SelectedCronograma);
-                if (idx >= 0)
-                    Cronogramas[idx] = editado;
+                WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
                 StatusMessage = "Cronograma editado correctamente.";
             }
             catch (System.Exception ex)
@@ -158,7 +162,7 @@ public partial class CronogramaViewModel : ObservableObject
         try
         {
             await _cronogramaService.DeleteAsync(SelectedCronograma.Codigo!);
-            Cronogramas.Remove(SelectedCronograma);
+            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
             StatusMessage = "Cronograma eliminado correctamente.";
         }
         catch (System.Exception ex)

@@ -6,6 +6,8 @@ using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -33,6 +35,9 @@ public partial class EquiposViewModel : ObservableObject
     {
         _equipoService = equipoService;
         _logger = logger;
+        // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+        WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
+        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
     }
 
     [RelayCommand]

@@ -2,7 +2,9 @@ using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +39,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             FechaFin = fechaFin;
             _cronogramaService = cronogramaService;
             _anio = anio;
+            // Suscribirse a mensajes de actualización de seguimientos
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync(_anio, _cronogramaService));
         }        public async Task VerSemanaAsync()
         {
             if (Mantenimientos == null || Mantenimientos.Count == 0)

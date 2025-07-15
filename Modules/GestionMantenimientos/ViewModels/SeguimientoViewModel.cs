@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
@@ -32,6 +34,8 @@ public partial class SeguimientoViewModel : ObservableObject
     {
         _seguimientoService = seguimientoService;
         _logger = logger;
+        // Suscribirse a mensajes de actualización de seguimientos
+        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadSeguimientosAsync());
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => await LoadSeguimientosAsync());
     }
@@ -68,7 +72,8 @@ public partial class SeguimientoViewModel : ObservableObject
             try
             {
                 await _seguimientoService.AddAsync(nuevo);
-                Seguimientos.Add(nuevo);
+                // Notificar a otros ViewModels
+                WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 StatusMessage = "Seguimiento agregado correctamente.";
             }
             catch (System.Exception ex)
@@ -91,10 +96,7 @@ public partial class SeguimientoViewModel : ObservableObject
             try
             {
                 await _seguimientoService.UpdateAsync(editado);
-                // Actualizar en la colección
-                var idx = Seguimientos.IndexOf(SelectedSeguimiento);
-                if (idx >= 0)
-                    Seguimientos[idx] = editado;
+                WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 StatusMessage = "Seguimiento editado correctamente.";
             }
             catch (System.Exception ex)
@@ -113,7 +115,7 @@ public partial class SeguimientoViewModel : ObservableObject
         try
         {
             await _seguimientoService.DeleteAsync(SelectedSeguimiento.Codigo!);
-            Seguimientos.Remove(SelectedSeguimiento);
+            WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
             StatusMessage = "Seguimiento eliminado correctamente.";
         }
         catch (System.Exception ex)

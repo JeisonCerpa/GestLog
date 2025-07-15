@@ -1,16 +1,21 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Models
 {
     public class CronogramaMantenimientoDto
     {
+        [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }
+        [Required(ErrorMessage = "El nombre del equipo es obligatorio.")]
         public string? Nombre { get; set; }
         public string? Marca { get; set; }
         public string? Sede { get; set; }
         public int? SemanaInicioMtto { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
+        [Required(ErrorMessage = "Las semanas del cronograma son obligatorias.")]
+        [MinLength(52, ErrorMessage = "El cronograma debe tener 52 semanas definidas.")]
         // S1...S52: Representación semanal del cronograma
         public bool[] Semanas { get; set; } = new bool[52];
 

@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
 {
@@ -121,6 +123,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             EstadosMantenimientos = estados;
             Mantenimientos = mantenimientos;
             _seguimientoService = seguimientoService;
+            // Suscribirse a mensajes de actualización de seguimientos
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
             
             // Log para debug
             var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
@@ -185,6 +189,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     else
                         seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
                     await _seguimientoService.AddAsync(seguimiento);
+                    // Notificar a otros ViewModels
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                     estado.Realizado = true;
                     estado.Atrasado = false;
                     estado.Seguimiento = seguimiento;
@@ -225,15 +231,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             try
             {
                 MensajeUsuario = null;
-                
                 if (estado == null)
                 {
                     MensajeUsuario = "No se ha seleccionado un estado de mantenimiento.";
                     return;
                 }
-                
                 estado.Atrasado = true;
-                
                 if (_seguimientoService == null)
                 {
                     MensajeUsuario = "El servicio de seguimiento no está disponible.";
@@ -241,14 +244,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     ActualizarPuedeRegistrarMantenimientos();
                     return;
                 }
-                
                 // Si existe seguimiento, actualizarlo en la base de datos
                 if (estado.Seguimiento != null)
                 {
                     estado.Seguimiento.Observaciones += " [Marcado como atrasado]";
                     await _seguimientoService.UpdateAsync(estado.Seguimiento);
+                    // Notificar a otros ViewModels
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 }
-
                 RefrescarEstados(EstadosMantenimientos);
                 ActualizarPuedeRegistrarMantenimientos();
                 MensajeUsuario = "Mantenimiento marcado como atrasado.";
@@ -256,6 +259,21 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             catch (Exception ex)
             {
                 MensajeUsuario = $"Error al marcar como atrasado: {ex.Message}";
+            }
+        }
+
+        public async Task RecargarEstadosAsync()
+        {
+            if (EstadosMantenimientos.Count > 0)
+            {
+                var anio = EstadosMantenimientos[0].Anio;
+                var semana = EstadosMantenimientos[0].Semana;
+                var cronogramaService = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider().GetService(typeof(GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService)) as GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService;
+                if (cronogramaService != null)
+                {
+                    var nuevosEstados = await cronogramaService.GetEstadoMantenimientosSemanaAsync(semana, anio);
+                    RefrescarEstados(nuevosEstados);
+                }
             }
         }
 
