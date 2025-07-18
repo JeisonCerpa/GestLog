@@ -10,5 +10,7 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
         <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+        <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </Application.Resources>
 </Application>

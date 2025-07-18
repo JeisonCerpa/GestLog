@@ -113,6 +113,9 @@ public partial class EquiposViewModel : ObservableObject
             var result = dialog.ShowDialog();
             if (result == true)
             {
+                // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
+                if (dialog.Equipo.Estado == EstadoEquipo.Activo)
+                    dialog.Equipo.FechaBaja = null;
                 await _equipoService.UpdateAsync(dialog.Equipo);
                 await LoadEquiposAsync();
                 StatusMessage = "Equipo editado exitosamente.";
@@ -283,5 +286,53 @@ public partial class EquiposViewModel : ObservableObject
         _ = LoadEquiposAsync();
     }
 
-    // TODO: Implementar métodos para abrir diálogos de alta/edición y conectar con servicios asíncronos
+    [RelayCommand]
+    public async Task RegistrarMantenimientoAsync(EquipoDto? equipo)
+    {
+        if (equipo == null)
+        {
+            StatusMessage = "Debe seleccionar un equipo para registrar mantenimiento.";
+            return;
+        }
+        try
+        {
+            var now = DateTime.Now;
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int semanaActual = cal.GetWeekOfYear(now, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            int anioActual = now.Year;
+            var seguimiento = new SeguimientoMantenimientoDto
+            {
+                Codigo = equipo.Codigo,
+                Nombre = equipo.Nombre,
+                Semana = semanaActual,
+                Anio = anioActual,
+                FechaRegistro = now,
+                TipoMtno = TipoMantenimiento.Correctivo // Preseleccionado
+                // Los campos TipoMtno y Frecuencia se llenan en el diálogo y al guardar
+            };
+            // Abrir el diálogo SOLO con opciones correctivo/predictivo
+            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, true);
+            var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+            if (owner != null) dialog.Owner = owner;
+            var result = dialog.ShowDialog();
+            if (result == true)
+            {
+                // Asignar la frecuencia automáticamente según el tipo
+                if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
+                    dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
+                else if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Predictivo)
+                    dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Predictivo;
+                else
+                    dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Otro;
+                await _seguimientoService.AddAsync(dialog.Seguimiento);
+                StatusMessage = "Mantenimiento registrado exitosamente.";
+                WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+            }
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Error al registrar mantenimiento");
+            StatusMessage = "Error al registrar mantenimiento.";
+        }
+    }
 }

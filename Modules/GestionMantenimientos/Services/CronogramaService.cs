@@ -12,6 +12,8 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -303,6 +305,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                     // Aquí deberías guardar los cronogramas importados en la base de datos o colección interna
                     _logger.LogInformation("[CronogramaService] Cronogramas importados: {Count}", cronogramas.Count);
+                    // Notificar actualización de seguimientos
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 }
                 catch (GestionMantenimientosDomainException ex)
                 {
@@ -546,6 +550,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             
             await dbContext.SaveChangesAsync();
             _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
+            // Notificar actualización de seguimientos
+            WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }
 
         /// <summary>
@@ -657,6 +663,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     await dbContext.SaveChangesAsync();
                 }
             }
+            // Al final del método, notificar actualización de seguimientos
+            WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }
 
         private int CalcularSemanaISO8601(DateTime fecha)
@@ -851,6 +859,28 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
                     estados.Add(estado);
                     continue;
+                }
+            }
+            // Al final del método, después de procesar los programados:
+            // Agregar estados para seguimientos manuales (no programados) de esa semana/año que no esté ya en la lista
+            var codigosProgramados = cronogramasConMantenimiento.Select(c => c.Codigo).ToHashSet();
+            foreach (var seguimiento in seguimientos)
+            {
+                if (!codigosProgramados.Contains(seguimiento.Codigo))
+                {
+                    var estado = new MantenimientoSemanaEstadoDto
+                    {
+                        CodigoEquipo = seguimiento.Codigo,
+                        NombreEquipo = seguimiento.Nombre,
+                        Semana = semana,
+                        Anio = anio,
+                        Frecuencia = seguimiento.Frecuencia,
+                        Programado = false,
+                        Seguimiento = MapToDto(seguimiento),
+                        Realizado = seguimiento.FechaRealizacion.HasValue,
+                        Estado = seguimiento.Estado
+                    };
+                    estados.Add(estado);
                 }
             }
             _logger.LogInformation("[CronogramaService] DEBUG - Retornando {count} estados de mantenimiento", estados.Count);

@@ -128,7 +128,13 @@ public static class LoggingService
 
             // ViewModels de Gestión de Mantenimientos
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
+            {
+                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, logger);
+            });
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
 
             // Configuración de base de datos EF Core

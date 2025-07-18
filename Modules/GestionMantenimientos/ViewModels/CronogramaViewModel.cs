@@ -17,6 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 public partial class CronogramaViewModel : ObservableObject
 {
     private readonly ICronogramaService _cronogramaService;
+    private readonly ISeguimientoService _seguimientoService;
     private readonly IGestLogLogger _logger;
 
     [ObservableProperty]
@@ -41,9 +42,10 @@ public partial class CronogramaViewModel : ObservableObject
     private ObservableCollection<int> aniosDisponibles = new();
 
     [ObservableProperty]
-    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();    public CronogramaViewModel(ICronogramaService cronogramaService, IGestLogLogger logger)
+    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();    public CronogramaViewModel(ICronogramaService cronogramaService, ISeguimientoService seguimientoService, IGestLogLogger logger)
     {
         _cronogramaService = cronogramaService;
+        _seguimientoService = seguimientoService;
         _logger = logger;
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
@@ -188,10 +190,14 @@ public partial class CronogramaViewModel : ObservableObject
     }
 
     // Agrupa los cronogramas por semana del año (ISO 8601)
-    public void AgruparPorSemana()
+    public async void AgruparPorSemana()
     {
         Semanas.Clear();
         var añoActual = AnioSeleccionado;
+        // Obtener todos los seguimientos del año seleccionado
+        var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
+            .Where(s => s.Anio == añoActual)
+            .ToList();
         for (int i = 1; i <= 52; i++)
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
@@ -199,10 +205,35 @@ public partial class CronogramaViewModel : ObservableObject
             var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
             if (CronogramasFiltrados != null)
             {
+                // 1. Agregar programados
                 foreach (var c in CronogramasFiltrados)
                 {
                     if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                    {
                         semanaVM.Mantenimientos.Add(c);
+                    }
+                }
+                // 2. Agregar no programados (manuales)
+                var codigosProgramados = CronogramasFiltrados
+                    .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                    .Select(c => c.Codigo)
+                    .ToHashSet();
+                var seguimientosSemana = seguimientos.Where(s => s.Semana == i && !codigosProgramados.Contains(s.Codigo)).ToList();
+                foreach (var s in seguimientosSemana)
+                {
+                    // Crear un CronogramaMantenimientoDto "ficticio" solo para mostrar en la semana
+                    var noProgramado = new CronogramaMantenimientoDto
+                    {
+                        Codigo = s.Codigo,
+                        Nombre = s.Nombre,
+                        Anio = s.Anio,
+                        Semanas = new bool[52],
+                        FrecuenciaMtto = s.Frecuencia,
+                        IsCodigoReadOnly = true,
+                        IsCodigoEnabled = false
+                    };
+                    // Marcar visualmente que es no programado (puedes usar una propiedad auxiliar si la UI lo soporta)
+                    semanaVM.Mantenimientos.Add(noProgramado);
                 }
             }
             Semanas.Add(semanaVM);

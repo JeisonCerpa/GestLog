@@ -29,5 +29,6 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public int Anio { get; set; } // Año del seguimiento
         public EstadoSeguimientoMantenimiento Estado { get; set; } // Estado calculado del seguimiento
         public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
+        public FrecuenciaMantenimiento? Frecuencia { get; set; } // NUEVO: para correctivo/predictivo
     }
 }

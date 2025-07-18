@@ -12,6 +12,8 @@ using ClosedXML.Excel;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -279,6 +281,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                     // Aquí deberías guardar los equipos importados en la base de datos o colección interna
                     _logger.LogInformation("[EquipoService] Equipos importados: {Count}", equipos.Count);
+                    // Notificar actualización de seguimientos
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 }
                 catch (GestionMantenimientosDomainException ex)
                 {

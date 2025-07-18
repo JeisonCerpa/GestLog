@@ -101,6 +101,20 @@
                     <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="80" Width="Auto"/>
+                    <DataGridTemplateColumn Header="Acción" MinWidth="180" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Registrar mantenimiento"
+                                        Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        MinWidth="120" MinHeight="28"
+                                        Padding="12,2"
+                                        Margin="8,2,8,2"
+                                        ToolTip="Registrar mantenimiento correctivo o predictivo para este equipo"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">

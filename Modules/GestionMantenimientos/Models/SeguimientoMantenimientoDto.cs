@@ -28,6 +28,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         [Range(2000, 2100, ErrorMessage = "El año debe ser válido.")]
         public int Anio { get; set; }   // Año del seguimiento
         public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
+        public FrecuenciaMantenimiento? Frecuencia { get; set; } // NUEVO: para correctivo/predictivo
 
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;
@@ -50,6 +51,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Semana = other.Semana;
             Anio = other.Anio;
             FechaRealizacion = other.FechaRealizacion;
+            Frecuencia = other.Frecuencia;
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
         }

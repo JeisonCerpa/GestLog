@@ -12,6 +12,8 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -42,7 +44,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FechaRealizacion = s.FechaRealizacion,
                 Semana = s.Semana,
                 Anio = s.Anio,
-                Estado = s.Estado
+                Estado = s.Estado,
+                Frecuencia = s.Frecuencia
             });
         }
 
@@ -64,7 +67,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FechaRealizacion = entity.FechaRealizacion,
                 Semana = entity.Semana,
                 Anio = entity.Anio,
-                Estado = entity.Estado
+                Estado = entity.Estado,
+                Frecuencia = entity.Frecuencia
             };
         }
 
@@ -95,6 +99,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                     entity.FechaRealizacion = seguimiento.FechaRealizacion;
                     entity.Estado = seguimiento.Estado;
+                    entity.Frecuencia = seguimiento.Frecuencia;
                     await dbContext.SaveChangesAsync();
                     _logger.LogInformation("[SeguimientoService] Seguimiento actualizado (sobrescrito) correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
                 }
@@ -114,7 +119,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         FechaRealizacion = seguimiento.FechaRealizacion,
                         Semana = seguimiento.Semana,
                         Anio = seguimiento.Anio,
-                        Estado = seguimiento.Estado
+                        Estado = seguimiento.Estado,
+                        Frecuencia = seguimiento.Frecuencia
                     };
                     dbContext.Seguimientos.Add(nuevo);
                     await dbContext.SaveChangesAsync();
@@ -153,6 +159,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                 entity.FechaRealizacion = seguimiento.FechaRealizacion;
                 entity.Estado = seguimiento.Estado;
+                entity.Frecuencia = seguimiento.Frecuencia;
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
             }
@@ -279,6 +286,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                     // Aquí deberías guardar los seguimientos importados en la base de datos o colección interna
                     _logger.LogInformation("[SeguimientoService] Seguimientos importados: {Count}", seguimientos.Count);
+                    // Notificar actualización de seguimientos
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 }
                 catch (GestionMantenimientosDomainException ex)
                 {
