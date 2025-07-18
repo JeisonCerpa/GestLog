@@ -10,29 +10,69 @@
     <UserControl.Resources>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#2B8E3F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2B8E3F"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#118938" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <CollectionViewSource x:Key="SeguimientosFiltrados" Source="{Binding Seguimientos}" Filter="OnSeguimientoFilter" />
     </UserControl.Resources>
-    <Grid Background="White" Margin="10">
+    <Grid Background="#FAFAFA" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="Seguimiento de Mantenimientos" FontSize="22" FontWeight="Bold" Foreground="#1976D2" Margin="0,0,0,10"/>
+        <TextBlock Text="Seguimiento de Mantenimientos" FontSize="22" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10"/>
         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Grid.Row="0" HorizontalAlignment="Right">
-            <Button Content="Nuevo" Command="{Binding AddSeguimientoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Editar" Command="{Binding EditSeguimientoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Eliminar" Command="{Binding DeleteSeguimientoCommand}" Margin="0,0,8,0"/>
-            <Button Content="Importar" Command="{Binding ImportarSeguimientosCommand}" Margin="0,0,8,0"/>
-            <Button Content="Exportar" Command="{Binding ExportarSeguimientosCommand}" Margin="0,0,8,0"/>
-            <Button Content="Backup" Command="{Binding BackupSeguimientosCommand}"/>
+            <Button Content="Exportar" Command="{Binding ExportarSeguimientosCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" MinWidth="100" MinHeight="32"/>
         </StackPanel>
-        <!-- DataGrid con Scroll visible siempre y ajuste de columnas al contenido -->
-        <Border Grid.Row="1" BorderThickness="1" BorderBrush="#DDD" CornerRadius="4" Margin="0,0,0,10">
-            <DataGrid ItemsSource="{Binding Seguimientos}" SelectedItem="{Binding SelectedSeguimiento, Mode=TwoWay}"
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
+            <DataGrid ItemsSource="{Binding Source={StaticResource SeguimientosFiltrados}}" SelectedItem="{Binding SelectedSeguimiento, Mode=TwoWay}"
                       AutoGenerateColumns="False" IsReadOnly="True"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
                       HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                      ScrollViewer.CanContentScroll="False"
+                      RowBackground="White" AlternatingRowBackground="#F5F5F5"
+                      HeadersVisibility="Column" GridLinesVisibility="None"
+                      SnapsToDevicePixels="True" UseLayoutRounding="True"
                       MinWidth="1200">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="120"/>

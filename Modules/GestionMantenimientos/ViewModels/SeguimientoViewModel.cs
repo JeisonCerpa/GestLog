@@ -8,6 +8,7 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -194,6 +195,36 @@ public partial class SeguimientoViewModel : ObservableObject
         {
             _logger.LogError(ex, "Error al eliminar seguimiento");
             StatusMessage = "Error al eliminar seguimiento.";
+        }
+    }
+
+    [RelayCommand]
+    public async Task ExportarSeguimientosAsync()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+            Title = "Exportar seguimientos a Excel",
+            FileName = $"Seguimientos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            IsLoading = true;
+            StatusMessage = "Exportando a Excel...";
+            try
+            {
+                await _seguimientoService.ExportarAExcelAsync(dialog.FileName);
+                StatusMessage = $"Exportación completada: {dialog.FileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al exportar seguimientos");
+                StatusMessage = $"Error al exportar: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
     }
 

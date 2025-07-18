@@ -149,7 +149,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     Semana = estado.Semana,
                     Anio = estado.Anio
                 };
-                var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimientoDto);
+                var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimientoDto, true); // modoRestringido: true
                 if (dialog.ShowDialog() == true)
                 {
                     var seguimiento = dialog.Seguimiento;
