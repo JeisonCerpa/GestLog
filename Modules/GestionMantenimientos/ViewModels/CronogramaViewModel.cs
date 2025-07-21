@@ -8,6 +8,9 @@ using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using ClosedXML.Excel;
+using Microsoft.Win32;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -250,5 +253,118 @@ public partial class CronogramaViewModel : ObservableObject
     public void AgruparSemanalmente()
     {
         AgruparPorSemana();
+    }
+
+    [RelayCommand]
+    public async Task ExportarCronogramasAsync()
+    {
+        try
+        {
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                FileName = $"CRONOGRAMA_{AnioSeleccionado}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                Title = "Exportar cronograma a Excel"
+            };
+            if (saveFileDialog.ShowDialog() != true)
+                return;
+            IsLoading = true;
+            StatusMessage = "Exportando cronograma...";
+
+            // Obtener todos los equipos y semanas del año seleccionado
+            var cronogramas = CronogramasFiltrados.ToList();
+            var semanas = Enumerable.Range(1, 52).ToList();
+            // Diccionario: [equipo][semana] = estado
+            var estadosPorEquipo = new Dictionary<string, Dictionary<int, MantenimientoSemanaEstadoDto>>();
+            foreach (var c in cronogramas)
+            {
+                estadosPorEquipo[c.Codigo!] = new Dictionary<int, MantenimientoSemanaEstadoDto>();
+                for (int s = 1; s <= 52; s++)
+                {
+                    var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(s, AnioSeleccionado);
+                    var estado = estados.FirstOrDefault(e => e.CodigoEquipo == c.Codigo);
+                    if (estado != null)
+                        estadosPorEquipo[c.Codigo!][s] = estado;
+                }
+            }
+
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add($"Cronograma {AnioSeleccionado}");
+            // Encabezados
+            ws.Cell(1, 1).Value = "Equipo";
+            ws.Cell(1, 2).Value = "Nombre";
+            ws.Cell(1, 3).Value = "Marca";
+            ws.Cell(1, 4).Value = "Sede";
+            for (int s = 1; s <= 52; s++)
+            {
+                ws.Cell(1, 4 + s).Value = $"S{s}";
+                ws.Cell(1, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            }
+            ws.Row(1).Style.Font.Bold = true;
+            int row = 2;
+            foreach (var c in cronogramas)
+            {
+                ws.Cell(row, 1).Value = c.Codigo;
+                ws.Cell(row, 2).Value = c.Nombre;
+                ws.Cell(row, 3).Value = c.Marca;
+                ws.Cell(row, 4).Value = c.Sede;
+                for (int s = 1; s <= 52; s++)
+                {
+                    if (estadosPorEquipo.TryGetValue(c.Codigo!, out var estadosSemana) && estadosSemana.TryGetValue(s, out var estado))
+                    {
+                        ws.Cell(row, 4 + s).Value = EstadoToTexto(estado.Estado);
+                        ws.Cell(row, 4 + s).Style.Fill.BackgroundColor = XLColorFromEstado(estado.Estado);
+                        ws.Cell(row, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Cell(row, 4 + s).Style.Font.FontColor = XLColor.White;
+                    }
+                    else
+                    {
+                        ws.Cell(row, 4 + s).Value = "-";
+                        ws.Cell(row, 4 + s).Style.Fill.BackgroundColor = XLColor.White;
+                        ws.Cell(row, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Cell(row, 4 + s).Style.Font.FontColor = XLColor.Black;
+                    }
+                }
+                row++;
+            }
+            ws.Columns().AdjustToContents();
+            workbook.SaveAs(saveFileDialog.FileName);
+            StatusMessage = $"Exportación completada: {saveFileDialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[CronogramaViewModel] Error al exportar cronograma a Excel");
+            StatusMessage = $"Error al exportar: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string EstadoToTexto(GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento estado)
+    {
+        return estado switch
+        {
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado => "No realizado",
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => "Atrasado",
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "Realizado",
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado",
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => "Pendiente",
+            _ => "-"
+        };
+    }
+
+    private static XLColor XLColorFromEstado(GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento estado)
+    {
+        return estado switch
+        {
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado => XLColor.FromHtml("#C80000"), // Rojo
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"), // Ámbar
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"), // Verde
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#388E3C"), // Verde
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#BDBDBD"), // Gris
+            _ => XLColor.White
+        };
     }
 }
