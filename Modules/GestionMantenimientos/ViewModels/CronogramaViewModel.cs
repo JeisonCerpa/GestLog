@@ -198,6 +198,7 @@ public partial class CronogramaViewModel : ObservableObject
         var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
             .Where(s => s.Anio == añoActual)
             .ToList();
+        var tareas = new List<Task>();
         for (int i = 1; i <= 52; i++)
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
@@ -236,8 +237,11 @@ public partial class CronogramaViewModel : ObservableObject
                     semanaVM.Mantenimientos.Add(noProgramado);
                 }
             }
+            // Inicializar estados de mantenimientos para la semana (carga asíncrona)
+            tareas.Add(semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService));
             Semanas.Add(semanaVM);
         }
+        await Task.WhenAll(tareas);
     }
 
     // TODO: Agregar comandos para importar/exportar y backup de cronogramas

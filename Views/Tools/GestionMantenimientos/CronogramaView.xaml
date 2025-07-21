@@ -4,8 +4,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:GestLog.Controls"
+             xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
+    <UserControl.Resources>
+        <!-- ...otros recursos... -->
+        <converters:CardForegroundColorConverter x:Key="CardForegroundColorConverter" />
+        <converters:CardButtonBackgroundColorConverter x:Key="CardButtonBackgroundColorConverter" />
+        <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
+        <converters:CardButtonBorderColorConverter x:Key="CardButtonBorderColorConverter" />
+        <!-- ...otros recursos... -->
+    </UserControl.Resources>
     <Grid Background="White" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -50,9 +59,37 @@
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border CornerRadius="8" Padding="2" Margin="2" BorderThickness="2"
-                                    BorderBrush="{Binding TieneMantenimientos, Converter={StaticResource BooleanToColorConverter}}"
-                                    Background="White" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Border x:Name="SemanaCard" CornerRadius="8" Padding="2" Margin="2" BorderThickness="2"
+                                    BorderBrush="#E0E0E0"
+                                    Background="{Binding ColorSemana}"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                        <Setter Property="Effect" Value="{x:Null}"/>
+                                        <Setter Property="Background" Value="{Binding ColorSemana}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
+                                                <Setter Property="BorderBrush" Value="#1976D2"/>
+                                                <Setter Property="BorderThickness" Value="4"/>
+                                                <Setter Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect BlurRadius="0" ShadowDepth="6" Direction="315" Color="Black" Opacity="1"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#F0F7FF" Offset="0.0"/>
+                                                            <GradientStop Color="{Binding ColorSemana}" Offset="0.5"/>
+                                                        </LinearGradientBrush>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <StackPanel ToolTipService.ShowDuration="15000" VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <StackPanel.ToolTip>
                                         <StackPanel>
@@ -67,10 +104,34 @@
                                             <TextBlock Text="Sin mantenimientos programados" Foreground="#C0392B" FontWeight="SemiBold" FontSize="11" Visibility="{Binding Mantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
                                         </StackPanel>
                                     </StackPanel.ToolTip>
-                                    <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
-                                    <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
-                                    <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}" FontWeight="SemiBold" FontSize="11" Foreground="#2B8E3F" HorizontalAlignment="Center" TextWrapping="NoWrap"/>
-                                    <Button Content="Ver Detalles" Command="{Binding VerSemanaCommand}" CommandParameter="{Binding}" Margin="0,4,0,0" Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="9"/>
+                                    <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"
+                                               Foreground="{Binding ColorSemana, Converter={StaticResource CardForegroundColorConverter}}"/>
+                                    <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"
+                                               Foreground="{Binding ColorSemana, Converter={StaticResource CardForegroundColorConverter}}"/>
+                                    <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}"
+                                               FontWeight="SemiBold" FontSize="11"
+                                               Foreground="{Binding ColorSemana, Converter={StaticResource CardForegroundColorConverter}}"
+                                               HorizontalAlignment="Center" TextWrapping="NoWrap"/>
+                                    <Button Content="Ver Detalles"
+                                            Command="{Binding VerSemanaCommand}"
+                                            CommandParameter="{Binding}"
+                                            Margin="0,4,0,0"
+                                            Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            FontSize="11"
+                                            Background="{Binding ColorSemana, Converter={StaticResource CardButtonBackgroundColorConverter}}"
+                                            Foreground="Black"
+                                            BorderBrush="#CCCCCC"
+                                            BorderThickness="1.5"
+                                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                            TextOptions.TextFormattingMode="Display"
+                                            TextOptions.TextRenderingMode="ClearType"
+                                            SnapsToDevicePixels="True">
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="6"/>
+                                            </Style>
+                                        </Button.Resources>
+                                    </Button>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

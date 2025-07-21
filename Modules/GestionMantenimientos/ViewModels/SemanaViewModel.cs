@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
@@ -86,6 +87,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             {
                 EstadosMantenimientos.Add(estado);
             }
+            // Forzar refresco de color tras carga asíncrona
+            OnPropertyChanged(nameof(ColorSemana));
         }
 
         public async Task CargarEstadosMantenimientosAsync(int anio, ICronogramaService cronogramaService)
@@ -97,6 +100,48 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         public async Task RecargarEstadosAsync(int anio, ICronogramaService cronogramaService)
         {
             await CargarEstadosMantenimientosAsync(anio, cronogramaService);
+        }
+
+        // Propiedad calculada para el color de la semana según los estados de los mantenimientos
+        public string ColorSemana
+        {
+            get
+            {
+                if (EstadosMantenimientos == null || EstadosMantenimientos.Count == 0)
+                    return "#FFFFFF"; // Sin datos, blanco
+                if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.NoRealizado))
+                    return "#C80000"; // Rojo fuerte personalizado (antes #DF0000)
+                if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Atrasado))
+                    return "#FFB300"; // Ámbar (Material Amber 700)
+                if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente))
+                    return "#BDBDBD"; // Gris medio (Material Grey 400)
+                if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
+                    return "#388E3C"; // Verde fuerte (Material Green 700)
+                // Si hay mezcla de Pendiente y Realizado, prioriza ámbar
+                if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente) &&
+                    EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
+                    return "#FFB300"; // Ámbar
+                return "#FFFFFF"; // Default/blanco
+            }
+        }
+
+        // Propiedad que indica si esta semana es la actual
+        public bool IsSemanaActual
+        {
+            get
+            {
+                var hoy = DateTime.Now;
+                var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+                int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+                int anioActual = hoy.Year;
+                return NumeroSemana == semanaActual && _anio == anioActual;
+            }
+        }
+
+        // Notificar cambio de color si cambian los estados
+        partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
+        {
+            OnPropertyChanged(nameof(ColorSemana));
         }
     }
 }
