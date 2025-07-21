@@ -11,6 +11,8 @@ using GestLog.Modules.GestionMantenimientos.Messages;
 using ClosedXML.Excel;
 using Ookii.Dialogs.Wpf;
 using System.IO;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -39,6 +41,12 @@ public partial class EquiposViewModel : ObservableObject
     [ObservableProperty]
     private bool mostrarDadosDeBaja = false;
 
+    [ObservableProperty]
+    private string filtroEquipo = "";
+
+    [ObservableProperty]
+    private ICollectionView? equiposView;
+
     public EquiposViewModel(IEquipoService equipoService, IGestLogLogger logger, ICronogramaService cronogramaService, ISeguimientoService seguimientoService)
     {
         _equipoService = equipoService;
@@ -48,6 +56,9 @@ public partial class EquiposViewModel : ObservableObject
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
+        EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+        if (EquiposView != null)
+            EquiposView.Filter = FiltrarEquipo;
     }
 
     [RelayCommand]
@@ -61,6 +72,9 @@ public partial class EquiposViewModel : ObservableObject
             // Filtrar según MostrarDadosDeBaja
             var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
             Equipos = new ObservableCollection<EquipoDto>(filtrados);
+            EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+            if (EquiposView != null)
+                EquiposView.Filter = FiltrarEquipo;
             StatusMessage = $"{Equipos.Count} equipos {(MostrarDadosDeBaja ? "(incluye dados de baja)" : "activos")} cargados.";
         }
         catch (System.Exception ex)
@@ -284,6 +298,99 @@ public partial class EquiposViewModel : ObservableObject
     {
         // Recargar la lista de equipos al cambiar el filtro
         _ = LoadEquiposAsync();
+    }
+
+    partial void OnFiltroEquipoChanged(string value)
+    {
+        EquiposView?.Refresh();
+    }
+
+    partial void OnEquiposChanged(ObservableCollection<EquipoDto> value)
+    {
+        EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+        if (EquiposView != null)
+            EquiposView.Filter = FiltrarEquipo;
+        EquiposView?.Refresh();
+    }
+
+    private bool FiltrarEquipo(object obj)
+    {
+        if (obj is not EquipoDto eq) return false;
+        if (string.IsNullOrWhiteSpace(FiltroEquipo)) return true;
+        string filtro = RemoverTildes(FiltroEquipo).ToLowerInvariant();
+        return RemoverTildes(eq.Codigo ?? "").ToLowerInvariant().Contains(filtro)
+            || RemoverTildes(eq.Nombre ?? "").ToLowerInvariant().Contains(filtro)
+            || RemoverTildes(eq.Marca ?? "").ToLowerInvariant().Contains(filtro)
+            || RemoverTildes(eq.Sede?.ToString() ?? "").ToLowerInvariant().Contains(filtro);
+    }
+
+    private string RemoverTildes(string texto)
+    {
+        return texto
+            .Replace("á", "a").Replace("é", "e").Replace("í", "i")
+            .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
+            .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
+            .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
+            .Replace("ñ", "n").Replace("Ñ", "N");
+    }
+
+    [RelayCommand]
+    public async Task ExportarEquiposFiltradosAsync()
+    {
+        var dialog = new VistaSaveFileDialog
+        {
+            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+            DefaultExt = ".xlsx",
+            Title = "Exportar equipos filtrados a Excel",
+            FileName = "EquiposFiltrados.xlsx"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            IsLoading = true;
+            StatusMessage = "Exportando a Excel...";
+            try
+            {
+                var filtrados = EquiposView?.Cast<EquipoDto>().ToList() ?? new List<EquipoDto>();
+                await Task.Run(() =>
+                {
+                    using var workbook = new XLWorkbook();
+                    var ws = workbook.Worksheets.Add("Equipos");
+                    ws.Cell(1, 1).Value = "Código";
+                    ws.Cell(1, 2).Value = "Nombre";
+                    ws.Cell(1, 3).Value = "Marca";
+                    ws.Cell(1, 4).Value = "Estado";
+                    ws.Cell(1, 5).Value = "Sede";
+                    ws.Cell(1, 6).Value = "Frecuencia Mtto";
+                    ws.Cell(1, 7).Value = "Precio";
+                    ws.Cell(1, 8).Value = "Fecha Registro";
+                    int row = 2;
+                    foreach (var eq in filtrados)
+                    {
+                        ws.Cell(row, 1).Value = eq.Codigo ?? "";
+                        ws.Cell(row, 2).Value = eq.Nombre ?? "";
+                        ws.Cell(row, 3).Value = eq.Marca ?? "";
+                        ws.Cell(row, 4).Value = eq.Estado?.ToString() ?? "";
+                        ws.Cell(row, 5).Value = eq.Sede?.ToString() ?? "";
+                        ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
+                        ws.Cell(row, 7).Value = eq.Precio ?? 0;
+                        ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        row++;
+                    }
+                    ws.Columns().AdjustToContents();
+                    workbook.SaveAs(dialog.FileName);
+                });
+                StatusMessage = $"Exportación completada: {dialog.FileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al exportar equipos filtrados");
+                StatusMessage = $"Error al exportar: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
     }
 
     [RelayCommand]

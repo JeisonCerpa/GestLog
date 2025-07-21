@@ -54,7 +54,7 @@
     <Grid Background="#FAFAFA" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Título y botones -->
-            <RowDefinition Height="Auto"/> <!-- CheckBox -->
+            <RowDefinition Height="Auto"/> <!-- CheckBox y filtro -->
             <RowDefinition Height="*"/>   <!-- DataGrid -->
             <RowDefinition Height="Auto"/> <!-- Barra de progreso -->
         </Grid.RowDefinitions>
@@ -75,14 +75,31 @@
                 </UniformGrid>
             </StackPanel>
         </Grid>
-        <!-- Fila 1: CheckBox discreto -->
-        <CheckBox Grid.Row="1" Content="Mostrar dados de baja" IsChecked="{Binding MostrarDadosDeBaja, Mode=TwoWay}"
-                  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,8"
-                  Foreground="#888" FontSize="13" FontStyle="Italic" Opacity="0.7"
-                  Focusable="False"/>
+        <!-- Fila 1: CheckBox a la derecha y filtro a la izquierda -->
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Grid.Column="0">
+                <TextBox Width="220" Height="28" VerticalAlignment="Center"
+                         Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,8,0" Padding="8,2"
+                         ToolTip="Filtrar por código, nombre, marca o sede"
+                         Foreground="#333" Background="#FFF" BorderBrush="#DDD" BorderThickness="1"
+                         FontSize="14"/>
+                <Button Content="Exportar filtrados"
+                        Command="{Binding ExportarEquiposFiltradosCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="28"/>
+            </StackPanel>
+            <CheckBox Content="Mostrar dados de baja" IsChecked="{Binding MostrarDadosDeBaja, Mode=TwoWay}"
+                      VerticalAlignment="Center" Margin="0,0,0,0"
+                      Foreground="#888" FontSize="13" FontStyle="Italic" Opacity="0.7"
+                      Focusable="False" HorizontalAlignment="Right" Grid.Column="1"/>
+        </Grid>
         <!-- Fila 2: DataGrid -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
-            <DataGrid ItemsSource="{Binding Equipos}" SelectedItem="{Binding SelectedEquipo, Mode=TwoWay}"
+            <DataGrid ItemsSource="{Binding EquiposView}" SelectedItem="{Binding SelectedEquipo, Mode=TwoWay}"
                       AutoGenerateColumns="False" IsReadOnly="True"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
                       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
