@@ -13,6 +13,7 @@ using Ookii.Dialogs.Wpf;
 using System.IO;
 using System.ComponentModel;
 using System.Windows.Data;
+using System.Linq;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -58,7 +59,7 @@ public partial class EquiposViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
         EquiposView = CollectionViewSource.GetDefaultView(Equipos);
         if (EquiposView != null)
-            EquiposView.Filter = FiltrarEquipo;
+            EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
     }
 
     [RelayCommand]
@@ -74,7 +75,7 @@ public partial class EquiposViewModel : ObservableObject
             Equipos = new ObservableCollection<EquipoDto>(filtrados);
             EquiposView = CollectionViewSource.GetDefaultView(Equipos);
             if (EquiposView != null)
-                EquiposView.Filter = FiltrarEquipo;
+                EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
             StatusMessage = $"{Equipos.Count} equipos {(MostrarDadosDeBaja ? "(incluye dados de baja)" : "activos")} cargados.";
         }
         catch (System.Exception ex)
@@ -309,7 +310,7 @@ public partial class EquiposViewModel : ObservableObject
     {
         EquiposView = CollectionViewSource.GetDefaultView(Equipos);
         if (EquiposView != null)
-            EquiposView.Filter = FiltrarEquipo;
+            EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
         EquiposView?.Refresh();
     }
 
@@ -317,11 +318,24 @@ public partial class EquiposViewModel : ObservableObject
     {
         if (obj is not EquipoDto eq) return false;
         if (string.IsNullOrWhiteSpace(FiltroEquipo)) return true;
-        string filtro = RemoverTildes(FiltroEquipo).ToLowerInvariant();
-        return RemoverTildes(eq.Codigo ?? "").ToLowerInvariant().Contains(filtro)
-            || RemoverTildes(eq.Nombre ?? "").ToLowerInvariant().Contains(filtro)
-            || RemoverTildes(eq.Marca ?? "").ToLowerInvariant().Contains(filtro)
-            || RemoverTildes(eq.Sede?.ToString() ?? "").ToLowerInvariant().Contains(filtro);
+        // Permitir múltiples términos separados por punto y coma
+        var terminos = FiltroEquipo.Split(';')
+            .Select(t => RemoverTildes(t.Trim()).ToLowerInvariant())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .ToArray();
+        // Campos relevantes para filtrar
+        var campos = new[]
+        {
+            RemoverTildes(eq.Codigo ?? "").ToLowerInvariant(),
+            RemoverTildes(eq.Nombre ?? "").ToLowerInvariant(),
+            RemoverTildes(eq.Marca ?? "").ToLowerInvariant(),
+            RemoverTildes(eq.Sede?.ToString() ?? "").ToLowerInvariant(),
+            RemoverTildes(eq.Estado?.ToString() ?? "").ToLowerInvariant(),
+            RemoverTildes(eq.FrecuenciaMtto?.ToString() ?? "").ToLowerInvariant(),
+            eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? ""
+        };
+        // Todos los términos deben estar presentes en algún campo
+        return terminos.All(term => campos.Any(campo => campo.Contains(term)));
     }
 
     private string RemoverTildes(string texto)

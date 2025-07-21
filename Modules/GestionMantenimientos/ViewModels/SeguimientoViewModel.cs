@@ -32,12 +32,27 @@ public partial class SeguimientoViewModel : ObservableObject
     [ObservableProperty]
     private string? statusMessage;
 
+    [ObservableProperty]
+    private string filtroSeguimiento = "";
+
+    [ObservableProperty]
+    private DateTime? fechaDesde;
+
+    [ObservableProperty]
+    private DateTime? fechaHasta;
+
+    [ObservableProperty]
+    private System.ComponentModel.ICollectionView? seguimientosView;
+
     public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger)
     {
         _seguimientoService = seguimientoService;
         _logger = logger;
         // Suscribirse a mensajes de actualización de seguimientos
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadSeguimientosAsync());
+        SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
+        if (SeguimientosView != null)
+            SeguimientosView.Filter = FiltrarSeguimiento;
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => await LoadSeguimientosAsync());
     }
@@ -226,6 +241,135 @@ public partial class SeguimientoViewModel : ObservableObject
                 IsLoading = false;
             }
         }
+    }
+
+    [RelayCommand]
+    public async Task ExportarSeguimientosFiltradosAsync()
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+            Title = "Exportar seguimientos filtrados a Excel",
+            FileName = $"SeguimientosFiltrados_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            IsLoading = true;
+            StatusMessage = "Exportando a Excel...";
+            try
+            {
+                var filtrados = SeguimientosView?.Cast<SeguimientoMantenimientoDto>().ToList() ?? new List<SeguimientoMantenimientoDto>();
+                await Task.Run(() =>
+                {
+                    using var workbook = new ClosedXML.Excel.XLWorkbook();
+                    var ws = workbook.Worksheets.Add("Seguimientos");
+                    ws.Cell(1, 1).Value = "Código";
+                    ws.Cell(1, 2).Value = "Nombre";
+                    ws.Cell(1, 3).Value = "Tipo Mtno";
+                    ws.Cell(1, 4).Value = "Responsable";
+                    ws.Cell(1, 5).Value = "Fecha Registro";
+                    ws.Cell(1, 6).Value = "Semana";
+                    ws.Cell(1, 7).Value = "Año";
+                    ws.Cell(1, 8).Value = "Estado";
+                    int row = 2;
+                    foreach (var s in filtrados)
+                    {
+                        ws.Cell(row, 1).Value = s.Codigo ?? "";
+                        ws.Cell(row, 2).Value = s.Nombre ?? "";
+                        ws.Cell(row, 3).Value = s.TipoMtno?.ToString() ?? "";
+                        ws.Cell(row, 4).Value = s.Responsable ?? "";
+                        ws.Cell(row, 5).Value = s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 6).Value = s.Semana;
+                        ws.Cell(row, 7).Value = s.Anio;
+                        ws.Cell(row, 8).Value = s.Estado.ToString();
+                        row++;
+                    }
+                    ws.Columns().AdjustToContents();
+                    workbook.SaveAs(dialog.FileName);
+                });
+                StatusMessage = $"Exportación completada: {dialog.FileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al exportar seguimientos filtrados");
+                StatusMessage = $"Error al exportar: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+    }
+
+    partial void OnFiltroSeguimientoChanged(string value)
+    {
+        SeguimientosView?.Refresh();
+    }
+    partial void OnFechaDesdeChanged(DateTime? value)
+    {
+        SeguimientosView?.Refresh();
+    }
+    partial void OnFechaHastaChanged(DateTime? value)
+    {
+        SeguimientosView?.Refresh();
+    }
+    partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
+    {
+        SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
+        if (SeguimientosView != null)
+            SeguimientosView.Filter = FiltrarSeguimiento;
+        SeguimientosView?.Refresh();
+    }
+    private bool FiltrarSeguimiento(object obj)
+    {
+        if (obj is not SeguimientoMantenimientoDto s) return false;
+        // Filtro múltiple por texto
+        if (!string.IsNullOrWhiteSpace(FiltroSeguimiento))
+        {
+            var terminos = FiltroSeguimiento.Split(';')
+                .Select(t => RemoverTildes(t.Trim()).ToLowerInvariant().Replace(" ", ""))
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToList();
+            // Normaliza el estado para que "RealizadoEnTiempo" sea "realizado en tiempo"
+            string estadoLegible = RemoverTildes(SepararCamelCase(s.Estado.ToString())).ToLowerInvariant().Replace(" ", "");
+            var campos = new[]
+            {
+                RemoverTildes(s.Codigo ?? "").ToLowerInvariant().Replace(" ", ""),
+                RemoverTildes(s.Nombre ?? "").ToLowerInvariant().Replace(" ", ""),
+                RemoverTildes(s.TipoMtno?.ToString() ?? "").ToLowerInvariant().Replace(" ", ""),
+                RemoverTildes(s.Responsable ?? "").ToLowerInvariant().Replace(" ", ""),
+                s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "",
+                s.Semana.ToString(),
+                s.Anio.ToString(),
+                estadoLegible
+            };
+            if (!terminos.All(termino => campos.Any(campo => campo.Contains(termino))))
+                return false;
+        }
+        // Filtro por fechas
+        if (FechaDesde.HasValue && (s.FechaRegistro == null || s.FechaRegistro < FechaDesde.Value))
+            return false;
+        if (FechaHasta.HasValue && (s.FechaRegistro == null || s.FechaRegistro > FechaHasta.Value))
+            return false;
+        // Filtro por estado: no mostrar "Pendiente"
+        if (s.Estado == EstadoSeguimientoMantenimiento.Pendiente)
+            return false;
+        return true;
+    }
+    private string RemoverTildes(string texto)
+    {
+        return texto
+            .Replace("á", "a").Replace("é", "e").Replace("í", "i")
+            .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
+            .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
+            .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
+            .Replace("ñ", "n").Replace("Ñ", "N");
+    }
+
+    private string SepararCamelCase(string texto)
+    {
+        // Convierte "RealizadoEnTiempo" en "Realizado en tiempo"
+        return System.Text.RegularExpressions.Regex.Replace(texto, "([a-z])([A-Z])", "$1 $2");
     }
 
     // TODO: Agregar comandos para importar/exportar y backup de seguimientos

@@ -17,22 +17,21 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
             DataContext = viewModel;
-
-            // Filtro para ocultar seguimientos con estado Pendiente
-            var cvs = (CollectionViewSource)this.Resources["SeguimientosFiltrados"];
-            cvs.Filter += OnSeguimientoFilter;
+            // El filtrado se realiza ahora en el ViewModel, no en el code-behind ni con CollectionViewSource
+            // var cvs = (CollectionViewSource)this.Resources["SeguimientosFiltrados"];
+            // cvs.Filter += OnSeguimientoFilter;
         }
 
-        private void OnSeguimientoFilter(object sender, FilterEventArgs e)
-        {
-            if (e.Item is GestLog.Modules.GestionMantenimientos.Models.SeguimientoMantenimientoDto dto)
-            {
-                e.Accepted = dto.Estado != EstadoSeguimientoMantenimiento.Pendiente;
-            }
-            else
-            {
-                e.Accepted = false;
-            }
-        }
+        // private void OnSeguimientoFilter(object sender, FilterEventArgs e)
+        // {
+        //     if (e.Item is GestLog.Modules.GestionMantenimientos.Models.SeguimientoMantenimientoDto dto)
+        //     {
+        //         e.Accepted = dto.Estado != EstadoSeguimientoMantenimiento.Pendiente;
+        //     }
+        //     else
+        //     {
+        //         e.Accepted = false;
+        //     }
+        // }
     }
 }
