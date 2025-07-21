@@ -14,6 +14,7 @@ using System.IO;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Linq;
+using System.Threading;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -301,9 +302,21 @@ public partial class EquiposViewModel : ObservableObject
         _ = LoadEquiposAsync();
     }
 
+    private CancellationTokenSource? _debounceToken;
+
     partial void OnFiltroEquipoChanged(string value)
     {
-        EquiposView?.Refresh();
+        _debounceToken?.Cancel();
+        _debounceToken = new CancellationTokenSource();
+        var token = _debounceToken.Token;
+        Task.Run(async () =>
+        {
+            await Task.Delay(250, token); // 250ms debounce
+            if (!token.IsCancellationRequested)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() => EquiposView?.Refresh());
+            }
+        }, token);
     }
 
     partial void OnEquiposChanged(ObservableCollection<EquipoDto> value)
