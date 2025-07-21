@@ -135,6 +135,7 @@ public partial class EquiposViewModel : ObservableObject
                 await _equipoService.UpdateAsync(dialog.Equipo);
                 await LoadEquiposAsync();
                 StatusMessage = "Equipo editado exitosamente.";
+                WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
             }
         }
         catch (System.Exception ex)
@@ -152,6 +153,18 @@ public partial class EquiposViewModel : ObservableObject
             StatusMessage = "Debe seleccionar un equipo válido para dar de baja.";
             return;
         }
+        // Confirmación antes de dar de baja
+        var result = System.Windows.MessageBox.Show(
+            $"¿Está seguro que desea dar de baja el equipo '{SelectedEquipo.Nombre}' (código: {SelectedEquipo.Codigo})?\nEsta acción es irreversible y eliminará cronogramas y seguimientos pendientes asociados.",
+            "Confirmar baja de equipo",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning
+        );
+        if (result != System.Windows.MessageBoxResult.Yes)
+        {
+            StatusMessage = "Operación cancelada por el usuario.";
+            return;
+        }
         try
         {
             SelectedEquipo.FechaBaja = DateTime.Now;
@@ -163,6 +176,7 @@ public partial class EquiposViewModel : ObservableObject
             await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
             await LoadEquiposAsync();
             StatusMessage = "Equipo dado de baja exitosamente. Se eliminaron cronogramas y seguimientos pendientes.";
+            WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
         }
         catch (System.Exception ex)
         {
