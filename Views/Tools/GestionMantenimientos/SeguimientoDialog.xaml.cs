@@ -40,6 +40,29 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
         private void Aceptar_Click(object sender, RoutedEventArgs e)
         {
+            var errores = new List<string>();
+            // Tipo de mantenimiento obligatorio
+            if (Seguimiento.TipoMtno == null)
+                errores.Add("Debe seleccionar el tipo de mantenimiento.");
+            // Descripción obligatoria y máximo 200 caracteres
+            if (string.IsNullOrWhiteSpace(Seguimiento.Descripcion))
+                errores.Add("La descripción es obligatoria.");
+            else if (Seguimiento.Descripcion.Length > 200)
+                errores.Add("La descripción no puede superar los 200 caracteres.");
+            // Responsable obligatorio
+            if (string.IsNullOrWhiteSpace(Seguimiento.Responsable))
+                errores.Add("El responsable es obligatorio.");
+            // Costo no negativo
+            if (Seguimiento.Costo != null && Seguimiento.Costo < 0)
+                errores.Add("El costo no puede ser negativo.");
+            // Frecuencia obligatoria si el campo es visible (no modo restringido)
+            if (!ModoRestringido && Seguimiento.Frecuencia == null)
+                errores.Add("Debe seleccionar la frecuencia de mantenimiento.");
+            if (errores.Count > 0)
+            {
+                System.Windows.MessageBox.Show(string.Join("\n", errores), "Errores de validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             DialogResult = true;
             Close();
         }
