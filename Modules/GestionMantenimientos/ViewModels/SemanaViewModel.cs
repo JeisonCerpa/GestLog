@@ -78,17 +78,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         public async Task VerSemana()
         {
             await VerSemanaAsync();
-        }
-
-        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
+        }        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
         {
             EstadosMantenimientos.Clear();
             foreach (var estado in nuevosEstados)
             {
                 EstadosMantenimientos.Add(estado);
             }
-            // Forzar refresco de color tras carga asíncrona
+            // Forzar refresco de color y semana vacía tras carga asíncrona
             OnPropertyChanged(nameof(ColorSemana));
+            OnPropertyChanged(nameof(EsSemanaVacia));
         }
 
         public async Task CargarEstadosMantenimientosAsync(int anio, ICronogramaService cronogramaService)
@@ -100,28 +99,25 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         public async Task RecargarEstadosAsync(int anio, ICronogramaService cronogramaService)
         {
             await CargarEstadosMantenimientosAsync(anio, cronogramaService);
-        }
-
-        // Propiedad calculada para el color de la semana según los estados de los mantenimientos
+        }        // Propiedad calculada para el color de la semana según los estados de los mantenimientos
         public string ColorSemana
         {
             get
             {
                 if (EstadosMantenimientos == null || EstadosMantenimientos.Count == 0)
-                    return "#FFFFFF"; // Sin datos, blanco
+                    return "Transparent"; // Sin datos, transparente para que no se vea borde
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.NoRealizado))
-                    return "#C80000"; // Rojo fuerte personalizado (antes #DF0000)
+                    return "#C80000"; // Rojo fuerte personalizado
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Atrasado))
-                    return "#FFB300"; // Ámbar (Material Amber 700)
+                    return "#FFB300"; // Ámbar
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente))
-                    return "#BDBDBD"; // Gris medio (Material Grey 400)
+                    return "#9E9E9E"; // Gris más oscuro para pendientes
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
-                    return "#388E3C"; // Verde fuerte (Material Green 700)
-                // Si hay mezcla de Pendiente y Realizado, prioriza ámbar
+                    return "#388E3C"; // Verde fuerte
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente) &&
                     EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
                     return "#FFB300"; // Ámbar
-                return "#FFFFFF"; // Default/blanco
+                return "Transparent"; // Default: transparente
             }
         }
 
@@ -136,12 +132,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 int anioActual = hoy.Year;
                 return NumeroSemana == semanaActual && _anio == anioActual;
             }
-        }
-
-        // Notificar cambio de color si cambian los estados
+        }        // Propiedad que indica si la semana está vacía (sin estados de mantenimiento)
+        public bool EsSemanaVacia => EstadosMantenimientos == null || EstadosMantenimientos.Count == 0;        // Notificar cambio de color si cambian los estados
         partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
         {
             OnPropertyChanged(nameof(ColorSemana));
+            OnPropertyChanged(nameof(EsSemanaVacia));
         }
     }
 }
