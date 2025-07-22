@@ -111,7 +111,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Atrasado))
                     return "#FFB300"; // Ámbar
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente))
-                    return "#9E9E9E"; // Gris más oscuro para pendientes
+                    return "#90CAF9"; // Azul clarito para pendientes
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
                     return "#388E3C"; // Verde fuerte
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente) &&
