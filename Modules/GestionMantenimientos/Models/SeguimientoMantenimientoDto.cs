@@ -34,6 +34,46 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public bool IsCodigoReadOnly { get; set; } = false;
         public bool IsCodigoEnabled { get; set; } = true;
 
+        // --- Cache de campos normalizados para filtrado eficiente ---
+        private string? _codigoNorm;
+        private string? _nombreNorm;
+        private string? _tipoMtnoNorm;
+        private string? _responsableNorm;
+        private string? _estadoNorm;
+        private string? _fechaRegistroNorm;
+        private string? _semanaNorm;
+        private string? _anioNorm;
+
+        public void RefrescarCacheFiltro()
+        {
+            _codigoNorm = Normalizar(Codigo);
+            _nombreNorm = Normalizar(Nombre);
+            _tipoMtnoNorm = Normalizar(TipoMtno?.ToString());
+            _responsableNorm = Normalizar(Responsable);
+            _estadoNorm = Normalizar(Estado.ToString());
+            _fechaRegistroNorm = FechaRegistro?.ToString("dd/MM/yyyy") ?? string.Empty;
+            _semanaNorm = Semana.ToString();
+            _anioNorm = Anio.ToString();
+        }
+        public string CodigoNorm => _codigoNorm ?? string.Empty;
+        public string NombreNorm => _nombreNorm ?? string.Empty;
+        public string TipoMtnoNorm => _tipoMtnoNorm ?? string.Empty;
+        public string ResponsableNorm => _responsableNorm ?? string.Empty;
+        public string EstadoNorm => _estadoNorm ?? string.Empty;
+        public string FechaRegistroNorm => _fechaRegistroNorm ?? string.Empty;
+        public string SemanaNorm => _semanaNorm ?? string.Empty;
+        public string AnioNorm => _anioNorm ?? string.Empty;
+
+        private static string Normalizar(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor)) return string.Empty;
+            string s = valor.ToLowerInvariant().Replace(" ", "");
+            s = s.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
+                 .Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
+                 .Replace("ñ", "n").Replace("Ñ", "N");
+            return s;
+        }
+
         public SeguimientoMantenimientoDto() { }
 
         public SeguimientoMantenimientoDto(SeguimientoMantenimientoDto other)

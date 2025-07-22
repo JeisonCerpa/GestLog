@@ -82,6 +82,7 @@ public partial class SeguimientoViewModel : ObservableObject
                         s.Responsable = "Automático";
                     await _seguimientoService.UpdateAsync(s);
                 }
+                s.RefrescarCacheFiltro(); // Refresca la caché de campos normalizados
             }
             Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
@@ -328,6 +329,11 @@ public partial class SeguimientoViewModel : ObservableObject
     }
     partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
     {
+        if (value != null)
+        {
+            foreach (var s in value)
+                s.RefrescarCacheFiltro();
+        }
         SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
         if (SeguimientosView != null)
             SeguimientosView.Filter = FiltrarSeguimiento;
@@ -343,18 +349,16 @@ public partial class SeguimientoViewModel : ObservableObject
                 .Select(t => RemoverTildes(t.Trim()).ToLowerInvariant().Replace(" ", ""))
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .ToList();
-            // Normaliza el estado para que "RealizadoEnTiempo" sea "realizado en tiempo"
-            string estadoLegible = RemoverTildes(SepararCamelCase(s.Estado.ToString())).ToLowerInvariant().Replace(" ", "");
             var campos = new[]
             {
-                RemoverTildes(s.Codigo ?? "").ToLowerInvariant().Replace(" ", ""),
-                RemoverTildes(s.Nombre ?? "").ToLowerInvariant().Replace(" ", ""),
-                RemoverTildes(s.TipoMtno?.ToString() ?? "").ToLowerInvariant().Replace(" ", ""),
-                RemoverTildes(s.Responsable ?? "").ToLowerInvariant().Replace(" ", ""),
-                s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "",
-                s.Semana.ToString(),
-                s.Anio.ToString(),
-                estadoLegible
+                s.CodigoNorm,
+                s.NombreNorm,
+                s.TipoMtnoNorm,
+                s.ResponsableNorm,
+                s.FechaRegistroNorm,
+                s.SemanaNorm,
+                s.AnioNorm,
+                s.EstadoNorm
             };
             if (!terminos.All(termino => campos.Any(campo => campo.Contains(termino))))
                 return false;

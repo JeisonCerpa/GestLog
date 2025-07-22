@@ -10,6 +10,7 @@
     <UserControl.Resources>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+        <converters:EstadoToColorConverter x:Key="EstadoToColorConverter" />
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -122,11 +123,18 @@
                     <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120"/>
                     <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80"/>
                     <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80"/>
-                    <DataGridTextColumn Header="Estado" MinWidth="120">
-                        <DataGridTextColumn.Binding>
-                            <Binding Path="Estado" Converter="{StaticResource EnumToDescriptionConverter}" />
-                        </DataGridTextColumn.Binding>
-                    </DataGridTextColumn>
+                    <!-- Reemplazar columna Estado por badge visual -->
+                    <DataGridTemplateColumn Header="Estado" MinWidth="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="12" Padding="6,2"
+                                        Background="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}">
+                                    <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}"
+                                               Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
