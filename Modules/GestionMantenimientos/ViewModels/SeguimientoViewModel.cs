@@ -9,7 +9,6 @@ using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Win32;
-using System.Threading;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -44,8 +43,6 @@ public partial class SeguimientoViewModel : ObservableObject
 
     [ObservableProperty]
     private System.ComponentModel.ICollectionView? seguimientosView;
-
-    private CancellationTokenSource? _debounceToken;
 
     public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger)
     {
@@ -305,27 +302,23 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    public void Filtrar()
+    {
+        SeguimientosView?.Refresh();
+    }
+
     partial void OnFiltroSeguimientoChanged(string value)
     {
-        _debounceToken?.Cancel();
-        _debounceToken = new CancellationTokenSource();
-        var token = _debounceToken.Token;
-        Task.Run(async () =>
-        {
-            await Task.Delay(250, token); // 250ms debounce
-            if (!token.IsCancellationRequested)
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() => SeguimientosView?.Refresh());
-            }
-        }, token);
+        // No refrescar automáticamente
     }
     partial void OnFechaDesdeChanged(DateTime? value)
     {
-        SeguimientosView?.Refresh();
+        // No refrescar automáticamente
     }
     partial void OnFechaHastaChanged(DateTime? value)
     {
-        SeguimientosView?.Refresh();
+        // No refrescar automáticamente
     }
     partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
     {

@@ -81,17 +81,19 @@
         <!-- Fila 1: Filtros -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Left" Margin="0,0,0,8">
             <TextBox Width="220" Height="28" VerticalAlignment="Center"
-                     Text="{Binding FiltroSeguimiento, UpdateSourceTrigger=PropertyChanged}"
+                     Text="{Binding FiltroSeguimiento, UpdateSourceTrigger=LostFocus}"
                      Margin="0,0,8,0" Padding="8,2"
                      ToolTip="Filtrar por código, nombre, tipo mtno, responsable, fecha, semana, año, estado (separa con ;)"
                      Foreground="#333" Background="#FFF" BorderBrush="#DDD" BorderThickness="1"
                      FontSize="14"/>
             <DatePicker Width="140" Height="28" VerticalAlignment="Center"
-                        SelectedDate="{Binding FechaDesde, UpdateSourceTrigger=PropertyChanged}"
+                        SelectedDate="{Binding FechaDesde, UpdateSourceTrigger=LostFocus}"
                         Margin="0,0,8,0" ToolTip="Desde (fecha registro)"/>
             <DatePicker Width="140" Height="28" VerticalAlignment="Center"
-                        SelectedDate="{Binding FechaHasta, UpdateSourceTrigger=PropertyChanged}"
+                        SelectedDate="{Binding FechaHasta, UpdateSourceTrigger=LostFocus}"
                         Margin="0,0,8,0" ToolTip="Hasta (fecha registro)"/>
+            <Button Content="Filtrar" Command="{Binding FiltrarCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}" MinWidth="100" MinHeight="28" Margin="8,0,0,0"/>
         </StackPanel>
         <!-- Fila 2: DataGrid -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
