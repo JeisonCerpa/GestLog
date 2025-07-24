@@ -30,7 +30,6 @@ namespace GestLog
 
             // ViewModels de Usuarios
             services.AddTransient<UsuarioManagementViewModel>();
-            services.AddTransient<CargoManagementViewModel>();
             services.AddTransient<RolManagementViewModel>();
             services.AddTransient<PermisoManagementViewModel>();
             services.AddTransient<AuditoriaManagementViewModel>();
