@@ -107,7 +107,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Catálogos", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-                var view = new GestLog.Views.Usuarios.CatalogosManagementView { DataContext = viewModel };
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogos.CatalogosManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -158,39 +158,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 _logger.LogError(ex, "❌ Error al abrir Historial de Auditoría");
                 System.Windows.MessageBox.Show($"Error al abrir Historial de Auditoría: {ex.Message}", "Error", 
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
-
-        [RelayCommand]
-        private void AbrirTiposDocumento()
-        {
-            try
-            {
-                _logger.LogInformation("🧭 Navegando a Gestión de Tipos de Documento");
-                var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(TipoDocumentoManagementViewModel));
-                if (viewModel == null)
-                {
-                    _logger.LogWarning("❌ TipoDocumentoManagementViewModel no se pudo resolver desde DI");
-                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Tipos de Documento", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return;
-                }
-                var view = new GestLog.Views.Usuarios.TipoDocumentoManagementView { DataContext = viewModel };
-                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
-                if (mainWindow != null)
-                {
-                    _logger.LogInformation("✅ Navegando a vista de Tipos de Documento");
-                    mainWindow.NavigateToView(view, "Gestión de Tipos de Documento");
-                }
-                else
-                {
-                    _logger.LogWarning("❌ MainWindow no encontrada");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error al abrir Gestión de Tipos de Documento");
-                System.Windows.MessageBox.Show($"Error al abrir Gestión de Tipos de Documento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
     }

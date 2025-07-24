@@ -1,0 +1,95 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Cargos.CargosView"
+    x:Name="CargosRoot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="#F5F5F5" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Margin="0,8,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Gestión de Cargos" FontSize="28" FontWeight="Bold" Foreground="#388E3C" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <Button Grid.Column="1" Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,8,0"
+                    Command="{Binding AbrirModalNuevoCargoCommand}"
+                    ToolTip="Agregar nuevo cargo"
+                    Background="#118938" Foreground="White" BorderBrush="#E5E5E5" BorderThickness="1"
+                    Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="24">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2B8E3F"/>
+                                <Setter Property="BorderBrush" Value="#118938"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <TextBlock Text="+" FontSize="28" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Button>
+        </Grid>
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="0" BorderBrush="#DDD" BorderThickness="1"
+                Effect="{DynamicResource CargoDataGridShadow}" Margin="16,0,16,16">
+            <DataGrid ItemsSource="{Binding Cargos}" AutoGenerateColumns="False" IsReadOnly="True"
+                      RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
+                      SelectionMode="Single" Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="2*"/>
+                    <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="3*"/>
+                    <DataGridTemplateColumn Header="Acciones" Width="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,0">
+                                    <Button Width="32" Height="32" Padding="0" Background="#E8F5E8" BorderBrush="#388E3C" BorderThickness="1" Cursor="Hand"
+                                            Command="{Binding DataContext.AbrirModalEditarCargoCommand, ElementName=CargosRoot}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Editar cargo">
+                                        <TextBlock Text="✏️" FontSize="18" Foreground="#388E3C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                    <Rectangle Width="8" Fill="Transparent"/>
+                                    <Button Width="32" Height="32" Padding="0" Background="#FDECEA" BorderBrush="#D32F2F" BorderThickness="1" Cursor="Hand"
+                                            Click="EliminarCargoDirecto_Click"
+                                            Tag="{Binding}" ToolTip="Eliminar cargo">
+                                        <TextBlock Text="🗑️" FontSize="18" Foreground="#D32F2F" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+    <UserControl.Resources>
+        <DropShadowEffect x:Key="CargoDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+    </UserControl.Resources>
+</UserControl>

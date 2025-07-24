@@ -121,7 +121,6 @@
                     <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="80" Width="Auto"/>
-                    <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="80" Width="Auto"/>
                     <DataGridTemplateColumn Header="Acción" MinWidth="180" Width="180">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -154,6 +153,26 @@
                                 <Setter Property="TextDecorations" Value="Strikethrough"/>
                                 <Setter Property="Foreground" Value="#888"/>
                             </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.Resources>

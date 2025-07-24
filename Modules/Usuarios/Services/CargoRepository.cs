@@ -10,50 +10,56 @@ namespace Modules.Usuarios.Services
 {
     public class CargoRepository : ICargoRepository
     {
-        private readonly GestLogDbContext _dbContext;
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
 
-        public CargoRepository(GestLogDbContext dbContext)
+        public CargoRepository(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<Cargo> AgregarAsync(Cargo cargo)
         {
-            _dbContext.Cargos.Add(cargo);
-            await _dbContext.SaveChangesAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            dbContext.Cargos.Add(cargo);
+            await dbContext.SaveChangesAsync();
             return cargo;
         }
 
         public async Task<Cargo> ActualizarAsync(Cargo cargo)
         {
-            _dbContext.Cargos.Update(cargo);
-            await _dbContext.SaveChangesAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            dbContext.Cargos.Update(cargo);
+            await dbContext.SaveChangesAsync();
             return cargo;
         }
 
         public async Task EliminarAsync(Guid idCargo)
         {
-            var cargo = await _dbContext.Cargos.FindAsync(idCargo);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var cargo = await dbContext.Cargos.FindAsync(idCargo);
             if (cargo != null)
             {
-                _dbContext.Cargos.Remove(cargo);
-                await _dbContext.SaveChangesAsync();
+                dbContext.Cargos.Remove(cargo);
+                await dbContext.SaveChangesAsync();
             }
         }
 
         public async Task<Cargo?> ObtenerPorIdAsync(Guid idCargo)
         {
-            return await _dbContext.Cargos.FindAsync(idCargo);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Cargos.FindAsync(idCargo);
         }
 
         public async Task<IEnumerable<Cargo>> ObtenerTodosAsync()
         {
-            return await _dbContext.Cargos.ToListAsync();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Cargos.ToListAsync();
         }
 
         public async Task<bool> ExisteNombreAsync(string nombre)
         {
-            return await _dbContext.Cargos.AnyAsync(c => c.Nombre == nombre);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Cargos.AnyAsync(c => c.Nombre == nombre);
         }
     }
 }

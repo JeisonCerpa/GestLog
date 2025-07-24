@@ -30,6 +30,8 @@ namespace Modules.Usuarios.ViewModels
             set { _mensajeError = value; OnPropertyChanged(); }
         }
 
+        private const int MaxNombreLength = 50;
+
         public CargoManagementViewModel(ICargoService cargoService)
         {
             _cargoService = cargoService;
@@ -51,6 +53,11 @@ namespace Modules.Usuarios.ViewModels
                 MensajeError = "El nombre del cargo es obligatorio.";
                 return;
             }
+            if (CargoSeleccionado.Nombre.Length > MaxNombreLength)
+            {
+                MensajeError = $"El nombre no puede superar los {MaxNombreLength} caracteres.";
+                return;
+            }
             // Validación de unicidad
             var existe = await _cargoService.ExisteNombreAsync(CargoSeleccionado.Nombre);
             if (existe)
@@ -68,6 +75,11 @@ namespace Modules.Usuarios.ViewModels
             if (CargoSeleccionado == null || string.IsNullOrWhiteSpace(CargoSeleccionado.Nombre))
             {
                 MensajeError = "El nombre del cargo es obligatorio.";
+                return;
+            }
+            if (CargoSeleccionado.Nombre.Length > MaxNombreLength)
+            {
+                MensajeError = $"El nombre no puede superar los {MaxNombreLength} caracteres.";
                 return;
             }
             await _cargoService.EditarCargoAsync(CargoSeleccionado);

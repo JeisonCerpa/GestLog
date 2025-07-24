@@ -10,6 +10,7 @@ namespace Modules.Usuarios.ViewModels
     public partial class CargoRegistroViewModel : ObservableObject
     {
         private readonly ICargoService _cargoService;
+        private const int MaxNombreLength = 50;
         [ObservableProperty]
         private string nombre = string.Empty;
         [ObservableProperty]
@@ -35,6 +36,11 @@ namespace Modules.Usuarios.ViewModels
             if (string.IsNullOrWhiteSpace(Nombre))
             {
                 MensajeError = "El nombre del cargo es obligatorio.";
+                return;
+            }
+            if (Nombre.Length > MaxNombreLength)
+            {
+                MensajeError = $"El nombre no puede superar los {MaxNombreLength} caracteres.";
                 return;
             }
             if (string.IsNullOrWhiteSpace(Descripcion))

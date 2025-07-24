@@ -34,6 +34,11 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private bool isModalCargoVisible;
 
+        [ObservableProperty]
+        private TipoDocumento? tipoDocumentoEnEdicion;
+        [ObservableProperty]
+        private bool isModalTipoDocumentoVisible;
+
         public CatalogosManagementViewModel(ICargoService cargoService, ITipoDocumentoRepository tipoDocumentoRepository, IModalService modalService)
         {
             _cargoService = cargoService;
@@ -137,14 +142,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        public void AbrirModalEditarCargo()
+        public void AbrirModalEditarCargo(Cargo cargo)
         {
-            if (CargoSeleccionado == null) return;
+            if (cargo == null) return;
             CargoEnEdicion = new Cargo
             {
-                IdCargo = CargoSeleccionado.IdCargo,
-                Nombre = CargoSeleccionado.Nombre,
-                Descripcion = CargoSeleccionado.Descripcion
+                IdCargo = cargo.IdCargo,
+                Nombre = cargo.Nombre,
+                Descripcion = cargo.Descripcion
             };
             MensajeErrorCargo = string.Empty;
             _modalService.MostrarCargoModal(this);
@@ -188,6 +193,121 @@ namespace GestLog.Modules.Usuarios.ViewModels
             Cargos = new ObservableCollection<Cargo>(await _cargoService.ObtenerTodosAsync());
             CargoEnEdicion = null;
             SolicitarCerrarModal?.Invoke();
+        }
+
+        [RelayCommand]
+        public async Task EliminarCargo(Cargo cargo)
+        {
+            if (cargo == null) return;
+            var result = System.Windows.MessageBox.Show(
+                $"¿Está seguro que desea eliminar el cargo '{cargo.Nombre}'?",
+                "Confirmar eliminación",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+            if (result == System.Windows.MessageBoxResult.Yes)
+            {
+                await _cargoService.EliminarCargoAsync(cargo.IdCargo);
+                Cargos = new ObservableCollection<Cargo>(await _cargoService.ObtenerTodosAsync());
+            }
+        }
+
+        [RelayCommand]
+        public void AbrirModalNuevoTipoDocumento()
+        {
+            TipoDocumentoEnEdicion = new TipoDocumento
+            {
+                IdTipoDocumento = Guid.NewGuid(),
+                Nombre = string.Empty,
+                Codigo = string.Empty,
+                Descripcion = string.Empty
+            };
+            MensajeErrorTipoDocumento = string.Empty;
+            _modalService.MostrarTipoDocumentoModal(this);
+        }
+
+        [RelayCommand]
+        public void AbrirModalEditarTipoDocumento(TipoDocumento tipo)
+        {
+            if (tipo == null) return;
+            TipoDocumentoEnEdicion = new TipoDocumento
+            {
+                IdTipoDocumento = tipo.IdTipoDocumento,
+                Nombre = tipo.Nombre,
+                Codigo = tipo.Codigo,
+                Descripcion = tipo.Descripcion
+            };
+            MensajeErrorTipoDocumento = string.Empty;
+            _modalService.MostrarTipoDocumentoModal(this);
+        }
+
+        [RelayCommand]
+        public void CerrarModalTipoDocumento()
+        {
+            IsModalTipoDocumentoVisible = false;
+            TipoDocumentoEnEdicion = null;
+            MensajeErrorTipoDocumento = string.Empty;
+        }
+
+        [RelayCommand]
+        public async Task GuardarTipoDocumento()
+        {
+            MensajeErrorTipoDocumento = string.Empty;
+            if (TipoDocumentoEnEdicion == null || string.IsNullOrWhiteSpace(TipoDocumentoEnEdicion.Nombre))
+            {
+                MensajeErrorTipoDocumento = "El nombre del tipo de documento es obligatorio.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(TipoDocumentoEnEdicion.Codigo))
+            {
+                MensajeErrorTipoDocumento = "El código es obligatorio.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(TipoDocumentoEnEdicion.Descripcion))
+            {
+                MensajeErrorTipoDocumento = "La descripción es obligatoria.";
+                return;
+            }
+            var todos = await _tipoDocumentoRepository.ObtenerTodosAsync();
+            var esEdicion = todos.Any(td => td.IdTipoDocumento == TipoDocumentoEnEdicion.IdTipoDocumento);
+            if (!esEdicion)
+            {
+                var existeNombre = todos.Any(td => td.Nombre.Equals(TipoDocumentoEnEdicion.Nombre, StringComparison.OrdinalIgnoreCase));
+                var existeCodigo = todos.Any(td => td.Codigo.Equals(TipoDocumentoEnEdicion.Codigo, StringComparison.OrdinalIgnoreCase));
+                if (existeNombre)
+                {
+                    MensajeErrorTipoDocumento = "Ya existe un tipo de documento con ese nombre.";
+                    return;
+                }
+                if (existeCodigo)
+                {
+                    MensajeErrorTipoDocumento = "Ya existe un tipo de documento con ese código.";
+                    return;
+                }
+                await _tipoDocumentoRepository.AgregarAsync(TipoDocumentoEnEdicion);
+            }
+            else
+            {
+                await _tipoDocumentoRepository.ActualizarAsync(TipoDocumentoEnEdicion);
+            }
+            TiposDocumento = new ObservableCollection<TipoDocumento>(await _tipoDocumentoRepository.ObtenerTodosAsync());
+            TipoDocumentoEnEdicion = null;
+            SolicitarCerrarModal?.Invoke();
+        }
+
+        [RelayCommand]
+        public async Task EliminarTipoDocumento(TipoDocumento tipo)
+        {
+            if (tipo == null) return;
+            var result = System.Windows.MessageBox.Show(
+                $"¿Está seguro que desea eliminar el tipo de documento '{tipo.Nombre}'?",
+                "Confirmar eliminación",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+            if (result == System.Windows.MessageBoxResult.Yes)
+            {
+                await _tipoDocumentoRepository.EliminarAsync(tipo.IdTipoDocumento);
+                TiposDocumento = new ObservableCollection<TipoDocumento>(await _tipoDocumentoRepository.ObtenerTodosAsync());
+            }
         }
     }
 }

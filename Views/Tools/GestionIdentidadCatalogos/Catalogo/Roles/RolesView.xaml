@@ -1,0 +1,9 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Usuarios.RolesView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Height="600" Width="1100">
+    <Grid Background="White">
+        <TextBlock Text="Gestión de Roles" FontSize="28" FontWeight="Bold" Foreground="#388E3C" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,32,0,0"/>
+        <!-- Aquí irá el contenido de la gestión de roles -->
+    </Grid>
+</UserControl>
