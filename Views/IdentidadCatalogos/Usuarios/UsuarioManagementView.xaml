@@ -1,0 +1,59 @@
+<UserControl x:Class="GestLog.Views.IdentidadCatalogos.Usuarios.UsuarioManagementView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GestLog.Views.IdentidadCatalogos.Usuarios"
+        mc:Ignorable="d">
+    <Grid Background="#FAFAFA" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Gestión de Usuarios" FontSize="28" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,20"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <!-- Lista de usuarios -->
+            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                <TextBox x:Name="txtBuscar" Margin="0,0,0,10"/>
+                <Button Content="Buscar" Command="{Binding BuscarUsuariosCommand}" Margin="0,0,0,10"/>
+                <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="Username" Height="400"/>
+                <Button Content="Registrar nuevo usuario" Command="{Binding RegistrarUsuarioCommand}" Margin="0,10,0,0"/>
+            </StackPanel>
+            <!-- Detalle y edición -->
+            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Detalle de Usuario" FontSize="20" FontWeight="SemiBold" Foreground="#388E3C" Margin="0,0,0,10"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Nombre de usuario:" Width="140"/>
+                        <TextBox Text="{Binding UsuarioSeleccionado.Username, Mode=TwoWay}" Style="{StaticResource WatermarkTextBoxStyle}" Tag="Nombre de usuario" Width="200"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Correo electrónico:" Width="140"/>
+                        <TextBox Text="{Binding UsuarioSeleccionado.Correo, Mode=TwoWay}" Style="{StaticResource WatermarkTextBoxStyle}" Tag="Correo electrónico" Width="200"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Estado:" Width="140"/>
+                        <ComboBox ItemsSource="{Binding Estados}" SelectedItem="{Binding UsuarioSeleccionado.Estado, Mode=TwoWay}" Width="200"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Roles:" Width="140"/>
+                        <ComboBox ItemsSource="{Binding Roles}" SelectedItem="{Binding UsuarioSeleccionado.Rol, Mode=TwoWay}" Width="200"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Permisos adicionales:" Width="140"/>
+                        <ListBox ItemsSource="{Binding Permisos}" Width="200" Height="60"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <Button Content="Editar" Command="{Binding EditarUsuarioCommand}" Margin="0,0,10,0"/>
+                        <Button Content="Desactivar" Command="{Binding DesactivarUsuarioCommand}"/>
+                    </StackPanel>
+                    <Button Content="Ver historial de auditoría" Command="{Binding CargarAuditoriaCommand}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

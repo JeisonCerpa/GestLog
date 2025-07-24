@@ -18,6 +18,11 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<Equipo> Equipos { get; set; }
         public DbSet<CronogramaMantenimiento> Cronogramas { get; set; }
         public DbSet<SeguimientoMantenimiento> Seguimientos { get; set; }
+        public DbSet<GestLog.Modules.Personas.Models.Persona> Personas { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.Cargo> Cargos { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.Usuario> Usuarios { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.TipoDocumento> TiposDocumento { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.Auditoria> Auditorias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +60,27 @@ namespace GestLog.Modules.DatabaseConnection
             modelBuilder.Entity<SeguimientoMantenimiento>()
                 .Property(s => s.Costo)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
+            {
+                entity.ToTable("TipoDocumento");
+                entity.HasKey(e => e.IdTipoDocumento);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.Descripcion).HasMaxLength(100);
+                entity.HasIndex(e => e.Codigo).IsUnique();
+            });
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Auditoria>(entity =>
+            {
+                entity.ToTable("Auditoria");
+                entity.HasKey(e => e.IdAuditoria);
+                entity.Property(e => e.EntidadAfectada).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Accion).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.UsuarioResponsable).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Detalle).IsRequired();
+                entity.Property(e => e.FechaHora).IsRequired();
+                entity.Property(e => e.IdEntidad).IsRequired();
+            });
         }
     }
 

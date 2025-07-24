@@ -10,7 +10,7 @@
              SnapsToDevicePixels="True"
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType">
-      <UserControl.Resources>
+    <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../Resources/ModernStyles.xaml"/>
@@ -41,125 +41,72 @@
             </StackPanel>
             
             <!-- Tools Grid -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="15"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="15"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="15"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                
+            <UniformGrid Columns="3" Rows="3" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
                 <!-- DaaterProccesor Card -->
-                <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                     <StackPanel>
                         <TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="DaaterProccesor" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="20" FontWeight="SemiBold" 
-                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Procesamiento avanzado de archivos Excel con funciones de consolidación y filtrado de datos" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                        <Button Name="btnDaaterProccesor" Content="Abrir DaaterProccesor" 
-                               Style="{StaticResource PrimaryButtonStyle}"
-                               Click="BtnDaaterProccesor_Click"/>
+                        <TextBlock Text="DaaterProccesor" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Procesamiento avanzado de archivos Excel con funciones de consolidación y filtrado de datos" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnDaaterProccesor" Content="Abrir DaaterProccesor" Style="{StaticResource PrimaryButtonStyle}" Click="BtnDaaterProccesor_Click"/>
                     </StackPanel>
                 </Border>
-                
                 <!-- Gestión de Cartera Card -->
-                <Border Grid.Column="2" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                     <StackPanel>
                         <TextBlock Text="💼" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Gestión de Cartera" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="20" FontWeight="SemiBold" 
-                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Genera estados de cuenta en PDF desde archivos Excel y gestiona la cartera de clientes" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnGestionCartera" Content="Abrir Gestión de Cartera" 
-                               Style="{StaticResource PrimaryButtonStyle}"
-                               Click="BtnGestionCartera_Click"/>
+                        <TextBlock Text="Gestión de Cartera" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Genera estados de cuenta en PDF desde archivos Excel y gestiona la cartera de clientes" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnGestionCartera" Content="Abrir Gestión de Cartera" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionCartera_Click"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Gestión de Mantenimientos Card -->
-                <Border Grid.Column="0" Grid.Row="2" Style="{StaticResource ModernCardStyle}">
-                    <StackPanel>
-                        <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Gestión de Mantenimientos" 
-                                   FontFamily="Segoe UI"
-                                   FontSize="20" FontWeight="SemiBold" 
-                                   HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Administra equipos, cronogramas y seguimientos de mantenimiento preventivo y correctivo" 
-                                   FontFamily="Segoe UI"
-                                   FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnGestionMantenimientos" Content="Abrir Gestión de Mantenimientos" 
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Click="BtnGestionMantenimientos_Click"/>
-                    </StackPanel>
-                </Border>
-                
                 <!-- Envío de Catálogo Card -->
-                <Border Grid.Column="4" Grid.Row="0" Style="{StaticResource ModernCardStyle}">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                     <StackPanel>
                         <TextBlock Text="📧" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Envío de Catálogo" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="20" FontWeight="SemiBold" 
-                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Envío masivo del catálogo de productos y servicios a múltiples clientes por email"
-                                  FontFamily="Segoe UI"
-                                  FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                        <Button Name="btnEnvioCatalogo" Content="Abrir Envío de Catálogo" 
-                               Style="{StaticResource PrimaryButtonStyle}"
-                               Click="BtnEnvioCatalogo_Click"/>
+                        <TextBlock Text="Envío de Catálogo" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Envío masivo del catálogo de productos y servicios a múltiples clientes por email" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnEnvioCatalogo" Content="Abrir Envío de Catálogo" Style="{StaticResource PrimaryButtonStyle}" Click="BtnEnvioCatalogo_Click"/>
                     </StackPanel>
                 </Border>
-                
-                <!-- Error Log Card -->
-                <Border Grid.Column="2" Grid.Row="2" Style="{StaticResource ModernCardStyle}">
+                <!-- Gestión de Mantenimientos Card -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                    <StackPanel>
+                        <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Gestión de Mantenimientos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Administra equipos, cronogramas y seguimientos de mantenimiento preventivo y correctivo" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnGestionMantenimientos" Content="Abrir Gestión de Mantenimientos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionMantenimientos_Click"/>
+                    </StackPanel>
+                </Border>
+                <!-- Registro de Errores Card -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                     <StackPanel>
                         <TextBlock Text="⚠️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Registro de Errores" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="20" FontWeight="SemiBold" 
-                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Visualiza y gestiona los errores de la aplicación para diagnosticar y resolver problemas" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnErrorLog" Content="Ver Errores" 
-                               Style="{StaticResource SecondaryButtonStyle}"
-                               Click="btnErrorLog_Click"/>
+                        <TextBlock Text="Registro de Errores" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Visualiza y gestiona los errores de la aplicación para diagnosticar y resolver problemas" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnErrorLog" Content="Ver Errores" Style="{StaticResource SecondaryButtonStyle}" Click="btnErrorLog_Click"/>
                     </StackPanel>
                 </Border>
-                
-                <!-- Configuration Card -->
-                <Border Grid.Column="4" Grid.Row="2" Style="{StaticResource ModernCardStyle}">
+                <!-- Configuración Card -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                     <StackPanel>
                         <TextBlock Text="⚙️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Configuración" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="20" FontWeight="SemiBold" 
-                                  HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Configuración unificada de la aplicación, módulos, interfaz y rendimiento del sistema" 
-                                  FontFamily="Segoe UI"
-                                  FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" 
-                                  HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnConfiguration" Content="Abrir Configuración" 
-                               Style="{StaticResource SecondaryButtonStyle}"
-                               Click="BtnConfiguration_Click"/>
-                    </StackPanel>                </Border>
-            </Grid>            
+                        <TextBlock Text="Configuración" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Configuración unificada de la aplicación, módulos, interfaz y rendimiento del sistema" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnConfiguration" Content="Abrir Configuración" Style="{StaticResource SecondaryButtonStyle}" Click="BtnConfiguration_Click"/>
+                    </StackPanel>
+                </Border>
+                <!-- Gestión de Identidad y Catálogos Card -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                    <StackPanel>
+                        <TextBlock Text="🆔" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Personas, usuarios, cargos, tipos de documento, roles y permisos." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnGestionIdentidadCatalogos" Content="Abrir Gestión de Identidad y Catálogos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionIdentidadCatalogos_Click"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+            <!-- ...existing code... -->
         </StackPanel>
     </ScrollViewer>
     </Grid>

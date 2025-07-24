@@ -374,4 +374,6 @@ public partial class MainWindow : Window
     }
 
     #endregion
+
+    public ContentControl MainContent => contentPanel;
 }

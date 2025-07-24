@@ -137,6 +137,9 @@ public static class LoggingService
             });
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
 
+            // --- REGISTRO DE SERVICIOS DE USUARIOS Y PERSONAS ---
+            GestLog.StartupUsuariosPersonas.ConfigureUsuariosPersonasServices(services);
+
             // Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
 

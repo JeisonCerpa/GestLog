@@ -477,7 +477,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="FilterBorder" Property="Background" Value="{StaticResource PrimaryGreenBrush}"/>
+                            <Setter TargetName="FilterBorder" Property="Background" Value="{StaticResource PrimaryGreen}"/>
                             <Setter TargetName="FilterBorder" Property="Effect">
                                 <Setter.Value>
                                     <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="8" ShadowDepth="3" Direction="270"/>
@@ -500,6 +500,57 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- ==================== ESTILOS DE CONTROLES PERSONALIZADOS ==================== -->
+    <!-- Estilo para TextBox con watermark (placeholder) -->
+    <Style x:Key="WatermarkTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <ScrollViewer x:Name="PART_ContentHost"/>
+                        <TextBlock Text="{TemplateBinding Tag}"
+                                   Foreground="#888"
+                                   Margin="6,0,0,0"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Botón Card (para cartas/tarjetas de navegación) -->
+    <Style x:Key="CardButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Margin" Value="5"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect ShadowDepth="2" Direction="315" Color="#C0C0C0" Opacity="0.3" BlurRadius="8"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#F8F9FA"/>
+                <Setter Property="BorderBrush" Value="#4CAF50"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect ShadowDepth="4" Direction="315" Color="#4CAF50" Opacity="0.4" BlurRadius="12"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#F0F0F0"/>
+                <Setter Property="BorderBrush" Value="#388E3C"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

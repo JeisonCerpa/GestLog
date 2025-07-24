@@ -1,0 +1,80 @@
+<UserControl x:Class="GestLog.Views.Usuarios.IdentidadCatalogosHomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#FAFAFA"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../Resources/ModernStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="#FAFAFA">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="40,30">
+            <StackPanel>
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                    <Border Background="White" Width="80" Height="80" CornerRadius="40" 
+                            HorizontalAlignment="Center" Margin="0,0,20,0"
+                            BorderBrush="#E5E5E5" BorderThickness="2">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.10"/>
+                        </Border.Effect>
+                        <TextBlock Text="🆔" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" Foreground="#118938"/>
+                        <TextBlock Text="Personas, usuarios, cargos y tipos de documento. (Roles y permisos: próximamente)" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+                    </StackPanel>
+                </StackPanel>
+                <!-- Cards Grid -->
+                <UniformGrid Columns="4" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <!-- Personas Card -->
+                    <Border Style="{StaticResource ModernCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="🧑" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Personas" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Registrar, editar y consultar personas." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Personas" Command="{Binding AbrirPersonasCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="180"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Usuarios Card -->
+                    <Border Style="{StaticResource ModernCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="👤" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Usuarios" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Gestión de cuentas de usuario y autenticación." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Usuarios" Command="{Binding AbrirUsuariosCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="180"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Cargos Card -->
+                    <Border Style="{StaticResource ModernCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="🗂️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Cargos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Gestiona los cargos disponibles en la empresa." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Cargos" Command="{Binding AbrirCargosCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="180"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Tipos de Documento Card -->
+                    <Border Style="{StaticResource ModernCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Tipos de Documento" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Gestiona los tipos de documento registrados." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Tipos de Documento" Command="{Binding AbrirTiposDocumentoCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="180"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

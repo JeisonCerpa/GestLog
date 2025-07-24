@@ -13,7 +13,7 @@ namespace GestLog.Services;
 /// Service for secure database configuration management using environment variables
 /// Follows SRP: Only responsible for database configuration security
 /// </summary>
-public class SecureDatabaseConfigurationService : ISecureDatabaseConfigurationService
+public class SecureDatabaseConfigurationService : ISecureDatabaseConfigurationService, IDatabaseConfigurationProvider
 {
     private readonly IGestLogLogger _logger;
     private readonly IConfiguration _configuration;
@@ -331,5 +331,11 @@ public class SecureDatabaseConfigurationService : ISecureDatabaseConfigurationSe
             _logger.LogError(ex, "Error accessing environment variable directly: {VariableName}", variableName);
             return null;
         }
+    }
+
+    // Implementación explícita para IDatabaseConfigurationProvider
+    async Task<string> IDatabaseConfigurationProvider.GetConnectionStringAsync()
+    {
+        return await GetConnectionStringAsync();
     }
 }

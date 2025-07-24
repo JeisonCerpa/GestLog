@@ -1,4 +1,5 @@
-    ```````instructions
+````````instructions
+```````instructions
 ````instructions
 # 🚀 Instrucciones GitHub Copilot - GestLog
 
@@ -22,6 +23,7 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 6. **Validación**: Antes de procesar
 7. **Errores**: Específicos del dominio + mensajes claros en español
 8. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas van dentro de la carpeta /Views (Siguiendo su estructura).
+9. **Archivos vacíos**: No crear archivos vacíos como `.keep` para mantener carpetas en el repositorio; la gestión de carpetas vacías la maneja el `.gitignore` y las reglas del repositorio.
 
 ## 🏗️ **Arquitectura Base**
 

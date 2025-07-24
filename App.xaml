@@ -4,13 +4,37 @@
              xmlns:local="clr-namespace:GestLog"
              xmlns:converters="clr-namespace:GestLog.Converters">
     <Application.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
-        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
-        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-        <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
-        <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
-        <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter"/>
-        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/ModernStyles.xaml"/>
+                <ResourceDictionary Source="Controls/Validation/ValidationStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
+            <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+            <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter"/>
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+            <converters:IsStringNullOrEmptyConverter x:Key="IsStringNullOrEmptyConverter"/>
+            <Style x:Key="WatermarkTextBoxStyle" TargetType="TextBox">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost"/>
+                                <TextBlock Text="{TemplateBinding Tag}"
+                                           Foreground="Gray"
+                                           Margin="5,0,0,0"
+                                           IsHitTestVisible="False"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

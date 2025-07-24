@@ -1,0 +1,50 @@
+<UserControl x:Class="GestLog.Views.IdentidadCatalogos.Personas.PersonaDetalleView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d">
+    <Border Background="White" CornerRadius="12" Padding="28" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{DynamicResource CardShadow}">
+        <StackPanel>
+            <TextBlock Text="Detalle de Persona" FontSize="22" FontWeight="SemiBold" Foreground="#388E3C" Margin="0,0,0,18"/>
+            <UniformGrid Columns="2" Rows="4" Margin="0,0,0,10" HorizontalAlignment="Left">
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Nombres" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Nombres}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Apellidos" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Apellidos}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Tipo Documento" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.TipoDocumento}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Número Documento" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.NumeroDocumento}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Correo electrónico" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Correo}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Teléfono" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Telefono}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Cargo" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Cargo.Nombre}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,0,10,10">
+                    <TextBlock Text="Estado" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PersonaSeleccionada.Estado}"/>
+                </StackPanel>
+            </UniformGrid>
+            <StackPanel Orientation="Horizontal" Margin="0,20,0,0" HorizontalAlignment="Left">
+                <Button Content="Editar" Command="{Binding EditarPersonaCommand}" Width="120" Margin="0,0,10,0" Style="{StaticResource PrimaryButtonStyle}"/>
+                <Button Content="Cerrar" Command="{Binding CerrarDetalleCommand}" Width="100" Style="{StaticResource SecondaryButtonStyle}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>
