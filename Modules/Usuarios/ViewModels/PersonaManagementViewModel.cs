@@ -184,20 +184,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private bool FiltrarPersona(object obj)
         {
             if (obj is not Persona p) return false;
-            // Filtro por texto
+            // Filtro por texto (solo nombre completo o documento)
             if (!string.IsNullOrWhiteSpace(FiltroTexto))
             {
-                var terminos = FiltroTexto.ToLowerInvariant().Split(';').Select(t => t.Trim()).Where(t => !string.IsNullOrWhiteSpace(t));
-                var campos = new[]
-                {
-                    p.Nombres?.ToLowerInvariant() ?? string.Empty,
-                    p.Apellidos?.ToLowerInvariant() ?? string.Empty,
-                    p.NumeroDocumento?.ToLowerInvariant() ?? string.Empty,
-                    p.Correo?.ToLowerInvariant() ?? string.Empty,
-                    p.Telefono?.ToLowerInvariant() ?? string.Empty,
-                    p.Cargo?.Nombre?.ToLowerInvariant() ?? string.Empty
-                };
-                if (!terminos.All(termino => campos.Any(campo => campo.Contains(termino))))
+                var filtro = FiltroTexto.ToLowerInvariant().Trim();
+                var nombreCompleto = ($"{p.Nombres} {p.Apellidos}").ToLowerInvariant();
+                var documento = p.NumeroDocumento?.ToLowerInvariant() ?? string.Empty;
+                if (!nombreCompleto.Contains(filtro) && !documento.Contains(filtro))
                     return false;
             }
             // Filtro por estado

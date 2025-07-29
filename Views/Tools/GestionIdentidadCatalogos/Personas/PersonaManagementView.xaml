@@ -64,7 +64,11 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Gestión de Personas" FontSize="28" FontWeight="Bold" Foreground="#388E3C" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                <TextBlock Text="Gestión de Personas" FontSize="28" FontWeight="Bold" Foreground="#388E3C" VerticalAlignment="Center"/>
+                <TextBox Width="260" Height="32" Margin="24,0,0,0" VerticalAlignment="Center"
+                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
             <Button Grid.Column="1" Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,8,0"
                     Command="{Binding RegistrarPersonaCommand}"
                     ToolTip="Registrar nueva persona"
