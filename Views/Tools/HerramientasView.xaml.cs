@@ -6,9 +6,9 @@ using GestLog.Views.Tools.EnvioCatalogo;
 using GestLog.Views.Configuration;
 using GestLog.Views;
 using GestLog.Services.Core.Logging;
-using GestLog.Views.IdentidadCatalogos.Personas;
-using GestLog.Views.IdentidadCatalogos.Usuarios;
-using GestLog.Views.IdentidadCatalogos;
+using GestLog.Views.Tools.GestionIdentidadCatalogos.Personas;
+using GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario;
+using GestLog.Views.Tools.GestionIdentidadCatalogos;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Views.Tools
@@ -120,7 +120,7 @@ namespace GestLog.Views.Tools
             try
             {
                 // Cargar la vista como Window usando reflexión, ya que está en el nuevo namespace
-                var type = System.Type.GetType("GestLog.Views.IdentidadCatalogos.Usuarios.UsuarioManagementView");
+                var type = System.Type.GetType("GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioManagementView");
                 if (type != null)
                 {
                     var window = (System.Windows.Window?)System.Activator.CreateInstance(type);
@@ -136,7 +136,7 @@ namespace GestLog.Views.Tools
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("No se encontró la clase UsuarioManagementView en GestLog.Views.IdentidadCatalogos.Usuarios.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("No se encontró la clase UsuarioManagementView en GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (System.Exception ex)
@@ -164,7 +164,7 @@ namespace GestLog.Views.Tools
         {
             var serviceProvider = Services.Core.Logging.LoggingService.GetServiceProvider();
             var viewModel = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel)) as GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel;
-            var view = new IdentidadCatalogosHomeView { DataContext = viewModel };
+            var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.IdentidadCatalogosHomeView { DataContext = viewModel };
             var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
             if (mainWindow != null)
                 mainWindow.NavigateToView(view, "Gestión de Identidad y Catálogos");

@@ -15,7 +15,7 @@ namespace Modules.Personas.Interfaces
         Task DesactivarPersonaAsync(Guid idPersona);
         Task<Persona> ObtenerPersonaPorIdAsync(Guid idPersona);
         Task<IEnumerable<Persona>> BuscarPersonasAsync(string filtro);
-        Task<bool> ValidarDocumentoUnicoAsync(string tipoDocumento, string numeroDocumento);
+        Task<bool> ValidarDocumentoUnicoAsync(Guid tipoDocumentoId, string numeroDocumento);
         Task<bool> ValidarCorreoUnicoAsync(string correo);
     }
 }

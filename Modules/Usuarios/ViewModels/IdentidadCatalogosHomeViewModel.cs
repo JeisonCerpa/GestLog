@@ -16,15 +16,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        private void AbrirPersonas()
+        private async Task AbrirPersonas()
         {
             try
             {
                 _logger.LogInformation("🧭 Navegando a Gestión de Personas");
-                
                 var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(PersonaManagementViewModel));
-                
+                var viewModel = serviceProvider.GetService(typeof(PersonaManagementViewModel)) as PersonaManagementViewModel;
                 if (viewModel == null)
                 {
                     _logger.LogWarning("❌ PersonaManagementViewModel no se pudo resolver desde DI");
@@ -32,10 +30,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-
-                var view = new GestLog.Views.IdentidadCatalogos.Personas.PersonaManagementView { DataContext = viewModel };
+                await viewModel.InicializarAsync();
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
-                
                 if (mainWindow != null)
                 {
                     _logger.LogInformation("✅ Navegando a vista de Personas");
@@ -72,7 +69,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     return;
                 }
 
-                var view = new GestLog.Views.IdentidadCatalogos.Usuarios.UsuarioManagementView { DataContext = viewModel };
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 
                 if (mainWindow != null)
@@ -141,7 +138,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-                var view = new GestLog.Views.IdentidadCatalogos.Catalogos.AuditoriaManagementView { DataContext = viewModel };
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Auditoria.AuditoriaManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -158,6 +155,74 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 _logger.LogError(ex, "❌ Error al abrir Historial de Auditoría");
                 System.Windows.MessageBox.Show($"Error al abrir Historial de Auditoría: {ex.Message}", "Error", 
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private async Task AbrirCargos()
+        {
+            try
+            {
+                _logger.LogInformation("🧭 Navegando a Gestión de Cargos");
+                var serviceProvider = LoggingService.GetServiceProvider();
+                var viewModel = serviceProvider.GetService(typeof(CatalogosManagementViewModel)) as CatalogosManagementViewModel;
+                if (viewModel == null)
+                {
+                    _logger.LogWarning("❌ CatalogosManagementViewModel no se pudo resolver desde DI");
+                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Cargos", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+                await viewModel.InitializeAsync();
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Cargos.CargosView { DataContext = viewModel };
+                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
+                if (mainWindow != null)
+                {
+                    _logger.LogInformation("✅ Navegando a vista de Cargos");
+                    mainWindow.NavigateToView(view, "Gestión de Cargos");
+                }
+                else
+                {
+                    _logger.LogWarning("❌ MainWindow no encontrada");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al abrir Gestión de Cargos");
+                System.Windows.MessageBox.Show($"Error al abrir Gestión de Cargos: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private async Task AbrirTiposDocumento()
+        {
+            try
+            {
+                _logger.LogInformation("🧭 Navegando a Gestión de Tipos de Documento");
+                var serviceProvider = LoggingService.GetServiceProvider();
+                var viewModel = serviceProvider.GetService(typeof(CatalogosManagementViewModel)) as CatalogosManagementViewModel;
+                if (viewModel == null)
+                {
+                    _logger.LogWarning("❌ CatalogosManagementViewModel no se pudo resolver desde DI");
+                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Tipos de Documento", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+                await viewModel.InitializeAsync();
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.TipoDocumento.TipoDocumentoManagementView { DataContext = viewModel };
+                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
+                if (mainWindow != null)
+                {
+                    _logger.LogInformation("✅ Navegando a vista de Tipos de Documento");
+                    mainWindow.NavigateToView(view, "Gestión de Tipos de Documento");
+                }
+                else
+                {
+                    _logger.LogWarning("❌ MainWindow no encontrada");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al abrir Gestión de Tipos de Documento");
+                System.Windows.MessageBox.Show($"Error al abrir Gestión de Tipos de Documento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
     }

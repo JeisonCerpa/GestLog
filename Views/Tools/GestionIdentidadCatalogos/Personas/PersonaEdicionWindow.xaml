@@ -1,0 +1,97 @@
+<Window x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Editar Persona" Height="540" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
+    <Window.Resources>
+        <DropShadowEffect x:Key="FormShadow" Color="#504F4E" BlurRadius="12" ShadowDepth="2" Opacity="0.18"/>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2B8E3F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Background="#F5F5F5">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <Border Background="White" CornerRadius="16" Padding="32" BorderBrush="#E0E0E0" BorderThickness="1" Effect="{StaticResource FormShadow}" Margin="32" MinWidth="500">
+                <StackPanel>
+                    <TextBlock Text="Editar Persona" FontSize="26" FontWeight="Bold" Foreground="#388E3C" Margin="0,0,0,28"/>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <!-- Nombres -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,16">
+                            <TextBlock Text="Nombres" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Persona.Nombres, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Apellidos -->
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,16">
+                            <TextBlock Text="Apellidos" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Persona.Apellidos, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Tipo Documento -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,16,16">
+                            <TextBlock Text="Tipo Documento" FontWeight="SemiBold"/>
+                            <ComboBox ItemsSource="{Binding TiposDocumento}"
+                                      SelectedItem="{Binding Persona.TipoDocumento, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                      DisplayMemberPath="Nombre"
+                                      MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Número Documento -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,16">
+                            <TextBlock Text="Número Documento" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Persona.NumeroDocumento, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Correo electrónico -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,16,16">
+                            <TextBlock Text="Correo electrónico" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Persona.Correo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Teléfono -->
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">
+                            <TextBlock Text="Teléfono" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Persona.Telefono, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                        <!-- Cargo -->
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="Cargo" FontWeight="SemiBold"/>
+                            <ComboBox ItemsSource="{Binding Cargos}" SelectedItem="{Binding Persona.Cargo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" DisplayMemberPath="Nombre" MinWidth="220" Height="32"/>
+                        </StackPanel>
+                    </Grid>
+                    <Separator Margin="0,10,0,10"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Right">
+                        <Button Content="Guardar cambios" Command="{Binding GuardarCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Cancelar" Command="{Binding CancelarCommand}" Style="{StaticResource PrimaryButtonStyle}" Background="#E0E0E0" Foreground="#388E3C"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</Window>

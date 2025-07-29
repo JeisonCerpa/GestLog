@@ -3,7 +3,7 @@ using GestLog.Modules.Usuarios.ViewModels;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestLog.Views.Usuarios
+namespace GestLog.Views.Tools.GestionIdentidadCatalogos
 {
     public partial class IdentidadCatalogosHomeView : System.Windows.Controls.UserControl
     {

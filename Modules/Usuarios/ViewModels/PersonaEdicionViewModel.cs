@@ -44,6 +44,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 TiposDocumento.Clear();
                 foreach (var tipo in tipos)
                     TiposDocumento.Add(tipo);
+                // Asegurar que la referencia seleccionada sea la de la lista
+                if (Persona.TipoDocumentoId != Guid.Empty)
+                {
+                    var seleccionado = TiposDocumento.FirstOrDefault(td => td.IdTipoDocumento == Persona.TipoDocumentoId);
+                    if (seleccionado != null)
+                    {
+                        Persona.TipoDocumento = seleccionado;
+                        OnPropertyChanged(nameof(Persona));
+                        OnPropertyChanged(nameof(Persona.TipoDocumento));
+                    }
+                }
             });
         }
 
@@ -54,6 +65,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Cargos.Clear();
                 foreach (var cargo in cargos)
                     Cargos.Add(cargo);
+                // Asegurar que la referencia seleccionada sea la de la lista
+                if (Persona.CargoId != Guid.Empty)
+                {
+                    var seleccionado = Cargos.FirstOrDefault(c => c.IdCargo == Persona.CargoId);
+                    if (seleccionado != null)
+                    {
+                        Persona.Cargo = seleccionado;
+                        OnPropertyChanged(nameof(Persona));
+                        OnPropertyChanged(nameof(Persona.Cargo));
+                    }
+                }
             });
         }
 
@@ -61,8 +83,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private async Task Guardar()
         {
             Persona.CargoId = Persona.Cargo?.IdCargo ?? Guid.Empty;
-            Persona.Activo = Persona.Estado == "Activo";
-            await _personaService.RegistrarPersonaAsync(Persona);
+            Persona.TipoDocumentoId = Persona.TipoDocumento?.IdTipoDocumento ?? Guid.Empty;
+            await _personaService.EditarPersonaAsync(Persona);
             Cerrar(true);
         }
 

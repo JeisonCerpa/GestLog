@@ -1,90 +1,98 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.Personas.Models;
+using Microsoft.EntityFrameworkCore;
 using Modules.Personas.Interfaces;
 
 namespace Modules.Personas.Services
 {
     public class PersonaRepository : IPersonaRepository
     {
-        private static readonly List<Persona> _personas = new();
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
 
-        // Aquí se inyectaría el contexto de datos o acceso a base de datos
-        public PersonaRepository()
+        public PersonaRepository(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            // Inicialización de recursos de datos
+            _dbContextFactory = dbContextFactory;
         }
 
-        public Task<Persona> AgregarAsync(Persona persona)
+        public async Task<Persona> AgregarAsync(Persona persona)
         {
+            using var dbContext = _dbContextFactory.CreateDbContext();
             persona.IdPersona = Guid.NewGuid();
-            _personas.Add(persona);
-            return Task.FromResult(persona);
+            persona.FechaCreacion = DateTime.UtcNow;
+            persona.FechaModificacion = DateTime.UtcNow;
+            // Evitar que EF intente insertar el Cargo asociado si ya existe
+            persona.Cargo = null;
+            persona.TipoDocumento = null;
+            dbContext.Personas.Add(persona);
+            await dbContext.SaveChangesAsync();
+            return persona;
         }
 
-        public Task<Persona> ActualizarAsync(Persona persona)
+        public async Task<Persona> ActualizarAsync(Persona persona)
         {
-            var existente = _personas.Find(p => p.IdPersona == persona.IdPersona);
-            if (existente != null)
-            {
-                existente.Nombres = persona.Nombres;
-                existente.Apellidos = persona.Apellidos;
-                existente.TipoDocumento = persona.TipoDocumento;
-                existente.NumeroDocumento = persona.NumeroDocumento;
-                existente.Correo = persona.Correo;
-                existente.Telefono = persona.Telefono;
-                existente.Cargo = persona.Cargo;
-                existente.Estado = persona.Estado;
-                existente.Activo = persona.Activo;
-            }
-            return Task.FromResult(persona);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            persona.FechaModificacion = DateTime.UtcNow;
+            dbContext.Personas.Update(persona);
+            await dbContext.SaveChangesAsync();
+            return persona;
         }
 
-        public Task DesactivarAsync(Guid idPersona)
+        public async Task DesactivarAsync(Guid idPersona)
         {
-            var existente = _personas.Find(p => p.IdPersona == idPersona);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var existente = await dbContext.Personas.FindAsync(idPersona);
             if (existente != null)
             {
                 existente.Activo = false;
-                existente.Estado = "Inactivo";
+                existente.FechaModificacion = DateTime.UtcNow;
+                dbContext.Personas.Update(existente);
+                await dbContext.SaveChangesAsync();
             }
-            return Task.CompletedTask;
         }
 
-        public Task<Persona> ObtenerPorIdAsync(Guid idPersona)
+        public async Task<Persona> ObtenerPorIdAsync(Guid idPersona)
         {
-            var persona = _personas.Find(p => p.IdPersona == idPersona);
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var persona = await dbContext.Personas.FindAsync(idPersona);
             if (persona == null)
                 throw new InvalidOperationException("Persona no encontrada");
-            return Task.FromResult(persona);
+            return persona;
         }
 
-        public Task<IEnumerable<Persona>> BuscarAsync(string filtro)
+        public async Task<IEnumerable<Persona>> BuscarAsync(string filtro)
         {
-            IEnumerable<Persona> personas = _personas;
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var query = dbContext.Personas
+                .Include(p => p.Cargo) // Incluye el nombre del cargo
+                .Include(p => p.TipoDocumento) // Incluye el nombre del tipo de documento
+                .AsQueryable();
             if (!string.IsNullOrWhiteSpace(filtro))
             {
                 filtro = filtro.ToLowerInvariant();
-                personas = _personas.FindAll(p =>
-                    (p.Nombres?.ToLowerInvariant().Contains(filtro) ?? false) ||
-                    (p.Apellidos?.ToLowerInvariant().Contains(filtro) ?? false) ||
-                    (p.NumeroDocumento?.ToLowerInvariant().Contains(filtro) ?? false) ||
-                    (p.Correo?.ToLowerInvariant().Contains(filtro) ?? false) ||
-                    (p.Telefono?.ToLowerInvariant().Contains(filtro) ?? false)
+                query = query.Where(p =>
+                    p.Nombres.ToLower().Contains(filtro) ||
+                    p.Apellidos.ToLower().Contains(filtro) ||
+                    p.NumeroDocumento.ToLower().Contains(filtro) ||
+                    p.Correo.ToLower().Contains(filtro) ||
+                    p.Telefono.ToLower().Contains(filtro)
                 );
             }
-            return Task.FromResult(personas);
+            return await query.ToListAsync();
         }
 
-        public Task<bool> ExisteDocumentoAsync(string tipoDocumento, string numeroDocumento)
+        public async Task<bool> ExisteDocumentoAsync(Guid tipoDocumentoId, string numeroDocumento)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Personas.AnyAsync(p => p.TipoDocumentoId == tipoDocumentoId && p.NumeroDocumento == numeroDocumento);
         }
 
-        public Task<bool> ExisteCorreoAsync(string correo)
+        public async Task<bool> ExisteCorreoAsync(string correo)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Personas.AnyAsync(p => p.Correo.ToLower() == correo.ToLower());
         }
     }
 }

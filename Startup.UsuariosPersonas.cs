@@ -9,6 +9,8 @@ using GestLog.Modules.Usuarios.ViewModels;
 using GestLog.Services.Interfaces;
 using GestLog.Services;
 using GestLog.Views.Usuarios;
+using GestLog.Modules.DatabaseConnection;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestLog
 {
@@ -38,7 +40,11 @@ namespace GestLog
 
             // Servicios y repositorios de Personas
             services.AddScoped<IPersonaService, PersonaService>();
-            services.AddScoped<IPersonaRepository, PersonaRepository>();
+            services.AddScoped<IPersonaRepository, PersonaRepository>(provider =>
+            {
+                var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
+                return new PersonaRepository(dbContextFactory);
+            });
             // Registrar proveedor seguro de configuración de base de datos
             services.AddSingleton<IDatabaseConfigurationProvider, SecureDatabaseConfigurationService>();
             services.AddScoped<ITipoDocumentoRepository>(provider =>

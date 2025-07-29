@@ -1,9 +1,9 @@
-<UserControl x:Class="GestLog.Views.IdentidadCatalogos.Usuarios.UsuarioManagementView"
+<UserControl x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioManagementView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GestLog.Views.IdentidadCatalogos.Usuarios"
+        xmlns:local="clr-namespace:GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario"
         mc:Ignorable="d">
     <Grid Background="#FAFAFA" Margin="20">
         <Grid.RowDefinitions>

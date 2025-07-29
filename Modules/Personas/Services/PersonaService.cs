@@ -27,10 +27,10 @@ namespace Modules.Personas.Services
         {
             try
             {
-                if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumento, persona.NumeroDocumento))
+                if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumentoId, persona.NumeroDocumento))
                 {
-                    _logger.LogWarning($"Duplicate document: {persona.TipoDocumento}-{persona.NumeroDocumento}");
-                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumento}-{persona.NumeroDocumento}'.");
+                    _logger.LogWarning($"Duplicate document: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
+                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumentoId}-{persona.NumeroDocumento}'.");
                 }
                 if (await _personaRepository.ExisteCorreoAsync(persona.Correo))
                 {
@@ -71,11 +71,11 @@ namespace Modules.Personas.Services
                     _logger.LogWarning($"Person not found: {persona.IdPersona}");
                     throw new PersonaNotFoundException(persona.IdPersona.ToString());
                 }
-                if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumento, persona.NumeroDocumento) &&
+                if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumentoId, persona.NumeroDocumento) &&
                     existente.NumeroDocumento != persona.NumeroDocumento)
                 {
-                    _logger.LogWarning($"Duplicate document on edit: {persona.TipoDocumento}-{persona.NumeroDocumento}");
-                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumento}-{persona.NumeroDocumento}'.");
+                    _logger.LogWarning($"Duplicate document on edit: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
+                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumentoId}-{persona.NumeroDocumento}'.");
                 }
                 if (await _personaRepository.ExisteCorreoAsync(persona.Correo) && existente.Correo != persona.Correo)
                 {
@@ -179,9 +179,9 @@ namespace Modules.Personas.Services
             }
         }
 
-        public async Task<bool> ValidarDocumentoUnicoAsync(string tipoDocumento, string numeroDocumento)
+        public async Task<bool> ValidarDocumentoUnicoAsync(Guid tipoDocumentoId, string numeroDocumento)
         {
-            return !await _personaRepository.ExisteDocumentoAsync(tipoDocumento, numeroDocumento);
+            return !await _personaRepository.ExisteDocumentoAsync(tipoDocumentoId, numeroDocumento);
         }
 
         public async Task<bool> ValidarCorreoUnicoAsync(string correo)

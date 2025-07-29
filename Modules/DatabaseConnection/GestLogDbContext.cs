@@ -81,6 +81,27 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.Property(e => e.FechaHora).IsRequired();
                 entity.Property(e => e.IdEntidad).IsRequired();
             });
+            modelBuilder.Entity<GestLog.Modules.Personas.Models.Persona>(entity =>
+            {
+                entity.ToTable("Personas");
+                entity.HasKey(e => e.IdPersona);
+                entity.Property(e => e.Nombres).IsRequired();
+                entity.Property(e => e.Apellidos).IsRequired();
+                entity.Property(e => e.NumeroDocumento).IsRequired();
+                entity.Property(e => e.Correo).IsRequired();
+                entity.Property(e => e.Telefono).IsRequired();
+                entity.Property(e => e.Activo).IsRequired();
+                entity.Property(e => e.FechaCreacion).IsRequired();
+                entity.Property(e => e.FechaModificacion).IsRequired();
+                entity.HasOne(e => e.Cargo)
+                    .WithMany()
+                    .HasForeignKey(e => e.CargoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.TipoDocumento)
+                    .WithMany()
+                    .HasForeignKey(e => e.TipoDocumentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 

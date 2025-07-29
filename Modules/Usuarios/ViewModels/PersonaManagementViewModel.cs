@@ -10,9 +10,6 @@ using System.Windows.Data;
 using System.ComponentModel;
 using System.Timers;
 using System.Windows.Controls;
-using PersonaDetalleView = GestLog.Views.IdentidadCatalogos.Personas.PersonaDetalleView;
-using PersonaEdicionView = GestLog.Views.IdentidadCatalogos.Personas.PersonaEdicionView;
-using GestLog.Views.IdentidadCatalogos.Personas;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
@@ -66,7 +63,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 PersonasView.Filter = FiltrarPersona;
         }
 
-        private async Task InicializarAsync()
+        public async Task InicializarAsync()
         {
             await CargarCargos();
             await CargarPersonas();
@@ -79,25 +76,21 @@ namespace GestLog.Modules.Usuarios.ViewModels
             var nuevaPersona = new Persona {
                 Nombres = string.Empty,
                 Apellidos = string.Empty,
-                TipoDocumento = string.Empty,
+                TipoDocumento = null, // Ahora es un objeto, no string
+                TipoDocumentoId = Guid.Empty, // Inicializar como vacío
                 NumeroDocumento = string.Empty,
                 Correo = string.Empty,
                 Telefono = string.Empty,
                 Cargo = primerCargo,
                 CargoId = primerCargo?.IdCargo ?? Guid.Empty,
-                Estado = "Activo",
                 Activo = true
             };
-            var registroViewModel = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository);
-            var window = new PersonaRegistroWindow
-            {
-                DataContext = registroViewModel,
-                Owner = System.Windows.Application.Current.MainWindow
-            };
-            var result = window.ShowDialog();
-            if (result == true)
+            var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository);
+            var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
+            if (win.ShowDialog() == true)
             {
                 await CargarPersonas();
+                PersonasView?.Refresh();
             }
         }
 
@@ -108,7 +101,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             try
             {
                 PersonaSeleccionada.CargoId = PersonaSeleccionada.Cargo?.IdCargo ?? Guid.Empty;
-                PersonaSeleccionada.Activo = PersonaSeleccionada.Estado == "Activo";
+                // Eliminar referencia a Estado, solo usar Activo
                 var personaGuardada = await _personaService.RegistrarPersonaAsync(PersonaSeleccionada);
                 await CargarPersonas();
                 PersonaSeleccionada = personaGuardada;
@@ -164,16 +157,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         private void MostrarDetalle()
         {
-            var detalle = new PersonaDetalleView();
-            detalle.DataContext = this;
-            VistaActual = detalle;
+            // Lógica para mostrar detalle de persona
         }
 
         private void MostrarEdicion()
         {
-            var edicion = new PersonaEdicionView();
-            edicion.DataContext = this;
-            VistaActual = edicion;
+            // Lógica para mostrar vista de edición de persona
         }
 
         private void DebounceFiltrar()
@@ -228,36 +217,31 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        private async Task EditarPersona()
+        private void EditarPersona(Persona? persona)
         {
-            if (PersonaSeleccionada == null) return;
+            if (persona == null) return;
             // Clonar la persona para edición (evita cambios directos hasta guardar)
             var personaCopia = new Persona
             {
-                IdPersona = PersonaSeleccionada.IdPersona,
-                Nombres = PersonaSeleccionada.Nombres,
-                Apellidos = PersonaSeleccionada.Apellidos,
-                TipoDocumento = PersonaSeleccionada.TipoDocumento,
-                NumeroDocumento = PersonaSeleccionada.NumeroDocumento,
-                Correo = PersonaSeleccionada.Correo,
-                Telefono = PersonaSeleccionada.Telefono,
-                Cargo = PersonaSeleccionada.Cargo,
-                CargoId = PersonaSeleccionada.CargoId,
-                Estado = PersonaSeleccionada.Estado,
-                Activo = PersonaSeleccionada.Activo
+                IdPersona = persona.IdPersona,
+                Nombres = persona.Nombres,
+                Apellidos = persona.Apellidos,
+                TipoDocumento = persona.TipoDocumento,
+                TipoDocumentoId = persona.TipoDocumentoId,
+                NumeroDocumento = persona.NumeroDocumento,
+                Correo = persona.Correo,
+                Telefono = persona.Telefono,
+                Cargo = persona.Cargo,
+                CargoId = persona.CargoId,
+                Activo = persona.Activo
             };
-            var edicionViewModel = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository);
-            var window = new GestLog.Views.IdentidadCatalogos.Personas.PersonaEdicionWindow
+            var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository);
+            var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
+            if (win.ShowDialog() == true)
             {
-                DataContext = edicionViewModel,
-                Owner = System.Windows.Application.Current.MainWindow
-            };
-            var result = window.ShowDialog();
-            if (result == true)
-            {
-                await CargarPersonas();
-                // Selecciona la persona editada en la lista
-                PersonaSeleccionada = Personas.FirstOrDefault(p => p.IdPersona == personaCopia.IdPersona);
+                // Guardar cambios en la base de datos y refrescar la lista
+                _ = CargarPersonas();
+                PersonasView?.Refresh();
             }
         }
 
@@ -278,7 +262,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private async Task ActivarDesactivarPersona(Persona persona)
         {
             persona.Activo = !persona.Activo;
-            persona.Estado = persona.Activo ? "Activo" : "Inactivo";
             await _personaService.EditarPersonaAsync(persona);
             await CargarPersonas();
             PersonasView?.Refresh();

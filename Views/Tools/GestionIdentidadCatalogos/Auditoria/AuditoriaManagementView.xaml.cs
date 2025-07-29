@@ -1,7 +1,6 @@
 using System.Windows.Controls;
-using GestLog.Modules.Usuarios.ViewModels;
 
-namespace GestLog.Views.IdentidadCatalogos.Catalogos
+namespace GestLog.Views.Tools.GestionIdentidadCatalogos.Auditoria
 {
     public partial class AuditoriaManagementView : System.Windows.Controls.UserControl
     {

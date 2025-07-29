@@ -15,7 +15,7 @@ namespace Modules.Personas.Interfaces
         Task DesactivarAsync(Guid idPersona);
         Task<Persona> ObtenerPorIdAsync(Guid idPersona);
         Task<IEnumerable<Persona>> BuscarAsync(string filtro);
-        Task<bool> ExisteDocumentoAsync(string tipoDocumento, string numeroDocumento);
+        Task<bool> ExisteDocumentoAsync(Guid tipoDocumentoId, string numeroDocumento);
         Task<bool> ExisteCorreoAsync(string correo);
     }
 }

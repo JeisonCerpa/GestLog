@@ -1,9 +1,0 @@
-<Window x:Class="GestLog.Views.IdentidadCatalogos.Personas.PersonaRegistroWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:GestLog.Views.IdentidadCatalogos.Personas"
-        Title="Registrar Persona" Height="540" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="SingleBorderWindow">
-    <Grid Background="#FAFAFA">
-        <local:PersonaRegistroView DataContext="{Binding}"/>
-    </Grid>
-</Window>

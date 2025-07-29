@@ -10,7 +10,8 @@ namespace GestLog.Modules.Personas.Models
         public Guid IdPersona { get; set; }
         public required string Nombres { get; set; }
         public required string Apellidos { get; set; }
-        public required string TipoDocumento { get; set; }
+        public Guid TipoDocumentoId { get; set; }
+        public GestLog.Modules.Usuarios.Models.TipoDocumento? TipoDocumento { get; set; }
         public required string NumeroDocumento { get; set; }
         public required string Correo { get; set; }
         public required string Telefono { get; set; }
@@ -21,11 +22,5 @@ namespace GestLog.Modules.Personas.Models
         public string NombreCompleto => $"{Nombres} {Apellidos}";
         // Propiedad auxiliar para binding en la UI (no persistente)
         public Cargo? Cargo { get; set; }
-        // Propiedad auxiliar para binding de estado en la UI ("Activo"/"Inactivo")
-        public string Estado
-        {
-            get => Activo ? "Activo" : "Inactivo";
-            set => Activo = value == "Activo";
-        }
     }
 }

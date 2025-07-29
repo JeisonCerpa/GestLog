@@ -43,6 +43,19 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 TiposDocumento.Clear();
                 foreach (var tipo in tipos)
                     TiposDocumento.Add(tipo);
+                // Preseleccionar 'Cédula de ciudadanía' exactamente si es registro nuevo
+                if (Persona.TipoDocumentoId == Guid.Empty || Persona.TipoDocumento == null || !TiposDocumento.Any(td => td.IdTipoDocumento == Persona.TipoDocumentoId))
+                {
+                    var cedula = TiposDocumento.FirstOrDefault(t => t.Nombre != null && t.Nombre.Trim().ToLower() == "cédula de ciudadanía");
+                    if (cedula != null)
+                    {
+                        Persona.TipoDocumento = cedula;
+                        Persona.TipoDocumentoId = cedula.IdTipoDocumento;
+                        OnPropertyChanged(nameof(Persona));
+                        OnPropertyChanged(nameof(Persona.TipoDocumento));
+                        OnPropertyChanged(nameof(Persona.TipoDocumentoId));
+                    }
+                }
             });
         }
 
@@ -60,7 +73,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private async Task Guardar()
         {
             Persona.CargoId = Persona.Cargo?.IdCargo ?? Guid.Empty;
-            Persona.Estado = "Activo";
+            Persona.TipoDocumentoId = Persona.TipoDocumento?.IdTipoDocumento ?? Guid.Empty;
             Persona.Activo = true;
             await _personaService.RegistrarPersonaAsync(Persona);
             Cerrar(true);
