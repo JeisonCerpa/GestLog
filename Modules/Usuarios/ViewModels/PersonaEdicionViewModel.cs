@@ -9,13 +9,19 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Windows;
+using GestLog.ViewModels.Base;
+using System.Runtime.CompilerServices;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
-    public partial class PersonaEdicionViewModel : ObservableObject, IDataErrorInfo
+    public partial class PersonaEdicionViewModel : ValidatableViewModel
     {
-        [ObservableProperty]
-        private Persona persona;
+        private Persona _persona = null!;
+        public Persona Persona
+        {
+            get => _persona;
+            set { _persona = value; OnPropertyChanged(); }
+        }
 
         public ObservableCollection<Cargo> Cargos { get; }
         public ObservableCollection<string> Estados { get; }
@@ -23,6 +29,38 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private readonly IPersonaService _personaService;
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
         private readonly ICargoRepository _cargoRepository;
+
+        private string _documentoError = string.Empty;
+        private string _correoError = string.Empty;
+        private bool _validandoDocumento;
+        private bool _validandoCorreo;
+        private string _documentoOriginal = string.Empty;
+        private string _correoOriginal = string.Empty;
+
+        public string DocumentoError
+        {
+            get => _documentoError;
+            set { _documentoError = value; OnPropertyChanged(); }
+        }
+        public string CorreoError
+        {
+            get => _correoError;
+            set { _correoError = value; OnPropertyChanged(); }
+        }
+        public bool ValidandoDocumento
+        {
+            get => _validandoDocumento;
+            set { _validandoDocumento = value; OnPropertyChanged(); }
+        }
+        public bool ValidandoCorreo
+        {
+            get => _validandoCorreo;
+            set { _validandoCorreo = value; OnPropertyChanged(); }
+        }
+
+        public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo;
+
+        private bool CanGuardar() => PuedeGuardar;
 
         public PersonaEdicionViewModel(Persona persona, ObservableCollection<string> estados, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository)
         {
@@ -35,6 +73,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
             Cargos = new ObservableCollection<Cargo>();
             _ = CargarTiposDocumentoAsync();
             _ = CargarCargosAsync();
+            _documentoOriginal = persona.NumeroDocumento;
+            _correoOriginal = persona.Correo;
+            PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(DocumentoError) || e.PropertyName == nameof(CorreoError) ||
+                    e.PropertyName == nameof(ValidandoDocumento) || e.PropertyName == nameof(ValidandoCorreo))
+                {
+                    OnPropertyChanged(nameof(PuedeGuardar));
+                    GuardarCommand.NotifyCanExecuteChanged();
+                }
+            };
         }
 
         private async Task CargarTiposDocumentoAsync()
@@ -79,13 +128,20 @@ namespace GestLog.Modules.Usuarios.ViewModels
             });
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanGuardar))]
         private async Task Guardar()
         {
             Persona.CargoId = Persona.Cargo?.IdCargo ?? Guid.Empty;
             Persona.TipoDocumentoId = Persona.TipoDocumento?.IdTipoDocumento ?? Guid.Empty;
-            await _personaService.EditarPersonaAsync(Persona);
-            Cerrar(true);
+            try
+            {
+                await _personaService.EditarPersonaAsync(Persona);
+                Cerrar(true);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Error al editar persona", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         [RelayCommand]
@@ -100,57 +156,63 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 win.DialogResult = resultado;
         }
 
-        public string this[string columnName]
+        private async Task ValidarDocumentoAsync()
         {
-            get
+            DocumentoError = string.Empty;
+            if (string.IsNullOrWhiteSpace(Persona.NumeroDocumento) || Persona.TipoDocumento == null)
+                return;
+            ValidandoDocumento = true;
+            try
             {
-                switch (columnName)
+                // Solo validar si el documento cambió
+                if (Persona.NumeroDocumento != _documentoOriginal || Persona.TipoDocumento.IdTipoDocumento != Persona.TipoDocumentoId)
                 {
-                    case nameof(Persona.Nombres):
-                        if (string.IsNullOrWhiteSpace(Persona.Nombres))
-                            return "El nombre es obligatorio.";
-                        break;
-                    case nameof(Persona.Apellidos):
-                        if (string.IsNullOrWhiteSpace(Persona.Apellidos))
-                            return "El apellido es obligatorio.";
-                        break;
-                    case nameof(Persona.NumeroDocumento):
-                        if (string.IsNullOrWhiteSpace(Persona.NumeroDocumento))
-                            return "El número de documento es obligatorio.";
-                        if (!Regex.IsMatch(Persona.NumeroDocumento, "^[0-9A-Za-z]+$"))
-                            return "El número de documento no es válido.";
-                        // Validación de unicidad (simulada, reemplazar por consulta real)
-                        // if (await _personaService.ExisteDocumentoAsync(Persona.NumeroDocumento))
-                        //     return "El número de documento ya está registrado.";
-                        break;
-                    case nameof(Persona.Correo):
-                        if (string.IsNullOrWhiteSpace(Persona.Correo))
-                            return "El correo electrónico es obligatorio.";
-                        if (!Regex.IsMatch(Persona.Correo, @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"))
-                            return "El correo electrónico no tiene un formato válido.";
-                        // Validación de unicidad (simulada, reemplazar por consulta real)
-                        // if (await _personaService.ExisteCorreoAsync(Persona.Correo))
-                        //     return "El correo electrónico ya está registrado.";
-                        break;
-                    case nameof(Persona.Telefono):
-                        if (string.IsNullOrWhiteSpace(Persona.Telefono))
-                            return "El teléfono es obligatorio.";
-                        if (!Regex.IsMatch(Persona.Telefono, "^[0-9]{7,15}$"))
-                            return "El teléfono debe tener entre 7 y 15 dígitos.";
-                        break;
-                    case nameof(Persona.Cargo):
-                        if (Persona.Cargo == null)
-                            return "Debe seleccionar un cargo.";
-                        break;
-                    case nameof(Persona.TipoDocumento):
-                        if (Persona.TipoDocumento == null)
-                            return "Debe seleccionar un tipo de documento.";
-                        break;
+                    var esUnico = await _personaService.ValidarDocumentoUnicoAsync(Persona.TipoDocumento.IdTipoDocumento, Persona.NumeroDocumento);
+                    if (!esUnico)
+                        DocumentoError = "El número de documento ya está registrado.";
                 }
-                return string.Empty;
             }
+            finally { ValidandoDocumento = false; }
+            SetValidationError(nameof(Persona.NumeroDocumento), DocumentoError);
         }
 
-        public string Error => string.Empty;
+        private async Task ValidarCorreoAsync()
+        {
+            CorreoError = string.Empty;
+            if (string.IsNullOrWhiteSpace(Persona.Correo))
+                return;
+            ValidandoCorreo = true;
+            try
+            {
+                if (Persona.Correo != _correoOriginal)
+                {
+                    var esUnico = await _personaService.ValidarCorreoUnicoAsync(Persona.Correo);
+                    if (!esUnico)
+                        CorreoError = "El correo electrónico ya está registrado.";
+                }
+            }
+            finally { ValidandoCorreo = false; }
+            SetValidationError(nameof(Persona.Correo), CorreoError);
+        }
+
+        private void SetValidationError(string property, string error)
+        {
+            var errors = string.IsNullOrEmpty(error) ? new List<string>() : new List<string> { error };
+            typeof(ValidatableViewModel).GetMethod("UpdateErrors", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .Invoke(this, new object[] { property, errors });
+        }
+
+        protected override bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            var changed = base.SetProperty(ref field, value, propertyName);
+            if (changed)
+            {
+                if (propertyName == nameof(Persona.NumeroDocumento) || propertyName == nameof(Persona.TipoDocumento))
+                    _ = ValidarDocumentoAsync();
+                if (propertyName == nameof(Persona.Correo))
+                    _ = ValidarCorreoAsync();
+            }
+            return changed;
+        }
     }
 }

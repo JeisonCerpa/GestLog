@@ -97,7 +97,13 @@
                       AutoGenerateColumns="False" IsReadOnly="True"
                       RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
                       SelectionMode="Single" Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8">
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8"
+                      EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                <DataGrid.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling"/>
+                    </ItemsPanelTemplate>
+                </DataGrid.ItemsPanel>
                 <DataGrid.Resources>
                     <Style TargetType="DataGridRow">
                         <Setter Property="Foreground" Value="#504F4E"/>

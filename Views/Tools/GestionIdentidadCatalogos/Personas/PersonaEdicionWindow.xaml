@@ -68,11 +68,13 @@
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,16">
                             <TextBlock Text="Número Documento" FontWeight="SemiBold"/>
                             <TextBox Text="{Binding Persona.NumeroDocumento, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                            <TextBlock Text="{Binding DocumentoError}" Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0" Visibility="{Binding DocumentoError, Converter={StaticResource StringToVisibilityConverter}}"/>
                         </StackPanel>
                         <!-- Correo electrónico -->
                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,16,16">
                             <TextBlock Text="Correo electrónico" FontWeight="SemiBold"/>
                             <TextBox Text="{Binding Persona.Correo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
+                            <TextBlock Text="{Binding CorreoError}" Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0" Visibility="{Binding CorreoError, Converter={StaticResource StringToVisibilityConverter}}"/>
                         </StackPanel>
                         <!-- Teléfono -->
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">

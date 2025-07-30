@@ -30,7 +30,7 @@ namespace Modules.Personas.Services
                 if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumentoId, persona.NumeroDocumento))
                 {
                     _logger.LogWarning($"Duplicate document: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
-                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumentoId}-{persona.NumeroDocumento}'.");
+                    throw new Exception($"Ya existe una persona con el documento '{persona.NumeroDocumento}'.");
                 }
                 if (await _personaRepository.ExisteCorreoAsync(persona.Correo))
                 {
@@ -75,7 +75,7 @@ namespace Modules.Personas.Services
                     existente.NumeroDocumento != persona.NumeroDocumento)
                 {
                     _logger.LogWarning($"Duplicate document on edit: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
-                    throw new Exception($"Ya existe una persona con el documento '{persona.TipoDocumentoId}-{persona.NumeroDocumento}'.");
+                    throw new Exception($"Ya existe una persona con el documento '{persona.NumeroDocumento}'.");
                 }
                 if (await _personaRepository.ExisteCorreoAsync(persona.Correo) && existente.Correo != persona.Correo)
                 {
