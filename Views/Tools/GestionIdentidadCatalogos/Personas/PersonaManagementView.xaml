@@ -92,18 +92,11 @@
         </Grid>
         <!-- DataGrid modernizado -->
         <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="0" BorderBrush="#DDD" BorderThickness="1"
-                Effect="{DynamicResource PersonaDataGridShadow}" Margin="16,0,16,16">
-            <DataGrid ItemsSource="{Binding PersonasView}" SelectedItem="{Binding PersonaSeleccionada, Mode=TwoWay}"
-                      AutoGenerateColumns="False" IsReadOnly="True"
+                Effect="{DynamicResource CargoDataGridShadow}" Margin="16,0,16,16">
+            <DataGrid ItemsSource="{Binding Personas}" AutoGenerateColumns="False" IsReadOnly="True"
                       RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
                       SelectionMode="Single" Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8"
-                      EnableRowVirtualization="True" EnableColumnVirtualization="True">
-                <DataGrid.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling"/>
-                    </ItemsPanelTemplate>
-                </DataGrid.ItemsPanel>
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8">
                 <DataGrid.Resources>
                     <Style TargetType="DataGridRow">
                         <Setter Property="Foreground" Value="#504F4E"/>
@@ -127,77 +120,11 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Nombre" Binding="{Binding NombreCompleto}" Width="2*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Tipo Documento" Binding="{Binding TipoDocumento.Nombre}" Width="1.5*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Documento" Binding="{Binding NumeroDocumento}" Width="1.5*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="2*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Cargo" Binding="{Binding Cargo.Nombre}" Width="1.5*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                    </DataGridTextColumn>
-                    <!-- Estado visual -->
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding NombreCompleto}" Width="2*"/>
+                    <DataGridTextColumn Header="Tipo Documento" Binding="{Binding TipoDocumento.Nombre}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Documento" Binding="{Binding NumeroDocumento}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="2*"/>
+                    <DataGridTextColumn Header="Cargo" Binding="{Binding Cargo.Nombre}" Width="1.5*"/>
                     <DataGridTemplateColumn Header="Estado" Width="1*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -210,11 +137,6 @@
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Acciones" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
@@ -225,6 +147,22 @@
                                             CommandParameter="{Binding}"
                                             ToolTip="Editar persona">
                                         <TextBlock Text="✏️" FontSize="18" Foreground="#388E3C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                    <Rectangle Width="8" Fill="Transparent"/>
+                                    <Button Width="32" Height="32" Padding="0" Background="#E3F2FD" BorderBrush="#1976D2" BorderThickness="1" Cursor="Hand"
+                                            Command="{Binding DataContext.CrearUsuarioParaPersonaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Crear usuario">
+                                        <TextBlock Text="👤+" FontSize="18" Foreground="#1976D2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TieneUsuario}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
                                     </Button>
                                     <Rectangle Width="8" Fill="Transparent"/>
                                     <Button Width="32" Height="32" Padding="0" Background="#FDECEA" BorderBrush="#D32F2F" BorderThickness="1" Cursor="Hand"
@@ -244,11 +182,6 @@
                                 </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
-                        <DataGridTemplateColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                            </Style>
-                        </DataGridTemplateColumn.HeaderStyle>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>

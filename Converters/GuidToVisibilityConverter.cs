@@ -5,18 +5,15 @@ using System.Windows.Data;
 
 namespace GestLog.Converters
 {
-    public class IsStringNullOrEmptyConverter : IValueConverter
+    public class GuidToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            bool isEmpty = string.IsNullOrEmpty(value as string);
-            
-            if (targetType == typeof(Visibility) || targetType == typeof(Visibility?))
+            if (value is Guid guid)
             {
-                return isEmpty ? Visibility.Visible : Visibility.Collapsed;
+                return guid != Guid.Empty ? Visibility.Visible : Visibility.Collapsed;
             }
-            
-            return isEmpty;
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

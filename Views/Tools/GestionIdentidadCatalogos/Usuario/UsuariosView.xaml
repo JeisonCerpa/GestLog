@@ -1,0 +1,17 @@
+<UserControl x:Class="Views.Tools.GestionIdentidadCatalogos.Usuario.UsuariosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Gestión de Usuarios" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
+            <Button Content="Nuevo Usuario" Command="{Binding NuevoUsuarioCommand}" Margin="0,0,0,10"/>
+            <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}" DisplayMemberPath="NombreUsuario" Height="200"/>
+            <Button Content="Editar" Command="{Binding EditarUsuarioCommand}" Margin="0,10,0,0"/>
+            <Button Content="Eliminar" Command="{Binding EliminarUsuarioCommand}" Margin="0,5,0,0"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

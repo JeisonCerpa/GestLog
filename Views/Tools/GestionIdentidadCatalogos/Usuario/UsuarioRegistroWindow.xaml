@@ -1,0 +1,53 @@
+<Window x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario"
+        xmlns:val="clr-namespace:GestLog.Controls.Validation"
+        Title="Registrar Usuario" Height="420" Width="480" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
+    <Border Background="White" CornerRadius="12" Padding="32" BorderBrush="#E0E0E0" BorderThickness="1" Margin="16">
+        <StackPanel>
+            <TextBlock Text="Registro de nuevo usuario" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,24" HorizontalAlignment="Center"/>
+            <!-- Selección o visualización de persona -->
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Persona asociada" FontWeight="SemiBold"/>
+                <StackPanel>
+                    <!-- Mostrar el nombre de la persona seleccionada directamente -->
+                    <TextBlock
+                        Text="{Binding NombreCompletoPersonaSeleccionada}"
+                        Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToVisibilityConverter}}"
+                        FontWeight="Bold" FontSize="16" Foreground="#1976D2"/>
+                    <!-- ComboBox solo visible si no hay persona seleccionada -->
+                    <ComboBox ItemsSource="{Binding PersonasDisponibles}"
+                              SelectedValuePath="IdPersona"
+                              DisplayMemberPath="NombreCompleto"
+                              SelectedValue="{Binding PersonaIdSeleccionada, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsEnabled="False"
+                              Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToInverseVisibilityConverter}}"
+                              Height="32"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}" 
+                         Margin="0,2,0,0" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
+                         ToolTip="Ingrese el nombre de usuario" Height="32"/>
+                <TextBlock Text="El nombre de usuario es obligatorio." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
+                           Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
+                <val:BindablePasswordBox
+                    Password="{Binding NuevoUsuarioPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" Height="32"
+                    ToolTip="Ingrese la contraseña"/>
+                <TextBlock Text="La contraseña es obligatoria." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
+                           Visibility="{Binding NuevoUsuarioPassword, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button Content="Cancelar" Margin="0,0,10,0" Width="100" Command="{Binding CancelarRegistroUsuarioCommand}"/>
+                <Button Content="Registrar" Width="110" Background="#388E3C" Foreground="White" FontWeight="Bold"
+                        Command="{Binding RegistrarNuevoUsuarioCommand}"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

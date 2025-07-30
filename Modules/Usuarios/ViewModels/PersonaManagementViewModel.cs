@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.ComponentModel;
 using System.Timers;
 using System.Windows.Controls;
+using Modules.Usuarios.ViewModels;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
@@ -116,7 +117,16 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private async Task CargarPersonas()
         {
             var lista = await _personaService.BuscarPersonasAsync("");
-            Personas = new ObservableCollection<Persona>(lista);
+            // Obtener todos los usuarios para asociar
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var usuarioService = serviceProvider.GetService(typeof(IUsuarioService)) as IUsuarioService;
+            var usuarios = usuarioService != null ? await usuarioService.BuscarUsuariosAsync("") : new List<GestLog.Modules.Usuarios.Models.Usuario>();
+            var personas = lista.ToList();
+            foreach (var persona in personas)
+            {
+                persona.TieneUsuario = usuarios.Any(u => u.PersonaId == persona.IdPersona);
+            }
+            Personas = new ObservableCollection<Persona>(personas);
         }
 
         private async Task CargarCargos()
@@ -258,6 +268,36 @@ namespace GestLog.Modules.Usuarios.ViewModels
             await _personaService.EditarPersonaAsync(persona);
             await CargarPersonas();
             PersonasView?.Refresh();
+        }
+
+        [RelayCommand]
+        private void CrearUsuarioParaPersona(Persona persona)
+        {
+            if (persona == null)
+            {
+                MensajeValidacion = "Debe seleccionar una persona.";
+                return;
+            }
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var usuarioVm = serviceProvider.GetService(typeof(UsuarioManagementViewModel)) as UsuarioManagementViewModel;
+            if (usuarioVm != null)
+            {
+                // Solo esa persona disponible para el registro
+                usuarioVm.PersonasDisponibles = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.Personas.Models.Persona> { persona };
+                usuarioVm.PersonaIdSeleccionada = persona.IdPersona;
+                usuarioVm.NuevoUsuarioNombre = string.Empty;
+                usuarioVm.NuevoUsuarioPassword = string.Empty;
+                var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow { DataContext = usuarioVm, Owner = System.Windows.Application.Current.MainWindow };
+                if (win.ShowDialog() == true)
+                {
+                    _ = CargarPersonas();
+                    PersonasView?.Refresh();
+                }
+            }
+            else
+            {
+                MensajeValidacion = "No se pudo cargar el formulario de usuario.";
+            }
         }
     }
 }

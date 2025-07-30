@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using GestLog.Modules.Usuarios.Models;
 
 namespace GestLog.Modules.Personas.Models
@@ -20,7 +21,11 @@ namespace GestLog.Modules.Personas.Models
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaModificacion { get; set; }
         public string NombreCompleto => $"{Nombres} {Apellidos}";
+        
         // Propiedad auxiliar para binding en la UI (no persistente)
         public Cargo? Cargo { get; set; }
+        
+        [NotMapped]
+        public bool TieneUsuario { get; set; } // No persistente, solo para la UI
     }
 }

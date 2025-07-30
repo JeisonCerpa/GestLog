@@ -18,5 +18,6 @@ namespace Modules.Usuarios.Interfaces
         Task RestablecerContraseñaAsync(Guid idUsuario, string nuevaContraseña);
         Task AsignarRolesAsync(Guid idUsuario, IEnumerable<Guid> rolesIds);
         Task AsignarPermisosAsync(Guid idUsuario, IEnumerable<Guid> permisosIds);
+        Task<Usuario> RegistrarUsuarioAsync(Usuario usuario);
     }
 }

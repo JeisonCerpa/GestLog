@@ -1,22 +1,22 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows;
+using System.Linq;
 using System.Windows.Data;
+using GestLog.Modules.Personas.Models;
 
 namespace GestLog.Converters
 {
-    public class IsStringNullOrEmptyConverter : IValueConverter
+    public class PersonaIdToNombreCompletoConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            bool isEmpty = string.IsNullOrEmpty(value as string);
-            
-            if (targetType == typeof(Visibility) || targetType == typeof(Visibility?))
+            if (value is Guid id && parameter is ObservableCollection<Persona> personas)
             {
-                return isEmpty ? Visibility.Visible : Visibility.Collapsed;
+                var persona = personas.FirstOrDefault(p => p.IdPersona == id);
+                return persona?.NombreCompleto ?? string.Empty;
             }
-            
-            return isEmpty;
+            return string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
