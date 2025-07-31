@@ -23,6 +23,11 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.Usuarios.Models.Usuario> Usuarios { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.TipoDocumento> TiposDocumento { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.Auditoria> Auditorias { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.Rol> Roles { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.Permiso> Permisos { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.UsuarioRol> UsuarioRoles { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.RolPermiso> RolPermisos { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.UsuarioPermiso> UsuarioPermisos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -102,6 +107,106 @@ namespace GestLog.Modules.DatabaseConnection
                     .HasForeignKey(e => e.TipoDocumentoId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // --- RELACIONES USUARIOS, ROLES Y PERMISOS ---
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Rol>(entity =>
+            {
+                entity.ToTable("Roles");
+                entity.HasKey(e => e.IdRol);
+                entity.Property(e => e.Nombre).IsRequired();
+                entity.Property(e => e.Descripcion).IsRequired();
+            });
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Permiso>(entity =>
+            {
+                entity.ToTable("Permisos");
+                entity.HasKey(e => e.IdPermiso);
+                entity.Property(e => e.Nombre).IsRequired();
+                entity.Property(e => e.Descripcion).IsRequired();
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Permiso>()
+                    .WithMany(p => p.SubPermisos)
+                    .HasForeignKey(p => p.PermisoPadreId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioRol>(entity =>
+            {
+                entity.ToTable("UsuarioRoles");
+                entity.HasKey(e => new { e.IdUsuario, e.IdRol });
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Usuario>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdUsuario)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Rol>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdRol)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.RolPermiso>(entity =>
+            {
+                entity.ToTable("RolPermisos");
+                entity.HasKey(e => new { e.IdRol, e.IdPermiso });
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Rol>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdRol)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Permiso>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdPermiso)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioPermiso>(entity =>
+            {
+                entity.ToTable("UsuarioPermisos");
+                entity.HasKey(e => new { e.IdUsuario, e.IdPermiso });
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Usuario>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdUsuario)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne<GestLog.Modules.Usuarios.Models.Permiso>()
+                    .WithMany()
+                    .HasForeignKey(e => e.IdPermiso)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+        }
+
+        public void SeedAdminRole()
+        {
+            // Crear permiso base si no existe
+            var permisoAdmin = Permisos.FirstOrDefault(p => p.Nombre == "AdministrarSistema");
+            if (permisoAdmin == null)
+            {
+                permisoAdmin = new GestLog.Modules.Usuarios.Models.Permiso
+                {
+                    IdPermiso = Guid.NewGuid(),
+                    Nombre = "AdministrarSistema",
+                    Descripcion = "Permite acceso total al sistema"
+                };
+                Permisos.Add(permisoAdmin);
+                SaveChanges();
+            }
+            // Crear rol admin si no existe
+            var rolAdmin = Roles.FirstOrDefault(r => r.Nombre == "Administrador");
+            if (rolAdmin == null)
+            {
+                rolAdmin = new GestLog.Modules.Usuarios.Models.Rol
+                {
+                    IdRol = Guid.NewGuid(),
+                    Nombre = "Administrador",
+                    Descripcion = "Rol con todos los permisos"
+                };
+                Roles.Add(rolAdmin);
+                SaveChanges();
+            }
+            // Asignar permiso al rol si no está asignado
+            var existeRolPermiso = RolPermisos.Any(rp => rp.IdRol == rolAdmin.IdRol && rp.IdPermiso == permisoAdmin.IdPermiso);
+            if (!existeRolPermiso)
+            {
+                RolPermisos.Add(new GestLog.Modules.Usuarios.Models.RolPermiso
+                {
+                    IdRol = rolAdmin.IdRol,
+                    IdPermiso = permisoAdmin.IdPermiso
+                });
+                SaveChanges();
+            }
         }
     }
 

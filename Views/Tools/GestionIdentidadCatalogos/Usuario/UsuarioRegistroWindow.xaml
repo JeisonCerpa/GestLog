@@ -3,51 +3,90 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario"
         xmlns:val="clr-namespace:GestLog.Controls.Validation"
-        Title="Registrar Usuario" Height="420" Width="480" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
+        xmlns:behaviors="clr-namespace:GestLog.Behaviors"
+        Title="Registrar Usuario" Height="600" Width="540" MinWidth="480" MinHeight="540" WindowStartupLocation="CenterOwner" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
     <Border Background="White" CornerRadius="12" Padding="32" BorderBrush="#E0E0E0" BorderThickness="1" Margin="16">
-        <StackPanel>
-            <TextBlock Text="Registro de nuevo usuario" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,24" HorizontalAlignment="Center"/>
-            <!-- Selección o visualización de persona -->
-            <StackPanel Margin="0,0,0,10">
-                <TextBlock Text="Persona asociada" FontWeight="SemiBold"/>
-                <StackPanel>
-                    <!-- Mostrar el nombre de la persona seleccionada directamente -->
-                    <TextBlock
-                        Text="{Binding NombreCompletoPersonaSeleccionada}"
-                        Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToVisibilityConverter}}"
-                        FontWeight="Bold" FontSize="16" Foreground="#1976D2"/>
-                    <!-- ComboBox solo visible si no hay persona seleccionada -->
-                    <ComboBox ItemsSource="{Binding PersonasDisponibles}"
-                              SelectedValuePath="IdPersona"
-                              DisplayMemberPath="NombreCompleto"
-                              SelectedValue="{Binding PersonaIdSeleccionada, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              IsEnabled="False"
-                              Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToInverseVisibilityConverter}}"
-                              Height="32"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Registro de nuevo usuario" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,24" HorizontalAlignment="Center" Grid.Row="0"/>
+                <StackPanel Grid.Row="1" Margin="0,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                    <!-- Persona -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Persona asociada" FontWeight="SemiBold"/>
+                        <StackPanel>
+                            <TextBlock
+                                Text="{Binding NombreCompletoPersonaSeleccionada}"
+                                Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToVisibilityConverter}}"
+                                FontWeight="Bold" FontSize="16" Foreground="#1976D2"/>
+                            <ComboBox ItemsSource="{Binding PersonasDisponibles}"
+                                      SelectedValuePath="IdPersona"
+                                      DisplayMemberPath="NombreCompleto"
+                                      SelectedValue="{Binding PersonaIdSeleccionada, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      IsEnabled="False"
+                                      Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToInverseVisibilityConverter}}"
+                                      Height="32"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <!-- Usuario -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}" 
+                                 Margin="0,2,0,0" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
+                                 ToolTip="Ingrese el nombre de usuario" Height="32"/>
+                        <TextBlock Text="El nombre de usuario es obligatorio." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
+                                   Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+                    </StackPanel>
+                    <!-- Contraseña -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
+                        <val:BindablePasswordBox
+                            Password="{Binding NuevoUsuarioPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" Height="32"
+                            ToolTip="Ingrese la contraseña"/>
+                        <TextBlock Text="La contraseña es obligatoria." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
+                                   Visibility="{Binding NuevoUsuarioPassword, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+                    </StackPanel>
+                    <!-- Roles -->
+                    <StackPanel Margin="0,0,0,0">
+                        <TextBlock Text="Roles asignados" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding RolesDisponibles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Nombre}"
+                                              Margin="0,2"
+                                              Foreground="#118938"
+                                              FontWeight="SemiBold"
+                                              Checked="CheckBox_Checked"
+                                              Unchecked="CheckBox_Unchecked">                                        <CheckBox.IsChecked>
+                                            <MultiBinding Converter="{StaticResource RoleCheckedConverter}" Mode="OneWay">
+                                                <!-- El ViewModel principal (DataContext de la ventana) -->
+                                                <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                <!-- El rol actual (DataContext del CheckBox) -->
+                                                <Binding Path="." />
+                                            </MultiBinding>
+                                        </CheckBox.IsChecked>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Debe seleccionar al menos un rol."
+                                   Foreground="#D32F2F"
+                                   FontSize="12"
+                                   Margin="2,2,0,0"
+                                   Visibility="{Binding RolesSeleccionadosCount, Converter={StaticResource CountToVisibilityConverter}}"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-            <StackPanel Margin="0,0,0,10">
-                <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
-                <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}" 
-                         Margin="0,2,0,0" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
-                         ToolTip="Ingrese el nombre de usuario" Height="32"/>
-                <TextBlock Text="El nombre de usuario es obligatorio." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
-                           Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
-            </StackPanel>
-            <StackPanel Margin="0,0,0,10">
-                <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
-                <val:BindablePasswordBox
-                    Password="{Binding NuevoUsuarioPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" Height="32"
-                    ToolTip="Ingrese la contraseña"/>
-                <TextBlock Text="La contraseña es obligatoria." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
-                           Visibility="{Binding NuevoUsuarioPassword, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button Content="Cancelar" Margin="0,0,10,0" Width="100" Command="{Binding CancelarRegistroUsuarioCommand}"/>
-                <Button Content="Registrar" Width="110" Background="#388E3C" Foreground="White" FontWeight="Bold"
-                        Command="{Binding RegistrarNuevoUsuarioCommand}"/>
-            </StackPanel>
-        </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0" Grid.Row="2">
+                    <Button Content="Cancelar" Margin="0,0,10,0" Width="110" Height="36" Command="{Binding CancelarRegistroUsuarioCommand}"/>
+                    <Button Content="Registrar" Width="120" Height="36" Background="#388E3C" Foreground="White" FontWeight="Bold"
+                            Command="{Binding RegistrarNuevoUsuarioCommand}"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
     </Border>
 </Window>

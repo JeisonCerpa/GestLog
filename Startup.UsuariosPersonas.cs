@@ -24,7 +24,11 @@ namespace GestLog
             services.AddScoped<ICargoService, CargoService>();
             services.AddScoped<ICargoRepository, CargoRepository>();
             services.AddScoped<IRolService, RolService>();
-            services.AddScoped<IRolRepository, RolRepository>();
+            services.AddScoped<IRolRepository>(provider =>
+            {
+                var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
+                return new RolRepository(dbContextFactory);
+            });
             services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
             services.AddScoped<IAuditoriaService, AuditoriaService>();

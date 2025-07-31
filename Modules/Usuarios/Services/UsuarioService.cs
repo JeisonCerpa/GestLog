@@ -36,8 +36,25 @@ namespace Modules.Usuarios.Services
 
         public async Task AsignarRolesAsync(Guid idUsuario, IEnumerable<Guid> rolesIds)
         {
-            await Task.CompletedTask;
-            throw new NotImplementedException();
+            try
+            {
+                using var db = new GestLog.Modules.DatabaseConnection.GestLogDbContextFactory().CreateDbContext(Array.Empty<string>());
+                // Eliminar roles previos
+                var existentes = db.UsuarioRoles.Where(ur => ur.IdUsuario == idUsuario);
+                db.UsuarioRoles.RemoveRange(existentes);
+                // Agregar nuevos roles
+                foreach (var idRol in rolesIds.Distinct())
+                {
+                    db.UsuarioRoles.Add(new UsuarioRol { IdUsuario = idUsuario, IdRol = idRol });
+                }
+                await db.SaveChangesAsync();
+                _logger.LogInformation($"Roles asignados a usuario {idUsuario}: {string.Join(",", rolesIds)}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al asignar roles a usuario {idUsuario}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task AsignarPermisosAsync(Guid idUsuario, IEnumerable<Guid> permisosIds)

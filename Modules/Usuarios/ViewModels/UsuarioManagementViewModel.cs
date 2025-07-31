@@ -117,6 +117,40 @@ namespace Modules.Usuarios.ViewModels
             }
         }
 
+        // --- NUEVO: Selección de roles en registro ---
+        private ObservableCollection<Rol> _rolesDisponibles = new();
+        public ObservableCollection<Rol> RolesDisponibles
+        {
+            get => _rolesDisponibles;
+            set { _rolesDisponibles = value; OnPropertyChanged(); }
+        }
+
+        private ObservableCollection<Rol> _rolesSeleccionados = new();
+        public ObservableCollection<Rol> RolesSeleccionados
+        {
+            get => _rolesSeleccionados;
+            set
+            {
+                if (_rolesSeleccionados != null)
+                    _rolesSeleccionados.CollectionChanged -= RolesSeleccionados_CollectionChanged;
+                _rolesSeleccionados = value;
+                if (_rolesSeleccionados != null)
+                    _rolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RolesSeleccionadosCount));
+            }
+        }
+
+        public int RolesSeleccionadosCount => RolesSeleccionados?.Count ?? 0;
+
+        private void RolesSeleccionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] RolesSeleccionados_CollectionChanged: Count = {RolesSeleccionados.Count}");
+            OnPropertyChanged(nameof(RolesSeleccionadosCount));
+            // También notificar la propiedad original por si acaso
+            OnPropertyChanged(nameof(RolesSeleccionados));
+        }
+
         public ICommand RegistrarUsuarioCommand { get; }
         public ICommand EditarUsuarioCommand { get; }
         public ICommand DesactivarUsuarioCommand { get; }
@@ -161,6 +195,10 @@ namespace Modules.Usuarios.ViewModels
             // Cargar usuarios desde la base de datos al inicializar
             _ = CargarUsuariosAsync();
             _ = CargarPersonasDisponiblesAsync();
+            _ = CargarRolesDisponiblesAsync();
+            
+            // Conectar el event handler para la colección de roles seleccionados
+            RolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
         }
 
         // Método para cargar usuarios desde la base de datos
@@ -183,6 +221,12 @@ namespace Modules.Usuarios.ViewModels
             }
         }
 
+        public async Task CargarRolesDisponiblesAsync()
+        {
+            var roles = await _rolService.ObtenerTodosAsync();
+            RolesDisponibles = new ObservableCollection<Rol>(roles);
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
@@ -193,12 +237,11 @@ namespace Modules.Usuarios.ViewModels
         private async Task EditarUsuarioAsync() { await Task.CompletedTask; }
         private async Task DesactivarUsuarioAsync() { await Task.CompletedTask; }
         private async Task BuscarUsuariosAsync() { await Task.CompletedTask; }
-        private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }
-
-        private void LimpiarCamposNuevoUsuario()
+        private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }        private void LimpiarCamposNuevoUsuario()
         {
             NuevoUsuarioNombre = string.Empty;
             NuevoUsuarioPassword = string.Empty;
+            RolesSeleccionados.Clear();
         }
         private bool PuedeRegistrarNuevoUsuario()
         {
@@ -206,14 +249,21 @@ namespace Modules.Usuarios.ViewModels
                    !string.IsNullOrWhiteSpace(NuevoUsuarioPassword);
             System.Diagnostics.Debug.WriteLine($"[DEBUG] PuedeRegistrarNuevoUsuario: {canRegister} (Nombre: '{NuevoUsuarioNombre}', Password: '{NuevoUsuarioPassword}')");
             return canRegister;
-        }
-        private async Task RegistrarNuevoUsuarioAsync()
+        }        private async Task RegistrarNuevoUsuarioAsync()
         {
             if (!PuedeRegistrarNuevoUsuario() || PersonaIdSeleccionada == Guid.Empty)
             {
                 System.Windows.MessageBox.Show("Debe seleccionar una persona para asociar el usuario.", "Registro de usuario", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }
+
+            // Validar que se haya seleccionado al menos un rol
+            if (RolesSeleccionados.Count == 0)
+            {
+                System.Windows.MessageBox.Show("Debe seleccionar al menos un rol para el usuario.", "Registro de usuario", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 // Generar salt y hash seguro
@@ -231,11 +281,24 @@ namespace Modules.Usuarios.ViewModels
                     FechaCreacion = DateTime.Now,
                     FechaModificacion = DateTime.Now
                 };
+
+                // Registrar el usuario
                 await _usuarioService.RegistrarUsuarioAsync(nuevoUsuario);
-                LimpiarCamposNuevoUsuario();
-                // Cerrar ventana emergente
+
+                // Asignar los roles seleccionados directamente
+                var rolesIds = RolesSeleccionados.Select(r => r.IdRol).ToArray();
+                await _usuarioService.AsignarRolesAsync(nuevoUsuario.IdUsuario, rolesIds);
+
+                // Mostrar mensaje de éxito
+                System.Windows.MessageBox.Show($"Usuario '{nuevoUsuario.NombreUsuario}' registrado exitosamente con {RolesSeleccionados.Count} rol(es).", "Registro Exitoso", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+                // Cerrar ventana de registro
                 if (global::System.Windows.Application.Current.Windows.OfType<global::System.Windows.Window>().FirstOrDefault(w => w is GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow && w.DataContext == this) is global::System.Windows.Window win)
                     win.DialogResult = true;
+
+                // Recargar lista de usuarios
+                await CargarUsuariosAsync();
+                LimpiarCamposNuevoUsuario();
             }
             catch (Exception ex)
             {
@@ -245,7 +308,15 @@ namespace Modules.Usuarios.ViewModels
 
         private void AbrirRegistroUsuarioWindow()
         {
-            var win = new UsuarioRegistroWindow { DataContext = this, Owner = global::System.Windows.Application.Current.MainWindow };
+            LimpiarCamposNuevoUsuario(); // Asegura que todo esté limpio ANTES de abrir la ventana
+            var win = new UsuarioRegistroWindow();
+            
+            // Limpiar la colección de roles seleccionados explícitamente
+            RolesSeleccionados.Clear();
+            
+            win.DataContext = this;
+            win.Owner = global::System.Windows.Application.Current.MainWindow;
+            
             var result = win.ShowDialog();
             if (result == true)
             {

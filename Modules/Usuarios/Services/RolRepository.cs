@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.Usuarios.Models;
+using Microsoft.EntityFrameworkCore;
 using Modules.Usuarios.Interfaces;
 
 namespace Modules.Usuarios.Services
 {
     public class RolRepository : IRolRepository
     {
-        public RolRepository()
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+
+        public RolRepository(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            // Inicialización de recursos de datos
+            _dbContextFactory = dbContextFactory;
         }
 
         public Task<Rol> AgregarAsync(Rol rol)
@@ -33,9 +37,10 @@ namespace Modules.Usuarios.Services
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Rol>> ObtenerTodosAsync()
+        public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Roles.ToListAsync();
         }
 
         public Task<bool> ExisteNombreAsync(string nombre)
