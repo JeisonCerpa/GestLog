@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:GestLog.Controls.Validation"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="600">
     <UserControl.Resources>
@@ -11,7 +10,8 @@
         <Style x:Key="LoginTextBoxStyle" TargetType="TextBox">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
             <Setter Property="BorderBrush" Value="#BDBDBD"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
@@ -26,22 +26,8 @@
         <Style x:Key="LoginPasswordBoxStyle" TargetType="PasswordBox">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#504F4E"/>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#118938"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="LoginBindablePasswordBoxStyle" TargetType="local:BindablePasswordBox">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
             <Setter Property="BorderBrush" Value="#BDBDBD"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
@@ -59,176 +45,113 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="BorderBrush" Value="#0F7A30"/>
+            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="22">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="35"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#118938"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#118938"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="18">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </UserControl.Resources>
-    <Grid>
-        <!-- Fondo con gradiente sutil -->
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#FAFAFA" Offset="0"/>
-                <GradientStop Color="#F5F5F5" Offset="1"/>
-            </LinearGradientBrush>
-        </Grid.Background>
-        <!-- Contenido principal expandido -->
-        <Grid Margin="0">
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- Contenido centrado -->
+        <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <!-- Header con logo -->
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,40,0,30">
-                <Image Source="/Assets/logo.png" 
-                       Width="200" Height="200" 
-                       Margin="0,0,0,15"/>
-                <TextBlock Text="GestLog" 
-                           FontSize="32" 
-                           FontWeight="Bold" 
-                           Foreground="#118938" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="Sistema de Gestión Logística" 
-                           FontSize="16" 
-                           Foreground="#706F6F"
-                           HorizontalAlignment="Center"
-                           Margin="0,5,0,0"/>
-            </StackPanel>
-            <!-- Mensaje de error -->
-            <Border Grid.Row="1"
-                    Background="#FFEBEE" 
-                    BorderBrush="#F44336" 
-                    BorderThickness="1" 
-                    CornerRadius="6" 
-                    Padding="12,8" 
-                    Margin="0,0,0,20"
-                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="{Binding ErrorMessage}" 
-                               FontSize="13" 
-                               Foreground="#C62828" 
-                               TextWrapping="Wrap"
-                               VerticalAlignment="Center"/>
+            <!-- Header y formulario distribuidos verticalmente -->
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image Source="/Assets/Simics.png" Width="420" Height="96" Stretch="Uniform" Margin="0,0,0,36"/>
+                <TextBlock Text="GestLog" Style="{DynamicResource HeadingLargeStyle}" Foreground="#118938" HorizontalAlignment="Center" Margin="0,0,0,36"/>
+                <TextBlock Text="Sistema de Gestión Logística" Style="{DynamicResource HeadingMediumStyle}" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,36"/>
+                <!-- Formulario de login y mensajes -->
+                <StackPanel HorizontalAlignment="Center" Width="340" Margin="0,0,0,0">
+                    <!-- Mensaje de error -->
+                    <Border Background="#FFEBEE" BorderBrush="#F44336" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,14" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="#C62828" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Campo Usuario -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>
+                        <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource LoginTextBoxStyle}" TabIndex="1">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </StackPanel>
+                    <!-- Campo Contraseña -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>
+                        <PasswordBox x:Name="PasswordBox" Style="{StaticResource LoginPasswordBoxStyle}" TabIndex="2" MinWidth="180" PasswordChanged="PasswordBox_PasswordChanged">
+                            <PasswordBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                            </PasswordBox.InputBindings>
+                        </PasswordBox>
+                    </StackPanel>
+                    <!-- Recordar sesión -->
+                    <CheckBox IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="#706F6F" TabIndex="3" Margin="0,6,0,0"/>
+                    <!-- Botón Login -->
+                    <Button Content="Iniciar Sesión" Style="{StaticResource LoginButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" Height="40" FontSize="15" FontWeight="SemiBold" TabIndex="4" Margin="0,18,0,0"/>
+                    <!-- Loading spinner -->
+                    <Grid Width="28" Height="28" Margin="0,16,0,8" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="#118938" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </Grid>
+                    <!-- Mensaje de estado -->
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,0,10"/>
                 </StackPanel>
-            </Border>
-            <!-- Formulario de login -->
-            <StackPanel Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Width="350">
-                <!-- Campo Usuario -->
-                <StackPanel Margin="0,0,0,20">
-                    <TextBlock Text="Usuario" 
-                               FontWeight="SemiBold" 
-                               FontSize="14" 
-                               Foreground="#504F4E" 
-                               Margin="0,0,0,8"/>
-                    <TextBox x:Name="UsernameTextBox"
-                             Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource LoginTextBoxStyle}"
-                             TabIndex="1">
-                        <TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                        </TextBox.InputBindings>
-                    </TextBox>
-                </StackPanel>
-                <!-- Campo Contraseña -->
-                <StackPanel Margin="0,0,0,20">
-                    <TextBlock Text="Contraseña" 
-                               FontWeight="SemiBold" 
-                               FontSize="14" 
-                               Foreground="#504F4E" 
-                               Margin="0,0,0,8"/>
-                    <PasswordBox x:Name="PasswordBox"
-                                 Style="{StaticResource LoginPasswordBoxStyle}"
-                                 TabIndex="2"
-                                 MinWidth="200"
-                                 PasswordChanged="PasswordBox_PasswordChanged">
-                        <PasswordBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                        </PasswordBox.InputBindings>
-                    </PasswordBox>
-                </StackPanel>
-                <!-- Recordar sesión -->
-                <CheckBox IsChecked="{Binding RememberMe}"
-                          Content="Recordar mi sesión"
-                          FontSize="13"
-                          Foreground="#706F6F"
-                          TabIndex="3"
-                          Margin="0,10,0,0"/>
-            </StackPanel>
-            <!-- Botones -->
-            <StackPanel Grid.Row="3" Margin="0,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="350">
-                <!-- Botón Login -->
-                <Button Content="Iniciar Sesión"
-                        Style="{StaticResource LoginButtonStyle}"
-                        IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"
-                        Command="{Binding LoginCommand}"
-                        Height="45"
-                        FontSize="16"
-                        FontWeight="SemiBold"
-                        TabIndex="4"
-                        Margin="0,0,0,12"/>
-                <!-- Loading indicator -->
-                <StackPanel Orientation="Horizontal" 
-                            HorizontalAlignment="Center"
-                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Margin="0,0,0,12">
-                    <ProgressBar IsIndeterminate="True" 
-                                 Width="20" Height="20" 
-                                 Margin="0,0,10,0"/>
-                    <TextBlock Text="{Binding StatusMessage}" 
-                               FontSize="13" 
-                               Foreground="#706F6F" 
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- Mensaje de estado -->
-                <TextBlock Text="{Binding StatusMessage}" 
-                           FontSize="13" 
-                           Foreground="#706F6F" 
-                           HorizontalAlignment="Center"
-                           Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                           Margin="0,0,0,15"/>
-                <!-- Botones secundarios -->
-                <StackPanel Orientation="Horizontal" 
-                            HorizontalAlignment="Center" 
-                            Margin="0,15,0,0">
-                    <Button Content="Limpiar"
-                            Command="{Binding ClearFieldsCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Width="80"
-                            Margin="0,0,15,0"/>
-                    <Button Content="¿Olvidó su contraseña?"
-                            Command="{Binding ForgotPasswordCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Width="160"/>
-                </StackPanel>
-            </StackPanel>
-            <!-- Footer -->
-            <StackPanel Grid.Row="4" 
-                        HorizontalAlignment="Center" 
-                        VerticalAlignment="Bottom"
-                        Margin="0,30,0,0">
-                <TextBlock Text="© 2025 GestLog - Sistema de Gestión Logística" 
-                           FontSize="11" 
-                           Foreground="#BDBDBD" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="Versión 1.0.0" 
-                           FontSize="10" 
-                           Foreground="#BDBDBD" 
-                           HorizontalAlignment="Center"
-                           Margin="0,2,0,0"/>
             </StackPanel>
         </Grid>
+        <!-- Footer -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,18,0,0">
+            <TextBlock Text="© 2025 GestLog - Sistema de Gestión Logística" FontSize="10" Foreground="#BDBDBD" HorizontalAlignment="Center"/>
+            <TextBlock Text="Versión 1.0.0" FontSize="9" Foreground="#BDBDBD" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+        </StackPanel>
     </Grid>
 </UserControl>
