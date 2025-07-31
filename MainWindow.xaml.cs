@@ -4,25 +4,47 @@ using System.Windows.Controls;
 using GestLog.Views;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
-namespace GestLog;
+namespace GestLog
+{
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly Stack<(System.Windows.Controls.UserControl view, string title)> _navigationStack;
     private System.Windows.Controls.UserControl? _currentView;
-    private readonly IGestLogLogger _logger;    public MainWindow()
+    private readonly IGestLogLogger _logger;
+    private bool _isAuthenticated = false;
+
+    public bool IsAuthenticated
+    {
+        get => _isAuthenticated;
+        set
+        {
+            if (_isAuthenticated != value)
+            {
+                _isAuthenticated = value;
+                OnPropertyChanged(nameof(IsAuthenticated));
+            }
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    public MainWindow()
     {
         try
         {
+            DataContext = this;
             InitializeComponent();
             _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
+            _logger = LoggingService.GetLogger<MainWindow>();
             
-            // Obtener logger del servicio de logging
-            _logger = LoggingService.GetLogger<MainWindow>();            // --- NUEVO: Establecer WindowState según configuración ---
+            // --- NUEVO: Establecer WindowState según configuración ---
             try
             {
                 var configService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
@@ -34,7 +56,7 @@ public partial class MainWindow : Window
                 this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
                 _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
             }
-            catch (System.Exception ex) 
+            catch (System.Exception ex)
             { 
                 _logger.LogWarning(ex, "⚠️ Error al leer configuración de ventana, usando maximizada por defecto");
                 this.WindowState = WindowState.Maximized; // Fallback
@@ -46,8 +68,19 @@ public partial class MainWindow : Window
             // Suscribirse a cambios de estado de la base de datos
             SubscribeToDatabaseStatusChanges();
             
-            // Cargar la vista Home por defecto
-            LoadHomeView();
+            // Mostrar LoginView como pantalla inicial si no hay sesión
+            var loginView = new Views.Authentication.LoginView();
+            loginView.LoginSuccessful += (s, e) =>
+            {
+                IsAuthenticated = true;
+                LoadHomeView();
+            };
+            contentPanel.Content = loginView;
+            _currentView = loginView;
+            txtCurrentView.Text = "Login";
+            btnBack.Visibility = Visibility.Collapsed;
+            IsAuthenticated = false;
+            // TODO: Suscribirse a evento de login exitoso para navegar a HomeView
         }
         catch (System.Exception ex)
         {
@@ -72,6 +105,8 @@ public partial class MainWindow : Window
             txtCurrentView.Text = "Home";
             btnBack.Visibility = Visibility.Collapsed;
             _navigationStack.Clear();
+            
+            IsAuthenticated = true;
             
             _logger.LogUserInteraction("✅", "LoadHomeView", "Vista Home cargada exitosamente");
         }
@@ -376,4 +411,5 @@ public partial class MainWindow : Window
     #endregion
 
     public ContentControl MainContent => contentPanel;
-}
+} // cierre de la clase MainWindow
+} // cierre del namespace GestLog

@@ -28,14 +28,34 @@ namespace Modules.Usuarios.Services
             return usuario;
         }
 
-        public Task<Usuario> ActualizarAsync(Usuario usuario)
+        public async Task<Usuario> ActualizarAsync(Usuario usuario)
         {
-            throw new NotImplementedException();
+            using var db = _dbContextFactory.CreateDbContext();
+            var existente = await db.Usuarios.FindAsync(usuario.IdUsuario);
+            if (existente == null)
+                throw new Exception("Usuario no encontrado");
+            existente.NombreUsuario = usuario.NombreUsuario;
+            existente.Activo = usuario.Activo;
+            existente.Desactivado = usuario.Desactivado;
+            existente.FechaModificacion = DateTime.UtcNow;
+            // No se actualiza la contraseña aquí
+            await db.SaveChangesAsync();
+            // Obtener correo actualizado
+            var persona = await db.Personas.FindAsync(existente.PersonaId);
+            existente.Correo = persona?.Correo;
+            return existente;
         }
 
-        public Task DesactivarAsync(Guid idUsuario)
+        public async Task DesactivarAsync(Guid idUsuario)
         {
-            throw new NotImplementedException();
+            using var db = _dbContextFactory.CreateDbContext();
+            var usuario = await db.Usuarios.FindAsync(idUsuario);
+            if (usuario == null)
+                throw new Exception("Usuario no encontrado");
+            usuario.Activo = false;
+            usuario.Desactivado = true;
+            usuario.FechaModificacion = DateTime.UtcNow;
+            await db.SaveChangesAsync();
         }
 
         public Task<Usuario> ObtenerPorIdAsync(Guid idUsuario)
@@ -52,19 +72,18 @@ namespace Modules.Usuarios.Services
                         select new
                         {
                             Usuario = u,
-                            Correo = p.Correo
+                            CorreoPersona = p.Correo // Renombrar para evitar conflicto
                         };
             if (!string.IsNullOrWhiteSpace(filtro))
             {
-                query = query.Where(x => x.Usuario.NombreUsuario.Contains(filtro) || x.Correo.Contains(filtro));
+                query = query.Where(x => x.Usuario.NombreUsuario.Contains(filtro) || x.CorreoPersona.Contains(filtro));
             }
             var result = await query.ToListAsync();
             // Mapear resultado a Usuario, agregando el correo como propiedad extendida si es necesario
             var usuarios = result.Select(x =>
             {
                 var usuario = x.Usuario;
-                // Si tienes una propiedad extendida para el correo en el ViewModel, asígnala aquí
-                // usuario.Correo = x.Correo;
+                usuario.Correo = x.CorreoPersona; // Asignar correo extendido
                 return usuario;
             }).ToList();
             return usuarios;
@@ -74,6 +93,45 @@ namespace Modules.Usuarios.Services
         {
             using var db = _dbContextFactory.CreateDbContext();
             return await db.Usuarios.AnyAsync(u => u.NombreUsuario == nombreUsuario);
+        }
+
+        public async Task EliminarAsync(Guid idUsuario)
+        {
+            using var db = _dbContextFactory.CreateDbContext();
+            using var transaction = await db.Database.BeginTransactionAsync();
+            try
+            {
+                // Eliminar relaciones UsuarioRol
+                var roles = db.UsuarioRoles.Where(ur => ur.IdUsuario == idUsuario);
+                db.UsuarioRoles.RemoveRange(roles);
+                // Eliminar relaciones UsuarioPermiso
+                var permisos = db.UsuarioPermisos.Where(up => up.IdUsuario == idUsuario);
+                db.UsuarioPermisos.RemoveRange(permisos);
+                // Eliminar usuario
+                var usuario = await db.Usuarios.FindAsync(idUsuario);
+                if (usuario != null)
+                    db.Usuarios.Remove(usuario);
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task RestablecerContrasenaAsync(Guid idUsuario, string nuevoHash, string nuevoSalt)
+        {
+            using var db = _dbContextFactory.CreateDbContext();
+            var usuario = await db.Usuarios.FindAsync(idUsuario);
+            if (usuario == null)
+                throw new Exception("Usuario no encontrado");
+            
+            usuario.HashContrasena = nuevoHash;
+            usuario.Salt = nuevoSalt;
+            usuario.FechaModificacion = DateTime.UtcNow;
+            
+            await db.SaveChangesAsync();
         }
     }
 }

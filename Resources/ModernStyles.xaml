@@ -20,9 +20,30 @@
     <SolidColorBrush x:Key="PrimaryGreenHoverBrush" Color="#0E7530"/>
     <SolidColorBrush x:Key="SecondaryGreenHoverBrush" Color="#2E9940"/>
     <SolidColorBrush x:Key="SurfaceBrush" Color="#F8F9FA"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="#E9ECEF"/>
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#212529"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#E9ECEF"/>    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#212529"/>
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6C757D"/>
+
+    <!-- ==================== EFECTOS DE SOMBRA ==================== -->
+    <!-- Sombra por defecto para elementos UI -->
+    <DropShadowEffect x:Key="DefaultDropShadow" 
+                      Color="#504F4E" 
+                      BlurRadius="8" 
+                      ShadowDepth="2" 
+                      Opacity="0.18"/>
+    
+    <!-- Sombra para formularios -->
+    <DropShadowEffect x:Key="FormShadow" 
+                      Color="#504F4E" 
+                      BlurRadius="12" 
+                      ShadowDepth="2" 
+                      Opacity="0.18"/>
+    
+    <!-- Sombra para botones elevados -->
+    <DropShadowEffect x:Key="ButtonShadow" 
+                      Color="#118938" 
+                      BlurRadius="6" 
+                      ShadowDepth="1" 
+                      Opacity="0.18"/>
 
     <!-- ==================== TIPOGRAFÍA ==================== -->
     <FontFamily x:Key="PrimaryFont">Myriad Pro, Segoe UI, sans-serif</FontFamily>

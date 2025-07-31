@@ -19,5 +19,6 @@ namespace Modules.Usuarios.Interfaces
         Task AsignarRolesAsync(Guid idUsuario, IEnumerable<Guid> rolesIds);
         Task AsignarPermisosAsync(Guid idUsuario, IEnumerable<Guid> permisosIds);
         Task<Usuario> RegistrarUsuarioAsync(Usuario usuario);
+        Task EliminarUsuarioAsync(Guid idUsuario);
     }
 }

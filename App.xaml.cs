@@ -8,6 +8,7 @@ using GestLog.Services;
 using GestLog.Services.Interfaces;
 using System.Threading;
 using System.Net.Sockets;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog;
 
@@ -20,6 +21,8 @@ public partial class App : System.Windows.Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // --- SOLUCIÓN: Evitar cierre automático al cerrar LoginWindow ---
+        this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         base.OnStartup(e);
         try
         {
@@ -59,14 +62,23 @@ public partial class App : System.Windows.Application
             {
                 _logger?.Logger.LogError(cronEx, "❌ Error al verificar/generar cronogramas de mantenimiento al inicio");
                 // No es crítico, la aplicación puede continuar
-            }
-
-            // Configurar manejo global de excepciones
-            SetupGlobalExceptionHandling();
-
-            // --- CREAR MainWindow MANUALMENTE DESPUÉS DE CARGAR CONFIGURACIÓN ---
+            }            // Configurar manejo global de excepciones
+            SetupGlobalExceptionHandling();            // 🔐 MOSTRAR LOGIN ANTES DEL MAINWINDOW
+            // if (!ShowAuthentication())
+            // {
+            //     _logger?.Logger.LogInformation("🚪 Usuario canceló login, cerrando aplicación");
+            //     System.Windows.Application.Current.Shutdown(0);
+            //     return;
+            // }
+            // --- CREAR MainWindow MANUALMENTE DESPUÉS DE AUTENTICACIÓN EXITOSA ---
             var mainWindow = new MainWindow();
+            
+            // IMPORTANTE: Establecer como MainWindow de la aplicación
+            this.MainWindow = mainWindow;
+            
             mainWindow.Show();
+            // --- Restaurar modo de cierre automático después de mostrar MainWindow ---
+            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
         }
         catch (Exception ex)
         {
@@ -401,11 +413,45 @@ public partial class App : System.Windows.Application
             var result = setupDialog.ShowDialog();
 
             return result == true;
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
             _logger?.Logger.LogError(ex, "❌ Error al mostrar First Run Setup Dialog");
             return false;
         }
+    }    /// <summary>
+    /// Muestra la ventana de autenticación y maneja el proceso de login
+    /// </summary>
+    /// <returns>True si el login fue exitoso, False si se canceló</returns>
+    private bool ShowAuthentication()
+    {        try
+        {
+            _logger?.Logger.LogInformation("🔐 Iniciando proceso de autenticación");
+
+            // Crear la ventana de login (el constructor maneja el ViewModel y DI)
+            // Eliminar referencias y uso de LoginWindow, solo debe usarse LoginView como UserControl
+            // var loginWindow = new Views.Authentication.LoginWindow();
+
+            // Mostrar como dialog modal
+            // var result = loginWindow.ShowDialog();
+
+            // if (result == true)
+            // {
+            //     _logger?.Logger.LogInformation("✅ Autenticación exitosa");
+            //     return true;
+            // }
+            // else
+            // {
+            //     _logger?.Logger.LogInformation("🚫 Login cancelado por el usuario");
+            //     return false;
+            // }
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error durante el proceso de autenticación");
+            // Antes: MessageBox con error
+            return false;
+        }
+
+        return false;
     }
 }

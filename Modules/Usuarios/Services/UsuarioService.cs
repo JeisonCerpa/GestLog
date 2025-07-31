@@ -26,12 +26,32 @@ namespace Modules.Usuarios.Services
         {
             // Implementación pendiente
             return await Task.FromResult<Usuario>(null!);
-        }
-
-        public async Task RestablecerContraseñaAsync(Guid idUsuario, string nuevaContraseña)
+        }        public async Task RestablecerContraseñaAsync(Guid idUsuario, string nuevaContraseña)
         {
-            await Task.CompletedTask;
-            throw new NotImplementedException();
+            try
+            {
+                // Generar nuevo salt y hash para la nueva contraseña
+                var salt = PasswordHelper.GenerateSalt();
+                var hash = PasswordHelper.HashPassword(nuevaContraseña, salt);
+                
+                await _usuarioRepository.RestablecerContrasenaAsync(idUsuario, hash, salt);
+                _logger.LogInformation($"Password reset for user: {idUsuario}");
+                
+                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
+                    IdAuditoria = Guid.NewGuid(),
+                    EntidadAfectada = "Usuario",
+                    IdEntidad = idUsuario,
+                    Accion = "RestablecerContrasena",
+                    UsuarioResponsable = "admin", // Reemplazar por usuario real
+                    FechaHora = DateTime.UtcNow,
+                    Detalle = $"Restablecimiento de contraseña para usuario: {idUsuario}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error resetting password for user {idUsuario}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task AsignarRolesAsync(Guid idUsuario, IEnumerable<Guid> rolesIds)
@@ -163,6 +183,29 @@ namespace Modules.Usuarios.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error searching users: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task EliminarUsuarioAsync(Guid idUsuario)
+        {
+            try
+            {
+                await _usuarioRepository.EliminarAsync(idUsuario);
+                _logger.LogInformation($"Usuario eliminado: {idUsuario}");
+                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
+                    IdAuditoria = Guid.NewGuid(),
+                    EntidadAfectada = "Usuario",
+                    IdEntidad = idUsuario,
+                    Accion = "Eliminar",
+                    UsuarioResponsable = "admin", // Reemplazar por usuario real
+                    FechaHora = DateTime.UtcNow,
+                    Detalle = $"Eliminación completa de usuario y relaciones: {idUsuario}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error eliminando usuario: {ex.Message}");
                 throw;
             }
         }

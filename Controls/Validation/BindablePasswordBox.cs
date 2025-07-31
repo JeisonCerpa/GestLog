@@ -20,6 +20,11 @@ namespace GestLog.Controls.Validation
 
         private PasswordBox? _passwordBox;
 
+        public BindablePasswordBox()
+        {
+            DefaultStyleKey = typeof(BindablePasswordBox);
+        }
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();

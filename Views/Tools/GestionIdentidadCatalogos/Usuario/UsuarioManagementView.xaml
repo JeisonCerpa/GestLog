@@ -3,51 +3,70 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario"
         mc:Ignorable="d">
     <Grid Background="#FAFAFA" Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <TextBlock Text="Gestión de Usuarios" FontSize="28" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,20"/>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="3*"/>
-            </Grid.ColumnDefinitions>
-            <!-- Lista de usuarios -->
-            <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                <TextBox Margin="0,0,0,10" Height="32" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
-                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Content="Buscar" Command="{Binding BuscarUsuariosCommand}" Margin="0,0,0,10" Height="32" Background="#2E7D32" Foreground="White"/>
-                <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado, Mode=TwoWay}" DisplayMemberPath="NombreUsuario" Height="400" Background="White" BorderBrush="#BDBDBD" BorderThickness="1"/>
-                <Button Content="Registrar nuevo usuario" Margin="0,10,0,0" Height="32" Background="#388E3C" Foreground="White"
-                        Command="{Binding AbrirRegistroUsuarioWindowCommand}"/>
-            </StackPanel>
-            <!-- Detalle y edición -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#E0E0E0" BorderThickness="1">
-                <StackPanel>
-                    <TextBlock Text="Detalle de Usuario" FontSize="20" FontWeight="SemiBold" Foreground="#388E3C" Margin="0,0,0,10"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Nombre de usuario:" Width="140" VerticalAlignment="Center"/>
-                        <TextBox Text="{Binding UsuarioSeleccionado.NombreUsuario, Mode=TwoWay}" Width="220" Height="32" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Correo electrónico:" Width="140" VerticalAlignment="Center"/>
-                        <TextBox Text="{Binding UsuarioSeleccionado.Correo, Mode=OneWay}" Width="220" Height="32" Background="#F5F5F5" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" IsReadOnly="True"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Estado:" Width="140" VerticalAlignment="Center"/>
-                        <CheckBox IsChecked="{Binding UsuarioSeleccionado.Activo, Mode=TwoWay}" Content="Activo"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <Button Content="Editar" Command="{Binding EditarUsuarioCommand}" Margin="0,0,10,0" Height="32" MinWidth="100" Background="#1976D2" Foreground="White" FontWeight="Bold"/>
-                        <Button Content="Desactivar" Command="{Binding DesactivarUsuarioCommand}" Height="32" MinWidth="100" Background="#C62828" Foreground="White" FontWeight="Bold"/>
-                    </StackPanel>
-                    <Button Content="Ver historial de auditoría" Command="{Binding CargarAuditoriaCommand}" Margin="0,10,0,0" Height="32" Background="#616161" Foreground="White"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <!-- Panel izquierdo: búsqueda y lista de usuarios -->
+        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+            <TextBox Height="36" Margin="0,0,0,12" Padding="10,0" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1"
+                     Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
+            <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado, Mode=TwoWay}"
+                     DisplayMemberPath="NombreUsuario" Height="480" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1"
+                     Margin="0,0,0,12"/>
+        </StackPanel>
+        <!-- Panel derecho: detalle de usuario -->
+        <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="8" Padding="28" BorderBrush="#E0E0E0" BorderThickness="1" 
+                Effect="{DynamicResource DropShadowEffect}">
+            <StackPanel>
+                <TextBlock Text="Detalle de Usuario" FontSize="22" FontWeight="SemiBold" Foreground="#118938" Margin="0,0,0,18"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Nombre de usuario:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <TextBox Text="{Binding UsuarioSeleccionado.NombreUsuario, Mode=TwoWay}" Width="220" Height="32" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"/>
                 </StackPanel>
-            </Border>
-        </Grid>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Correo electrónico:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <TextBox Text="{Binding UsuarioSeleccionado.Correo, Mode=OneWay}" Width="220" Height="32" Background="#F5F5F5" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" IsReadOnly="True"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                    <TextBlock Text="Estado:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <Ellipse Width="16" Height="16" Margin="0,0,8,0"
+                             Fill="{Binding UsuarioSeleccionado.Activo, Converter={StaticResource BooleanToColorConverter}}"/>
+                    <CheckBox IsChecked="{Binding UsuarioSeleccionado.Activo, Mode=TwoWay}" Content="Activo"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                    <TextBlock Text="Roles:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <ItemsControl ItemsSource="{Binding RolesDeUsuario}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#2B8E3F" CornerRadius="12" Margin="0,0,8,0" Padding="10,2">
+                                    <TextBlock Text="{Binding Nombre}" Foreground="White" FontWeight="SemiBold"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Fecha creación:" Width="150" Foreground="#504F4E"/>
+                    <TextBlock Text="{Binding UsuarioSeleccionado.FechaCreacion, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Último acceso:" Width="150" Foreground="#504F4E"/>
+                    <TextBlock Text="{Binding UsuarioSeleccionado.FechaUltimoAcceso, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"/>
+                </StackPanel>                <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                    <Button Content="Editar" Command="{Binding EditarUsuarioCommand}" Margin="0,0,10,0" Height="36" MinWidth="110" Background="#1976D2" Foreground="White" FontWeight="Bold"/>
+                    <Button Content="Restablecer contraseña" Command="{Binding RestablecerContrasenaCommand}" Margin="0,0,10,0" Height="36" MinWidth="150" Background="#FF9800" Foreground="White" FontWeight="Bold"/>
+                    <Button Content="Ver auditoría" Command="{Binding CargarAuditoriaCommand}" Margin="0,0,10,0" Height="36" MinWidth="110" Background="#616161" Foreground="White"/>
+                    <Button Content="Eliminar" Command="{Binding EliminarUsuarioCommand}" Height="36" MinWidth="110" Background="#504F4E" Foreground="White"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

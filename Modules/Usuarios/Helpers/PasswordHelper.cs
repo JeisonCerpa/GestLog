@@ -12,14 +12,21 @@ namespace Modules.Usuarios.Helpers
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(saltBytes);
             return Convert.ToBase64String(saltBytes);
-        }
-
-        public static string HashPassword(string password, string salt)
+        }        public static string HashPassword(string password, string salt)
         {
             using var sha256 = SHA256.Create();
             var combined = Encoding.UTF8.GetBytes(password + salt);
             var hash = sha256.ComputeHash(combined);
             return Convert.ToBase64String(hash);
+        }
+
+        public static bool VerifyPassword(string password, string storedHash, string storedSalt)
+        {
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash) || string.IsNullOrEmpty(storedSalt))
+                return false;
+
+            var hashToCheck = HashPassword(password, storedSalt);
+            return hashToCheck.Equals(storedHash, StringComparison.Ordinal);
         }
     }
 }

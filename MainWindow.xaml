@@ -132,7 +132,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>        </Grid.RowDefinitions>        <!-- Navigation Bar -->
-        <Border Grid.Row="0" Padding="18,12">
+        <Border x:Name="navbar" Grid.Row="0" Padding="18,12" Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                     <GradientStop Color="#118938" Offset="0"/>

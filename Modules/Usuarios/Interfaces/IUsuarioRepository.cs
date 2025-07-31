@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 using GestLog.Modules.Usuarios.Models;
 
 namespace Modules.Usuarios.Interfaces
-{
-    /// <summary>
+{    /// <summary>
     /// Contrato para acceso a datos de usuarios.
     /// </summary>
     public interface IUsuarioRepository
@@ -16,5 +15,7 @@ namespace Modules.Usuarios.Interfaces
         Task<Usuario> ObtenerPorIdAsync(Guid idUsuario);
         Task<IEnumerable<Usuario>> BuscarAsync(string filtro);
         Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario);
+        Task EliminarAsync(Guid idUsuario);
+        Task RestablecerContrasenaAsync(Guid idUsuario, string nuevoHash, string nuevoSalt);
     }
 }

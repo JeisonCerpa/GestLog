@@ -1,0 +1,94 @@
+using System;
+using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Services.Core.Logging;
+
+namespace GestLog.Modules.Usuarios.Services
+{
+    /// <summary>
+    /// Servicio para gestionar la información del usuario autenticado actual
+    /// Responsabilidad: Mantener el estado de la sesión del usuario
+    /// </summary>
+    public class CurrentUserService : ICurrentUserService
+    {
+        private readonly IGestLogLogger _logger;
+        private CurrentUserInfo? _currentUser;
+
+        public CurrentUserService(IGestLogLogger logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public CurrentUserInfo? Current => _currentUser;
+
+        public bool IsAuthenticated => _currentUser != null;
+
+        public event EventHandler<CurrentUserInfo?>? CurrentUserChanged;
+
+        public void SetCurrentUser(CurrentUserInfo userInfo)
+        {
+            if (userInfo == null)
+                throw new ArgumentNullException(nameof(userInfo));
+
+            _currentUser = userInfo;
+            _logger.LogInformation("Usuario establecido en sesión: {Username} ({UserId})", 
+                userInfo.Username, userInfo.UserId);
+            
+            CurrentUserChanged?.Invoke(this, _currentUser);
+        }
+
+        public void ClearCurrentUser()
+        {
+            var previousUser = _currentUser?.Username ?? "Unknown";
+            _currentUser = null;
+            
+            _logger.LogInformation("Sesión cerrada para usuario: {Username}", previousUser);
+            CurrentUserChanged?.Invoke(this, null);
+        }
+
+        public void UpdateActivity()
+        {
+            if (_currentUser != null)
+            {
+                _currentUser.UpdateActivity();
+                _logger.LogDebug("Actividad actualizada para usuario: {Username}", _currentUser.Username);
+            }
+        }
+
+        public bool HasPermission(string permission)
+        {
+            if (string.IsNullOrWhiteSpace(permission))
+                return false;
+
+            var hasPermission = _currentUser?.HasPermission(permission) ?? false;
+            
+            _logger.LogDebug("Verificación de permiso '{Permission}' para usuario '{Username}': {HasPermission}", 
+                permission, _currentUser?.Username ?? "None", hasPermission);
+            
+            return hasPermission;
+        }
+
+        public bool HasRole(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+                return false;
+
+            var hasRole = _currentUser?.HasRole(roleName) ?? false;
+            
+            _logger.LogDebug("Verificación de rol '{Role}' para usuario '{Username}': {HasRole}", 
+                roleName, _currentUser?.Username ?? "None", hasRole);
+            
+            return hasRole;
+        }
+
+        public string GetCurrentUserFullName()
+        {
+            return _currentUser?.FullName ?? "Usuario no autenticado";
+        }
+
+        public Guid? GetCurrentUserId()
+        {
+            return _currentUser?.UserId;
+        }
+    }
+}

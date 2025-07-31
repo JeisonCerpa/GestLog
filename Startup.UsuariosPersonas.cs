@@ -6,6 +6,8 @@ using Modules.Usuarios.ViewModels;
 using Modules.Personas.Interfaces;
 using Modules.Personas.Services;
 using GestLog.Modules.Usuarios.ViewModels;
+using GestLog.Modules.Usuarios.Interfaces; // Para autenticación
+using GestLog.Modules.Usuarios.Services; // Para servicios de autenticación
 using GestLog.Services.Interfaces;
 using GestLog.Services;
 using GestLog.Views.Usuarios;
@@ -17,10 +19,14 @@ namespace GestLog
     public static class StartupUsuariosPersonas
     {
         public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
-        {
-            // Servicios y repositorios de Usuarios
+        {            // Servicios y repositorios de Usuarios
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+            
+            // 🔐 SERVICIOS DE AUTENTICACIÓN
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddSingleton<ICurrentUserService, CurrentUserService>();
+            
             services.AddScoped<ICargoService, CargoService>();
             services.AddScoped<ICargoRepository, CargoRepository>();
             services.AddScoped<IRolService, RolService>();
@@ -31,14 +37,12 @@ namespace GestLog
             });
             services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
-            services.AddScoped<IAuditoriaService, AuditoriaService>();
-            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();
-
-            // ViewModels de Usuarios
+            services.AddScoped<IAuditoriaService, AuditoriaService>();            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios
             services.AddTransient<UsuarioManagementViewModel>();
             services.AddTransient<RolManagementViewModel>();
             services.AddTransient<PermisoManagementViewModel>();
             services.AddTransient<AuditoriaManagementViewModel>();
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddTransient<CatalogosManagementViewModel>();
 

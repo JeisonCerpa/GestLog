@@ -14,9 +14,9 @@
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
             <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
-            <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
-            <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+            <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>            <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
             <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter"/>
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
             <converters:IsStringNullOrEmptyConverter x:Key="IsStringNullOrEmptyConverter"/>
             <converters:GuidToVisibilityConverter x:Key="GuidToVisibilityConverter"/>

@@ -11,6 +11,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Modules.Usuarios.Helpers;
 using Modules.Personas.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using MessageBox = System.Windows.MessageBox; // Usar siempre System.Windows.MessageBox para evitar ambigüedad
 
 namespace Modules.Usuarios.ViewModels
 {
@@ -38,7 +41,13 @@ namespace Modules.Usuarios.ViewModels
                 _usuarioSeleccionado = value;
                 OnPropertyChanged();
                 // Cargar correo de la persona asociada si está disponible
-                CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);
+                CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);                // Cargar roles del usuario seleccionado
+                _ = CargarRolesDeUsuarioAsync();
+                // Notificar cambios en los comandos
+                (EditarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (RestablecerContrasenaCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (EliminarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (CargarAuditoriaCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
         private string ObtenerCorreoDePersona(Usuario? usuario)
@@ -151,14 +160,28 @@ namespace Modules.Usuarios.ViewModels
             OnPropertyChanged(nameof(RolesSeleccionados));
         }
 
-        public ICommand RegistrarUsuarioCommand { get; }
+        private string _filtroTexto = string.Empty;
+        public string FiltroTexto
+        {
+            get => _filtroTexto;
+            set
+            {
+                if (_filtroTexto != value)
+                {
+                    _filtroTexto = value;
+                    OnPropertyChanged();
+                    _ = BuscarUsuariosAsync();
+                }
+            }
+        }        public ICommand RegistrarUsuarioCommand { get; }
         public ICommand EditarUsuarioCommand { get; }
-        public ICommand DesactivarUsuarioCommand { get; }
+        public ICommand RestablecerContrasenaCommand { get; }
         public ICommand BuscarUsuariosCommand { get; }
         public ICommand CargarAuditoriaCommand { get; }
         public ICommand AbrirRegistroUsuarioWindowCommand { get; }
         public ICommand CancelarRegistroUsuarioCommand { get; }
         public ICommand RegistrarNuevoUsuarioCommand { get; }
+        public ICommand EliminarUsuarioCommand { get; }
 
         // Lista de personas disponibles para asociar
         private ObservableCollection<GestLog.Modules.Personas.Models.Persona> _personasDisponibles = new();
@@ -166,6 +189,14 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _personasDisponibles;
             set { _personasDisponibles = value; OnPropertyChanged(); OnPropertyChanged(nameof(NombreCompletoPersonaSeleccionada)); }
+        }
+
+        // Propiedad para mostrar los roles del usuario seleccionado
+        private ObservableCollection<Rol> _rolesDeUsuario = new();
+        public ObservableCollection<Rol> RolesDeUsuario
+        {
+            get => _rolesDeUsuario;
+            set { _rolesDeUsuario = value; OnPropertyChanged(); }
         }
 
         public UsuarioManagementViewModel(
@@ -181,21 +212,21 @@ namespace Modules.Usuarios.ViewModels
             _rolService = rolService;
             _permisoService = permisoService;
             _auditoriaService = auditoriaService;
-            _personaService = personaService;
-
-            RegistrarUsuarioCommand = new RelayCommand(async _ => await RegistrarUsuarioAsync(), _ => true);
+            _personaService = personaService;            RegistrarUsuarioCommand = new RelayCommand(async _ => await RegistrarUsuarioAsync(), _ => true);
             EditarUsuarioCommand = new RelayCommand(async _ => await EditarUsuarioAsync(), _ => UsuarioSeleccionado != null);
-            DesactivarUsuarioCommand = new RelayCommand(async _ => await DesactivarUsuarioAsync(), _ => UsuarioSeleccionado != null);
+            RestablecerContrasenaCommand = new RelayCommand(async _ => await RestablecerContrasenaAsync(), _ => UsuarioSeleccionado != null);
             BuscarUsuariosCommand = new RelayCommand(async _ => await BuscarUsuariosAsync(), _ => true);
             CargarAuditoriaCommand = new RelayCommand(async _ => await CargarAuditoriaAsync(), _ => UsuarioSeleccionado != null);
             AbrirRegistroUsuarioWindowCommand = new RelayCommand(_ => { AbrirRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
             CancelarRegistroUsuarioCommand = new RelayCommand(_ => { CerrarRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
             RegistrarNuevoUsuarioCommand = new RelayCommand(async _ => await RegistrarNuevoUsuarioAsync(), _ => PuedeRegistrarNuevoUsuario());
+            EliminarUsuarioCommand = new RelayCommand(async _ => await EliminarUsuarioAsync(), _ => UsuarioSeleccionado != null);
 
             // Cargar usuarios desde la base de datos al inicializar
             _ = CargarUsuariosAsync();
             _ = CargarPersonasDisponiblesAsync();
             _ = CargarRolesDisponiblesAsync();
+            _ = CargarRolesDeUsuarioAsync();
             
             // Conectar el event handler para la colección de roles seleccionados
             RolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
@@ -227,6 +258,34 @@ namespace Modules.Usuarios.ViewModels
             RolesDisponibles = new ObservableCollection<Rol>(roles);
         }
 
+        public async Task CargarRolesDeUsuarioAsync()
+        {
+            if (UsuarioSeleccionado == null) 
+            {
+                RolesDeUsuario.Clear();
+                return;
+            }
+            try
+            {
+                // Obtener roles del usuario desde la base de datos
+                using var db = new GestLog.Modules.DatabaseConnection.GestLogDbContextFactory().CreateDbContext(Array.Empty<string>());
+                var rolesIds = await db.UsuarioRoles
+                    .Where(ur => ur.IdUsuario == UsuarioSeleccionado.IdUsuario)
+                    .Select(ur => ur.IdRol)
+                    .ToListAsync();
+                var roles = await db.Roles
+                    .Where(r => rolesIds.Contains(r.IdRol))
+                    .ToListAsync();
+                RolesDeUsuario.Clear();
+                foreach (var rol in roles)
+                    RolesDeUsuario.Add(rol);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error cargando roles del usuario: {ex.Message}");
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
@@ -234,9 +293,98 @@ namespace Modules.Usuarios.ViewModels
         }
 
         private async Task RegistrarUsuarioAsync() { await Task.CompletedTask; }
-        private async Task EditarUsuarioAsync() { await Task.CompletedTask; }
-        private async Task DesactivarUsuarioAsync() { await Task.CompletedTask; }
-        private async Task BuscarUsuariosAsync() { await Task.CompletedTask; }
+        private async Task EditarUsuarioAsync()
+        {
+            if (UsuarioSeleccionado == null)
+                return;
+            try
+            {
+                await _usuarioService.EditarUsuarioAsync(UsuarioSeleccionado);
+                System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' editado correctamente.", "Edición exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                await BuscarUsuariosAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al editar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }        private async Task RestablecerContrasenaAsync()
+        {
+            if (UsuarioSeleccionado == null)
+                return;            // Solicitar nueva contraseña usando InputBox
+            string nuevaContrasena = Interaction.InputBox(
+                $"Ingrese la nueva contraseña para el usuario '{UsuarioSeleccionado.NombreUsuario}':\n\n" +
+                "Recomendaciones:\n" +
+                "• Mínimo 6 caracteres\n" +
+                "• Combine letras, números y símbolos\n" +
+                "• Evite información personal",
+                "Restablecer Contraseña",
+                "");
+
+            if (string.IsNullOrWhiteSpace(nuevaContrasena))
+                return;
+
+            // Validar longitud mínima
+            if (nuevaContrasena.Length < 6)
+            {
+                MessageBox.Show("La contraseña debe tener al menos 6 caracteres.", "Contraseña inválida", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Confirmar contraseña
+            string confirmContrasena = Interaction.InputBox(
+                "Confirme la nueva contraseña:",
+                "Confirmar Contraseña",
+                "");
+
+            if (nuevaContrasena != confirmContrasena)
+            {
+                MessageBox.Show("Las contraseñas no coinciden. Intente nuevamente.", "Error de confirmación", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var confirmacion = MessageBox.Show(
+                $"¿Está seguro que desea restablecer la contraseña para el usuario '{UsuarioSeleccionado.NombreUsuario}'?", 
+                "Confirmar restablecimiento", 
+                MessageBoxButton.YesNo, 
+                MessageBoxImage.Question);
+            
+            if (confirmacion != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                await _usuarioService.RestablecerContraseñaAsync(UsuarioSeleccionado.IdUsuario, nuevaContrasena);
+                
+                MessageBox.Show(
+                    $"✅ Contraseña restablecida correctamente para el usuario '{UsuarioSeleccionado.NombreUsuario}'.\n\n" +
+                    "La nueva contraseña ha sido establecida exitosamente.", 
+                    "Restablecimiento exitoso", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al restablecer contraseña: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GenerarContrasenaTemporal()
+        {
+            // Este método ya no se usa, pero lo mantengo por si se necesita en el futuro
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 8)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+        private async Task BuscarUsuariosAsync()
+        {
+            var lista = await _usuarioService.BuscarUsuariosAsync(FiltroTexto);
+            Usuarios.Clear();
+            foreach (var usuario in lista)
+                Usuarios.Add(usuario);
+        }
         private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }        private void LimpiarCamposNuevoUsuario()
         {
             NuevoUsuarioNombre = string.Empty;
@@ -329,6 +477,27 @@ namespace Modules.Usuarios.ViewModels
         {
             if (global::System.Windows.Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w is UsuarioRegistroWindow && w.DataContext == this) is Window win)
                 win.DialogResult = false;
+        }
+
+        private async Task EliminarUsuarioAsync()
+        {
+            if (UsuarioSeleccionado == null)
+                return;
+            var result = System.Windows.MessageBox.Show($"¿Está seguro que desea eliminar el usuario '{UsuarioSeleccionado.NombreUsuario}'?\nEsta acción eliminará todas sus relaciones y no se puede deshacer.",
+                "Confirmar eliminación", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+                return;
+            try
+            {
+                await _usuarioService.EliminarUsuarioAsync(UsuarioSeleccionado.IdUsuario);
+                System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' eliminado correctamente.", "Eliminación exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                await CargarUsuariosAsync();
+                UsuarioSeleccionado = null;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al eliminar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         // Implementación simple de RelayCommand para MVVM
