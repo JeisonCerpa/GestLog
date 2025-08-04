@@ -6,168 +6,119 @@
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
     <Grid Background="#FAFAFA">
-        <Border Background="White" CornerRadius="8" Padding="32" Margin="40"
-                Effect="{DynamicResource DropShadowEffect}" >
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,24">
-                    <TextBlock Text="🛡️" FontSize="40" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                    <StackPanel>
-                        <TextBlock Text="Gestión de Roles" FontFamily="Segoe UI" FontSize="28" FontWeight="Bold" Foreground="#504F4E"/>
-                        <TextBlock Text="Administra los roles del sistema y sus permisos" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+        <Border Background="White" CornerRadius="8" Padding="32" Margin="40" Effect="{DynamicResource DropShadowEffect}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!-- Header con título y botón alineado a la derecha -->
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
+                        <TextBlock Text="🛡️" FontSize="40" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <TextBlock Text="Gestión de Roles" FontFamily="Segoe UI" FontSize="28" FontWeight="Bold" Foreground="#504F4E"/>
+                            <TextBlock Text="Administra los roles del sistema y sus permisos" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-                <Button Content="+ Nuevo Rol" Command="{Binding AbrirNuevoRolCommand}" Height="44" Width="180"
-                        Background="#118938" Foreground="White" FontWeight="SemiBold" FontSize="16"
-                        BorderThickness="0"
-                        Margin="0,0,0,24"
-                        HorizontalAlignment="Left">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#118938"/>
-                            <Setter Property="Foreground" Value="White"/>
-                            <Setter Property="BorderBrush" Value="#2B8E3F"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="FontSize" Value="16"/>
-                            <Setter Property="Padding" Value="12,4"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#2B8E3F"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <!-- UI final ajustada: cards más pequeñas y scroll en el listado -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="340" Margin="0,0,0,0">
-                    <ItemsControl ItemsSource="{Binding Roles}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,12"
-                                        Effect="{DynamicResource DropShadowEffect}" MinWidth="320" MaxWidth="600">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="🛡️" FontSize="28" VerticalAlignment="Top" Grid.Column="0" Margin="0,0,12,0"/>
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Nombre}" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="#504F4E"/>
-                                            <TextBlock Text="{Binding Descripcion}" FontFamily="Segoe UI" FontSize="13" Foreground="#706F6F" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                            <Button Content="Editar" Command="{Binding DataContext.AbrirEditarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                                                    Background="#2B8E3F" Foreground="White" BorderThickness="0" FontWeight="SemiBold" FontSize="13" Padding="8,2" Margin="0,0,6,0" MinWidth="70">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#2B8E3F"/>
-                                                        <Setter Property="Foreground" Value="White"/>
-                                                        <Setter Property="BorderBrush" Value="#118938"/>
-                                                        <Setter Property="BorderThickness" Value="0"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                        <Setter Property="FontSize" Value="13"/>
-                                                        <Setter Property="Padding" Value="8,2"/>
-                                                        <Setter Property="MinWidth" Value="70"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#118938"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
-                                            <Button Content="Eliminar" Command="{Binding DataContext.EliminarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                                                    Background="#C0392B" Foreground="White" BorderThickness="0" FontWeight="SemiBold" FontSize="13" Padding="8,2" MinWidth="70">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#C0392B"/>
-                                                        <Setter Property="Foreground" Value="White"/>
-                                                        <Setter Property="BorderBrush" Value="#A93226"/>
-                                                        <Setter Property="BorderThickness" Value="0"/>
-                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                        <Setter Property="FontSize" Value="13"/>
-                                                        <Setter Property="Padding" Value="8,2"/>
-                                                        <Setter Property="MinWidth" Value="70"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#A93226"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-                <TextBlock Text="{Binding MensajeEstado}" Foreground="#C0392B" FontWeight="SemiBold" FontSize="14" Margin="0,18,0,0"
-                           Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"/>
-            </StackPanel>
-        </Border>
-        <!-- Modal para crear/editar rol con asignación de permisos -->
-        <Grid x:Name="ModalRol" Visibility="{Binding IsModalRolVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#80000000" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Panel.ZIndex="99">
-            <Border Background="White" CornerRadius="12" Padding="32" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{DynamicResource DropShadowEffect}">
-                <StackPanel>
-                    <TextBlock Text="{Binding ModalTitulo}" FontSize="22" FontWeight="Bold" Foreground="#504F4E" Margin="0,0,0,18"/>
-                    <TextBox Text="{Binding RolEditado.Nombre, UpdateSourceTrigger=PropertyChanged}" FontSize="16" Margin="0,0,0,12" ToolTip="Nombre del rol"/>
-                    <TextBox Text="{Binding RolEditado.Descripcion, UpdateSourceTrigger=PropertyChanged}" FontSize="16" Margin="0,0,0,18" Height="60" TextWrapping="Wrap" ToolTip="Descripción"/>
-                    <TextBlock Text="Permisos por módulo" FontWeight="SemiBold" FontSize="16" Foreground="#504F4E" Margin="0,0,0,8"/>
-                    <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding PermisosPorModulo}">
+                    <Button Content="+ Nuevo Rol"
+                            Command="{Binding AbrirNuevoRolCommand}"
+                            Height="44" Width="180"
+                            Background="#118938"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            FontSize="16"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="0,0,0,0"
+                            Padding="0,0,0,0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Grid.Column="1"/>
+                </Grid>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <!-- Encabezados -->
+                        <Grid Grid.Row="0" Background="#F3F3F3" Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="160"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="" Grid.Column="0"/>
+                            <TextBlock Text="Nombre" Grid.Column="1" FontWeight="Bold" Padding="8,4"/>
+                            <TextBlock Text="Descripción" Grid.Column="2" FontWeight="Bold" Padding="8,4"/>
+                            <TextBlock Text="Acciones" Grid.Column="3" FontWeight="Bold" Padding="8,4" HorizontalAlignment="Center"/>
+                        </Grid>
+                        <!-- Filas de roles -->
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Roles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="{Binding Modulo}" FontWeight="Bold" Foreground="#2B8E3F" FontSize="15" Margin="0,0,0,4"/>
-                                        <ItemsControl ItemsSource="{Binding Permisos}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox Content="{Binding Nombre}" IsChecked="{Binding DataContext.PermisosSeleccionados, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource RoleCheckedConverter}, ConverterParameter={Binding IdPermiso}}"/>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
+                                    <Border Margin="0,0,0,10" Background="White" CornerRadius="6" Padding="0" Effect="{DynamicResource DropShadowEffect}">
+                                        <Grid Height="60" VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="3*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="🛡️" FontSize="22" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Nombre}" Grid.Column="1" FontSize="17" VerticalAlignment="Center" Padding="8,0" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Descripcion}" Grid.Column="2" FontSize="15" Foreground="#706F6F" TextWrapping="Wrap" VerticalAlignment="Center" Padding="8,0"/>
+                                            <!-- Botones de acción estilo Gestión de Personas -->
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                <Button Command="{Binding DataContext.AbrirEditarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Editar" Margin="0,0,8,0">
+                                                    <TextBlock Text="✏️" FontSize="18"/>
+                                                </Button>
+                                                <Button x:Name="BtnVerRol" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Ver detalles" Margin="0,0,8,0"
+                                                        Click="BtnVerRol_Click">
+                                                    <TextBlock Text="👁️" FontSize="18"/>
+                                                </Button>
+                                                <Button Command="{Binding DataContext.EliminarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Eliminar">
+                                                    <TextBlock Text="🗑️" FontSize="18"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
-                    <TextBlock Text="{Binding MensajeValidacion}" Foreground="#C0392B" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,12" Visibility="{Binding MensajeValidacion, Converter={StaticResource StringToVisibilityConverter}}"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Command="{Binding CancelarModalRolCommand}" Background="#706F6F" Foreground="White" Padding="10,4" Margin="0,0,8,0" MinWidth="80"/>
-                        <Button Content="Guardar" Command="{Binding GuardarModalRolCommand}" Background="#118938" Foreground="White" Padding="10,4" MinWidth="80"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Grid>
+                    </Grid>
+                </ScrollViewer>
+                <!-- Mensaje de estado/validación fuera del datagrid, abajo a la izquierda -->
+                <TextBlock Text="{Binding MensajeEstado}"
+                           Foreground="#C0392B"
+                           FontWeight="SemiBold" FontSize="14" Margin="48,0,0,12"
+                           VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                           Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"
+                           Panel.ZIndex="10"/>
+                
+                <!-- Modal para crear/editar rol con asignación de permisos -->
+                <Grid x:Name="ModalRol" Visibility="{Binding IsModalRolVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#80000000" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Panel.ZIndex="99">
+                    <Border Background="White" CornerRadius="12" Padding="32" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{DynamicResource DropShadowEffect}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ModalTitulo}" FontSize="22" FontWeight="Bold" Foreground="#504F4E" Margin="0,0,0,18"/>
+                            <TextBox Text="{Binding RolEditado.Nombre, UpdateSourceTrigger=PropertyChanged}" FontSize="16" Margin="0,0,0,12" ToolTip="Nombre del rol"/>
+                            <TextBox Text="{Binding RolEditado.Descripcion, UpdateSourceTrigger=PropertyChanged}" FontSize="16" Margin="0,0,0,18" Height="60" TextWrapping="Wrap" ToolTip="Descripción"/>
+                            <TextBlock Text="{Binding MensajeValidacion}" Foreground="#C0392B" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,12" Visibility="{Binding MensajeValidacion, Converter={StaticResource StringToVisibilityConverter}}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Cancelar" Command="{Binding CancelarModalRolCommand}" Background="#706F6F" Foreground="White" Padding="10,4" Margin="0,0,8,0" MinWidth="80"/>
+                                <Button Content="Guardar" Command="{Binding GuardarModalRolCommand}" Background="#118938" Foreground="White" Padding="10,4" MinWidth="80"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

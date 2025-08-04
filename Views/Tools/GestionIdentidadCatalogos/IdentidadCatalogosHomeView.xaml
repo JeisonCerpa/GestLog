@@ -79,14 +79,6 @@
                             <TextBlock Text="Gestiona los roles y sus permisos." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                             <Button Content="Gestionar Roles" Command="{Binding AbrirRolesCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
                         </StackPanel>
-                    </Border>                    <!-- Permisos Card -->
-                    <Border Style="{StaticResource ModernCardStyle}" Margin="12">
-                        <StackPanel>
-                            <TextBlock Text="🔑" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                            <TextBlock Text="Catálogo de Permisos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                            <TextBlock Text="Gestiona el catálogo base de permisos del sistema." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                            <Button Content="Gestionar Catálogo" Command="{Binding AbrirPermisosCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
-                        </StackPanel>
                     </Border>                    <!-- Gestión de Permisos de Rol Card -->
                     <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                         <StackPanel>

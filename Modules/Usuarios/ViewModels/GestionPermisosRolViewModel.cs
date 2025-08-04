@@ -69,6 +69,28 @@ namespace GestLog.Modules.Usuarios.ViewModels
         public ICommand CargarRolesCommand { get; }
         public ICommand CargarPermisosDelRolCommand { get; }
         public ICommand GuardarAsignacionesCommand { get; }
+        public ICommand AbrirVerRolCommand { get; }
+        public ICommand CerrarVerRolCommand { get; }
+
+        // === PROPIEDADES PARA VER DETALLES DE ROL ===
+        private bool _isModalVerRolVisible = false;
+        public bool IsModalVerRolVisible
+        {
+            get => _isModalVerRolVisible;
+            set { _isModalVerRolVisible = value; OnPropertyChanged(); }
+        }
+        private Rol? _rolVerDetalle;
+        public Rol? RolVerDetalle
+        {
+            get => _rolVerDetalle;
+            set { _rolVerDetalle = value; OnPropertyChanged(); }
+        }
+        private ObservableCollection<ModuloPermisos> _modulosPermisosVer = new();
+        public ObservableCollection<ModuloPermisos> ModulosPermisosVer
+        {
+            get => _modulosPermisosVer;
+            set { _modulosPermisosVer = value; OnPropertyChanged(); }
+        }
 
         // === CONSTRUCTOR ===
         public GestionPermisosRolViewModel(IRolService rolService, IPermisoService permisoService, IGestLogLogger logger)
@@ -81,6 +103,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             CargarRolesCommand = new AsyncRelayCommand(CargarRolesAsync);
             CargarPermisosDelRolCommand = new AsyncRelayCommand(CargarPermisosDelRolAsync);
             GuardarAsignacionesCommand = new AsyncRelayCommand(GuardarAsignacionesAsync);
+            AbrirVerRolCommand = new AsyncRelayCommand<Rol>(AbrirVerRolAsync);
+            CerrarVerRolCommand = new RelayCommand(() => IsModalVerRolVisible = false);
 
             // Cargar roles al inicializar
             _ = CargarRolesAsync();
@@ -210,6 +234,44 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 MensajeEstado = $"Error al guardar permisos: {ex.Message}";
                 _logger.LogError(ex, $"Error guardando permisos para rol {RolSeleccionado?.IdRol}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task AbrirVerRolAsync(Rol? rol)
+        {
+            if (rol == null) return;
+            RolVerDetalle = rol;
+            IsLoading = true;
+            try
+            {
+                // Obtener permisos asignados
+                var permisosAsignados = await _rolService.ObtenerPermisosDeRolAsync(rol.IdRol);
+                // Agrupar por módulo
+                var modulosAgrupados = permisosAsignados
+                    .GroupBy(p => p.Modulo)
+                    .Select(g => {
+                        var modulo = new ModuloPermisos
+                        {
+                            NombreModulo = g.Key
+                        };
+                        modulo.Permisos = new ObservableCollection<PermisoViewModel>(
+                            g.Select(p => new PermisoViewModel
+                            {
+                                Permiso = p,
+                                EstaAsignado = true,
+                                ParentModulo = modulo
+                            })
+                        );
+                        return modulo;
+                    })
+                    .OrderBy(m => m.NombreModulo)
+                    .ToList();
+                ModulosPermisosVer = new ObservableCollection<ModuloPermisos>(modulosAgrupados);
+                IsModalVerRolVisible = true;
             }
             finally
             {

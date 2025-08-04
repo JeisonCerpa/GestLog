@@ -260,37 +260,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        private void AbrirPermisos()
-        {
-            try
-            {
-                _logger.LogInformation("🧭 Navegando a Gestión de Permisos");
-                var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(PermisoManagementViewModel));
-                if (viewModel == null)
-                {
-                    _logger.LogWarning("❌ PermisoManagementViewModel no se pudo resolver desde DI");
-                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Permisos", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return;
-                }
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Permisos.PermisosView { DataContext = viewModel };
-                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
-                if (mainWindow != null)
-                {
-                    _logger.LogInformation("✅ Navegando a vista de Permisos");
-                    mainWindow.NavigateToView(view, "Gestión de Permisos");
-                }
-                else
-                {
-                    _logger.LogWarning("❌ MainWindow no encontrada");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error al abrir Gestión de Permisos");
-                System.Windows.MessageBox.Show($"Error al abrir Gestión de Permisos: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }        [RelayCommand]
         private void AbrirGestionPermisosRol()
         {
             try

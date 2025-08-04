@@ -39,12 +39,11 @@ namespace GestLog
             services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();
             services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios            services.AddTransient<UsuarioManagementViewModel>();
             services.AddTransient<RolManagementViewModel>();
-            services.AddTransient<PermisoManagementViewModel>();
-            services.AddTransient<GestionPermisosRolViewModel>();
             services.AddTransient<AuditoriaManagementViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddTransient<CatalogosManagementViewModel>();
+            services.AddTransient<GestionPermisosRolViewModel>();
 
             // Servicios y repositorios de Personas
             services.AddScoped<IPersonaService, PersonaService>();

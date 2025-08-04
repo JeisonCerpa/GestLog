@@ -44,7 +44,8 @@ namespace Modules.Usuarios.ViewModels
         public ICommand BuscarRolesCommand { get; }
         public ICommand AbrirNuevoRolCommand { get; }
         public ICommand AbrirEditarRolCommand { get; }
-        public ICommand EliminarRolCommand { get; }        public RolManagementViewModel(IRolService rolService)
+        public ICommand EliminarRolCommand { get; }
+        public ICommand AbrirVerRolCommand { get; }        public RolManagementViewModel(IRolService rolService)
         {
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Constructor iniciado");
             _rolService = rolService ?? throw new ArgumentNullException(nameof(rolService));
@@ -68,6 +69,7 @@ namespace Modules.Usuarios.ViewModels
             AbrirNuevoRolCommand = new RelayCommand(_ => { AbrirNuevoRol(); return Task.CompletedTask; }, _ => true);
             AbrirEditarRolCommand = new RelayCommand(param => { if (param is Rol rol) AbrirEditarRol(rol); return Task.CompletedTask; }, _ => true);
             EliminarRolCommand = new RelayCommand(async param => { if (param is Rol rol) await EliminarRolAsync(rol); }, _ => true);
+            AbrirVerRolCommand = new RelayCommand(async param => { if (param is Rol rol) await AbrirVerRolAsync(rol); }, _ => true);
             
             GuardarModalRolCommand = new RelayCommand(async _ => await GuardarModalRolAsync(), _ => true);
             CancelarModalRolCommand = new RelayCommand(_ => { IsModalRolVisible = false; MensajeValidacion = string.Empty; return Task.CompletedTask; }, _ => true);
@@ -350,6 +352,42 @@ namespace Modules.Usuarios.ViewModels
             {
                 MensajeEstado = $"Error al eliminar rol: {ex.Message}";
             }
+        }
+        // Modal de solo lectura para ver detalles
+        private bool _isModalVerRolVisible = false;
+        public bool IsModalVerRolVisible
+        {
+            get => _isModalVerRolVisible;
+            set { _isModalVerRolVisible = value; OnPropertyChanged(); }
+        }
+        private Rol? _rolVerDetalle;
+        public Rol? RolVerDetalle
+        {
+            get => _rolVerDetalle;
+            set { _rolVerDetalle = value; OnPropertyChanged(); }
+        }
+        private ObservableCollection<PermisosModuloGroup> _permisosPorModuloVer = new();
+        public ObservableCollection<PermisosModuloGroup> PermisosPorModuloVer
+        {
+            get => _permisosPorModuloVer;
+            set { _permisosPorModuloVer = value; OnPropertyChanged(); }
+        }
+        private async Task AbrirVerRolAsync(Rol rol)
+        {
+            if (rol == null) return;
+            RolVerDetalle = rol;
+            // Obtener permisos asignados
+            var permisos = await _rolService.ObtenerPermisosDeRolAsync(rol.IdRol);
+            // Agrupar por módulo
+            var grupos = permisos
+                .GroupBy(p => p.Modulo)
+                .Select(g => new PermisosModuloGroup
+                {
+                    Modulo = g.Key,
+                    Permisos = new ObservableCollection<Permiso>(g)
+                });
+            PermisosPorModuloVer = new ObservableCollection<PermisosModuloGroup>(grupos);
+            IsModalVerRolVisible = true;
         }
         // Implementación de RelayCommand local
         public class RelayCommand : ICommand

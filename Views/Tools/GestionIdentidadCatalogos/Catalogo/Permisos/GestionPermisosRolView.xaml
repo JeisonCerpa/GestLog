@@ -126,193 +126,158 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#F5F5F5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <!-- Título -->
-        <TextBlock Grid.Row="0" 
-                   Text="🔐 Gestión de Permisos por Rol"
-                   FontSize="32" FontWeight="Bold"
-                   Foreground="#333333"
-                   Margin="24,20,24,10"
-                   HorizontalAlignment="Center"/>
-
-        <!-- Panel de selección de rol -->
-        <Border Grid.Row="1" 
-                Background="White" 
-                BorderBrush="#E0E0E0" 
-                BorderThickness="1" 
-                CornerRadius="8" 
-                Margin="24,10,24,20" 
-                Padding="20">
-            <StackPanel>
-                <TextBlock Text="Seleccionar Rol:" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <Grid>
+    <Grid Background="#FAFAFA">
+        <Border Background="White" CornerRadius="8" Padding="32" Margin="40"
+                Effect="{DynamicResource DropShadowEffect}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,24">
+                    <TextBlock Text="🔐" FontSize="40" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock Text="Gestión de Permisos por Rol" FontFamily="Segoe UI" FontSize="28" FontWeight="Bold" Foreground="#504F4E"/>
+                        <TextBlock Text="Asigna permisos a los roles del sistema" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+                    </StackPanel>
+                </StackPanel>
+                <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="320"/>
+                        <ColumnDefinition Width="16"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>                    <ComboBox Grid.Column="0"
-                              ItemsSource="{Binding Roles}"
-                              SelectedItem="{Binding RolSeleccionado}"
-                              FontSize="14"
-                              Padding="12,8"
-                              Margin="0,0,10,0"
-                              IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding Descripcion}" FontSize="12" Foreground="#666666"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-
-                    <Button Grid.Column="1"
-                            Content="🔄 Actualizar Roles"
-                            Command="{Binding CargarRolesCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Margin="0,0,10,0"/>
-
-                    <Button Grid.Column="2"
-                            Content="💾 Guardar Permisos"
-                            Command="{Binding GuardarAsignacionesCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Background="#4CAF50"
-                            IsEnabled="{Binding RolSeleccionado, Converter={StaticResource NullToBoolConverter}}"/>
-                </Grid>
-            </StackPanel>
-        </Border>
-
-        <!-- Área de permisos por módulos -->
-        <ScrollViewer Grid.Row="2" 
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled"
-                      Margin="24,0,24,20">
-            <StackPanel>
-                <!-- Mensaje de estado -->
-                <TextBlock Text="{Binding MensajeEstado}"
-                           FontSize="14"
-                           Margin="0,0,0,10"
-                           HorizontalAlignment="Center"
-                           Foreground="#666666"/>
-
-                <!-- Indicador de carga -->
-                <ProgressBar IsIndeterminate="{Binding IsLoading}"
-                             Height="4"
-                             Margin="0,0,0,20"
-                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                <!-- Lista de módulos -->
-                <ItemsControl ItemsSource="{Binding ModulosPermisos}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource ModuleCardStyle}">
-                                <StackPanel>
-                                    <!-- Header del módulo -->
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                            <TextBlock Text="📦" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding NombreModulo}" 
-                                                       FontSize="18" FontWeight="Bold" 
-                                                       Foreground="#333333"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>                                        <TextBlock Grid.Column="1" 
-                                                   Text="{Binding Permisos.Count, StringFormat=\{0\} permisos}"
-                                                   FontSize="12" 
-                                                   Foreground="#666666"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,15,0"/>                                        <ToggleButton Grid.Column="2"
-                                                      Style="{StaticResource ModernToggleButton}"
-                                                      IsChecked="{Binding TodosAsignados, Mode=TwoWay}"
-                                                      ToolTip="Activar/Desactivar todos los permisos del módulo">
-                                            <ToggleButton.Resources>
-                                                <Style TargetType="ToggleButton" BasedOn="{StaticResource ModernToggleButton}">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding TodosAsignados}" Value="{x:Null}">
-                                                            <Setter Property="Background" Value="#FFD700"/><!-- Amarillo para indeterminado -->
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </ToggleButton.Resources>
-                                        </ToggleButton>
-                                    </Grid>
-
-                                    <!-- Lista de permisos del módulo -->
-                                    <ItemsControl ItemsSource="{Binding Permisos}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#FAFAFA" 
-                                                        BorderBrush="#E8E8E8" 
-                                                        BorderThickness="1" 
-                                                        CornerRadius="6" 
-                                                        Margin="0,2" 
-                                                        Padding="12,8">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Text="{Binding Permiso.Nombre}" 
-                                                                       FontSize="14" 
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="#333333"/>
-                                                            <TextBlock Text="{Binding Permiso.Descripcion}" 
-                                                                       FontSize="12" 
-                                                                       Foreground="#666666"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,2,0,0"/>
-                                                        </StackPanel>                                                        <ToggleButton Grid.Column="1"
-                                                                      Style="{StaticResource ModernToggleButton}"
-                                                                      IsChecked="{Binding EstaAsignado, Mode=TwoWay}"
-                                                                      ToolTip="Activar/Desactivar este permiso"/>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <!-- Mensaje cuando no hay rol seleccionado -->
-                <Border Background="White" 
-                        BorderBrush="#E0E0E0" 
-                        BorderThickness="1" 
-                        CornerRadius="8" 
-                        Padding="40"
-                        Visibility="{Binding RolSeleccionado, Converter={StaticResource NullToVisibilityConverter}}">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Selecciona un rol para gestionar sus permisos" 
-                                   FontSize="18" 
+                    </Grid.ColumnDefinitions>
+                    <!-- Listado de roles -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Stretch">
+                        <TextBlock Text="Roles" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Height="340">
+                            <ItemsControl ItemsSource="{Binding Roles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#F7F7F7" CornerRadius="6" Padding="10" Margin="0,0,0,8" BorderBrush="#E0E0E0" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="🛡️" FontSize="20" Margin="0,0,8,0"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Nombre}" FontWeight="Bold" FontSize="15"/>
+                                                    <TextBlock Text="{Binding Descripcion}" FontSize="12" Foreground="#888"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <Button Command="{Binding DataContext.AbrirVerRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Ver" Width="28" Height="28" Background="#1976D2" Foreground="White" BorderThickness="0" Margin="0,0,4,0">
+                                                        <TextBlock Text="👁️" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.AbrirEditarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Editar" Width="28" Height="28" Background="#2B8E3F" Foreground="White" BorderThickness="0" Margin="0,0,4,0">
+                                                        <TextBlock Text="✏️" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.EliminarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Eliminar" Width="28" Height="28" Background="#C0392B" Foreground="White" BorderThickness="0">
+                                                        <TextBlock Text="🗑️" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                    <!-- Espaciador -->
+                    <Grid Grid.Column="1"/>
+                    <!-- Área de permisos y mensaje de estado -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Stretch">
+                        <TextBlock Text="{Binding MensajeEstado}" Foreground="#C0392B" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12" Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"/>
+                        <!-- Aquí va el área de asignación de permisos existente -->
+                        <!-- Mensaje de estado -->
+                        <TextBlock Text="{Binding MensajeEstado}"
+                                   FontSize="14"
+                                   Margin="0,0,0,10"
                                    HorizontalAlignment="Center"
                                    Foreground="#666666"/>
-                        <TextBlock Text="Utiliza el selector de rol en la parte superior para comenzar" 
-                                   FontSize="14" 
-                                   HorizontalAlignment="Center"
-                                   Foreground="#999999"
-                                   Margin="0,5,0,0"/>
+
+                        <!-- Indicador de carga -->
+                        <ProgressBar IsIndeterminate="{Binding IsLoading}"
+                                     Height="4"
+                                     Margin="0,0,0,20"
+                                     Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <!-- Lista de módulos -->
+                        <ItemsControl ItemsSource="{Binding ModulosPermisos}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource ModuleCardStyle}">
+                                        <StackPanel>
+                                            <!-- Header del módulo -->
+                                            <Grid Margin="0,0,0,15">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <TextBlock Text="📦" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding NombreModulo}" FontSize="18" FontWeight="Bold" Foreground="#333333" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding Permisos.Count, StringFormat={}{0} permisos}" FontSize="12" Foreground="#666666" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                                                <ToggleButton Grid.Column="2" Style="{StaticResource ModernToggleButton}" IsChecked="{Binding TodosAsignados, Mode=TwoWay}" ToolTip="Activar/Desactivar todos los permisos del módulo">
+                                                    <ToggleButton.Resources>
+                                                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ModernToggleButton}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding TodosAsignados}" Value="{x:Null}">
+                                                                    <Setter Property="Background" Value="#FFD700"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ToggleButton.Resources>
+                                                </ToggleButton>
+                                            </Grid>
+                                            <!-- Lista de permisos del módulo -->
+                                            <ItemsControl ItemsSource="{Binding Permisos}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#FAFAFA" BorderBrush="#E8E8E8" BorderThickness="1" CornerRadius="6" Margin="0,2,0,0" Padding="12,8">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Grid.Column="0">
+                                                                    <TextBlock Text="{Binding Permiso.Nombre}" FontSize="14" FontWeight="SemiBold" Foreground="#333333"/>
+                                                                    <TextBlock Text="{Binding Permiso.Descripcion}" FontSize="12" Foreground="#666666" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                                </StackPanel>
+                                                                <ToggleButton Grid.Column="1" Style="{StaticResource ModernToggleButton}" IsChecked="{Binding EstaAsignado, Mode=TwoWay}" ToolTip="Activar/Desactivar este permiso"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Mensaje cuando no hay rol seleccionado -->
+                        <Border Background="White" 
+                                BorderBrush="#E0E0E0" 
+                                BorderThickness="1" 
+                                CornerRadius="8" 
+                                Padding="40"
+                                Visibility="{Binding RolSeleccionado, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                                <TextBlock Text="Selecciona un rol para gestionar sus permisos" 
+                                           FontSize="18" 
+                                           HorizontalAlignment="Center"
+                                           Foreground="#666666"/>
+                                <TextBlock Text="Utiliza el selector de rol en la parte superior para comenzar" 
+                                           FontSize="14" 
+                                           HorizontalAlignment="Center"
+                                           Foreground="#999999"
+                                           Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
+                </Grid>
+            </Grid>
+        </Border>
 
         <!-- Footer con información -->
         <Border Grid.Row="3" 
@@ -337,5 +302,40 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- MODAL SOLO LECTURA: VER DETALLES DE ROL -->
+        <Grid x:Name="ModalVerRol" Visibility="{Binding IsModalVerRolVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#80000000" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Panel.ZIndex="99">
+            <Border Background="White" CornerRadius="12" Padding="32" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{DynamicResource DropShadowEffect}">
+                <StackPanel>
+                    <TextBlock Text="Detalles del Rol" FontSize="22" FontWeight="Bold" Foreground="#504F4E" Margin="0,0,0,18"/>
+                    <TextBlock Text="Nombre" FontWeight="SemiBold" FontSize="14" Foreground="#888"/>
+                    <TextBlock Text="{Binding RolVerDetalle.Nombre}" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBlock Text="Descripción" FontWeight="SemiBold" FontSize="14" Foreground="#888"/>
+                    <TextBlock Text="{Binding RolVerDetalle.Descripcion}" FontSize="15" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                    <TextBlock Text="Permisos asignados" FontWeight="SemiBold" FontSize="15" Foreground="#504F4E" Margin="0,0,0,8"/>
+                    <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ModulosPermisosVer}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="{Binding NombreModulo}" FontWeight="Bold" Foreground="#2B8E3F" FontSize="15" Margin="0,0,0,4"/>
+                                        <ItemsControl ItemsSource="{Binding Permisos}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="• {Binding Permiso.Nombre}" FontSize="14" Margin="12,0,0,0"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                        <Button Content="Cerrar" Command="{Binding CerrarVerRolCommand}" Background="#706F6F" Foreground="White" Padding="10,4" MinWidth="80"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
