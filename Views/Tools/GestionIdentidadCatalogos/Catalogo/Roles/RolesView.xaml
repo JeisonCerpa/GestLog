@@ -6,11 +6,11 @@
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
     <Grid Background="#FAFAFA">
-        <Border Background="White" CornerRadius="8" Padding="32" Margin="40" Effect="{DynamicResource DropShadowEffect}">
-            <Grid>
+        <Border Background="White" CornerRadius="8" Padding="32" Margin="40" Effect="{DynamicResource DropShadowEffect}">            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <!-- Header con título y botón alineado a la derecha -->
                 <Grid Margin="0,0,0,24">
@@ -93,15 +93,14 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </Grid>
-                </ScrollViewer>
-                <!-- Mensaje de estado/validación fuera del datagrid, abajo a la izquierda -->
-                <TextBlock Text="{Binding MensajeEstado}"
+                    </Grid>                </ScrollViewer>
+                
+                <!-- Mensaje de estado/validación debajo de la tabla de roles -->
+                <TextBlock Grid.Row="2" Text="{Binding MensajeEstado}"
                            Foreground="#C0392B"
-                           FontWeight="SemiBold" FontSize="14" Margin="48,0,0,12"
-                           VerticalAlignment="Bottom" HorizontalAlignment="Left"
-                           Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"
-                           Panel.ZIndex="10"/>
+                           FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"
+                           HorizontalAlignment="Left"
+                           Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"/>
                 
                 <!-- Modal para crear/editar rol con asignación de permisos -->
                 <Grid x:Name="ModalRol" Visibility="{Binding IsModalRolVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Background="#80000000" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Panel.ZIndex="99">
