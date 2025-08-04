@@ -8,6 +8,7 @@ namespace GestLog.Modules.Usuarios.Models
         public Guid IdRol { get; set; }
         public required string Nombre { get; set; }
         public required string Descripcion { get; set; }
+        // Permisos asignados al rol, por módulo
         public List<Permiso> Permisos { get; set; } = new();
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    [Migration("20250730204346_RolesPermisosSoporte")]
-    partial class RolesPermisosSoporte
+    [Migration("20250801160900_ModuloPermisosSync")]
+    partial class ModuloPermisosSync
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -278,6 +278,10 @@ namespace GestLog.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Modulo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

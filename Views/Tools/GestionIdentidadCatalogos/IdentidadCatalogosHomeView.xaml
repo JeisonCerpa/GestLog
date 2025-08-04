@@ -29,14 +29,12 @@
                             <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.10"/>
                         </Border.Effect>
                         <TextBlock Text="🆔" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
+                    </Border>                    <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" Foreground="#118938"/>
-                        <TextBlock Text="Personas, usuarios, cargos y tipos de documento. (Roles y permisos: próximamente)" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
+                        <TextBlock Text="Personas, usuarios, cargos, tipos de documento, roles y permisos" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
                     </StackPanel>
-                </StackPanel>
-                <!-- Cards Grid -->
-                <UniformGrid Columns="4" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
+                </StackPanel>                <!-- Cards Grid -->
+                <UniformGrid Columns="3" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
                     <!-- Personas Card -->
                     <Border Style="{StaticResource ModernCardStyle}" Margin="12">
                         <StackPanel>
@@ -71,6 +69,31 @@
                             <TextBlock Text="Tipos de Documento" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
                             <TextBlock Text="Gestiona los tipos de documento registrados." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                             <Button Content="Gestionar Tipos de Documento" Command="{Binding AbrirTiposDocumentoCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- Roles Card -->
+                    <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                        <StackPanel>
+                            <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Roles" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Gestiona los roles y sus permisos." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Roles" Command="{Binding AbrirRolesCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>                    <!-- Permisos Card -->
+                    <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                        <StackPanel>
+                            <TextBlock Text="🔑" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Catálogo de Permisos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Gestiona el catálogo base de permisos del sistema." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Gestionar Catálogo" Command="{Binding AbrirPermisosCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>                    <!-- Gestión de Permisos de Rol Card -->
+                    <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                        <StackPanel>
+                            <TextBlock Text="🔧" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Text="Asignación de Permisos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                            <TextBlock Text="Asignar permisos a roles dinámicamente con toggle switches." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Asignar Permisos" Command="{Binding AbrirGestionPermisosRolCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </UniformGrid>

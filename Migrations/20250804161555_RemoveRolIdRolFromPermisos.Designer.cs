@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    [Migration("20250730204346_RolesPermisosSoporte")]
-    partial class RolesPermisosSoporte
+    [Migration("20250804161555_RemoveRolIdRolFromPermisos")]
+    partial class RemoveRolIdRolFromPermisos
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -281,6 +281,10 @@ namespace GestLog.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -288,9 +292,14 @@ namespace GestLog.Migrations
                     b.Property<Guid?>("PermisoPadreId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("RolIdRol")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("IdPermiso");
 
                     b.HasIndex("PermisoPadreId");
+
+                    b.HasIndex("RolIdRol");
 
                     b.ToTable("Permisos", (string)null);
                 });
@@ -454,6 +463,10 @@ namespace GestLog.Migrations
                         .WithMany("SubPermisos")
                         .HasForeignKey("PermisoPadreId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GestLog.Modules.Usuarios.Models.Rol", null)
+                        .WithMany("Permisos")
+                        .HasForeignKey("RolIdRol");
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.RolPermiso", b =>

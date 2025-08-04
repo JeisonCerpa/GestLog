@@ -3,44 +3,88 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.Usuarios.Models;
 using Modules.Usuarios.Interfaces;
+using GestLog.Modules.DatabaseConnection;
+using Microsoft.EntityFrameworkCore;
+using Modules.Usuarios.Helpers;
 
 namespace Modules.Usuarios.Services
 {
     public class PermisoRepository : IPermisoRepository
     {
-        public PermisoRepository()
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+
+        public PermisoRepository(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            // Inicialización de recursos de datos
+            _dbContextFactory = dbContextFactory;
         }
 
-        public Task<Permiso> AgregarAsync(Permiso permiso)
+        public async Task<Permiso> AgregarAsync(Permiso permiso)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            if (permiso == null)
+                throw new ArgumentNullException(nameof(permiso), "El permiso no puede ser nulo");
+            if (string.IsNullOrWhiteSpace(permiso.Nombre))
+                throw new ArgumentException("El nombre del permiso es obligatorio", nameof(permiso.Nombre));
+            if (await dbContext.Permisos.AnyAsync(p => p.Nombre == permiso.Nombre))
+                throw new PermisoDuplicadoException(permiso.Nombre);
+            permiso.IdPermiso = Guid.NewGuid();
+            dbContext.Permisos.Add(permiso);
+            await dbContext.SaveChangesAsync();
+            return permiso;
         }
 
-        public Task<Permiso> ActualizarAsync(Permiso permiso)
+        public async Task<Permiso> ActualizarAsync(Permiso permiso)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var existente = await dbContext.Permisos.FindAsync(permiso.IdPermiso);
+            if (existente == null)
+                throw new PermisoNotFoundException(permiso.IdPermiso);
+            if (await dbContext.Permisos.AnyAsync(p => p.Nombre == permiso.Nombre && p.IdPermiso != permiso.IdPermiso))
+                throw new PermisoDuplicadoException(permiso.Nombre);
+            existente.Nombre = permiso.Nombre;
+            existente.Descripcion = permiso.Descripcion;
+            existente.PermisoPadreId = permiso.PermisoPadreId;
+            await dbContext.SaveChangesAsync();
+            return existente;
         }
 
-        public Task EliminarAsync(Guid idPermiso)
+        public async Task EliminarAsync(Guid idPermiso)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var existente = await dbContext.Permisos.FindAsync(idPermiso);
+            if (existente == null)
+                throw new PermisoNotFoundException(idPermiso);
+            dbContext.Permisos.Remove(existente);
+            await dbContext.SaveChangesAsync();
         }
 
-        public Task<Permiso> ObtenerPorIdAsync(Guid idPermiso)
+        public async Task<Permiso> ObtenerPorIdAsync(Guid idPermiso)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var permiso = await dbContext.Permisos.FindAsync(idPermiso);
+            if (permiso == null)
+                throw new PermisoNotFoundException(idPermiso);
+            return permiso;
         }
 
-        public Task<IEnumerable<Permiso>> ObtenerTodosAsync()
+        public async Task<IEnumerable<Permiso>> ObtenerTodosAsync()
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Permisos.ToListAsync();
         }
 
-        public Task<bool> ExisteNombreAsync(string nombre)
+        public async Task<bool> ExisteNombreAsync(string nombre)
         {
-            throw new NotImplementedException();
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Permisos.AnyAsync(p => p.Nombre == nombre);
+        }
+
+        public async Task<IEnumerable<Permiso>> ObtenerPorModuloAsync(string modulo)
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Permisos
+                .Where(p => p.Modulo == modulo)
+                .ToListAsync();
         }
     }
 }

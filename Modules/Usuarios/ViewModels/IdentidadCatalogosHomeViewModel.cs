@@ -225,5 +225,103 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 System.Windows.MessageBox.Show($"Error al abrir Gestión de Tipos de Documento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
+
+        [RelayCommand]
+        private void AbrirRoles()
+        {
+            try
+            {
+                _logger.LogInformation("🧭 Navegando a Gestión de Roles");
+                var serviceProvider = LoggingService.GetServiceProvider();
+                var viewModel = serviceProvider.GetService(typeof(RolManagementViewModel));
+                if (viewModel == null)
+                {
+                    _logger.LogWarning("❌ RolManagementViewModel no se pudo resolver desde DI");
+                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Roles", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Roles.RolesView { DataContext = viewModel };
+                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
+                if (mainWindow != null)
+                {
+                    _logger.LogInformation("✅ Navegando a vista de Roles");
+                    mainWindow.NavigateToView(view, "Gestión de Roles");
+                }
+                else
+                {
+                    _logger.LogWarning("❌ MainWindow no encontrada");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al abrir Gestión de Roles");
+                System.Windows.MessageBox.Show($"Error al abrir Gestión de Roles: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand]
+        private void AbrirPermisos()
+        {
+            try
+            {
+                _logger.LogInformation("🧭 Navegando a Gestión de Permisos");
+                var serviceProvider = LoggingService.GetServiceProvider();
+                var viewModel = serviceProvider.GetService(typeof(PermisoManagementViewModel));
+                if (viewModel == null)
+                {
+                    _logger.LogWarning("❌ PermisoManagementViewModel no se pudo resolver desde DI");
+                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Permisos", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Permisos.PermisosView { DataContext = viewModel };
+                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
+                if (mainWindow != null)
+                {
+                    _logger.LogInformation("✅ Navegando a vista de Permisos");
+                    mainWindow.NavigateToView(view, "Gestión de Permisos");
+                }
+                else
+                {
+                    _logger.LogWarning("❌ MainWindow no encontrada");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al abrir Gestión de Permisos");
+                System.Windows.MessageBox.Show($"Error al abrir Gestión de Permisos: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }        [RelayCommand]
+        private void AbrirGestionPermisosRol()
+        {
+            try
+            {
+                _logger.LogInformation("🧭 Navegando a Gestión de Permisos por Rol");
+                var serviceProvider = LoggingService.GetServiceProvider();
+                var viewModel = serviceProvider.GetService(typeof(GestionPermisosRolViewModel));
+                if (viewModel == null)
+                {
+                    _logger.LogWarning("❌ GestionPermisosRolViewModel no se pudo resolver desde DI");
+                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Gestión de Permisos por Rol", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Permisos.GestionPermisosRolView();
+                view.DataContext = viewModel;
+                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
+                if (mainWindow != null)
+                {
+                    _logger.LogInformation("✅ Navegando a vista de Gestión de Permisos por Rol");
+                    mainWindow.NavigateToView(view as System.Windows.Controls.UserControl, "Gestión de Permisos por Rol");
+                }
+                else
+                {
+                    _logger.LogWarning("❌ MainWindow no encontrada");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al abrir Gestión de Permisos por Rol");
+                System.Windows.MessageBox.Show($"Error al abrir Gestión de Permisos por Rol: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     }
 }

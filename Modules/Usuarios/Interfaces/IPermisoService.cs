@@ -16,5 +16,6 @@ namespace Modules.Usuarios.Interfaces
         Task<Permiso> ObtenerPermisoPorIdAsync(Guid idPermiso);
         Task<IEnumerable<Permiso>> ObtenerTodosAsync();
         Task<bool> ExisteNombreAsync(string nombre);
+        Task<IEnumerable<Permiso>> ObtenerPorModuloAsync(string modulo);
     }
 }

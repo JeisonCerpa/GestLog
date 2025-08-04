@@ -1,24 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using GestLog.Modules.Usuarios.Models;
 using GestLog.Services.Core.Logging;
 using Modules.Usuarios.Helpers;
 using Modules.Usuarios.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using GestLog.Modules.DatabaseConnection;
 
 namespace Modules.Usuarios.Services
-{
-    public class RolService : IRolService
+{    public class RolService : IRolService
     {
         private readonly IRolRepository _rolRepository;
         private readonly IGestLogLogger _logger;
         private readonly IAuditoriaService _auditoriaService;
+        private readonly IRolPermisoRepository _rolPermisoRepository;
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
 
-        public RolService(IRolRepository rolRepository, IGestLogLogger logger, IAuditoriaService auditoriaService)
+        public RolService(IRolRepository rolRepository, IGestLogLogger logger, IAuditoriaService auditoriaService, IRolPermisoRepository rolPermisoRepository, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _rolRepository = rolRepository;
             _logger = logger;
             _auditoriaService = auditoriaService;
+            _rolPermisoRepository = rolPermisoRepository;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<Rol> CrearRolAsync(Rol rol)
@@ -142,17 +148,32 @@ namespace Modules.Usuarios.Services
                 _logger.LogError(ex, $"Error getting role: {ex.Message}");
                 throw;
             }
-        }
-
-        public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
+        }        public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
         {
             try
             {
-                return await _rolRepository.ObtenerTodosAsync();
+                _logger.LogInformation("RolService.ObtenerTodosAsync: Iniciando consulta de roles");
+                System.Diagnostics.Debug.WriteLine("RolService.ObtenerTodosAsync: Iniciando consulta de roles");
+                
+                var roles = await _rolRepository.ObtenerTodosAsync();
+                var rolesLista = roles.ToList(); // Materializar la consulta para obtener el count
+                
+                _logger.LogInformation($"RolService.ObtenerTodosAsync: Se obtuvieron {rolesLista.Count} roles de la base de datos");
+                System.Diagnostics.Debug.WriteLine($"RolService.ObtenerTodosAsync: Se obtuvieron {rolesLista.Count} roles de la base de datos");
+                
+                // Log de cada rol para debugging
+                foreach (var rol in rolesLista)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Rol encontrado: ID={rol.IdRol}, Nombre='{rol.Nombre}', Descripcion='{rol.Descripcion}'");
+                }
+                
+                return rolesLista;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error getting all roles: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ERROR en RolService.ObtenerTodosAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 throw;
             }
         }
@@ -160,6 +181,36 @@ namespace Modules.Usuarios.Services
         public async Task<bool> ExisteNombreAsync(string nombre)
         {
             return await _rolRepository.ExisteNombreAsync(nombre);
+        }
+
+        public async Task AsignarPermisosARolAsync(Guid idRol, IEnumerable<Guid> permisosIds)
+        {
+            await _rolPermisoRepository.AsignarPermisosAsync(idRol, permisosIds);        _logger.LogInformation($"Permisos asignados al rol {idRol}: {string.Join(",", permisosIds)}");
+        }
+        
+        public async Task<IEnumerable<Permiso>> ObtenerPermisosDeRolAsync(Guid idRol)
+        {
+            try
+            {
+                var rolPermisos = await _rolPermisoRepository.ObtenerPorRolAsync(idRol);
+                var permisosIds = rolPermisos.Select(rp => rp.IdPermiso).ToList();
+                
+                if (!permisosIds.Any())
+                    return new List<Permiso>();
+                
+                // Obtener permisos completos de la base de datos
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var permisos = await dbContext.Permisos
+                    .Where(p => permisosIds.Contains(p.IdPermiso))
+                    .ToListAsync();
+                
+                return permisos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting permissions for role {idRol}: {ex.Message}");
+                throw;
+            }
         }
     }
 }

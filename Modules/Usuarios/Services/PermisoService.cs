@@ -154,5 +154,18 @@ namespace Modules.Usuarios.Services
         {
             return await _permisoRepository.ExisteNombreAsync(nombre);
         }
+
+        public async Task<IEnumerable<Permiso>> ObtenerPorModuloAsync(string modulo)
+        {
+            try
+            {
+                return await _permisoRepository.ObtenerPorModuloAsync(modulo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting permissions by module: {ex.Message}");
+                throw;
+            }
+        }
     }
 }

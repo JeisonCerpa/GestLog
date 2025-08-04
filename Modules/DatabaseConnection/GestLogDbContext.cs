@@ -178,7 +178,8 @@ namespace GestLog.Modules.DatabaseConnection
                 {
                     IdPermiso = Guid.NewGuid(),
                     Nombre = "AdministrarSistema",
-                    Descripcion = "Permite acceso total al sistema"
+                    Descripcion = "Permite acceso total al sistema",
+                    Modulo = "Sistema" // Inicialización obligatoria
                 };
                 Permisos.Add(permisoAdmin);
                 SaveChanges();

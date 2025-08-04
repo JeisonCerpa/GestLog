@@ -6,6 +6,7 @@ using GestLog.Modules.Usuarios.Models;
 using Modules.Usuarios.Interfaces;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Modules.Usuarios.Helpers;
 
 namespace Modules.Usuarios.ViewModels
 {
@@ -18,6 +19,12 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _permisoSeleccionado;
             set { _permisoSeleccionado = value; OnPropertyChanged(); }
+        }
+        private string _mensajeEstado = string.Empty;
+        public string MensajeEstado
+        {
+            get => _mensajeEstado;
+            set { _mensajeEstado = value; OnPropertyChanged(); }
         }
         public ICommand RegistrarPermisoCommand { get; }
         public ICommand EditarPermisoCommand { get; }
@@ -36,10 +43,96 @@ namespace Modules.Usuarios.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName ?? string.Empty));
         }
-        private async Task RegistrarPermisoAsync() { await Task.CompletedTask; }
-        private async Task EditarPermisoAsync() { await Task.CompletedTask; }
-        private async Task DesactivarPermisoAsync() { await Task.CompletedTask; }
-        private async Task BuscarPermisosAsync() { await Task.CompletedTask; }
+        private async Task RegistrarPermisoAsync()
+        {
+            MensajeEstado = string.Empty;
+            try
+            {
+                var nuevoPermiso = new Permiso
+                {
+                    Nombre = PermisoSeleccionado?.Nombre ?? string.Empty,
+                    Descripcion = PermisoSeleccionado?.Descripcion ?? string.Empty,
+                    PermisoPadreId = PermisoSeleccionado?.PermisoPadreId,
+                    Modulo = PermisoSeleccionado?.Modulo ?? string.Empty // Inicialización obligatoria
+                };
+                var permisoCreado = await _permisoService.CrearPermisoAsync(nuevoPermiso);
+                Permisos.Add(permisoCreado);
+                MensajeEstado = $"Permiso '{permisoCreado.Nombre}' creado exitosamente.";
+            }
+            catch (PermisoDuplicadoException ex)
+            {
+                MensajeEstado = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al crear permiso: {ex.Message}";
+            }
+        }
+        private async Task EditarPermisoAsync()
+        {
+            MensajeEstado = string.Empty;
+            if (PermisoSeleccionado == null)
+            {
+                MensajeEstado = "Debe seleccionar un permiso para editar.";
+                return;
+            }
+            try
+            {
+                var permisoEditado = await _permisoService.EditarPermisoAsync(PermisoSeleccionado);
+                var idx = Permisos.IndexOf(PermisoSeleccionado);
+                if (idx >= 0)
+                    Permisos[idx] = permisoEditado;
+                MensajeEstado = $"Permiso '{permisoEditado.Nombre}' editado exitosamente.";
+            }
+            catch (PermisoDuplicadoException ex)
+            {
+                MensajeEstado = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al editar permiso: {ex.Message}";
+            }
+        }
+        private async Task DesactivarPermisoAsync()
+        {
+            MensajeEstado = string.Empty;
+            if (PermisoSeleccionado == null)
+            {
+                MensajeEstado = "Debe seleccionar un permiso para eliminar.";
+                return;
+            }
+            try
+            {
+                await _permisoService.EliminarPermisoAsync(PermisoSeleccionado.IdPermiso);
+                Permisos.Remove(PermisoSeleccionado);
+                MensajeEstado = $"Permiso eliminado correctamente.";
+                PermisoSeleccionado = null;
+            }
+            catch (PermisoNotFoundException ex)
+            {
+                MensajeEstado = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al eliminar permiso: {ex.Message}";
+            }
+        }
+        private async Task BuscarPermisosAsync()
+        {
+            MensajeEstado = string.Empty;
+            try
+            {
+                Permisos.Clear();
+                var permisos = await _permisoService.ObtenerTodosAsync();
+                foreach (var permiso in permisos)
+                    Permisos.Add(permiso);
+                MensajeEstado = $"Se cargaron {Permisos.Count} permisos.";
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al cargar permisos: {ex.Message}";
+            }
+        }
 
         // Implementación de RelayCommand local
         public class RelayCommand : ICommand

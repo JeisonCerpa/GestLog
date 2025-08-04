@@ -1,0 +1,341 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Permisos.GestionPermisosRolView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:GestLog.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1200">
+    
+    <UserControl.Resources>
+        <!-- Convertidores -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:CountActivePermissionsConverter x:Key="CountActivePermissionsConverter"/>
+        
+        <!-- Estilo para Toggle Switch -->
+        <Style x:Key="ModernToggleButton" TargetType="ToggleButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid>
+                            <Border x:Name="SwitchBorder" 
+                                    Width="50" Height="26" 
+                                    CornerRadius="13"
+                                    Background="#E0E0E0"
+                                    BorderThickness="1"
+                                    BorderBrush="#CCCCCC">
+                                <Ellipse x:Name="SwitchThumb" 
+                                         Width="20" Height="20" 
+                                         Fill="White"
+                                         HorizontalAlignment="Left"
+                                         Margin="3,0,0,0"
+                                         Stroke="#CCCCCC"
+                                         StrokeThickness="1">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform x:Name="ThumbTransform" X="0"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="SwitchBorder"
+                                                          Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                          To="#4CAF50" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                           Storyboard.TargetProperty="X"
+                                                           To="24" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="SwitchBorder"
+                                                          Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                          To="#E0E0E0" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform"
+                                                           Storyboard.TargetProperty="X"
+                                                           To="0" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SwitchBorder" Property="BorderBrush" Value="#999999"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo para botones principales -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1976D2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                                <Setter Property="Foreground" Value="#888888"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo para tarjetas de módulos -->
+        <Style x:Key="ModuleCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.1" Color="Black"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F5F5F5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Título -->
+        <TextBlock Grid.Row="0" 
+                   Text="🔐 Gestión de Permisos por Rol"
+                   FontSize="32" FontWeight="Bold"
+                   Foreground="#333333"
+                   Margin="24,20,24,10"
+                   HorizontalAlignment="Center"/>
+
+        <!-- Panel de selección de rol -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                BorderBrush="#E0E0E0" 
+                BorderThickness="1" 
+                CornerRadius="8" 
+                Margin="24,10,24,20" 
+                Padding="20">
+            <StackPanel>
+                <TextBlock Text="Seleccionar Rol:" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>                    <ComboBox Grid.Column="0"
+                              ItemsSource="{Binding Roles}"
+                              SelectedItem="{Binding RolSeleccionado}"
+                              FontSize="14"
+                              Padding="12,8"
+                              Margin="0,0,10,0"
+                              IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Descripcion}" FontSize="12" Foreground="#666666"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button Grid.Column="1"
+                            Content="🔄 Actualizar Roles"
+                            Command="{Binding CargarRolesCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Grid.Column="2"
+                            Content="💾 Guardar Permisos"
+                            Command="{Binding GuardarAsignacionesCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Background="#4CAF50"
+                            IsEnabled="{Binding RolSeleccionado, Converter={StaticResource NullToBoolConverter}}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Área de permisos por módulos -->
+        <ScrollViewer Grid.Row="2" 
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Margin="24,0,24,20">
+            <StackPanel>
+                <!-- Mensaje de estado -->
+                <TextBlock Text="{Binding MensajeEstado}"
+                           FontSize="14"
+                           Margin="0,0,0,10"
+                           HorizontalAlignment="Center"
+                           Foreground="#666666"/>
+
+                <!-- Indicador de carga -->
+                <ProgressBar IsIndeterminate="{Binding IsLoading}"
+                             Height="4"
+                             Margin="0,0,0,20"
+                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <!-- Lista de módulos -->
+                <ItemsControl ItemsSource="{Binding ModulosPermisos}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource ModuleCardStyle}">
+                                <StackPanel>
+                                    <!-- Header del módulo -->
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                            <TextBlock Text="📦" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding NombreModulo}" 
+                                                       FontSize="18" FontWeight="Bold" 
+                                                       Foreground="#333333"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>                                        <TextBlock Grid.Column="1" 
+                                                   Text="{Binding Permisos.Count, StringFormat=\{0\} permisos}"
+                                                   FontSize="12" 
+                                                   Foreground="#666666"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,15,0"/>                                        <ToggleButton Grid.Column="2"
+                                                      Style="{StaticResource ModernToggleButton}"
+                                                      IsChecked="{Binding TodosAsignados, Mode=TwoWay}"
+                                                      ToolTip="Activar/Desactivar todos los permisos del módulo">
+                                            <ToggleButton.Resources>
+                                                <Style TargetType="ToggleButton" BasedOn="{StaticResource ModernToggleButton}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TodosAsignados}" Value="{x:Null}">
+                                                            <Setter Property="Background" Value="#FFD700"/><!-- Amarillo para indeterminado -->
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ToggleButton.Resources>
+                                        </ToggleButton>
+                                    </Grid>
+
+                                    <!-- Lista de permisos del módulo -->
+                                    <ItemsControl ItemsSource="{Binding Permisos}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#FAFAFA" 
+                                                        BorderBrush="#E8E8E8" 
+                                                        BorderThickness="1" 
+                                                        CornerRadius="6" 
+                                                        Margin="0,2" 
+                                                        Padding="12,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Permiso.Nombre}" 
+                                                                       FontSize="14" 
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#333333"/>
+                                                            <TextBlock Text="{Binding Permiso.Descripcion}" 
+                                                                       FontSize="12" 
+                                                                       Foreground="#666666"
+                                                                       TextWrapping="Wrap"
+                                                                       Margin="0,2,0,0"/>
+                                                        </StackPanel>                                                        <ToggleButton Grid.Column="1"
+                                                                      Style="{StaticResource ModernToggleButton}"
+                                                                      IsChecked="{Binding EstaAsignado, Mode=TwoWay}"
+                                                                      ToolTip="Activar/Desactivar este permiso"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Mensaje cuando no hay rol seleccionado -->
+                <Border Background="White" 
+                        BorderBrush="#E0E0E0" 
+                        BorderThickness="1" 
+                        CornerRadius="8" 
+                        Padding="40"
+                        Visibility="{Binding RolSeleccionado, Converter={StaticResource NullToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Selecciona un rol para gestionar sus permisos" 
+                                   FontSize="18" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="#666666"/>
+                        <TextBlock Text="Utiliza el selector de rol en la parte superior para comenzar" 
+                                   FontSize="14" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="#999999"
+                                   Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer con información -->
+        <Border Grid.Row="3" 
+                Background="#F0F0F0" 
+                BorderBrush="#E0E0E0" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                           Text="💡 Tip: Usa los switches de cada módulo para activar/desactivar todos los permisos de ese módulo de una vez"
+                           FontSize="12" 
+                           Foreground="#666666"
+                           VerticalAlignment="Center"/>                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="Total permisos activos: " FontSize="12" Foreground="#666666"/>
+                    <TextBlock Text="{Binding ModulosPermisos, Converter={StaticResource CountActivePermissionsConverter}}"
+                               FontSize="12" FontWeight="Bold" Foreground="#4CAF50"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

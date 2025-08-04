@@ -34,13 +34,13 @@ namespace GestLog
             {
                 var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
                 return new RolRepository(dbContextFactory);
-            });
-            services.AddScoped<IPermisoService, PermisoService>();
+            });            services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
-            services.AddScoped<IAuditoriaService, AuditoriaService>();            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios
-            services.AddTransient<UsuarioManagementViewModel>();
+            services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();
+            services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios            services.AddTransient<UsuarioManagementViewModel>();
             services.AddTransient<RolManagementViewModel>();
             services.AddTransient<PermisoManagementViewModel>();
+            services.AddTransient<GestionPermisosRolViewModel>();
             services.AddTransient<AuditoriaManagementViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();

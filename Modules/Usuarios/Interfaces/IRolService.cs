@@ -16,5 +16,7 @@ namespace Modules.Usuarios.Interfaces
         Task<Rol> ObtenerRolPorIdAsync(Guid idRol);
         Task<IEnumerable<Rol>> ObtenerTodosAsync();
         Task<bool> ExisteNombreAsync(string nombre);
+        Task AsignarPermisosARolAsync(Guid idRol, IEnumerable<Guid> permisosIds);
+        Task<IEnumerable<Permiso>> ObtenerPermisosDeRolAsync(Guid idRol);
     }
 }
