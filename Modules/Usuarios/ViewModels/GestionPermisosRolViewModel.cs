@@ -71,6 +71,11 @@ namespace GestLog.Modules.Usuarios.ViewModels
         public ICommand GuardarAsignacionesCommand { get; }
         public ICommand AbrirVerRolCommand { get; }
         public ICommand CerrarVerRolCommand { get; }
+        
+        // Comandos faltantes para los botones en la vista
+        public ICommand SeleccionarRolCommand { get; }
+        public ICommand AbrirEditarRolCommand { get; }
+        public ICommand EliminarRolCommand { get; }
 
         // === PROPIEDADES PARA VER DETALLES DE ROL ===
         private bool _isModalVerRolVisible = false;
@@ -97,14 +102,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             _rolService = rolService ?? throw new ArgumentNullException(nameof(rolService));
             _permisoService = permisoService ?? throw new ArgumentNullException(nameof(permisoService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            // Inicializar comandos
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));            // Inicializar comandos
             CargarRolesCommand = new AsyncRelayCommand(CargarRolesAsync);
             CargarPermisosDelRolCommand = new AsyncRelayCommand(CargarPermisosDelRolAsync);
             GuardarAsignacionesCommand = new AsyncRelayCommand(GuardarAsignacionesAsync);
             AbrirVerRolCommand = new AsyncRelayCommand<Rol>(AbrirVerRolAsync);
             CerrarVerRolCommand = new RelayCommand(() => IsModalVerRolVisible = false);
+            
+            // Comandos faltantes para los botones en la vista
+            SeleccionarRolCommand = new RelayCommand<Rol>(SeleccionarRol);
+            AbrirEditarRolCommand = new RelayCommand<Rol>(AbrirEditarRol);
+            EliminarRolCommand = new AsyncRelayCommand<Rol>(EliminarRolAsync);
 
             // Cargar roles al inicializar
             _ = CargarRolesAsync();
@@ -272,6 +280,56 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     .ToList();
                 ModulosPermisosVer = new ObservableCollection<ModuloPermisos>(modulosAgrupados);
                 IsModalVerRolVisible = true;
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // === MÉTODOS DE COMANDOS ADICIONALES ===
+        private void SeleccionarRol(Rol? rol)
+        {
+            if (rol != null)
+            {
+                foreach (var r in Roles)
+                    r.IsSelected = false;
+                rol.IsSelected = true;
+                RolSeleccionado = rol;
+            }
+        }
+
+        private void AbrirEditarRol(Rol? rol)
+        {
+            if (rol == null) return;
+            
+            // Aquí se podría abrir una ventana de edición o cambiar a otra vista
+            // Por ahora solo mostramos un mensaje de estado
+            MensajeEstado = $"Función de edición para rol '{rol.Nombre}' no implementada aún.";
+            _logger.LogInformation($"Solicitada edición de rol: {rol.Nombre} ({rol.IdRol})");
+        }        private async Task EliminarRolAsync(Rol? rol)
+        {
+            if (rol == null) return;
+
+            try
+            {
+                IsLoading = true;
+                MensajeEstado = $"Eliminando rol '{rol.Nombre}'...";
+
+                // Aquí se implementaría la lógica de eliminación
+                // await _rolService.EliminarRolAsync(rol.IdRol);
+                
+                // Simular operación async mientras no esté implementada
+                await Task.Delay(500);
+                
+                // Por ahora solo mostramos un mensaje
+                MensajeEstado = $"Función de eliminación para rol '{rol.Nombre}' no implementada aún.";
+                _logger.LogInformation($"Solicitada eliminación de rol: {rol.Nombre} ({rol.IdRol})");
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al eliminar rol: {ex.Message}";
+                _logger.LogError(ex, $"Error eliminando rol {rol?.IdRol}");
             }
             finally
             {
