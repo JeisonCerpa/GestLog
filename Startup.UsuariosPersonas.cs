@@ -17,9 +17,11 @@ using Microsoft.EntityFrameworkCore;
 namespace GestLog
 {
     public static class StartupUsuariosPersonas
-    {
-        public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
-        {            // Servicios y repositorios de Usuarios
+    {        public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
+        {
+            Console.WriteLine("🔧 Configurando servicios de Usuarios y Personas...");
+            
+            // Servicios y repositorios de Usuarios
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             
@@ -36,8 +38,10 @@ namespace GestLog
                 return new RolRepository(dbContextFactory);
             });            services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
-            services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();
-            services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios            services.AddTransient<UsuarioManagementViewModel>();
+            services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();            services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios
+            Console.WriteLine("🔧 [DEBUG] Registrando UsuarioManagementViewModel...");
+            services.AddTransient<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
+            Console.WriteLine("✅ [DEBUG] UsuarioManagementViewModel registrado!");
             services.AddTransient<RolManagementViewModel>();
             services.AddTransient<AuditoriaManagementViewModel>();
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>();

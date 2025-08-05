@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Services.Core.Logging;
 using Modules.Usuarios.ViewModels;
+using ModulosUsuarios = global::Modules.Usuarios.ViewModels;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
@@ -53,13 +54,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private void AbrirUsuarios()
-        {
-            try
-            {
-                _logger.LogInformation("🧭 Navegando a Gestión de Usuarios");
+        {            try
+            {                _logger.LogInformation("🧭 Navegando a Gestión de Usuarios");
                 
-                var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(UsuarioManagementViewModel));
+                var serviceProvider = LoggingService.GetServiceProvider();                // Debug: verificar tipos registrados
+                _logger.LogDebug("🔍 Verificando registro de UsuarioManagementViewModel en DI");
+                var viewModel = serviceProvider.GetRequiredService<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
                 
                 if (viewModel == null)
                 {
@@ -68,6 +68,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
+
+                _logger.LogInformation("✅ UsuarioManagementViewModel resuelto exitosamente desde DI");
 
                 var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;

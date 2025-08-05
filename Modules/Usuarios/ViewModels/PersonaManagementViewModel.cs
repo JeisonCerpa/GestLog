@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Timers;
 using System.Windows.Controls;
 using Modules.Usuarios.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
@@ -277,9 +278,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 MensajeValidacion = "Debe seleccionar una persona.";
                 return;
-            }
-            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var usuarioVm = serviceProvider.GetService(typeof(UsuarioManagementViewModel)) as UsuarioManagementViewModel;
+            }            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var usuarioVm = serviceProvider.GetService<UsuarioManagementViewModel>();
             if (usuarioVm != null)
             {
                 // Solo esa persona disponible para el registro
