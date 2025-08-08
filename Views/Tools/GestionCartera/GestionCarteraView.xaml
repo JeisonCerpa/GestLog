@@ -25,6 +25,7 @@
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:ProgressToWidthConverter x:Key="ProgressToWidthConverter"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         </ResourceDictionary>
       </UserControl.Resources>
     <Grid Background="White">
@@ -93,7 +94,7 @@
                         </Setter.Value>
                     </Setter>
                 </Style>
-            </TabControl.Resources><!-- Primera pestaña: Generación de Documentos más compacta -->            <TabItem Header="📄 Generación de Documentos">
+            </TabControl.Resources><!-- Primera pestaana: Generación de Documentos más compacta -->            <TabItem Header="📄 Generación de Documentos">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F5F5F5">
                     <StackPanel Margin="0" Background="#F5F5F5">                        <!-- Configuración de Archivos -->
                         <Border Background="#F5F5F5" 
@@ -171,7 +172,9 @@
                                FontSize="14"
                                HorizontalAlignment="Center"
                                Margin="20,8,20,15"
-                               Command="{Binding GenerateDocumentsCommand}"/>
+                               Command="{Binding GenerateDocumentsCommand}"
+                               IsEnabled="{Binding PdfCanGenerateDocuments}"
+                               Opacity="{Binding PdfCanGenerateDocuments, Converter={StaticResource BooleanToOpacityConverter}}"/>
 
                     </StackPanel>
                 </ScrollViewer>
@@ -290,13 +293,9 @@
                                                    Padding="10,6"
                                                    FontSize="11"
                                                    Margin="0,0,6,0"
-                                                   Click="ConfigureSmtp_Click"/>
-                                            <Button Content="🧪" 
-                                                   Style="{StaticResource SecondaryButtonStyle}"
-                                                   Width="30" Height="30"
-                                                   ToolTip="Enviar email de prueba"
-                                                   IsEnabled="{Binding IsEmailConfigured}"
-                                                   Command="{Binding SendTestEmailCommand}"/>                                        </StackPanel>
+                                                   Click="ConfigureSmtp_Click"
+                                                   IsEnabled="{Binding CanConfigureSmtp}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -307,7 +306,8 @@
                                FontSize="14"
                                HorizontalAlignment="Center"
                                Margin="20,8,20,15"
-                               IsEnabled="{Binding CanSendAutomatically}"
+                               IsEnabled="{Binding AutoCanSendDocuments}"
+                               Opacity="{Binding AutoCanSendDocuments, Converter={StaticResource BooleanToOpacityConverter}}"
                                Command="{Binding SendDocumentsAutomaticallyCommand}"/>
 
                     </StackPanel>

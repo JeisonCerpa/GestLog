@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionCartera.Services;
 using GestLog.Modules.GestionCartera.Models;
+using GestLog.Modules.Usuarios.Models.Authentication;
 
 namespace GestLog.Modules.GestionCartera.ViewModels;
 
@@ -18,19 +19,36 @@ public partial class DocumentGenerationViewModel : ObservableObject
 {
     private readonly MainDocumentGenerationViewModel _mainViewModel;
     private readonly IGestLogLogger _logger;
+    private readonly CurrentUserInfo _currentUser;
 
-    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IGestLogLogger logger)
+    // Permisos para Gestión de Cartera
+    public bool CanAccessGestionCartera => _currentUser.HasPermission("Herramientas.AccederGestionCartera");
+    public bool CanGenerateDocuments => _currentUser.HasPermission("GestionCartera.GenerarDocumentos");
+    public bool CanSendEmails => _currentUser.HasPermission("GestionCartera.EnviarEmails");
+    public bool CanImportExcel => _currentUser.HasPermission("GestionCartera.ImportarExcel");
+    // Ahora requiere ambos permisos para configurar SMTP
+    public bool CanConfigureSmtp => _currentUser.HasPermission("GestionCartera.ConfigurarSmtp") && CanGenerateDocuments;
+    public bool CanOpenOutputFolder => !string.IsNullOrWhiteSpace(OutputFolderPath) && Directory.Exists(OutputFolderPath);
+    // Nuevo: proteger envío automático por ambos permisos
+    public bool CanSendDocumentsAutomatically => CanSendEmails && CanGenerateDocuments;
+    public bool CanSelectExcelFile => CanGenerateDocuments;
+    public bool CanTestSmtp => CanConfigureSmtp;
+
+    // Modificar constructor para DI
+    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IGestLogLogger logger, CurrentUserInfo currentUser)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mainViewModel = new MainDocumentGenerationViewModel(pdfGenerator, null!, logger);
-        
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         InitializeAsync();
-    }    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IEmailService emailService, IGestLogLogger logger)
+        SubscribeToViewModelEvents();
+    }    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IEmailService emailService, IGestLogLogger logger, CurrentUserInfo currentUser)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mainViewModel = new MainDocumentGenerationViewModel(pdfGenerator, emailService, logger);
-        
+        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
         InitializeAsync();
+        SubscribeToViewModelEvents();
     }    private async void InitializeAsync()
     {
         try
@@ -77,6 +95,19 @@ public partial class DocumentGenerationViewModel : ObservableObject
         {
             _logger.LogError(ex, "Error inicializando DocumentGenerationViewModel");
         }
+    }
+
+    // Notificar cambios en propiedades de los subviewmodels
+    private void SubscribeToViewModelEvents()
+    {
+        _mainViewModel.PdfGeneration.PropertyChanged += (s, e) =>
+        {
+            OnPropertyChanged(nameof(PdfCanGenerateDocuments));
+        };
+        _mainViewModel.AutomaticEmail.PropertyChanged += (s, e) =>
+        {
+            OnPropertyChanged(nameof(AutoCanSendDocuments));
+        };
     }
 
     #region Propiedades que delegan al MainViewModel
@@ -234,80 +265,65 @@ public partial class DocumentGenerationViewModel : ObservableObject
     public string DocumentStatusWarning => _mainViewModel.AutomaticEmail.DocumentStatusWarning;
     public bool HasDocumentsGenerated => _mainViewModel.AutomaticEmail.HasDocumentsGenerated;
 
+    // Nuevas propiedades para exponer el estado de los sub-ViewModels
+    public bool PdfCanGenerateDocuments
+    {
+        get => _mainViewModel.PdfGeneration.CanGenerateDocuments();
+    }
+    public bool AutoCanSendDocuments
+    {
+        get => _mainViewModel.AutomaticEmail.CanSendAutomatically;
+    }
+
     #endregion
 
     #region Comandos que delegan al MainViewModel
 
-    [RelayCommand]
-    private void SelectExcelFile() => _mainViewModel.PdfGeneration.SelectExcelFileCommand.Execute(null);
-
-    [RelayCommand]
-    private void SelectOutputFolder() => _mainViewModel.PdfGeneration.SelectOutputFolderCommand.Execute(null);
-
-    [RelayCommand]
-    private void SelectTemplate() => _mainViewModel.PdfGeneration.SelectTemplateCommand.Execute(null);
-
-    [RelayCommand]
-    private void ClearTemplate() => _mainViewModel.PdfGeneration.ClearTemplateCommand.Execute(null);
-
+    // Comandos protegidos por permisos
     [RelayCommand(CanExecute = nameof(CanGenerateDocuments))]
     private async Task GenerateDocuments() => await _mainViewModel.PdfGeneration.GenerateDocumentsCommand.ExecuteAsync(null);
 
-    [RelayCommand]
-    private void ClearLog() => _mainViewModel.ClearLogCommand.Execute(null);
-
-    [RelayCommand(CanExecute = nameof(CanOpenOutputFolder))]
-    private void OpenOutputFolder() => _mainViewModel.PdfGeneration.OpenOutputFolderCommand.Execute(null);
-
-    // Comandos de configuración SMTP
     [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
     private async Task ConfigureSmtp() => await _mainViewModel.SmtpConfiguration.ConfigureSmtpCommand.ExecuteAsync(null);
 
+    // Otros comandos
+    [RelayCommand(CanExecute = nameof(CanSelectExcelFile))]
+    private void SelectExcelFile() => _mainViewModel.PdfGeneration.SelectExcelFileCommand.Execute(null);
     [RelayCommand]
-    private async Task TestSmtpConnection() => await _mainViewModel.SmtpConfiguration.TestSmtpConnectionCommand.ExecuteAsync(null);    // Comandos de generación de PDF
+    private void SelectOutputFolder() => _mainViewModel.PdfGeneration.SelectOutputFolderCommand.Execute(null);
+    [RelayCommand]
+    private void SelectTemplate() => _mainViewModel.PdfGeneration.SelectTemplateCommand.Execute(null);
+    [RelayCommand]
+    private void ClearTemplate() => _mainViewModel.PdfGeneration.ClearTemplateCommand.Execute(null);
+    [RelayCommand]
+    private void ClearLog() => _mainViewModel.ClearLogCommand.Execute(null);
+    [RelayCommand(CanExecute = nameof(CanOpenOutputFolder))]
+    private void OpenOutputFolder() => _mainViewModel.PdfGeneration.OpenOutputFolderCommand.Execute(null);
     [RelayCommand]
     private void CancelGeneration() => _mainViewModel.PdfGeneration.CancelGenerationCommand.Execute(null);
-      [RelayCommand]
+    [RelayCommand]
     private void ResetProgress() => _mainViewModel.PdfGeneration.ResetProgressDataCommand.Execute(null);
-
     [RelayCommand]
     private void GoToEmailTab() => _mainViewModel.PdfGeneration.GoToEmailTabCommand.Execute(null);
-
-    // Comandos de email automático
-    [RelayCommand]
-    private async Task SelectEmailExcelFile() 
-    {
-        await _mainViewModel.AutomaticEmail.SelectEmailExcelFileAsync();
-    }    [RelayCommand(CanExecute = nameof(CanSendAutomaticallyMethod))]
-    private async Task SendDocumentsAutomatically() 
-    {
-        await _mainViewModel.SendDocumentsAutomaticallyCommand.ExecuteAsync(null);
-    }
-
-    /// <summary>
-    /// Comando para cancelar el envío de emails
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanCancelEmailSending))]
+    [RelayCommand(CanExecute = nameof(CanAccessGestionCartera))]
+    private async Task SelectEmailExcelFile() => await _mainViewModel.AutomaticEmail.SelectEmailExcelFileAsync();
+    [RelayCommand(CanExecute = nameof(CanSendDocumentsAutomatically))]
+    private async Task SendDocumentsAutomatically() => await _mainViewModel.SendDocumentsAutomaticallyCommand.ExecuteAsync(null);
+    [RelayCommand(CanExecute = nameof(CanSendEmails))]
     private void CancelEmailSending() => _mainViewModel.AutomaticEmail.CancelEmailSendingCommand.Execute(null);
+    [RelayCommand(CanExecute = nameof(CanTestSmtp))]
+    private async Task TestSmtpConnection() => await _mainViewModel.SmtpConfiguration.TestSmtpConnectionCommand.ExecuteAsync(null);
 
     #endregion
 
     #region Métodos CanExecute
 
-    private bool CanGenerateDocuments() => _mainViewModel.PdfGeneration.CanGenerateDocuments();
-
-    private bool CanOpenOutputFolder() => 
-        !string.IsNullOrWhiteSpace(OutputFolderPath) && 
-        Directory.Exists(OutputFolderPath);    private bool CanConfigureSmtp() => 
-        !IsProcessing && 
-        !IsSendingEmail && 
-        !string.IsNullOrWhiteSpace(SmtpServer) && 
-        !string.IsNullOrWhiteSpace(SmtpUsername);
-
-    /// <summary>
-    /// Determina si se puede enviar automáticamente - método para el RelayCommand
-    /// </summary>
     private bool CanSendAutomaticallyMethod() => _mainViewModel.AutomaticEmail.CanSendAutomatically;
+
+    // Eliminar métodos duplicados y limpiar comandos
+    // Validar existencia de ImportExcelCommand en PdfGenerationViewModel
+    // Si no existe, eliminar el comando y el método relacionado
+    // Si existe, mantenerlo protegido por CanImportExcel
 
     #endregion
 
@@ -319,3 +335,16 @@ public partial class DocumentGenerationViewModel : ObservableObject
         _mainViewModel?.Cleanup();
     }
 }
+
+    // -------------------------------------------------------------------------
+    // DOCUMENTACIÓN DE PATRÓN DE PERMISOS (para Copilot y desarrolladores)
+    // -------------------------------------------------------------------------
+    // 1. Declara propiedades públicas bool en el ViewModel que consulten CurrentUserInfo.HasPermission("Permiso")
+    // 2. Usa esas propiedades en los métodos CanExecute de los comandos RelayCommand
+    // 3. Enlaza la visibilidad y habilitación de los controles en la UI a esas propiedades
+    // 4. Para agregar un nuevo permiso:
+    //    a) Añade la propiedad bool correspondiente
+    //    b) Usa en CanExecute del comando
+    //    c) Enlaza en la UI
+    // 5. Documenta el permiso en el README del módulo
+    // -------------------------------------------------------------------------

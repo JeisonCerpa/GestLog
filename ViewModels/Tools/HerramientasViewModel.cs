@@ -8,6 +8,7 @@ namespace GestLog.ViewModels.Tools
         private readonly CurrentUserInfo _currentUser;
 
         public bool CanAccessDaaterProcessor => _currentUser.HasPermission("Herramientas.AccederDaaterProccesor");
+        public bool CanAccessGestionCartera => _currentUser.HasPermission("Herramientas.AccederGestionCartera");
 
         public HerramientasViewModel(CurrentUserInfo currentUser)
         {

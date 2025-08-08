@@ -872,4 +872,10 @@ public partial class PdfGenerationViewModel : BaseDocumentGenerationViewModel
             }
         }
     }
+    
+    partial void OnSelectedExcelFilePathChanged(string value)
+    {
+        NotifyCommandsCanExecuteChanged();
+        OnPropertyChanged(nameof(SelectedExcelFilePath));
+    }
 }

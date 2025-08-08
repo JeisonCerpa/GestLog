@@ -53,7 +53,8 @@
                     </StackPanel>
                 </Border>
                 <!-- Gestión de Cartera Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessGestionCartera, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="💼" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Gestión de Cartera" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
