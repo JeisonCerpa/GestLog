@@ -92,7 +92,8 @@
                                               FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap"
                                               HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                                    <Button Content="Seleccionar Carpeta y Procesar" 
                                            Style="{StaticResource PrimaryButtonStyle}"
-                                           Command="{Binding ProcessExcelFilesCommand}"/>
+                                           Command="{Binding ProcessExcelFilesCommand}"
+                                           IsEnabled="{Binding CanProcessFiles}"/>
                                 </StackPanel>
                             </Border>
                             
