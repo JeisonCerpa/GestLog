@@ -22,7 +22,7 @@ namespace GestLog.Modules.Usuarios.Interfaces
         /// <summary>
         /// Establece el usuario actual después de un login exitoso
         /// </summary>
-        void SetCurrentUser(CurrentUserInfo userInfo);
+        void SetCurrentUser(CurrentUserInfo userInfo, bool rememberMe = false);
 
         /// <summary>
         /// Limpia la información del usuario actual (logout)
@@ -58,5 +58,7 @@ namespace GestLog.Modules.Usuarios.Interfaces
         /// Evento que se dispara cuando cambia el usuario actual
         /// </summary>
         event EventHandler<CurrentUserInfo?> CurrentUserChanged;
+
+        void RestoreSessionIfExists();
     }
 }

@@ -71,11 +71,29 @@ public partial class App : System.Windows.Application
             //     return;
             // }
             // --- CREAR MainWindow MANUALMENTE DESPUÉS DE AUTENTICACIÓN EXITOSA ---
+            // Restaurar sesión si existe
+            var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
+            currentUserService?.RestoreSessionIfExists();
+
+            // Crear ventana principal
             var mainWindow = new MainWindow();
-            
-            // IMPORTANTE: Establecer como MainWindow de la aplicación
             this.MainWindow = mainWindow;
-            
+
+            // Actualizar estado de autenticación en el ViewModel principal
+            string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
+            if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            {
+                vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
+                // Notificar cambio de usuario restaurado para actualizar el binding del nombre
+                vm.NotificarCambioNombrePersona();
+            }
+
+            // Mostrar vista principal si está autenticado
+            if (currentUserService?.IsAuthenticated == true)
+            {
+                mainWindow.LoadHomeView();
+            }
+
             mainWindow.Show();
             // --- Restaurar modo de cierre automático después de mostrar MainWindow ---
             this.ShutdownMode = ShutdownMode.OnMainWindowClose;

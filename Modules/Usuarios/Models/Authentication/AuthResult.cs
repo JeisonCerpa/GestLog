@@ -12,14 +12,16 @@ namespace GestLog.Modules.Usuarios.Models.Authentication
         public Usuario? User { get; set; }
         public DateTime? LoginTime { get; set; }
         public string? ErrorCode { get; set; }
+        public CurrentUserInfo? CurrentUserInfo { get; set; }
 
-        public static AuthResult SuccessResult(Usuario user)
+        public static AuthResult SuccessResult(Usuario user, CurrentUserInfo userInfo)
         {
             return new AuthResult
             {
                 Success = true,
                 User = user,
-                LoginTime = DateTime.UtcNow
+                LoginTime = DateTime.UtcNow,
+                CurrentUserInfo = userInfo
             };
         }
 

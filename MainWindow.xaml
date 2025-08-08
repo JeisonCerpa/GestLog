@@ -178,6 +178,9 @@
                 </StackPanel>
                   <!-- Right side config button -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">                    <!-- Indicador de estado de base de datos -->
+                    <TextBlock Text="{Binding NombrePersonaActual}" 
+                               Foreground="White" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="15"
+                               VerticalAlignment="Center" Margin="0,0,18,0"/>
                     <Border x:Name="DatabaseStatusBorder" 
                             CornerRadius="6" 
                             Padding="10,6" 
@@ -196,17 +199,18 @@
                                       FontWeight="SemiBold"
                                       VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Border>                    <Button x:Name="btnConfig" Content="⚙️" 
+                    </Border>                    <Button x:Name="btnCerrarSesion" Content="🔒 Cerrar sesión" 
                            Foreground="White" 
                            BorderThickness="0"
                            FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="15"
-                           Width="40" Height="40"
-                           ToolTip="Configuración"
-                           Click="btnConfig_Click"
+                           Width="140" Height="40"
+                           ToolTip="Cerrar sesión"
+                           Command="{Binding CerrarSesionCommand}"
                            Style="{StaticResource ConfigButtonStyle}"/>
                 </StackPanel>
             </Grid>
-        </Border>        <!-- Main Content -->
+        </Border>
+        <!-- Main Content -->
         <Grid Grid.Row="1">
             <ContentControl x:Name="contentPanel">
                 <ContentControl.Background>

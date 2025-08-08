@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Messages;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Core.Logging;
@@ -19,6 +21,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
     {
         private readonly IAuthenticationService _authenticationService;
         private readonly IGestLogLogger _logger;
+        private readonly ICurrentUserService _currentUserService;
 
         [ObservableProperty]
         [Required(ErrorMessage = "El nombre de usuario es obligatorio")]
@@ -43,45 +46,44 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private string _statusMessage = "Ingrese sus credenciales para acceder";
 
-        public LoginViewModel(IAuthenticationService authenticationService, IGestLogLogger logger)
+        public static readonly string UserLoggedInMessageToken = "UserLoggedInMessage";
+
+        public LoginViewModel(IAuthenticationService authenticationService, IGestLogLogger logger, ICurrentUserService currentUserService)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
         }        [RelayCommand]
         private async Task LoginAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 ClearError();
-                
-                // Log básico del estado de validación
-                
                 if (!ValidateInput())
                 {
                     _logger.LogWarning("Validación falló - no se procederá con el login");
                     return;
                 }
-
                 IsLoading = true;
                 StatusMessage = "Verificando credenciales...";
-
                 _logger.LogInformation("Iniciando proceso de login para usuario: {Username}", Username);
-
                 var loginRequest = new LoginRequest
                 {
                     Username = Username.Trim(),
                     Password = Password,
                     RememberMe = RememberMe
                 };
-
                 var result = await _authenticationService.LoginAsync(loginRequest, cancellationToken);
-
                 if (result.Success)
                 {
                     _logger.LogInformation("Login exitoso para usuario: {Username}", Username);
-                    StatusMessage = "¡Bienvenido! Redirigiendo...";
-                    
-                    // Notificar login exitoso
+                    StatusMessage = "¡Bienvenido! Redirigiendo...";                    if (result.CurrentUserInfo != null)
+                    {
+                        _currentUserService.SetCurrentUser(result.CurrentUserInfo, RememberMe);
+                        
+                        // Enviar mensaje de login exitoso con el usuario autenticado
+                        WeakReferenceMessenger.Default.Send(new UserLoggedInMessage(result.CurrentUserInfo));
+                    }
                     LoginSuccessful?.Invoke();
                 }
                 else
@@ -106,6 +108,19 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        [RelayCommand]
+        public async Task CerrarSesionAsync()
+        {
+            await _authenticationService.LogoutAsync();
+            _currentUserService.ClearCurrentUser();
+            Username = string.Empty;
+            Password = string.Empty;
+            RememberMe = false;
+            StatusMessage = "Ingrese sus credenciales para acceder";
+            ErrorMessage = string.Empty;
+            HasError = false;
         }
 
         [RelayCommand]

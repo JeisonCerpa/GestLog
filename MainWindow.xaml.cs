@@ -5,6 +5,8 @@ using GestLog.Views;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Messages;
 
 namespace GestLog
 {
@@ -37,61 +39,52 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public MainWindow()
     {
+        InitializeComponent();
         try
         {
-            DataContext = this;
-            InitializeComponent();
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var loginViewModel = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.ViewModels.LoginViewModel)) as GestLog.Modules.Usuarios.ViewModels.LoginViewModel;
+            var mainWindowViewModel = new GestLog.ViewModels.MainWindowViewModel(loginViewModel!);
+            DataContext = mainWindowViewModel;
             _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
-            _logger = LoggingService.GetLogger<MainWindow>();
-            
-            // --- NUEVO: Establecer WindowState según configuración ---
-            try
-            {
-                var configService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
-                
-                // NO CARGAR AQUÍ - solo usar la configuración que ya está disponible
-                // El ConfigurationService ya se inicializa y carga automáticamente
-                bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
-                
-                this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
-                _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
-            }
-            catch (System.Exception ex)
-            { 
-                _logger.LogWarning(ex, "⚠️ Error al leer configuración de ventana, usando maximizada por defecto");
-                this.WindowState = WindowState.Maximized; // Fallback
-            }
-            // --- FIN NUEVO ---
-            
-            _logger.LogApplicationStarted("MainWindow inicializada correctamente");
-            
-            // Suscribirse a cambios de estado de la base de datos
+            _logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();
             SubscribeToDatabaseStatusChanges();
-            
-            // Mostrar LoginView como pantalla inicial si no hay sesión
-            var loginView = new Views.Authentication.LoginView();
+            var loginView = new GestLog.Views.Authentication.LoginView();
             loginView.LoginSuccessful += (s, e) =>
             {
-                IsAuthenticated = true;
+                if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+                {
+                    var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                    var currentUserService = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.Services.CurrentUserService)) as GestLog.Modules.Usuarios.Services.CurrentUserService;
+                    string nombrePersona = currentUserService?.GetCurrentUserFullName() ?? string.Empty;
+                    vm.SetAuthenticated(true, nombrePersona);
+                    vm.NotificarCambioNombrePersona(); // Forzar actualización del binding
+                }
                 LoadHomeView();
             };
             contentPanel.Content = loginView;
             _currentView = loginView;
             txtCurrentView.Text = "Login";
             btnBack.Visibility = Visibility.Collapsed;
-            IsAuthenticated = false;
-            // TODO: Suscribirse a evento de login exitoso para navegar a HomeView
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
+                vm2.SetAuthenticated(false);
+            CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<GestLog.Messages.ShowLoginViewMessage>(this, (r, m) => MostrarLoginView());
+
+            // Leer configuración para ventana maximizada
+            var configService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
+            bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
+            this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
+            _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
         }
         catch (System.Exception ex)
         {
-            // Fallback en caso de que el logger no esté disponible
-            var fallbackLogger = LoggingService.GetLogger<MainWindow>();
+            var fallbackLogger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();
             fallbackLogger.LogError(ex, "Error al inicializar MainWindow");
             throw;
         }
     }
 
-    private void LoadHomeView()
+    public void LoadHomeView()
     {
         try
         {
@@ -411,5 +404,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     #endregion
 
     public ContentControl MainContent => contentPanel;
+
+    private async void btnCerrarSesion_Click(object sender, RoutedEventArgs e)
+    {
+        // Esperar el comando de cierre de sesión (enlazado por Command en XAML)
+        if (DataContext is ViewModels.MainWindowViewModel vm && vm.CerrarSesionCommand.CanExecute(null))
+        {
+            await vm.CerrarSesionCommand.ExecuteAsync(null);
+        }
+        // Navegar a la vista de login
+        MostrarLoginView();
+    }
+
+    private void MostrarLoginView()
+    {
+        if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            vm.SetAuthenticated(false);
+        var loginView = new GestLog.Views.Authentication.LoginView();
+        loginView.LoginSuccessful += (s, e) =>
+        {
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var currentUserService = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.Services.CurrentUserService)) as GestLog.Modules.Usuarios.Services.CurrentUserService;
+                string nombrePersona = currentUserService?.GetCurrentUserFullName() ?? string.Empty;
+                vm2.SetAuthenticated(true, nombrePersona);
+                vm2.NotificarCambioNombrePersona(); // Forzar actualización del binding
+            }
+            LoadHomeView();
+        };
+        contentPanel.Content = loginView;
+        _currentView = loginView;
+        txtCurrentView.Text = "Login";
+        btnBack.Visibility = Visibility.Collapsed;
+    }
 } // cierre de la clase MainWindow
 } // cierre del namespace GestLog

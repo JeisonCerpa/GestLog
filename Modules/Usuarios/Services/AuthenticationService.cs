@@ -94,7 +94,7 @@ namespace GestLog.Modules.Usuarios.Services
                 _logger.LogInformation("Login exitoso para usuario: {Username}", loginRequest.Username);
                 await LogLoginAttemptAsync(loginRequest.Username, true, "Login exitoso", cancellationToken);
 
-                return AuthResult.SuccessResult(usuario);
+                return AuthResult.SuccessResult(usuario, userInfo);
             }
             catch (Exception ex)
             {

@@ -12,9 +12,7 @@ namespace GestLog.Modules.Usuarios.Services
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IGestLogLogger _logger;
-        private CurrentUserInfo? _currentUser;
-
-        public CurrentUserService(IGestLogLogger logger)
+        private CurrentUserInfo? _currentUser;        public CurrentUserService(IGestLogLogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -23,9 +21,7 @@ namespace GestLog.Modules.Usuarios.Services
 
         public bool IsAuthenticated => _currentUser != null;
 
-        public event EventHandler<CurrentUserInfo?>? CurrentUserChanged;
-
-        public void SetCurrentUser(CurrentUserInfo userInfo)
+        public event EventHandler<CurrentUserInfo?>? CurrentUserChanged;        public void SetCurrentUser(CurrentUserInfo userInfo, bool rememberMe = false)
         {
             if (userInfo == null)
                 throw new ArgumentNullException(nameof(userInfo));
@@ -33,15 +29,27 @@ namespace GestLog.Modules.Usuarios.Services
             _currentUser = userInfo;
             _logger.LogInformation("Usuario establecido en sesión: {Username} ({UserId})", 
                 userInfo.Username, userInfo.UserId);
-            
+            if (rememberMe)
+                UserSessionPersistence.SaveSession(userInfo);
             CurrentUserChanged?.Invoke(this, _currentUser);
+        }
+
+        public void RestoreSessionIfExists()
+        {
+            var restored = UserSessionPersistence.LoadSession();
+            if (restored != null)
+            {
+                _currentUser = restored;
+                _logger.LogInformation("Sesión restaurada automáticamente para usuario: {Username}", restored.Username);
+                CurrentUserChanged?.Invoke(this, _currentUser);
+            }
         }
 
         public void ClearCurrentUser()
         {
             var previousUser = _currentUser?.Username ?? "Unknown";
             _currentUser = null;
-            
+            UserSessionPersistence.ClearSession();
             _logger.LogInformation("Sesión cerrada para usuario: {Username}", previousUser);
             CurrentUserChanged?.Invoke(this, null);
         }
@@ -79,9 +87,7 @@ namespace GestLog.Modules.Usuarios.Services
                 roleName, _currentUser?.Username ?? "None", hasRole);
             
             return hasRole;
-        }
-
-        public string GetCurrentUserFullName()
+        }        public string GetCurrentUserFullName()
         {
             return _currentUser?.FullName ?? "Usuario no autenticado";
         }
