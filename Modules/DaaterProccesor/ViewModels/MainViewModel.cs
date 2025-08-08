@@ -18,6 +18,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.Services.Core.UI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using GestLog.Modules.Usuarios.Models.Authentication;
 
 namespace GestLog.Modules.DaaterProccesor.ViewModels;
 
@@ -58,28 +59,40 @@ public partial class MainViewModel : ObservableObject
     
     private readonly IExcelProcessingService _excelService;
     private readonly IGestLogLogger _logger;
+    private readonly CurrentUserInfo _currentUser;
     private CancellationTokenSource? _cancellationTokenSource;
     
     // Servicio de progreso suavizado para animación fluida
     private SmoothProgressService _smoothProgress = null!; // Será inicializado en InitializeViewModel
 
+    // Propiedades de acceso
+    public bool CanAccessDaaterProcessor => _currentUser.HasPermission("Herramientas.AccederDaaterProccesor");
+    public bool CanProcessFiles => _currentUser.HasPermission("DaaterProccesor.ProcesarArchivos");
+
     // Constructor para usar desde DI
-    public MainViewModel() 
+    public MainViewModel()
     {
         // Obtener servicios del contenedor de DI
         var serviceProvider = LoggingService.GetServiceProvider();
         _excelService = serviceProvider.GetRequiredService<IExcelProcessingService>();
         _logger = serviceProvider.GetRequiredService<IGestLogLogger>();
-        
-        // Inicializar propiedades comunes
+        // Inicializar usuario actual por defecto (solo para evitar null)
+        _currentUser = new CurrentUserInfo
+        {
+            UserId = Guid.Empty,
+            Username = "",
+            FullName = "",
+            Permissions = new List<string>()
+        };
         InitializeViewModel();
     }
     
     // Constructor para pruebas o instanciación manual
-    public MainViewModel(IExcelProcessingService excelService, IGestLogLogger logger)
+    public MainViewModel(IExcelProcessingService excelService, IGestLogLogger logger, CurrentUserInfo currentUser)
     {
         _excelService = excelService;
         _logger = logger;
+        _currentUser = currentUser;
         
         // Inicializar propiedades comunes
         InitializeViewModel();
@@ -331,7 +344,7 @@ public partial class MainViewModel : ObservableObject
         _logger.Logger.LogDebug("🔄 Token de cancelación activado");
     }
 
-    private bool CanProcessExcelFiles() => !IsProcessing;
+    private bool CanProcessExcelFiles() => !IsProcessing && CanProcessFiles;
 
     private bool CanCancelProcessing() 
     {

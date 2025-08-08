@@ -120,6 +120,15 @@ public static class LoggingService
                 Modules.EnvioCatalogo.Services.EnvioCatalogoService>();            // ViewModels
             services.AddTransient<Modules.GestionCartera.ViewModels.DocumentGenerationViewModel>();
             services.AddTransient<Modules.EnvioCatalogo.ViewModels.EnvioCatalogoViewModel>();
+            
+            // ViewModel de DaaterProccesor con DI (incluye CurrentUserInfo)
+            services.AddTransient<GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel>(sp =>
+            {
+                var excelSvc = sp.GetRequiredService<GestLog.Modules.DaaterProccesor.Services.IExcelProcessingService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var currentUser = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
+                return new GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel(excelSvc, logger, currentUser);
+            });
 
             // Servicios de Gestión de Mantenimientos
             services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();

@@ -67,6 +67,23 @@ namespace GestLog
             // ViewModels de Personas (agregar cuando existan)
             services.AddTransient<PersonaManagementViewModel>();
             services.AddSingleton<IModalService, ModalService>();
+            
+            // Registrar CurrentUserInfo como servicio Scoped
+            services.AddScoped<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>(provider =>
+            {
+                var currentUserService = provider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                return currentUserService.Current ?? new GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo
+                {
+                    UserId = Guid.Empty,
+                    Username = "",
+                    FullName = "",
+                    Email = "",
+                    LoginTime = DateTime.UtcNow,
+                    LastActivity = DateTime.UtcNow,
+                    Roles = new(),
+                    Permissions = new()
+                };
+            });
         }
     }
 }

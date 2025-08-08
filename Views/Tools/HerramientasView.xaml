@@ -43,7 +43,8 @@
             <!-- Tools Grid -->
             <UniformGrid Columns="3" Rows="3" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
                 <!-- DaaterProccesor Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessDaaterProcessor, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="DaaterProccesor" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>

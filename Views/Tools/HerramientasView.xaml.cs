@@ -10,6 +10,8 @@ using GestLog.Views.Tools.GestionIdentidadCatalogos.Personas;
 using GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario;
 using GestLog.Views.Tools.GestionIdentidadCatalogos;
 using Microsoft.Extensions.DependencyInjection;
+using GestLog.ViewModels.Tools;
+using GestLog.Modules.Usuarios.Models.Authentication;
 
 namespace GestLog.Views.Tools
 {
@@ -21,8 +23,18 @@ namespace GestLog.Views.Tools
         {
             InitializeComponent();
             _mainWindow = System.Windows.Application.Current.MainWindow as MainWindow;
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var currentUser = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
+            var viewModel = new GestLog.ViewModels.Tools.HerramientasViewModel(currentUser);
+            DataContext = viewModel;
         }    private void BtnDaaterProccesor_Click(object sender, RoutedEventArgs e)
         {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessDaaterProcessor)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a DaaterProccesor.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             var daaterProccesorView = new DaaterProccesorView();
             _mainWindow?.NavigateToView(daaterProccesorView, "DaaterProccesor");
         }
