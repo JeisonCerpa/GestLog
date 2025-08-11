@@ -1,3 +1,4 @@
+``````````````instructions
 `````````````instructions
 ````````````instructions
 ```````````instructions
@@ -338,4 +339,52 @@ WeakReferenceMessenger.Default.Register<UserLoggedInMessage>(this, (r, m) => {
 - Documenta este patrón en README.md y en los módulos que lo usen.
 
 ---
-````````````
+
+# ➕ Cómo agregar permisos a nuevos módulos
+
+Para implementar permisos en cualquier módulo futuro de GestLog, sigue estos pasos generales:
+
+1. **Definir el permiso en la base de datos**
+   - Agrega el permiso en la tabla `Permisos` con un nombre único, descripción y módulo correspondiente.
+   - Ejemplo: `MiModulo.AccionPrincipal`
+
+2. **Asignar el permiso a roles**
+   - Usa la gestión de roles para asignar el permiso a los roles que lo requieran.
+
+3. **Validar el permiso en el ViewModel**
+   - Declara una propiedad observable:
+     ```csharp
+     [ObservableProperty]
+     private bool canAccionPrincipal;
+     ```
+   - En el método de inicialización o al cambiar usuario:
+     ```csharp
+     var hasPermission = _currentUser.HasPermission("MiModulo.AccionPrincipal");
+     CanAccionPrincipal = hasPermission;
+     OnPropertyChanged(nameof(CanAccionPrincipal));
+     ```
+   - Si la acción depende de otros factores, usa una propiedad calculada:
+     ```csharp
+     public bool CanEjecutarAccion => CanAccionPrincipal && OtrosRequisitos;
+     ```
+
+4. **Refrescar permisos de forma reactiva**
+   - Suscríbete a cambios de usuario y roles para recalcular los permisos automáticamente.
+   - Usa métodos como `RecalcularPermisos()` y notificaciones de cambio de propiedad.
+
+5. **Enlazar la propiedad en la UI**
+   - Usa `{Binding CanAccionPrincipal}` o `{Binding CanEjecutarAccion}` en los controles relevantes (`IsEnabled`, `Visibility`, `Opacity`).
+
+6. **Documentar el permiso**
+   - Añade la definición y uso del permiso en el README del módulo y en este archivo.
+
+---
+
+**Patrón recomendado:**
+- Permisos por acción y módulo: `MiModulo.Accion`
+- Validación centralizada en el ViewModel
+- Refresco reactivo al cambiar usuario/rol
+- Feedback visual en la UI
+
+Esto asegura que los permisos sean consistentes, seguros y fáciles de mantener en toda la aplicación.
+``````````````

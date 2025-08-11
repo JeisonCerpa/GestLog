@@ -54,6 +54,54 @@ WeakReferenceMessenger.Default.Register<UserLoggedInMessage>(this, (r, m) => {
 - Si restauras sesión en `App.xaml.cs`, dispara también la notificación de cambio de usuario.
 - Documenta este patrón en copilot-instructions.md y en los módulos que lo usen.
 
+## 🔐 Guía para desarrolladores: Implementación de permisos en módulos
+
+Para agregar permisos en cualquier módulo de GestLog, sigue este patrón general:
+
+1. **Definir el permiso en la base de datos**
+   - Inserta el permiso en la tabla `Permisos` con nombre, descripción y módulo.
+   - Ejemplo: `MiModulo.AccionPrincipal`
+
+2. **Asignar el permiso a roles**
+   - Usa la gestión de roles para asignar el permiso a los roles necesarios.
+
+3. **Validar el permiso en el ViewModel**
+   - Declara una propiedad observable para el permiso:
+     ```csharp
+     [ObservableProperty]
+     private bool canAccionPrincipal;
+     ```
+   - Actualiza la propiedad al iniciar sesión o cambiar usuario:
+     ```csharp
+     var hasPermission = _currentUser.HasPermission("MiModulo.AccionPrincipal");
+     CanAccionPrincipal = hasPermission;
+     OnPropertyChanged(nameof(CanAccionPrincipal));
+     ```
+   - Si la acción depende de otros factores, usa una propiedad calculada:
+     ```csharp
+     public bool CanEjecutarAccion => CanAccionPrincipal && OtrosRequisitos;
+     ```
+
+4. **Refrescar permisos de forma reactiva**
+   - Suscríbete a cambios de usuario y roles para recalcular los permisos automáticamente.
+   - Usa métodos como `RecalcularPermisos()` y notificaciones de cambio de propiedad.
+
+5. **Enlazar la propiedad en la UI**
+   - Usa `{Binding CanAccionPrincipal}` o `{Binding CanEjecutarAccion}` en los controles relevantes (`IsEnabled`, `Visibility`, `Opacity`).
+
+6. **Documentar el permiso**
+   - Añade la definición y uso del permiso en el README del módulo y en la documentación técnica.
+
+---
+
+**Recomendaciones:**
+- Usa nombres de permisos claros y consistentes: `MiModulo.Accion`
+- Centraliza la validación en el ViewModel
+- Refresca los permisos al cambiar usuario/rol
+- Proporciona feedback visual en la UI
+
+Este patrón garantiza seguridad, mantenibilidad y una experiencia de usuario coherente en toda la aplicación.
+
 ## 📚 Documentación adicional
 - Consulta copilot-instructions.md para detalles de arquitectura, patrones y reglas de implementación.
 - Todos los cambios y patrones deben documentarse en este archivo y en copilot-instructions.md.
