@@ -5,12 +5,17 @@ using GestLog.Modules.Usuarios.ViewModels;
 using GestLog.Messages; // Asegúrate de tener la referencia correcta para el Messenger
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.Modules.Usuarios.Models.Authentication;
 
 namespace GestLog.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
         private readonly LoginViewModel _loginViewModel;
+        private readonly ICurrentUserService _currentUserService = null!;
+        private CurrentUserInfo _currentUser;
+
         [ObservableProperty]
         private bool _isAuthenticated = false;
         [ObservableProperty]
@@ -33,15 +38,24 @@ namespace GestLog.ViewModels
             }
         }
 
-        public MainWindowViewModel(LoginViewModel loginViewModel)
+        [ObservableProperty]
+        private bool canAccessAdminPanel;
+        [ObservableProperty]
+        private bool canAccessUserManagement;
+        [ObservableProperty]
+        private bool canAccessErrorLog;
+
+        public MainWindowViewModel(LoginViewModel loginViewModel, ICurrentUserService currentUserService)
         {
-            _loginViewModel = loginViewModel;            // Suscribirse al cambio de usuario actual para notificar cambios en NombrePersonaActual
-            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+            _loginViewModel = loginViewModel;
+            _currentUserService = currentUserService;
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             // Suscribirse a eventos y mensajes
-            if (currentUserService != null)
+            if (_currentUserService != null)
             {
-                currentUserService.CurrentUserChanged += (s, user) =>
+                _currentUserService.CurrentUserChanged += (s, user) =>
                 {
                     OnPropertyChanged(nameof(NombrePersonaActual));
                 };
@@ -86,6 +100,19 @@ namespace GestLog.ViewModels
         }        public void NotificarCambioNombrePersona()
         {
             OnPropertyChanged(nameof(NombrePersonaActual));
+        }
+
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }
+
+        private void RecalcularPermisos()
+        {
+            CanAccessAdminPanel = _currentUser.HasRole("Administrador");
+            CanAccessUserManagement = _currentUser.HasPermission("Usuarios.GestionarUsuarios");
+            CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
         }
     }
 }

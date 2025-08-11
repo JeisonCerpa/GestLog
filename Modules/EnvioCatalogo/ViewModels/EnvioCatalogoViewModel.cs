@@ -12,6 +12,7 @@ using GestLog.Modules.GestionCartera.Models; // Para SmtpConfiguration
 using GestLog.Services.Core.Logging;
 using GestLog.Services.Configuration;
 using GestLog.Services.Core.Security;
+using GestLog.Modules.Usuarios.Interfaces;
 
 namespace GestLog.Modules.EnvioCatalogo.ViewModels
 {
@@ -24,7 +25,9 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
         private readonly IConfigurationService _configurationService;
         private readonly ICredentialService _credentialService;
         private readonly IGestLogLogger _logger;
+        private readonly ICurrentUserService _currentUserService;
         private CancellationTokenSource? _cancellationTokenSource;
+        private GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo _currentUser;
 
         #region Propiedades Observables
 
@@ -50,8 +53,7 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
         [ObservableProperty] private int _smtpPort = 587;
         [ObservableProperty] private string _smtpUsername = string.Empty;
         [ObservableProperty] private string _smtpPassword = string.Empty;
-        [ObservableProperty] private bool _enableSsl = true;
-        [ObservableProperty] private bool _isSmtpConfigured = false;
+        [ObservableProperty] private bool _enableSsl = true;        [ObservableProperty] private bool _isSmtpConfigured = false;
 
         #endregion
 
@@ -59,7 +61,7 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
 
         public bool HasExcelFile => !string.IsNullOrWhiteSpace(SelectedExcelFilePath) && File.Exists(SelectedExcelFilePath);
         public bool HasCatalogFile => !string.IsNullOrWhiteSpace(CatalogoFilePath) && File.Exists(CatalogoFilePath);
-        public bool CanSendCatalogo => HasExcelFile && HasCatalogFile && IsSmtpConfigured && !IsProcessing;
+        public bool CanSendCatalogo => HasExcelFile && HasCatalogFile && IsSmtpConfigured && !IsProcessing && CanSendCatalogPermission;
         public string ExcelFileName => HasExcelFile ? Path.GetFileName(SelectedExcelFilePath) : "Ningún archivo seleccionado";
         public string CatalogoFileName => HasCatalogFile ? Path.GetFileName(CatalogoFilePath) : "Archivo no encontrado";
 
@@ -69,18 +71,39 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
             IEnvioCatalogoService catalogoService, 
             IConfigurationService configurationService,
             ICredentialService credentialService,
-            IGestLogLogger logger)
+            IGestLogLogger logger,
+            ICurrentUserService currentUserService)
         {
             _catalogoService = catalogoService ?? throw new ArgumentNullException(nameof(catalogoService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
             // Suscribirse a cambios de configuración
             _configurationService.ConfigurationChanged += OnConfigurationChanged;
+            
+            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
 
             InitializeDefaults();
             LoadSmtpConfiguration();
+        }
+
+        private void OnCurrentUserChanged(object? sender, GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            var hasPermission = _currentUser.HasPermission("EnvioCatalogo.EnviarCatalogo");
+            CanSendCatalogPermission = hasPermission;
+            OnPropertyChanged(nameof(CanSendCatalogo)); // Notificar que CanSendCatalogo también cambió
+            
+            _logger.LogInformation("🔐 Permisos recalculados - Usuario: {User}, EnvioCatalogo.EnviarCatalogo: {HasPermission}", 
+                _currentUser.Username ?? "Sin usuario", hasPermission);
         }
 
         #region Inicialización
@@ -543,17 +566,23 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
 
         #endregion
 
-        #region Métodos Privados
-
-        partial void OnSelectedExcelFilePathChanged(string value) => UpdateCanSendCatalogo();
+        #region Métodos Privados        partial void OnSelectedExcelFilePathChanged(string value) => UpdateCanSendCatalogo();
         partial void OnCatalogoFilePathChanged(string value) => UpdateCanSendCatalogo();
         partial void OnIsSmtpConfiguredChanged(bool value) => UpdateCanSendCatalogo();
         partial void OnIsProcessingChanged(bool value) => UpdateCanSendCatalogo();
+        partial void OnCanSendCatalogPermissionChanged(bool value) => UpdateCanSendCatalogo();
 
         private void UpdateCanSendCatalogo()
         {
             OnPropertyChanged(nameof(CanSendCatalogo));
         }
+
+                #endregion
+
+        #region Propiedades de Permisos
+
+        [ObservableProperty]
+        private bool canSendCatalogPermission;
 
         #endregion
     }

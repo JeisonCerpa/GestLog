@@ -24,6 +24,7 @@
             <converters:GuidToInverseVisibilityConverter x:Key="GuidToInverseVisibilityConverter"/>
             <converters:PersonaIdToNombreCompletoConverter x:Key="PersonaIdToNombreCompletoConverter"/>
             <converters:RoleCheckedConverter x:Key="RoleCheckedConverter"/>
+            <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
             <Style x:Key="WatermarkTextBoxStyle" TargetType="TextBox">
                 <Setter Property="Template">
                     <Setter.Value>

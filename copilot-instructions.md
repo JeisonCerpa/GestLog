@@ -1,3 +1,4 @@
+`````````````instructions
 ````````````instructions
 ```````````instructions
 ``````````instructions
@@ -156,13 +157,16 @@ private async Task ProcessAsync(CancellationToken cancellationToken)
 
 ## 🛡️ Permisos y Feedback Visual en la UI
 
-- Los botones de generación y envío automático en Gestión de Cartera usan las propiedades `CanGenerateDocuments` y `CanSendAutomatically` del ViewModel.
-- En XAML, enlaza `IsEnabled` y `Opacity` de los botones a estas propiedades usando el convertidor `BooleanToOpacityConverter`.
+- Solo se deben implementar y documentar los permisos para las acciones que están disponibles para el usuario en cada módulo.
+- Ejemplo en Gestión de Mantenimientos: únicamente se aplican permisos para Registrar equipo, Editar equipo, Dar de baja equipo y Registrar mantenimiento. No se deben agregar permisos para acciones no presentes en la UI.
+- Los botones y comandos deben enlazar `IsEnabled` y `Opacity` a las propiedades de permiso del ViewModel usando el convertidor `BooleanToOpacityConverter`.
 - Ejemplo:
 
 ```xaml
-<Button Content="Generar" IsEnabled="{Binding CanGenerateDocuments}" Opacity="{Binding CanGenerateDocuments, Converter={StaticResource BooleanToOpacityConverter}}" />
-<Button Content="Enviar" IsEnabled="{Binding CanSendAutomatically}" Opacity="{Binding CanSendAutomatically, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Registrar equipo" IsEnabled="{Binding CanRegistrarEquipo}" Opacity="{Binding CanRegistrarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Editar equipo" IsEnabled="{Binding CanEditarEquipo}" Opacity="{Binding CanEditarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Dar de baja" IsEnabled="{Binding CanDarDeBajaEquipo}" Opacity="{Binding CanDarDeBajaEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Registrar mantenimiento" IsEnabled="{Binding CanRegistrarMantenimiento}" Opacity="{Binding CanRegistrarMantenimiento, Converter={StaticResource BooleanToOpacityConverter}}" />
 ```
 
 - Si falta configuración (Excel, carpeta, SMTP), el ViewModel expone mensajes claros (`DocumentStatusWarning`) que se muestran en la UI.

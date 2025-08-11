@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using GestLog.Views;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Messages;
@@ -40,11 +41,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public MainWindow()
     {
         InitializeComponent();
-        try
-        {
+        try        {
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var loginViewModel = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.ViewModels.LoginViewModel)) as GestLog.Modules.Usuarios.ViewModels.LoginViewModel;
-            var mainWindowViewModel = new GestLog.ViewModels.MainWindowViewModel(loginViewModel!);
+            var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+            var mainWindowViewModel = new GestLog.ViewModels.MainWindowViewModel(loginViewModel!, currentUserService);
             DataContext = mainWindowViewModel;
             _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
             _logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();

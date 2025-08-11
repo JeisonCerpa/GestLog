@@ -8,6 +8,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionCartera.Services;
 using GestLog.Modules.GestionCartera.Models;
 using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 
 namespace GestLog.Modules.GestionCartera.ViewModels;
 
@@ -19,34 +20,53 @@ public partial class DocumentGenerationViewModel : ObservableObject
 {
     private readonly MainDocumentGenerationViewModel _mainViewModel;
     private readonly IGestLogLogger _logger;
-    private readonly CurrentUserInfo _currentUser;
+    private readonly ICurrentUserService _currentUserService;
+    private CurrentUserInfo _currentUser;
 
-    // Permisos para Gestión de Cartera
-    public bool CanAccessGestionCartera => _currentUser.HasPermission("Herramientas.AccederGestionCartera");
-    public bool CanGenerateDocuments => _currentUser.HasPermission("GestionCartera.GenerarDocumentos");
-    public bool CanSendEmails => _currentUser.HasPermission("GestionCartera.EnviarEmails");
-    public bool CanImportExcel => _currentUser.HasPermission("GestionCartera.ImportarExcel");
-    // Ahora requiere ambos permisos para configurar SMTP
-    public bool CanConfigureSmtp => _currentUser.HasPermission("GestionCartera.ConfigurarSmtp") && CanGenerateDocuments;
-    public bool CanOpenOutputFolder => !string.IsNullOrWhiteSpace(OutputFolderPath) && Directory.Exists(OutputFolderPath);
-    // Nuevo: proteger envío automático por ambos permisos
-    public bool CanSendDocumentsAutomatically => CanSendEmails && CanGenerateDocuments;
-    public bool CanSelectExcelFile => CanGenerateDocuments;
-    public bool CanTestSmtp => CanConfigureSmtp;
+    // Permisos para Gestión de Cartera (ahora reactivos con [ObservableProperty])
+    [ObservableProperty]
+    private bool canAccessGestionCartera;
+    [ObservableProperty]
+    private bool canGenerateDocuments;
+    [ObservableProperty]
+    private bool canSendEmails;
+    [ObservableProperty]
+    private bool canImportExcel;
+    [ObservableProperty]
+    private bool canConfigureSmtp;
+    [ObservableProperty]
+    private bool canSendDocumentsAutomatically;
+    [ObservableProperty]
+    private bool canSelectExcelFile;
+    [ObservableProperty]
+    private bool canTestSmtp;
 
-    // Modificar constructor para DI
-    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IGestLogLogger logger, CurrentUserInfo currentUser)
+    // Propiedades calculadas que no dependen de permisos
+    public bool CanOpenOutputFolder => !string.IsNullOrWhiteSpace(OutputFolderPath) && Directory.Exists(OutputFolderPath);    // Modificar constructor para DI
+    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mainViewModel = new MainDocumentGenerationViewModel(pdfGenerator, null!, logger);
-        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        
+        RecalcularPermisos();
+        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+        
         InitializeAsync();
         SubscribeToViewModelEvents();
-    }    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IEmailService emailService, IGestLogLogger logger, CurrentUserInfo currentUser)
+    }
+
+    public DocumentGenerationViewModel(IPdfGeneratorService pdfGenerator, IEmailService emailService, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _mainViewModel = new MainDocumentGenerationViewModel(pdfGenerator, emailService, logger);
-        _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        
+        RecalcularPermisos();
+        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+        
         InitializeAsync();
         SubscribeToViewModelEvents();
     }    private async void InitializeAsync()
@@ -326,6 +346,24 @@ public partial class DocumentGenerationViewModel : ObservableObject
     // Si existe, mantenerlo protegido por CanImportExcel
 
     #endregion
+
+    private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+    {
+        _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        RecalcularPermisos();
+    }
+
+    private void RecalcularPermisos()
+    {
+        CanAccessGestionCartera = _currentUser.HasPermission("Herramientas.AccederGestionCartera");
+        CanGenerateDocuments = _currentUser.HasPermission("GestionCartera.GenerarDocumentos");
+        CanSendEmails = _currentUser.HasPermission("GestionCartera.EnviarEmails");
+        CanImportExcel = _currentUser.HasPermission("GestionCartera.ImportarExcel");
+        CanConfigureSmtp = _currentUser.HasPermission("GestionCartera.ConfigurarSmtp") && CanGenerateDocuments;
+        CanSendDocumentsAutomatically = CanSendEmails && CanGenerateDocuments;
+        CanSelectExcelFile = CanGenerateDocuments;
+        CanTestSmtp = CanConfigureSmtp;
+    }
 
     /// <summary>
     /// Limpia recursos

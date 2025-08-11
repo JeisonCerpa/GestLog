@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
-{
-    public partial class SemanaDetalleViewModel : ObservableObject
+{    public partial class SemanaDetalleViewModel : ObservableObject
     {
         private readonly ISeguimientoService? _seguimientoService;
+        private readonly ICurrentUserService? _currentUserService;
 
         public string Titulo { get; }
         public string RangoFechas { get; }
@@ -29,12 +31,22 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
         
         [ObservableProperty]
-        private ObservableCollection<CronogramaMantenimientoDto> mantenimientos = new();        public IRelayCommand<MantenimientoSemanaEstadoDto?> VerSeguimientoCommand { get; }
+        private ObservableCollection<CronogramaMantenimientoDto> mantenimientos = new();
+
+        public IRelayCommand<MantenimientoSemanaEstadoDto?> VerSeguimientoCommand { get; }
         public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> RegistrarMantenimientoCommand { get; }
-        public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> MarcarAtrasadoCommand { get; }        [ObservableProperty]
+        public IAsyncRelayCommand<MantenimientoSemanaEstadoDto?> MarcarAtrasadoCommand { get; }
+
+        [ObservableProperty]
         private int semanaActual;
         [ObservableProperty]
         private int anioActual;
+        
+        // Permisos reactivos para mantenimiento
+        [ObservableProperty]
+        private bool canRegistrarMantenimiento;
+        [ObservableProperty]
+        private bool canMarcarAtrasado;
         
         public bool PuedeRegistrarMantenimiento(int semana, int anio)
         {
@@ -85,14 +97,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - PuedeRegistrar final: {puedeRegistrarFinal}", 
                     estado.CodigoEquipo, estado.PuedeRegistrar);
             }
-        }
-        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService)
+        }        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService, ICurrentUserService currentUserService)
         {
             Titulo = titulo;
             RangoFechas = rangoFechas;
             EstadosMantenimientos = estados;
             Mantenimientos = mantenimientos;
             _seguimientoService = seguimientoService;
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+
+            // Suscribirse a cambios de usuario
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+            RecalcularPermisos();
+
             // Suscribirse a mensajes de actualización de seguimientos
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
             
@@ -101,26 +118,57 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             logger.Logger.LogInformation("[SemanaDetalleViewModel] Constructor llamado - Título: {titulo}, Estados: {estadosCount}, Mantenimientos: {mantenimientosCount}", 
                 titulo, estados?.Count ?? 0, mantenimientos?.Count ?? 0);
                       // Inicializar comandos
-        VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
-        RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync);
-        MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync);
-        
-        ActualizarPuedeRegistrarMantenimientos();
+            VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
+            RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
+            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);            ActualizarPuedeRegistrarMantenimientos();
         }
 
-        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos)
+        private bool CanExecuteRegistrarMantenimiento(MantenimientoSemanaEstadoDto? estado)
+        {
+            return CanRegistrarMantenimiento && estado?.PuedeRegistrar == true;
+        }
+
+        private bool CanExecuteMarcarAtrasado(MantenimientoSemanaEstadoDto? estado)
+        {
+            return CanMarcarAtrasado && estado != null;
+        }private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            RecalcularPermisos();
+        }
+
+        private void RecalcularPermisos()
+        {
+            if (_currentUserService?.Current != null)
+            {
+                CanRegistrarMantenimiento = _currentUserService.Current.HasPermission("GestionMantenimientos.RegistrarMantenimiento");
+                CanMarcarAtrasado = _currentUserService.Current.HasPermission("GestionMantenimientos.MarcarAtrasado");
+            }
+            else
+            {
+                CanRegistrarMantenimiento = false;
+                CanMarcarAtrasado = false;
+            }
+        }        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ICurrentUserService? currentUserService = null)
         {
             Titulo = titulo;
             RangoFechas = rangoFechas;
             EstadosMantenimientos = estados;
             Mantenimientos = mantenimientos;
             _seguimientoService = null;
+            _currentUserService = currentUserService;
+            
+            // Suscribirse a cambios de usuario si el servicio está disponible
+            if (_currentUserService != null)
+            {
+                _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+            }
+            RecalcularPermisos();
             
             // Inicializar comandos
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
-            RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync);
-            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync);
-        }        public async Task RegistrarMantenimientoAsync(MantenimientoSemanaEstadoDto? estado)
+            RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
+            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);
+        }public async Task RegistrarMantenimientoAsync(MantenimientoSemanaEstadoDto? estado)
         {
             try
             {

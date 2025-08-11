@@ -15,6 +15,8 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System.Linq;
 using System.Threading;
+using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.Modules.Usuarios.Models.Authentication;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -27,6 +29,9 @@ public partial class EquiposViewModel : ObservableObject
     private readonly IGestLogLogger _logger;
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
+
+    private readonly ICurrentUserService _currentUserService;
+    private CurrentUserInfo _currentUser;
 
     [ObservableProperty]
     private ObservableCollection<EquipoDto> equipos = new();
@@ -49,12 +54,30 @@ public partial class EquiposViewModel : ObservableObject
     [ObservableProperty]
     private ICollectionView? equiposView;
 
-    public EquiposViewModel(IEquipoService equipoService, IGestLogLogger logger, ICronogramaService cronogramaService, ISeguimientoService seguimientoService)
+    [ObservableProperty]
+    private bool canRegistrarEquipo;
+    [ObservableProperty]
+    private bool canEditarEquipo;
+    [ObservableProperty]
+    private bool canDarDeBajaEquipo;
+    [ObservableProperty]
+    private bool canRegistrarMantenimientoPermiso;
+
+    public EquiposViewModel(
+        IEquipoService equipoService,
+        IGestLogLogger logger,
+        ICronogramaService cronogramaService,
+        ISeguimientoService seguimientoService,
+        ICurrentUserService currentUserService)
     {
         _equipoService = equipoService;
         _logger = logger;
         _cronogramaService = cronogramaService;
         _seguimientoService = seguimientoService;
+        _currentUserService = currentUserService;
+        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        RecalcularPermisos();
+        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
@@ -434,7 +457,13 @@ public partial class EquiposViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    public bool CanRegistrarMantenimiento(EquipoDto? equipo)
+    {
+        // Solo permite registrar mantenimiento si el equipo está ACTIVO
+        return CanRegistrarMantenimientoPermiso && equipo != null && (equipo.Estado == EstadoEquipo.Activo);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRegistrarMantenimiento))]
     public async Task RegistrarMantenimientoAsync(EquipoDto? equipo)
     {
         if (equipo == null)
@@ -482,5 +511,19 @@ public partial class EquiposViewModel : ObservableObject
             _logger.LogError(ex, "Error al registrar mantenimiento");
             StatusMessage = "Error al registrar mantenimiento.";
         }
+    }
+
+    private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+    {
+        _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        RecalcularPermisos();
+    }
+
+    private void RecalcularPermisos()
+    {
+        CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.RegistrarEquipo");
+        CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo");
+        CanDarDeBajaEquipo = _currentUser.HasPermission("GestionMantenimientos.DarDeBajaEquipo");
+        CanRegistrarMantenimientoPermiso = _currentUser.HasPermission("GestionMantenimientos.RegistrarMantenimiento");
     }
 }

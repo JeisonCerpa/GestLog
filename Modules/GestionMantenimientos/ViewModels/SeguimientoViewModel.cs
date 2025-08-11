@@ -6,6 +6,8 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -19,6 +21,18 @@ public partial class SeguimientoViewModel : ObservableObject
 {
     private readonly ISeguimientoService _seguimientoService;
     private readonly IGestLogLogger _logger;
+    private readonly ICurrentUserService _currentUserService;
+    private CurrentUserInfo _currentUser;
+
+    // Permisos reactivos para seguimiento
+    [ObservableProperty]
+    private bool canAddSeguimiento;
+    [ObservableProperty]
+    private bool canEditSeguimiento;
+    [ObservableProperty]
+    private bool canDeleteSeguimiento;
+    [ObservableProperty]
+    private bool canExportSeguimiento;
 
     [ObservableProperty]
     private ObservableCollection<SeguimientoMantenimientoDto> seguimientos = new();
@@ -44,10 +58,16 @@ public partial class SeguimientoViewModel : ObservableObject
     [ObservableProperty]
     private System.ComponentModel.ICollectionView? seguimientosView;
 
-    public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger)
+    public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
         _seguimientoService = seguimientoService;
         _logger = logger;
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+
+        RecalcularPermisos();
+        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
         // Suscribirse a mensajes de actualización de seguimientos
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadSeguimientosAsync());
         SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
@@ -55,6 +75,20 @@ public partial class SeguimientoViewModel : ObservableObject
             SeguimientosView.Filter = FiltrarSeguimiento;
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => await LoadSeguimientosAsync());
+    }
+
+    private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+    {
+        _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        RecalcularPermisos();
+    }
+
+    private void RecalcularPermisos()
+    {
+        CanAddSeguimiento = _currentUser.HasPermission("GestionMantenimientos.AgregarSeguimiento");
+        CanEditSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EditarSeguimiento");
+        CanDeleteSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EliminarSeguimiento");
+        CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarSeguimiento");
     }
 
     [RelayCommand]
@@ -149,9 +183,7 @@ public partial class SeguimientoViewModel : ObservableObject
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
         return result.AddDays(-3);
-    }
-
-    [RelayCommand]
+    }    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]
     public async Task AddSeguimientoAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog();
@@ -173,7 +205,7 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditSeguimiento))]
     public async Task EditSeguimientoAsync()
     {
         if (SelectedSeguimiento == null)
@@ -196,7 +228,7 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDeleteSeguimiento))]
     public async Task DeleteSeguimientoAsync()
     {
         if (SelectedSeguimiento == null)
@@ -214,7 +246,7 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
     public async Task ExportarSeguimientosAsync()
     {
         var dialog = new Microsoft.Win32.SaveFileDialog
@@ -244,7 +276,7 @@ public partial class SeguimientoViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
     public async Task ExportarSeguimientosFiltradosAsync()
     {
         var dialog = new Microsoft.Win32.SaveFileDialog

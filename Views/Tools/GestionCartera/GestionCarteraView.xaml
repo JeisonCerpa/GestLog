@@ -151,13 +151,14 @@
                                         <TextBlock Text="{Binding OutputFolderPath, TargetNullValue='Carpeta por defecto'}" 
                                                   FontFamily="Segoe UI" FontSize="11" Foreground="#706F6F" TextWrapping="Wrap"
                                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Content="📂 Seleccionar" 
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">                                            <Button Content="📂 Seleccionar" 
                                                    Style="{StaticResource PrimaryButtonStyle}"
                                                    Padding="10,6"
                                                    FontSize="11"
                                                    Margin="0,0,8,0"
-                                                   Command="{Binding SelectOutputFolderCommand}"/>
+                                                   Command="{Binding SelectOutputFolderCommand}"
+                                                   IsEnabled="{Binding CanGenerateDocuments}"
+                                                   Opacity="{Binding CanGenerateDocuments, Converter={StaticResource BooleanToOpacityConverter}}"/>
                                             <Button Content="🗂️" 
                                                    Style="{StaticResource SecondaryButtonStyle}"
                                                    Width="30" Height="30"
@@ -223,12 +224,13 @@
                                                       Visibility="{Binding DocumentStatusWarning, Converter={StaticResource StringToVisibilityConverter}}"
                                                       Margin="0,2,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
                                         </StackPanel>
-                                        
-                                        <Button Content="📂 Seleccionar Archivo" 
+                                          <Button Content="📂 Seleccionar Archivo" 
                                                Style="{StaticResource PrimaryButtonStyle}"
                                                Padding="12,8"
                                                FontSize="12"
-                                               Command="{Binding SelectEmailExcelFileCommand}"/>
+                                               Command="{Binding SelectEmailExcelFileCommand}"
+                                               IsEnabled="{Binding CanSelectExcelFile}"
+                                               Opacity="{Binding CanSelectExcelFile, Converter={StaticResource BooleanToOpacityConverter}}"/>
                                     </StackPanel>
                                 </Border>
                                 
@@ -287,14 +289,14 @@
                                                   Margin="0,0,0,10"
                                                   Visibility="{Binding IsEmailConfigured, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}"/>
                                         
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Content="⚙️ Configurar" 
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">                                            <Button Content="⚙️ Configurar" 
                                                    Style="{StaticResource PrimaryButtonStyle}"
                                                    Padding="10,6"
                                                    FontSize="11"
                                                    Margin="0,0,6,0"
                                                    Click="ConfigureSmtp_Click"
-                                                   IsEnabled="{Binding CanConfigureSmtp}"/>
+                                                   IsEnabled="{Binding CanConfigureSmtp}"
+                                                   Opacity="{Binding CanConfigureSmtp, Converter={StaticResource BooleanToOpacityConverter}}"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
@@ -364,13 +366,14 @@
                           Foreground="#118938"
                           Margin="0,0,0,15"/>
                 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="🚀 Ir a Envío de Correos" 
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">                    <Button Content="🚀 Ir a Envío de Correos" 
                            Style="{StaticResource PrimaryButtonStyle}"
                            Padding="20,12" 
                            FontSize="14" 
                            Margin="8"
-                           Click="GoToEmailTab_Click"/>
+                           Click="GoToEmailTab_Click"
+                           IsEnabled="{Binding CanSendEmails}"
+                           Opacity="{Binding CanSendEmails, Converter={StaticResource BooleanToOpacityConverter}}"/>
                     <Button Content="📂 Ver Documentos" 
                            Style="{StaticResource SecondaryButtonStyle}"
                            Padding="16,12" 
@@ -407,7 +410,9 @@
                         FontSize="12"
                         HorizontalAlignment="Center"
                         Margin="0,12,0,0"
-                        Command="{Binding CancelEmailSendingCommand}"/>
+                        Command="{Binding CancelEmailSendingCommand}"
+                        IsEnabled="{Binding CanCancelEmailSending}"
+                        Opacity="{Binding CanCancelEmailSending, Converter={StaticResource BooleanToOpacityConverter}}"/>
             </StackPanel>
         </Border>
         </Grid>

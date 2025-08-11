@@ -17,6 +17,7 @@
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+            <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         </ResourceDictionary>
     </UserControl.Resources><Grid Background="{StaticResource OffWhiteBrush}">
         <Grid.RowDefinitions>
@@ -85,7 +86,9 @@
                                                Style="{StaticResource PrimaryButtonStyle}"
                                                Padding="12,8"
                                                FontSize="12"
-                                               Command="{Binding SelectExcelFileCommand}"/>
+                                               Command="{Binding SelectExcelFileCommand}"
+                                               IsEnabled="{Binding CanSendCatalogPermission}"
+                                               Opacity="{Binding CanSendCatalogPermission, Converter={StaticResource BooleanToOpacityConverter}}"/>
                                         
                                         <!-- Estados: Excel y Catálogo -->
                                         <Grid Margin="0,8,0,0">
@@ -195,7 +198,9 @@
                                                Padding="12,8"
                                                FontSize="12"
                                                HorizontalAlignment="Center"
-                                               Click="ConfigureSmtp_Click"/>
+                                               Click="ConfigureSmtp_Click"
+                                               IsEnabled="{Binding CanSendCatalogPermission}"
+                                               Opacity="{Binding CanSendCatalogPermission, Converter={StaticResource BooleanToOpacityConverter}}"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -209,7 +214,8 @@
                                HorizontalAlignment="Center"
                                Margin="20,8,20,15"
                                Command="{Binding SendCatalogoCommand}"
-                               IsEnabled="{Binding CanSendCatalogo}"/>
+                               IsEnabled="{Binding CanSendCatalogo}"
+                               Opacity="{Binding CanSendCatalogo, Converter={StaticResource BooleanToOpacityConverter}}"/>
                         
                         <!-- Panel de Progreso -->
                         <Border Background="White" Padding="20" CornerRadius="6" Margin="20,0,20,15"

@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Core.Error;
 using GestLog.Services.Core.Logging;
 
@@ -16,6 +18,8 @@ namespace GestLog.ViewModels
     {
         private readonly IErrorHandlingService _errorHandler;
         private readonly IGestLogLogger _logger;
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;
 
         [ObservableProperty]
         private ObservableCollection<ErrorRecord> errors;
@@ -29,11 +33,18 @@ namespace GestLog.ViewModels
         [ObservableProperty]
         private bool isLoading;
 
-        public ErrorLogViewModel()
+        [ObservableProperty]
+        private bool canViewErrorLog;
+
+        public ErrorLogViewModel(ICurrentUserService currentUserService)
         {
             _errorHandler = LoggingService.GetErrorHandler();
             _logger = LoggingService.GetLogger();
+            _currentUserService = currentUserService;
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             errors = new ObservableCollection<ErrorRecord>();
+
+            RecalcularPermisos();
 
             // Suscribirse al evento de errores
             _errorHandler.ErrorOccurred += (sender, e) =>
@@ -48,6 +59,19 @@ namespace GestLog.ViewModels
 
             // Cargar errores iniciales
             RefreshErrorLogCommand.Execute(null);
+
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+        }
+
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }
+
+        private void RecalcularPermisos()
+        {
+            CanViewErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
         }
 
         [RelayCommand]

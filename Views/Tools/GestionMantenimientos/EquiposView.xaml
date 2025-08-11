@@ -4,9 +4,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:GestLog.Controls"
+             xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
-    <UserControl.Resources>
+             d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -65,13 +67,17 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Gestión de Equipos" FontSize="22" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10" VerticalAlignment="Center"/>
-            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
-                <UniformGrid Rows="1" Columns="5" HorizontalAlignment="Right" VerticalAlignment="Top">
-                    <Button Content="Nuevo" Command="{Binding AddEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
-                    <Button Content="Editar" Command="{Binding EditEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
-                    <Button Content="Dar de baja" Command="{Binding DeleteEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
-                    <Button Content="Importar" Command="{Binding ImportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
-                    <Button Content="Exportar" Command="{Binding ExportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"/>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">                <UniformGrid Rows="1" Columns="5" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button Content="Nuevo" Command="{Binding AddEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"
+                            IsEnabled="{Binding CanAddEquipo}" Opacity="{Binding CanAddEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    <Button Content="Editar" Command="{Binding EditEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"
+                            IsEnabled="{Binding CanEditEquipo}" Opacity="{Binding CanEditEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    <Button Content="Dar de baja" Command="{Binding DeleteEquipoCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"
+                            IsEnabled="{Binding CanDeleteEquipo}" Opacity="{Binding CanDeleteEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    <Button Content="Importar" Command="{Binding ImportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"
+                            IsEnabled="{Binding CanImportEquipo}" Opacity="{Binding CanImportEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    <Button Content="Exportar" Command="{Binding ExportarEquiposCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" MinWidth="100" MinHeight="32"
+                            IsEnabled="{Binding CanExportEquipo}" Opacity="{Binding CanExportEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
                 </UniformGrid>
             </StackPanel>
         </Grid>
@@ -131,7 +137,9 @@
                                         MinWidth="120" MinHeight="28"
                                         Padding="12,2"
                                         Margin="8,2,8,2"
-                                        ToolTip="Registrar mantenimiento correctivo o predictivo para este equipo"/>
+                                        ToolTip="Registrar mantenimiento correctivo o predictivo para este equipo"
+                                        IsEnabled="{Binding DataContext.CanRegistrarMantenimiento, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Opacity="{Binding DataContext.CanRegistrarMantenimiento, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToOpacityConverter}}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

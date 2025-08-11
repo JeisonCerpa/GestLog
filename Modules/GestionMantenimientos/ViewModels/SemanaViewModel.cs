@@ -58,13 +58,23 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             // Obtener el servicio de seguimiento usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
-            
-            var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel(
+            var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+            var currentUser = currentUserService.Current ?? new GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo {
+                UserId = Guid.Empty,
+                Username = "",
+                FullName = "",
+                Email = "",
+                LoginTime = DateTime.Now,
+                LastActivity = DateTime.Now,
+                Roles = new List<string>(),
+                Permissions = new List<string>()
+            };            var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel(
                 $"Semana {NumeroSemana}",
                 $"{FechaInicio:dd/MM/yyyy} - {FechaFin:dd/MM/yyyy}",
                 new ObservableCollection<MantenimientoSemanaEstadoDto>(estados),
                 new ObservableCollection<CronogramaMantenimientoDto>(Mantenimientos),
-                seguimientoService
+                seguimientoService,
+                currentUserService
             );
             
             logger.Logger.LogInformation("[SemanaViewModel] ViewModel creado con {EstadosCount} estados y {MantenimientosCount} mantenimientos", 

@@ -22,10 +22,9 @@ namespace GestLog.Views.Tools
         public HerramientasView()
         {
             InitializeComponent();
-            _mainWindow = System.Windows.Application.Current.MainWindow as MainWindow;
-            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var currentUser = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
-            var viewModel = new GestLog.ViewModels.Tools.HerramientasViewModel(currentUser);
+            _mainWindow = System.Windows.Application.Current.MainWindow as MainWindow;            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+            var viewModel = new GestLog.ViewModels.Tools.HerramientasViewModel(currentUserService);
             DataContext = viewModel;
         }    private void BtnDaaterProccesor_Click(object sender, RoutedEventArgs e)
         {
@@ -100,6 +99,12 @@ namespace GestLog.Views.Tools
 
         private void BtnEnvioCatalogo_Click(object sender, RoutedEventArgs e)
         {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessEnvioCatalogo)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder al Envío de Catálogo.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             try
             {
                 var envioCatalogoView = new EnvioCatalogoView();
@@ -114,6 +119,12 @@ namespace GestLog.Views.Tools
 
         private void BtnGestionMantenimientos_Click(object sender, RoutedEventArgs e)
         {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessGestionMantenimientos)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Mantenimientos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             try
             {
                 // Ahora navega a la vista contenedora con tabs

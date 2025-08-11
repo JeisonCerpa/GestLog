@@ -5,6 +5,8 @@ using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -22,6 +24,18 @@ public partial class CronogramaViewModel : ObservableObject
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
     private readonly IGestLogLogger _logger;
+    private readonly ICurrentUserService _currentUserService;
+    private CurrentUserInfo _currentUser;
+
+    // Permisos reactivos para cronograma
+    [ObservableProperty]
+    private bool canAddCronograma;
+    [ObservableProperty]
+    private bool canEditCronograma;
+    [ObservableProperty]
+    private bool canDeleteCronograma;
+    [ObservableProperty]
+    private bool canExportCronograma;
 
     [ObservableProperty]
     private ObservableCollection<CronogramaMantenimientoDto> cronogramas = new();
@@ -45,11 +59,19 @@ public partial class CronogramaViewModel : ObservableObject
     private ObservableCollection<int> aniosDisponibles = new();
 
     [ObservableProperty]
-    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();    public CronogramaViewModel(ICronogramaService cronogramaService, ISeguimientoService seguimientoService, IGestLogLogger logger)
+    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();
+
+    public CronogramaViewModel(ICronogramaService cronogramaService, ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
         _cronogramaService = cronogramaService;
         _seguimientoService = seguimientoService;
         _logger = logger;
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+
+        RecalcularPermisos();
+        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
         WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
@@ -67,9 +89,22 @@ public partial class CronogramaViewModel : ObservableObject
             {
                 _logger.LogError(ex, "[CronogramaViewModel] Error al actualizar cronogramas y seguimientos");
             }
-            
-            await LoadCronogramasAsync();
+              await LoadCronogramasAsync();
         });
+    }
+
+    private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+    {
+        _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        RecalcularPermisos();
+    }
+
+    private void RecalcularPermisos()
+    {
+        CanAddCronograma = _currentUser.HasPermission("GestionMantenimientos.AgregarCronograma");
+        CanEditCronograma = _currentUser.HasPermission("GestionMantenimientos.EditarCronograma");
+        CanDeleteCronograma = _currentUser.HasPermission("GestionMantenimientos.EliminarCronograma");
+        CanExportCronograma = _currentUser.HasPermission("GestionMantenimientos.ExportarCronograma");
     }
 
     partial void OnAnioSeleccionadoChanged(int value)
@@ -113,9 +148,7 @@ public partial class CronogramaViewModel : ObservableObject
         {
             IsLoading = false;
         }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand(CanExecute = nameof(CanAddCronograma))]
     public async Task AddCronogramaAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.CronogramaDialog();
@@ -134,9 +167,7 @@ public partial class CronogramaViewModel : ObservableObject
                 StatusMessage = "Error al agregar cronograma.";
             }
         }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand(CanExecute = nameof(CanEditCronograma))]
     public async Task EditCronogramaAsync()
     {
         if (SelectedCronograma == null)
@@ -157,9 +188,7 @@ public partial class CronogramaViewModel : ObservableObject
                 StatusMessage = "Error al editar cronograma.";
             }
         }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand(CanExecute = nameof(CanDeleteCronograma))]
     public async Task DeleteCronogramaAsync()
     {
         if (SelectedCronograma == null)
@@ -253,9 +282,7 @@ public partial class CronogramaViewModel : ObservableObject
     public void AgruparSemanalmente()
     {
         AgruparPorSemana();
-    }
-
-    [RelayCommand]
+    }    [RelayCommand(CanExecute = nameof(CanExportCronograma))]
     public async Task ExportarCronogramasAsync()
     {
         try

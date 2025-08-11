@@ -63,7 +63,8 @@
                     </StackPanel>
                 </Border>
                 <!-- Envío de Catálogo Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessEnvioCatalogo, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="📧" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Envío de Catálogo" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
@@ -72,16 +73,20 @@
                     </StackPanel>
                 </Border>
                 <!-- Gestión de Mantenimientos Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessGestionMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Gestión de Mantenimientos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
                         <TextBlock Text="Administra equipos, cronogramas y seguimientos de mantenimiento preventivo y correctivo" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnGestionMantenimientos" Content="Abrir Gestión de Mantenimientos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionMantenimientos_Click"/>
+                        <Button Name="btnGestionMantenimientos" Content="Abrir Gestión de Mantenimientos"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="BtnGestionMantenimientos_Click"/>
                     </StackPanel>
                 </Border>
                 <!-- Registro de Errores Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessErrorLog, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="⚠️" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Registro de Errores" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
@@ -99,7 +104,8 @@
                     </StackPanel>
                 </Border>
                 <!-- Gestión de Identidad y Catálogos Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12">
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessGestionIdentidadCatalogos, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <TextBlock Text="🆔" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                         <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>

@@ -6,11 +6,12 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
-    <UserControl.Resources>
+             d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
         <converters:EstadoToColorConverter x:Key="EstadoToColorConverter" />
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -68,14 +69,15 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Seguimiento de Mantenimientos" FontSize="22" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10" VerticalAlignment="Center"/>
-            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
+            <TextBlock Text="Seguimiento de Mantenimientos" FontSize="22" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10" VerticalAlignment="Center"/>            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
                 <Button Content="Exportar filtrados"
                         Command="{Binding ExportarSeguimientosFiltradosCommand}"
-                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"/>
+                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"
+                        IsEnabled="{Binding CanExportSeguimiento}" Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
                 <Button Content="Exportar todo"
                         Command="{Binding ExportarSeguimientosCommand}"
-                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"/>
+                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"
+                        IsEnabled="{Binding CanExportSeguimiento}" Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
             </StackPanel>
         </Grid>
         <!-- Fila 1: Filtros -->

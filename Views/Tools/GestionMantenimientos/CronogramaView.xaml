@@ -12,6 +12,7 @@
         <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
         <converters:CardButtonBorderColorConverter x:Key="CardButtonBorderColorConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <!-- ...otros recursos... -->
     </UserControl.Resources>
     <Grid Background="White" Margin="10">
@@ -39,8 +40,7 @@
                           BorderBrush="#1976D2"
                           BorderThickness="1"
                           Background="#F5F8FF"/>
-            </StackPanel>
-            <Button Content="Exportar"
+            </StackPanel>            <Button Content="Exportar"
                     Command="{Binding ExportarCronogramasCommand}"
                     FontSize="14"
                     Padding="16,4"
@@ -52,7 +52,9 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Margin="0,0,0,0"
-                    Grid.Column="1">
+                    Grid.Column="1"
+                    IsEnabled="{Binding CanExportCronograma}" 
+                    Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}">
                 <Button.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="8"/>
