@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.Personas.Models;
 using GestLog.Modules.Usuarios.Models;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using Modules.Personas.Interfaces;
 using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
@@ -14,13 +16,14 @@ using Modules.Usuarios.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{
-    public partial class PersonaManagementViewModel : ObservableObject
+{    public partial class PersonaManagementViewModel : ObservableObject
     {
         private readonly IPersonaService _personaService;
         private readonly ICargoService _cargoService;
         private readonly ICargoRepository _cargoRepository;
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;
 
         [ObservableProperty]
         private ObservableCollection<Persona> personas = new();
@@ -46,19 +49,38 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private System.Timers.Timer? _debounceTimer;
 
         [ObservableProperty]
-        private System.Windows.Controls.UserControl? vistaActual;
-
-        [ObservableProperty]
+        private System.Windows.Controls.UserControl? vistaActual;        [ObservableProperty]
         private string mensajeValidacion = string.Empty;
 
-        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";
+        // Propiedades de permisos
+        [ObservableProperty]
+        private bool canCreatePersona = false;
 
-        public PersonaManagementViewModel(IPersonaService personaService, ICargoService cargoService, ICargoRepository cargoRepository, ITipoDocumentoRepository tipoDocumentoRepository)
+        [ObservableProperty]
+        private bool canEditPersona = false;
+
+        [ObservableProperty]
+        private bool canDeletePersona = false;
+
+        [ObservableProperty]
+        private bool canViewPersona = false;
+
+        [ObservableProperty]
+        private bool canActivatePersona = false;
+
+        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";        public PersonaManagementViewModel(IPersonaService personaService, ICargoService cargoService, ICargoRepository cargoRepository, ITipoDocumentoRepository tipoDocumentoRepository, ICurrentUserService currentUserService)
         {
             _personaService = personaService;
             _cargoService = cargoService;
             _cargoRepository = cargoRepository;
             _tipoDocumentoRepository = tipoDocumentoRepository;
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+
+            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
             _ = InicializarAsync();
             PersonasView = CollectionViewSource.GetDefaultView(Personas);
             if (PersonasView != null)
@@ -69,9 +91,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             await CargarCargos();
             await CargarPersonas();
-        }
-
-        [RelayCommand]
+        }        [RelayCommand(CanExecute = nameof(CanCreatePersona))]
         private async Task RegistrarPersona()
         {
             var primerCargo = Cargos.FirstOrDefault();
@@ -87,16 +107,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 CargoId = primerCargo?.IdCargo ?? Guid.Empty,
                 Activo = true
             };
-            var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository);
+            var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
             var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
             if (win.ShowDialog() == true)
             {
                 await CargarPersonas();
                 PersonasView?.Refresh();
             }
-        }
-
-        [RelayCommand]
+        }        [RelayCommand(CanExecute = nameof(CanEditPersona))]
         private async Task GuardarPersona()
         {
             if (PersonaSeleccionada == null) return;
@@ -239,7 +257,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 CargoId = persona.CargoId,
                 Activo = persona.Activo
             };
-            var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository);
+            var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
             var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
             if (win.ShowDialog() == true)
             {
@@ -260,9 +278,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private void CancelarEdicion()
         {
             MostrarDetalle();
-        }
-
-        [RelayCommand]
+        }        [RelayCommand(CanExecute = nameof(CanActivatePersona))]
         private async Task ActivarDesactivarPersona(Persona persona)
         {
             persona.Activo = !persona.Activo;
@@ -271,7 +287,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             PersonasView?.Refresh();
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanCreatePersona))]
         private void CrearUsuarioParaPersona(Persona persona)
         {
             if (persona == null)
@@ -298,6 +314,20 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 MensajeValidacion = "No se pudo cargar el formulario de usuario.";
             }
+        }
+
+        // === MÉTODOS DE GESTIÓN DE PERMISOS ===
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            CanCreatePersona = _currentUser.HasPermission("Personas.Crear");
+            CanEditPersona = _currentUser.HasPermission("Personas.Editar");
+            CanDeletePersona = _currentUser.HasPermission("Personas.Editar"); // Usar Editar para eliminar/desactivar
+            CanViewPersona = _currentUser.HasPermission("Personas.Ver");
+            CanActivatePersona = _currentUser.HasPermission("Personas.ActivarDesactivar");
         }
     }
 }

@@ -52,9 +52,7 @@ public partial class EquiposViewModel : ObservableObject
     private string filtroEquipo = "";
 
     [ObservableProperty]
-    private ICollectionView? equiposView;
-
-    [ObservableProperty]
+    private ICollectionView? equiposView;    [ObservableProperty]
     private bool canRegistrarEquipo;
     [ObservableProperty]
     private bool canEditarEquipo;
@@ -62,6 +60,12 @@ public partial class EquiposViewModel : ObservableObject
     private bool canDarDeBajaEquipo;
     [ObservableProperty]
     private bool canRegistrarMantenimientoPermiso;
+
+    // Propiedades alias para compatibilidad con la vista XAML
+    public bool CanAddEquipo => CanRegistrarEquipo;
+    public bool CanDeleteEquipo => CanDarDeBajaEquipo;
+    public bool CanImportEquipo => CanRegistrarEquipo; // Usar el mismo permiso que registrar
+    public bool CanExportEquipo => true; // Exportar no requiere permisos especiales
 
     public EquiposViewModel(
         IEquipoService equipoService,
@@ -298,8 +302,7 @@ public partial class EquiposViewModel : ObservableObject
                     var eq = new EquipoDto
                     {
                         Codigo = row.Cell(1).GetString(),
-                        Nombre = row.Cell(2).GetString(),
-                        Marca = row.Cell(3).GetString(),
+                        Nombre = row.Cell(2).GetString(),                        Marca = row.Cell(3).GetString(),
                         Estado = ParseEnumFlexible<EstadoEquipo>(row.Cell(4).GetString()),
                         Sede = ParseEnumFlexible<Sede>(row.Cell(5).GetString()),
                         FrecuenciaMtto = ParseEnumFlexible<FrecuenciaMantenimiento>(row.Cell(6).GetString()),
@@ -517,13 +520,17 @@ public partial class EquiposViewModel : ObservableObject
     {
         _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
         RecalcularPermisos();
-    }
-
-    private void RecalcularPermisos()
+    }    private void RecalcularPermisos()
     {
         CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.RegistrarEquipo");
         CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo");
         CanDarDeBajaEquipo = _currentUser.HasPermission("GestionMantenimientos.DarDeBajaEquipo");
         CanRegistrarMantenimientoPermiso = _currentUser.HasPermission("GestionMantenimientos.RegistrarMantenimiento");
+        
+        // Notificar cambios en las propiedades alias
+        OnPropertyChanged(nameof(CanAddEquipo));
+        OnPropertyChanged(nameof(CanDeleteEquipo));
+        OnPropertyChanged(nameof(CanImportEquipo));
+        OnPropertyChanged(nameof(CanExportEquipo));
     }
 }

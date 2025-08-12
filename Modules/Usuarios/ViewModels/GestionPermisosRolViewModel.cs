@@ -6,6 +6,8 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GestLog.Modules.Usuarios.Models;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Services.Core.Logging;
 using Modules.Usuarios.Interfaces;
 using CommunityToolkit.Mvvm.Input;
@@ -20,6 +22,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private readonly IRolService _rolService;
         private readonly IPermisoService _permisoService;
         private readonly IGestLogLogger _logger;
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;
 
         // === PROPIEDADES PRINCIPALES ===
         private ObservableCollection<Rol> _roles = new();
@@ -56,14 +60,25 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             get => _mensajeEstado;
             set { _mensajeEstado = value; OnPropertyChanged(); }
-        }
-
-        private bool _isLoading;
+        }        private bool _isLoading;
         public bool IsLoading
         {
             get => _isLoading;
             set { _isLoading = value; OnPropertyChanged(); }
         }
+
+        // Propiedades de permisos
+        private bool _canViewRole;
+        public bool CanViewRole { get => _canViewRole; set { _canViewRole = value; OnPropertyChanged(); } }
+
+        private bool _canEditRole;
+        public bool CanEditRole { get => _canEditRole; set { _canEditRole = value; OnPropertyChanged(); } }
+
+        private bool _canDeleteRole;
+        public bool CanDeleteRole { get => _canDeleteRole; set { _canDeleteRole = value; OnPropertyChanged(); } }
+
+        private bool _canAssignPermissions;
+        public bool CanAssignPermissions { get => _canAssignPermissions; set { _canAssignPermissions = value; OnPropertyChanged(); } }
 
         // === COMANDOS ===
         public ICommand CargarRolesCommand { get; }
@@ -95,24 +110,28 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             get => _modulosPermisosVer;
             set { _modulosPermisosVer = value; OnPropertyChanged(); }
-        }
-
-        // === CONSTRUCTOR ===
-        public GestionPermisosRolViewModel(IRolService rolService, IPermisoService permisoService, IGestLogLogger logger)
+        }        // === CONSTRUCTOR ===
+        public GestionPermisosRolViewModel(IRolService rolService, IPermisoService permisoService, IGestLogLogger logger, ICurrentUserService currentUserService)
         {
             _rolService = rolService ?? throw new ArgumentNullException(nameof(rolService));
             _permisoService = permisoService ?? throw new ArgumentNullException(nameof(permisoService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));            // Inicializar comandos
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };            // Inicializar comandos
             CargarRolesCommand = new AsyncRelayCommand(CargarRolesAsync);
             CargarPermisosDelRolCommand = new AsyncRelayCommand(CargarPermisosDelRolAsync);
-            GuardarAsignacionesCommand = new AsyncRelayCommand(GuardarAsignacionesAsync);
-            AbrirVerRolCommand = new AsyncRelayCommand<Rol>(AbrirVerRolAsync);
+            GuardarAsignacionesCommand = new AsyncRelayCommand(GuardarAsignacionesAsync, () => CanAssignPermissions);
+            AbrirVerRolCommand = new AsyncRelayCommand<Rol>(AbrirVerRolAsync, _ => CanViewRole);
             CerrarVerRolCommand = new RelayCommand(() => IsModalVerRolVisible = false);
             
             // Comandos faltantes para los botones en la vista
-            SeleccionarRolCommand = new RelayCommand<Rol>(SeleccionarRol);
-            AbrirEditarRolCommand = new RelayCommand<Rol>(AbrirEditarRol);
-            EliminarRolCommand = new AsyncRelayCommand<Rol>(EliminarRolAsync);
+            SeleccionarRolCommand = new RelayCommand<Rol>(SeleccionarRol, _ => CanViewRole);
+            AbrirEditarRolCommand = new RelayCommand<Rol>(AbrirEditarRol, _ => CanEditRole);
+            EliminarRolCommand = new AsyncRelayCommand<Rol>(EliminarRolAsync, _ => CanDeleteRole);
+
+            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
 
             // Cargar roles al inicializar
             _ = CargarRolesAsync();
@@ -333,8 +352,27 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
             finally
             {
-                IsLoading = false;
-            }
+                IsLoading = false;            }
+        }
+
+        // === MÉTODOS DE GESTIÓN DE PERMISOS ===
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            CanViewRole = _currentUser.HasPermission("Roles.Ver");
+            CanEditRole = _currentUser.HasPermission("Roles.Editar");
+            CanDeleteRole = _currentUser.HasPermission("Roles.Eliminar");
+            CanAssignPermissions = _currentUser.HasPermission("Roles.AsignarPermisos");
+
+            // Notificar cambios en comandos que implementan IRelayCommand
+            if (GuardarAsignacionesCommand is IRelayCommand guardarCmd) guardarCmd.NotifyCanExecuteChanged();
+            if (AbrirVerRolCommand is IRelayCommand abrirVerCmd) abrirVerCmd.NotifyCanExecuteChanged();
+            if (SeleccionarRolCommand is IRelayCommand seleccionarCmd) seleccionarCmd.NotifyCanExecuteChanged();
+            if (AbrirEditarRolCommand is IRelayCommand abrirEditarCmd) abrirEditarCmd.NotifyCanExecuteChanged();
+            if (EliminarRolCommand is IRelayCommand eliminarCmd) eliminarCmd.NotifyCanExecuteChanged();
         }
 
         // === IMPLEMENTACIÓN DE INotifyPropertyChanged ===

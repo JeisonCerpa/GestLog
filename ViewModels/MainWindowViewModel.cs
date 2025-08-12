@@ -106,12 +106,10 @@ namespace GestLog.ViewModels
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }
-
-        private void RecalcularPermisos()
+        }        private void RecalcularPermisos()
         {
             CanAccessAdminPanel = _currentUser.HasRole("Administrador");
-            CanAccessUserManagement = _currentUser.HasPermission("Usuarios.GestionarUsuarios");
+            CanAccessUserManagement = _currentUser.HasPermission("Herramientas.AccederGestionUsuarios");
             CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
         }
     }

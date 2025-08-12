@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GestLog.Modules.Usuarios.Models;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using Modules.Usuarios.Interfaces;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -12,6 +14,8 @@ using Modules.Usuarios.Helpers;
 namespace Modules.Usuarios.ViewModels
 {    public class RolManagementViewModel : INotifyPropertyChanged
     {        private readonly IRolService _rolService;
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;
         private ObservableCollection<Rol> _roles;        public ObservableCollection<Rol> Roles 
         { 
             get 
@@ -31,13 +35,28 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _rolSeleccionado;
             set { _rolSeleccionado = value; OnPropertyChanged(); }
-        }
-        private string _mensajeEstado = string.Empty;
+        }        private string _mensajeEstado = string.Empty;
         public string MensajeEstado
         {
             get => _mensajeEstado;
             set { _mensajeEstado = value; OnPropertyChanged(); }
         }
+
+        // Propiedades de permisos
+        private bool _canCreateRole;
+        public bool CanCreateRole { get => _canCreateRole; set { _canCreateRole = value; OnPropertyChanged(); } }
+
+        private bool _canEditRole;
+        public bool CanEditRole { get => _canEditRole; set { _canEditRole = value; OnPropertyChanged(); } }
+
+        private bool _canDeleteRole;
+        public bool CanDeleteRole { get => _canDeleteRole; set { _canDeleteRole = value; OnPropertyChanged(); } }
+
+        private bool _canViewRole;
+        public bool CanViewRole { get => _canViewRole; set { _canViewRole = value; OnPropertyChanged(); } }
+
+        private bool _canAssignPermissions;
+        public bool CanAssignPermissions { get => _canAssignPermissions; set { _canAssignPermissions = value; OnPropertyChanged(); } }
         public ICommand RegistrarRolCommand { get; }
         public ICommand EditarRolCommand { get; }
         public ICommand DesactivarRolCommand { get; }
@@ -45,10 +64,12 @@ namespace Modules.Usuarios.ViewModels
         public ICommand AbrirNuevoRolCommand { get; }
         public ICommand AbrirEditarRolCommand { get; }
         public ICommand EliminarRolCommand { get; }
-        public ICommand AbrirVerRolCommand { get; }        public RolManagementViewModel(IRolService rolService)
+        public ICommand AbrirVerRolCommand { get; }        public RolManagementViewModel(IRolService rolService, ICurrentUserService currentUserService)
         {
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Constructor iniciado");
             _rolService = rolService ?? throw new ArgumentNullException(nameof(rolService));
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             _roles = new ObservableCollection<Rol>();
             _mensajeEstado = string.Empty;
             
@@ -58,21 +79,23 @@ namespace Modules.Usuarios.ViewModels
                 System.Diagnostics.Debug.WriteLine($"ObservableCollection CollectionChanged: Action = {e.Action}, NewItems = {e.NewItems?.Count ?? 0}");
             };
             
-            System.Diagnostics.Debug.WriteLine($"RolManagementViewModel: ObservableCollection inicializada. Count = {_roles.Count}");
-            
+            System.Diagnostics.Debug.WriteLine($"RolManagementViewModel: ObservableCollection inicializada. Count = {_roles.Count}");            
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Creando comandos");
-            RegistrarRolCommand = new RelayCommand(async _ => await RegistrarRolAsync(), _ => true);
-            EditarRolCommand = new RelayCommand(async _ => await EditarRolAsync(), _ => RolSeleccionado != null);
-            DesactivarRolCommand = new RelayCommand(async _ => await DesactivarRolAsync(), _ => RolSeleccionado != null);
-            BuscarRolesCommand = new RelayCommand(async _ => await BuscarRolesAsync(), _ => true);
+            RegistrarRolCommand = new RelayCommand(async _ => await RegistrarRolAsync(), _ => CanCreateRole);
+            EditarRolCommand = new RelayCommand(async _ => await EditarRolAsync(), _ => RolSeleccionado != null && CanEditRole);
+            DesactivarRolCommand = new RelayCommand(async _ => await DesactivarRolAsync(), _ => RolSeleccionado != null && CanDeleteRole);
+            BuscarRolesCommand = new RelayCommand(async _ => await BuscarRolesAsync(), _ => CanViewRole);
             
-            AbrirNuevoRolCommand = new RelayCommand(_ => { AbrirNuevoRol(); return Task.CompletedTask; }, _ => true);
-            AbrirEditarRolCommand = new RelayCommand(param => { if (param is Rol rol) AbrirEditarRol(rol); return Task.CompletedTask; }, _ => true);
-            EliminarRolCommand = new RelayCommand(async param => { if (param is Rol rol) await EliminarRolAsync(rol); }, _ => true);
-            AbrirVerRolCommand = new RelayCommand(async param => { if (param is Rol rol) await AbrirVerRolAsync(rol); }, _ => true);
-            
-            GuardarModalRolCommand = new RelayCommand(async _ => await GuardarModalRolAsync(), _ => true);
+            AbrirNuevoRolCommand = new RelayCommand(_ => { AbrirNuevoRol(); return Task.CompletedTask; }, _ => CanCreateRole);
+            AbrirEditarRolCommand = new RelayCommand(param => { if (param is Rol rol) AbrirEditarRol(rol); return Task.CompletedTask; }, _ => CanEditRole);
+            EliminarRolCommand = new RelayCommand(async param => { if (param is Rol rol) await EliminarRolAsync(rol); }, _ => CanDeleteRole);
+            AbrirVerRolCommand = new RelayCommand(async param => { if (param is Rol rol) await AbrirVerRolAsync(rol); }, _ => CanViewRole);
+              GuardarModalRolCommand = new RelayCommand(async _ => await GuardarModalRolAsync(), _ => CanCreateRole || CanEditRole);
             CancelarModalRolCommand = new RelayCommand(_ => { IsModalRolVisible = false; MensajeValidacion = string.Empty; return Task.CompletedTask; }, _ => true);
+            
+            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Constructor completado");
             System.Diagnostics.Debug.WriteLine($"RolManagementViewModel: Roles collection inicializada con {Roles.Count} elementos");
@@ -386,9 +409,33 @@ namespace Modules.Usuarios.ViewModels
                     Modulo = g.Key,
                     Permisos = new ObservableCollection<Permiso>(g)
                 });
-            PermisosPorModuloVer = new ObservableCollection<PermisosModuloGroup>(grupos);
-            IsModalVerRolVisible = true;
+            PermisosPorModuloVer = new ObservableCollection<PermisosModuloGroup>(grupos);            IsModalVerRolVisible = true;
         }
+
+        // Métodos de gestión de permisos
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            CanCreateRole = _currentUser.HasPermission("Roles.Crear");
+            CanEditRole = _currentUser.HasPermission("Roles.Editar");
+            CanDeleteRole = _currentUser.HasPermission("Roles.Eliminar");
+            CanViewRole = _currentUser.HasPermission("Roles.Ver");
+            CanAssignPermissions = _currentUser.HasPermission("Roles.AsignarPermisos");
+
+            // Notificar cambios en comandos
+            if (RegistrarRolCommand is RelayCommand registrarCmd) registrarCmd.RaiseCanExecuteChanged();
+            if (EditarRolCommand is RelayCommand editarCmd) editarCmd.RaiseCanExecuteChanged();
+            if (DesactivarRolCommand is RelayCommand desactivarCmd) desactivarCmd.RaiseCanExecuteChanged();
+            if (BuscarRolesCommand is RelayCommand buscarCmd) buscarCmd.RaiseCanExecuteChanged();
+            if (AbrirNuevoRolCommand is RelayCommand abrirNuevoCmd) abrirNuevoCmd.RaiseCanExecuteChanged();
+            if (AbrirEditarRolCommand is RelayCommand abrirEditarCmd) abrirEditarCmd.RaiseCanExecuteChanged();
+            if (EliminarRolCommand is RelayCommand eliminarCmd) eliminarCmd.RaiseCanExecuteChanged();            if (GuardarModalRolCommand is RelayCommand guardarCmd) guardarCmd.RaiseCanExecuteChanged();
+            if (AbrirVerRolCommand is RelayCommand abrirVerCmd) abrirVerCmd.RaiseCanExecuteChanged();
+        }
+
         // Implementación de RelayCommand local
         public class RelayCommand : ICommand
         {

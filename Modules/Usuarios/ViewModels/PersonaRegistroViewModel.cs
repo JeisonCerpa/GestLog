@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.Personas.Models;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using Modules.Personas.Interfaces;
 using GestLog.Modules.Usuarios.Models;
 using Modules.Usuarios.Interfaces;
@@ -13,9 +15,11 @@ using GestLog.ViewModels.Base;
 using System.Runtime.CompilerServices;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{
-    public partial class PersonaRegistroViewModel : ValidatableViewModel
+{    public partial class PersonaRegistroViewModel : ValidatableViewModel
     {
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;
+        
         private Persona _persona = new Persona {
             Nombres = string.Empty,
             Apellidos = string.Empty,
@@ -38,8 +42,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         private string _documentoError = string.Empty;
         private string _correoError = string.Empty;
-        private bool _validandoDocumento;
-        private bool _validandoCorreo;
+        private bool _validandoDocumento;        private bool _validandoCorreo;
+
+        // Propiedades de permisos
+        private bool _canSavePersona = false;
+        public bool CanSavePersona 
+        { 
+            get => _canSavePersona; 
+            set { _canSavePersona = value; OnPropertyChanged(); } 
+        }
 
         public string DocumentoError
         {
@@ -55,25 +66,33 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             get => _validandoDocumento;
             set { _validandoDocumento = value; OnPropertyChanged(); }
-        }
-        public bool ValidandoCorreo
+        }        public bool ValidandoCorreo
         {
             get => _validandoCorreo;
             set { _validandoCorreo = value; OnPropertyChanged(); }
         }
 
-        public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo;
+        public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo && CanSavePersona;
 
-        private bool CanGuardar() => PuedeGuardar;
+        private bool CanGuardar() => PuedeGuardar;        // Comando para guardar
+        public CommunityToolkit.Mvvm.Input.AsyncRelayCommand SaveCommand { get; }
 
-        public PersonaRegistroViewModel(Persona persona, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository)
+        public PersonaRegistroViewModel(Persona persona, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository, ICurrentUserService currentUserService)
         {
             Persona = persona;
             _personaService = personaService;
             _tipoDocumentoRepository = tipoDocumentoRepository;
             _cargoRepository = cargoRepository;
-            TiposDocumento = new ObservableCollection<TipoDocumento>();
-            Cargos = new ObservableCollection<Cargo>();
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+              TiposDocumento = new ObservableCollection<TipoDocumento>();
+            Cargos = new ObservableCollection<Cargo>();            // Inicializar comandos
+            SaveCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(GuardarAsync, CanGuardar);
+
+            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
             _ = CargarTiposDocumentoAsync();
             _ = CargarCargosAsync();
             PropertyChanged += (s, e) =>
@@ -82,7 +101,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     e.PropertyName == nameof(ValidandoDocumento) || e.PropertyName == nameof(ValidandoCorreo))
                 {
                     OnPropertyChanged(nameof(PuedeGuardar));
-                    GuardarCommand.NotifyCanExecuteChanged();
+                    SaveCommand.NotifyCanExecuteChanged();
                 }
             };
         }
@@ -198,8 +217,44 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     _ = ValidarDocumentoAsync();
                 if (propertyName == nameof(Persona.Correo))
                     _ = ValidarCorreoAsync();
+            }            return changed;
+        }
+
+        // === MÉTODOS DE GESTIÓN DE PERMISOS ===
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            CanSavePersona = _currentUser.HasPermission("Personas.Crear");
+        }
+
+        // Método para guardar persona
+        private async Task GuardarAsync()
+        {
+            if (Persona == null) return;
+
+            try
+            {
+                // Validar datos antes de guardar
+                if (string.IsNullOrWhiteSpace(Persona.Nombres) || string.IsNullOrWhiteSpace(Persona.Apellidos))
+                {
+                    // Manejar error de validación
+                    return;
+                }
+
+                Persona.CargoId = Persona.Cargo?.IdCargo ?? Guid.Empty;
+                var personaGuardada = await _personaService.RegistrarPersonaAsync(Persona);
+                
+                // Si llegamos aquí, el guardado fue exitoso
+                // Se puede agregar lógica adicional según sea necesario
             }
-            return changed;
+            catch (Exception)
+            {
+                // Manejar errores de guardado
+                throw;
+            }
         }
     }
 }

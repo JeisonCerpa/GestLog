@@ -13,6 +13,8 @@ using Modules.Usuarios.Helpers;
 using Modules.Personas.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Modules.Usuarios.Interfaces;
 using MessageBox = System.Windows.MessageBox; // Usar siempre System.Windows.MessageBox para evitar ambigüedad
 
 namespace Modules.Usuarios.ViewModels
@@ -25,12 +27,48 @@ namespace Modules.Usuarios.ViewModels
         private readonly IPermisoService _permisoService;
         private readonly IAuditoriaService _auditoriaService;
         private readonly IPersonaService _personaService;
-
-        public ObservableCollection<Usuario> Usuarios { get; set; } = new();
+        private readonly ICurrentUserService _currentUserService;
+        private CurrentUserInfo _currentUser;        public ObservableCollection<Usuario> Usuarios { get; set; } = new();
         public ObservableCollection<Cargo> Cargos { get; set; } = new();
         public ObservableCollection<Rol> Roles { get; set; } = new();
         public ObservableCollection<Permiso> Permisos { get; set; } = new();
         public ObservableCollection<Auditoria> Auditorias { get; set; } = new();
+
+        // Propiedades de permisos para el módulo Usuarios
+        private bool _canCreateUser;
+        public bool CanCreateUser
+        {
+            get => _canCreateUser;
+            set { _canCreateUser = value; OnPropertyChanged(); }
+        }
+        
+        private bool _canEditUser;
+        public bool CanEditUser
+        {
+            get => _canEditUser;
+            set { _canEditUser = value; OnPropertyChanged(); }
+        }
+        
+        private bool _canDeleteUser;
+        public bool CanDeleteUser
+        {
+            get => _canDeleteUser;
+            set { _canDeleteUser = value; OnPropertyChanged(); }
+        }
+        
+        private bool _canResetPassword;
+        public bool CanResetPassword
+        {
+            get => _canResetPassword;
+            set { _canResetPassword = value; OnPropertyChanged(); }
+        }
+        
+        private bool _canViewAudit;
+        public bool CanViewAudit
+        {
+            get => _canViewAudit;
+            set { _canViewAudit = value; OnPropertyChanged(); }
+        }
 
         private Usuario? _usuarioSeleccionado = null;
         public Usuario? UsuarioSeleccionado
@@ -197,30 +235,36 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _rolesDeUsuario;
             set { _rolesDeUsuario = value; OnPropertyChanged(); }
-        }
-
-        public UsuarioManagementViewModel(
+        }        public UsuarioManagementViewModel(
             IUsuarioService usuarioService,
             ICargoService cargoService,
             IRolService rolService,
             IPermisoService permisoService,
             IAuditoriaService auditoriaService,
-            IPersonaService personaService)
+            IPersonaService personaService,
+            ICurrentUserService currentUserService)
         {
             _usuarioService = usuarioService;
             _cargoService = cargoService;
             _rolService = rolService;
             _permisoService = permisoService;
             _auditoriaService = auditoriaService;
-            _personaService = personaService;            RegistrarUsuarioCommand = new RelayCommand(async _ => await RegistrarUsuarioAsync(), _ => true);
-            EditarUsuarioCommand = new RelayCommand(async _ => await EditarUsuarioAsync(), _ => UsuarioSeleccionado != null);
-            RestablecerContrasenaCommand = new RelayCommand(async _ => await RestablecerContrasenaAsync(), _ => UsuarioSeleccionado != null);
+            _personaService = personaService;
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };            // Configurar permisos reactivos
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
+            // Comandos con validación de permisos
+            RegistrarUsuarioCommand = new RelayCommand(async _ => await RegistrarUsuarioAsync(), _ => true);
+            EditarUsuarioCommand = new RelayCommand(async _ => await EditarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanEditUser);
+            RestablecerContrasenaCommand = new RelayCommand(async _ => await RestablecerContrasenaAsync(), _ => UsuarioSeleccionado != null && CanResetPassword);
             BuscarUsuariosCommand = new RelayCommand(async _ => await BuscarUsuariosAsync(), _ => true);
-            CargarAuditoriaCommand = new RelayCommand(async _ => await CargarAuditoriaAsync(), _ => UsuarioSeleccionado != null);
-            AbrirRegistroUsuarioWindowCommand = new RelayCommand(_ => { AbrirRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
+            CargarAuditoriaCommand = new RelayCommand(async _ => await CargarAuditoriaAsync(), _ => UsuarioSeleccionado != null && CanViewAudit);
+            AbrirRegistroUsuarioWindowCommand = new RelayCommand(_ => { AbrirRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => CanCreateUser);
             CancelarRegistroUsuarioCommand = new RelayCommand(_ => { CerrarRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
-            RegistrarNuevoUsuarioCommand = new RelayCommand(async _ => await RegistrarNuevoUsuarioAsync(), _ => PuedeRegistrarNuevoUsuario());
-            EliminarUsuarioCommand = new RelayCommand(async _ => await EliminarUsuarioAsync(), _ => UsuarioSeleccionado != null);
+            RegistrarNuevoUsuarioCommand = new RelayCommand(async _ => await RegistrarNuevoUsuarioAsync(), _ => PuedeRegistrarNuevoUsuario() && CanCreateUser);
+            EliminarUsuarioCommand = new RelayCommand(async _ => await EliminarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanDeleteUser);
 
             // Cargar usuarios desde la base de datos al inicializar
             _ = CargarUsuariosAsync();
@@ -497,8 +541,31 @@ namespace Modules.Usuarios.ViewModels
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Error al eliminar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
+            }        }
+
+        #region Métodos de Permisos
+
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        {
+            _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+        }        private void RecalcularPermisos()
+        {
+            CanCreateUser = _currentUser.HasPermission("Usuarios.Crear");
+            CanEditUser = _currentUser.HasPermission("Usuarios.Editar");
+            CanDeleteUser = _currentUser.HasPermission("Usuarios.Eliminar");
+            CanResetPassword = _currentUser.HasPermission("Usuarios.RestablecerContrasena");
+            CanViewAudit = _currentUser.HasPermission("Usuarios.VerAuditoria");
+
+            // Notificar cambios en comandos que dependen de permisos
+            (RegistrarNuevoUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (EliminarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (RestablecerContrasenaCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CargarAuditoriaCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
+
+        #endregion
 
         // Implementación simple de RelayCommand para MVVM
         public class RelayCommand : ICommand
