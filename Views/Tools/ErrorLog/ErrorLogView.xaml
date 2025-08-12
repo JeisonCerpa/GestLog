@@ -24,10 +24,6 @@
         </ResourceDictionary>
     </Window.Resources>
     
-    <Window.DataContext>
-        <vm:ErrorLogViewModel />
-    </Window.DataContext>
-
     <Grid Background="#FAFAFA" Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

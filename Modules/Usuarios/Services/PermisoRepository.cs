@@ -70,7 +70,12 @@ namespace Modules.Usuarios.Services
         public async Task<IEnumerable<Permiso>> ObtenerTodosAsync()
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
-            return await dbContext.Permisos.ToListAsync();
+            // Filtrar permisos con campos requeridos no nulos y no vacíos
+            return await dbContext.Permisos
+                .Where(p => !string.IsNullOrWhiteSpace(p.Nombre)
+                         && !string.IsNullOrWhiteSpace(p.Descripcion)
+                         && !string.IsNullOrWhiteSpace(p.Modulo))
+                .ToListAsync();
         }
 
         public async Task<bool> ExisteNombreAsync(string nombre)

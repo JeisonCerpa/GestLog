@@ -58,8 +58,10 @@ namespace GestLog.Views.Tools
         {
             try
             {
-                var errorLogView = new ErrorLogView();
-                
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                var errorLogViewModel = new GestLog.ViewModels.ErrorLogViewModel(currentUserService);
+                var errorLogView = new ErrorLogView(errorLogViewModel);
                 // Verificar que _mainWindow no sea null antes de pasarlo como parámetro
                 if (_mainWindow != null)
                 {
@@ -67,19 +69,19 @@ namespace GestLog.Views.Tools
                 }
                 else
                 {
-                    // Usar la ventana actual si _mainWindow es null
                     var currentWindow = Window.GetWindow(this);
                     if (currentWindow != null)
                     {
                         errorLogView.ShowErrorLog(currentWindow);
                     }
-                    else                {
-                        // Si no hay ventana disponible, mostrar sin propietario
+                    else
+                    {
                         System.Windows.MessageBox.Show("No se pudo obtener una ventana propietaria para el visor de errores.",
                             "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
                         errorLogView.Show();
                     }
-                }        }
+                }
+            }
             catch (System.Exception ex)        {
                 var errorHandler = LoggingService.GetErrorHandler();
                 errorHandler.HandleException(ex, "Mostrar registro de errores desde herramientas");
