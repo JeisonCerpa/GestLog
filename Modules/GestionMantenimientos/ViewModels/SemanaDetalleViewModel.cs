@@ -302,27 +302,30 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
 
         public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
         {
-            EstadosMantenimientos.Clear();
-            foreach (var estado in nuevosEstados)
+            GestLog.Services.Core.UI.DispatcherService.InvokeOnUIThread(() =>
             {
-                // Clonar el DTO para forzar refresco de la UI
-                var clon = new MantenimientoSemanaEstadoDto
+                EstadosMantenimientos.Clear();
+                foreach (var estado in nuevosEstados)
                 {
-                    CodigoEquipo = estado.CodigoEquipo,
-                    NombreEquipo = estado.NombreEquipo,
-                    Semana = estado.Semana,
-                    Anio = estado.Anio,
-                    Frecuencia = estado.Frecuencia,
-                    Programado = estado.Programado,
-                    Realizado = estado.Realizado,
-                    Atrasado = estado.Atrasado,
-                    Seguimiento = estado.Seguimiento,
-                    Estado = estado.Estado,
-                    PuedeRegistrar = estado.PuedeRegistrar
-                };
-                EstadosMantenimientos.Add(clon);
-            }
-            ActualizarPuedeRegistrarMantenimientos();
+                    // Clonar el DTO para forzar refresco de la UI
+                    var clon = new MantenimientoSemanaEstadoDto
+                    {
+                        CodigoEquipo = estado.CodigoEquipo,
+                        NombreEquipo = estado.NombreEquipo,
+                        Semana = estado.Semana,
+                        Anio = estado.Anio,
+                        Frecuencia = estado.Frecuencia,
+                        Programado = estado.Programado,
+                        Realizado = estado.Realizado,
+                        Atrasado = estado.Atrasado,
+                        Seguimiento = estado.Seguimiento,
+                        Estado = estado.Estado,
+                        PuedeRegistrar = estado.PuedeRegistrar
+                    };
+                    EstadosMantenimientos.Add(clon);
+                }
+                ActualizarPuedeRegistrarMantenimientos();
+            });
         }
     }
 }

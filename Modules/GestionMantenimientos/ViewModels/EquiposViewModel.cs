@@ -60,11 +60,12 @@ public partial class EquiposViewModel : ObservableObject
     private bool canDarDeBajaEquipo;
     [ObservableProperty]
     private bool canRegistrarMantenimientoPermiso;
+    private bool canImportEquipo;
 
     // Propiedades alias para compatibilidad con la vista XAML
     public bool CanAddEquipo => CanRegistrarEquipo;
     public bool CanDeleteEquipo => CanDarDeBajaEquipo;
-    public bool CanImportEquipo => CanRegistrarEquipo; // Usar el mismo permiso que registrar
+    public bool CanImportEquipo => canImportEquipo;
     public bool CanExportEquipo => true; // Exportar no requiere permisos especiales
 
     public EquiposViewModel(
@@ -522,11 +523,11 @@ public partial class EquiposViewModel : ObservableObject
         RecalcularPermisos();
     }    private void RecalcularPermisos()
     {
-        CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.RegistrarEquipo");
-        CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo");
+        CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.NuevoEquipo");
+        CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo"); // Si existe este permiso en la BD
         CanDarDeBajaEquipo = _currentUser.HasPermission("GestionMantenimientos.DarDeBajaEquipo");
+        canImportEquipo = _currentUser.HasPermission("GestionMantenimientos.ImportarEquipo");
         CanRegistrarMantenimientoPermiso = _currentUser.HasPermission("GestionMantenimientos.RegistrarMantenimiento");
-        
         // Notificar cambios en las propiedades alias
         OnPropertyChanged(nameof(CanAddEquipo));
         OnPropertyChanged(nameof(CanDeleteEquipo));
