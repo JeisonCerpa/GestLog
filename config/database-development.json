@@ -10,10 +10,16 @@
     "TrustServerCertificate": true,
     "EnableSsl": false
   },
+  "Updater": {
+    "UpdateServerPath": "\\\\SIMICSGROUPWKS1\\GestLogUpdates",
+    "CheckInterval": "00:30:00",
+    "AutoInstall": true,
+    "BackupBeforeUpdate": true
+  },
   "Metadata": {
-    "Environment": "Production",
+    "Environment": "Development",
     "Version": "1.0",
-    "LastUpdated": "2025-06-17",
-    "Description": "Configuración de producción para SIMICS Group"
+    "LastUpdated": "2025-08-12",
+    "Description": "Configuración de desarrollo/pruebas para SIMICS Group"
   }
 }

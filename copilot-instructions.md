@@ -1,9 +1,3 @@
-``````````````instructions
-`````````````instructions
-````````````instructions
-```````````instructions
-``````````instructions
-````instructions
 # 🚀 Instrucciones GitHub Copilot - GestLog
 
 ## 🎯 **Contexto**
@@ -387,4 +381,40 @@ Para implementar permisos en cualquier módulo futuro de GestLog, sigue estos pa
 - Feedback visual en la UI
 
 Esto asegura que los permisos sean consistentes, seguros y fáciles de mantener en toda la aplicación.
-``````````````
+
+# 🌎 Configuración de Entorno (Development, Testing, Production)
+
+GestLog soporta múltiples entornos de ejecución para facilitar el desarrollo, pruebas y despliegue seguro en producción. El entorno determina qué archivo de configuración de base de datos se carga automáticamente.
+
+## ¿Cómo funciona?
+- El entorno se detecta usando la variable de entorno `GESTLOG_ENVIRONMENT`.
+- Según el valor, se carga el archivo correspondiente:
+  - `Development` → `config/database-development.json`
+  - `Testing` → `config/database-testing.json`
+  - `Production` (o no definida) → `config/database-production.json`
+- Si el archivo no existe, se usan valores predeterminados de producción.
+
+## 🔄 Cambiar de entorno en tu máquina
+
+### Opción 1: PowerShell
+```powershell
+# Para entorno de desarrollo
+[Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Development", "User")
+# Para entorno de pruebas
+[Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Testing", "User")
+# Para producción (o eliminar variable)
+[Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", "User")
+```
+Reinicia GestLog después de cambiar el entorno.
+
+## 🚀 Buenas prácticas para despliegue
+- **Producción:** Solo incluye `database-production.json` en el instalador/folder final.
+- **Desarrollo/Testing:** Incluye los archivos de configuración necesarios.
+- **Nunca** modifiques el código para cambiar de entorno; solo usa la variable y reinicia la app.
+
+## 🧑‍💻 Notas para desarrolladores
+- Puedes cambiar de entorno en cualquier momento usando la variable y reiniciando GestLog.
+- Documenta el entorno que usas en tus PRs si es relevante.
+- Si tienes dudas, consulta este archivo o pregunta al equipo.
+
+---

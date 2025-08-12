@@ -12,12 +12,11 @@ namespace GestLog.Services;
 /// Follows SRP: Only responsible for security validation at startup
 /// </summary>
 public class SecurityStartupValidationService
-{
-    private readonly ISecureDatabaseConfigurationService _databaseConfig;
+{    private readonly IUnifiedDatabaseConfigurationService _databaseConfig;
     private readonly IGestLogLogger _logger;
 
     public SecurityStartupValidationService(
-        ISecureDatabaseConfigurationService databaseConfig,
+        IUnifiedDatabaseConfigurationService databaseConfig,
         IGestLogLogger logger)
     {
         _databaseConfig = databaseConfig ?? throw new ArgumentNullException(nameof(databaseConfig));

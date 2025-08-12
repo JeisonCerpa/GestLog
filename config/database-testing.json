@@ -1,0 +1,26 @@
+{
+  "Database": {
+    "Server": "TEST-SQL-SERVER\\INSTANCE",
+    "Database": "GestLog_Testing",
+    "Username": "gestlog_test",
+    "Password": "REMOVED_SECRET",
+    "UseIntegratedSecurity": false,
+    "ConnectionTimeout": 30,
+    "CommandTimeout": 30,
+    "TrustServerCertificate": true,
+    "EnableSsl": false
+  },
+  "Updater": {
+    "UpdateServerPath": "\\\\TEST-FILESERVER\\GestLogUpdates",
+    "CheckInterval": "00:15:00",
+    "AutoInstall": true,
+    "BackupBeforeUpdate": true,
+    "AllowBetaUpdates": true
+  },
+  "Metadata": {
+    "Environment": "Testing",
+    "Version": "1.0",
+    "LastUpdated": "2025-08-12",
+    "Description": "Configuración de testing/QA para GestLog"
+  }
+}

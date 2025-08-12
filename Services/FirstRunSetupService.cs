@@ -16,12 +16,10 @@ namespace GestLog.Services;
 /// </summary>
 public class FirstRunSetupService : IFirstRunSetupService
 {
-    private readonly ISecureDatabaseConfigurationService _databaseConfig;
+    private readonly IUnifiedDatabaseConfigurationService _databaseConfig;
     private readonly IGestLogLogger _logger;
-    private readonly IConfiguration _configuration;
-
-    public FirstRunSetupService(
-        ISecureDatabaseConfigurationService databaseConfig,
+    private readonly IConfiguration _configuration;    public FirstRunSetupService(
+        IUnifiedDatabaseConfigurationService databaseConfig,
         IGestLogLogger logger,
         IConfiguration configuration)
     {
@@ -181,28 +179,35 @@ public class FirstRunSetupService : IFirstRunSetupService
     }
 
     /// <summary>
-    /// Loads production configuration using hybrid strategy:
-    /// 1. Try config/database-development.json file
-    /// 2. Fall back to hardcoded production values
-    /// 3. Last resort: appsettings.json values
+    /// Loads configuration based on environment variable GESTLOG_ENVIRONMENT
+    /// Prioridad:
+    /// 1. Si GESTLOG_ENVIRONMENT=Development, usa database-development.json
+    /// 2. Si GESTLOG_ENVIRONMENT=Testing, usa database-testing.json
+    /// 3. Si GESTLOG_ENVIRONMENT=Production o no está definida, usa database-production.json
+    /// 4. Si el archivo no existe, usa valores hardcodeados
     /// </summary>
     private async Task<(string server, string database, string username, string password, bool useIntegrated)> LoadProductionConfigurationAsync()
     {
+        string environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT", EnvironmentVariableTarget.User)
+            ?? Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT", EnvironmentVariableTarget.Machine)
+            ?? "Production";
+        string configFileName = environment.ToLower() switch
+        {
+            "development" => "database-development.json",
+            "testing" => "database-testing.json",
+            _ => "database-production.json"
+        };
         try
         {
-            // PRIORIDAD 1: Intentar cargar desde archivo de configuración de producción
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "database-development.json");
-            
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", configFileName);
             if (File.Exists(configPath))
             {
                 _logger.LogInformation("📄 Cargando configuración desde: {ConfigPath}", configPath);
-                
                 var jsonContent = await File.ReadAllTextAsync(configPath);
                 var prodConfig = System.Text.Json.JsonSerializer.Deserialize<ProductionConfig>(jsonContent);
-                
                 if (prodConfig?.Database != null && !string.IsNullOrWhiteSpace(prodConfig.Database.Server))
                 {
-                    _logger.LogInformation("✅ Configuración de producción cargada desde archivo");
+                    _logger.LogInformation("✅ Configuración de {Env} cargada desde archivo", environment);
                     return (
                         prodConfig.Database.Server,
                         prodConfig.Database.Database,
@@ -212,15 +217,13 @@ public class FirstRunSetupService : IFirstRunSetupService
                     );
                 }
             }
-            
             _logger.LogWarning("📄 Archivo de configuración no encontrado o inválido: {ConfigPath}", configPath);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "❌ Error leyendo archivo de configuración de producción");
+            _logger.LogWarning(ex, "❌ Error leyendo archivo de configuración de {Env}", environment);
         }
-
-        // PRIORIDAD 2: Usar valores hardcodeados de producción (SIMICS Group)
+        // Valores hardcodeados de producción (SIMICS Group)
         _logger.LogInformation("⚙️ Usando valores hardcodeados de producción para SIMICS Group");
         return (
             "SIMICSGROUPWKS1\\SIMICSBD",

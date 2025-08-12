@@ -64,9 +64,10 @@ public static class LoggingService
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
             services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
-            
-            // 🔒 SERVICIOS DE SEGURIDAD
-            services.AddSingleton<ISecureDatabaseConfigurationService, SecureDatabaseConfigurationService>();
+              // 🔒 SERVICIOS DE SEGURIDAD Y CONFIGURACIÓN PROFESIONAL
+            services.AddSingleton<IEnvironmentDetectionService, EnvironmentDetectionService>();
+            services.AddSingleton<IUnifiedDatabaseConfigurationService, UnifiedDatabaseConfigurationService>();
+            services.AddSingleton<IDatabaseConfigurationProvider, UnifiedDatabaseConfigurationService>();
             services.AddSingleton<SecurityStartupValidationService>();
             
             // 🚀 SERVICIOS DE FIRST RUN SETUP

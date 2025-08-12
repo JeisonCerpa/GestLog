@@ -23,7 +23,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     private readonly DatabaseConfiguration _config;
     private readonly DatabaseResilienceConfiguration _resilienceConfig;
     private readonly IGestLogLogger _logger;
-    private readonly ISecureDatabaseConfigurationService _secureConfig;
+    private readonly IUnifiedDatabaseConfigurationService _secureConfig;
     
     // Servicios de resiliencia
     private readonly CircuitBreakerService _circuitBreaker;
@@ -37,11 +37,10 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     private DatabaseConnectionState _currentState;
     private readonly ConnectionMetricsCollector _metricsCollector;
     private CancellationTokenSource? _serviceTokenSource;
-    private bool _disposed;    public DatabaseConnectionService(
-        IOptions<DatabaseConfiguration> config,
+    private bool _disposed;    public DatabaseConnectionService(        IOptions<DatabaseConfiguration> config,
         IOptions<DatabaseResilienceConfiguration> resilienceConfig,
         IGestLogLogger logger,
-        ISecureDatabaseConfigurationService secureConfig)
+        IUnifiedDatabaseConfigurationService secureConfig)
     {
         _config = config.Value ?? throw new ArgumentNullException(nameof(config));
         _resilienceConfig = resilienceConfig.Value ?? throw new ArgumentNullException(nameof(resilienceConfig));

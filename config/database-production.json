@@ -1,19 +1,26 @@
 {
   "Database": {
-    "Server": "",
-    "Database": "",
+    "Server": "PROD-SQL-SERVER\\INSTANCE",
+    "Database": "GestLog_Production",
     "Username": "",
     "Password": "",
-    "UseIntegratedSecurity": false,
+    "UseIntegratedSecurity": true,
     "ConnectionTimeout": 30,
     "CommandTimeout": 30,
     "TrustServerCertificate": true,
-    "EnableSsl": false
+    "EnableSsl": true
+  },
+  "Updater": {
+    "UpdateServerPath": "\\\\PROD-FILESERVER\\GestLogUpdates",
+    "CheckInterval": "01:00:00",
+    "AutoInstall": false,
+    "BackupBeforeUpdate": true,
+    "RequireAdminApproval": true
   },
   "Metadata": {
     "Environment": "Production",
     "Version": "1.0",
-    "LastUpdated": "2025-07-02",
-    "Description": "Configuración de producción pendiente. Definir valores antes de publicar en producción."
+    "LastUpdated": "2025-08-12",
+    "Description": "Configuración de producción. Configurar valores reales antes de desplegar."
   }
 }
