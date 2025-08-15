@@ -59,17 +59,17 @@ public static class LoggingService
             {
                 builder.ClearProviders();
                 builder.AddSerilog(Log.Logger);
-            });            // Servicios custom
+            });            
+            // Servicios custom
             services.AddSingleton<IGestLogLogger, GestLogLogger>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
             services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
-              // 🔒 SERVICIOS DE SEGURIDAD Y CONFIGURACIÓN PROFESIONAL
+            // 🔒 SERVICIOS DE SEGURIDAD Y CONFIGURACIÓN PROFESIONAL
             services.AddSingleton<IEnvironmentDetectionService, EnvironmentDetectionService>();
             services.AddSingleton<IUnifiedDatabaseConfigurationService, UnifiedDatabaseConfigurationService>();
             services.AddSingleton<IDatabaseConfigurationProvider, UnifiedDatabaseConfigurationService>();
             services.AddSingleton<SecurityStartupValidationService>();
-            
             // 🚀 SERVICIOS DE FIRST RUN SETUP
             services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
             services.AddTransient<FirstRunSetupViewModel>();

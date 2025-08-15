@@ -11,7 +11,10 @@ namespace GestLog.Modules.Usuarios.Services
     /// </summary>
     public static class UserSessionPersistence
     {
-        private static readonly string SessionFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "user_session.dat");
+        private static readonly string SessionFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+            "GestLog", 
+            "user_session.dat");
 
         public static void SaveSession(CurrentUserInfo userInfo)
         {

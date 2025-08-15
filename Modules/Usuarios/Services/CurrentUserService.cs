@@ -1,7 +1,10 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Core.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestLog.Modules.Usuarios.Services
 {
@@ -32,15 +35,17 @@ namespace GestLog.Modules.Usuarios.Services
             if (rememberMe)
                 UserSessionPersistence.SaveSession(userInfo);
             CurrentUserChanged?.Invoke(this, _currentUser);
-        }
-
-        public void RestoreSessionIfExists()
+        }        public void RestoreSessionIfExists()
         {
             var restored = UserSessionPersistence.LoadSession();
             if (restored != null)
             {
                 _currentUser = restored;
                 _logger.LogInformation("Sesión restaurada automáticamente para usuario: {Username}", restored.Username);
+                
+                // Refrescar permisos y roles desde la base de datos para asegurar información actualizada
+                _ = RefreshUserPermissionsAsync();
+                
                 CurrentUserChanged?.Invoke(this, _currentUser);
             }
         }
@@ -90,11 +95,56 @@ namespace GestLog.Modules.Usuarios.Services
         }        public string GetCurrentUserFullName()
         {
             return _currentUser?.FullName ?? "Usuario no autenticado";
-        }
-
-        public Guid? GetCurrentUserId()
+        }        public Guid? GetCurrentUserId()
         {
             return _currentUser?.UserId;
+        }
+
+        /// <summary>
+        /// Refresca los permisos y roles del usuario actual desde la base de datos
+        /// </summary>
+        private async Task RefreshUserPermissionsAsync()
+        {
+            if (_currentUser == null) return;
+
+            try
+            {
+                using var db = new GestLog.Modules.DatabaseConnection.GestLogDbContextFactory().CreateDbContext(Array.Empty<string>());
+
+                // Obtener roles del usuario
+                var roles = await db.UsuarioRoles
+                    .Where(ur => ur.IdUsuario == _currentUser.UserId)
+                    .Join(db.Roles, ur => ur.IdRol, r => r.IdRol, (ur, r) => r.Nombre)
+                    .ToListAsync();
+
+                // Obtener permisos directos
+                var directPermissions = await db.UsuarioPermisos
+                    .Where(up => up.IdUsuario == _currentUser.UserId)
+                    .Join(db.Permisos, up => up.IdPermiso, p => p.IdPermiso, (up, p) => p.Nombre)
+                    .ToListAsync();
+
+                // Obtener permisos por roles
+                var rolePermissions = await db.UsuarioRoles
+                    .Where(ur => ur.IdUsuario == _currentUser.UserId)
+                    .Join(db.RolPermisos, ur => ur.IdRol, rp => rp.IdRol, (ur, rp) => rp.IdPermiso)
+                    .Join(db.Permisos, rp => rp, p => p.IdPermiso, (rp, p) => p.Nombre)
+                    .ToListAsync();
+
+                // Combinar todos los permisos
+                var allPermissions = directPermissions.Concat(rolePermissions).Distinct().ToList();
+
+                // Actualizar los permisos y roles en la sesión actual
+                _currentUser.Roles = roles;
+                _currentUser.Permissions = allPermissions;
+                _currentUser.LastActivity = DateTime.UtcNow;
+
+                _logger.LogInformation("Permisos y roles actualizados para usuario: {Username}. Roles: {RoleCount}, Permisos: {PermissionCount}", 
+                    _currentUser.Username, roles.Count, allPermissions.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refrescando permisos para usuario: {Username}", _currentUser.Username);
+            }
         }
     }
 }

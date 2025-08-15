@@ -1,18 +1,32 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.IO;
 
 namespace GestLog.Modules.DatabaseConnection
 {
     public class GestLogDbContextFactory : IDesignTimeDbContextFactory<GestLogDbContext>
-    {
-        public GestLogDbContext CreateDbContext(string[] args)
-        {
-            // Cargar configuración desde config/database-development.json
+    {        public GestLogDbContext CreateDbContext(string[] args)
+        {            // Detectar entorno automáticamente
+            var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+            var configFile = environment.ToLower() switch
+            {
+                "development" => "config/database-development.json",
+                "testing" => "config/database-testing.json",
+                _ => "config/database-production.json"
+            };
+
+            // Verificar que el archivo existe, si no usar production como fallback
+            if (!File.Exists(configFile))
+            {
+                configFile = "config/database-production.json";
+            }
+
+            // Cargar configuración desde el archivo detectado
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("config/database-development.json")
+                .AddJsonFile(configFile)
                 .Build();
 
             var dbSection = configuration.GetSection("Database");

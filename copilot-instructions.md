@@ -406,7 +406,7 @@ GestLog soporta múltiples entornos de ejecución para facilitar el desarrollo, 
 [Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", "User")
 ```
 Reinicia GestLog después de cambiar el entorno.
-
+ 
 ## 🚀 Buenas prácticas para despliegue
 - **Producción:** Solo incluye `database-production.json` en el instalador/folder final.
 - **Desarrollo/Testing:** Incluye los archivos de configuración necesarios.
@@ -416,5 +416,25 @@ Reinicia GestLog después de cambiar el entorno.
 - Puedes cambiar de entorno en cualquier momento usando la variable y reiniciando GestLog.
 - Documenta el entorno que usas en tus PRs si es relevante.
 - Si tienes dudas, consulta este archivo o pregunta al equipo.
+
+## 🎯 ¿Development y Production en la misma máquina?
+**¡SÍ!** Ambos entornos pueden funcionar perfectamente en la misma máquina:
+
+### ✅ **Development** (con variable configurada)
+- `dotnet run` desde VS Code ✅
+- Debugging (F5) en VS Code ✅  
+- Task "run-dev" de VS Code ✅
+- Terminal PowerShell que hereda variables ✅
+
+### ✅ **Production** (sin variable o ejecutable directo)
+- Ejecutable publicado (`.exe`) ✅
+- Acceso directo del escritorio ✅
+- Instalador y aplicación instalada ✅
+- Ejecutar desde Explorer ✅
+
+**Configuración actual:**
+- Variable `GESTLOG_ENVIRONMENT="Development"` configurada para tu usuario
+- Archivos VS Code con tasks específicos por entorno
+- Sistema de fallback automático a Production
 
 ---

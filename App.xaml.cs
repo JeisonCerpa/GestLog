@@ -1,5 +1,6 @@
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Windows;
 using GestLog.Services.Core.Logging;
 using System.Windows.Threading;
@@ -9,6 +10,9 @@ using GestLog.Services.Interfaces;
 using System.Threading;
 using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
+using AutoUpdaterDotNET;
+using static AutoUpdaterDotNET.Mode;
+using System.Reflection;
 
 namespace GestLog;
 
@@ -30,11 +34,8 @@ public partial class App : System.Windows.Application
             LoggingService.InitializeServices();
             _logger = LoggingService.GetLogger();
 
-            _logger.Logger.LogInformation("🚀 Aplicación GestLog iniciada");
-            // CORRECCIÓN: Cargar configuración PRIMERO, antes de crear cualquier ventana
-            await LoadApplicationConfigurationAsync();
-
-            _logger.LogConfiguration("Version", "1.0.0");
+            _logger.Logger.LogInformation("🚀 === INICIANDO GESTLOG v1.0.10 ===");
+            // CORRECCIÓN: Cargar configuración PRIMERO, antes de crear cualquier ventana            await LoadApplicationConfigurationAsync();            _logger.LogConfiguration("Version", "1.0.10");
             _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
             _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
 
@@ -45,7 +46,82 @@ public partial class App : System.Windows.Application
             await CheckFirstRunSetupAsync();
 
             // Inicializar conexión a base de datos automáticamente
-            await InitializeDatabaseConnectionAsync();
+            await InitializeDatabaseConnectionAsync();            // --- INICIO AUTOUPDATE Autoupdater.NET.Official ---
+            try
+            {                var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
+                _logger?.Logger.LogInformation($"🔍 Environment detectado: '{env ?? "null"}'");
+                
+                if (string.IsNullOrEmpty(env) || env == "Production")
+                {
+                    _logger?.Logger.LogInformation("🔄 Iniciando verificación de actualizaciones automáticas...");
+                      // Verificar que la ruta del servidor existe
+                    var updateServerPath = @"\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater\GestLogUpdate.xml";
+                    if (!System.IO.File.Exists(updateServerPath))
+                    {
+                        _logger?.Logger.LogWarning($"⚠️ No se encontró el archivo de actualización: {updateServerPath}");
+                        return;
+                    }
+                    
+                    _logger?.Logger.LogInformation($"✅ Archivo de actualización encontrado: {updateServerPath}");                    // Configurar AutoUpdater para actualización AUTOMÁTICA Y SILENCIOSA
+                    AutoUpdater.ShowSkipButton = false; // No mostrar botón Skip
+                    AutoUpdater.ShowRemindLaterButton = false; // No mostrar Remind Later
+                    AutoUpdater.RunUpdateAsAdmin = true; // Ejecutar como admin
+                    AutoUpdater.Mandatory = true; // Forzar la actualización automática
+                    AutoUpdater.UpdateMode = ForcedDownload; // Descarga forzada
+                    AutoUpdater.DownloadPath = Path.GetTempPath(); // Usar carpeta temporal                    
+                    // SOLUCIÓN: Establecer versión instalada explícitamente para evitar MissingFieldException
+                    var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                    AutoUpdater.InstalledVersion = assemblyVersion;
+                    _logger?.Logger.LogInformation($"🏷️ Versión actual detectada: {assemblyVersion}");
+                    
+                    // Configurar textos en español (aunque no se mostrarán en modo automático)
+                    AutoUpdater.AppTitle = "GestLog - Actualizando...";
+                    AutoUpdater.UpdateFormSize = new System.Drawing.Size(400, 200);// Agregar eventos para manejo automático del proceso de actualización
+                    AutoUpdater.CheckForUpdateEvent += (args) =>
+                    {
+                        if (args.Error != null)
+                        {
+                            _logger?.Logger.LogError(args.Error, "❌ Error al verificar actualizaciones");
+                            return;
+                        }
+                        
+                        if (args.IsUpdateAvailable)
+                        {
+                            _logger?.Logger.LogInformation($"🆕 Actualización disponible: v{args.CurrentVersion} -> v{args.InstalledVersion}");
+                            _logger?.Logger.LogInformation("🔄 Iniciando descarga automática...");
+                            // AutoUpdater.NET manejará automáticamente la descarga e instalación
+                        }
+                        else
+                        {
+                            _logger?.Logger.LogInformation("ℹ️ No hay actualizaciones disponibles");
+                        }
+                    };
+                      // Eventos adicionales para debugging
+                    AutoUpdater.ParseUpdateInfoEvent += (args) =>
+                    {
+                        _logger?.Logger.LogInformation($"📄 Información de actualización parseada: {args.UpdateInfo?.CurrentVersion}");
+                    };// Evento que se dispara cuando la descarga está completa
+                    AutoUpdater.ApplicationExitEvent += () =>
+                    {
+                        _logger?.Logger.LogInformation("🔄 Actualización descargada. Cerrando aplicación para instalar...");
+                        // La aplicación se cerrará automáticamente para permitir la instalación
+                        System.Windows.Application.Current.Shutdown(0);
+                    };
+                    
+                    // Iniciar verificación de actualizaciones
+                    _logger?.Logger.LogInformation("🚀 Iniciando AutoUpdater...");
+                    AutoUpdater.Start(updateServerPath);
+                }
+                else
+                {
+                    _logger?.Logger.LogInformation($"ℹ️ Auto-actualización deshabilitada en ambiente: {env}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.Logger.LogError(ex, "❌ Error en el sistema de auto-actualización");
+            }
+            // --- FIN AUTOUPDATE Autoupdater.NET.Official ---
 
             // Asegurar cronogramas completos para todos los equipos activos
             try
