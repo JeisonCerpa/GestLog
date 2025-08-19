@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AutoUpdaterDotNET;
 using static AutoUpdaterDotNET.Mode;
 using System.Reflection;
+using Velopack;
 
 namespace GestLog;
 
@@ -21,10 +22,19 @@ namespace GestLog;
 /// </summary>
 public partial class App : System.Windows.Application
 {
-    private IGestLogLogger? _logger;
-
+    private IGestLogLogger? _logger;    
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // Inicializar Velopack al arranque
+        VelopackApp.Build().Run();
+        
+        // Verificar si se está ejecutando para aplicar actualizaciones
+        if (e.Args.Contains("--apply-update"))
+        {
+            await HandleUpdateApplicationAsync();
+            return;
+        }
+        
         // --- SOLUCIÓN: Evitar cierre automático al cerrar LoginWindow ---
         this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         base.OnStartup(e);
@@ -34,94 +44,21 @@ public partial class App : System.Windows.Application
             LoggingService.InitializeServices();
             _logger = LoggingService.GetLogger();
 
-            _logger.Logger.LogInformation("🚀 === INICIANDO GESTLOG v1.0.10 ===");
-            // CORRECCIÓN: Cargar configuración PRIMERO, antes de crear cualquier ventana            await LoadApplicationConfigurationAsync();            _logger.LogConfiguration("Version", "1.0.10");
+            _logger.Logger.LogInformation("🚀 === INICIANDO GESTLOG v1.0.0 ===");
+            await LoadApplicationConfigurationAsync();
+            _logger.LogConfiguration("Version", "1.0.0");
             _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
             _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
-
-            // 🔒 VALIDAR SEGURIDAD AL STARTUP
             await ValidateSecurityConfigurationAsync();
-
-            // 🚀 VERIFICAR FIRST RUN SETUP
             await CheckFirstRunSetupAsync();
-
-            // Inicializar conexión a base de datos automáticamente
-            await InitializeDatabaseConnectionAsync();            // --- INICIO AUTOUPDATE Autoupdater.NET.Official ---
-            try
-            {                var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
-                _logger?.Logger.LogInformation($"🔍 Environment detectado: '{env ?? "null"}'");
-                
-                if (string.IsNullOrEmpty(env) || env == "Production")
-                {
-                    _logger?.Logger.LogInformation("🔄 Iniciando verificación de actualizaciones automáticas...");
-                      // Verificar que la ruta del servidor existe
-                    var updateServerPath = @"\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater\GestLogUpdate.xml";
-                    if (!System.IO.File.Exists(updateServerPath))
-                    {
-                        _logger?.Logger.LogWarning($"⚠️ No se encontró el archivo de actualización: {updateServerPath}");
-                        return;
-                    }
-                    
-                    _logger?.Logger.LogInformation($"✅ Archivo de actualización encontrado: {updateServerPath}");                    // Configurar AutoUpdater para actualización AUTOMÁTICA Y SILENCIOSA
-                    AutoUpdater.ShowSkipButton = false; // No mostrar botón Skip
-                    AutoUpdater.ShowRemindLaterButton = false; // No mostrar Remind Later
-                    AutoUpdater.RunUpdateAsAdmin = true; // Ejecutar como admin
-                    AutoUpdater.Mandatory = true; // Forzar la actualización automática
-                    AutoUpdater.UpdateMode = ForcedDownload; // Descarga forzada
-                    AutoUpdater.DownloadPath = Path.GetTempPath(); // Usar carpeta temporal                    
-                    // SOLUCIÓN: Establecer versión instalada explícitamente para evitar MissingFieldException
-                    var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                    AutoUpdater.InstalledVersion = assemblyVersion;
-                    _logger?.Logger.LogInformation($"🏷️ Versión actual detectada: {assemblyVersion}");
-                    
-                    // Configurar textos en español (aunque no se mostrarán en modo automático)
-                    AutoUpdater.AppTitle = "GestLog - Actualizando...";
-                    AutoUpdater.UpdateFormSize = new System.Drawing.Size(400, 200);// Agregar eventos para manejo automático del proceso de actualización
-                    AutoUpdater.CheckForUpdateEvent += (args) =>
-                    {
-                        if (args.Error != null)
-                        {
-                            _logger?.Logger.LogError(args.Error, "❌ Error al verificar actualizaciones");
-                            return;
-                        }
-                        
-                        if (args.IsUpdateAvailable)
-                        {
-                            _logger?.Logger.LogInformation($"🆕 Actualización disponible: v{args.CurrentVersion} -> v{args.InstalledVersion}");
-                            _logger?.Logger.LogInformation("🔄 Iniciando descarga automática...");
-                            // AutoUpdater.NET manejará automáticamente la descarga e instalación
-                        }
-                        else
-                        {
-                            _logger?.Logger.LogInformation("ℹ️ No hay actualizaciones disponibles");
-                        }
-                    };
-                      // Eventos adicionales para debugging
-                    AutoUpdater.ParseUpdateInfoEvent += (args) =>
-                    {
-                        _logger?.Logger.LogInformation($"📄 Información de actualización parseada: {args.UpdateInfo?.CurrentVersion}");
-                    };// Evento que se dispara cuando la descarga está completa
-                    AutoUpdater.ApplicationExitEvent += () =>
-                    {
-                        _logger?.Logger.LogInformation("🔄 Actualización descargada. Cerrando aplicación para instalar...");
-                        // La aplicación se cerrará automáticamente para permitir la instalación
-                        System.Windows.Application.Current.Shutdown(0);
-                    };
-                    
-                    // Iniciar verificación de actualizaciones
-                    _logger?.Logger.LogInformation("🚀 Iniciando AutoUpdater...");
-                    AutoUpdater.Start(updateServerPath);
-                }
-                else
-                {
-                    _logger?.Logger.LogInformation($"ℹ️ Auto-actualización deshabilitada en ambiente: {env}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.Logger.LogError(ex, "❌ Error en el sistema de auto-actualización");
-            }
-            // --- FIN AUTOUPDATE Autoupdater.NET.Official ---
+            await InitializeDatabaseConnectionAsync();            
+            // --- INICIO AUTOUPDATE Velopack (Verificación silenciosa) ---
+            var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
+            _logger?.Logger.LogInformation($"🔍 Environment detectado: '{env ?? "null"}'");
+            
+            // Inicializar el servicio de actualizaciones de forma silenciosa
+            await InitializeUpdateServiceAsync();
+            // --- FIN AUTOUPDATE Velopack ---
 
             // Asegurar cronogramas completos para todos los equipos activos
             try
@@ -138,8 +75,10 @@ public partial class App : System.Windows.Application
             {
                 _logger?.Logger.LogError(cronEx, "❌ Error al verificar/generar cronogramas de mantenimiento al inicio");
                 // No es crítico, la aplicación puede continuar
-            }            // Configurar manejo global de excepciones
-            SetupGlobalExceptionHandling();            // 🔐 MOSTRAR LOGIN ANTES DEL MAINWINDOW
+            }            
+            // Configurar manejo global de excepciones
+            SetupGlobalExceptionHandling();            
+            // 🔐 MOSTRAR LOGIN ANTES DEL MAINWINDOW
             // if (!ShowAuthentication())
             // {
             //     _logger?.Logger.LogInformation("🚪 Usuario canceló login, cerrando aplicación");
@@ -194,6 +133,61 @@ public partial class App : System.Windows.Application
                 return;
             }
         }
+    }
+
+    /// <summary>
+    /// Maneja la aplicación de actualizaciones cuando se ejecuta con privilegios elevados
+    /// </summary>
+    private async Task HandleUpdateApplicationAsync()
+    {
+        try
+        {
+            _logger = LoggingService.GetLogger();
+            _logger.LogInformation("🔐 Iniciando aplicación de actualizaciones con privilegios elevados...");
+
+            // Crear el servicio de actualización
+            var updateServerPath = "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater";
+            var updateService = new VelopackUpdateService(_logger, updateServerPath);
+
+            // Verificar si hay actualizaciones disponibles
+            var hasUpdates = await updateService.CheckForUpdatesAsync();
+            if (hasUpdates)
+            {
+                _logger.LogInformation("✅ Aplicando actualización...");
+                
+                // Aplicar la actualización directamente (ya tenemos privilegios)
+                var updater = new UpdateManager(updateServerPath);
+                var updateInfo = await updater.CheckForUpdatesAsync();
+                
+                if (updateInfo != null)
+                {
+                    await updater.DownloadUpdatesAsync(updateInfo);
+                    updater.ApplyUpdatesAndRestart(updateInfo);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ No hay actualizaciones disponibles");
+                
+                // Iniciar la aplicación normalmente
+                await StartNormalApplicationAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "❌ Error aplicando actualizaciones");
+            
+            // En caso de error, iniciar la aplicación normalmente
+            await StartNormalApplicationAsync();
+        }
+    }    /// <summary>
+    /// Inicia la aplicación de forma normal (sin aplicar actualizaciones)
+    /// </summary>
+    private Task StartNormalApplicationAsync()
+    {
+        // Implementación para iniciar la aplicación normalmente
+        // Este método se puede expandir en el futuro si se necesita lógica específica
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -325,7 +319,8 @@ public partial class App : System.Windows.Application
         {
             base.OnExit(e);
         }
-    }    /// <summary>
+    }    
+    /// <summary>
     /// Realiza un shutdown directo y simple sin servicios complejos
     /// </summary>
     private void PerformDirectShutdown()
@@ -401,7 +396,8 @@ public partial class App : System.Windows.Application
                 _logger?.Logger.LogCritical("💥 La aplicación se está cerrando debido a una excepción no manejada");
                 LoggingService.Shutdown();
             }
-        };        // Excepciones no observadas en Tasks
+        };        
+        // Excepciones no observadas en Tasks
         TaskScheduler.UnobservedTaskException += (sender, e) =>
         {
             // Filtrar excepciones de red que son comunes y no críticas
@@ -507,17 +503,20 @@ public partial class App : System.Windows.Application
             var result = setupDialog.ShowDialog();
 
             return result == true;
-        }        catch (Exception ex)
+        }        
+        catch (Exception ex)
         {
             _logger?.Logger.LogError(ex, "❌ Error al mostrar First Run Setup Dialog");
             return false;
         }
-    }    /// <summary>
+    }    
+    /// <summary>
     /// Muestra la ventana de autenticación y maneja el proceso de login
     /// </summary>
     /// <returns>True si el login fue exitoso, False si se canceló</returns>
     private bool ShowAuthentication()
-    {        try
+    {        
+        try
         {
             _logger?.Logger.LogInformation("🔐 Iniciando proceso de autenticación");
 
@@ -544,8 +543,79 @@ public partial class App : System.Windows.Application
             _logger?.Logger.LogError(ex, "❌ Error durante el proceso de autenticación");
             // Antes: MessageBox con error
             return false;
-        }
-
+        }        
         return false;
+    }    /// <summary>
+    /// Inicializa el servicio de actualizaciones de forma silenciosa en segundo plano
+    /// Solo muestra pantalla de actualización si realmente hay una actualización disponible
+    /// </summary>
+    private async Task InitializeUpdateServiceAsync()
+    {
+        try
+        {
+            _logger?.Logger.LogInformation("🔍 Iniciando verificación silenciosa de actualizaciones...");
+
+            // Obtener el servicio de configuración para verificar si las actualizaciones están habilitadas
+            var configurationService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
+            var config = configurationService?.Current;
+
+            if (config?.Updater?.Enabled != true)
+            {
+                _logger?.Logger.LogInformation("⏭️ Sistema de actualizaciones deshabilitado en configuración");
+                return;
+            }            
+            if (string.IsNullOrWhiteSpace(config.Updater.UpdateServerPath))
+            {
+                _logger?.Logger.LogWarning("⚠️ URL de actualizaciones no configurada");
+                return;
+            }
+
+            // Crear el servicio de actualizaciones
+            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
+            if (updateService == null)
+            {
+                _logger?.Logger.LogWarning("⚠️ Servicio de actualizaciones no disponible");
+                return;
+            }
+
+            // Verificar en segundo plano si hay actualizaciones disponibles (SIN mostrar UI)
+            _logger?.Logger.LogInformation("🔍 Verificando actualizaciones en segundo plano...");
+            
+            // Ejecutar verificación en background thread para no bloquear la UI
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var hasUpdate = await updateService.CheckForUpdatesAsync();
+                    
+                    if (hasUpdate)
+                    {
+                        _logger?.Logger.LogInformation("✅ Actualización disponible - mostrando pantalla de actualización");
+                          // Solo ahora mostrar la pantalla de actualización porque SÍ hay una actualización
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            await updateService.DownloadAndInstallUpdatesAsync();
+                        });
+                    }
+                    else
+                    {
+                        _logger?.Logger.LogInformation("ℹ️ No hay actualizaciones disponibles - continuando con inicio normal");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.Logger.LogError(ex, "❌ Error verificando actualizaciones en segundo plano");
+                    // No es crítico, la aplicación continúa normalmente
+                }
+            });            _logger?.Logger.LogInformation("✅ Verificación de actualizaciones iniciada en segundo plano");
+            
+            // Completar de forma asíncrona
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error inicializando servicio de actualizaciones");
+            // No es crítico, la aplicación puede continuar
+        }
     }
 }

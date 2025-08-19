@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GestLog"
         mc:Ignorable="d"
-        Title="GestLog - Sistema de Gestión" Height="600" Width="1000"
+        Title="GestLog - Sistema de Gestión v1.0.6" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">

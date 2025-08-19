@@ -8,6 +8,7 @@ using GestLog.Services.Core.Error;
 using GestLog.Models.Configuration;
 using GestLog.Services.Interfaces;
 using GestLog.ViewModels;
+using GestLog.Services;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -69,10 +70,19 @@ public static class LoggingService
             services.AddSingleton<IEnvironmentDetectionService, EnvironmentDetectionService>();
             services.AddSingleton<IUnifiedDatabaseConfigurationService, UnifiedDatabaseConfigurationService>();
             services.AddSingleton<IDatabaseConfigurationProvider, UnifiedDatabaseConfigurationService>();
-            services.AddSingleton<SecurityStartupValidationService>();
-            // 🚀 SERVICIOS DE FIRST RUN SETUP
+            services.AddSingleton<SecurityStartupValidationService>();            // 🚀 SERVICIOS DE FIRST RUN SETUP
             services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
             services.AddTransient<FirstRunSetupViewModel>();
+            
+            // 🔄 SERVICIO DE ACTUALIZACIONES VELOPACK
+            services.AddSingleton<VelopackUpdateService>(serviceProvider =>
+            {
+                var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
+                var configService = serviceProvider.GetRequiredService<Configuration.IConfigurationService>();
+                var updateServerPath = configService.Current.Updater.UpdateServerPath ?? 
+                                      "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater";
+                return new VelopackUpdateService(logger, updateServerPath);
+            });
             
             // Configuración de base de datos
             services.Configure<Models.Configuration.DatabaseConfiguration>(config =>

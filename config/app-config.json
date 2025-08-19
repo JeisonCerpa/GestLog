@@ -1,7 +1,6 @@
-{
-  "general": {
+{  "general": {
     "applicationName": "GestLog",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "language": "es-ES",
     "autoSave": true
   },
@@ -48,10 +47,18 @@
         "timeout": 30000,
         "isConfigured": false,
         "bccEmail": "",
-        "ccEmail": ""
-      }
+        "ccEmail": ""      }
     }
+  },  "updater": {
+    "enabled": true,
+    "updateServerPath": "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater",
+    "checkInterval": "00:30:00",
+    "autoInstall": true,
+    "requireRestart": true,
+    "backupBeforeUpdate": true,
+    "updateChannel": "stable",
+    "allowBetaUpdates": false
   },
-  "configVersion": "1.0.0",
+  "configVersion": "1.0.1",
   "lastModified": "2025-06-10T10:00:00"
 }

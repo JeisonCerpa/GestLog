@@ -13,6 +13,7 @@ public class AppConfiguration : INotifyPropertyChanged
     private LoggingSettings _logging = new();
     private SmtpSettings _smtp = new();
     private ModulesConfiguration _modules = new();
+    private UpdaterSettings _updater = new();
 
     /// <summary>
     /// Configuraciones generales de la aplicación
@@ -46,9 +47,7 @@ public class AppConfiguration : INotifyPropertyChanged
     {
         get => _smtp;
         set => SetProperty(ref _smtp, value);
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Configuraciones de módulos específicos
     /// </summary>
     public ModulesConfiguration Modules
@@ -58,9 +57,18 @@ public class AppConfiguration : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Configuraciones del sistema de actualizaciones
+    /// </summary>
+    public UpdaterSettings Updater
+    {
+        get => _updater;
+        set => SetProperty(ref _updater, value);
+    }
+
+    /// <summary>
     /// Versión de la configuración para migración
     /// </summary>
-    public string ConfigVersion { get; set; } = "1.0.0";
+    public string ConfigVersion { get; set; } = "1.0.1";
 
     /// <summary>
     /// Timestamp de la última modificación

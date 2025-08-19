@@ -9,7 +9,7 @@ namespace GestLog.Models.Configuration;
 public class GeneralSettings : INotifyPropertyChanged
 {
     private readonly string _applicationName = "GestLog";
-    private string _version = "1.0.0";
+    private string _version = "1.0.1";
     private string _outputDirectory = "Output";
     private bool _startMaximized = true;
 

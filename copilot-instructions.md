@@ -437,4 +437,39 @@ Reinicia GestLog después de cambiar el entorno.
 - Archivos VS Code con tasks específicos por entorno
 - Sistema de fallback automático a Production
 
+## 🔄 Sistema de Actualización Automática con Velopack
+
+GestLog incluye un sistema robusto de actualización automática usando Velopack que maneja la elevación de privilegios de forma inteligente.
+
+### **Características principales:**
+- **Detección automática** de actualizaciones en segundo plano
+- **Descarga incremental** usando archivos delta para actualizaciones más rápidas
+- **Auto-elevación inteligente** - solo solicita privilegios de administrador cuando es necesario aplicar actualizaciones
+- **Cierre controlado** de la aplicación durante actualizaciones
+- **Rollback automático** en caso de errores
+
+### **Flujo de actualización:**
+1. **Verificación silenciosa** - La app verifica actualizaciones al inicio sin mostrar UI
+2. **Descarga automática** - Si hay actualizaciones, se descargan en segundo plano
+3. **Solicitud de permisos** - Solo cuando va a aplicar la actualización, solicita privilegios de administrador
+4. **Aplicación segura** - Cierra la aplicación de forma controlada y aplica la actualización
+5. **Reinicio automático** - Inicia la nueva versión automáticamente
+
+### **Configuración del servidor:**
+- **Servidor de actualizaciones**: `\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater`
+- **Manifiestos**: `RELEASES`, `releases.win.json`
+- **Paquetes**: `.nupkg` (full y delta)
+
+### **Seguridad:**
+- ✅ **Principio de menor privilegio** - Solo solicita admin cuando es necesario
+- ✅ **Validación de origen** - Verifica integridad de las actualizaciones
+- ✅ **Proceso controlado** - Maneja errores y permite continuar la ejecución
+- ✅ **No ejecuta como admin por defecto** - Mejora la seguridad general
+
+### **Para desarrolladores:**
+- Las actualizaciones se manejan automáticamente
+- El servicio `VelopackUpdateService` está registrado en DI
+- Los logs detallan todo el proceso de actualización
+- En caso de problemas de permisos, se guía al usuario
+
 ---

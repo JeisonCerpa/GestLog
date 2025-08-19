@@ -6,16 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>    <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>    <!-- Información de versión de la aplicación -->    <AssemblyVersion>1.0.12.0</AssemblyVersion>
-    <FileVersion>1.0.12.0</FileVersion>
-    <Version>1.0.12</Version>
-    <AssemblyInformationalVersion>1.0.12</AssemblyInformationalVersion>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>    <!-- Información de versión de la aplicación -->    <AssemblyVersion>1.0.6.0</AssemblyVersion>
+    <FileVersion>1.0.6.0</FileVersion>
+    <Version>1.0.6</Version>
+    <AssemblyInformationalVersion>1.0.6</AssemblyInformationalVersion>
     <Product>GestLog</Product>
     <Company>SIMICS Group SAS</Company>
     <Copyright>© 2025 SIMICS Group SAS. Todos los derechos reservados.</Copyright>
     <AssemblyTitle>GestLog - Sistema de Gestión</AssemblyTitle>
     <Description>Sistema integral de gestión empresarial</Description>    <AssemblyMetadata>
-      <AssemblyMetadata Include="ProductVersion" Value="1.0.12" />
+      <AssemblyMetadata Include="ProductVersion" Value="1.0.6" />
     </AssemblyMetadata>
       <!-- Configuración del icono de la aplicación -->
     <ApplicationIcon>Assets\image001.ico</ApplicationIcon>
@@ -109,5 +109,6 @@
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.2" />    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 </Project>

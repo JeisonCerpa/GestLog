@@ -233,8 +233,7 @@ public class ConfigurationService : IConfigurationService
             {
                 // Restaurar toda la configuración
                 _current = new AppConfiguration();
-            }
-            else
+            }            else
             {
                 // Restaurar sección específica
                 switch (section?.ToLowerInvariant())
@@ -253,6 +252,9 @@ public class ConfigurationService : IConfigurationService
                         break;
                     case "modules":
                         _current.Modules = new ModulesConfiguration();
+                        break;
+                    case "updater":
+                        _current.Updater = new UpdaterSettings();
                         break;
                     default:
                         _logger.LogWarning("⚠️ Sección desconocida: {Section}", section ?? string.Empty);
@@ -380,9 +382,7 @@ public class ConfigurationService : IConfigurationService
         SetupPropertyChangeHandlers(_current);
         _hasUnsavedChanges = true;
         await SaveAsync();
-    }
-
-    private void SetupPropertyChangeHandlers(AppConfiguration config)
+    }    private void SetupPropertyChangeHandlers(AppConfiguration config)
     {
         config.PropertyChanged += OnConfigurationPropertyChanged;
         config.General.PropertyChanged += OnConfigurationPropertyChanged;
@@ -392,6 +392,7 @@ public class ConfigurationService : IConfigurationService
         config.Modules.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.DaaterProcessor.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.ErrorLog.PropertyChanged += OnConfigurationPropertyChanged;
+        config.Updater.PropertyChanged += OnConfigurationPropertyChanged;
     }
 
     private void OnConfigurationPropertyChanged(object? sender, PropertyChangedEventArgs e)
