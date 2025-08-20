@@ -13,21 +13,27 @@ public class BooleanToColorConverter : IValueConverter
     /// <summary>
     /// Color para el valor true (Verde)
     /// </summary>
-    public System.Windows.Media.Color TrueColor { get; set; } = Colors.Green;
-
-    /// <summary>
+    public System.Windows.Media.Color TrueColor { get; set; } = Colors.Green;    /// <summary>
     /// Color para el valor false (Rojo)
     /// </summary>
     public System.Windows.Media.Color FalseColor { get; set; } = System.Windows.Media.Color.FromRgb(200, 200, 200); // Gris claro
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is bool boolValue)
+        try
         {
-            return new SolidColorBrush(boolValue ? TrueColor : FalseColor);
-        }
+            if (value is bool boolValue)
+            {
+                return new SolidColorBrush(boolValue ? TrueColor : FalseColor);
+            }
 
-        return new SolidColorBrush(FalseColor);
+            return new SolidColorBrush(FalseColor);
+        }
+        catch
+        {
+            // Fallback seguro: nunca devolver UnsetValue o lanzar excepción
+            return new SolidColorBrush(Colors.Transparent);
+        }
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

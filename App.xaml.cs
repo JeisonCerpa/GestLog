@@ -309,15 +309,38 @@ public partial class App : System.Windows.Application
     private void SetupGlobalExceptionHandling()
     {
         // Obtener el servicio de manejo de errores
-        var errorHandler = LoggingService.GetErrorHandler();
-
-        // Excepciones no manejadas en el hilo principal (UI)
+        var errorHandler = LoggingService.GetErrorHandler();        // Excepciones no manejadas en el hilo principal (UI)
         DispatcherUnhandledException += (sender, e) =>
         {
+            // Información adicional para errores de Background UnsetValue
+            if (e.Exception is InvalidOperationException invalidOp && 
+                invalidOp.Message.Contains("DependencyProperty.UnsetValue") &&
+                invalidOp.Message.Contains("Background"))
+            {
+                _logger?.Logger.LogError(e.Exception, "❌ Error específico de Background UnsetValue detectado");
+                
+                // Intentar obtener información del control que causó el error
+                try
+                {
+                    var targetSite = invalidOp.TargetSite?.DeclaringType?.Name;
+                    var stackTrace = invalidOp.StackTrace;
+                    
+                    _logger?.Logger.LogError("🔍 Información del error Background:");
+                    _logger?.Logger.LogError("  - Target Site: {TargetSite}", targetSite);
+                    _logger?.Logger.LogError("  - Stack Trace contiene Border: {ContainsBorder}", stackTrace?.Contains("Border") ?? false);
+                    _logger?.Logger.LogError("  - Stack Trace contiene DataGrid: {ContainsDataGrid}", stackTrace?.Contains("DataGrid") ?? false);
+                    _logger?.Logger.LogError("  - Stack Trace contiene UserControl: {ContainsUserControl}", stackTrace?.Contains("UserControl") ?? false);
+                }
+                catch
+                {
+                    _logger?.Logger.LogError("❌ No se pudo obtener información adicional del error Background");
+                }
+            }
+
             errorHandler.HandleException(
                 e.Exception,
                 "DispatcherUnhandledException",
-                showToUser: true);
+                showToUser: false); // Cambiado a false para evitar ventanas emergentes constantes
 
             e.Handled = true; // Permitir que la aplicación continúe
         };

@@ -8,8 +8,7 @@
              d:DesignHeight="80" d:DesignWidth="400">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </UserControl.Resources>
-      <Border Background="{Binding BackgroundColor, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+    </UserControl.Resources>      <Border Background="{Binding BackgroundColor, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=Transparent, TargetNullValue=Transparent}" 
             CornerRadius="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType=UserControl}}" 
             Padding="15">
         <StackPanel>
@@ -33,11 +32,10 @@
                           Visibility="{Binding ShowPercentage, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </DockPanel>
             
-            <!-- Barra de progreso -->
-            <ProgressBar Value="{Binding ProgressValue, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}" 
+            <!-- Barra de progreso -->            <ProgressBar Value="{Binding ProgressValue, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}" 
                         Maximum="100" 
                         Height="{Binding BarHeight, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Background="{Binding BarBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Background="{Binding BarBackground, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=LightGray, TargetNullValue=LightGray}"
                         Foreground="{Binding BarForeground, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         BorderThickness="0"/>
             

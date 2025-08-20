@@ -129,7 +129,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border CornerRadius="6" Padding="4,2" 
-                                        Background="{Binding Activo, Converter={StaticResource BooleanToColorConverter}, ConverterParameter='Activo=#C8E6C9;Inactivo=#FFCDD2'}"
+                                        Background="{Binding Activo, Converter={StaticResource BooleanToColorConverter}, ConverterParameter='Activo=#C8E6C9;Inactivo=#FFCDD2', FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}"
                                         HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Activo, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Activo;Inactivo'}"
                                                FontWeight="SemiBold" FontSize="14" Foreground="#333" 

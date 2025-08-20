@@ -132,7 +132,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border CornerRadius="12" Padding="6,2"
-                                        Background="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}">
+                                        Background="{Binding Estado, Converter={StaticResource EstadoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
                                     <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}"
                                                Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
                                 </Border>

@@ -159,23 +159,81 @@ public class DataConsolidationService : IDataConsolidationService
                         file,
                         "VALID_WORKSHEET");
                 }
-                  var headerRow = worksheet.Row(1);
-                var missingColumns = requiredColumns
-                    .Where(col => !headerRow.Cells().Any(cell => cell.GetString().Trim().Equals(col, StringComparison.OrdinalIgnoreCase)))
+                var headerRow = worksheet.Row(1);
+
+                // Construir mapa de posiciones de cabeceras: Nombre normalizado -> lista de índices de columna (1-based)
+                var headerPositions = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var cell in headerRow.CellsUsed())
+                {
+                    var raw = cell.GetString() ?? string.Empty;
+                    var name = raw.Trim();
+                    if (string.IsNullOrEmpty(name))
+                        continue;
+
+                    var norm = name.ToUpperInvariant();
+                    if (!headerPositions.ContainsKey(norm))
+                        headerPositions[norm] = new List<int>();
+                    headerPositions[norm].Add(cell.Address.ColumnNumber);
+                }
+
+                // Contar cuántas ocurrencias se esperan por cada cabecera (según requiredColumns)
+                var expectedCounts = requiredColumns
+                    .GroupBy(c => c.Trim().ToUpperInvariant())
+                    .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+                // Validar que existan las columnas requeridas con la cantidad de ocurrencias esperada
+                var missingColumns = expectedCounts
+                    .Where(kv => !headerPositions.ContainsKey(kv.Key) || headerPositions[kv.Key].Count < kv.Value)
+                    .Select(kv => kv.Key)
                     .ToList();
-                    
+
                 if (missingColumns.Any())
                 {
                     var columnasFaltantes = string.Join(", ", missingColumns);
-                    _logger.LogWarning("⚠️ Archivo con columnas faltantes: {FileName} - Columnas: {MissingColumns}", 
-                        fileName, columnasFaltantes);
-                    
-                    // Lanzar excepción con mensaje detallado sobre las columnas faltantes
+                    _logger.LogWarning("⚠️ Archivo con columnas faltantes: {FileName} - Columnas: {MissingColumns}", fileName, columnasFaltantes);
                     throw new ExcelFormatException(
                         $"El archivo '{fileName}' no tiene el formato esperado. Faltan columnas: {columnasFaltantes}",
                         file,
                         "REQUIRED_COLUMNS");
-                }var rows = worksheet.RowsUsed().Skip(1).ToList();
+                }
+
+                // Detectar cabeceras repetidas inesperadas (más ocurrencias de las requeridas). Solo warn, no error en modo permisivo.
+                var unexpectedDuplicates = headerPositions
+                    .Where(kv => expectedCounts.TryGetValue(kv.Key, out var expected) ? kv.Value.Count > expected : kv.Value.Count > 1)
+                    .Select(kv => kv.Key)
+                    .ToList();
+
+                if (unexpectedDuplicates.Any())
+                {
+                    var amb = string.Join(", ", unexpectedDuplicates);
+                    _logger.LogWarning("⚠️ Cabeceras repetidas inesperadas en archivo: {FileName} - Cabeceras: {Ambiguous}", fileName, amb);
+                    // No lanzamos excepción: modo permisivo por posición
+                }
+
+                // Helpers para trabajar con N-ésima aparición de una cabecera
+                int GetColumnIndexForOccurrence(string name, int occurrence = 1)
+                {
+                    var key = name.Trim().ToUpperInvariant();
+                    if (!headerPositions.TryGetValue(key, out var positions))
+                        return -1;
+
+                    if (occurrence <= 0)
+                        occurrence = 1;
+
+                    if (occurrence <= positions.Count)
+                        return positions[occurrence - 1];
+
+                    return -1;
+                }
+
+                string GetCellString(IXLRow r, string expectedColumnName, int occurrence = 1)
+                {
+                    var colIndex = GetColumnIndexForOccurrence(expectedColumnName, occurrence);
+                    return colIndex > 0 ? r.Cell(colIndex).GetString() : string.Empty;
+                }
+
+                var rows = worksheet.RowsUsed().Skip(1).ToList();
                 int rowCount = rows.Count;
                 int rowIndex = 0;
                 
@@ -193,20 +251,20 @@ public class DataConsolidationService : IDataConsolidationService
                         }
                     }
                     
-                    var fecha = row.Cell(1).GetString();
-                    var declaracion = row.Cell(2).GetString();
-                    var nitImportador = row.Cell(3).GetString();
-                    var nombreImportador = row.Cell(4).GetString();
-                    var nombreProveedor = row.Cell(5).GetString();
-                    var direccionProveedor = row.Cell(6).GetString();
-                    var datoContactoProveedor = row.Cell(7).GetString();
-                    var paisExportador = row.Cell(8).GetString();
-                    var paisDeOrigen = row.Cell(9).GetString();
-                    var partidaArancelaria = row.Cell(10).GetString();
-                    var numeroDeBultos = row.Cell(12).GetString();
-                    var pesoNeto = row.Cell(13).GetString();
-                    var valorFobUsd = row.Cell(14).GetString();
-                    var descripcionMercancia = row.Cell(15).GetString();
+                    var fecha = GetCellString(row, "FECHA DECLARACIÓN");
+                    var declaracion = GetCellString(row, "NÚMERO DECLARACIÓN");
+                    var nitImportador = GetCellString(row, "IMPORTADOR", 1);
+                    var nombreImportador = GetCellString(row, "IMPORTADOR", 2);
+                    var nombreProveedor = GetCellString(row, "EXPORTADOR (PROVEEDOR)");
+                    var direccionProveedor = GetCellString(row, "DIRECCIÓN EXPORTADOR (PROVEEDOR)");
+                    var datoContactoProveedor = GetCellString(row, "DATO DE CONTACTO EXPORTADOR");
+                    var paisExportador = GetCellString(row, "PAÍS EXPORTADOR");
+                    var paisDeOrigen = GetCellString(row, "PAÍS DE ORIGEN");
+                    var partidaArancelaria = GetCellString(row, "PARTIDA ARANCELARIA", 1);
+                    var numeroDeBultos = GetCellString(row, "NÚMERO DE BULTOS");
+                    var pesoNeto = GetCellString(row, "PESO NETO");
+                    var valorFobUsd = GetCellString(row, "VALOR FOB (USD)");
+                    var descripcionMercancia = GetCellString(row, "DESCRIPCIÓN MERCANCÍA");
                     // --- Normalización de nombre de proveedor ---
                     // Obtener lista de nombres oficiales únicos
                     var nombresOficiales = proveedores.Values.Distinct().ToList();
@@ -223,7 +281,11 @@ public class DataConsolidationService : IDataConsolidationService
                         // Si se encontró, también normalizar
                         if (!string.IsNullOrWhiteSpace(nombreProveedor))
                             nombreProveedor = ResourceLoaderService.NormalizarNombreProveedor(nombreProveedor, nombresOficiales, 80);
-                        row.Cell(5).Value = nombreProveedor;
+
+                        // Escribir nombre normalizado de proveedor de vuelta en la columna correcta (si existe)
+                        var exportadorCol = GetColumnIndexForOccurrence("EXPORTADOR (PROVEEDOR)", 1);
+                        if (exportadorCol > 0)
+                            row.Cell(exportadorCol).Value = nombreProveedor;
                     }
                     DateTime? fechaValida = null;
                     string mes = string.Empty;
