@@ -27,13 +27,8 @@ public partial class App : System.Windows.Application
     {
         // Inicializar Velopack al arranque
         VelopackApp.Build().Run();
-        
-        // Verificar si se está ejecutando para aplicar actualizaciones
-        if (e.Args.Contains("--apply-update"))
-        {
-            await HandleUpdateApplicationAsync();
-            return;
-        }
+          // AUTO-ELEVACIÓN DESHABILITADA: Ya no manejamos parámetros de actualización
+        // La verificación de actualizaciones se hace manualmente
         
         // --- SOLUCIÓN: Evitar cierre automático al cerrar LoginWindow ---
         this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -51,14 +46,13 @@ public partial class App : System.Windows.Application
             _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
             await ValidateSecurityConfigurationAsync();
             await CheckFirstRunSetupAsync();
-            await InitializeDatabaseConnectionAsync();            
-            // --- INICIO AUTOUPDATE Velopack (Verificación silenciosa) ---
+            await InitializeDatabaseConnectionAsync();            // --- VERIFICACIÓN DE ACTUALIZACIONES (Sin auto-elevación) ---
             var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
             _logger?.Logger.LogInformation($"🔍 Environment detectado: '{env ?? "null"}'");
             
-            // Inicializar el servicio de actualizaciones de forma silenciosa
+            // Inicializar verificación de actualizaciones de forma silenciosa y mostrar diálogo solo si hay actualizaciones
             await InitializeUpdateServiceAsync();
-            // --- FIN AUTOUPDATE Velopack ---
+            // --- FIN VERIFICACIÓN DE ACTUALIZACIONES ---
 
             // Asegurar cronogramas completos para todos los equipos activos
             try
@@ -133,64 +127,7 @@ public partial class App : System.Windows.Application
                 return;
             }
         }
-    }
-
-    /// <summary>
-    /// Maneja la aplicación de actualizaciones cuando se ejecuta con privilegios elevados
-    /// </summary>
-    private async Task HandleUpdateApplicationAsync()
-    {
-        try
-        {
-            _logger = LoggingService.GetLogger();
-            _logger.LogInformation("🔐 Iniciando aplicación de actualizaciones con privilegios elevados...");
-
-            // Crear el servicio de actualización
-            var updateServerPath = "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater";
-            var updateService = new VelopackUpdateService(_logger, updateServerPath);
-
-            // Verificar si hay actualizaciones disponibles
-            var hasUpdates = await updateService.CheckForUpdatesAsync();
-            if (hasUpdates)
-            {
-                _logger.LogInformation("✅ Aplicando actualización...");
-                
-                // Aplicar la actualización directamente (ya tenemos privilegios)
-                var updater = new UpdateManager(updateServerPath);
-                var updateInfo = await updater.CheckForUpdatesAsync();
-                
-                if (updateInfo != null)
-                {
-                    await updater.DownloadUpdatesAsync(updateInfo);
-                    updater.ApplyUpdatesAndRestart(updateInfo);
-                }
-            }
-            else
-            {
-                _logger.LogInformation("ℹ️ No hay actualizaciones disponibles");
-                
-                // Iniciar la aplicación normalmente
-                await StartNormalApplicationAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "❌ Error aplicando actualizaciones");
-            
-            // En caso de error, iniciar la aplicación normalmente
-            await StartNormalApplicationAsync();
-        }
     }    /// <summary>
-    /// Inicia la aplicación de forma normal (sin aplicar actualizaciones)
-    /// </summary>
-    private Task StartNormalApplicationAsync()
-    {
-        // Implementación para iniciar la aplicación normalmente
-        // Este método se puede expandir en el futuro si se necesita lógica específica
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
     /// Carga la configuración de la aplicación al inicio
     /// </summary>
     private async Task LoadApplicationConfigurationAsync()
@@ -547,7 +484,7 @@ public partial class App : System.Windows.Application
         return false;
     }    /// <summary>
     /// Inicializa el servicio de actualizaciones de forma silenciosa en segundo plano
-    /// Solo muestra pantalla de actualización si realmente hay una actualización disponible
+    /// Solo muestra diálogo de actualización si realmente hay una actualización disponible
     /// </summary>
     private async Task InitializeUpdateServiceAsync()
     {
@@ -586,15 +523,19 @@ public partial class App : System.Windows.Application
             {
                 try
                 {
+                    // Dar tiempo para que la aplicación cargue completamente
+                    await Task.Delay(3000);
+                    
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
                     
                     if (hasUpdate)
                     {
-                        _logger?.Logger.LogInformation("✅ Actualización disponible - mostrando pantalla de actualización");
-                          // Solo ahora mostrar la pantalla de actualización porque SÍ hay una actualización
+                        _logger?.Logger.LogInformation("✅ Actualización disponible - mostrando diálogo al usuario");
+                          
+                        // Solo ahora mostrar el diálogo porque SÍ hay una actualización
                         await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
                         {
-                            await updateService.DownloadAndInstallUpdatesAsync();
+                            await updateService.NotifyAndPromptForUpdateAsync();
                         });
                     }
                     else

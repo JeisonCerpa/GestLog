@@ -1,11 +1,9 @@
 using System;
 using System.Diagnostics;
-using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Velopack;
-using Velopack.Windows;
 using GestLog.Services.Core.Logging;
 
 namespace GestLog.Services
@@ -65,7 +63,51 @@ namespace GestLog.Services
         }
 
         /// <summary>
-        /// Descarga e instala las actualizaciones (muestra UI de progreso)
+        /// Muestra una notificación al usuario sobre actualizaciones disponibles
+        /// </summary>
+        public async Task<bool> NotifyAndPromptForUpdateAsync()
+        {
+            try
+            {
+                var hasUpdate = await CheckForUpdatesAsync();
+                if (!hasUpdate)
+                {
+                    _logger.LogInformation("ℹ️ No hay actualizaciones disponibles");
+                    return false;
+                }
+
+                // Obtener información de la versión disponible
+                var updater = new UpdateManager(_updateUrl);
+                var updateInfo = await updater.CheckForUpdatesAsync();
+                var availableVersion = updateInfo?.TargetFullRelease?.Version;                // Mostrar diálogo al usuario
+                var result = System.Windows.MessageBox.Show(
+                    $"Nueva actualización disponible: v{availableVersion}\n\n" +
+                    "¿Desea descargar e instalar la actualización ahora?\n\n" +
+                    "Nota: La aplicación se reiniciará para aplicar la actualización.",
+                    "Actualización Disponible",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    await DownloadAndInstallUpdatesAsync();
+                    return true;
+                }
+                else
+                {
+                    _logger.LogInformation("ℹ️ Usuario decidió no actualizar en este momento");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al notificar actualizaciones");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Descarga e instala las actualizaciones (SIN auto-elevación)
         /// </summary>
         public async Task DownloadAndInstallUpdatesAsync(Action<double>? onProgress = null)
         {
@@ -81,28 +123,10 @@ namespace GestLog.Services
                     {
                         onProgress?.Invoke(progress);
                     });
-                      _logger.LogInformation("🔄 Preparando aplicación de actualizaciones...");
                     
-                    // Verificar si se necesitan privilegios de administrador
-                    if (!IsRunningAsAdministrator())
-                    {
-                        _logger.LogInformation("🔐 Se requieren privilegios de administrador para aplicar la actualización");
-                        var elevated = await RestartAsAdministratorForUpdateAsync();
-                        if (!elevated)
-                        {
-                            _logger.LogWarning("⚠️ Usuario canceló la elevación de privilegios. Actualización cancelada.");
-                            return;
-                        }
-                        // Si llegamos aquí, la aplicación se reiniciará con privilegios elevados
-                        return;
-                    }
+                    _logger.LogInformation("✅ Aplicando actualizaciones directamente (sin auto-elevación)...");
                     
-                    // Si ya tenemos privilegios, continuar con la actualización
-                    _logger.LogInformation("🔄 Aplicando actualizaciones y reiniciando...");
-                    
-                    // Programar el cierre controlado de la aplicación
-                    await ScheduleApplicationShutdownAsync();
-                    
+                    // Aplicar actualizaciones directamente - la app ya se ejecuta como admin
                     updater.ApplyUpdatesAndRestart(updateInfo);
                 }
                 else
@@ -113,46 +137,18 @@ namespace GestLog.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error descargando/instalando actualizaciones");
+                  // Mostrar error amigable al usuario
+                System.Windows.MessageBox.Show(
+                    $"Error al aplicar la actualización:\n{ex.Message}\n\n" +
+                    "Por favor, asegúrese de que:\n" +
+                    "1. GestLog se está ejecutando como Administrador\n" +
+                    "2. Tiene acceso al servidor de actualizaciones\n" +
+                    "3. No hay otro proceso de GestLog ejecutándose",
+                    "Error de Actualización",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                
                 throw;
-            }
-        }
-
-        /// <summary>
-        /// Programa el cierre controlado de la aplicación para permitir la actualización
-        /// </summary>
-        private async Task ScheduleApplicationShutdownAsync()
-        {
-            try
-            {
-                _logger.LogInformation("🔄 Programando cierre controlado de la aplicación...");
-                
-                // Dar tiempo para completar operaciones pendientes
-                await Task.Delay(1000);
-                
-                // Forzar cierre de la aplicación en el hilo principal
-                System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    try
-                    {
-                        _logger.LogInformation("🔄 Cerrando aplicación para permitir actualización...");
-                        System.Windows.Application.Current?.Shutdown();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "❌ Error cerrando aplicación");
-                        // Forzar cierre del proceso si es necesario
-                        Environment.Exit(0);
-                    }
-                }));
-                
-                // Dar tiempo adicional para que el cierre se procese
-                await Task.Delay(2000);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error en el cierre programado");
-                // Forzar cierre inmediato si hay problemas
-                Environment.Exit(0);
             }
         }
 
@@ -185,83 +181,24 @@ namespace GestLog.Services
         }
 
         /// <summary>
-        /// Verifica si la aplicación se está ejecutando con privilegios de administrador
+        /// Obtiene información sobre la versión actual y disponible
         /// </summary>
-        private bool IsRunningAsAdministrator()
+        public async Task<(string? current, string? available)> GetVersionInfoAsync()
         {
             try
             {
-                var identity = WindowsIdentity.GetCurrent();
-                var principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "No se pudo verificar privilegios de administrador");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Reinicia la aplicación con privilegios de administrador para aplicar actualizaciones
-        /// </summary>
-        private async Task<bool> RestartAsAdministratorForUpdateAsync()
-        {
-            try
-            {
-                _logger.LogInformation("🔐 Solicitando privilegios de administrador para aplicar actualización...");
-                  var result = System.Windows.MessageBox.Show(
-                    "Para aplicar la actualización, GestLog necesita permisos de administrador.\n\n" +
-                    "¿Desea continuar? La aplicación se reiniciará con privilegios elevados.",
-                    "Permisos requeridos",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (result != MessageBoxResult.Yes)
-                {
-                    _logger.LogInformation("❌ Usuario canceló la elevación de privilegios");
-                    return false;
-                }
-
-                // Obtener la ruta del ejecutable actual
-                var currentProcess = Process.GetCurrentProcess();
-                var executablePath = currentProcess.MainModule?.FileName;                if (string.IsNullOrEmpty(executablePath))
-                {
-                    var errorMsg = "No se pudo obtener la ruta del ejecutable actual";
-                    _logger.LogError(new InvalidOperationException(errorMsg), errorMsg);
-                    return false;
-                }
-
-                // Configurar el proceso para ejecutar como administrador
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = executablePath,
-                    Arguments = "--apply-update", // Parámetro para indicar que debe aplicar actualización
-                    UseShellExecute = true,
-                    Verb = "runas" // Solicita elevación de privilegios
-                };
-
-                // Iniciar el proceso elevado
-                var elevatedProcess = Process.Start(startInfo);
+                var updater = new UpdateManager(_updateUrl);
+                var updateInfo = await updater.CheckForUpdatesAsync();
                 
-                if (elevatedProcess != null)
-                {
-                    _logger.LogInformation("✅ Aplicación reiniciada con privilegios de administrador");
-                    
-                    // Cerrar la instancia actual
-                    await ScheduleApplicationShutdownAsync();
-                    return true;
-                }                else
-                {
-                    var errorMsg = "❌ No se pudo iniciar la aplicación con privilegios elevados";
-                    _logger.LogError(new InvalidOperationException(errorMsg), errorMsg);
-                    return false;
-                }
+                var currentVersion = updater.CurrentVersion?.ToString();
+                var availableVersion = updateInfo?.TargetFullRelease?.Version?.ToString();
+                
+                return (currentVersion, availableVersion);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al reiniciar como administrador");
-                return false;
+                _logger.LogError(ex, "❌ Error obteniendo información de versiones");
+                return (null, null);
             }
         }
     }

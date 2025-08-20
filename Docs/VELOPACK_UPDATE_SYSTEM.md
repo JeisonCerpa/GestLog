@@ -15,8 +15,8 @@
 
 GestLog utiliza **Velopack** como sistema de actualizaciones automáticas, proporcionando:
 - ✅ **Actualizaciones incrementales** usando archivos delta
-- ✅ **Auto-elevación de privilegios** solo cuando es necesario
-- ✅ **Instalación silenciosa** en segundo plano
+- ✅ **Verificación automática** en segundo plano al iniciar la aplicación
+- ✅ **Instalación silenciosa** con permisos de administrador preexistentes
 - ✅ **Rollback automático** en caso de errores
 - ✅ **Verificación de integridad** de las actualizaciones
 
@@ -71,10 +71,9 @@ private void btnInfo_Click(object sender, RoutedEventArgs e)
         "• DaaterProccesor - Procesamiento de datos Excel\n" +
         "• Gestión de Cartera - Estados de cuenta PDF\n" +
         "• Envío de Catálogo - Envío masivo de catálogo\n\n" +
-        "Estado: ✅ Operativo\n" +
-        "Actualizaciones: ✅ Sistema Velopack completamente funcional\n" +
-        "Seguridad: 🔐 Auto-elevación inteligente de privilegios\n" +
-        "Comportamiento: 🎯 Detección silenciosa, aplicación transparente",
+        "Estado: ✅ Operativo\n" +        "Actualizaciones: ✅ Sistema Velopack completamente funcional\n" +
+        "Seguridad: 🔐 Privilegios de administrador mediante manifiesto\n" +
+        "Comportamiento: 🎯 Detección silenciosa, aplicación con confirmación del usuario",
         "Información del Sistema",
         MessageBoxButton.OK,
         MessageBoxImage.Information
@@ -134,28 +133,34 @@ dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0"
 ### **Para Usuarios Finales**
 
 #### **Actualización Automática (Recomendada)**
-1. **Inicio Normal**: GestLog se ejecuta con permisos de usuario
-2. **Verificación Silenciosa**: Busca actualizaciones en segundo plano
-3. **Descarga Automática**: Si hay actualizaciones, las descarga automáticamente
-4. **Solicitud de Permisos**: Solo cuando va a aplicar la actualización
-5. **Aplicación Segura**: Reinicia con privilegios elevados y aplica la actualización
+1. **Inicio Normal**: GestLog se ejecuta con permisos de administrador (mediante manifiesto)
+2. **Verificación Silenciosa**: Busca actualizaciones en segundo plano (3 segundos después del inicio)
+3. **Notificación al Usuario**: Si hay actualizaciones, muestra un diálogo preguntando si desea actualizar
+4. **Descarga y Aplicación**: Si el usuario acepta, descarga e instala automáticamente
+5. **Reinicio Automático**: La aplicación se reinicia con la nueva versión
+
+> **Nota sobre elevación de privilegios:**
+> - **GestLog requiere privilegios de administrador para ejecutarse** debido a las operaciones que realiza (acceso a servidor de red, manipulación de archivos del sistema, etc.).
+> - La aplicación está configurada con un manifiesto (`app.manifest`) que solicita automáticamente elevación al iniciar.
+> - Las actualizaciones se aplicarán automáticamente sin solicitar permisos adicionales, ya que la aplicación ya se ejecuta como administrador.
+> - **Importante**: Los usuarios siempre verán el diálogo UAC al iniciar GestLog, esto es normal y necesario para el correcto funcionamiento.
 
 #### **Instalación Manual de Nueva Versión**
 1. Ejecutar `GestLog-win-Setup.exe` como **Administrador**
 2. Seguir el asistente de instalación
 3. La nueva versión reemplaza automáticamente la anterior
 
-### **Experiencia del Usuario**
+#### **Experiencia del Usuario**
 
 #### **Sin Actualizaciones**
-- ✅ Inicio normal sin interrupciones
-- ✅ No aparecen diálogos UAC
+- ✅ Inicio normal con solicitud UAC (requerida por privilegios de administrador)
+- ✅ No aparecen diálogos adicionales una vez iniciada la aplicación
 
 #### **Con Actualizaciones Disponibles**
 - 🔍 Detección automática en segundo plano
-- 📥 Descarga silenciosa (no interrumpe el trabajo)
-- 🔐 Solicitud de permisos cuando va a aplicar
-- 🔄 Aplicación automática y reinicio
+- 💬 Diálogo de confirmación al usuario
+- 📥 Descarga e instalación solo si el usuario acepta
+- 🔄 Reinicio transparente con nueva versión
 
 ---
 
@@ -167,8 +172,8 @@ dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0"
 La aplicación no tiene permisos suficientes para modificar archivos.
 
 #### **Solución**
-1. **Para Usuarios**: Ejecutar GestLog como Administrador
-2. **Para Desarrolladores**: Implementar auto-elevación (ya implementado en v1.0.6+)
+1. **Para Usuarios**: Asegurar que GestLog se ejecute como Administrador (ya configurado mediante manifiesto)
+2. **Para Desarrolladores**: El sistema de auto-elevación fue removido en v1.0.9+ para mayor estabilidad
 
 #### **Verificación**
 ```powershell
@@ -360,5 +365,5 @@ dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0.6"
 
 ---
 
-*Última actualización: 19 de agosto de 2025*
-*Versión del documento: 1.0*
+*Última actualización: 20 de agosto de 2025*
+*Versión del documento: 1.1 - Sistema sin auto-elevación implementado en v1.0.9*

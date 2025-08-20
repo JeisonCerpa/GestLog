@@ -3,24 +3,30 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>    
+    <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>    <!-- Información de versión de la aplicación -->    <AssemblyVersion>1.0.6.0</AssemblyVersion>
-    <FileVersion>1.0.6.0</FileVersion>
-    <Version>1.0.6</Version>
-    <AssemblyInformationalVersion>1.0.6</AssemblyInformationalVersion>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>    
+    <!-- Información de versión de la aplicación -->      <AssemblyVersion>1.0.9.0</AssemblyVersion>
+    <FileVersion>1.0.9.0</FileVersion>
+    <Version>1.0.9</Version>
+    <AssemblyInformationalVersion>1.0.9</AssemblyInformationalVersion>
     <Product>GestLog</Product>
     <Company>SIMICS Group SAS</Company>
     <Copyright>© 2025 SIMICS Group SAS. Todos los derechos reservados.</Copyright>
     <AssemblyTitle>GestLog - Sistema de Gestión</AssemblyTitle>
-    <Description>Sistema integral de gestión empresarial</Description>    <AssemblyMetadata>
-      <AssemblyMetadata Include="ProductVersion" Value="1.0.6" />
-    </AssemblyMetadata>
-      <!-- Configuración del icono de la aplicación -->
+    <Description>Sistema integral de gestión empresarial</Description>    
+    <AssemblyMetadata>
+      <AssemblyMetadata Include="ProductVersion" Value="1.0.9" />
+    </AssemblyMetadata>    
+    <!-- Configuración del icono de la aplicación -->
     <ApplicationIcon>Assets\image001.ico</ApplicationIcon>
+    <!-- Configuración del manifiesto para elevación de privilegios -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Suprimir advertencias CA1416 - GestLog es específicamente una aplicación de Windows -->
     <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +38,8 @@
     <EmbeddedResource Include="Data\*.xlsx" />
     <Content Include="Data\*" Exclude="Data\*.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>    <Content Include="appsettings.json">
+    </Content>    
+    <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
       <!-- Include config files (only production for Release builds) -->
@@ -106,7 +113,8 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageReference Include="itext7" Version="8.0.2" />
-    <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.2" />    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.2" />    
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
