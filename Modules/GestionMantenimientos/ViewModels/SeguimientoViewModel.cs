@@ -88,7 +88,7 @@ public partial class SeguimientoViewModel : ObservableObject
         CanAddSeguimiento = _currentUser.HasPermission("GestionMantenimientos.AgregarSeguimiento");
         CanEditSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EditarSeguimiento");
         CanDeleteSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EliminarSeguimiento");
-        CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarSeguimiento");
+        CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
     }
 
     [RelayCommand]
