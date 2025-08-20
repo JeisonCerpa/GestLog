@@ -85,42 +85,30 @@
                             <Setter Property="HorizontalAlignment" Value="Stretch"/>
                             <Setter Property="VerticalAlignment" Value="Stretch"/>
                         </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemTemplate>
+                    </ItemsControl.ItemContainerStyle>                    <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid>
                                 <!-- Border principal de la tarjeta -->
                                 <Border x:Name="SemanaCard" CornerRadius="8" Padding="2" Margin="2" BorderThickness="4"
                                         BorderBrush="{Binding ColorSemana}"
                                         Background="White"
-                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                    <Border.Style>
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">                                    <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderBrush" Value="{Binding ColorSemana}"/>
                                             <Setter Property="BorderThickness" Value="4"/>
-                                            <Setter Property="Effect" Value="{x:Null}"/>
                                             <Setter Property="Background" Value="White"/>
                                             <Setter Property="SnapsToDevicePixels" Value="True"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="#1976D2"/>
-                                                    <Setter Property="BorderThickness" Value="6"/>
-                                                    <Setter Property="Effect">
-                                                        <Setter.Value>
-                                                            <DropShadowEffect BlurRadius="0" ShadowDepth="6" Direction="315" Color="#888888" Opacity="1"/>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter Property="Background">
-                                                        <Setter.Value>
-                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                                <GradientStop Color="#F0F7FF" Offset="0.0"/>
-                                                                <GradientStop Color="White" Offset="0.5"/>
-                                                            </LinearGradientBrush>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>                                                <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                <!-- Semana vacía: sin borde -->
+                                                <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
                                                     <Setter Property="BorderThickness" Value="0"/>
                                                     <Setter Property="BorderBrush" Value="Transparent"/>
+                                                </DataTrigger>
+                                                <!-- Semana actual: solo fondo sutil, sin borde -->
+                                                <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                                    <Setter Property="Background" Value="#F8FFF8"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -166,15 +154,54 @@
                                                 </Style>
                                             </Button.Resources>
                                         </Button>
-                                    </StackPanel>
-                                </Border>                                <!-- Rectangle punteado solo para semanas vacías, por encima del Border -->
-                                <Rectangle Stroke="#F0F0F0" StrokeThickness="2" RadiusX="8" RadiusY="8" Fill="Transparent"
+                                    </StackPanel>                                </Border>
+
+                                <!-- Badge "ACTUAL" para semana actual con más margen -->
+                                <Border x:Name="CurrentWeekBadge"
+                                        Background="#118938"
+                                        CornerRadius="10"
+                                        Padding="8,3"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,6,6,0"
+                                        Panel.ZIndex="20"
+                                        Visibility="{Binding IsSemanaActual, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#118938" Opacity="0.3" BlurRadius="6" ShadowDepth="1"/>
+                                    </Border.Effect>
+                                    <TextBlock Text="ACTUAL" 
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               Foreground="White"/>
+                                </Border>                                <!-- Rectangle punteado para semanas vacías -->
+                                <Rectangle x:Name="EmptyWeekIndicator"
+                                           Stroke="#BFBFBF" 
+                                           StrokeThickness="2" 
+                                           RadiusX="8" RadiusY="8" 
+                                           Fill="Transparent"
                                            StrokeDashArray="4 2"
                                            Margin="2"
-                                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                           HorizontalAlignment="Stretch" 
+                                           VerticalAlignment="Stretch"
                                            Panel.ZIndex="10"
-                                           Visibility="{Binding EsSemanaVacia, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           IsHitTestVisible="False"/>
+                                           IsHitTestVisible="False">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Solo mostrar punteado si está vacía -->
+                                                <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                                <!-- Si es actual Y vacía, cambiar color del punteado a verde -->
+                                                <DataTrigger Binding="{Binding IsSemanaActualYVacia}" Value="True">
+                                                    <Setter Property="Stroke" Value="#118938"/>
+                                                    <Setter Property="StrokeThickness" Value="3"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

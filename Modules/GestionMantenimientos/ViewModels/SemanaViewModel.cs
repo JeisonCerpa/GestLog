@@ -143,11 +143,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 return NumeroSemana == semanaActual && _anio == anioActual;
             }
         }        // Propiedad que indica si la semana está vacía (sin estados de mantenimiento)
-        public bool EsSemanaVacia => EstadosMantenimientos == null || EstadosMantenimientos.Count == 0;        // Notificar cambio de color si cambian los estados
+        public bool EsSemanaVacia => EstadosMantenimientos == null || EstadosMantenimientos.Count == 0;
+
+        // Propiedad que indica si es semana actual Y está vacía
+        public bool IsSemanaActualYVacia => IsSemanaActual && EsSemanaVacia;        // Notificar cambio de color si cambian los estados
         partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
         {
             OnPropertyChanged(nameof(ColorSemana));
             OnPropertyChanged(nameof(EsSemanaVacia));
+            OnPropertyChanged(nameof(IsSemanaActualYVacia));
         }
     }
 }
