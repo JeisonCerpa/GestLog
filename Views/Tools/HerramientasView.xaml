@@ -39,8 +39,7 @@
                     <TextBlock Text="Selecciona la herramienta que deseas utilizar" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
                 </StackPanel>
             </StackPanel>
-            
-            <!-- Tools Grid -->
+              <!-- Tools Grid -->
             <UniformGrid Columns="3" Rows="3" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Top">
                 <!-- DaaterProccesor Card -->
                 <Border Style="{StaticResource ModernCardStyle}" Margin="12"
@@ -84,6 +83,16 @@
                                 Click="BtnGestionMantenimientos_Click"/>
                     </StackPanel>
                 </Border>
+                <!-- Gestión de Identidad y Catálogos Card -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessGestionIdentidadCatalogos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="🆔" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Personas, usuarios, cargos, tipos de documento, roles y permisos." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnGestionIdentidadCatalogos" Content="Abrir Gestión de Identidad y Catálogos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionIdentidadCatalogos_Click"/>
+                    </StackPanel>
+                </Border>
                 <!-- Registro de Errores Card -->
                 <Border Style="{StaticResource ModernCardStyle}" Margin="12"
                         Visibility="{Binding CanAccessErrorLog, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -101,16 +110,6 @@
                         <TextBlock Text="Configuración" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
                         <TextBlock Text="Configuración unificada de la aplicación, módulos, interfaz y rendimiento del sistema" FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
                         <Button Name="btnConfiguration" Content="Abrir Configuración" Style="{StaticResource SecondaryButtonStyle}" Click="BtnConfiguration_Click"/>
-                    </StackPanel>
-                </Border>
-                <!-- Gestión de Identidad y Catálogos Card -->
-                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
-                        Visibility="{Binding CanAccessGestionIdentidadCatalogos, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <TextBlock Text="🆔" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                        <TextBlock Text="Gestión de Identidad y Catálogos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
-                        <TextBlock Text="Personas, usuarios, cargos, tipos de documento, roles y permisos." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                        <Button Name="btnGestionIdentidadCatalogos" Content="Abrir Gestión de Identidad y Catálogos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionIdentidadCatalogos_Click"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>

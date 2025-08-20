@@ -97,14 +97,12 @@ public partial class CronogramaViewModel : ObservableObject
     {
         _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
         RecalcularPermisos();
-    }
-
-    private void RecalcularPermisos()
+    }    private void RecalcularPermisos()
     {
         CanAddCronograma = _currentUser.HasPermission("GestionMantenimientos.AgregarCronograma");
         CanEditCronograma = _currentUser.HasPermission("GestionMantenimientos.EditarCronograma");
         CanDeleteCronograma = _currentUser.HasPermission("GestionMantenimientos.EliminarCronograma");
-        CanExportCronograma = _currentUser.HasPermission("GestionMantenimientos.ExportarCronograma");
+        CanExportCronograma = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
     }
 
     partial void OnAnioSeleccionadoChanged(int value)
