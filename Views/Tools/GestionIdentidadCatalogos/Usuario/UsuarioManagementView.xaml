@@ -12,23 +12,39 @@
         <!-- Panel izquierdo: búsqueda y lista de usuarios -->
         <StackPanel Grid.Column="0" Margin="0,0,20,0">
             <TextBox Height="36" Margin="0,0,0,12" Padding="10,0" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1"
-                     Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
-            <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado, Mode=TwoWay}"
-                     DisplayMemberPath="NombreUsuario" Height="480" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1"
-                     Margin="0,0,0,12"/>
+                     Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>            <ListBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado, Mode=TwoWay}"
+                     Height="480" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1"
+                     Margin="0,0,0,12">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="8">
+                            <TextBlock Text="{Binding NombreUsuario}" FontWeight="SemiBold" FontSize="14" Foreground="#333333"/>
+                            <TextBlock Text="{Binding NombrePersona}" FontSize="12" Foreground="#666666" Margin="0,2,0,0"/>
+                            <TextBlock Text="{Binding Correo}" FontSize="11" Foreground="#888888" Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </StackPanel>
         <!-- Panel derecho: detalle de usuario -->
         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="8" Padding="28" BorderBrush="#E0E0E0" BorderThickness="1" 
                 Effect="{DynamicResource DropShadowEffect}">
             <StackPanel>
-                <TextBlock Text="Detalle de Usuario" FontSize="22" FontWeight="SemiBold" Foreground="#118938" Margin="0,0,0,18"/>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Detalle de Usuario" FontSize="22" FontWeight="SemiBold" Foreground="#118938" Margin="0,0,0,18"/>                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Nombre de usuario:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
                     <TextBox Text="{Binding UsuarioSeleccionado.NombreUsuario, Mode=TwoWay}" Width="220" Height="32" Background="#FFFFFF" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Persona asignada:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <TextBox Text="{Binding UsuarioSeleccionado.NombrePersona, Mode=OneWay}" Width="220" Height="32" Background="#F5F5F5" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" IsReadOnly="True"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Correo electrónico:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
                     <TextBox Text="{Binding UsuarioSeleccionado.Correo, Mode=OneWay}" Width="220" Height="32" Background="#F5F5F5" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" IsReadOnly="True"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Teléfono:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
+                    <TextBox Text="{Binding UsuarioSeleccionado.TelefonoPersona, Mode=OneWay}" Width="220" Height="32" Background="#F5F5F5" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
                     <TextBlock Text="Estado:" Width="150" VerticalAlignment="Center" Foreground="#504F4E"/>
@@ -61,10 +77,57 @@
                     <TextBlock Text="Último acceso:" Width="150" Foreground="#504F4E"/>
                     <TextBlock Text="{Binding UsuarioSeleccionado.FechaUltimoAcceso, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"/>
                 </StackPanel>                <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                    <Button Content="Editar" Command="{Binding EditarUsuarioCommand}" Margin="0,0,10,0" Height="36" MinWidth="110" Background="#1976D2" Foreground="White" FontWeight="Bold"/>
-                    <Button Content="Restablecer contraseña" Command="{Binding RestablecerContrasenaCommand}" Margin="0,0,10,0" Height="36" MinWidth="150" Background="#FF9800" Foreground="White" FontWeight="Bold"/>
-                    <Button Content="Ver auditoría" Command="{Binding CargarAuditoriaCommand}" Margin="0,0,10,0" Height="36" MinWidth="110" Background="#616161" Foreground="White"/>
-                    <Button Content="Eliminar" Command="{Binding EliminarUsuarioCommand}" Height="36" MinWidth="110" Background="#504F4E" Foreground="White"/>
+                    <!-- Botón principal: Editar con corner radius e ícono (Segoe MDL2 Assets) -->
+                    <Button Command="{Binding EditarUsuarioCommand}" Margin="0,0,12,0" Height="36" MinWidth="110" ToolTip="Editar usuario seleccionado" Background="#118938" Foreground="White" FontWeight="Bold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="8" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Opacity" Value="0.95"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Editar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Botón de tres puntos (ellipsis) con corner radius que abre un Popup con las acciones -->
+                    <Grid>
+                        <ToggleButton x:Name="ActionsToggle" Width="36" Height="36" Padding="0" ToolTip="Acciones" HorizontalAlignment="Left">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="0.95"/>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Background" Value="#F0F0F0"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                            <TextBlock Text="⋯" FontSize="20" Foreground="#504F4E" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </ToggleButton>
+                        <Popup PlacementTarget="{Binding ElementName=ActionsToggle}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" IsOpen="{Binding IsChecked, ElementName=ActionsToggle}">
+                            <Border Background="#FFFFFF" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="8" Effect="{DynamicResource DropShadowEffect}">
+                                <StackPanel Width="220">
+                                    <Button Content="Restablecer contraseña" Command="{Binding RestablecerContrasenaCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,6" Background="#FFFFFF" Foreground="#504F4E" Padding="8"/>
+                                    <Button Content="Ver auditoría" Command="{Binding CargarAuditoriaCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,6" Background="#FFFFFF" Foreground="#504F4E" Padding="8"/>
+                                    <Separator Margin="0,4"/>
+                                    <Button Content="Eliminar" Command="{Binding EliminarUsuarioCommand}" HorizontalAlignment="Stretch" Background="#FFFFFF" Foreground="#C0392B" Padding="8"/>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
                 </StackPanel>
             </StackPanel>
         </Border>

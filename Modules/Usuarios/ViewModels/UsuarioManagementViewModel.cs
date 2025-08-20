@@ -70,8 +70,7 @@ namespace Modules.Usuarios.ViewModels
             set { _canViewAudit = value; OnPropertyChanged(); }
         }
 
-        private Usuario? _usuarioSeleccionado = null;
-        public Usuario? UsuarioSeleccionado
+        private Usuario? _usuarioSeleccionado = null;        public Usuario? UsuarioSeleccionado
         {
             get => _usuarioSeleccionado;
             set
@@ -79,7 +78,12 @@ namespace Modules.Usuarios.ViewModels
                 _usuarioSeleccionado = value;
                 OnPropertyChanged();
                 // Cargar correo de la persona asociada si está disponible
-                CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);                // Cargar roles del usuario seleccionado
+                CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);
+                
+                // Actualizar información de persona en tiempo real
+                _ = ActualizarInformacionUsuarioSeleccionadoAsync();
+                
+                // Cargar roles del usuario seleccionado
                 _ = CargarRolesDeUsuarioAsync();
                 // Notificar cambios en los comandos
                 (EditarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -87,12 +91,9 @@ namespace Modules.Usuarios.ViewModels
                 (EliminarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 (CargarAuditoriaCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
-        }
-        private string ObtenerCorreoDePersona(Usuario? usuario)
+        }private string ObtenerCorreoDePersona(Usuario? usuario)
         {
-            // Aquí deberías obtener el correo de la persona asociada, si está disponible
-            // Si el modelo Usuario no lo expone, puedes extenderlo o usar un DTO
-            return string.Empty;
+            return usuario?.Correo ?? string.Empty;
         }
 
         // Propiedades para el modal de registro
@@ -274,15 +275,42 @@ namespace Modules.Usuarios.ViewModels
             
             // Conectar el event handler para la colección de roles seleccionados
             RolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
-        }
-
-        // Método para cargar usuarios desde la base de datos
+        }        // Método para cargar usuarios desde la base de datos
         public async Task CargarUsuariosAsync()
         {
             var lista = await _usuarioService.BuscarUsuariosAsync("");
+            
+            // Cargar información de personas para cada usuario
+            await CargarInformacionPersonasAsync(lista);
+            
             Usuarios.Clear();
             foreach (var usuario in lista)
                 Usuarios.Add(usuario);
+        }
+
+        // Método para enriquecer usuarios con información de personas
+        private async Task CargarInformacionPersonasAsync(IEnumerable<Usuario> usuarios)
+        {
+            try
+            {
+                // Obtener todas las personas de una vez para optimizar
+                var todasLasPersonas = await _personaService.BuscarPersonasAsync("");
+                var personasDict = todasLasPersonas.ToDictionary(p => p.IdPersona, p => p);
+
+                foreach (var usuario in usuarios)
+                {
+                    if (personasDict.TryGetValue(usuario.PersonaId, out var persona))
+                    {
+                        usuario.Correo = persona.Correo;
+                        usuario.NombrePersona = persona.NombreCompleto;
+                        usuario.TelefonoPersona = persona.Telefono;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error cargando información de personas: {ex.Message}");
+            }
         }
 
         // Método para cargar personas activas
@@ -327,6 +355,32 @@ namespace Modules.Usuarios.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error cargando roles del usuario: {ex.Message}");
+            }
+        }        // Método para actualizar información del usuario seleccionado con datos de persona
+        private async Task ActualizarInformacionUsuarioSeleccionadoAsync()
+        {
+            if (UsuarioSeleccionado != null && _personaService != null)
+            {
+                try
+                {
+                    var persona = await _personaService.ObtenerPersonaPorIdAsync(UsuarioSeleccionado.PersonaId);
+                    if (persona != null)
+                    {
+                        UsuarioSeleccionado.Correo = persona.Correo;
+                        UsuarioSeleccionado.NombrePersona = persona.NombreCompleto;
+                        UsuarioSeleccionado.TelefonoPersona = persona.Telefono;
+                        
+                        // Actualizar la propiedad CorreoPersonaSeleccionada
+                        CorreoPersonaSeleccionada = persona.Correo;
+                        
+                        // Notificar cambios
+                        OnPropertyChanged(nameof(UsuarioSeleccionado));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error actualizando información de persona: {ex.Message}");
+                }
             }
         }
 
@@ -421,10 +475,13 @@ namespace Modules.Usuarios.ViewModels
             var random = new Random();
             return new string(Enumerable.Repeat(chars, 8)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-        private async Task BuscarUsuariosAsync()
+        }        private async Task BuscarUsuariosAsync()
         {
             var lista = await _usuarioService.BuscarUsuariosAsync(FiltroTexto);
+            
+            // Cargar información de personas para cada usuario encontrado
+            await CargarInformacionPersonasAsync(lista);
+            
             Usuarios.Clear();
             foreach (var usuario in lista)
                 Usuarios.Add(usuario);

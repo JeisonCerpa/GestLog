@@ -17,9 +17,20 @@ namespace GestLog.Modules.Usuarios.Models
         public DateTime? FechaUltimoAcceso { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaModificacion { get; set; }
-        
-        // Propiedad extendida para mostrar el correo de la persona asociada
+          // Propiedades extendidas para mostrar información de la persona asociada
         [NotMapped]
         public string? Correo { get; set; }
+        
+        [NotMapped]
+        public string? NombrePersona { get; set; }
+        
+        [NotMapped]
+        public string? TelefonoPersona { get; set; }
+        
+        // Propiedad calculada para mostrar información completa del usuario
+        [NotMapped]
+        public string DisplayText => !string.IsNullOrEmpty(NombrePersona) 
+            ? $"{NombreUsuario} - {NombrePersona}"
+            : NombreUsuario;
     }
 }
