@@ -25,6 +25,91 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // Mostrar SplashScreen antes de cualquier lógica
+        var splash = new GestLog.Views.SplashScreen();
+        splash.Show();
+        await System.Threading.Tasks.Task.Delay(500); // Permitir renderizado
+
+        base.OnStartup(e); // Llamar primero según buenas prácticas WPF
+        this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        try
+        {
+            LoggingService.InitializeServices();
+            _logger = LoggingService.GetLogger();
+
+            splash.ShowStatus("Verificando conexión a la base de datos...");
+            var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            bool conexionOk = false;
+            if (databaseService != null)
+            {
+                conexionOk = await databaseService.TestConnectionAsync();
+            }
+            if (!conexionOk)
+            {
+                splash.ShowStatus("Sin conexión a la base de datos");
+                await System.Threading.Tasks.Task.Delay(1500);
+            }
+            else
+            {
+                splash.ShowStatus("Conexión a la base de datos OK");
+                await System.Threading.Tasks.Task.Delay(500);
+            }
+
+            splash.ShowStatus("Verificando actualizaciones...");
+            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
+            bool hayActualizacion = false;
+            if (updateService != null)
+            {
+                hayActualizacion = await updateService.CheckForUpdatesAsync();
+            }
+            if (hayActualizacion)
+            {
+                splash.ShowStatus("¡Actualización disponible!");
+                await System.Threading.Tasks.Task.Delay(1200);
+            }
+            else
+            {
+                splash.ShowStatus("No hay actualizaciones");
+                await System.Threading.Tasks.Task.Delay(500);
+            }
+
+            // Crear ventana principal y mostrarla
+            var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
+            currentUserService?.RestoreSessionIfExists();
+            var mainWindow = new MainWindow();
+            this.MainWindow = mainWindow;
+            string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
+            if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            {
+                vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
+                vm.NotificarCambioNombrePersona();
+            }
+            if (currentUserService?.IsAuthenticated == true)
+            {
+                mainWindow.LoadHomeView();
+            }
+            mainWindow.Show();
+            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            splash.Close();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error crítico al inicializar la aplicación:\n{ex.Message}",
+                "Error de Inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
+            try
+            {
+                LoggingService.InitializeServices();
+                _logger = LoggingService.GetLogger();
+                _logger.LogUnhandledException(ex, "App.OnStartup");
+            }
+            catch
+            {
+                System.Windows.Application.Current.Shutdown(1);
+                return;
+            }
+        }
+
         // Inicializar Velopack al arranque
         VelopackApp.Build().Run();
           // AUTO-ELEVACIÓN DESHABILITADA: Ya no manejamos parámetros de actualización
@@ -112,6 +197,18 @@ public partial class App : System.Windows.Application
             mainWindow.Show();
             // --- Restaurar modo de cierre automático después de mostrar MainWindow ---
             this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            // Cerrar el splash solo después de mostrar la ventana principal
+            splash.Close();
+            
+            // Aquí podrías verificar la conexión y mostrar el estado en el splash
+            // Ejemplo:
+            bool hayConexion = true; // Reemplazar por tu lógica real de verificación
+            if (!hayConexion)
+            {
+                splash.ShowStatus("Sin conexión a la base de datos");
+                await System.Threading.Tasks.Task.Delay(2000); // Mostrar el mensaje unos segundos
+            }
+            splash.Close();
         }
         catch (Exception ex)
         {
@@ -133,7 +230,8 @@ public partial class App : System.Windows.Application
                 return;
             }
         }
-    }    /// <summary>
+    }
+    /// <summary>
     /// Carga la configuración de la aplicación al inicio
     /// </summary>
     private async Task LoadApplicationConfigurationAsync()
