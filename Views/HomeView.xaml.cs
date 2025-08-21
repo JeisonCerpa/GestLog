@@ -22,7 +22,7 @@ namespace GestLog.Views
             _mainWindow?.NavigateToView(herramientasView, "Herramientas");
         }        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {            System.Windows.MessageBox.Show(
-                "GestLog v1.0.9\n\n" +
+                "GestLog v1.0.10\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
