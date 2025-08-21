@@ -66,7 +66,15 @@ public partial class App : System.Windows.Application
             if (hayActualizacion)
             {
                 splash.ShowStatus("¡Actualización disponible!");
-                await System.Threading.Tasks.Task.Delay(1200);
+                splash.ShowUpdateButtons();
+                var result = splash.ShowDialog();
+                if (result == true && updateService != null)
+                {
+                    await updateService.NotifyAndPromptForUpdateAsync();
+                    // Puedes cerrar la app si es necesario, o continuar
+                }
+                // Si el usuario omite, sigue el flujo normal
+                splash.HideUpdateButtons();
             }
             else
             {
@@ -112,124 +120,6 @@ public partial class App : System.Windows.Application
 
         // Inicializar Velopack al arranque
         VelopackApp.Build().Run();
-          // AUTO-ELEVACIÓN DESHABILITADA: Ya no manejamos parámetros de actualización
-        // La verificación de actualizaciones se hace manualmente
-        
-        // --- SOLUCIÓN: Evitar cierre automático al cerrar LoginWindow ---
-        this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        base.OnStartup(e);
-        try
-        {
-            // Inicializar el sistema de logging y servicios
-            LoggingService.InitializeServices();
-            _logger = LoggingService.GetLogger();
-
-            _logger.Logger.LogInformation("🚀 === INICIANDO GESTLOG v1.0.0 ===");
-            await LoadApplicationConfigurationAsync();
-            _logger.LogConfiguration("Version", "1.0.0");
-            _logger.LogConfiguration("Environment", Environment.OSVersion.ToString());
-            _logger.LogConfiguration("WorkingDirectory", Environment.CurrentDirectory);
-            await ValidateSecurityConfigurationAsync();
-            await CheckFirstRunSetupAsync();
-            await InitializeDatabaseConnectionAsync();            // --- VERIFICACIÓN DE ACTUALIZACIONES (Sin auto-elevación) ---
-            var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
-            if (string.IsNullOrWhiteSpace(env))
-            {
-                Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", EnvironmentVariableTarget.Process);
-                _logger?.LogInformation("🌎 Variable de entorno GESTLOG_ENVIRONMENT no definida, asignando 'Production' por defecto");
-                env = "Production";
-            }
-            _logger?.LogInformation($"🔍 Environment detectado: '{env}'");
-            
-            // Inicializar verificación de actualizaciones de forma silenciosa y mostrar diálogo solo si hay actualizaciones
-            await InitializeUpdateServiceAsync();
-            // --- FIN VERIFICACIÓN DE ACTUALIZACIONES ---
-
-            // Asegurar cronogramas completos para todos los equipos activos
-            try
-            {
-                var cronogramaService = LoggingService.GetService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
-                if (cronogramaService != null)
-                {
-                    _logger?.Logger.LogInformation("⏳ Verificando y generando cronogramas de mantenimiento al inicio...");
-                    await cronogramaService.EnsureAllCronogramasUpToDateAsync();
-                    _logger?.Logger.LogInformation("✅ Cronogramas de mantenimiento verificados/generados correctamente al inicio");
-                }
-            }
-            catch (Exception cronEx)
-            {
-                _logger?.Logger.LogError(cronEx, "❌ Error al verificar/generar cronogramas de mantenimiento al inicio");
-                // No es crítico, la aplicación puede continuar
-            }            
-            // Configurar manejo global de excepciones
-            SetupGlobalExceptionHandling();            
-            // 🔐 MOSTRAR LOGIN ANTES DEL MAINWINDOW
-            // if (!ShowAuthentication())
-            // {
-            //     _logger?.Logger.LogInformation("🚪 Usuario canceló login, cerrando aplicación");
-            //     System.Windows.Application.Current.Shutdown(0);
-            //     return;
-            // }
-            // --- CREAR MainWindow MANUALMENTE DESPUÉS DE AUTENTICACIÓN EXITOSA ---
-            // Restaurar sesión si existe
-            var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
-            currentUserService?.RestoreSessionIfExists();
-
-            // Crear ventana principal
-            var mainWindow = new MainWindow();
-            this.MainWindow = mainWindow;
-
-            // Actualizar estado de autenticación en el ViewModel principal
-            string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
-            if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
-            {
-                vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
-                // Notificar cambio de usuario restaurado para actualizar el binding del nombre
-                vm.NotificarCambioNombrePersona();
-            }
-
-            // Mostrar vista principal si está autenticado
-            if (currentUserService?.IsAuthenticated == true)
-            {
-                mainWindow.LoadHomeView();
-            }
-
-            mainWindow.Show();
-            // --- Restaurar modo de cierre automático después de mostrar MainWindow ---
-            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            // Cerrar el splash solo después de mostrar la ventana principal
-            splash.Close();
-            
-            // Aquí podrías verificar la conexión y mostrar el estado en el splash
-            // Ejemplo:
-            bool hayConexion = true; // Reemplazar por tu lógica real de verificación
-            if (!hayConexion)
-            {
-                splash.ShowStatus("Sin conexión a la base de datos");
-                await System.Threading.Tasks.Task.Delay(2000); // Mostrar el mensaje unos segundos
-            }
-            splash.Close();
-        }
-        catch (Exception ex)
-        {
-            // Manejo de emergencia si falla la inicialización del logging
-            System.Windows.MessageBox.Show($"Error crítico al inicializar la aplicación:\n{ex.Message}",
-                "Error de Inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
-
-            // Intentar logging de emergencia
-            try
-            {
-                LoggingService.InitializeServices();
-                _logger = LoggingService.GetLogger();
-                _logger.LogUnhandledException(ex, "App.OnStartup");
-            }
-            catch
-            {
-                // Si ni siquiera el logging de emergencia funciona, salir
-                System.Windows.Application.Current.Shutdown(1);
-                return;
-            }
-        }
     }
     /// <summary>
     /// Carga la configuración de la aplicación al inicio

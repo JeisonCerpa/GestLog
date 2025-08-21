@@ -10,6 +10,12 @@
         Width="600" Height="400">
     <Grid>
         <Image Source="/Assets/Simics.png" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-        <TextBlock x:Name="StatusText" Text="" FontSize="14" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,40" Visibility="Collapsed"/>
+        <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,32">
+            <TextBlock x:Name="StatusText" Text="" FontSize="14" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,0,8"/>
+            <StackPanel x:Name="UpdateButtonsPanel" Orientation="Horizontal" HorizontalAlignment="Center" Visibility="Collapsed">
+                <Button x:Name="BtnUpdate" Content="Actualizar ahora" Width="140" Margin="0,0,12,0" Click="BtnUpdate_Click"/>
+                <Button x:Name="BtnSkip" Content="Omitir" Width="100" Click="BtnSkip_Click"/>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>
