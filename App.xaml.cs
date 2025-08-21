@@ -48,7 +48,13 @@ public partial class App : System.Windows.Application
             await CheckFirstRunSetupAsync();
             await InitializeDatabaseConnectionAsync();            // --- VERIFICACIÓN DE ACTUALIZACIONES (Sin auto-elevación) ---
             var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
-            _logger?.Logger.LogInformation($"🔍 Environment detectado: '{env ?? "null"}'");
+            if (string.IsNullOrWhiteSpace(env))
+            {
+                Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", EnvironmentVariableTarget.Process);
+                _logger?.LogInformation("🌎 Variable de entorno GESTLOG_ENVIRONMENT no definida, asignando 'Production' por defecto");
+                env = "Production";
+            }
+            _logger?.LogInformation($"🔍 Environment detectado: '{env}'");
             
             // Inicializar verificación de actualizaciones de forma silenciosa y mostrar diálogo solo si hay actualizaciones
             await InitializeUpdateServiceAsync();
@@ -513,11 +519,21 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            _logger?.Logger.LogInformation("🔍 Iniciando verificación silenciosa de actualizaciones...");
-
-            // Obtener el servicio de configuración para verificar si las actualizaciones están habilitadas
+            _logger?.Logger.LogInformation("🔍 Iniciando verificación silenciosa de actualizaciones...");            // Obtener el servicio de configuración y asegurar que esté cargado
             var configurationService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
-            var config = configurationService?.Current;
+            if (configurationService == null)
+            {
+                _logger?.Logger.LogWarning("⚠️ Servicio de configuración no disponible");
+                return;
+            }
+
+            // ASEGURAR que la configuración esté completamente cargada antes de verificar
+            await configurationService.LoadAsync();
+            var config = configurationService.Current;            // 🔍 DEBUG: Verificar valores exactos de configuración
+            _logger?.Logger.LogInformation("🔍 DEBUG Updater Config: Enabled='{Enabled}', UpdateServerPath='{UpdateServerPath}' (Length={Length})", 
+                config?.Updater?.Enabled, 
+                config?.Updater?.UpdateServerPath ?? "NULL", 
+                config?.Updater?.UpdateServerPath?.Length ?? 0);
 
             if (config?.Updater?.Enabled != true)
             {
@@ -529,6 +545,9 @@ public partial class App : System.Windows.Application
                 _logger?.Logger.LogWarning("⚠️ URL de actualizaciones no configurada");
                 return;
             }
+
+            // ✅ URL de actualizaciones configurada correctamente
+            _logger?.Logger.LogInformation("✅ URL de actualizaciones configurada: '{UpdateServerPath}'", config.Updater.UpdateServerPath);
 
             // Crear el servicio de actualizaciones
             var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();

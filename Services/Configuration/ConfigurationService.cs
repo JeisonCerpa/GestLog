@@ -112,6 +112,19 @@ public class ConfigurationService : IConfigurationService
                 _logger.LogInformation("📋 Archivo de configuración no encontrado, creando valores por defecto");
                 await CreateDefaultConfigurationAsync();
             }
+
+            if (_current.Updater == null || !_current.Updater.Enabled || string.IsNullOrWhiteSpace(_current.Updater.UpdateServerPath))
+            {
+                _logger.LogWarning("⚡ Reparando configuración de actualizaciones por defecto");
+                _current.Updater = new UpdaterSettings
+                {
+                    Enabled = true,
+                    UpdateServerPath = @"\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"
+                };
+                _hasUnsavedChanges = true;
+                await SaveAsync();
+                _logger.LogInformation("✅ Configuración de actualizaciones reparada automáticamente");
+            }
         }
         catch (Exception ex)
         {

@@ -72,11 +72,12 @@ public class FirstRunSetupService : IFirstRunSetupService
                 fallbackServer, fallbackDatabase);
 
             _logger.LogDebug("Using configuration values - Server: {Server}, Database: {Database}, UseIntegratedSecurity: {UseIntegratedSecurity}",
-                fallbackServer!, fallbackDatabase!, useIntegratedSecurity);
-
-            // Configurar variables de entorno
+                fallbackServer!, fallbackDatabase!, useIntegratedSecurity);            // Configurar variables de entorno
             await Task.Run(() =>
             {
+                // Configurar entorno como Production para nuevas instalaciones
+                Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", EnvironmentVariableTarget.Machine);
+                
                 Environment.SetEnvironmentVariable("GESTLOG_DB_SERVER", fallbackServer, EnvironmentVariableTarget.User);
                 Environment.SetEnvironmentVariable("GESTLOG_DB_NAME", fallbackDatabase, EnvironmentVariableTarget.User);
                 Environment.SetEnvironmentVariable("GESTLOG_DB_USE_INTEGRATED_SECURITY", useIntegratedSecurity.ToString().ToLower(), EnvironmentVariableTarget.User);
@@ -100,6 +101,7 @@ public class FirstRunSetupService : IFirstRunSetupService
             }, cancellationToken);
 
             _logger.LogInformation("✅ Variables de entorno configuradas automáticamente");
+            _logger.LogInformation("🌍 Entorno configurado como: Production");
 
             // Probar la conexión con los valores configurados
             var connectionWorks = await TestAutomaticConnectionAsync(cancellationToken);

@@ -363,6 +363,9 @@ dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0.6"
 3. **Mantener Conectividad**: Asegurar acceso a la red corporativa
 4. **No Interrumpir**: Permitir que las actualizaciones se completen
 
+```powershell
+dotnet clean; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe"; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"
+```
 ---
 
 *Última actualización: 20 de agosto de 2025*

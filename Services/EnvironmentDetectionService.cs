@@ -54,15 +54,17 @@ public class EnvironmentDetectionService : IEnvironmentDetectionService
                 _detectedEnvironment = envVariable;
                 _logger.LogInformation("✅ Entorno detectado por variable de entorno: {Environment}", _detectedEnvironment);
                 return _detectedEnvironment;
-            }
-
-            // Prioridad 2: Nombre de máquina
+            }            // Prioridad 2: Nombre de máquina
             var machineName = Environment.MachineName;
             _detectedEnvironment = DetectByMachineName(machineName);
             if (_detectedEnvironment != null)
             {
                 _logger.LogInformation("✅ Entorno detectado por nombre de máquina '{MachineName}': {Environment}", 
                     machineName, _detectedEnvironment);
+                
+                // Configurar la variable de entorno para que persista
+                ConfigureEnvironmentVariable(_detectedEnvironment);
+                
                 return _detectedEnvironment;
             }
 
@@ -71,6 +73,10 @@ public class EnvironmentDetectionService : IEnvironmentDetectionService
             if (_detectedEnvironment != null)
             {
                 _logger.LogInformation("✅ Entorno detectado por configuración de BD: {Environment}", _detectedEnvironment);
+                
+                // Configurar la variable de entorno para que persista
+                ConfigureEnvironmentVariable(_detectedEnvironment);
+                
                 return _detectedEnvironment;
             }
 
@@ -79,12 +85,19 @@ public class EnvironmentDetectionService : IEnvironmentDetectionService
             if (_detectedEnvironment != null)
             {
                 _logger.LogInformation("✅ Entorno detectado por archivo de configuración: {Environment}", _detectedEnvironment);
+                
+                // Configurar la variable de entorno para que persista
+                ConfigureEnvironmentVariable(_detectedEnvironment);
+                
                 return _detectedEnvironment;
             }
 
             // Por defecto: Producción
             _detectedEnvironment = "Production";
             _logger.LogWarning("⚠️ No se pudo detectar entorno automáticamente, usando por defecto: {Environment}", _detectedEnvironment);
+            
+            // Configurar la variable de entorno para que persista
+            ConfigureEnvironmentVariable(_detectedEnvironment);
             
             return _detectedEnvironment;
         }
@@ -208,14 +221,41 @@ public class EnvironmentDetectionService : IEnvironmentDetectionService
                         return char.ToUpperInvariant(env[0]) + env[1..];
                     }
                 }
-            }
-
-            return null;
+            }            return null;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error detectando entorno por archivos de configuración");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Configura la variable de entorno GESTLOG_ENVIRONMENT para que persista
+    /// </summary>
+    private void ConfigureEnvironmentVariable(string environment)
+    {
+        try
+        {
+            // Verificar si la variable ya está configurada
+            var userEnv = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT", EnvironmentVariableTarget.User);
+            var machineEnv = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT", EnvironmentVariableTarget.Machine);
+
+            if (string.IsNullOrWhiteSpace(userEnv) && string.IsNullOrWhiteSpace(machineEnv))
+            {
+                // Configurar a nivel de usuario para que persista
+                Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", environment, EnvironmentVariableTarget.User);
+                _logger.LogInformation("🔧 Variable GESTLOG_ENVIRONMENT configurada como '{Environment}' a nivel de usuario", environment);
+            }
+            else
+            {
+                var existingValue = !string.IsNullOrWhiteSpace(userEnv) ? userEnv : machineEnv;
+                _logger.LogInformation("✅ Variable GESTLOG_ENVIRONMENT ya configurada: '{ExistingValue}'", existingValue ?? "<vacío>");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error configurando variable GESTLOG_ENVIRONMENT");
         }
     }
 }

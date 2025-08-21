@@ -7,9 +7,8 @@ namespace GestLog.Models.Configuration;
 /// Configuraciones del sistema de actualizaciones
 /// </summary>
 public class UpdaterSettings : INotifyPropertyChanged
-{
-    private bool _enabled = false;
-    private string _updateServerPath = string.Empty;
+{    private bool _enabled = true;
+    private string _updateServerPath = "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater";
     private TimeSpan _checkInterval = TimeSpan.FromMinutes(30);
     private bool _autoInstall = true;
     private bool _requireRestart = true;
