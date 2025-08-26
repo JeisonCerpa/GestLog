@@ -63,30 +63,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude old DaaterProccesor files to avoid conflicts -->
-    <Compile Remove="Modules\DaaterProccesor\Views\**" />
-    <Compile Remove="Modules\DaaterProccesor\App.xaml.cs" />
-    <Page Remove="Modules\DaaterProccesor\Views\**" />
-    <ApplicationDefinition Remove="Modules\DaaterProccesor\App.xaml" />
-      <!-- Exclude MiProyectoWPF files - only used as reference -->
-    <Compile Remove="Implementaciones\MiProyectoWPF\**" />
-    <Page Remove="Implementaciones\MiProyectoWPF\**" />
-    <ApplicationDefinition Remove="Implementaciones\MiProyectoWPF\App.xaml" />
-    <Content Remove="Implementaciones\MiProyectoWPF\**" />
-    <Resource Remove="Implementaciones\MiProyectoWPF\**" />
-    
-       <Compile Remove="Implementaciones\Beta Mantenimiento\**" />
-    <Page Remove="Implementaciones\\*Beta Mantenimiento*" />
-    <ApplicationDefinition Remove="Implementaciones\Beta Mantenimiento\App.xaml" />
-    <Content Remove="Implementaciones\Beta Mantenimiento\**" />
-    <Resource Remove="Implementaciones\Beta Mantenimiento\**" />
-    <!-- Exclude ConexionDB files - only used as reference -->
-    <Compile Remove="Implementaciones\ConexionDB\**" />
-    <Page Remove="Implementaciones\ConexionDB\**" />
-    <ApplicationDefinition Remove="Implementaciones\ConexionDB\App.xaml" />
-    <Content Remove="Implementaciones\ConexionDB\**" />
-    <Resource Remove="Implementaciones\ConexionDB\**" />
-
     <!-- Excluir toda la carpeta Implementaciones de la compilación y empaquetado -->
     <Compile Remove="Implementaciones\**" />
     <Page Remove="Implementaciones\**" />
