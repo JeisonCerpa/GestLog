@@ -19,11 +19,10 @@ namespace GestLog.Converters
                         case EstadoSeguimientoMantenimiento.RealizadoEnTiempo:
                             return new SolidColorBrush(System.Windows.Media.Color.FromRgb(43, 142, 63)); // #2B8E3F
                         case EstadoSeguimientoMantenimiento.Atrasado:
-                            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(249, 178, 51)); // #F9B233
+                        case EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo:
+                            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(249, 178, 51)); // #F9B233 (ámbar)
                         case EstadoSeguimientoMantenimiento.NoRealizado:
                             return new SolidColorBrush(System.Windows.Media.Color.FromRgb(192, 57, 43)); // #C0392B
-                        case EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo:
-                            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(122, 201, 67)); // #7AC943
                         default:
                             return new SolidColorBrush(System.Windows.Media.Color.FromRgb(112, 111, 111)); // #706F6F
                     }

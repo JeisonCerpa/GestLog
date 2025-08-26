@@ -240,6 +240,7 @@ public partial class EquiposViewModel : ObservableObject
                     ws.Cell(1, 6).Value = "Frecuencia Mtto";
                     ws.Cell(1, 7).Value = "Precio";
                     ws.Cell(1, 8).Value = "Fecha Registro";
+                    ws.Cell(1, 9).Value = "Fecha Compra";
                     int row = 2;
                     foreach (var eq in Equipos)
                     {
@@ -251,6 +252,7 @@ public partial class EquiposViewModel : ObservableObject
                         ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
                         ws.Cell(row, 7).Value = eq.Precio ?? 0;
                         ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
                         row++;
                     }
                     ws.Columns().AdjustToContents();
@@ -308,7 +310,8 @@ public partial class EquiposViewModel : ObservableObject
                         Sede = ParseEnumFlexible<Sede>(row.Cell(5).GetString()),
                         FrecuenciaMtto = ParseEnumFlexible<FrecuenciaMantenimiento>(row.Cell(6).GetString()),
                         Precio = row.Cell(7).GetValue<decimal>(),
-                        FechaRegistro = DateTime.TryParse(row.Cell(8).GetString(), out var fecha) ? fecha : null
+                        FechaRegistro = DateTime.TryParse(row.Cell(8).GetString(), out var fecha) ? fecha : null,
+                        FechaCompra = DateTime.TryParse(row.Cell(9).GetString(), out var fechaCompra) ? fechaCompra : null
                     };
                     equiposImportados.Add(eq);
                 }
@@ -431,6 +434,7 @@ public partial class EquiposViewModel : ObservableObject
                     ws.Cell(1, 6).Value = "Frecuencia Mtto";
                     ws.Cell(1, 7).Value = "Precio";
                     ws.Cell(1, 8).Value = "Fecha Registro";
+                    ws.Cell(1, 9).Value = "Fecha Compra";
                     int row = 2;
                     foreach (var eq in filtrados)
                     {
@@ -442,6 +446,7 @@ public partial class EquiposViewModel : ObservableObject
                         ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
                         ws.Cell(row, 7).Value = eq.Precio ?? 0;
                         ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
                         row++;
                     }
                     ws.Columns().AdjustToContents();
@@ -490,9 +495,8 @@ public partial class EquiposViewModel : ObservableObject
                 FechaRegistro = now,
                 TipoMtno = TipoMantenimiento.Correctivo // Preseleccionado
                 // Los campos TipoMtno y Frecuencia se llenan en el diálogo y al guardar
-            };
-            // Abrir el diálogo SOLO con opciones correctivo/predictivo
-            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, true);
+            };            // Abrir el diálogo con opciones correctivo/predictivo (modo NO restringido)
+            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, false);
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
             var result = dialog.ShowDialog();

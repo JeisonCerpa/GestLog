@@ -42,7 +42,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Observaciones = e.Observaciones,
                 FechaRegistro = e.FechaRegistro,
                 FrecuenciaMtto = e.FrecuenciaMtto,
-                FechaBaja = e.FechaBaja
+                FechaBaja = e.FechaBaja,
+                FechaCompra = e.FechaCompra
                 // SemanaInicioMtto eliminado
             });
         }
@@ -63,7 +64,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Observaciones = equipo.Observaciones,
                 FechaRegistro = equipo.FechaRegistro,
                 FrecuenciaMtto = equipo.FrecuenciaMtto,
-                FechaBaja = equipo.FechaBaja
+                FechaBaja = equipo.FechaBaja,
+                FechaCompra = equipo.FechaCompra
                 // SemanaInicioMtto eliminado
             };
         }
@@ -90,7 +92,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Precio = equipo.Precio,
                     Observaciones = equipo.Observaciones,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
-                    FechaBaja = equipo.FechaBaja
+                    FechaBaja = equipo.FechaBaja,
+                    FechaCompra = equipo.FechaCompra
                     // SemanaInicioMtto eliminado
                 };
                 dbContext.Equipos.Add(entity);

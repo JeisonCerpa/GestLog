@@ -98,6 +98,8 @@ public partial class SeguimientoViewModel : ObservableObject
         StatusMessage = "Cargando seguimientos...";
         try
         {
+            // Actualiza observaciones antes de cargar
+            await _seguimientoService.ActualizarObservacionesPendientesAsync();
             var lista = await _seguimientoService.GetSeguimientosAsync();
             var hoy = DateTime.Now;
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
@@ -183,7 +185,31 @@ public partial class SeguimientoViewModel : ObservableObject
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
         return result.AddDays(-3);
-    }    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]
+    }    
+
+    [RelayCommand]
+    public async Task ActualizarObservacionesPendientesAsync()
+    {
+        IsLoading = true;
+        StatusMessage = "Actualizando observaciones de seguimientos...";
+        try
+        {
+            await _seguimientoService.ActualizarObservacionesPendientesAsync();
+            StatusMessage = "Observaciones actualizadas correctamente.";
+            await LoadSeguimientosAsync(); // Refresca la vista
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar observaciones");
+            StatusMessage = "Error al actualizar observaciones.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]
     public async Task AddSeguimientoAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog();

@@ -16,5 +16,6 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task BackupAsync();
         Task<List<SeguimientoMantenimientoDto>> GetSeguimientosAsync();
         Task DeletePendientesByEquipoCodigoAsync(string codigoEquipo);
+        Task ActualizarObservacionesPendientesAsync();
     }
 }

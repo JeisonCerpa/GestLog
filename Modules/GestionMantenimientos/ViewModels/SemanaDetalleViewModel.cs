@@ -12,7 +12,8 @@ using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
-{    public partial class SemanaDetalleViewModel : ObservableObject
+{    
+    public partial class SemanaDetalleViewModel : ObservableObject
     {
         private readonly ISeguimientoService? _seguimientoService;
         private readonly ICurrentUserService? _currentUserService;
@@ -52,11 +53,46 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             int semanaActual = GetSemanaActual();
             int anioActual = GetAnioActual();
-            // Solo permitir registro en la semana actual y la anterior
+            var hoy = DateTime.Now;
+            var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
+            var lunesSiguiente = primerDiaSemana.AddDays(7); // lunes siguiente
+            var viernesSiguiente = primerDiaSemana.AddDays(11); // viernes siguiente
+            // Permitir registro en la semana actual y la anterior, hasta el viernes de la semana siguiente
             if (anio == anioActual && (semana == semanaActual || semana == semanaActual - 1))
-                return true;
-            // No permitir en otros casos
+            {
+                if (hoy.Date <= viernesSiguiente.Date)
+                    return true;
+            }
             return false;
+        }
+
+        // Determina el estado de registro según la fecha actual
+        public Models.Enums.EstadoSeguimientoMantenimiento CalcularEstadoRegistro(int semana, int anio)
+        {
+            var hoy = DateTime.Now;
+            var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
+            var lunesSiguiente = primerDiaSemana.AddDays(7);
+            var viernesSiguiente = primerDiaSemana.AddDays(11);
+            if (hoy.Date <= lunesSiguiente.Date)
+                return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            if (hoy.Date > lunesSiguiente.Date && hoy.Date <= viernesSiguiente.Date)
+                return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+            return Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
+        }
+
+        // Utilidad para obtener el primer día de la semana ISO 8601
+        private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+            var firstThursday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var weekNum = weekOfYear;
+            if (firstWeek <= 1)
+                weekNum -= 1;
+            var result = firstThursday.AddDays(weekNum * 7);
+            return result.AddDays(-3);
         }
         private int GetSemanaActual()
         {
@@ -75,29 +111,23 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             logger.Logger.LogInformation("[SemanaDetalleViewModel] ActualizarPuedeRegistrarMantenimientos - Actualizando {count} estados", EstadosMantenimientos.Count);
             foreach (var estado in EstadosMantenimientos.ToList())
             {
-                // Permitir registro solo para Pendiente y Atrasado (NO para NoRealizado)
+                // Permitir registro para Pendiente, Atrasado y NoRealizado
                 var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
-                                         estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
-                // No permitir registro si el estado es NoRealizado
-                if (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
-                    esEstadoRegistrable = false;
+                                         estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado ||
+                                         estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado;
                 var nuevoValor = esEstadoRegistrable && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
-                logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - Semana: {semana}, Año: {anio}, EstadoActual: {estadoActual}, EsRegistrable: {esRegistrable}, PuedeRegistrarCalculado: {puedeRegistrar}", 
-                    estado.CodigoEquipo, estado.Semana, estado.Anio, estado.Estado, esEstadoRegistrable, nuevoValor);
                 if (estado.PuedeRegistrar != nuevoValor)
                 {
                     estado.PuedeRegistrar = nuevoValor;
                 }
                 else
                 {
-                    // Forzar notificación para la UI
                     estado.PuedeRegistrar = !nuevoValor;
                     estado.PuedeRegistrar = nuevoValor;
                 }
-                logger.Logger.LogInformation("[SemanaDetalleViewModel] Estado: {codigo} - PuedeRegistrar final: {puedeRegistrarFinal}", 
-                    estado.CodigoEquipo, estado.PuedeRegistrar);
             }
-        }        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService, ICurrentUserService currentUserService)
+        }        
+        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService, ICurrentUserService currentUserService)
         {
             Titulo = titulo;
             RangoFechas = rangoFechas;
@@ -120,7 +150,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                       // Inicializar comandos
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
             RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
-            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);            ActualizarPuedeRegistrarMantenimientos();
+            MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);            
+            ActualizarPuedeRegistrarMantenimientos();
         }
 
         private bool CanExecuteRegistrarMantenimiento(MantenimientoSemanaEstadoDto? estado)
@@ -131,7 +162,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         private bool CanExecuteMarcarAtrasado(MantenimientoSemanaEstadoDto? estado)
         {
             return CanMarcarAtrasado && estado != null;
-        }private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
+        }
+        
+        private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
             RecalcularPermisos();
         }
@@ -148,7 +181,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 CanRegistrarMantenimiento = false;
                 CanMarcarAtrasado = false;
             }
-        }        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ICurrentUserService? currentUserService = null)
+        }        
+        public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ICurrentUserService? currentUserService = null)
         {
             Titulo = titulo;
             RangoFechas = rangoFechas;
@@ -168,7 +202,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
             RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
             MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);
-        }public async Task RegistrarMantenimientoAsync(MantenimientoSemanaEstadoDto? estado)
+        }
+        
+        public async Task RegistrarMantenimientoAsync(MantenimientoSemanaEstadoDto? estado)
         {
             try
             {
@@ -183,11 +219,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     MensajeUsuario = "El servicio de seguimiento no está disponible.";
                     return;
                 }
-                if (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
-                {
-                    MensajeUsuario = "No se puede registrar un mantenimiento para una semana marcada como 'No realizado'.";
-                    return;
-                }
+                // Permitir registrar como NoRealizado y guardar la fecha de registro
                 var seguimientoDto = new SeguimientoMantenimientoDto
                 {
                     Codigo = estado.CodigoEquipo,
@@ -201,21 +233,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (dialog.ShowDialog() == true)
                 {
                     var seguimiento = dialog.Seguimiento;
-                    var fechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
-                    var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-                    int semanaActual = cal.GetWeekOfYear(fechaRegistro, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-                    int anioActual = fechaRegistro.Year;
+                    seguimiento.FechaRegistro = DateTime.Now;
                     seguimiento.Semana = estado.Semana;
                     seguimiento.Anio = estado.Anio;
-                    if (estado.Anio == anioActual && estado.Semana == semanaActual)
-                        seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
-                    else
-                        seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                    // Si el usuario marca como NoRealizado, guardar la fecha de registro
+                    if (seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+                    {
+                        seguimiento.FechaRegistro = DateTime.Now;
+                        seguimiento.FechaRealizacion = null;
+                    }
                     await _seguimientoService.AddAsync(seguimiento);
-                    // Notificar a otros ViewModels
                     WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
-                    estado.Realizado = true;
-                    estado.Atrasado = false;
+                    estado.Realizado = seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo || seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                    estado.Atrasado = seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
                     estado.Seguimiento = seguimiento;
                     estado.Estado = seguimiento.Estado;
                     RefrescarEstados(EstadosMantenimientos);
@@ -249,7 +279,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             {
                 MensajeUsuario = $"Error al abrir el seguimiento: {ex.Message}";
             }
-        }        public async Task MarcarAtrasadoAsync(MantenimientoSemanaEstadoDto? estado)
+        }        
+        public async Task MarcarAtrasadoAsync(MantenimientoSemanaEstadoDto? estado)
         {
             try
             {

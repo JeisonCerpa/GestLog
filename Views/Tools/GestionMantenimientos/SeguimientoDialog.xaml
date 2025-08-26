@@ -45,7 +45,7 @@
                 <TextBlock Text="Nombre:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
                 <TextBox Text="{Binding Nombre}" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True" IsEnabled="False"/>
                 <TextBlock Text="Fecha real de realización:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                <DatePicker SelectedDate="{Binding FechaRealizacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="0,4" IsEnabled="False"/>
+                <DatePicker SelectedDate="{Binding FechaRealizacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="0,4"/>
                 <TextBlock Text="Tipo Mtno:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
                 <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,4" SelectedItem="{Binding TipoMtno, UpdateSourceTrigger=PropertyChanged}" 
                           ItemsSource="{Binding Source={StaticResource TipoMantenimientoFiltrado}}"/>

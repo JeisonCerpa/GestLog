@@ -21,23 +21,27 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             Loaded += (s, e) =>
             {
                 var cvs = (CollectionViewSource)this.Resources["TipoMantenimientoFiltrado"];
-                cvs.Filter += (sender, args) =>
-                {
-                    if (args.Item is TipoMantenimiento tipo)
-                    {
-                        if (ModoRestringido)
-                            args.Accepted = tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
-                        else
-                            args.Accepted = true;
-                    }
-                    else
-                    {
-                        args.Accepted = false;
-                    }
-                };
+                cvs.Filter -= TipoMantenimientoFilterHandler;
+                cvs.Filter += TipoMantenimientoFilterHandler;
                 cvs.View.Refresh();
             };
         }
+
+        private void TipoMantenimientoFilterHandler(object sender, FilterEventArgs args)
+        {
+            if (args.Item is TipoMantenimiento tipo)
+            {
+                if (ModoRestringido)
+                    args.Accepted = tipo == TipoMantenimiento.Preventivo;
+                else
+                    args.Accepted = tipo == TipoMantenimiento.Preventivo || tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
+            }
+            else
+            {
+                args.Accepted = false;
+            }
+        }
+
         private void Aceptar_Click(object sender, RoutedEventArgs e)
         {
             var errores = new List<string>();
@@ -63,9 +67,38 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 System.Windows.MessageBox.Show(string.Join("\n", errores), "Errores de validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+
+            // Agregar fecha programada en observaciones si corresponde
+            if (Seguimiento.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo ||
+                Seguimiento.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+            {
+                DateTime fechaProgramada = FirstDateOfWeekISO8601(Seguimiento.Anio, Seguimiento.Semana);
+                string observacionFechaProgramada = $"[Fecha programada: {fechaProgramada:dd/MM/yyyy}]";
+                if (string.IsNullOrWhiteSpace(Seguimiento.Observaciones) || !Seguimiento.Observaciones.Contains(observacionFechaProgramada))
+                {
+                    Seguimiento.Observaciones = ((Seguimiento.Observaciones ?? "") + " " + observacionFechaProgramada).Trim();
+                }
+            }
+
             DialogResult = true;
             Close();
         }
+
+        // Utilidad para obtener el primer día de la semana ISO 8601
+        private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+            var firstThursday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var weekNum = weekOfYear;
+            if (firstWeek <= 1)
+                weekNum -= 1;
+            var result = firstThursday.AddDays(weekNum * 7);
+            return result.AddDays(-3);
+        }
+
         private void Cancelar_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;

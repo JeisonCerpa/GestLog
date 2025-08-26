@@ -14,8 +14,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public string? Marca { get; set; }
         public EstadoEquipo Estado { get; set; }
         public Sede? Sede { get; set; }
-        [Required(ErrorMessage = "La fecha de registro es obligatoria.")]
         public DateTime? FechaRegistro { get; set; } // Usar como fecha de alta y referencia
+        public DateTime? FechaCompra { get; set; }
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
         public decimal? Precio { get; set; }
         public string? Observaciones { get; set; }

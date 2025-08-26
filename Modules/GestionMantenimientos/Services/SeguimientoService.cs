@@ -77,27 +77,33 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             try
             {
                 ValidarSeguimiento(seguimiento);
-                // Validación de rango de semana permitido
                 var hoy = DateTime.Now;
                 var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
                 int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
                 int anioActual = hoy.Year;
-                if (!(seguimiento.Anio == anioActual && Math.Abs(seguimiento.Semana - semanaActual) <= 1))
-                    throw new GestionMantenimientosDomainException("Solo se permite registrar mantenimientos en la semana actual, una antes o una después.");
+                if (!(seguimiento.Anio < anioActual || (seguimiento.Anio == anioActual && seguimiento.Semana <= semanaActual)))
+                    throw new GestionMantenimientosDomainException("Solo se permite registrar mantenimientos en semanas anteriores o la actual.");
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                // Buscar por clave compuesta: Codigo, Semana, Anio
                 var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
+
+                // Calcular intervalo de la semana programada
+                DateTime fechaInicioSemana = FirstDateOfWeekISO8601(seguimiento.Anio, seguimiento.Semana);
+                DateTime fechaFinSemana = fechaInicioSemana.AddDays(6);
+                string observacionSemana = $"Programado en la semana {seguimiento.Semana} entre {fechaInicioSemana:dd/MM/yyyy} y {fechaFinSemana:dd/MM/yyyy}";
+                bool agregarObservacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado;
+
                 if (entity != null)
                 {
-                    // Ya existe: actualizar los campos editables
                     entity.Nombre = seguimiento.Nombre ?? string.Empty;
                     entity.TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo;
                     entity.Descripcion = seguimiento.Descripcion ?? string.Empty;
                     entity.Responsable = seguimiento.Responsable ?? string.Empty;
                     entity.Costo = seguimiento.Costo.HasValue ? seguimiento.Costo.Value : 0m;
                     entity.Observaciones = seguimiento.Observaciones ?? string.Empty;
-                    entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
-                    entity.FechaRealizacion = seguimiento.FechaRealizacion;
+                    if (agregarObservacion)
+                        entity.Observaciones = observacionSemana;
+                    entity.FechaRegistro = DateTime.Now;
+                    entity.FechaRealizacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado ? null : seguimiento.FechaRealizacion;
                     entity.Estado = seguimiento.Estado;
                     entity.Frecuencia = seguimiento.Frecuencia;
                     await dbContext.SaveChangesAsync();
@@ -105,7 +111,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 }
                 else
                 {
-                    // Nuevo seguimiento
+                    string observacionesFinal = seguimiento.Observaciones ?? string.Empty;
+                    if (agregarObservacion)
+                        observacionesFinal = observacionSemana;
                     var nuevo = new SeguimientoMantenimiento
                     {
                         Codigo = seguimiento.Codigo ?? string.Empty,
@@ -114,9 +122,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Descripcion = seguimiento.Descripcion ?? string.Empty,
                         Responsable = seguimiento.Responsable ?? string.Empty,
                         Costo = seguimiento.Costo,
-                        Observaciones = seguimiento.Observaciones ?? string.Empty,
-                        FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now,
-                        FechaRealizacion = seguimiento.FechaRealizacion,
+                        Observaciones = observacionesFinal,
+                        FechaRegistro = DateTime.Now,
+                        FechaRealizacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado ? null : seguimiento.FechaRealizacion,
                         Semana = seguimiento.Semana,
                         Anio = seguimiento.Anio,
                         Estado = seguimiento.Estado,
@@ -210,6 +218,30 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             dbContext.Seguimientos.RemoveRange(pendientes);
             await dbContext.SaveChangesAsync();
             _logger.LogInformation("[SeguimientoService] Seguimientos pendientes eliminados para equipo: {Codigo}", codigoEquipo);
+        }
+
+        public async Task ActualizarObservacionesPendientesAsync()
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var seguimientos = await dbContext.Seguimientos
+                .Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo ||
+                            s.Estado == EstadoSeguimientoMantenimiento.NoRealizado)
+                .ToListAsync();
+            int actualizados = 0;
+            foreach (var s in seguimientos)
+            {
+                DateTime fechaInicioSemana = FirstDateOfWeekISO8601(s.Anio, s.Semana);
+                DateTime fechaFinSemana = fechaInicioSemana.AddDays(6);
+                string observacionSemana = $"Programado en la semana {s.Semana} entre {fechaInicioSemana:dd/MM/yyyy} y {fechaFinSemana:dd/MM/yyyy}";
+                if (string.IsNullOrWhiteSpace(s.Observaciones) || !s.Observaciones.Contains(observacionSemana))
+                {
+                    s.Observaciones = ((s.Observaciones ?? "") + " " + observacionSemana).Trim();
+                    actualizados++;
+                }
+            }
+            if (actualizados > 0)
+                await dbContext.SaveChangesAsync();
+            _logger.LogInformation($"[SeguimientoService] Observaciones actualizadas en {actualizados} seguimientos.");
         }
 
         private void ValidarSeguimiento(SeguimientoMantenimientoDto seguimiento)
@@ -307,7 +339,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             _logger.LogInformation("[SeguimientoService] Starting export to Excel: {FilePath}", filePath);
             try
             {
-                var seguimientos = (await GetAllAsync()).ToList();
+                var seguimientos = (await GetAllAsync()).Where(s => s.Estado != EstadoSeguimientoMantenimiento.Pendiente).ToList();
                 if (!seguimientos.Any())
                 {
                     _logger.LogWarning("[SeguimientoService] No data to export.");
@@ -318,7 +350,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var worksheet = workbook.Worksheets.Add("Seguimientos");
 
                 // Encabezados
-                var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro" };
+                var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRegistro", "Estado" };
                 for (int i = 0; i < headers.Length; i++)
                 {
                     worksheet.Cell(1, i + 1).Value = headers[i];
@@ -337,6 +369,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(row, 6).Value = s.Costo;
                     worksheet.Cell(row, 7).Value = s.Observaciones;
                     worksheet.Cell(row, 8).Value = s.FechaRegistro;
+                    worksheet.Cell(row, 9).Value = SepararCamelCase(s.Estado.ToString());
                     row++;
                 }
                 worksheet.Columns().AdjustToContents();
@@ -360,6 +393,36 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             var seguimientos = await GetAllAsync();
             return seguimientos.ToList();
+        }
+
+        // Utilidad para obtener el primer día de la semana ISO 8601
+        private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+            var firstThursday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var weekNum = weekOfYear;
+            if (firstWeek <= 1)
+                weekNum -= 1;
+            var result = firstThursday.AddDays(weekNum * 7);
+            return result.AddDays(-3);
+        }
+
+        private string SepararCamelCase(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            var result = new System.Text.StringBuilder();
+            foreach (char c in input)
+            {
+                if (char.IsUpper(c) && result.Length > 0)
+                    result.Append(' ');
+                result.Append(c);
+            }
+            return result.ToString();
         }
     }
 }

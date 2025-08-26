@@ -127,6 +127,8 @@
                     <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='C0'}" MinWidth="80" Width="Auto"/>
+                    <DataGridTextColumn Header="Fecha de Compra" Binding="{Binding FechaCompra, StringFormat='dd/MM/yyyy'}" MinWidth="100" Width="Auto"/>
+                    <DataGridTextColumn Header="Fecha de Baja" Binding="{Binding FechaBaja, StringFormat='dd/MM/yyyy'}" MinWidth="100" Width="Auto"/>
                     <DataGridTemplateColumn Header="Acción" MinWidth="180" Width="180">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

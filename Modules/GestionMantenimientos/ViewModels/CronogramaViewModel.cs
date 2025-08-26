@@ -74,7 +74,12 @@ public partial class CronogramaViewModel : ObservableObject
 
         // Suscribirse a mensajes de actualización de cronogramas y seguimientos
         WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
-        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
+        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
+        {
+            await LoadCronogramasAsync();
+            // Si tienes una vista de semanas o agrupación, refresca también
+            AgruparPorSemana();
+        });
         // Cargar datos automáticamente al crear el ViewModel
         Task.Run(async () => 
         {
@@ -204,7 +209,7 @@ public partial class CronogramaViewModel : ObservableObject
         }
     }
 
-    // Utilidad para obtener el primer día de la semana ISO 8601
+    // Utilidad para obtener el primer día de la semana ISO8601
     private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
     {
         var jan1 = new DateTime(year, 1, 1);
@@ -374,7 +379,7 @@ public partial class CronogramaViewModel : ObservableObject
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado => "No realizado",
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => "Atrasado",
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "Realizado",
-            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado",
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado fuera de tiempo",
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => "Pendiente",
             _ => "-"
         };
@@ -387,7 +392,7 @@ public partial class CronogramaViewModel : ObservableObject
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado => XLColor.FromHtml("#C80000"), // Rojo
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"), // Ámbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"), // Verde
-            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#388E3C"), // Verde
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // Ámbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#BDBDBD"), // Gris
             _ => XLColor.White
         };
