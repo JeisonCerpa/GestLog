@@ -7,7 +7,8 @@
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1100">
     <Grid Background="White" Margin="10">
-        <TabControl x:Name="tabMantenimientos" Background="#F5F5F5" BorderThickness="0" Padding="0">
+        <TabControl x:Name="tabMantenimientos" Background="#F5F5F5" BorderThickness="0" Padding="0"
+                    SelectionChanged="OnTabChanged">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
                     <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -43,15 +44,14 @@
                         </Setter.Value>
                     </Setter>
                 </Style>
-            </TabControl.Resources>
-            <TabItem Header="Equipos">
-                <local:EquiposView />
+            </TabControl.Resources>            <TabItem Header="Equipos">
+                <!-- El contenido se carga dinámicamente -->
             </TabItem>
             <TabItem Header="Cronograma">
-                <local:CronogramaView />
+                <!-- El contenido se carga dinámicamente -->
             </TabItem>
             <TabItem Header="Seguimiento">
-                <local:SeguimientoView />
+                <!-- El contenido se carga dinámicamente -->
             </TabItem>
         </TabControl>
     </Grid>

@@ -103,12 +103,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         private int GetAnioActual()
         {
             return DateTime.Now.Year;
-        }
-        private void ActualizarPuedeRegistrarMantenimientos()
+        }        private void ActualizarPuedeRegistrarMantenimientos()
         {
             if (EstadosMantenimientos == null) return;
-            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] ActualizarPuedeRegistrarMantenimientos - Actualizando {count} estados", EstadosMantenimientos.Count);
+            
             foreach (var estado in EstadosMantenimientos.ToList())
             {
                 // Permitir registro para Pendiente, Atrasado y NoRealizado
@@ -140,14 +138,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             RecalcularPermisos();
 
-            // Suscribirse a mensajes de actualización de seguimientos
-            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
+            // Suscribirse a mensajes de actualización de seguimientos            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
             
-            // Log para debug
-            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
-            logger.Logger.LogInformation("[SemanaDetalleViewModel] Constructor llamado - Título: {titulo}, Estados: {estadosCount}, Mantenimientos: {mantenimientosCount}", 
-                titulo, estados?.Count ?? 0, mantenimientos?.Count ?? 0);
-                      // Inicializar comandos
+            // Inicializar comandos
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
             RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
             MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);            

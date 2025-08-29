@@ -23,14 +23,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 /// <summary>
 /// ViewModel para la gestión de equipos.
 /// </summary>
-public partial class EquiposViewModel : ObservableObject
+public partial class EquiposViewModel : ObservableObject, IDisposable
 {
     private readonly IEquipoService _equipoService;
     private readonly IGestLogLogger _logger;
     private readonly ICronogramaService _cronogramaService;
-    private readonly ISeguimientoService _seguimientoService;
-
-    private readonly ICurrentUserService _currentUserService;
+    private readonly ISeguimientoService _seguimientoService;    private readonly ICurrentUserService _currentUserService;
     private CurrentUserInfo _currentUser;
 
     [ObservableProperty]
@@ -49,10 +47,16 @@ public partial class EquiposViewModel : ObservableObject
     private bool mostrarDadosDeBaja = false;
 
     [ObservableProperty]
-    private string filtroEquipo = "";
+    private string filtroEquipo = "";    [ObservableProperty]
+    private ICollectionView? equiposView;
+
+    // Optimización: Control de carga para evitar recargas innecesarias
+    private CancellationTokenSource? _loadCancellationToken;
+    private DateTime _lastLoadTime = DateTime.MinValue;
+    private const int DEBOUNCE_DELAY_MS = 500; // 500ms de debounce
+    private const int MIN_RELOAD_INTERVAL_MS = 2000; // Mínimo 2 segundos entre cargas
 
     [ObservableProperty]
-    private ICollectionView? equiposView;    [ObservableProperty]
     private bool canRegistrarEquipo;
     [ObservableProperty]
     private bool canEditarEquipo;
@@ -75,37 +79,112 @@ public partial class EquiposViewModel : ObservableObject
         ISeguimientoService seguimientoService,
         ICurrentUserService currentUserService)
     {
-        _equipoService = equipoService;
-        _logger = logger;
-        _cronogramaService = cronogramaService;
-        _seguimientoService = seguimientoService;
-        _currentUserService = currentUserService;
-        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
-        RecalcularPermisos();
-        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
-        // Suscribirse a mensajes de actualización de cronogramas y seguimientos
-        WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
-        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadEquiposAsync());
-        EquiposView = CollectionViewSource.GetDefaultView(Equipos);
-        if (EquiposView != null)
-            EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
-    }
-
-    [RelayCommand]
-    public async Task LoadEquiposAsync()
+        try
+        {
+            _equipoService = equipoService;
+            _logger = logger;
+            _cronogramaService = cronogramaService;
+            _seguimientoService = seguimientoService;
+            _currentUserService = currentUserService;
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+              // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+            // OPTIMIZACIÓN: Solo recargar cuando sea realmente necesario
+            WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => 
+            {
+                try
+                {
+                    // Solo recargar si han pasado al menos 2 segundos desde la última carga
+                    await LoadEquiposAsync(forceReload: false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[EquiposViewModel] Error en mensaje CronogramasActualizados");
+                }
+            });
+            
+            // Para seguimientos, ser más selectivo - solo recargar si afecta equipos directamente
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
+            {
+                try
+                {
+                    // Los cambios en seguimientos normalmente no afectan la lista de equipos
+                    // Solo recargar si han pasado más de 5 segundos desde la última carga
+                    if ((DateTime.Now - _lastLoadTime).TotalSeconds > 5)
+                    {
+                        await LoadEquiposAsync(forceReload: false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[EquiposViewModel] Error en mensaje SeguimientosActualizados");
+                }
+            });
+            
+            EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+            if (EquiposView != null)
+                EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
+            throw; // Re-lanzar para que se capture en el nivel superior
+        }
+    }    [RelayCommand]
+    public async Task LoadEquiposAsync(bool forceReload = true)
     {
+        // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias
+        if (!forceReload)
+        {
+            var timeSinceLastLoad = DateTime.Now - _lastLoadTime;
+            if (timeSinceLastLoad.TotalMilliseconds < MIN_RELOAD_INTERVAL_MS && !IsLoading)
+            {
+                return; // Muy pronto desde la última carga, omitir
+            }
+        }
+
+        // Cancelar cualquier carga en progreso
+        _loadCancellationToken?.Cancel();
+        _loadCancellationToken = new CancellationTokenSource();
+        var cancellationToken = _loadCancellationToken.Token;
+
+        // Debounce: esperar un poco antes de cargar
+        if (!forceReload)
+        {
+            try
+            {
+                await Task.Delay(DEBOUNCE_DELAY_MS, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // Cancelado, otra carga está en progreso
+            }
+        }
+
         IsLoading = true;
         StatusMessage = "Cargando equipos...";
+        
         try
         {
             var lista = await _equipoService.GetAllAsync();
+            
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             // Filtrar según MostrarDadosDeBaja
             var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
             Equipos = new ObservableCollection<EquipoDto>(filtrados);
             EquiposView = CollectionViewSource.GetDefaultView(Equipos);
             if (EquiposView != null)
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+            
             StatusMessage = $"{Equipos.Count} equipos {(MostrarDadosDeBaja ? "(incluye dados de baja)" : "activos")} cargados.";
+            _lastLoadTime = DateTime.Now;
+        }
+        catch (OperationCanceledException)
+        {
+            // Carga cancelada, no hacer nada
         }
         catch (System.Exception ex)
         {
@@ -126,11 +205,10 @@ public partial class EquiposViewModel : ObservableObject
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.EquipoDialog();
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
-            var result = dialog.ShowDialog();
-            if (result == true)
+            var result = dialog.ShowDialog();            if (result == true)
             {
                 await _equipoService.AddAsync(dialog.Equipo);
-                await LoadEquiposAsync();
+                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras agregar
                 StatusMessage = "Equipo agregado exitosamente.";
             }
         }
@@ -159,9 +237,8 @@ public partial class EquiposViewModel : ObservableObject
             {
                 // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
                 if (dialog.Equipo.Estado == EstadoEquipo.Activo)
-                    dialog.Equipo.FechaBaja = null;
-                await _equipoService.UpdateAsync(dialog.Equipo);
-                await LoadEquiposAsync();
+                    dialog.Equipo.FechaBaja = null;                await _equipoService.UpdateAsync(dialog.Equipo);
+                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras editar
                 StatusMessage = "Equipo editado exitosamente.";
                 WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
             }
@@ -200,9 +277,8 @@ public partial class EquiposViewModel : ObservableObject
             await _equipoService.UpdateAsync(SelectedEquipo);
             // Eliminar cronogramas y seguimientos pendientes
             await _cronogramaService.DeleteByEquipoCodigoAsync(SelectedEquipo.Codigo!);
-            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
-            await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
-            await LoadEquiposAsync();
+            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());            await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
+            await LoadEquiposAsync(forceReload: true); // Forzar recarga tras dar de baja
             StatusMessage = "Equipo dado de baja exitosamente. Se eliminaron cronogramas y seguimientos pendientes.";
             WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
         }
@@ -321,9 +397,8 @@ public partial class EquiposViewModel : ObservableObject
                     if (existente != null)
                         await _equipoService.UpdateAsync(eq);
                     else
-                        await _equipoService.AddAsync(eq);
-                }
-                await LoadEquiposAsync();
+                        await _equipoService.AddAsync(eq);                }
+                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras importar
                 StatusMessage = $"Importación completada: {equiposImportados.Count} equipos importados.";
             }
         }
@@ -338,12 +413,10 @@ public partial class EquiposViewModel : ObservableObject
     public IEnumerable<EstadoEquipo> EstadosEquipo => System.Enum.GetValues(typeof(EstadoEquipo)) as EstadoEquipo[] ?? new EstadoEquipo[0];
     public IEnumerable<TipoMantenimiento> TiposMantenimiento => System.Enum.GetValues(typeof(TipoMantenimiento)) as TipoMantenimiento[] ?? new TipoMantenimiento[0];
     public IEnumerable<Sede> Sedes => System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0];
-    public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0];
-
-    partial void OnMostrarDadosDeBajaChanged(bool value)
+    public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0];    partial void OnMostrarDadosDeBajaChanged(bool value)
     {
         // Recargar la lista de equipos al cambiar el filtro
-        _ = LoadEquiposAsync();
+        _ = LoadEquiposAsync(forceReload: true); // Forzar recarga al cambiar filtro
     }
 
     private CancellationTokenSource? _debounceToken;
@@ -535,7 +608,40 @@ public partial class EquiposViewModel : ObservableObject
         // Notificar cambios en las propiedades alias
         OnPropertyChanged(nameof(CanAddEquipo));
         OnPropertyChanged(nameof(CanDeleteEquipo));
-        OnPropertyChanged(nameof(CanImportEquipo));
-        OnPropertyChanged(nameof(CanExportEquipo));
+        OnPropertyChanged(nameof(CanImportEquipo));        OnPropertyChanged(nameof(CanExportEquipo));
+    }
+
+    // Implementar IDisposable para limpieza de recursos
+    private bool _disposed = false;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            _loadCancellationToken?.Cancel();
+            _loadCancellationToken?.Dispose();
+            _debounceToken?.Cancel();
+            _debounceToken?.Dispose();
+            
+            // Desuscribirse de mensajes
+            WeakReferenceMessenger.Default.Unregister<CronogramasActualizadosMessage>(this);
+            WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
+            
+            if (_currentUserService != null)
+                _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
+                
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~EquiposViewModel()
+    {
+        Dispose(false);
     }
 }

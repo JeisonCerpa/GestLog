@@ -14,12 +14,12 @@ using ClosedXML.Excel;
 using Microsoft.Win32;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.ViewModels;
-
-/// <summary>
-/// ViewModel para la gestión del cronograma de mantenimientos.
-/// </summary>
-public partial class CronogramaViewModel : ObservableObject
+namespace GestLog.Modules.GestionMantenimientos.ViewModels
+{
+    /// <summary>
+    /// ViewModel para la gestión del cronograma de mantenimientos.
+    /// </summary>
+    public partial class CronogramaViewModel : ObservableObject
 {
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
@@ -41,13 +41,15 @@ public partial class CronogramaViewModel : ObservableObject
     private ObservableCollection<CronogramaMantenimientoDto> cronogramas = new();
 
     [ObservableProperty]
-    private CronogramaMantenimientoDto? selectedCronograma;
-
-    [ObservableProperty]
+    private CronogramaMantenimientoDto? selectedCronograma;    [ObservableProperty]
     private bool isLoading;
 
     [ObservableProperty]
     private string? statusMessage;
+
+    // Flag para controlar cargas múltiples
+    private bool _isInitialized;
+    private readonly object _initializationLock = new object();
 
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
@@ -63,39 +65,73 @@ public partial class CronogramaViewModel : ObservableObject
 
     public CronogramaViewModel(ICronogramaService cronogramaService, ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
-        _cronogramaService = cronogramaService;
-        _seguimientoService = seguimientoService;
-        _logger = logger;
-        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
-        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
-
-        RecalcularPermisos();
-        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
-
-        // Suscribirse a mensajes de actualización de cronogramas y seguimientos
-        WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => await LoadCronogramasAsync());
-        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
+        try
         {
-            await LoadCronogramasAsync();
-            // Si tienes una vista de semanas o agrupación, refresca también
-            AgruparPorSemana();
-        });
-        // Cargar datos automáticamente al crear el ViewModel
-        Task.Run(async () => 
+            _cronogramaService = cronogramaService;
+            _seguimientoService = seguimientoService;
+            _logger = logger;
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;            // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+            WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => 
+            {
+                // Solo recargar si ya está inicializado
+                lock (_initializationLock)
+                {
+                    if (!_isInitialized) return;
+                }
+                await LoadCronogramasAsync();
+            });
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
+            {
+                // Solo recargar si ya está inicializado
+                lock (_initializationLock)
+                {
+                    if (!_isInitialized) return;
+                }
+                
+                try
+                {
+                    await LoadCronogramasAsync();
+                    AgruparPorSemana();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[CronogramaViewModel] Error en mensaje SeguimientosActualizados");
+                }
+            });
+            
+            // Cargar datos automáticamente al crear el ViewModel
+            Task.Run(async () => 
+            {
+                try
+                {
+                    // Primero asegurar cronogramas completos
+                    await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
+                    // Luego generar seguimientos faltantes
+                    await _cronogramaService.GenerarSeguimientosFaltantesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[CronogramaViewModel] Error al actualizar cronogramas y seguimientos");
+                }
+                  try
+                {
+                    await LoadCronogramasAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[CronogramaViewModel] Error en carga inicial de cronogramas");
+                }
+            });
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                // Primero asegurar cronogramas completos
-                await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
-                // Luego generar seguimientos faltantes
-                await _cronogramaService.GenerarSeguimientosFaltantesAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[CronogramaViewModel] Error al actualizar cronogramas y seguimientos");
-            }
-              await LoadCronogramasAsync();
-        });
+            logger?.LogError(ex, "[CronogramaViewModel] Error crítico en constructor");
+            throw; // Re-lanzar para que se capture en el nivel superior
+        }
     }
 
     private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
@@ -113,19 +149,30 @@ public partial class CronogramaViewModel : ObservableObject
     partial void OnAnioSeleccionadoChanged(int value)
     {
         FiltrarPorAnio();
-    }
-
-    private void FiltrarPorAnio()
+    }    private void FiltrarPorAnio()
     {
         if (Cronogramas == null) return;
+        
         var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
         CronogramasFiltrados = new ObservableCollection<CronogramaMantenimientoDto>(filtrados);
-        AgruparPorSemana();
-    }
-
-    [RelayCommand]
+        
+        // Solo ejecutar AgruparPorSemana si ya está inicializado Y no es la carga inicial
+        lock (_initializationLock)
+        {
+            if (_isInitialized)
+            {
+                AgruparPorSemana();
+            }
+        }
+    }[RelayCommand]
     public async Task LoadCronogramasAsync()
     {
+        // Evitar cargas múltiples simultáneas
+        lock (_initializationLock)
+        {
+            if (IsLoading) return;
+        }
+
         IsLoading = true;
         StatusMessage = "Cargando cronogramas...";
         try
@@ -140,6 +187,14 @@ public partial class CronogramaViewModel : ObservableObject
                     AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
                 FiltrarPorAnio();
                 StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
+                  // Marcar como inicializado después de la primera carga exitosa
+                lock (_initializationLock)
+                {
+                    _isInitialized = true;
+                }
+                
+                // Ejecutar AgruparPorSemana automáticamente después de la carga inicial
+                AgruparPorSemana();
             });
         }
         catch (System.Exception ex)
@@ -151,7 +206,7 @@ public partial class CronogramaViewModel : ObservableObject
         {
             IsLoading = false;
         }
-    }    [RelayCommand(CanExecute = nameof(CanAddCronograma))]
+    }[RelayCommand(CanExecute = nameof(CanAddCronograma))]
     public async Task AddCronogramaAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.CronogramaDialog();
@@ -222,18 +277,29 @@ public partial class CronogramaViewModel : ObservableObject
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
         return result.AddDays(-3);
-    }
-
-    // Agrupa los cronogramas por semana del año (ISO 8601)
+    }    // Agrupa los cronogramas por semana del año (ISO 8601)
     public async void AgruparPorSemana()
     {
-        Semanas.Clear();
+        // Verificar que tengamos datos para procesar
+        if (CronogramasFiltrados == null || !CronogramasFiltrados.Any())
+        {
+            _logger.LogInformation("[CronogramaViewModel] No hay cronogramas filtrados para agrupar");
+            return;
+        }
+
+        _logger.LogInformation("[CronogramaViewModel] Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
+        
+        // Limpiar en el hilo de UI
+        System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
+        
         var añoActual = AnioSeleccionado;
-        // Obtener todos los seguimientos del año seleccionado
         var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
             .Where(s => s.Anio == añoActual)
             .ToList();
         var tareas = new List<Task>();
+        var semaphore = new System.Threading.SemaphoreSlim(5); // Limitar a 5 tareas concurrentes
+        var semanasTemp = new List<SemanaViewModel>(); // Lista temporal para construir fuera del UI thread
+        
         for (int i = 1; i <= 52; i++)
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
@@ -241,7 +307,6 @@ public partial class CronogramaViewModel : ObservableObject
             var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
             if (CronogramasFiltrados != null)
             {
-                // 1. Agregar programados
                 foreach (var c in CronogramasFiltrados)
                 {
                     if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
@@ -249,7 +314,6 @@ public partial class CronogramaViewModel : ObservableObject
                         semanaVM.Mantenimientos.Add(c);
                     }
                 }
-                // 2. Agregar no programados (manuales)
                 var codigosProgramados = CronogramasFiltrados
                     .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
                     .Select(c => c.Codigo)
@@ -257,7 +321,6 @@ public partial class CronogramaViewModel : ObservableObject
                 var seguimientosSemana = seguimientos.Where(s => s.Semana == i && !codigosProgramados.Contains(s.Codigo)).ToList();
                 foreach (var s in seguimientosSemana)
                 {
-                    // Crear un CronogramaMantenimientoDto "ficticio" solo para mostrar en la semana
                     var noProgramado = new CronogramaMantenimientoDto
                     {
                         Codigo = s.Codigo,
@@ -268,24 +331,52 @@ public partial class CronogramaViewModel : ObservableObject
                         IsCodigoReadOnly = true,
                         IsCodigoEnabled = false
                     };
-                    // Marcar visualmente que es no programado (puedes usar una propiedad auxiliar si la UI lo soporta)
                     semanaVM.Mantenimientos.Add(noProgramado);
                 }
             }
-            // Inicializar estados de mantenimientos para la semana (carga asíncrona)
-            tareas.Add(semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService));
-            Semanas.Add(semanaVM);
+            // Inicializar estados de mantenimientos para la semana (carga asíncrona, con manejo de errores y semáforo)
+            tareas.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService);
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, $"Error al cargar estados de la semana {i}");
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
+            semanasTemp.Add(semanaVM);
         }
         await Task.WhenAll(tareas);
+          // Agregar todas las semanas a la colección observable en el hilo de UI
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            foreach (var semana in semanasTemp)
+            {
+                Semanas.Add(semana);
+            }
+            
+            _logger.LogInformation("[CronogramaViewModel] Agrupación completada: {Count} semanas agregadas", semanasTemp.Count);
+        });
     }
 
-    // TODO: Agregar comandos para importar/exportar y backup de cronogramas
-
-    [RelayCommand]
+    // TODO: Agregar comandos para importar/exportar y backup de cronogramas    [RelayCommand]
     public void AgruparSemanalmente()
     {
+        // Solo ejecutar si ya está inicializado para evitar cargas múltiples
+        lock (_initializationLock)
+        {
+            if (!_isInitialized) return;
+        }
+        
         AgruparPorSemana();
-    }    [RelayCommand(CanExecute = nameof(CanExportCronograma))]
+    }[RelayCommand(CanExecute = nameof(CanExportCronograma))]
     public async Task ExportarCronogramasAsync()
     {
         try
@@ -381,7 +472,7 @@ public partial class CronogramaViewModel : ObservableObject
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "Realizado",
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado fuera de tiempo",
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => "Pendiente",
-            _ => "-"
+                    _ => "-"
         };
     }
 
@@ -397,4 +488,5 @@ public partial class CronogramaViewModel : ObservableObject
             _ => XLColor.White
         };
     }
+}
 }

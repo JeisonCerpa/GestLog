@@ -14,8 +14,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             // Asignar el DataContext usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>();
-            DataContext = viewModel;
-            this.Loaded += (s, e) => viewModel.AgruparSemanalmenteCommand.Execute(null);
+            DataContext = viewModel;            
+            // El ViewModel ya se inicializa automáticamente, no necesitamos disparar comandos extra
+            // esto evita cargas múltiples
         }
     }
 }

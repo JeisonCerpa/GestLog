@@ -46,14 +46,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             if (Mantenimientos == null || Mantenimientos.Count == 0)
                 return;
-            
-            // Log para debug
-            var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger();
-            logger.Logger.LogInformation("[SemanaViewModel] Ejecutando VerSemanaAsync - Semana {NumeroSemana}, Año {Anio}, Mantenimientos: {Count}", NumeroSemana, _anio, Mantenimientos.Count);
-            
-            var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(NumeroSemana, _anio);
-            
-            logger.Logger.LogInformation("[SemanaViewModel] Obtenidos {Count} estados de mantenimiento", estados.Count);
+              var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(NumeroSemana, _anio);
             
             // Obtener el servicio de seguimiento usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
@@ -74,16 +67,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 new ObservableCollection<MantenimientoSemanaEstadoDto>(estados),
                 new ObservableCollection<CronogramaMantenimientoDto>(Mantenimientos),
                 seguimientoService,
-                currentUserService
-            );
-            
-            logger.Logger.LogInformation("[SemanaViewModel] ViewModel creado con {EstadosCount} estados y {MantenimientosCount} mantenimientos", 
-                vm.EstadosMantenimientos.Count, vm.Mantenimientos.Count);
-            
-            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
+                currentUserService            );
+              var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
             dialog.ShowDialog();
-            
-            logger.Logger.LogInformation("[SemanaViewModel] Dialog cerrado - Semana {NumeroSemana}", NumeroSemana);
         }[RelayCommand]
         public async Task VerSemana()
         {

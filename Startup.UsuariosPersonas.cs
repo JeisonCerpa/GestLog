@@ -39,15 +39,15 @@ namespace GestLog
             });            services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
             services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();            services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios
-            Console.WriteLine("🔧 [DEBUG] Registrando UsuarioManagementViewModel...");
-            services.AddTransient<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
-            Console.WriteLine("✅ [DEBUG] UsuarioManagementViewModel registrado!");
-            services.AddTransient<RolManagementViewModel>();
-            services.AddTransient<AuditoriaManagementViewModel>();
-            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>();
-            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
-            services.AddTransient<CatalogosManagementViewModel>();
-            services.AddTransient<GestionPermisosRolViewModel>();
+            
+            services.AddSingleton<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
+            
+            services.AddSingleton<RolManagementViewModel>();
+            services.AddSingleton<AuditoriaManagementViewModel>();
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesión
+            services.AddSingleton<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
+            services.AddSingleton<CatalogosManagementViewModel>();
+            services.AddSingleton<GestionPermisosRolViewModel>();
 
             // Servicios y repositorios de Personas
             services.AddScoped<IPersonaService, PersonaService>();
@@ -63,9 +63,8 @@ namespace GestLog
                 var dbConfigProvider = provider.GetRequiredService<IDatabaseConfigurationProvider>();
                 var connectionString = dbConfigProvider.GetConnectionStringAsync().GetAwaiter().GetResult();
                 return new TipoDocumentoRepository(connectionString);
-            });
-            // ViewModels de Personas (agregar cuando existan)
-            services.AddTransient<PersonaManagementViewModel>();
+            });            // ViewModels de Personas (agregar cuando existan)
+            services.AddSingleton<PersonaManagementViewModel>();
             services.AddSingleton<IModalService, ModalService>();
             
             // Registrar CurrentUserInfo como servicio Scoped

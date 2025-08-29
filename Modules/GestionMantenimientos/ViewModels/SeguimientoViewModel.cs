@@ -17,7 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 /// <summary>
 /// ViewModel para el seguimiento de mantenimientos.
 /// </summary>
-public partial class SeguimientoViewModel : ObservableObject
+public partial class SeguimientoViewModel : ObservableObject, IDisposable
 {
     private readonly ISeguimientoService _seguimientoService;
     private readonly IGestLogLogger _logger;
@@ -53,28 +53,63 @@ public partial class SeguimientoViewModel : ObservableObject
     private DateTime? fechaDesde;
 
     [ObservableProperty]
-    private DateTime? fechaHasta;
-
-    [ObservableProperty]
+    private DateTime? fechaHasta;    [ObservableProperty]
     private System.ComponentModel.ICollectionView? seguimientosView;
+
+    // Optimización: Control de carga para evitar actualizaciones innecesarias
+    private CancellationTokenSource? _loadCancellationToken;
+    private DateTime _lastLoadTime = DateTime.MinValue;
+    private DateTime _lastObservacionesUpdateTime = DateTime.MinValue;
+    private const int DEBOUNCE_DELAY_MS = 300; // 300ms de debounce para seguimientos
+    private const int MIN_RELOAD_INTERVAL_MS = 1500; // Mínimo 1.5 segundos entre cargas
+    private const int MIN_OBSERVACIONES_UPDATE_INTERVAL_MS = 5000; // Mínimo 5 segundos entre actualizaciones de observaciones
 
     public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
     {
-        _seguimientoService = seguimientoService;
-        _logger = logger;
-        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
-        _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
+        try
+        {
+            _seguimientoService = seguimientoService;
+            _logger = logger;
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
-        RecalcularPermisos();
-        _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
-
-        // Suscribirse a mensajes de actualización de seguimientos
-        WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await LoadSeguimientosAsync());
-        SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
-        if (SeguimientosView != null)
-            SeguimientosView.Filter = FiltrarSeguimiento;
-        // Cargar datos automáticamente al crear el ViewModel
-        Task.Run(async () => await LoadSeguimientosAsync());
+            RecalcularPermisos();
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;            // Suscribirse a mensajes de actualización de seguimientos
+            // OPTIMIZACIÓN: Solo recargar cuando sea realmente necesario
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
+            {
+                try
+                {
+                    // Solo recargar si han pasado al menos 1.5 segundos desde la última carga
+                    await LoadSeguimientosAsync(forceReload: false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[SeguimientoViewModel] Error en mensaje SeguimientosActualizados");
+                }
+            });
+            
+            SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
+            if (SeguimientosView != null)
+                SeguimientosView.Filter = FiltrarSeguimiento;
+                  // Cargar datos automáticamente al crear el ViewModel
+            Task.Run(async () => 
+            {
+                try
+                {
+                    await LoadSeguimientosAsync(forceReload: true); // Carga inicial siempre forzada
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[SeguimientoViewModel] Error en carga inicial de seguimientos");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "[SeguimientoViewModel] Error crítico en constructor");
+            throw; // Re-lanzar para que se capture en el nivel superior
+        }
     }
 
     private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
@@ -89,18 +124,65 @@ public partial class SeguimientoViewModel : ObservableObject
         CanEditSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EditarSeguimiento");
         CanDeleteSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EliminarSeguimiento");
         CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
-    }
-
-    [RelayCommand]
-    public async Task LoadSeguimientosAsync()
+    }    [RelayCommand]
+    public async Task LoadSeguimientosAsync(bool forceReload = true)
     {
+        // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias
+        if (!forceReload)
+        {
+            var timeSinceLastLoad = DateTime.Now - _lastLoadTime;
+            if (timeSinceLastLoad.TotalMilliseconds < MIN_RELOAD_INTERVAL_MS && !IsLoading)
+            {
+                return; // Muy pronto desde la última carga, omitir
+            }
+        }
+
+        // Cancelar cualquier carga en progreso
+        _loadCancellationToken?.Cancel();
+        _loadCancellationToken = new CancellationTokenSource();
+        var cancellationToken = _loadCancellationToken.Token;
+
+        // Debounce: esperar un poco antes de cargar
+        if (!forceReload)
+        {
+            try
+            {
+                await Task.Delay(DEBOUNCE_DELAY_MS, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // Cancelado, otra carga está en progreso
+            }
+        }
+
         IsLoading = true;
         StatusMessage = "Cargando seguimientos...";
         try
         {
-            // Actualiza observaciones antes de cargar
-            await _seguimientoService.ActualizarObservacionesPendientesAsync();
+            // OPTIMIZACIÓN: Actualizar observaciones solo si han pasado más de 5 segundos
+            var timeSinceLastObservacionesUpdate = DateTime.Now - _lastObservacionesUpdateTime;
+            if (forceReload || timeSinceLastObservacionesUpdate.TotalMilliseconds > MIN_OBSERVACIONES_UPDATE_INTERVAL_MS)
+            {
+                try
+                {
+                    await _seguimientoService.ActualizarObservacionesPendientesAsync();
+                    _lastObservacionesUpdateTime = DateTime.Now;
+                }
+                catch (System.Exception exObs)
+                {
+                    _logger.LogError(exObs, "Error al actualizar observaciones de seguimientos");
+                    StatusMessage = "Error al actualizar observaciones.";
+                }
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            // Continuar con la carga aunque falle la actualización de observaciones
             var lista = await _seguimientoService.GetSeguimientosAsync();
+            
+            if (cancellationToken.IsCancellationRequested)
+                return;
             var hoy = DateTime.Now;
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
             int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
@@ -119,6 +201,11 @@ public partial class SeguimientoViewModel : ObservableObject
             }
             Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
+            _lastLoadTime = DateTime.Now;
+        }
+        catch (OperationCanceledException)
+        {
+            // Carga cancelada, no hacer nada
         }
         catch (System.Exception ex)
         {
@@ -193,10 +280,9 @@ public partial class SeguimientoViewModel : ObservableObject
         IsLoading = true;
         StatusMessage = "Actualizando observaciones de seguimientos...";
         try
-        {
-            await _seguimientoService.ActualizarObservacionesPendientesAsync();
+        {            await _seguimientoService.ActualizarObservacionesPendientesAsync();
             StatusMessage = "Observaciones actualizadas correctamente.";
-            await LoadSeguimientosAsync(); // Refresca la vista
+            await LoadSeguimientosAsync(forceReload: true); // Forzar recarga tras actualizar observaciones
         }
         catch (Exception ex)
         {
@@ -431,13 +517,43 @@ public partial class SeguimientoViewModel : ObservableObject
             .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
             .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
             .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
-            .Replace("ñ", "n").Replace("Ñ", "N");
-    }
+            .Replace("ñ", "n").Replace("Ñ", "N");    }
 
     private string SepararCamelCase(string texto)
     {
         // Convierte "RealizadoEnTiempo" en "Realizado en tiempo"
         return System.Text.RegularExpressions.Regex.Replace(texto, "([a-z])([A-Z])", "$1 $2");
+    }
+
+    // Implementar IDisposable para limpieza de recursos
+    private bool _disposed = false;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            _loadCancellationToken?.Cancel();
+            _loadCancellationToken?.Dispose();
+            
+            // Desuscribirse de mensajes
+            WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
+            
+            if (_currentUserService != null)
+                _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
+                
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~SeguimientoViewModel()
+    {
+        Dispose(false);
     }
 
     // TODO: Agregar comandos para importar/exportar y backup de seguimientos

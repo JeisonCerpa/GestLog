@@ -25,6 +25,9 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // Configurar manejo global de excepciones ANTES de cualquier otra lógica
+        SetupGlobalExceptionHandling();
+        
         // Mostrar SplashScreen antes de cualquier lógica
         var splash = new GestLog.Views.SplashScreen();
         splash.Show();
@@ -82,24 +85,33 @@ public partial class App : System.Windows.Application
                 await System.Threading.Tasks.Task.Delay(500);
             }
 
-            // Crear ventana principal y mostrarla
-            var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
-            currentUserService?.RestoreSessionIfExists();
-            var mainWindow = new MainWindow();
-            this.MainWindow = mainWindow;
-            string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
-            if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            // Bloque try-catch adicional para inicialización de ventana principal y restauración de sesión
+            try
             {
-                vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
-                vm.NotificarCambioNombrePersona();
+                var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
+                currentUserService?.RestoreSessionIfExists();
+                var mainWindow = new MainWindow();
+                this.MainWindow = mainWindow;
+                string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
+                if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+                {
+                    vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
+                    vm.NotificarCambioNombrePersona();
+                }
+                if (currentUserService?.IsAuthenticated == true)
+                {
+                    mainWindow.LoadHomeView();
+                }
+                mainWindow.Show();
+                this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                splash.Close();
             }
-            if (currentUserService?.IsAuthenticated == true)
+            catch (Exception exWin)
             {
-                mainWindow.LoadHomeView();
+                _logger?.Logger.LogError(exWin, "❌ Error al inicializar la ventana principal o restaurar sesión");
+                System.Windows.MessageBox.Show($"Error al inicializar la ventana principal:\n{exWin.Message}",
+                    "Error de Inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            mainWindow.Show();
-            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            splash.Close();
         }
         catch (Exception ex)
         {
@@ -118,8 +130,11 @@ public partial class App : System.Windows.Application
             }
         }
 
-        // Inicializar Velopack al arranque
+        // Inicializar Velopack al arranque solo si no es DEBUG
+#if !DEBUG
         VelopackApp.Build().Run();
+#endif
+
     }
     /// <summary>
     /// Carga la configuración de la aplicación al inicio

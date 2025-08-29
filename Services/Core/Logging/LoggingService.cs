@@ -147,7 +147,7 @@ public static class LoggingService
             services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService, GestLog.Modules.GestionMantenimientos.Services.SeguimientoService>();
 
             // ViewModels de Gestión de Mantenimientos
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>();            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>();            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
             {
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
@@ -155,7 +155,7 @@ public static class LoggingService
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, logger, currentUserService);
             });
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
 
             // Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
