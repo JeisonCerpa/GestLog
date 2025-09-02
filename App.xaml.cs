@@ -23,6 +23,7 @@ namespace GestLog;
 public partial class App : System.Windows.Application
 {
     private IGestLogLogger? _logger;    
+    public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();
     protected override async void OnStartup(StartupEventArgs e)
     {
         // Configurar manejo global de excepciones ANTES de cualquier otra lógica

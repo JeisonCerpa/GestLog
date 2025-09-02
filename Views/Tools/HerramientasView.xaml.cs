@@ -194,5 +194,31 @@ namespace GestLog.Views.Tools
             if (mainWindow != null)
                 mainWindow.NavigateToView(view, "Gestión de Identidad y Catálogos");
         }
+
+        private void BtnGestionEquipos_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessGestionEquipos)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            // Navegación al módulo de Gestión de Equipos
+            var gestionEquiposView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+            _mainWindow?.NavigateToView(gestionEquiposView, "Gestión de Equipos Informáticos");
+        }
+
+        private void BtnEquiposInformaticos_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessEquiposInformaticos)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            // Navegación al módulo de Equipos Informáticos
+            var equiposInformaticosView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+            _mainWindow?.NavigateToView(equiposInformaticosView, "Equipos Informáticos");
+        }
     }
 }

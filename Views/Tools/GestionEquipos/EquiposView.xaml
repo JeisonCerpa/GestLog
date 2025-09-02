@@ -1,0 +1,29 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionEquipos.EquiposView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="900">
+    <Grid Background="#FAFAFA">
+        <DataGrid x:Name="dgEquipos" AutoGenerateColumns="False" CanUserAddRows="False" Margin="24" IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column" RowHeaderWidth="0"
+                  ItemsSource="{Binding ListaEquiposInformaticos}"
+                  Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
+                  ColumnHeaderHeight="38" RowHeight="34" FontSize="14"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120"/>
+                <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" Width="180"/>
+                <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="180"/>
+                <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
+                <DataGridTemplateColumn Header="Detalles" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Ver Detalles" Command="{Binding DataContext.VerDetallesCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource PrimaryButtonStyle}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>
