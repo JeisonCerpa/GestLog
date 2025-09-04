@@ -93,7 +93,7 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
                                         <TextBlock Text="Usuario Asignado *" FontWeight="Bold" Foreground="#504F4E" />
-                                        <ComboBox Height="32" IsEditable="True" ItemsSource="{Binding PersonasFiltradas}" SelectedItem="{Binding PersonaAsignada}" Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Buscar y seleccionar usuario" />
+                                        <ComboBox Height="32" IsEditable="True" ItemsSource="{Binding PersonasFiltradas}" SelectedItem="{Binding PersonaAsignada}" Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Buscar y seleccionar usuario" DisplayMemberPath="NombreCompleto" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
                                         <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" />
