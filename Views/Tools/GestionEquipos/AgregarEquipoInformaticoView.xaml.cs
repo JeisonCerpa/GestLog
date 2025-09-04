@@ -24,8 +24,8 @@ namespace GestLog.Views.Tools.GestionEquipos
             DataContext = viewModel;
             
             // Cargar personas cuando se carga la ventana
-            this.Loaded += async (sender, e) => {
-                await viewModel.InicializarPersonasAsignadasAsync();
+            this.Loaded += (sender, e) => {
+                viewModel.Inicializar();
             };
         }
 

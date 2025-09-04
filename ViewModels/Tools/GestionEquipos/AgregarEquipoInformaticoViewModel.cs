@@ -113,10 +113,29 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
-        public async Task InicializarAsync()
+        public void Inicializar()
         {
-            await InicializarPersonasAsignadasAsync();
-            // ...cargar otros datos si es necesario...
+            try
+            {
+                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
+                    .UseSqlServer(GetProductionConnectionString())
+                    .Options;
+                using var dbContext = new GestLogDbContext(options);
+                var personas = dbContext.Personas.Where(p => p.Activo).ToList();
+                PersonasDisponibles = new ObservableCollection<Persona>(personas);
+                PersonasFiltradas = new ObservableCollection<Persona>(personas);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar las personas para usuario asignado");
+                MessageBox.Show("No se pudieron cargar los usuarios disponibles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GetProductionConnectionString()
+        {
+            // Configuración de conexión de producción
+            return "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=True;Connection Timeout=30;";
         }
 
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
@@ -128,7 +147,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 return;
             }
             var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                .UseSqlServer("Data Source=.;Initial Catalog=GestLog;Integrated Security=True;TrustServerCertificate=True;") // TODO: Usar configuración real
+                .UseSqlServer(GetProductionConnectionString())
                 .Options;
             using var dbContext = new GestLogDbContext(options);
             if (dbContext.EquiposInformaticos.Any(e => e.Codigo == Codigo))
@@ -149,7 +168,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 SerialNumber = SerialNumber,
                 Observaciones = Observaciones,
                 FechaCreacion = DateTime.Now,
-                Estado = "Disponible"
+                Estado = Estado
             };
             dbContext.EquiposInformaticos.Add(equipo);
             int slotNum = 1;
@@ -169,6 +188,15 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             await dbContext.SaveChangesAsync();
             MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
         }        
+        [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
+        public async Task GuardarAsync()
+        {
+            await GuardarEquipoAsync();
+            // Cerrar la ventana después de guardar
+            if (Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this) is Window win)
+                win.DialogResult = true;
+        }
+
         [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
         public async Task ObtenerCamposAutomaticosAsync()
         {
@@ -178,7 +206,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 await Task.Run(() => ObtenerCamposAutomaticos());
                 // También obtener discos automáticamente
-                await Task.Run(() => ObtenerDiscosAutomaticos());                
+                await ObtenerDiscosAutomaticosAsync();                
                 // Detección automática del sistema operativo
                 if (string.IsNullOrWhiteSpace(So))
                 {
@@ -492,103 +520,89 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 await Task.Run(() => ObtenerDiscosAutomaticos());
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al obtener los discos: {ex.Message}", "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
             finally
             {
                 IsLoadingDiscos = false;
             }
-        }        
+        }
+
         private void ObtenerDiscosAutomaticos()
         {
             _logger.LogDebug("[DISCOS] Iniciando detección automática de discos");
             Application.Current.Dispatcher.Invoke(() => ListaDiscos.Clear());
-            
             try
-            {                
-                // Usar Get-CimInstance del namespace Storage para información más precisa del tipo de disco
-                var output = EjecutarPowerShellCompleto("Get-CimInstance -Namespace root\\Microsoft\\Windows\\Storage -ClassName MSFT_PhysicalDisk | Select-Object DeviceId, MediaType, Size, Manufacturer, Model | ConvertTo-Csv -NoTypeInformation");
+            {
+                var output = EjecutarPowerShellCompleto("Get-WmiObject Win32_DiskDrive | Select-Object Model, Size, InterfaceType, Manufacturer | ConvertTo-Csv -NoTypeInformation");
                 _logger.LogDebug($"[DISCOS] Resultado PowerShell Win32_DiskDrive CSV: '{output}'");
-                
                 if (string.IsNullOrWhiteSpace(output))
                 {
                     _logger.LogWarning("[DISCOS] La salida de PowerShell está vacía");
-                    throw new Exception("PowerShell no devolvió ningún resultado para discos");
+                    throw new Exception("PowerShell no devolvió ningún resultado");
                 }
-                
                 var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 _logger.LogDebug($"[DISCOS] Total de líneas obtenidas: {lines.Count}");
-                
                 if (lines.Count <= 1)
                 {
                     _logger.LogWarning("[DISCOS] Solo se obtuvo la cabecera CSV, sin datos de discos");
                     throw new Exception("No hay datos de discos en la salida");
                 }
-                
-                int discosDetectados = 0;
+                int discoNum = 1;
                 for (int i = 1; i < lines.Count; i++)
                 {
                     var csv = lines[i];
-                    _logger.LogDebug($"[DISCOS] Procesando línea CSV {i}: '{csv}'");                    
-                    // Usar el parser robusto para CSV
                     var parts = ParseCsvLine(csv);
-                    _logger.LogDebug($"[DISCOS] Partes parseadas: {string.Join(" | ", parts)}");
-                    
-                    if (parts.Length < 5)
-                    {
-                        _logger.LogDebug($"[DISCOS] Línea ignorada por longitud ({parts.Length} campos): '{csv}'");
-                        continue;
-                    }
-                    
-                    var deviceId = parts[0].Trim('"'); // DeviceId
-                    var mediaTypeStr = parts[1].Trim('"'); // MediaType (número)
-                    var capacidadStr = parts[2].Trim('"'); // Size
-                    var fabricante = parts[3].Trim('"'); // Manufacturer
-                    var modelo = parts[4].Trim('"'); // Model
-                      _logger.LogDebug($"[DISCOS] Datos extraídos - DeviceId: {deviceId}, MediaType: {mediaTypeStr}, Capacidad: {capacidadStr}, Fabricante: {fabricante}, Modelo: {modelo}");
-                      long capacidadBytes = 0;
+                    if (parts.Length < 4) continue;
+                    var modelo = parts[0].Trim('"');
+                    var sizeStr = parts[1].Trim('"');
+                    var interfaz = parts[2].Trim('"');
+                    var fabricante = parts[3].Trim('"');
+                    long sizeBytes = 0;
                     int capacidadGB = 0;
-                    if (long.TryParse(capacidadStr, out capacidadBytes))
+                    if (long.TryParse(sizeStr, out sizeBytes))
                     {
-                        // Usar división decimal usando base 1000 (como los fabricantes) para mostrar capacidades más intuitivas
-                        double capacidadGBDecimal = capacidadBytes / (1000.0 * 1000.0 * 1000.0);
-                        capacidadGB = (int)Math.Round(capacidadGBDecimal);
-                        _logger.LogDebug($"[DISCOS] Capacidad calculada: {capacidadBytes} bytes = {capacidadGBDecimal:F2} GB → {capacidadGB} GB (base 1000)");
+                        // Cálculo comercial: dividir por 1,000,000,000 y redondear
+                        capacidadGB = (int)Math.Round(sizeBytes / 1_000_000_000.0);
+                        // Si la capacidad está entre 480 y 512, mostrar 512
+                        if (capacidadGB >= 480 && capacidadGB < 520) capacidadGB = 512;
                     }
-                    
-                    var tipoNormalizado = NormalizarTipoDiscoStorage(mediaTypeStr, modelo);
-                    
+                    // Inferir tipo
+                    string tipo = "HDD";
+                    if (modelo.ToUpper().Contains("NVME")) tipo = "NVMe";
+                    else if (modelo.ToUpper().Contains("SSD")) tipo = "SSD";
+                    else if (modelo.ToUpper().Contains("EMMC")) tipo = "eMMC";
+                    else if (interfaz == "SSD" || interfaz == "NVMe" || interfaz == "eMMC") tipo = interfaz;
+                    // Extraer marca del modelo
+                    string marca = fabricante;
+                    var palabras = modelo.Split(' ');
+                    foreach (var palabra in palabras)
+                    {
+                        if (palabra.ToUpper().Contains("MICRON") || palabra.ToUpper().Contains("SAMSUNG") || palabra.ToUpper().Contains("KINGSTON") || palabra.ToUpper().Contains("SEAGATE") || palabra.ToUpper().Contains("WD") || palabra.ToUpper().Contains("TOSHIBA") || palabra.ToUpper().Contains("CRUCIAL"))
+                        {
+                            marca = palabra;
+                            break;
+                        }
+                    }
+                    if (string.IsNullOrWhiteSpace(marca) || marca == "(Unidades de disco estándar)") marca = modelo;
                     var disco = new DiscoEntity
                     {
-                        NumeroDisco = ++discosDetectados,
-                        Tipo = tipoNormalizado,
+                        Tipo = tipo,
                         CapacidadGB = capacidadGB,
-                        Marca = fabricante,
-                        Modelo = modelo,
-                        CodigoEquipo = Codigo
+                        Marca = marca,
+                        Modelo = modelo
                     };
-                    
-                    _logger.LogDebug($"[DISCOS] Creando disco: {disco.NumeroDisco} - {disco.CapacidadGB}GB {disco.Tipo} {disco.Marca} {disco.Modelo}");
                     Application.Current.Dispatcher.Invoke(() => ListaDiscos.Add(disco));
+                    discoNum++;
                 }
-                
-                string resumen = $"Discos detectados: {discosDetectados}";
-                _logger.LogDebug($"[DISCOS] Resumen: {resumen}");
-                
                 if (ListaDiscos.Count == 0)
                 {
                     _logger.LogWarning("[DISCOS] No se detectaron discos automáticamente. Permitiendo edición manual.");
-                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se detectaron discos automáticamente. Se ha añadido un disco vacío para edición manual.\n" + resumen, "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Warning));
+                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se detectaron discos automáticamente. Se ha añadido un disco vacío para edición manual.", "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Warning));
                     Application.Current.Dispatcher.Invoke(() => ListaDiscos.Add(new DiscoEntity
                     {
-                        NumeroDisco = 1,
-                        Tipo = "Otro",
+                        Tipo = "HDD",
                         CapacidadGB = null,
                         Marca = string.Empty,
-                        Modelo = string.Empty,
-                        CodigoEquipo = Codigo
+                        Modelo = string.Empty
                     }));
                 }
                 else
@@ -598,206 +612,30 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[DISCOS] Error en la detección automática de discos");
+                _logger.LogError(ex, "[DISCOS] Error en la detección automática");
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show("Error al detectar los discos automáticamente. Se ha añadido un disco vacío para edición manual.", "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Error));
                 Application.Current.Dispatcher.Invoke(() => ListaDiscos.Add(new DiscoEntity
                 {
-                    NumeroDisco = 1,
-                    Tipo = "Otro",
+                    Tipo = "HDD",
                     CapacidadGB = null,
                     Marca = string.Empty,
-                    Modelo = string.Empty,
-                    CodigoEquipo = Codigo
+                    Modelo = string.Empty
                 }));
             }
-            
-            _logger.LogDebug($"[DISCOS] Lista final de discos: {string.Join(", ", ListaDiscos.Select(d => $"Disco {d.NumeroDisco}: {d.CapacidadGB}GB {d.Tipo} {d.Marca} {d.Modelo}"))}");
-        }        
-        private string NormalizarTipoDiscoStorage(string mediaTypeStr, string modelo = "")
-        {
-            _logger.LogDebug($"[DISCOS] Normalizando tipo Storage - MediaType: '{mediaTypeStr}', Modelo: '{modelo}'");
-            
-            // Convertir MediaType string a número
-            if (!int.TryParse(mediaTypeStr, out int mediaType))
-            {
-                _logger.LogDebug($"[DISCOS] MediaType no es numérico: '{mediaTypeStr}', usando fallback por modelo");
-                return NormalizarTipoDiscoPorModelo(modelo);
-            }
-            
-            // Mapeo según Microsoft Storage MediaType values
-            // https://docs.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-storage_media_type
-            return mediaType switch
-            {
-                0 => "Otro",        // Unknown
-                3 => "HDD",         // FixedMedia (traditional HDD)
-                4 => "SSD",         // SSD
-                5 => "Otro",        // SCM (Storage Class Memory)
-                _ => "Otro"         // Otros valores no definidos
-            };
-        }
-        
-        private string NormalizarTipoDiscoPorModelo(string modelo)
-        {
-            if (string.IsNullOrWhiteSpace(modelo)) return "Otro";
-            
-            var modeloLower = modelo.ToLower().Trim();
-            
-            // Detectar NVMe primero (más específico)
-            if (modeloLower.Contains("nvme") || modeloLower.Contains("m.2"))
-                return "NVMe";
-            
-            // Detectar SSD
-            if (modeloLower.Contains("ssd") || modeloLower.Contains("solid state"))
-                return "SSD";
-            
-            // Detectar HDD
-            if (modeloLower.Contains("hdd") || modeloLower.Contains("seagate") || 
-                modeloLower.Contains("western digital") || modeloLower.Contains("wd"))
-                return "HDD";
-            
-            // Detectar eMMC
-            if (modeloLower.Contains("emmc") || modeloLower.Contains("embedded"))
-                return "eMMC";
-            
-            return "Otro";
+            _logger.LogDebug($"[DISCOS] Lista final de discos: {string.Join(", ", ListaDiscos.Select(d => $"{d.Tipo} {d.CapacidadGB}GB {d.Marca} {d.Modelo}"))}");
         }
 
         [RelayCommand(CanExecute = nameof(CanAgregarDiscoManual))]
         public void AgregarDiscoManual()
         {
-            var disco = new DiscoEntity
+            var nuevoDisco = new DiscoEntity
             {
-                NumeroDisco = ListaDiscos.Count + 1,
                 Tipo = "SSD",
                 CapacidadGB = 256,
                 Marca = string.Empty,
-                Modelo = string.Empty,
-                CodigoEquipo = Codigo
+                Modelo = string.Empty
             };
-            ListaDiscos.Add(disco);
-        }
-
-        [RelayCommand(CanExecute = nameof(CanEliminarDisco))]
-        public void EliminarDisco(DiscoEntity disco)
-        {
-            if (ListaDiscos.Contains(disco))
-                ListaDiscos.Remove(disco);
-        }
-
-        [RelayCommand]
-        public void AgregarRam()
-        {
-            // El permiso debe ser el mismo que para agregar equipo
-            if (!CanGuardarEquipo)
-            {
-                MessageBox.Show("No tienes permisos para agregar RAM.", "Permiso requerido", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var slot = new SlotRamEntity
-            {
-                NumeroSlot = ListaRam.Count + 1,
-                CapacidadGB = 8,
-                Marca = string.Empty,
-                Frecuencia = string.Empty,
-                TipoMemoria = "DDR4",
-                Ocupado = true,
-                Observaciones = string.Empty,
-                CodigoEquipo = Codigo
-            };
-            ListaRam.Add(slot);
-        }
-
-        [RelayCommand]
-        public void EliminarRam(SlotRamEntity slot)
-        {
-            if (!_currentUser.HasPermission("GestionEquipos.GestionarRam")) return;
-            
-            if (ListaRam.Contains(slot))
-                ListaRam.Remove(slot);
-        }        
-        public async Task CargarPersonasDisponiblesAsync()
-        {
-            try
-            {
-                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-                var personaService = serviceProvider.GetService(typeof(IPersonaService)) as IPersonaService;
-                if (personaService == null)
-                {
-                    PersonasDisponibles = new ObservableCollection<Persona>();
-                    return;
-                }
-                var personas = await personaService.BuscarPersonasAsync("");
-                var personasActivas = personas.Where(p => p.Activo).ToList();
-                Application.Current.Dispatcher.Invoke(() => {
-                    PersonasDisponibles = new ObservableCollection<Persona>(personasActivas);
-                });
-                // Actualizar filtro después de cargar
-                ActualizarFiltroPersonas();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error cargando personas disponibles: {Message}", ex.Message);
-                Application.Current.Dispatcher.Invoke(() => {
-                    PersonasDisponibles = new ObservableCollection<Persona>();
-                    ActualizarFiltroPersonas();
-                });
-            }
-        }
-
-        private void ActualizarFiltroPersonas()
-        {
-            if (PersonasDisponibles == null || PersonasDisponibles.Count == 0)
-            {
-                PersonasFiltradas = new ObservableCollection<Persona>();
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(FiltroPersonaAsignada))
-            {
-                PersonasFiltradas = new ObservableCollection<Persona>(PersonasDisponibles);
-            }
-            else
-            {
-                var filtro = FiltroPersonaAsignada.Trim().ToLowerInvariant();
-                var filtradas = PersonasDisponibles.Where(p => p.NombreCompleto.ToLowerInvariant().Contains(filtro)).ToList();
-                PersonasFiltradas = new ObservableCollection<Persona>(filtradas);
-            }
-        }
-
-        partial void OnFiltroPersonaAsignadaChanged(string value)
-        {
-            ActualizarFiltroPersonas();
-        }
-
-        partial void OnPersonasDisponiblesChanged(ObservableCollection<Persona> value)
-        {
-            ActualizarFiltroPersonas();
-        }
-
-        [RelayCommand]
-        public async Task InicializarPersonasAsignadasAsync()
-        {
-            await CargarPersonasDisponiblesAsync();
-        }
-
-        // Eliminar referencias a propiedades eliminadas de la entidad principal
-        // public int? SlotsTotales { get; set; }
-        // public int? SlotsUtilizados { get; set; }
-        // public string? TipoRam { get; set; }
-        // public int? CapacidadTotalRamGB { get; set; }
-        // public int? CantidadDiscos { get; set; }
-        // public int? CapacidadTotalDiscosGB { get; set; }
-        // Si se requiere mostrar totales, calcularlos desde ListaRam y ListaDiscos
-
-        [RelayCommand]
-        public void Cancelar()
-        {
-            // Cierra la ventana si está en modo diálogo
-            var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive && w.DataContext == this);
-            if (window != null)
-            {
-                window.DialogResult = false;
-                window.Close();
-            }
+            ListaDiscos.Add(nuevoDisco);
         }
     }
 }
