@@ -222,7 +222,7 @@
                                     </ItemsControl.ItemsPanel>
                                 </ItemsControl>
                             </ScrollViewer>
-                            <Button Content="Agregar RAM" Width="180" Height="40" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="16,0,16,0" Command="{Binding AgregarRamCommand}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            <Button Content="Agregar RAM" Width="110" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         </StackPanel>
                     </GroupBox>
                     <!-- Sección Discos -->
