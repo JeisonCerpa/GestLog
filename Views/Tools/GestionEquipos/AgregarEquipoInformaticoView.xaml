@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
+        xmlns:modelsEntities="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Models.Entities"
         mc:Ignorable="d"
         Title="Agregar Equipo Informático"
         Height="720" Width="1100"
@@ -48,6 +49,37 @@
             </Border>
         </DataTemplate>
         <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
+        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Número de disco -->
+                    <StackPanel Orientation="Vertical" Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="Disco:" FontWeight="Bold" Foreground="#504F4E" />
+                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" />
+                    </StackPanel>
+                    <!-- Campos editables -->
+                    <StackPanel Orientation="Vertical" Grid.Column="1">
+                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" />
+                        <ComboBox ItemsSource="{Binding DataContext.TiposDisco, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  SelectedItem="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,0,0,4" Background="#FAFAFA" />
+                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" />
+                        <TextBox Text="{Binding CapacidadGB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
+                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" />
+                        <TextBox Text="{Binding Marca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
+                        <TextBlock Text="Modelo:" FontWeight="Bold" Foreground="#504F4E" />
+                        <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
+                    </StackPanel>
+                    <!-- Botón eliminar -->
+                    <Button Content="Eliminar" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Style="{StaticResource CardButtonStyle}" Width="80" Height="32" Grid.Column="2" Margin="8,0,0,0" />
+                </Grid>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid Margin="32">
@@ -213,31 +245,27 @@
                     <!-- Sección RAM -->
                     <GroupBox Header="Memoria RAM" Margin="32,0,32,0" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}">
                         <StackPanel>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding ListaRam}" ItemTemplate="{StaticResource SlotRamTemplate}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                            </ScrollViewer>
-                            <Button Content="Agregar RAM" Width="110" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            <ItemsControl ItemsSource="{Binding ListaRam}" ItemTemplate="{StaticResource SlotRamTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                            <Button Content="Agregar RAM" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" IsEnabled="{Binding CanGuardarEquipo}" Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         </StackPanel>
                     </GroupBox>
                     <!-- Sección Discos -->
                     <GroupBox Header="Discos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}">
                         <StackPanel>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding ListaDiscos}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                            </ScrollViewer>
-                            <Button Content="Agregar Disco" Width="180" Height="40" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="16,0,16,0" Command="{Binding AgregarDiscoManualCommand}" IsEnabled="{Binding CanAgregarDiscoManual}" Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" />
+                            <ItemsControl ItemsSource="{Binding ListaDiscos}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                            <Button Content="Agregar Disco" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarDiscoManualCommand}" IsEnabled="{Binding CanAgregarDiscoManual}" Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
