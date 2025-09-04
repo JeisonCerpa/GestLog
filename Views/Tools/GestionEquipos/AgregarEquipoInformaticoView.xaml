@@ -135,7 +135,11 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
                                         <TextBlock Text="Sede" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Sede}" Background="#FFFFFF" />
+                                        <ComboBox Height="32" SelectedItem="{Binding Sede, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0">
+                                            <ComboBoxItem Content="Administrativa - Barranquilla" />
+                                            <ComboBoxItem Content="Taller - Barranquilla" />
+                                            <ComboBoxItem Content="Bodega - Bayunca" />
+                                        </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
                                         <TextBlock Text="Marca" FontWeight="Bold" Foreground="#504F4E" />
