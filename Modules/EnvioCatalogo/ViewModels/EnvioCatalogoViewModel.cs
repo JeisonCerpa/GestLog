@@ -203,13 +203,12 @@ namespace GestLog.Modules.EnvioCatalogo.ViewModels
                 smtpConfig.UseAuthentication = !string.IsNullOrWhiteSpace(SmtpUsername);
                 smtpConfig.IsConfigured = IsSmtpConfigured;
 
-                // Guardar contraseña de forma segura con target específico para EnvioCatalogo
-                if (!string.IsNullOrWhiteSpace(SmtpUsername) && !string.IsNullOrWhiteSpace(SmtpPassword))
+                // Guardar contraseña de forma segura con target específico para EnvioCatalogo                if (!string.IsNullOrWhiteSpace(SmtpUsername) && !string.IsNullOrWhiteSpace(SmtpPassword))
                 {
                     var credentialTarget = $"EnvioCatalogo_SMTP_{SmtpServer}_{SmtpUsername}";
                     _credentialService.SaveCredentials(credentialTarget, SmtpUsername, SmtpPassword);
                     
-                    _logger.LogInformation("🔐 ✅ Credenciales SMTP de EnvioCatalogo guardadas en Windows Credential Manager");
+                    _logger.LogInformation("Credenciales SMTP de EnvioCatalogo guardadas en Windows Credential Manager");
                 }
 
                 await _configurationService.SaveAsync();

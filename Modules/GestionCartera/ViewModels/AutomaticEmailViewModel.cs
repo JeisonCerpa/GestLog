@@ -602,36 +602,20 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 
                 if (GeneratedDocuments.Count == 0)
                 {                    CompaniesStatusText = $"📊 En archivo Excel: {validationResult.ValidNitRows}";
-                    DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
-                    HasDocumentsGenerated = false;
+                    DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";                    HasDocumentsGenerated = false;
                     
-                    // 🔍 DEBUG: Verificar valores antes de notificar
-                    _logger.LogInformation("🔍 DEBUG - Antes de notificar cambios:");
-                    _logger.LogInformation("   CompaniesWithEmail: {CompaniesWithEmail}", CompaniesWithEmail);
-                    _logger.LogInformation("   CompaniesStatusText: '{CompaniesStatusText}'", CompaniesStatusText);
-                    _logger.LogInformation("   DocumentStatusWarning: '{DocumentStatusWarning}'", DocumentStatusWarning);
-                    _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
-                    _logger.LogInformation("   HasDocumentsGenerated: {HasDocumentsGenerated}", HasDocumentsGenerated);
-                    
-                    // ✨ IMPORTANTE: Notificar cambios de propiedades
-                    OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Agregar esta notificación!
+                    // Notificar cambios de propiedades
+                    OnPropertyChanged(nameof(CompaniesWithEmail));
                     OnPropertyChanged(nameof(CompaniesStatusText));
                     OnPropertyChanged(nameof(DocumentStatusWarning));
                     OnPropertyChanged(nameof(HasDocumentsGenerated));
-                    
-                    // 🔍 DEBUG: Confirmar notificaciones enviadas
-                    _logger.LogInformation("🔍 DEBUG - Notificaciones enviadas para: CompaniesWithEmail, CompaniesStatusText, DocumentStatusWarning, HasDocumentsGenerated");
-                    
-                    _logger.LogInformation("📊 Estado actualizado: CompaniesWithEmail={CompaniesWithEmail}, StatusText: {StatusText}, Warning: {Warning}", 
-                        CompaniesWithEmail, CompaniesStatusText, DocumentStatusWarning);
                 }                else
                 {
-                    CompaniesStatusText = "📄 Analizando documentos generados...";
-                    DocumentStatusWarning = string.Empty;
+                    CompaniesStatusText = "📄 Analizando documentos generados...";                    DocumentStatusWarning = string.Empty;
                     HasDocumentsGenerated = true;
                     
-                    // ✨ IMPORTANTE: Notificar cambios de propiedades (mantener CompaniesWithEmail)
-                    OnPropertyChanged(nameof(CompaniesWithEmail)); // ¡Mantener la funcionalidad original!
+                    // Notificar cambios de propiedades
+                    OnPropertyChanged(nameof(CompaniesWithEmail));
                     OnPropertyChanged(nameof(CompaniesStatusText));
                     OnPropertyChanged(nameof(DocumentStatusWarning));
                     OnPropertyChanged(nameof(HasDocumentsGenerated));

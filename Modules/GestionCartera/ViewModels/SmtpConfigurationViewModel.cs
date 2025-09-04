@@ -52,15 +52,12 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         
         // Cargar configuración inicial
         LoadSmtpConfiguration();
-    }
-
-    [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
+    }    [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
     private async Task ConfigureSmtpAsync(CancellationToken cancellationToken = default)
     {
         if (_emailService == null) return;        try
         {
             IsConfiguring = true;
-            _logger.LogInformation("🔧 Configurando servidor SMTP...");
 
             var smtpConfig = new SmtpConfiguration
             {
@@ -79,7 +76,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             if (IsEmailConfigured)
             {
                 await SaveSmtpConfigurationAsync();
-                _logger.LogInformation("✅ Configuración SMTP exitosa y guardada");
+                _logger.LogInformation("Configuración SMTP exitosa y guardada");
             }
         }
         catch (Exception ex)
@@ -91,9 +88,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             IsConfiguring = false;
         }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     private void ClearConfiguration()
     {
         SmtpServer = string.Empty;
@@ -103,7 +98,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         EnableSsl = true;
         IsEmailConfigured = false;
         StatusMessage = "Configuración de email limpiada";
-        _logger.LogInformation("🧹 Configuración de email limpiada");
+        _logger.LogInformation("Configuración de email limpiada");
     }
 
     /// <summary>
@@ -145,16 +140,15 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
 
             await _emailService.ConfigureSmtpAsync(smtpConfig);
             var isValid = await _emailService.ValidateConfigurationAsync();
-            
-            if (isValid)
+              if (isValid)
             {
                 StatusMessage = "✅ Conexión SMTP exitosa";
-                _logger.LogInformation("✅ Prueba de conexión SMTP exitosa");
+                _logger.LogInformation("Prueba de conexión SMTP exitosa");
             }
             else
             {
                 StatusMessage = "❌ Error en la conexión SMTP";
-                _logger.LogWarning("❌ Prueba de conexión SMTP falló");
+                _logger.LogWarning("Prueba de conexión SMTP falló");
             }
         }
         catch (Exception ex)
@@ -179,26 +173,19 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     private bool CanConfigureSmtp() => !IsConfiguring && 
         !string.IsNullOrWhiteSpace(SmtpServer) && 
         !string.IsNullOrWhiteSpace(SmtpUsername) && 
-        !string.IsNullOrWhiteSpace(SmtpPassword);
-
-    private void LoadSmtpConfiguration()
+        !string.IsNullOrWhiteSpace(SmtpPassword);    private void LoadSmtpConfiguration()
     {
         try
         {
-            _logger.LogInformation("🔄 Cargando configuración SMTP...");
-            
             var smtpConfig = _configurationService.Current.Smtp;
               SmtpServer = smtpConfig.Server ?? string.Empty;
             SmtpPort = smtpConfig.Port;
             SmtpUsername = smtpConfig.Username ?? string.Empty;
             EnableSsl = smtpConfig.UseSSL;
             IsEmailConfigured = smtpConfig.IsConfigured;
-              // ✅ CORRECCIÓN CRÍTICA: Cargar campos BCC y CC desde la configuración
+              // Cargar campos BCC y CC desde la configuración
             BccEmail = smtpConfig.BccEmail ?? string.Empty;
             CcEmail = smtpConfig.CcEmail ?? string.Empty;
-            
-            _logger.LogInformation("🔄 ✅ SMTP configurado: Server='{Server}', Username='{Username}', BCC='{BccEmail}', CC='{CcEmail}', IsConfigured={IsConfigured}", 
-                SmtpServer, SmtpUsername, BccEmail, CcEmail, IsEmailConfigured);
 
             // Cargar contraseña desde Windows Credential Manager
             if (!string.IsNullOrWhiteSpace(smtpConfig.Username))

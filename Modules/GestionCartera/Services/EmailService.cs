@@ -10,6 +10,7 @@ using GestLog.Modules.GestionCartera.Exceptions;
 using GestLog.Modules.GestionCartera.Models;
 using GestLog.Services;
 using GestLog.Services.Core.Logging;
+using GestLog.Services.Core.Security;
 
 namespace GestLog.Modules.GestionCartera.Services
 {
@@ -19,12 +20,14 @@ namespace GestLog.Modules.GestionCartera.Services
     public class EmailService : IEmailService
     {
         private readonly IGestLogLogger _logger;
+        private readonly ICredentialService _credentialService;
         private SmtpConfiguration? _smtpConfiguration;
         private readonly object _configurationLock = new object();
 
-        public EmailService(IGestLogLogger logger)
+        public EmailService(IGestLogLogger logger, ICredentialService credentialService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
         }
 
         public SmtpConfiguration? CurrentConfiguration 
@@ -529,6 +532,16 @@ namespace GestLog.Modules.GestionCartera.Services
         private SmtpClient CreateSmtpClient()
         {
             var config = CurrentConfiguration!;
+            // Si la contraseña está vacía, intentar recuperarla del Credential Manager
+            if (string.IsNullOrWhiteSpace(config.Password) && !string.IsNullOrWhiteSpace(config.Username))
+            {
+                var credentialTarget = $"SMTP_{config.SmtpServer}_{config.Username}";
+                var credentials = _credentialService.GetCredentials(credentialTarget);
+                if (!string.IsNullOrEmpty(credentials.password))
+                {
+                    config.Password = credentials.password;
+                }
+            }
             return new SmtpClient(config.SmtpServer)
             {
                 Port = config.Port,

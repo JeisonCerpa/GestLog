@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
-using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 using GestLog.Modules.DatabaseConnection;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -16,6 +15,8 @@ using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using GestLog.Modules.Personas.Models;
+using Modules.Personas.Interfaces;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -50,6 +51,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
 
         [ObservableProperty]
         private ObservableCollection<DiscoEntity> listaDiscos = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Persona> personasDisponibles = new();
+
+        [ObservableProperty]
+        private Persona? personaAsignada;
 
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
         public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
@@ -94,6 +101,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
+        public async Task InicializarAsync()
+        {
+            await InicializarPersonasAsignadasAsync();
+            // ...cargar otros datos si es necesario...
+        }
+
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task GuardarEquipoAsync()
         {
@@ -114,7 +127,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             var equipo = new EquipoInformaticoEntity
             {
                 Codigo = Codigo,
-                UsuarioAsignado = UsuarioAsignado,
+                UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty,
                 NombreEquipo = NombreEquipo,
                 Sede = Sede,
                 Marca = Marca,
@@ -677,6 +690,23 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             
             if (ListaRam.Contains(slot))
                 ListaRam.Remove(slot);
+        }
+
+        public async Task CargarPersonasDisponiblesAsync()
+        {
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            var personaService = serviceProvider.GetService(typeof(IPersonaService)) as IPersonaService;
+            if (personaService != null)
+            {
+                var personas = await personaService.BuscarPersonasAsync("");
+                PersonasDisponibles = new ObservableCollection<Persona>(personas.Where(p => p.Activo));
+            }
+        }
+
+        [RelayCommand]
+        public async Task InicializarPersonasAsignadasAsync()
+        {
+            await CargarPersonasDisponiblesAsync();
         }
 
         // TODO: Agregar lógica de discos y guardar equipo aquí siguiendo el mismo patrón MVVM

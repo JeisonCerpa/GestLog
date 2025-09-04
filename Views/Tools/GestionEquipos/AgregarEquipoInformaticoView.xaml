@@ -61,6 +61,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <!-- Columna 1 -->
                         <StackPanel Grid.Column="0" Grid.Row="0" Margin="8">
@@ -69,7 +70,7 @@
                         </StackPanel>
                         <StackPanel Grid.Column="0" Grid.Row="1" Margin="8">
                             <TextBlock Text="Usuario Asignado" FontWeight="Bold"/>
-                            <TextBox Height="32" Text="{Binding UsuarioAsignado}" />
+                            <ComboBox Height="32" ItemsSource="{Binding PersonasDisponibles}" SelectedItem="{Binding PersonaAsignada, Mode=TwoWay}" DisplayMemberPath="NombreCompleto" />
                         </StackPanel>
                         <StackPanel Grid.Column="0" Grid.Row="2" Margin="8">
                             <TextBlock Text="Nombre de Equipo" FontWeight="Bold"/>
@@ -86,6 +87,10 @@
                         <StackPanel Grid.Column="0" Grid.Row="4" Margin="8">
                             <TextBlock Text="Observaciones" FontWeight="Bold"/>
                             <TextBox Height="60" AcceptsReturn="True" Text="{Binding Observaciones}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Grid.Row="5" Margin="8">
+                            <TextBlock Text="Código AnyDesk" FontWeight="Bold"/>
+                            <TextBox Height="32" Text="{Binding CodigoAnydesk}" />
                         </StackPanel>
                         <!-- Columna 2 -->
                         <StackPanel Grid.Column="1" Grid.Row="0" Margin="8" VerticalAlignment="Top" HorizontalAlignment="Left">

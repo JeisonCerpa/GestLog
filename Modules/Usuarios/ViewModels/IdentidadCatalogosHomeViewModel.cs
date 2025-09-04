@@ -18,10 +18,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private async Task AbrirPersonas()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Personas");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(PersonaManagementViewModel)) as PersonaManagementViewModel;
                 if (viewModel == null)
@@ -55,8 +53,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [RelayCommand]
         private void AbrirUsuarios()
         {            try
-            {                _logger.LogInformation("🧭 Navegando a Gestión de Usuarios");
-                
+            {                
                 var serviceProvider = LoggingService.GetServiceProvider();                // Debug: verificar tipos registrados
                 _logger.LogDebug("🔍 Verificando registro de UsuarioManagementViewModel en DI");
                 var viewModel = serviceProvider.GetRequiredService<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
@@ -94,10 +91,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private void AbrirCatalogos()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Catálogos");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(CatalogosManagementViewModel));
                 if (viewModel == null)
@@ -127,10 +122,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private void AbrirAuditoria()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Historial de Auditoría");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(AuditoriaManagementViewModel));
                 if (viewModel == null)
@@ -162,10 +155,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private async Task AbrirCargos()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Cargos");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(CatalogosManagementViewModel)) as CatalogosManagementViewModel;
                 if (viewModel == null)
@@ -196,10 +187,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private async Task AbrirTiposDocumento()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Tipos de Documento");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(CatalogosManagementViewModel)) as CatalogosManagementViewModel;
                 if (viewModel == null)
@@ -230,10 +219,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private void AbrirRoles()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Roles");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(RolManagementViewModel));
                 if (viewModel == null)
@@ -263,10 +250,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [RelayCommand]
         private void AbrirGestionPermisosRol()
-        {
-            try
+        {            try
             {
-                _logger.LogInformation("🧭 Navegando a Gestión de Permisos por Rol");
                 var serviceProvider = LoggingService.GetServiceProvider();
                 var viewModel = serviceProvider.GetService(typeof(GestionPermisosRolViewModel));
                 if (viewModel == null)

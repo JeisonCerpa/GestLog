@@ -61,8 +61,7 @@ public partial class ConfigurationViewModel : ObservableObject
     {
         new("General", "🔧", "Configuraciones generales de la aplicación"),        new("UI", "🎨", "Configuraciones de interfaz de usuario"),
         new("Logging", "📝", "Configuraciones del sistema de logging"),
-        new("Modules", "🔧", "Configuraciones de módulos"),
-        new("SMTP", "📧", "Configuraciones del servidor de correo"),
+        new("Modules", "🔧", "Configuraciones de módulos"),        new("SMTP", "📧", "Configuraciones del servidor de correo"),
         new("DaaterProcessor", "📊", "Configuraciones del procesador de datos"),
         new("ErrorLog", "⚠️", "Configuraciones del registro de errores")
     };    public ConfigurationViewModel(IConfigurationService configurationService, IGestLogLogger logger)
@@ -87,11 +86,8 @@ public partial class ConfigurationViewModel : ObservableObject
     private async Task LoadConfiguration()
     {
         try
-        {
-            IsLoading = true;
+        {            IsLoading = true;
             StatusMessage = "Cargando configuración...";
-            
-            _logger.LogDebug("🔄 Cargando configuración desde ViewModel");
             
             await _configurationService.LoadAsync();
             
@@ -150,12 +146,9 @@ public partial class ConfigurationViewModel : ObservableObject
     /// </summary>
     [RelayCommand]
     private async Task ResetToDefaults()
-    {
-        try
+    {        try
         {
             StatusMessage = "Restaurando valores por defecto...";
-            
-            _logger.LogInformation("🔄 Restaurando configuración a valores por defecto");
             
             await _configurationService.ResetToDefaultsAsync();
             Configuration = _configurationService.Current;
@@ -178,12 +171,9 @@ public partial class ConfigurationViewModel : ObservableObject
     /// </summary>
     [RelayCommand]
     private async Task ResetSection()
-    {
-        try
+    {        try
         {
             StatusMessage = $"Restaurando sección {SelectedSection}...";
-            
-            _logger.LogInformation("🔄 Restaurando sección {Section}", SelectedSection);
             
             await _configurationService.ResetToDefaultsAsync(SelectedSection.ToLower());
             Configuration = _configurationService.Current;
@@ -268,13 +258,11 @@ public partial class ConfigurationViewModel : ObservableObject
     /// <summary>
     /// Comando para cambiar la sección activa
     /// </summary>
-    [RelayCommand]
-    private void ChangeSection(string sectionName)
+    [RelayCommand]    private void ChangeSection(string sectionName)
     {
         if (!string.IsNullOrEmpty(sectionName))
         {
             SelectedSection = sectionName;
-            _logger.LogDebug("🔄 Sección cambiada a: {Section}", sectionName);
         }
     }
 
@@ -302,11 +290,12 @@ public partial class ConfigurationViewModel : ObservableObject
 
     /// <summary>
     /// Maneja cambios en la configuración
+    /// </summary>    /// <summary>
+    /// Maneja cambios en la configuración
     /// </summary>
     private void OnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
     {
         HasUnsavedChanges = _configurationService.HasUnsavedChanges;
-        _logger.LogDebug("🔄 Configuración cambiada: {Path} = {NewValue}", e.SettingPath, e.NewValue ?? "null");
     }
 
     /// <summary>

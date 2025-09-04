@@ -133,32 +133,25 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
     /// Maneja cambios en la configuración
     /// </summary>
     private async void OnConfigurationChanged(object? sender, EventArgs e)
-    {
-        try
+    {        try
         {
-            _logger.LogInformation("🔄 Configuración cambiada, sincronizando ViewModels...");
-            
             // Recargar configuración en los ViewModels correspondientes
             await SmtpConfiguration.LoadSmtpConfigurationAsync();
-            
-            _logger.LogInformation("✅ ViewModels sincronizados con nueva configuración");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error sincronizando configuración");
+            _logger.LogError(ex, "Error sincronizando configuración");
         }
     }
 
     /// <summary>
     /// Limpia el log de texto
     /// </summary>
-    [RelayCommand]
-    private void ClearLog()
+    [RelayCommand]    private void ClearLog()
     {
         LogText = string.Empty;
         GlobalStatusMessage = "Log limpiado";
-        _logger.LogInformation("🧹 Log de texto limpiado");
-    }    /// <summary>
+    }/// <summary>
     /// Comando para envío automático de documentos por email
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanSendDocumentsAutomatically))]
@@ -209,11 +202,9 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
     /// Inicializa todos los componentes después de la construcción
     /// </summary>
     public async Task InitializeAsync()
-    {
-        try
+    {        try
         {
-            _logger.LogInformation("🔄 Inicializando componentes del MainDocumentGenerationViewModel...");
-              // Cargar configuración SMTP
+            // Cargar configuración SMTP
             await SmtpConfiguration.LoadSmtpConfigurationAsync();
             
             // NOTA: Los documentos se cargarán cuando se seleccione el archivo Excel de emails
@@ -224,7 +215,7 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
             AutomaticEmail.UpdateEmailConfiguration(SmtpConfiguration.IsEmailConfigured);
             
             GlobalStatusMessage = "Componentes inicializados correctamente";
-            _logger.LogInformation("✅ MainDocumentGenerationViewModel inicializado completamente");
+            _logger.LogInformation("MainDocumentGenerationViewModel inicializado completamente");
         }
         catch (Exception ex)
         {
@@ -241,15 +232,14 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         try
         {
             _configurationService.ConfigurationChanged -= OnConfigurationChanged;
-            
-            SmtpConfiguration?.Cleanup();
+              SmtpConfiguration?.Cleanup();
             AutomaticEmail?.Cleanup();
             
-            _logger.LogInformation("🧹 MainDocumentGenerationViewModel limpiado correctamente");
+            _logger.LogInformation("MainDocumentGenerationViewModel limpiado correctamente");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error durante la limpieza");
+            _logger.LogError(ex, "Error durante la limpieza");
         }
     }
 }
