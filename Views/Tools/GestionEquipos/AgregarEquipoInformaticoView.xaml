@@ -203,14 +203,14 @@
                         <!-- Separador vertical -->
                         <Rectangle Grid.Column="1" Width="1" Fill="#DDD" Margin="16,0" />
                         <!-- Botones principales -->
-                        <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,24,0,24" Width="180">
-                            <Button Content="Obtener campos automáticos" Width="180" Height="40" Margin="0,0,0,16"
+                        <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,24,0,24" Orientation="Vertical">
+                            <Button Content="Obtener campos automáticos" Width="Auto" MinWidth="200" Height="40" Margin="0,0,0,16"
                                     Command="{Binding ObtenerCamposAutomaticosCommand}"
                                     IsEnabled="{Binding CanObtenerCamposAutomaticos}"
                                     Opacity="{Binding CanObtenerCamposAutomaticos, Converter={StaticResource BooleanToOpacityConverter}}"
                                     Background="#118938" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#2B8E3F" BorderThickness="1"
                                     Cursor="Hand"
-                                    Padding="16,0,16,0"
+                                    Padding="24,0,24,0"
                                     Style="{StaticResource CardButtonStyle}"
                                     FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
                                     ToolTip="Detectar marca, RAM, discos y otros campos automáticamente">
@@ -218,22 +218,22 @@
                                     <DropShadowEffect Color="#118938" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
                             </Button>
-                            <Button Content="Guardar" Width="180" Height="40" Command="{Binding GuardarCommand}"
+                            <Button Content="Guardar" Width="Auto" MinWidth="200" Height="40" Command="{Binding GuardarCommand}"
                                     IsEnabled="{Binding CanGuardar}"
                                     Opacity="{Binding CanGuardar, Converter={StaticResource BooleanToOpacityConverter}}"
-                                    Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1" Margin="0,0,0,12"
+                                    Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1" Margin="0,0,0,16"
                                     Cursor="Hand"
-                                    Padding="16,0,16,0"
+                                    Padding="24,0,24,0"
                                     Style="{StaticResource CardButtonStyle}"
                                     FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
                                 <Button.Effect>
                                     <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
                             </Button>
-                            <Button Content="Cancelar" Width="180" Height="40" Command="{Binding CancelarCommand}"
+                            <Button Content="Cancelar" Width="Auto" MinWidth="200" Height="40" Command="{Binding CancelarCommand}"
                                     Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
                                     Cursor="Hand"
-                                    Padding="16,0,16,0"
+                                    Padding="24,0,24,0"
                                     Style="{StaticResource CardButtonStyle}"
                                     FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
                                 <Button.Effect>
