@@ -97,7 +97,12 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
                                         <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Estado}" Background="#FFFFFF" />
+                                        <ComboBox Height="32" SelectedItem="{Binding Estado, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo" SelectedIndex="0">
+                                            <ComboBoxItem Content="Activo" />
+                                            <ComboBoxItem Content="Dado de baja" />
+                                            <ComboBoxItem Content="En reparación" />
+                                            <ComboBoxItem Content="En mantenimiento" />
+                                        </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
                                         <TextBlock Text="Costo" FontWeight="Bold" Foreground="#504F4E" />

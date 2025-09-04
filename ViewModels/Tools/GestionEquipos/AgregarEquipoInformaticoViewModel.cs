@@ -64,6 +64,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private ObservableCollection<Persona> personasFiltradas = new();
 
+        [ObservableProperty]
+        private string estado = "Activo";
+
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
         public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
 
