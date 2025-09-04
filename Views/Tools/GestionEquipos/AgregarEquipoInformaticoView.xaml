@@ -20,7 +20,7 @@
         <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
         <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
         <DataTemplate x:Key="SlotRamTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -180,6 +180,7 @@
                                     Cursor="Hand"
                                     Padding="16,0,16,0"
                                     Style="{StaticResource CardButtonStyle}"
+                                    FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
                                     ToolTip="Detectar marca, RAM, discos y otros campos automáticamente">
                                 <Button.Effect>
                                     <DropShadowEffect Color="#118938" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
@@ -191,7 +192,8 @@
                                     Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1" Margin="0,0,0,12"
                                     Cursor="Hand"
                                     Padding="16,0,16,0"
-                                    Style="{StaticResource CardButtonStyle}">
+                                    Style="{StaticResource CardButtonStyle}"
+                                    FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
                                 <Button.Effect>
                                     <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
@@ -200,7 +202,8 @@
                                     Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
                                     Cursor="Hand"
                                     Padding="16,0,16,0"
-                                    Style="{StaticResource CardButtonStyle}">
+                                    Style="{StaticResource CardButtonStyle}"
+                                    FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
                                 <Button.Effect>
                                     <DropShadowEffect Color="#C0392B" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
@@ -219,7 +222,7 @@
                                     </ItemsControl.ItemsPanel>
                                 </ItemsControl>
                             </ScrollViewer>
-                            <Button Content="Agregar RAM" Width="180" Height="40" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="16,0,16,0" Command="{Binding AgregarRamCommand}" Style="{StaticResource CardButtonStyle}" />
+                            <Button Content="Agregar RAM" Width="180" Height="40" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="16,0,16,0" Command="{Binding AgregarRamCommand}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         </StackPanel>
                     </GroupBox>
                     <!-- Sección Discos -->

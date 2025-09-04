@@ -552,20 +552,10 @@
         <Setter Property="Margin" Value="5"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect ShadowDepth="2" Direction="315" Color="#C0C0C0" Opacity="0.3" BlurRadius="8"/>
-            </Setter.Value>
-        </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="#F8F9FA"/>
                 <Setter Property="BorderBrush" Value="#4CAF50"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect ShadowDepth="4" Direction="315" Color="#4CAF50" Opacity="0.4" BlurRadius="12"/>
-                    </Setter.Value>
-                </Setter>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
                 <Setter Property="Background" Value="#F0F0F0"/>

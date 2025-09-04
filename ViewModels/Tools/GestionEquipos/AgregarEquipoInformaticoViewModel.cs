@@ -687,8 +687,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [RelayCommand]
         public void AgregarRam()
         {
-            if (!_currentUser.HasPermission("GestionEquipos.GestionarRam")) return;
-            
+            // El permiso debe ser el mismo que para agregar equipo
+            if (!CanGuardarEquipo)
+            {
+                MessageBox.Show("No tienes permisos para agregar RAM.", "Permiso requerido", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             var slot = new SlotRamEntity
             {
                 NumeroSlot = ListaRam.Count + 1,
@@ -783,5 +787,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         // public int? CantidadDiscos { get; set; }
         // public int? CapacidadTotalDiscosGB { get; set; }
         // Si se requiere mostrar totales, calcularlos desde ListaRam y ListaDiscos
+
+        [RelayCommand]
+        public void Cancelar()
+        {
+            // Cierra la ventana si está en modo diálogo
+            var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive && w.DataContext == this);
+            if (window != null)
+            {
+                window.DialogResult = false;
+                window.Close();
+            }
+        }
     }
 }
