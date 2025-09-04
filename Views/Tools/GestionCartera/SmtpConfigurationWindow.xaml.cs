@@ -187,10 +187,13 @@ namespace GestLog.Views.Tools.GestionCartera
         {
             try
             {
-                // Protección contra múltiples ejecuciones simultáneas            if (_isLoadingConfiguration)
+            // Protección contra múltiples ejecuciones simultáneas
+            if (_isLoadingConfiguration)
             {
                 return;
-            }                _isLoadingConfiguration = true;
+            }
+            
+            _isLoadingConfiguration = true;
 
                 // Obtener la configuración más actualizada desde el servicio
                 var latestConfig = _configurationService?.Current?.Smtp;

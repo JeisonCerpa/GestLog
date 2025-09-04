@@ -70,7 +70,14 @@
                         </StackPanel>
                         <StackPanel Grid.Column="0" Grid.Row="1" Margin="8">
                             <TextBlock Text="Usuario Asignado" FontWeight="Bold"/>
-                            <ComboBox Height="32" ItemsSource="{Binding PersonasDisponibles}" SelectedItem="{Binding PersonaAsignada, Mode=TwoWay}" DisplayMemberPath="NombreCompleto" />
+                            <!-- ComboBox filtrado -->
+                            <ComboBox Height="32"
+                                      ItemsSource="{Binding PersonasFiltradas}"
+                                      SelectedItem="{Binding PersonaAsignada, Mode=TwoWay}"
+                                      DisplayMemberPath="NombreCompleto"
+                                      IsEditable="True"
+                                      IsTextSearchEnabled="False"
+                                      Text="{Binding FiltroPersonaAsignada, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="0" Grid.Row="2" Margin="8">
                             <TextBlock Text="Nombre de Equipo" FontWeight="Bold"/>

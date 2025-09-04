@@ -58,11 +58,18 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private Persona? personaAsignada;
 
+        [ObservableProperty]
+        private string filtroPersonaAsignada = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<Persona> personasFiltradas = new();
+
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
         public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
 
         [ObservableProperty]
-        private bool isLoadingDiscos;        private readonly ICurrentUserService _currentUserService;
+        private bool isLoadingDiscos;        
+        private readonly ICurrentUserService _currentUserService;
         private CurrentUserInfo _currentUser;
         private readonly IGestLogLogger _logger;
 
@@ -75,7 +82,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private bool canAgregarDiscoManual;
         [ObservableProperty]
-        private bool canEliminarDisco;        public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
+        private bool canEliminarDisco;        
+        public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
         {
             _currentUserService = currentUserService;
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
@@ -92,7 +100,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        public void RecalcularPermisos()
+        }        
+        public void RecalcularPermisos()
         {
             CanGuardarEquipo = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanObtenerCamposAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
@@ -116,7 +125,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 return;
             }
             var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                .UseSqlServer("Data Source=.;Initial Catalog=GestLog;Integrated Security=True;") // TODO: Usar configuración real
+                .UseSqlServer("Data Source=.;Initial Catalog=GestLog;Integrated Security=True;TrustServerCertificate=True;") // TODO: Usar configuración real
                 .Options;
             using var dbContext = new GestLogDbContext(options);
             if (dbContext.EquiposInformaticos.Any(e => e.Codigo == Codigo))
@@ -156,7 +165,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             }
             await dbContext.SaveChangesAsync();
             MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-        }        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
+        }        
+        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
         public async Task ObtenerCamposAutomaticosAsync()
         {
             if (IsLoadingRam) return;
@@ -165,7 +175,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 await Task.Run(() => ObtenerCamposAutomaticos());
                 // También obtener discos automáticamente
-                await Task.Run(() => ObtenerDiscosAutomaticos());                // Detección automática del sistema operativo
+                await Task.Run(() => ObtenerDiscosAutomaticos());                
+                // Detección automática del sistema operativo
                 if (string.IsNullOrWhiteSpace(So))
                 {
                     So = System.Environment.OSVersion.VersionString;
@@ -175,7 +186,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 IsLoadingRam = false;
             }
-        }        private void ObtenerCamposAutomaticos()
+        }        
+        private void ObtenerCamposAutomaticos()
         {
             _logger.LogInformation("🔍 Iniciando detección automática de campos del equipo");
             
@@ -319,7 +331,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 _logger.LogError(ex, "❌ Error ejecutando proceso {FileName} {Arguments}", fileName, arguments);
                 return string.Empty; 
             }
-        }        private void ObtenerRamAutomatica()
+        }        
+        private void ObtenerRamAutomatica()
         {
             _logger.LogDebug("[RAM] Iniciando detección con WMI clásico");
             Application.Current.Dispatcher.Invoke(() => ListaRam.Clear());
@@ -484,13 +497,15 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 IsLoadingDiscos = false;
             }
-        }        private void ObtenerDiscosAutomaticos()
+        }        
+        private void ObtenerDiscosAutomaticos()
         {
             _logger.LogDebug("[DISCOS] Iniciando detección automática de discos");
             Application.Current.Dispatcher.Invoke(() => ListaDiscos.Clear());
             
             try
-            {                // Usar Get-CimInstance del namespace Storage para información más precisa del tipo de disco
+            {                
+                // Usar Get-CimInstance del namespace Storage para información más precisa del tipo de disco
                 var output = EjecutarPowerShellCompleto("Get-CimInstance -Namespace root\\Microsoft\\Windows\\Storage -ClassName MSFT_PhysicalDisk | Select-Object DeviceId, MediaType, Size, Manufacturer, Model | ConvertTo-Csv -NoTypeInformation");
                 _logger.LogDebug($"[DISCOS] Resultado PowerShell Win32_DiskDrive CSV: '{output}'");
                 
@@ -513,7 +528,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 for (int i = 1; i < lines.Count; i++)
                 {
                     var csv = lines[i];
-                    _logger.LogDebug($"[DISCOS] Procesando línea CSV {i}: '{csv}'");                    // Usar el parser robusto para CSV
+                    _logger.LogDebug($"[DISCOS] Procesando línea CSV {i}: '{csv}'");                    
+                    // Usar el parser robusto para CSV
                     var parts = ParseCsvLine(csv);
                     _logger.LogDebug($"[DISCOS] Partes parseadas: {string.Join(" | ", parts)}");
                     
@@ -593,7 +609,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             }
             
             _logger.LogDebug($"[DISCOS] Lista final de discos: {string.Join(", ", ListaDiscos.Select(d => $"Disco {d.NumeroDisco}: {d.CapacidadGB}GB {d.Tipo} {d.Marca} {d.Modelo}"))}");
-        }        private string NormalizarTipoDiscoStorage(string mediaTypeStr, string modelo = "")
+        }        
+        private string NormalizarTipoDiscoStorage(string mediaTypeStr, string modelo = "")
         {
             _logger.LogDebug($"[DISCOS] Normalizando tipo Storage - MediaType: '{mediaTypeStr}', Modelo: '{modelo}'");
             
@@ -690,17 +707,63 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             
             if (ListaRam.Contains(slot))
                 ListaRam.Remove(slot);
-        }
-
+        }        
         public async Task CargarPersonasDisponiblesAsync()
         {
-            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var personaService = serviceProvider.GetService(typeof(IPersonaService)) as IPersonaService;
-            if (personaService != null)
+            try
             {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var personaService = serviceProvider.GetService(typeof(IPersonaService)) as IPersonaService;
+                if (personaService == null)
+                {
+                    PersonasDisponibles = new ObservableCollection<Persona>();
+                    return;
+                }
                 var personas = await personaService.BuscarPersonasAsync("");
-                PersonasDisponibles = new ObservableCollection<Persona>(personas.Where(p => p.Activo));
+                var personasActivas = personas.Where(p => p.Activo).ToList();
+                Application.Current.Dispatcher.Invoke(() => {
+                    PersonasDisponibles = new ObservableCollection<Persona>(personasActivas);
+                });
+                // Actualizar filtro después de cargar
+                ActualizarFiltroPersonas();
             }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error cargando personas disponibles: {Message}", ex.Message);
+                Application.Current.Dispatcher.Invoke(() => {
+                    PersonasDisponibles = new ObservableCollection<Persona>();
+                    ActualizarFiltroPersonas();
+                });
+            }
+        }
+
+        private void ActualizarFiltroPersonas()
+        {
+            if (PersonasDisponibles == null || PersonasDisponibles.Count == 0)
+            {
+                PersonasFiltradas = new ObservableCollection<Persona>();
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(FiltroPersonaAsignada))
+            {
+                PersonasFiltradas = new ObservableCollection<Persona>(PersonasDisponibles);
+            }
+            else
+            {
+                var filtro = FiltroPersonaAsignada.Trim().ToLowerInvariant();
+                var filtradas = PersonasDisponibles.Where(p => p.NombreCompleto.ToLowerInvariant().Contains(filtro)).ToList();
+                PersonasFiltradas = new ObservableCollection<Persona>(filtradas);
+            }
+        }
+
+        partial void OnFiltroPersonaAsignadaChanged(string value)
+        {
+            ActualizarFiltroPersonas();
+        }
+
+        partial void OnPersonasDisponiblesChanged(ObservableCollection<Persona> value)
+        {
+            ActualizarFiltroPersonas();
         }
 
         [RelayCommand]
@@ -709,6 +772,13 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             await CargarPersonasDisponiblesAsync();
         }
 
-        // TODO: Agregar lógica de discos y guardar equipo aquí siguiendo el mismo patrón MVVM
+        // Eliminar referencias a propiedades eliminadas de la entidad principal
+        // public int? SlotsTotales { get; set; }
+        // public int? SlotsUtilizados { get; set; }
+        // public string? TipoRam { get; set; }
+        // public int? CapacidadTotalRamGB { get; set; }
+        // public int? CantidadDiscos { get; set; }
+        // public int? CapacidadTotalDiscosGB { get; set; }
+        // Si se requiere mostrar totales, calcularlos desde ListaRam y ListaDiscos
     }
 }

@@ -70,7 +70,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private void VerDetalles(EquipoInformaticoEntity equipo)
         {
             // Aquí puedes abrir un diálogo o navegar a una vista de detalles
-        }        [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
+        }        
+        [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
         private void AgregarEquipo()
         {
             var ventana = new AgregarEquipoInformaticoView();
@@ -80,5 +81,14 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 CargarEquipos();
             }
         }
+
+        // Eliminar referencias a propiedades eliminadas de la entidad principal
+        // public int? SlotsTotales { get; set; }
+        // public int? SlotsUtilizados { get; set; }
+        // public string? TipoRam { get; set; }
+        // public int? CapacidadTotalRamGB { get; set; }
+        // public int? CantidadDiscos { get; set; }
+        // public int? CapacidadTotalDiscosGB { get; set; }
+        // Si se requiere mostrar totales, calcularlos desde ListaRam y ListaDiscos
     }
 }

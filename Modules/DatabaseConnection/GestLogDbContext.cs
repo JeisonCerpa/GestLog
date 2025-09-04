@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
-using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -29,11 +28,9 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.Usuarios.Models.UsuarioRol> UsuarioRoles { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.RolPermiso> RolPermisos { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.UsuarioPermiso> UsuarioPermisos { get; set; }
-        
-        // --- GESTIÓN DE EQUIPOS INFORMÁTICOS ---
-        public DbSet<EquipoInformaticoEntity> EquiposInformaticos { get; set; }
-        public DbSet<SlotRamEntity> SlotsRam { get; set; }
-        public DbSet<DiscoEntity> Discos { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> EquiposInformaticos { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -171,72 +168,6 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany()
                     .HasForeignKey(e => e.IdPermiso)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-            
-            // --- CONFIGURACIONES GESTIÓN DE EQUIPOS INFORMÁTICOS ---
-            
-            // Configuración de EquipoInformaticoEntity
-            modelBuilder.Entity<EquipoInformaticoEntity>(entity =>
-            {
-                entity.ToTable("EquiposInformaticos");
-                entity.HasKey(e => e.Codigo);
-                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.UsuarioAsignado).HasMaxLength(100);
-                entity.Property(e => e.NombreEquipo).HasMaxLength(100);
-                entity.Property(e => e.Costo).HasPrecision(18, 2);
-                entity.Property(e => e.CodigoAnydesk).HasMaxLength(50);
-                entity.Property(e => e.Modelo).HasMaxLength(100);
-                entity.Property(e => e.SO).HasMaxLength(100);
-                entity.Property(e => e.Marca).HasMaxLength(50);
-                entity.Property(e => e.SerialNumber).HasMaxLength(100);
-                entity.Property(e => e.Procesador).HasMaxLength(100);
-                entity.Property(e => e.Observaciones).HasMaxLength(500);
-                entity.Property(e => e.Estado).HasConversion<int>();
-                entity.Property(e => e.Sede).HasConversion<int>();
-                entity.Property(e => e.TipoRam).HasConversion<int?>();
-                entity.Property(e => e.FechaCreacion).IsRequired();
-            });
-            
-            // Configuración de SlotRamEntity
-            modelBuilder.Entity<SlotRamEntity>(entity =>
-            {
-                entity.ToTable("SlotsRam");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.CodigoEquipo).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.NumeroSlot).IsRequired();
-                entity.Property(e => e.TipoMemoria).HasMaxLength(50);
-                entity.Property(e => e.Marca).HasMaxLength(100);
-                entity.Property(e => e.Frecuencia).HasMaxLength(50);
-                entity.Property(e => e.Observaciones).HasMaxLength(200);
-                
-                // Relación con EquipoInformaticoEntity
-                entity.HasOne(s => s.Equipo)
-                    .WithMany(e => e.SlotsRam)
-                    .HasForeignKey(s => s.CodigoEquipo)
-                    .OnDelete(DeleteBehavior.Cascade);
-                    
-                // Índice único para evitar slots duplicados por equipo
-                entity.HasIndex(e => new { e.CodigoEquipo, e.NumeroSlot }).IsUnique();
-            });
-            
-            // Configuración de DiscoEntity
-            modelBuilder.Entity<DiscoEntity>(entity =>
-            {
-                entity.ToTable("Discos");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.CodigoEquipo).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.NumeroDisco).IsRequired();
-                entity.Property(e => e.Tipo).HasConversion<int>();
-                entity.Property(e => e.CapacidadGB);
-                entity.Property(e => e.Marca).HasMaxLength(100);
-                entity.Property(e => e.Modelo).HasMaxLength(100);
-                // Relación con EquipoInformaticoEntity
-                entity.HasOne(d => d.Equipo)
-                    .WithMany(e => e.Discos)
-                    .HasForeignKey(d => d.CodigoEquipo)
-                    .OnDelete(DeleteBehavior.Cascade);
-                // Índice único para evitar discos duplicados por equipo
-                entity.HasIndex(e => new { e.CodigoEquipo, e.NumeroDisco }).IsUnique();
             });
         }
 

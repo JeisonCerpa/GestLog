@@ -48,17 +48,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         public string? Procesador { get; set; }
         
         // RAM - Información general
-        public int? SlotsTotales { get; set; }
-        public int? SlotsUtilizados { get; set; }
-        
-        [MaxLength(50)]
-        public string? TipoRam { get; set; }
-        
-        public int? CapacidadTotalRamGB { get; set; }
+        // public int? SlotsTotales { get; set; }
+        // public int? SlotsUtilizados { get; set; }
+        // [MaxLength(50)]
+        // public string? TipoRam { get; set; }
+        // public int? CapacidadTotalRamGB { get; set; }
         
         // Almacenamiento - Información general
-        public int? CantidadDiscos { get; set; }
-        public int? CapacidadTotalDiscosGB { get; set; }
+        // public int? CantidadDiscos { get; set; }
+        // public int? CapacidadTotalDiscosGB { get; set; }
         
         [MaxLength(500)]
         public string? Observaciones { get; set; }

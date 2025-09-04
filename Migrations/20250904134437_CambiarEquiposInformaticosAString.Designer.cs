@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    partial class GestLogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250904134437_CambiarEquiposInformaticosAString")]
+    partial class CambiarEquiposInformaticosAString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,6 +69,15 @@ namespace GestLog.Migrations
                     b.Property<string>("Codigo")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("CantidadDiscos")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CapacidadTotalDiscosGB")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CapacidadTotalRamGB")
+                        .HasColumnType("int");
 
                     b.Property<string>("CodigoAnydesk")
                         .HasMaxLength(50)
@@ -122,6 +134,16 @@ namespace GestLog.Migrations
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("SlotsTotales")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SlotsUtilizados")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TipoRam")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("UsuarioAsignado")
                         .HasMaxLength(100)

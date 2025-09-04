@@ -10,8 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{
-    public partial class AgregarEquipoInformaticoView : Window
+{    public partial class AgregarEquipoInformaticoView : Window
     {
         public AgregarEquipoInformaticoView()
         {
@@ -23,6 +22,11 @@ namespace GestLog.Views.Tools.GestionEquipos
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
             var viewModel = new GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel(currentUserService);
             DataContext = viewModel;
+            
+            // Cargar personas cuando se carga la ventana
+            this.Loaded += async (sender, e) => {
+                await viewModel.InicializarPersonasAsignadasAsync();
+            };
         }
 
         private void BtnCancelar_Click(object sender, RoutedEventArgs e)
