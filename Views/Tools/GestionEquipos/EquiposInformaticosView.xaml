@@ -7,46 +7,200 @@
              mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="900">
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Estilo idéntico al de Registrar mantenimiento en Mantenimiento -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#2B8E3F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2B8E3F"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#118938" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <!-- Estilo para botones circulares flotantes -->
+        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderBrush" Value="#E5E5E5"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
-    <Grid Background="#FAFAFA">
-        <StackPanel Margin="24,0,24,64" VerticalAlignment="Top">
+    <Grid Background="#FAFAFA" Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Margin="24,0,24,8" VerticalAlignment="Top" Grid.Row="0">
             <TextBlock Text="Listado de Equipos Informáticos" FontSize="18" FontWeight="SemiBold" Foreground="#118938" Margin="0,0,0,18"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,8">
+                <TextBox Width="220" Height="28" VerticalAlignment="Center"
+                         Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,8,0" Padding="8,2"
+                         ToolTip="Filtrar por código, usuario, nombre o sede"
+                         Foreground="#333" Background="#FFF" BorderBrush="#DDD" BorderThickness="1"
+                         FontSize="14"/>
+                <Button Content="Exportar filtrados"
+                        Command="{Binding ExportarEquiposFiltradosCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="28"/>
+            </StackPanel>
+        </StackPanel>
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
             <DataGrid x:Name="dgEquipos" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column" RowHeaderWidth="0"
-                      ItemsSource="{Binding ListaEquiposInformaticos}"
-                      Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
+                      ItemsSource="{Binding EquiposView}"
+                      Background="Transparent" BorderThickness="0"
                       ColumnHeaderHeight="38" RowHeight="34" FontSize="14"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      RowBackground="White" AlternatingRowBackground="#F5F5F5"
+                      GridLinesVisibility="None" SnapsToDevicePixels="True" UseLayoutRounding="True"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <DataGrid.Resources>
+                    <Style x:Key="CenteredTextBlockStyle" TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="TextAlignment" Value="Center"/>
+                    </Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="TextAlignment" Value="Center"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                <Setter Property="Foreground" Value="#888"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="8,6"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Foreground" Value="#504F4E"/>
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E8F5E8"/>
+                                <Setter Property="Foreground" Value="#118938"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120"/>
-                    <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" Width="180"/>
-                    <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="180"/>
-                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="120"/>
-                    <DataGridTemplateColumn Header="Detalles" Width="100">
+                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="80" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="100" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" MinWidth="100" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTemplateColumn Header="Acción" MinWidth="180" Width="180">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Ver Detalles" 
-                                        Command="{Binding DataContext.VerDetallesCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        IsEnabled="{Binding DataContext.CanVerHistorial, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        Opacity="{Binding DataContext.CanVerHistorial, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToOpacityConverter}}"
-                                        Style="{StaticResource PrimaryButtonStyle}"/>
+                                <Button Content="Ver Detalles"
+                                        Command="{Binding DataContext.VerDetallesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        MinWidth="120" MinHeight="28"
+                                        Padding="12,2"
+                                        Margin="8,2,8,2"
+                                        ToolTip="Ver detalles completos del equipo informático"
+                                        IsEnabled="{Binding DataContext.CanVerHistorial, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Opacity="{Binding DataContext.CanVerHistorial, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToOpacityConverter}}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                <Setter Property="Background" Value="#FFEDEDED"/>
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </DataTrigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#E6F4EA"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
             </DataGrid>
+        </Border>
+        <!-- Botones flotantes para agregar, importar y exportar equipo -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Margin="0,0,32,32" Panel.ZIndex="10">
+            <Button Width="56" Height="56" Content="⭱" ToolTip="Exportar todos los equipos"
+                    Command="{Binding ExportarEquiposCommand}"
+                    IsEnabled="{Binding CanExportarDatos}"
+                    Opacity="{Binding CanExportarDatos, Converter={StaticResource BooleanToOpacityConverter}}"
+                    Style="{StaticResource CircularButtonStyle}"/>
+            <Button Width="56" Height="56" Content="⭳" ToolTip="Importar equipos"
+                    Command="{Binding ImportarEquiposCommand}"
+                    IsEnabled="{Binding CanCrearEquipo}"
+                    Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
+                    Style="{StaticResource CircularButtonStyle}"
+                    Margin="12,0,0,0"/>
+            <Button Width="56" Height="56" Content="+" ToolTip="Agregar nuevo equipo"
+                    Command="{Binding AgregarEquipoCommand}"
+                    IsEnabled="{Binding CanCrearEquipo}"
+                    Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
+                    Style="{StaticResource CircularButtonStyle}"
+                    Margin="12,0,0,0"/>
         </StackPanel>
-        <!-- Botón flotante para agregar equipo -->
-        <Button Width="56" Height="56" VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                Margin="0,0,32,32" Content="+" FontSize="28" FontWeight="Bold"
-                Background="#118938" Foreground="White"
-                BorderBrush="#E5E5E5" BorderThickness="2"
-                Cursor="Hand"
-                ToolTip="Agregar nuevo equipo"
-                Command="{Binding AgregarEquipoCommand}"
-                IsEnabled="{Binding CanCrearEquipo}"
-                Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
-                Style="{StaticResource PrimaryButtonStyle}"/>
     </Grid>
 </UserControl>

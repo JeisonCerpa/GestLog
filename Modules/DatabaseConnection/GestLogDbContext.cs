@@ -69,6 +69,11 @@ namespace GestLog.Modules.DatabaseConnection
                 .Property(s => s.Costo)
                 .HasPrecision(18, 2);
 
+            // Configuración para precision en Costo de EquipoInformaticoEntity (evita warning EF Core)
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity>()
+                .Property(e => e.Costo)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
             {
                 entity.ToTable("TipoDocumento");

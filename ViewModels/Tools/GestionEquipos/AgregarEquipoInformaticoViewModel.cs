@@ -50,6 +50,13 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private string observaciones = string.Empty;
 
         [ObservableProperty]
+        private decimal? costo;
+        [ObservableProperty]
+        private DateTime? fechaCompra;
+        [ObservableProperty]
+        private string codigoAnydesk = string.Empty;
+
+        [ObservableProperty]
         private ObservableCollection<DiscoEntity> listaDiscos = new();
 
         [ObservableProperty]
@@ -168,7 +175,11 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 SerialNumber = SerialNumber,
                 Observaciones = Observaciones,
                 FechaCreacion = DateTime.Now,
-                Estado = Estado
+                Estado = Estado,
+                // Corrección: asignar campos adicionales
+                Costo = Costo,
+                FechaCompra = FechaCompra,
+                CodigoAnydesk = CodigoAnydesk
             };
             dbContext.EquiposInformaticos.Add(equipo);
             int slotNum = 1;
