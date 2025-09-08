@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Windows.Data;
 using Microsoft.Win32;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -114,8 +115,24 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [RelayCommand]
         private void VerDetalles(EquipoInformaticoEntity equipo)
         {
-            // Aquí puedes abrir un diálogo o navegar a una vista de detalles
+            if (equipo == null) return;
+
+            // Obtener la entidad y cargar explícitamente las colecciones relacionadas
+            var detalle = _db.EquiposInformaticos.FirstOrDefault(e => e.Codigo == equipo.Codigo);
+            if (detalle != null)
+            {
+                _db.Entry(detalle).Collection(e => e.SlotsRam).Load();
+                _db.Entry(detalle).Collection(e => e.Discos).Load();
+            }
+
+            // Use detalle if available, otherwise fallback to the original equipo parameter
+            var equipoParaDetalles = detalle ?? equipo;
+            var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(equipoParaDetalles);
+            var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+            if (owner != null) ventana.Owner = owner;
+            ventana.ShowDialog();
         }        
+
         [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
         private void AgregarEquipo()
         {
