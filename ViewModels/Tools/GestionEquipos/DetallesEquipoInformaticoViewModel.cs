@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.DatabaseConnection;
@@ -64,6 +65,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         public string? Observaciones => Equipo.Observaciones;
         public DateTime FechaCreacion => Equipo.FechaCreacion;
         public DateTime? FechaModificacion => Equipo.FechaModificacion;
+        // Propiedades formateadas para enlazar desde XAML (uso de cultura española)
+        private static readonly CultureInfo SpanishCulture = new CultureInfo("es-ES");
+        public string FechaCreacionFormatted => $"Creado: {Equipo.FechaCreacion.ToString("f", SpanishCulture)}";
+        public string FechaModificacionFormatted => Equipo.FechaModificacion.HasValue ? $"Modificado: {Equipo.FechaModificacion.Value.ToString("g", SpanishCulture)}" : "Modificado: -";
         public string? Estado => Equipo.Estado;
         public string? Sede => Equipo.Sede;
     }

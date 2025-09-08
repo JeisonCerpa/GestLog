@@ -157,14 +157,8 @@
                             <Separator Margin="0,8"/>
 
                             <TextBlock Text="Fechas internas" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock>
-                                <Run Text="Creado: "/>
-                                <Run Text="{Binding FechaCreacion, StringFormat=f}"/>
-                            </TextBlock>
-                            <TextBlock>
-                                <Run Text="Modificado: "/>
-                                <Run Text="{Binding FechaModificacion, StringFormat=g}"/>
-                            </TextBlock>
+                            <TextBlock Text="{Binding FechaCreacionFormatted}" />
+                            <TextBlock Text="{Binding FechaModificacionFormatted}" />
                         </StackPanel>
                     </Grid>
 
