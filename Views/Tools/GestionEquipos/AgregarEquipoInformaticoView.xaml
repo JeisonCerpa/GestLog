@@ -12,6 +12,10 @@
         Background="#FAFAFA"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
         >
     <Window.Resources>
         <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter"/>
@@ -19,9 +23,9 @@
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
-        <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
-        <DataTemplate x:Key="SlotRamTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+        <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>        <DataTemplate x:Key="SlotRamTemplate">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
+                    UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -29,28 +33,43 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Vertical" Grid.Column="0" Margin="0,0,12,0">
-                        <TextBlock Text="Slot:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBlock Text="{Binding NumeroSlot}" Foreground="#706F6F" />
+                        <TextBlock Text="Slot:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBlock Text="{Binding NumeroSlot}" Foreground="#706F6F" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Grid.Column="1">
-                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding TipoMemoria}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding CapacidadGB}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding Marca}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Frecuencia:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding Frecuencia}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Observaciones:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding Observaciones}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="No ocupado" Foreground="#C0392B" FontWeight="Bold" FontSize="14" Visibility="{Binding Ocupado, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,8,0,0" />
+                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding TipoMemoria}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding CapacidadGB}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding Marca}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Frecuencia:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding Frecuencia}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Observaciones:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding Observaciones}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="No ocupado" Foreground="#C0392B" FontWeight="Bold" FontSize="14" 
+                                   Visibility="{Binding Ocupado, Converter={StaticResource InverseBooleanToVisibilityConverter}}" 
+                                   Margin="0,8,0,0" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                     </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
-        <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
-        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+        <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
+                    UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -59,24 +78,35 @@
                     </Grid.ColumnDefinitions>
                     <!-- Número de disco -->
                     <StackPanel Orientation="Vertical" Grid.Column="0" Margin="0,0,12,0">
-                        <TextBlock Text="Disco:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" />
+                        <TextBlock Text="Disco:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                     </StackPanel>
                     <!-- Campos editables -->
                     <StackPanel Orientation="Vertical" Grid.Column="1">
-                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" />
+                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         <ComboBox ItemsSource="{Binding DataContext.TiposDisco, RelativeSource={RelativeSource AncestorType=Window}}"
                                   SelectedItem="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding CapacidadGB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding Marca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
-                        <TextBlock Text="Modelo:" FontWeight="Bold" Foreground="#504F4E" />
-                        <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" />
+                                  Margin="0,0,0,4" Background="#FAFAFA" 
+                                  SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding CapacidadGB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding Marca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        <TextBlock Text="Modelo:" FontWeight="Bold" Foreground="#504F4E" 
+                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
+                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                     </StackPanel>
                     <!-- Botón eliminar -->
-                    <Button Content="Eliminar" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Style="{StaticResource CardButtonStyle}" Width="80" Height="32" Grid.Column="2" Margin="8,0,0,0" />
+                    <Button Content="Eliminar" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Style="{StaticResource CardButtonStyle}" Width="80" Height="32" Grid.Column="2" Margin="8,0,0,0" 
+                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                 </Grid>
             </Border>
         </DataTemplate>
@@ -84,12 +114,14 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid Margin="32">
             <Border Background="#FFFFFF" CornerRadius="12" Padding="0" Effect="{DynamicResource DropShadowEffect}">
-                <StackPanel>
-                    <!-- Encabezado -->
-                    <Border Background="#F4FFF6" CornerRadius="12,12,0,0" Padding="32,24,32,24" BorderBrush="#2B8E3F" BorderThickness="0,0,0,1">
+                <StackPanel>                    <!-- Encabezado -->
+                    <Border Background="#F4FFF6" CornerRadius="12,12,0,0" Padding="32,24,32,24" BorderBrush="#2B8E3F" BorderThickness="0,0,0,1"
+                            UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Image Source="/Assets/image001.ico" Width="38" Height="38" Margin="0,0,12,0" />
-                            <TextBlock Text="Agregar Equipo Informático" FontSize="28" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center" />
+                            <Image Source="/Assets/image001.ico" Width="38" Height="38" Margin="0,0,12,0" 
+                                   UseLayoutRounding="True" SnapsToDevicePixels="True" />
+                            <TextBlock Text="Agregar Equipo Informático" FontSize="28" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center" 
+                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         </StackPanel>
                     </Border>
                     <!-- Sección principal -->
@@ -100,9 +132,9 @@
                             <ColumnDefinition Width="1.2*" />
                         </Grid.ColumnDefinitions>
                         <!-- Datos del equipo -->
-                        <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="8" Padding="24" Margin="0,24,0,24" BorderBrush="#DDD" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="Datos principales" FontSize="16" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,12" />
+                        <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="8" Padding="24" Margin="0,24,0,24" BorderBrush="#DDD" BorderThickness="1">                            <StackPanel>
+                                <TextBlock Text="Datos principales" FontSize="16" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,12" 
+                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                                 <Separator Margin="0,0,0,12" />
                                 <!-- Datos que llena el usuario, arriba -->
                                 <Grid Margin="0,0,0,16">
@@ -116,20 +148,28 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
                                     <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                                        <TextBlock Text="Código *" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Codigo}" Background="#FFFFFF" ToolTip="Código interno del equipo" />
+                                        <TextBlock Text="Código *" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding Codigo}" Background="#FFFFFF" ToolTip="Código interno del equipo" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                                        <TextBlock Text="Código AnyDesk" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding CodigoAnydesk}" Background="#FFFFFF" />
+                                        <TextBlock Text="Código AnyDesk" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding CodigoAnydesk}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
-                                        <TextBlock Text="Usuario Asignado *" FontWeight="Bold" Foreground="#504F4E" />
-                                        <ComboBox Height="32" IsEditable="True" ItemsSource="{Binding PersonasFiltradas}" SelectedItem="{Binding PersonaAsignada}" Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Buscar y seleccionar usuario" DisplayMemberPath="NombreCompleto" />
+                                        <TextBlock Text="Usuario Asignado *" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <ComboBox Height="32" IsEditable="True" ItemsSource="{Binding PersonasFiltradas}" SelectedItem="{Binding PersonaAsignada}" Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Buscar y seleccionar usuario" DisplayMemberPath="NombreCompleto" 
+                                                  SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
-                                        <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" />
-                                        <ComboBox Height="32" SelectedItem="{Binding Estado, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo" SelectedIndex="0">
+                                        <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <ComboBox Height="32" SelectedItem="{Binding Estado, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo" SelectedIndex="0"
+                                                  SnapsToDevicePixels="True" UseLayoutRounding="True">
                                             <ComboBoxItem Content="Activo" />
                                             <ComboBoxItem Content="Dado de baja" />
                                             <ComboBoxItem Content="En reparación" />
@@ -137,17 +177,21 @@
                                         </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
-                                        <TextBlock Text="Costo" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Costo}" Background="#FFFFFF" />
+                                        <TextBlock Text="Costo" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding Costo}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="2" Margin="8,0,0,8">
-                                        <TextBlock Text="Fecha de Compra" FontWeight="Bold" Foreground="#504F4E" />
-                                        <DatePicker Height="32" SelectedDate="{Binding FechaCompra}" Background="#FFFFFF" />
+                                        <TextBlock Text="Fecha de Compra" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <DatePicker Height="32" SelectedDate="{Binding FechaCompra}" Background="#FFFFFF" 
+                                                    SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                 </Grid>
                                 <!-- Resto de campos debajo -->
-                                <TextBlock Text="Información adicional" FontSize="15" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,8" />
-                                <Grid>
+                                <TextBlock Text="Información adicional" FontSize="15" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,8" 
+                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
@@ -162,40 +206,56 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
                                     <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                                        <TextBlock Text="Nombre del Equipo *" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding NombreEquipo}" Background="#FFFFFF" ToolTip="Nombre visible en red" />
+                                        <TextBlock Text="Nombre del Equipo *" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding NombreEquipo}" Background="#FFFFFF" ToolTip="Nombre visible en red" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
-                                        <TextBlock Text="Sede" FontWeight="Bold" Foreground="#504F4E" />
-                                        <ComboBox Height="32" SelectedItem="{Binding Sede, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0">
+                                        <TextBlock Text="Sede" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <ComboBox Height="32" SelectedItem="{Binding Sede, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0"
+                                                  SnapsToDevicePixels="True" UseLayoutRounding="True">
                                             <ComboBoxItem Content="Administrativa - Barranquilla" />
                                             <ComboBoxItem Content="Taller - Barranquilla" />
                                             <ComboBoxItem Content="Bodega - Bayunca" />
                                         </ComboBox>
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
-                                        <TextBlock Text="Marca" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Marca}" Background="#FFFFFF" />
+                                        <TextBlock Text="Marca" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding Marca}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,8,8">
-                                        <TextBlock Text="Modelo" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Modelo}" Background="#FFFFFF" />
+                                        <TextBlock Text="Modelo" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding Modelo}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                                        <TextBlock Text="Sistema Operativo" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding So}" Background="#FFFFFF" />
+                                        <TextBlock Text="Sistema Operativo" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding So}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
-                                        <TextBlock Text="Serial" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding SerialNumber}" Background="#FFFFFF" />
+                                        <TextBlock Text="Serial" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding SerialNumber}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="2" Margin="8,0,0,8">
-                                        <TextBlock Text="Procesador" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="32" Text="{Binding Procesador}" Background="#FFFFFF" />
+                                        <TextBlock Text="Procesador" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="32" Text="{Binding Procesador}" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="3" Margin="8,0,0,8">
-                                        <TextBlock Text="Observaciones" FontWeight="Bold" Foreground="#504F4E" />
-                                        <TextBox Height="64" Text="{Binding Observaciones}" AcceptsReturn="True" Background="#FFFFFF" />
+                                        <TextBlock Text="Observaciones" FontWeight="Bold" Foreground="#504F4E" 
+                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                        <TextBox Height="64" Text="{Binding Observaciones}" AcceptsReturn="True" Background="#FFFFFF" 
+                                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -241,9 +301,9 @@
                                 </Button.Effect>
                             </Button>
                         </StackPanel>
-                    </Grid>
-                    <!-- Sección RAM -->
-                    <GroupBox Header="Memoria RAM" Margin="32,0,32,0" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}">
+                    </Grid>                    <!-- Sección RAM -->
+                    <GroupBox Header="Memoria RAM" Margin="32,0,32,0" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
+                              UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding ListaRam}" ItemTemplate="{StaticResource SlotRamTemplate}">
                                 <ItemsControl.ItemsPanel>
@@ -252,11 +312,12 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
-                            <Button Content="Agregar RAM" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" IsEnabled="{Binding CanGuardarEquipo}" Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            <Button Content="Agregar RAM" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" IsEnabled="{Binding CanGuardarEquipo}" Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
                         </StackPanel>
                     </GroupBox>
                     <!-- Sección Discos -->
-                    <GroupBox Header="Discos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}">
+                    <GroupBox Header="Discos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
+                              UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding ListaDiscos}">
                                 <ItemsControl.ItemsPanel>
@@ -265,7 +326,7 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
-                            <Button Content="Agregar Disco" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarDiscoManualCommand}" IsEnabled="{Binding CanAgregarDiscoManual}" Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            <Button Content="Agregar Disco" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarDiscoManualCommand}" IsEnabled="{Binding CanAgregarDiscoManual}" Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
