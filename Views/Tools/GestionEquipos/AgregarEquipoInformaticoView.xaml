@@ -218,7 +218,7 @@
                                     <DropShadowEffect Color="#118938" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
                             </Button>
-                            <Button Content="Guardar" Width="Auto" MinWidth="200" Height="40" Command="{Binding GuardarCommand}"
+                            <Button Content="Guardar" Width="Auto" MinWidth="200" Height="40" Command="{Binding GuardarCommand}" Click="BtnGuardar_Click"
                                     IsEnabled="{Binding CanGuardarEquipo}"
                                     Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
                                     Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1" Margin="0,0,0,16"
@@ -230,7 +230,7 @@
                                     <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                 </Button.Effect>
                             </Button>
-                            <Button Content="Cancelar" Width="Auto" MinWidth="200" Height="40" Command="{Binding CancelarCommand}"
+                            <Button Content="Cancelar" Width="Auto" MinWidth="200" Height="40" Command="{Binding CancelarCommand}" Click="BtnCancelar_Click"
                                     Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
                                     Cursor="Hand"
                                     Padding="24,0,24,0"

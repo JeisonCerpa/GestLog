@@ -106,41 +106,70 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
 
         private void CargarEquipos()
         {
-            var equipos = _db.EquiposInformaticos.ToList();
-            ListaEquiposInformaticos.Clear();
-            foreach (var eq in equipos)
-                ListaEquiposInformaticos.Add(eq);
-            EquiposView?.Refresh();
-        }
+            try
+            {
+                // Usar AsNoTracking para evitar devolver instancias ya rastreadas y con datos stale
+                var equipos = _db.EquiposInformaticos
+                    .AsNoTracking()
+                    .OrderBy(e => e.Codigo)
+                    .ToList();
 
-        [RelayCommand]
+                ListaEquiposInformaticos.Clear();
+                foreach (var eq in equipos)
+                    ListaEquiposInformaticos.Add(eq);
+
+                EquiposView?.Refresh();
+            }
+            catch (Exception ex)
+            {
+                // No romper UI si falla la carga; registrar y avisar al usuario
+                System.Diagnostics.Debug.WriteLine($"Error cargando equipos: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error al cargar equipos: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }        [RelayCommand]
         private void VerDetalles(EquipoInformaticoEntity equipo)
         {
             if (equipo == null) return;
 
-            // Obtener la entidad y cargar explícitamente las colecciones relacionadas
-            var detalle = _db.EquiposInformaticos.FirstOrDefault(e => e.Codigo == equipo.Codigo);
-            if (detalle != null)
+            // Asegurarnos de obtener una entidad fresca desde la base de datos (evitar devolver la instancia rastreada y stale)
+            try
             {
-                _db.Entry(detalle).Collection(e => e.SlotsRam).Load();
-                _db.Entry(detalle).Collection(e => e.Discos).Load();
+                // SIEMPRE recargar desde BD - no confiar en la instancia de la lista que puede estar desactualizada
+                var detalle = _db.EquiposInformaticos
+                    .AsNoTracking() // Usar AsNoTracking para obtener datos frescos sin tracking
+                    .Include(e => e.SlotsRam)
+                    .Include(e => e.Discos)
+                    .FirstOrDefault(e => e.Codigo == equipo.Codigo);
+
+                if (detalle == null)
+                {
+                    System.Windows.MessageBox.Show("No se encontró el equipo en la base de datos.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }
+
+                var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(detalle);
+                var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+                if (owner != null) ventana.Owner = owner;
+                
+                // Mostrar ventana de detalles y esperar a que se cierre
+                var result = ventana.ShowDialog();
+                
+                // CRÍTICO: Después de cerrar detalles, recargar la lista principal para reflejar cambios
+                CargarEquipos();
             }
-
-            // Use detalle if available, otherwise fallback to the original equipo parameter
-            var equipoParaDetalles = detalle ?? equipo;
-            var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(equipoParaDetalles);
-            var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
-            if (owner != null) ventana.Owner = owner;
-            ventana.ShowDialog();
-        }        
-
-        [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al obtener detalles del equipo: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error al obtener detalles del equipo: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }        [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
         private void AgregarEquipo()
         {
             var ventana = new AgregarEquipoInformaticoView();
             var resultado = ventana.ShowDialog();
             if (resultado == true)
             {
+                // Recargar la lista para mostrar el nuevo equipo
                 CargarEquipos();
             }
         }

@@ -17,6 +17,8 @@ using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.Personas.Models;
 using Modules.Personas.Interfaces;
+using System.Globalization;
+using System.Threading;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -59,6 +61,14 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private ObservableCollection<DiscoEntity> listaDiscos = new();
 
+        // Modo edición: si true, Guardar actualizará un equipo existente en lugar de crear uno nuevo
+        [ObservableProperty]
+        private bool isEditing;
+
+        // Código original del equipo (antes de editar) para identificar la entidad en BD
+        [ObservableProperty]
+        private string originalCodigo = string.Empty;
+
         [ObservableProperty]
         private ObservableCollection<Persona> personasDisponibles = new();
 
@@ -93,6 +103,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private bool canAgregarDiscoManual;
         [ObservableProperty]
         private bool canEliminarDisco;        
+        private int _isSaving = 0; // 0 = no guardando, 1 = guardando
         public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
         {
             _currentUserService = currentUserService;
@@ -120,22 +131,80 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
-        public void Inicializar()
+        public async Task InicializarAsync()
         {
             try
             {
                 var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
                     .UseSqlServer(GetProductionConnectionString())
                     .Options;
-                using var dbContext = new GestLogDbContext(options);
-                var personas = dbContext.Personas.Where(p => p.Activo).ToList();
-                PersonasDisponibles = new ObservableCollection<Persona>(personas);
-                PersonasFiltradas = new ObservableCollection<Persona>(personas);
+
+                // Ejecutar la consulta en background para no bloquear la UI
+                var personas = await Task.Run(() =>
+                {
+                    using var dbContext = new GestLogDbContext(options);
+                    return dbContext.Personas.Where(p => p.Activo).ToList();
+                }).ConfigureAwait(false);
+
+                // Asignar/actualizar las colecciones en el hilo de UI
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // Si la colección no existe, crearla; si existe, actualizarla para preservar referencias enlazadas
+                    if (PersonasDisponibles == null)
+                        PersonasDisponibles = new ObservableCollection<Persona>(personas);
+                    else
+                    {
+                        PersonasDisponibles.Clear();
+                        foreach (var p in personas) PersonasDisponibles.Add(p);
+                    }
+
+                    if (PersonasFiltradas == null)
+                        PersonasFiltradas = new ObservableCollection<Persona>(personas);
+                    else
+                    {
+                        PersonasFiltradas.Clear();
+                        foreach (var p in personas) PersonasFiltradas.Add(p);
+                    }
+
+                    // Intentar re-emparejar la persona asignada si ya había una selección previa o texto en el filtro
+                    string? objetivoTexto = null;
+                    if (PersonaAsignada != null && !string.IsNullOrWhiteSpace(PersonaAsignada.NombreCompleto))
+                        objetivoTexto = PersonaAsignada.NombreCompleto;
+                    else if (!string.IsNullOrWhiteSpace(FiltroPersonaAsignada))
+                        objetivoTexto = FiltroPersonaAsignada;
+
+                    if (!string.IsNullOrWhiteSpace(objetivoTexto) && PersonasDisponibles != null && PersonasDisponibles.Any())
+                    {
+                        static string NormalizeStringLocal(string s)
+                        {
+                            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+                            var normalized = s.Normalize(System.Text.NormalizationForm.FormD);
+                            var chars = normalized.Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark).ToArray();
+                            return new string(chars).Normalize(System.Text.NormalizationForm.FormC).Trim().ToLowerInvariant();
+                        }
+
+                        var objetivo = NormalizeStringLocal(objetivoTexto);
+                        var encontrada = PersonasDisponibles.FirstOrDefault(p => NormalizeStringLocal(p.NombreCompleto) == objetivo);
+                        if (encontrada == null)
+                            encontrada = PersonasDisponibles.FirstOrDefault(p => NormalizeStringLocal(p.NombreCompleto).Contains(objetivo) || objetivo.Contains(NormalizeStringLocal(p.NombreCompleto)));
+
+                        if (encontrada != null)
+                        {
+                            PersonaAsignada = encontrada;
+                            FiltroPersonaAsignada = string.Empty;
+                        }
+                        else
+                        {
+                            // Mantener el filtro para que el usuario vea el nombre en caso de no encontrar coincidencia exacta
+                            FiltroPersonaAsignada = objetivoTexto.Trim();
+                        }
+                    }
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar las personas para usuario asignado");
-                MessageBox.Show("No se pudieron cargar los usuarios disponibles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se pudieron cargar los usuarios disponibles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
             }
         }
 
@@ -148,64 +217,516 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task GuardarEquipoAsync()
         {
-            if (string.IsNullOrWhiteSpace(Codigo) || string.IsNullOrWhiteSpace(NombreEquipo))
+            // Evitar reentrada concurrente (por doble disparo del comando/handler)
+            if (Interlocked.Exchange(ref _isSaving, 1) == 1)
             {
-                MessageBox.Show("El código y el nombre del equipo son obligatorios.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _logger.LogWarning("Intento de guardar ignorado: ya hay una operación de guardado en curso.");
                 return;
             }
-            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                .UseSqlServer(GetProductionConnectionString())
-                .Options;
-            using var dbContext = new GestLogDbContext(options);
-            if (dbContext.EquiposInformaticos.Any(e => e.Codigo == Codigo))
+
+            try
             {
-                MessageBox.Show("Ya existe un equipo con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                if (string.IsNullOrWhiteSpace(Codigo) || string.IsNullOrWhiteSpace(NombreEquipo))
+                {
+                    MessageBox.Show("El código y el nombre del equipo son obligatorios.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
+                    .UseSqlServer(GetProductionConnectionString())
+                    .Options;
+
+                _logger.LogInformation("Iniciando GuardarEquipoAsync. IsEditing={IsEditing} OriginalCodigo={OriginalCodigo} Codigo={Codigo}", IsEditing, OriginalCodigo, Codigo);
+
+                using var dbContext = new GestLogDbContext(options);
+
+                // Si estamos en modo edición, actualizar
+                if (IsEditing)
+                {
+                    // Si se cambió el código, comprobar que no exista otro equipo con ese código
+                    if (!string.Equals(OriginalCodigo, Codigo, StringComparison.OrdinalIgnoreCase) && dbContext.EquiposInformaticos.Any(e => e.Codigo == Codigo))
+                    {
+                        MessageBox.Show("Ya existe un equipo con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
+                    var equipo = dbContext.EquiposInformaticos
+                        .Include(e => e.SlotsRam)
+                        .Include(e => e.Discos)
+                        .FirstOrDefault(e => e.Codigo == OriginalCodigo);
+
+                    if (equipo == null)
+                    {
+                        MessageBox.Show("No se encontró el equipo a actualizar.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Si cambió el código primario, realizar flujo seguro: actualizar PK y FKs via SQL dentro de transacción
+                    if (!string.Equals(OriginalCodigo, Codigo, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogInformation("Cambio de PK detectado: {Original} -> {Nuevo}. Usando flujo de actualización segura.", OriginalCodigo, Codigo);                        using var transaction = await dbContext.Database.BeginTransactionAsync();
+                        try
+                        {
+                            _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);
+
+                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
+                            _logger.LogInformation("🔓 Deshabilitando constraints FK temporalmente...");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam NOCHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos NOCHECK CONSTRAINT FK_Discos_EquipoInformatico");
+
+                            // 1. Actualizar la Primary Key en EquiposInformaticos
+                            var rowsEquipo = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE EquiposInformaticos SET Codigo = {Codigo} WHERE Codigo = {OriginalCodigo}");
+                            _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);
+
+                            // 2. Actualizar las Foreign Keys en tablas relacionadas
+                            var rowsSlots = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE SlotsRam SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            _logger.LogInformation("💾 SlotsRam actualizados: {RowsAffected} filas", rowsSlots);
+
+                            var rowsDiscos = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE Discos SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            _logger.LogInformation("💿 Discos actualizados: {RowsAffected} filas", rowsDiscos);
+
+                            // 3. Rehabilitar las constraints FK
+                            _logger.LogInformation("🔒 Rehabilitando constraints FK...");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
+
+                            // Invalidar cualquier entidad rastreada para evitar conflictos de ChangeTracker
+                            try
+                            {
+                                var tracked = dbContext.ChangeTracker.Entries<EquipoInformaticoEntity>().ToList();
+                                foreach (var t in tracked)
+                                {
+                                    dbContext.Entry(t.Entity).State = EntityState.Detached;
+                                }
+                                var trackedSlots = dbContext.ChangeTracker.Entries<SlotRamEntity>().ToList();
+                                foreach (var t in trackedSlots)
+                                {
+                                    dbContext.Entry(t.Entity).State = EntityState.Detached;
+                                }
+                                var trackedDiscos = dbContext.ChangeTracker.Entries<DiscoEntity>().ToList();
+                                foreach (var t in trackedDiscos)
+                                {
+                                    dbContext.Entry(t.Entity).State = EntityState.Detached;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "No se pudo limpiar ChangeTracker antes de recargar (no crítico)");
+                            }
+
+                            // Volver a cargar la entidad ya con el nuevo código
+                            var equipoRecargado = dbContext.EquiposInformaticos
+                                .Include(e => e.SlotsRam)
+                                .Include(e => e.Discos)
+                                .FirstOrDefault(e => e.Codigo == Codigo);
+
+                            if (equipoRecargado == null)
+                            {
+                                await transaction.RollbackAsync();
+                                MessageBox.Show("No se pudo localizar el equipo después de renombrar el código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                return;
+                            }
+
+                            // Actualizar campos escalares en la entidad recargada
+                            equipoRecargado.UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty;
+                            equipoRecargado.NombreEquipo = NombreEquipo;
+                            equipoRecargado.Sede = Sede;
+                            equipoRecargado.Marca = Marca;
+                            equipoRecargado.Modelo = Modelo;
+                            equipoRecargado.Procesador = Procesador;
+                            equipoRecargado.SO = So;
+                            equipoRecargado.SerialNumber = SerialNumber;
+                            equipoRecargado.Observaciones = Observaciones;
+                            equipoRecargado.FechaModificacion = DateTime.Now;
+                            equipoRecargado.Estado = Estado;
+                            equipoRecargado.Costo = Costo;
+                            equipoRecargado.FechaCompra = FechaCompra;
+                            equipoRecargado.CodigoAnydesk = CodigoAnydesk;
+
+                            // Reemplazar colecciones: eliminar existentes y añadir nuevas instancias
+                            if (equipoRecargado.SlotsRam != null && equipoRecargado.SlotsRam.Any())
+                                dbContext.SlotsRam.RemoveRange(equipoRecargado.SlotsRam);
+                            if (equipoRecargado.Discos != null && equipoRecargado.Discos.Any())
+                                dbContext.Discos.RemoveRange(equipoRecargado.Discos);
+
+                            int slotNumNew = 1;
+                            foreach (var slot in ListaRam)
+                            {
+                                var nuevoSlot = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity
+                                {
+                                    CodigoEquipo = Codigo,
+                                    NumeroSlot = slotNumNew++,
+                                    CapacidadGB = slot.CapacidadGB,
+                                    TipoMemoria = slot.TipoMemoria,
+                                    Marca = slot.Marca,
+                                    Frecuencia = slot.Frecuencia,
+                                    Ocupado = slot.Ocupado,
+                                    Observaciones = slot.Observaciones
+                                };
+                                dbContext.SlotsRam.Add(nuevoSlot);
+                            }
+
+                            int discoNumNew = 1;
+                            foreach (var disco in ListaDiscos)
+                            {
+                                var nuevoDisco = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity
+                                {
+                                    CodigoEquipo = Codigo,
+                                    NumeroDisco = discoNumNew++,
+                                    Tipo = disco.Tipo,
+                                    CapacidadGB = disco.CapacidadGB,
+                                    Marca = disco.Marca,
+                                    Modelo = disco.Modelo
+                                };
+                                dbContext.Discos.Add(nuevoDisco);
+                            }
+
+                            // Intentar guardar cambios con manejo específico de concurrencia y reintento único
+                            bool saved = false;
+                            int attempts = 0;
+                            while (!saved && attempts < 2)
+                            {
+                                attempts++;
+                                try
+                                {
+                                    await dbContext.SaveChangesAsync();
+                                    saved = true;
+                                }
+                                catch (DbUpdateConcurrencyException dbce)
+                                {
+                                    _logger.LogWarning(dbce, "DbUpdateConcurrencyException al guardar equipo (intento {Attempt})", attempts);
+                                    if (attempts >= 2)
+                                    {
+                                        MessageBox.Show("No se pudo guardar los cambios por un conflicto de concurrencia. Por favor, recargue y reintente.", "Conflicto", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                        try { await transaction.RollbackAsync(); } catch { }
+                                        return;
+                                    }
+
+                                    // En caso de concurrencia, recargar la entidad y reintentar
+                                    try
+                                    {
+                                        // Limpiar ChangeTracker y recargar
+                                        foreach (var entry in dbContext.ChangeTracker.Entries().ToList())
+                                            entry.State = EntityState.Detached;
+
+                                        equipoRecargado = dbContext.EquiposInformaticos
+                                            .Include(e => e.SlotsRam)
+                                            .Include(e => e.Discos)
+                                            .FirstOrDefault(e => e.Codigo == Codigo);
+
+                                        if (equipoRecargado == null)
+                                        {
+                                            MessageBox.Show("Equipo no encontrado al intentar resolver concurrencia.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                            try { await transaction.RollbackAsync(); } catch { }
+                                            return;
+                                        }
+
+                                        // Re-apply desired scalar updates and collection replacements as above
+                                        equipoRecargado.UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty;
+                                        equipoRecargado.NombreEquipo = NombreEquipo;
+                                        equipoRecargado.Sede = Sede;
+                                        equipoRecargado.Marca = Marca;
+                                        equipoRecargado.Modelo = Modelo;
+                                        equipoRecargado.Procesador = Procesador;
+                                        equipoRecargado.SO = So;
+                                        equipoRecargado.SerialNumber = SerialNumber;
+                                        equipoRecargado.Observaciones = Observaciones;
+                                        equipoRecargado.FechaModificacion = DateTime.Now;
+                                        equipoRecargado.Estado = Estado;
+                                        equipoRecargado.Costo = Costo;
+                                        equipoRecargado.FechaCompra = FechaCompra;
+                                        equipoRecargado.CodigoAnydesk = CodigoAnydesk;
+
+                                        if (equipoRecargado.SlotsRam != null && equipoRecargado.SlotsRam.Any())
+                                            dbContext.SlotsRam.RemoveRange(equipoRecargado.SlotsRam);
+                                        if (equipoRecargado.Discos != null && equipoRecargado.Discos.Any())
+                                            dbContext.Discos.RemoveRange(equipoRecargado.Discos);
+
+                                        slotNumNew = 1;
+                                        foreach (var slot in ListaRam)
+                                        {
+                                            var nuevoSlot = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity
+                                            {
+                                                CodigoEquipo = Codigo,
+                                                NumeroSlot = slotNumNew++,
+                                                CapacidadGB = slot.CapacidadGB,
+                                                TipoMemoria = slot.TipoMemoria,
+                                                Marca = slot.Marca,
+                                                Frecuencia = slot.Frecuencia,
+                                                Ocupado = slot.Ocupado,
+                                                Observaciones = slot.Observaciones
+                                            };
+                                            dbContext.SlotsRam.Add(nuevoSlot);
+                                        }
+
+                                        discoNumNew = 1;
+                                        foreach (var disco in ListaDiscos)
+                                        {
+                                            var nuevoDisco = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity
+                                            {
+                                                CodigoEquipo = Codigo,
+                                                NumeroDisco = discoNumNew++,
+                                                Tipo = disco.Tipo,
+                                                CapacidadGB = disco.CapacidadGB,
+                                                Marca = disco.Marca,
+                                                Modelo = disco.Modelo
+                                            };
+                                            dbContext.Discos.Add(nuevoDisco);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError(ex, "Error reintentando tras DbUpdateConcurrencyException");
+                                        MessageBox.Show($"Error al intentar resolver conflicto: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                        try { await transaction.RollbackAsync(); } catch { }
+                                        return;
+                                    }
+                                }
+                            }
+
+                            await transaction.CommitAsync();
+
+                            _logger.LogInformation("Actualización de código completada y datos guardados: {Codigo}", Codigo);
+                            MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "❌ Error en flujo de actualización de PK al cambiar {Original} -> {Nuevo}", OriginalCodigo, Codigo);
+                            
+                            // CRÍTICO: Rehabilitar constraints FK incluso si hay error
+                            try
+                            {
+                                _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
+                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
+                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
+                            }
+                            catch (Exception constraintEx)
+                            {
+                                _logger.LogError(constraintEx, "❌ Error rehabilitando constraints FK");
+                            }
+
+                            try { await transaction.RollbackAsync(); } catch { }
+                            MessageBox.Show($"Error al actualizar el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+
+                        // Fin del flujo de cambio de PK
+                    }
+                    else
+                    {
+                        // Evitar duplicados en el ChangeTracker: detach de cualquier otra instancia con la misma clave
+                        try
+                        {
+                            var duplicates = dbContext.ChangeTracker.Entries<EquipoInformaticoEntity>()
+                                .Where(x => x.Entity.Codigo == equipo.Codigo && !ReferenceEquals(x.Entity, equipo))
+                                .ToList();
+                            foreach (var dup in duplicates)
+                            {
+                                _logger.LogWarning("Detaching duplicate tracked EquipoInformaticoEntity with Codigo={Codigo}", dup.Entity.Codigo);
+                                dbContext.Entry(dup.Entity).State = EntityState.Detached;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "No se pudo limpiar ChangeTracker antes de actualizar (no crítico)");
+                        }
+
+                        // Actualizar campos escalares
+                        equipo.UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty;
+                        equipo.NombreEquipo = NombreEquipo;
+                        equipo.Sede = Sede;
+                        equipo.Marca = Marca;
+                        equipo.Modelo = Modelo;
+                        equipo.Procesador = Procesador;
+                        equipo.SO = So;
+                        equipo.SerialNumber = SerialNumber;
+                        equipo.Observaciones = Observaciones;
+                        equipo.FechaModificacion = DateTime.Now;
+                        equipo.Estado = Estado;
+                        equipo.Costo = Costo;
+                        equipo.FechaCompra = FechaCompra;
+                        equipo.CodigoAnydesk = CodigoAnydesk;
+
+                        // Reemplazar colecciones: eliminar los antiguos y añadir los actuales
+                        if (equipo.SlotsRam != null && equipo.SlotsRam.Any())
+                            dbContext.SlotsRam.RemoveRange(equipo.SlotsRam);
+                        if (equipo.Discos != null && equipo.Discos.Any())
+                            dbContext.Discos.RemoveRange(equipo.Discos);
+
+                        int slotNum = 1;
+                        foreach (var slot in ListaRam)
+                        {
+                            // Crear una nueva instancia sin referencias navegacionales para evitar conflictos de tracking
+                            var nuevoSlot = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity
+                            {
+                                CodigoEquipo = Codigo,
+                                NumeroSlot = slotNum++,
+                                CapacidadGB = slot.CapacidadGB,
+                                TipoMemoria = slot.TipoMemoria,
+                                Marca = slot.Marca,
+                                Frecuencia = slot.Frecuencia,
+                                Ocupado = slot.Ocupado,
+                                Observaciones = slot.Observaciones
+                            };
+                            dbContext.SlotsRam.Add(nuevoSlot);
+                        }
+
+                        int discoNum = 1;
+                        foreach (var disco in ListaDiscos)
+                        {
+                            var nuevoDisco = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity
+                            {
+                                CodigoEquipo = Codigo,
+                                NumeroDisco = discoNum++,
+                                Tipo = disco.Tipo,
+                                CapacidadGB = disco.CapacidadGB,
+                                Marca = disco.Marca,
+                                Modelo = disco.Modelo
+                            };
+                            dbContext.Discos.Add(nuevoDisco);
+                        }
+
+                        try
+                        {
+                            await dbContext.SaveChangesAsync();
+                            _logger.LogInformation("Equipo '{Codigo}' actualizado correctamente.", Codigo);
+                            MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error al guardar cambios de actualización del equipo '{Codigo}'", Codigo);
+                            MessageBox.Show($"Error al actualizar el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                }
+                else
+                {
+                    // Creación nueva
+                    if (dbContext.EquiposInformaticos.Any(e => e.Codigo == Codigo))
+                    {
+                        MessageBox.Show("Ya existe un equipo con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    var equipo = new EquipoInformaticoEntity
+                    {
+                        Codigo = Codigo,
+                        UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty,
+                        NombreEquipo = NombreEquipo,
+                        Sede = Sede,
+                        Marca = Marca,
+                        Modelo = Modelo,
+                        Procesador = Procesador,
+                        SO = So,
+                        SerialNumber = SerialNumber,
+                        Observaciones = Observaciones,
+                        FechaCreacion = DateTime.Now,
+                        Estado = Estado,
+                        Costo = Costo,
+                        FechaCompra = FechaCompra,
+                        CodigoAnydesk = CodigoAnydesk
+                    };
+
+                    // Antes de añadir, comprobar si ya existe una instancia en el ChangeTracker con la misma clave y detachearla
+                    try
+                    {
+                        var tracked = dbContext.ChangeTracker.Entries<EquipoInformaticoEntity>().FirstOrDefault(e => e.Entity.Codigo == equipo.Codigo && e.State != EntityState.Detached);
+                        if (tracked != null)
+                        {
+                            _logger.LogWarning("Detaching tracked EquipoInformaticoEntity before Add, Codigo={Codigo}", tracked.Entity.Codigo);
+                            dbContext.Entry(tracked.Entity).State = EntityState.Detached;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "No se pudo revisar ChangeTracker antes de Add (no crítico)");
+                    }
+
+                    dbContext.EquiposInformaticos.Add(equipo);
+
+                    int slotNum = 1;
+                    foreach (var slot in ListaRam)
+                    {
+                        var nuevoSlot = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity
+                        {
+                            CodigoEquipo = Codigo,
+                            NumeroSlot = slotNum++,
+                            CapacidadGB = slot.CapacidadGB,
+                            TipoMemoria = slot.TipoMemoria,
+                            Marca = slot.Marca,
+                            Frecuencia = slot.Frecuencia,
+                            Ocupado = slot.Ocupado,
+                            Observaciones = slot.Observaciones
+                        };
+                        dbContext.SlotsRam.Add(nuevoSlot);
+                    }
+
+                    int discoNum = 1;
+                    foreach (var disco in ListaDiscos)
+                    {
+                        var nuevoDisco = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity
+                        {
+                            CodigoEquipo = Codigo,
+                            NumeroDisco = discoNum++,
+                            Tipo = disco.Tipo,
+                            CapacidadGB = disco.CapacidadGB,
+                            Marca = disco.Marca,
+                            Modelo = disco.Modelo
+                        };
+                        dbContext.Discos.Add(nuevoDisco);
+                    }
+
+                    try
+                    {
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation("Equipo '{Codigo}' creado correctamente.", Codigo);
+                        MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al guardar nuevo equipo '{Codigo}'", Codigo);
+                        MessageBox.Show($"Error al guardar el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
-            var equipo = new EquipoInformaticoEntity
+            finally
             {
-                Codigo = Codigo,
-                UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty,
-                NombreEquipo = NombreEquipo,
-                Sede = Sede,
-                Marca = Marca,
-                Modelo = Modelo,
-                Procesador = Procesador,
-                SO = So,
-                SerialNumber = SerialNumber,
-                Observaciones = Observaciones,
-                FechaCreacion = DateTime.Now,
-                Estado = Estado,
-                // Corrección: asignar campos adicionales
-                Costo = Costo,
-                FechaCompra = FechaCompra,
-                CodigoAnydesk = CodigoAnydesk
-            };
-            dbContext.EquiposInformaticos.Add(equipo);
-            int slotNum = 1;
-            foreach (var slot in ListaRam)
-            {
-                slot.CodigoEquipo = Codigo;
-                slot.NumeroSlot = slotNum++;
-                dbContext.SlotsRam.Add(slot);
+                // Log de diagnóstico de discos antes de resetear el flag
+                _logger.LogDebug($"[DISCOS] Lista final de discos: {string.Join(", ", ListaDiscos.Select(d => $"{d.Tipo} {d.CapacidadGB}GB {d.Marca} {d.Modelo}"))}");
+                // Resetear flag de guardado
+                Interlocked.Exchange(ref _isSaving, 0);
             }
-            int discoNum = 1;
-            foreach (var disco in ListaDiscos)
-            {
-                disco.CodigoEquipo = Codigo;
-                disco.NumeroDisco = discoNum++;
-                dbContext.Discos.Add(disco);
-            }
-            await dbContext.SaveChangesAsync();
-            MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
         }        
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task GuardarAsync()
         {
-            await GuardarEquipoAsync();
-            // Cerrar la ventana después de guardar
+            try
+            {
+                // Await la operación principal de guardado para que las excepciones sean observadas
+                await GuardarEquipoAsync().ConfigureAwait(true);
+
+                // Si la ventana existe y el guardado finalizó sin excepciones, cerrar con DialogResult=true
+                var win = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                if (win != null)
+                {
+                    // Establecer DialogResult en hilo de UI
+                    Application.Current.Dispatcher.Invoke(() => win.DialogResult = true);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GuardarAsync");
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"Error al guardar el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
+            }
+        }
+
+        // Comando para cancelar/ cerrar sin guardar (soporta binding desde XAML)
+        [RelayCommand]
+        public void Cancelar()
+        {
             if (Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this) is Window win)
-                win.DialogResult = true;
+            {
+                win.DialogResult = false;
+            }
         }
 
         [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
@@ -536,22 +1057,25 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 IsLoadingDiscos = false;
             }
         }
-
         private void ObtenerDiscosAutomaticos()
         {
             _logger.LogDebug("[DISCOS] Iniciando detección automática de discos");
             Application.Current.Dispatcher.Invoke(() => ListaDiscos.Clear());
             try
             {
-                var output = EjecutarPowerShellCompleto("Get-WmiObject Win32_DiskDrive | Select-Object Model, Size, InterfaceType, Manufacturer | ConvertTo-Csv -NoTypeInformation");
+                // Usar Get-WmiObject Win32_DiskDrive para máxima compatibilidad
+                var output = EjecutarPowerShellCompleto("Get-WmiObject Win32_DiskDrive | Select-Object Model, Size, MediaType, Manufacturer | ConvertTo-Csv -NoTypeInformation");
                 _logger.LogDebug($"[DISCOS] Resultado PowerShell Win32_DiskDrive CSV: '{output}'");
+                
                 if (string.IsNullOrWhiteSpace(output))
                 {
                     _logger.LogWarning("[DISCOS] La salida de PowerShell está vacía");
                     throw new Exception("PowerShell no devolvió ningún resultado");
                 }
+                
                 var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 _logger.LogDebug($"[DISCOS] Total de líneas obtenidas: {lines.Count}");
+                
                 if (lines.Count <= 1)
                 {
                     _logger.LogWarning("[DISCOS] Solo se obtuvo la cabecera CSV, sin datos de discos");

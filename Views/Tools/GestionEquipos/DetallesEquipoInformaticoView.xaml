@@ -91,12 +91,24 @@
         </Grid.RowDefinitions>
 
         <Border Background="#FFFFFF" CornerRadius="8" Padding="16" BorderBrush="#DDD" BorderThickness="1" Grid.Row="0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Detalles del equipo" FontSize="18" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center"/>
-                <TextBlock Text="  -  " FontSize="18" VerticalAlignment="Center"/>
-                <TextBlock Text="Código: " Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Center" Cursor="IBeam"/>
-            </StackPanel>
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <!-- Izquierda: título y código -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
+                    <TextBlock Text="Detalles del equipo" FontSize="18" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center"/>
+                    <TextBlock Text="  -  " FontSize="18" VerticalAlignment="Center"/>
+                    <TextBlock Text="Código: " Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Center" Cursor="IBeam"/>
+                </StackPanel>
+
+                <!-- Derecha: botón Editar alineado a la derecha en la misma fila -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Button Content="Editar" Width="90" Height="30" Margin="8,0,0,0" Click="BtnEditar_Click" Background="#2B8E3F" Foreground="White" FontWeight="SemiBold" />
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Metadatos y resumen en fila separada -->
