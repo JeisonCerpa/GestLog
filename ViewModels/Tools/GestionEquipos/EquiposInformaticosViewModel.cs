@@ -88,6 +88,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 RemoverTildes(eq.Codigo ?? "").ToLowerInvariant(),
                 RemoverTildes(eq.UsuarioAsignado ?? "").ToLowerInvariant(),
                 RemoverTildes(eq.NombreEquipo ?? "").ToLowerInvariant(),
+                RemoverTildes(eq.Marca ?? "").ToLowerInvariant(),
                 RemoverTildes(eq.Sede ?? "").ToLowerInvariant(),
             };
             return terminos.All(term => campos.Any(campo => campo.Contains(term)));
