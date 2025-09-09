@@ -17,49 +17,65 @@
             <Setter Property="Foreground" Value="#2B8E3F"/>
         </Style>
 
-        <!-- Plantilla detallada para un slot RAM -->
+        <!-- Style para TextBox en modo solo lectura: se ve como texto pero permite selección -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="#222222"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="IsReadOnlyCaretVisible" Value="True"/>
+            <Setter Property="Cursor" Value="IBeam"/>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="SelectionBrush" Value="#BEE6FD"/>
+            <Setter Property="SelectionOpacity" Value="0.9"/>
+            <Setter Property="CaretBrush" Value="#222222"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/>
+        </Style>
+
+        <!-- Plantilla detallada para un slot RAM (valores como TextBox seleccionables) -->
         <DataTemplate x:Key="RamItemTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Slot: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding NumeroSlot}" Margin="8,0,16,0"/>
+                        <TextBox Text="{Binding NumeroSlot, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
                         <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding CapacidadGB}" Margin="8,0,16,0"/>
+                        <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
                         <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding TipoMemoria}" Margin="8,0,0,0"/>
+                        <TextBox Text="{Binding TipoMemoria, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Marca}" Margin="8,0,16,0"/>
+                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
                         <TextBlock Text="Frecuencia: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Frecuencia}" Margin="8,0,16,0"/>
+                        <TextBox Text="{Binding Frecuencia, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
                         <TextBlock Text="Ocupado: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Ocupado, Converter={StaticResource BooleanToEmojiConverter}}" Margin="8,0,0,0"/>
+                        <TextBox Text="{Binding Ocupado, Converter={StaticResource BooleanToEmojiConverter}, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
                     </StackPanel>
                     <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
-                    <TextBlock Text="{Binding Observaciones}" TextWrapping="Wrap" />
+                    <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" IsReadOnly="True" AcceptsReturn="True"/>
                 </StackPanel>
             </Border>
         </DataTemplate>
 
-        <!-- Plantilla detallada para un disco -->
+        <!-- Plantilla detallada para un disco (valores como TextBox seleccionables) -->
         <DataTemplate x:Key="DiscoItemTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="#" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding NumeroDisco}" Margin="8,0,12,0"/>
+                        <TextBox Text="{Binding NumeroDisco, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
                         <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Tipo}" Margin="8,0,12,0"/>
+                        <TextBox Text="{Binding Tipo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
                         <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding CapacidadGB}" Margin="8,0,0,0"/>
+                        <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Marca}" Margin="8,0,16,0"/>
+                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
                         <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding Modelo}" Margin="8,0,0,0"/>
+                        <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -79,7 +95,7 @@
                 <TextBlock Text="Detalles del equipo" FontSize="18" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center"/>
                 <TextBlock Text="  -  " FontSize="18" VerticalAlignment="Center"/>
                 <TextBlock Text="Código: " Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Codigo}" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Center" Cursor="IBeam"/>
             </StackPanel>
         </Border>
 
@@ -88,23 +104,23 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Fecha creación" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding FechaCreacion, StringFormat=d}"/>
+                    <TextBox Text="{Binding FechaCreacion, StringFormat=d, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Fecha modificación" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding FechaModificacion, StringFormat=d}"/>
+                    <TextBox Text="{Binding FechaModificacion, StringFormat=d, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Estado" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding Estado}"/>
+                    <TextBox Text="{Binding Estado, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Sede" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding Sede}"/>
+                    <TextBox Text="{Binding Sede, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="Usuario asignado" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding UsuarioAsignado}"/>
+                    <TextBox Text="{Binding UsuarioAsignado, Mode=OneWay}" IsReadOnly="True"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -120,45 +136,45 @@
 
                         <StackPanel Grid.Column="0" Margin="0,0,12,0">
                             <TextBlock Text="Nombre del equipo" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Text="{Binding NombreEquipo}" />
+                            <TextBox Text="{Binding NombreEquipo, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Marca" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding Marca}" />
+                            <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Modelo" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding Modelo}" />
+                            <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Sistema operativo" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding SO}" />
+                            <TextBox Text="{Binding SO, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Serial" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding SerialNumber}" />
+                            <TextBox Text="{Binding SerialNumber, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Procesador" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding Procesador}" />
+                            <TextBox Text="{Binding Procesador, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Código AnyDesk" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding CodigoAnydesk}" />
+                            <TextBox Text="{Binding CodigoAnydesk, Mode=OneWay}" IsReadOnly="True" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="12,0,0,0">
                             <TextBlock Text="Costo" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Text="{Binding Costo, StringFormat=C}" />
+                            <TextBox Text="{Binding Costo, StringFormat=C, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Fecha de compra" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding FechaCompra, StringFormat=d}" />
+                            <TextBox Text="{Binding FechaCompra, StringFormat=d, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Fecha baja" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding FechaBaja, StringFormat=d}" />
+                            <TextBox Text="{Binding FechaBaja, StringFormat=d, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Observaciones" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding Observaciones}" TextWrapping="Wrap" />
+                            <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />
 
                             <Separator Margin="0,8"/>
 
                             <TextBlock Text="Fechas internas" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBlock Text="{Binding FechaCreacionFormatted}" />
-                            <TextBlock Text="{Binding FechaModificacionFormatted}" />
+                            <TextBox Text="{Binding FechaCreacionFormatted, Mode=OneWay}" IsReadOnly="True" />
+                            <TextBox Text="{Binding FechaModificacionFormatted, Mode=OneWay}" IsReadOnly="True" />
                         </StackPanel>
                     </Grid>
 
@@ -168,7 +184,7 @@
                     <Expander Header="{Binding RamHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
                         <StackPanel>
                             <TextBlock Text="Cantidad de slots: " Style="{StaticResource LabelStyle}" />
-                            <TextBlock Text="{Binding SlotsRam.Count}" Margin="0,0,0,8"/>
+                            <TextBox Text="{Binding SlotsRam.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
 
                             <ItemsControl ItemsSource="{Binding SlotsRam}" ItemTemplate="{StaticResource RamItemTemplate}">
                                 <ItemsControl.ItemsPanel>
@@ -186,7 +202,7 @@
                     <Expander Header="{Binding DiscoHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
                         <StackPanel>
                             <TextBlock Text="Cantidad de discos: " Style="{StaticResource LabelStyle}" />
-                            <TextBlock Text="{Binding Discos.Count}" Margin="0,0,0,8"/>
+                            <TextBox Text="{Binding Discos.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
 
                             <ItemsControl ItemsSource="{Binding Discos}" ItemTemplate="{StaticResource DiscoItemTemplate}">
                                 <ItemsControl.ItemsPanel>
