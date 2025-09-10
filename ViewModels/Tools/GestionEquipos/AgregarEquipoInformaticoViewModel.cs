@@ -103,6 +103,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private bool canAgregarDiscoManual;
         [ObservableProperty]
+        private bool canAgregarRam;
+        [ObservableProperty]
         private bool canEliminarDisco;        
         private int _isSaving = 0; // 0 = no guardando, 1 = guardando
         public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
@@ -129,6 +131,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanObtenerCamposAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanObtenerDiscosAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarDiscoManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanAgregarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
@@ -925,36 +928,63 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             _logger.LogDebug("[RAM] Iniciando detección con WMI clásico");
             Application.Current.Dispatcher.Invoke(() => ListaRam.Clear());
+            int totalSlotsFisicos = 0;
             try
             {
-                // Usar Get-WmiObject Win32_PhysicalMemory para máxima compatibilidad
+                // Intentar obtener el número total de ranuras físicas (MemoryDevices)
+                try
+                {
+                    var arrOutput = EjecutarPowerShellCompleto("Get-WmiObject Win32_PhysicalMemoryArray | Select-Object MemoryDevices | ConvertTo-Csv -NoTypeInformation");
+                    _logger.LogDebug($"[RAM] Resultado PowerShell Win32_PhysicalMemoryArray CSV: '{arrOutput}'");
+                    if (!string.IsNullOrWhiteSpace(arrOutput))
+                    {
+                        var arrLines = arrOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        if (arrLines.Count > 1)
+                        {
+                            var parts = ParseCsvLine(arrLines[1]);
+                            if (parts.Length > 0)
+                            {
+                                var memDevicesStr = parts[0].Trim('"');
+                                if (int.TryParse(memDevicesStr, out var md))
+                                {
+                                    totalSlotsFisicos = md;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception exArr)
+                {
+                    _logger.LogWarning(exArr, "[RAM] No se pudo obtener MemoryDevices desde Win32_PhysicalMemoryArray (no crítico)");
+                }
+
+                // Usar Get-WmiObject Win32_PhysicalMemory para obtener módulos instalados
                 var output = EjecutarPowerShellCompleto("Get-WmiObject Win32_PhysicalMemory | Select-Object SMBIOSMemoryType, Capacity, Manufacturer, PartNumber, Speed | ConvertTo-Csv -NoTypeInformation");
                 _logger.LogDebug($"[RAM] Resultado PowerShell Win32_PhysicalMemory CSV: '{output}'");
-                
+
                 if (string.IsNullOrWhiteSpace(output))
                 {
                     _logger.LogWarning("[RAM] La salida de PowerShell está vacía");
                     throw new Exception("PowerShell no devolvió ningún resultado");
                 }
-                
+
                 var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 _logger.LogDebug($"[RAM] Total de líneas obtenidas: {lines.Count}");
-                
+
                 if (lines.Count <= 1)
                 {
                     _logger.LogWarning("[RAM] Solo se obtuvo la cabecera CSV, sin datos de módulos");
-                    throw new Exception("No hay datos de módulos de RAM en la salida");
+                    // No módulos detectados, proceder más abajo a añadir slots vacíos según totalSlotsFisicos
                 }
-                
+
                 int slotsOcupados = 0;
                 for (int i = 1; i < lines.Count; i++)
                 {
                     var csv = lines[i];
                     _logger.LogDebug($"[RAM] Procesando línea CSV {i}: '{csv}'");
-                    // El CSV puede tener comas en PartNumber, así que usar un parser robusto
                     var parts = ParseCsvLine(csv);
                     _logger.LogDebug($"[RAM] Partes parseadas: {string.Join(" | ", parts)}");
-                    
+
                     if (parts.Length < 5)
                     {
                         _logger.LogDebug($"[RAM] Línea ignorada por longitud ({parts.Length} campos): '{csv}'");
@@ -966,15 +996,15 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     var modelo = parts[3].Trim('"'); // PartNumber
                     var velocidad = parts[4].Trim('"');
                     _logger.LogDebug($"[RAM] Datos extraídos - Slot: {slotsOcupados+1}, Capacidad: {capacidadStr}, Marca: {fabricante}, Frecuencia: {velocidad}, Modelo: {modelo}, Tipo: {tipoStr}");
-                    
+
                     long capacidadBytes = 0;
                     int capacidadGB = 0;
                     if (long.TryParse(capacidadStr, out capacidadBytes))
                         capacidadGB = (int)(capacidadBytes / (1024 * 1024 * 1024));
-                    
+
                     var tipoMemoriaTraducido = TraducirTipoMemoria(tipoStr);
                     var tipoCombo = ObtenerTipoMemoriaCombo(tipoMemoriaTraducido);
-                    
+
                     var slot = new SlotRamEntity
                     {
                         NumeroSlot = ++slotsOcupados,
@@ -985,32 +1015,56 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         Ocupado = true,
                         Observaciones = modelo
                     };
-                    
+
                     _logger.LogDebug($"[RAM] Creando slot: {slot.NumeroSlot} - {slot.CapacidadGB}GB {slot.TipoMemoria} {slot.Marca}");
                     Application.Current.Dispatcher.Invoke(() => ListaRam.Add(slot));
                 }
-                
-                string resumen = $"Slots ocupados: {slotsOcupados}";
-                _logger.LogDebug($"[RAM] Resumen: {resumen}");
-                
-                if (ListaRam.Count == 0)
+
+                // Si WMI nos indicó un número total de ranuras, añadir slots vacíos para las ranuras no ocupadas
+                if (totalSlotsFisicos > 0)
                 {
-                    _logger.LogWarning("[RAM] No se detectaron módulos de RAM automáticamente. Permitiendo edición manual.");
-                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se detectaron módulos de RAM automáticamente. Se ha añadido un slot vacío para edición manual.\n" + resumen, "RAM automática", MessageBoxButton.OK, MessageBoxImage.Warning));
-                    Application.Current.Dispatcher.Invoke(() => ListaRam.Add(new SlotRamEntity
+                    _logger.LogDebug($"[RAM] Ranuras físicas detectadas: {totalSlotsFisicos}. Módulos detectados: {slotsOcupados}");
+                    int start = slotsOcupados + 1;
+                    for (int n = start; n <= totalSlotsFisicos; n++)
                     {
-                        NumeroSlot = 1,
-                        CapacidadGB = null,
-                        Marca = string.Empty,
-                        Frecuencia = string.Empty,
-                        TipoMemoria = string.Empty,
-                        Ocupado = false,
-                        Observaciones = "Manual"
-                    }));
+                        var emptySlot = new SlotRamEntity
+                        {
+                            NumeroSlot = n,
+                            CapacidadGB = null,
+                            Marca = string.Empty,
+                            Frecuencia = string.Empty,
+                            TipoMemoria = string.Empty,
+                            Ocupado = false,
+                            Observaciones = "Vacío"
+                        };
+                        Application.Current.Dispatcher.Invoke(() => ListaRam.Add(emptySlot));
+                    }
                 }
                 else
                 {
-                    _logger.LogInformation($"[RAM] ✅ Detectados {ListaRam.Count} módulos de RAM correctamente");
+                    // Si no hay información de ranuras y no detectamos módulos, añadir un slot vacío para edición manual
+                    if (ListaRam.Count == 0)
+                    {
+                        _logger.LogWarning("[RAM] No se detectaron módulos de RAM automáticamente y no hay información de ranuras. Añadiendo un slot vacío.");
+                        Application.Current.Dispatcher.Invoke(() => ListaRam.Add(new SlotRamEntity
+                        {
+                            NumeroSlot = 1,
+                            CapacidadGB = null,
+                            Marca = string.Empty,
+                            Frecuencia = string.Empty,
+                            TipoMemoria = string.Empty,
+                            Ocupado = false,
+                            Observaciones = "Manual"
+                        }));
+                    }
+                }
+
+                string resumen = $"Slots ocupados: {ListaRam.Count(l => l.Ocupado)} / { (totalSlotsFisicos>0? totalSlotsFisicos.ToString(): ListaRam.Count.ToString()) }";
+                _logger.LogDebug($"[RAM] Resumen: {resumen}");
+
+                if (ListaRam.Count > 0)
+                {
+                    _logger.LogInformation($"[RAM] ✅ Detectados {ListaRam.Count(l => l.Ocupado)} módulos de RAM correctamente. Ranuras totales: { (totalSlotsFisicos>0? totalSlotsFisicos.ToString(): "desconocido") }");
                 }
             }
             catch (Exception ex)
@@ -1028,7 +1082,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     Observaciones = "Manual"
                 }));
             }
-            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {r.CapacidadGB}GB {r.TipoMemoria} {r.Marca}"))}");
+            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {(r.CapacidadGB.HasValue? r.CapacidadGB.ToString()+"GB":"vacío")} {r.TipoMemoria} {r.Marca} (Ocupado={r.Ocupado})"))}");
         }
 
         private string[] ParseCsvLine(string line)
@@ -1197,6 +1251,23 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 Modelo = string.Empty
             };
             ListaDiscos.Add(nuevoDisco);
+        }
+
+        // Comando para agregar un slot de RAM manualmente desde la UI
+        [RelayCommand(CanExecute = nameof(CanAgregarRam))]
+        public void AgregarRam()
+        {
+            var nuevoSlot = new SlotRamEntity
+            {
+                NumeroSlot = ListaRam.Count + 1,
+                CapacidadGB = null,
+                Marca = string.Empty,
+                Frecuencia = string.Empty,
+                TipoMemoria = string.Empty,
+                Ocupado = false,
+                Observaciones = "Manual"
+            };
+            ListaRam.Add(nuevoSlot);
         }
     }
 }
