@@ -19,6 +19,7 @@ using GestLog.Modules.Personas.Models;
 using Modules.Personas.Interfaces;
 using System.Globalization;
 using System.Threading;
+using GestLog.Services.Equipos;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -339,10 +340,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             equipoRecargado.SerialNumber = SerialNumber;
                             equipoRecargado.Observaciones = Observaciones;
                             equipoRecargado.FechaModificacion = DateTime.Now;
-                            equipoRecargado.Estado = Estado;
-                            equipoRecargado.Costo = Costo;
-                            equipoRecargado.FechaCompra = FechaCompra;
-                            equipoRecargado.CodigoAnydesk = CodigoAnydesk;
+                            {
+                                // Antes: equipoRecargado.Estado = Estado;
+                                string _msg; bool _persisted;
+                                EquipoEstadoService.SetEstado(equipoRecargado, Estado, dbContext, out _msg, out _persisted);
+                            }
+
+                            // Si se marcó como Activo, limpiar la FechaBaja (volver a activo elimina la fecha de baja)
+                            if (string.Equals(Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                            {
+                                equipoRecargado.FechaBaja = null;
+                            }
 
                             // Reemplazar colecciones: eliminar existentes y añadir nuevas instancias
                             if (equipoRecargado.SlotsRam != null && equipoRecargado.SlotsRam.Any())
@@ -433,10 +441,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                         equipoRecargado.SerialNumber = SerialNumber;
                                         equipoRecargado.Observaciones = Observaciones;
                                         equipoRecargado.FechaModificacion = DateTime.Now;
-                                        equipoRecargado.Estado = Estado;
-                                        equipoRecargado.Costo = Costo;
-                                        equipoRecargado.FechaCompra = FechaCompra;
-                                        equipoRecargado.CodigoAnydesk = CodigoAnydesk;
+                                        {
+                                            // Antes: equipoRecargado.Estado = Estado;
+                                            string _msg; bool _persisted;
+                                            EquipoEstadoService.SetEstado(equipoRecargado, Estado, dbContext, out _msg, out _persisted);
+                                        }
+
+                                        // Si se marcó como Activo, limpiar la FechaBaja (volver a activo elimina la fecha de baja)
+                                        if (string.Equals(Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            equipoRecargado.FechaBaja = null;
+                                        }
 
                                         if (equipoRecargado.SlotsRam != null && equipoRecargado.SlotsRam.Any())
                                             dbContext.SlotsRam.RemoveRange(equipoRecargado.SlotsRam);
@@ -541,10 +556,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         equipo.SerialNumber = SerialNumber;
                         equipo.Observaciones = Observaciones;
                         equipo.FechaModificacion = DateTime.Now;
-                        equipo.Estado = Estado;
-                        equipo.Costo = Costo;
-                        equipo.FechaCompra = FechaCompra;
-                        equipo.CodigoAnydesk = CodigoAnydesk;
+                        {
+                            // Antes: equipo.Estado = Estado;
+                            string _msg; bool _persisted;
+                            EquipoEstadoService.SetEstado(equipo, Estado, dbContext, out _msg, out _persisted);
+                        }
+
+                        // Si se marcó como Activo, limpiar la FechaBaja (volver a activo elimina la fecha de baja)
+                        if (string.Equals(Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                        {
+                            equipo.FechaBaja = null;
+                        }
 
                         // Reemplazar colecciones: eliminar los antiguos y añadir los actuales
                         if (equipo.SlotsRam != null && equipo.SlotsRam.Any())
@@ -620,11 +642,15 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         SerialNumber = SerialNumber,
                         Observaciones = Observaciones,
                         FechaCreacion = DateTime.Now,
-                        Estado = Estado,
                         Costo = Costo,
                         FechaCompra = FechaCompra,
                         CodigoAnydesk = CodigoAnydesk
                     };
+                    {
+                        // Antes: equipo.Estado = Estado;
+                        string _msg; bool _persisted;
+                        EquipoEstadoService.SetEstado(equipo, Estado, dbContext, out _msg, out _persisted);
+                    }
 
                     // Antes de añadir, comprobar si ya existe una instancia en el ChangeTracker con la misma clave y detachearla
                     try

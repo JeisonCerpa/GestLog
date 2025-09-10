@@ -115,6 +115,18 @@
                                 <Setter Property="TextDecorations" Value="Strikethrough"/>
                                 <Setter Property="Foreground" Value="#888"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="EnMantenimiento">
+                                <Setter Property="Foreground" Value="#8A6B00"/>
+                                <Setter Property="FontStyle" Value="Italic"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="EnReparacion">
+                                <Setter Property="Foreground" Value="#A85B00"/>
+                                <Setter Property="FontStyle" Value="Italic"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
+                                <Setter Property="Foreground" Value="#9E9E9E"/>
+                                <Setter Property="Opacity" Value="0.75"/>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                     <Style TargetType="DataGridRow">
@@ -172,6 +184,16 @@
                             <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
                                 <Setter Property="Background" Value="#FFEDEDED"/>
                                 <Setter Property="Opacity" Value="0.6"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="EnMantenimiento">
+                                <Setter Property="Background" Value="#FFF8E1"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="EnReparacion">
+                                <Setter Property="Background" Value="#FFF3E0"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                                <Setter Property="Opacity" Value="0.75"/>
                             </DataTrigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="#E6F4EA"/>

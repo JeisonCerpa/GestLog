@@ -68,8 +68,23 @@ namespace GestLog.Views.Tools.GestionEquipos
                         try
                         {
                             await vm.GuardarAsync().ConfigureAwait(true);
-                            // Sólo cerrar el diálogo si el guardado finalizó correctamente (el ViewModel establece DialogResult=true)
-                            this.Close();
+
+                            // Intentar establecer DialogResult sólo si la ventana fue mostrada como diálogo.
+                            // Si no se puede (InvalidOperationException), cerrar como fallback.
+                            bool dialogResultSet = false;
+                            try
+                            {
+                                this.DialogResult = true; // esto cierra la ventana cuando fue opened con ShowDialog()
+                                dialogResultSet = true;
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                // No fue mostrada como dialog (Show), fallback: cerrar la ventana
+                            }
+
+                            if (!dialogResultSet)
+                                this.Close();
+
                             return;
                         }
                         catch (Exception ex)

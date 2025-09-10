@@ -14,6 +14,7 @@ using System.Windows.Data;
 using Microsoft.Win32;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using GestLog.Services.Equipos;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -348,7 +349,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             Sede = sede,
                             Costo = costo,
                             FechaCompra = fechaCompra,
-                            Estado = estado,
+                            // Estado se asigna mediante EquipoEstadoService para centralizar reglas (no persistir individualmente aquí)
                             CodigoAnydesk = anydesk,
                             Marca = marca,
                             Modelo = modelo,
@@ -360,6 +361,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             FechaCreacion = fechaCreacion,
                             FechaModificacion = fechaMod
                         };
+
+                        // Usar el servicio para asignar estado en memoria (db=null) y mantener reglas como limpiar FechaBaja si es Activo
+                        try
+                        {
+                            string _msgEstado; bool _persistedEstado;
+                            EquipoEstadoService.SetEstado(eq, estado, null, out _msgEstado, out _persistedEstado);
+                        }
+                        catch (Exception exSetEstado)
+                        {
+                            importErrors.Add($"Fila {row.RowNumber()}: no se pudo asignar Estado ('{estado}'): {exSetEstado.Message}");
+                        }
 
                         // Guardar: si ya existe, omitimos (podrías cambiar a actualización si se desea)
                         if (!_db.EquiposInformaticos.Any(e => e.Codigo == eq.Codigo))

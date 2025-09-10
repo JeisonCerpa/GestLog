@@ -30,10 +30,19 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 try
                 {
-                    if (!_db.Entry(Equipo).Collection(e => e.SlotsRam).IsLoaded)
-                        _db.Entry(Equipo).Collection(e => e.SlotsRam).Load();
-                    if (!_db.Entry(Equipo).Collection(e => e.Discos).IsLoaded)
-                        _db.Entry(Equipo).Collection(e => e.Discos).Load();
+                    var entry = _db.Entry(Equipo);
+
+                    // Solo cargar automáticamente si la entidad está siendo rastreada para evitar duplicados
+                    // cuando la entidad ya trae colecciones (p. ej. proviene de AsNoTracking) o cuando
+                    // reconstruimos la entidad desde el VM de edición (ya contiene listas).
+                    if (entry.State != EntityState.Detached)
+                    {
+                        if (!entry.Collection(e => e.SlotsRam).IsLoaded && (Equipo.SlotsRam == null || !Equipo.SlotsRam.Any()))
+                            entry.Collection(e => e.SlotsRam).Load();
+
+                        if (!entry.Collection(e => e.Discos).IsLoaded && (Equipo.Discos == null || !Equipo.Discos.Any()))
+                            entry.Collection(e => e.Discos).Load();
+                    }
                 }
                 catch
                 {
@@ -81,47 +90,77 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         /// </summary>
         public bool DarDeBaja(out string mensaje, out bool persistedToDb)
         {
+            // Delegar a SetEstado para centralizar reglas de negocio y persistencia.
+            try
+            {
+                var result = SetEstado("Dado de baja", out mensaje, out persistedToDb);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error al dar de baja: {ex.Message}";
+                persistedToDb = false;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Establece un nuevo estado al equipo. Si el estado es 'Activo', limpia FechaBaja; si es 'Dado de baja', establece FechaBaja a ahora.
+        /// Persiste en DB si hay DbContext.
+        /// </summary>
+        public bool SetEstado(string nuevoEstado, out string mensaje, out bool persistedToDb)
+        {
             mensaje = string.Empty;
             persistedToDb = false;
             try
             {
-                // Si hay DbContext, intentar localizar la entidad rastreada en la BD
+                bool esActivo = string.Equals(nuevoEstado, "Activo", StringComparison.OrdinalIgnoreCase);
+                bool esDadoBaja = string.Equals(nuevoEstado, "Dado de baja", StringComparison.OrdinalIgnoreCase) || string.Equals(nuevoEstado, "DadoDeBaja", StringComparison.OrdinalIgnoreCase);
+
                 if (_db != null)
                 {
                     var equipoRef = _db.EquiposInformaticos.FirstOrDefault(e => e.Codigo == Equipo.Codigo);
                     if (equipoRef != null)
                     {
-                        equipoRef.FechaBaja = DateTime.Now;
-                        equipoRef.Estado = "Dado de baja";
+                        equipoRef.Estado = nuevoEstado;
                         equipoRef.FechaModificacion = DateTime.Now;
+
+                        if (esActivo)
+                            equipoRef.FechaBaja = null;
+
+                        if (esDadoBaja)
+                            equipoRef.FechaBaja = DateTime.Now;
+
                         _db.SaveChanges();
 
-                        // Actualizar la entidad en memoria para mantener consistencia
-                        Equipo.FechaBaja = equipoRef.FechaBaja;
+                        // Sincronizar entidad en memoria
                         Equipo.Estado = equipoRef.Estado;
                         Equipo.FechaModificacion = equipoRef.FechaModificacion;
+                        Equipo.FechaBaja = equipoRef.FechaBaja;
 
-                        // Notificar al resto de la app
                         try { WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage()); } catch { }
 
-                        mensaje = "Equipo dado de baja correctamente.";
+                        mensaje = esActivo ? "Equipo marcado como activo y fecha de baja eliminada." : (esDadoBaja ? "Equipo dado de baja correctamente." : "Estado actualizado correctamente.");
                         persistedToDb = true;
                         return true;
                     }
                 }
 
-                // Fallback: actualizar solo en memoria
-                Equipo.FechaBaja = DateTime.Now;
-                Equipo.Estado = "Dado de baja";
+                // Fallback en memoria
+                Equipo.Estado = nuevoEstado;
                 Equipo.FechaModificacion = DateTime.Now;
+                if (esActivo)
+                    Equipo.FechaBaja = null;
+                if (esDadoBaja)
+                    Equipo.FechaBaja = DateTime.Now;
 
-                mensaje = "No se pudo acceder a la base de datos, se actualizó el estado en memoria.";
+                mensaje = esActivo ? "Estado actualizado en memoria: equipo marcado como activo y fecha de baja eliminada." : (esDadoBaja ? "Estado actualizado en memoria: equipo marcado como dado de baja." : "Estado actualizado en memoria.");
                 persistedToDb = false;
                 return true;
             }
             catch (Exception ex)
             {
-                mensaje = $"Error al dar de baja: {ex.Message}";
+                mensaje = $"Error al actualizar estado: {ex.Message}";
                 persistedToDb = false;
                 return false;
             }

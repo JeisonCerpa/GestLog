@@ -9,6 +9,9 @@ namespace GestLog.Views.Tools.GestionEquipos
 {
     public partial class DetallesEquipoInformaticoView : Window
     {
+        // Guardar referencia al DbContext pasado por el llamador para reutilizarlo en refrescos
+        private readonly GestLogDbContext? _db;
+
         // Constructor antiguo preservado y redirigido a la nueva sobrecarga
         public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo) : this(equipo, null)
         {
@@ -20,7 +23,8 @@ namespace GestLog.Views.Tools.GestionEquipos
             InitializeComponent();
 
             // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
-            DataContext = new DetallesEquipoInformaticoViewModel(equipo, db);
+            _db = db;
+            DataContext = new DetallesEquipoInformaticoViewModel(equipo, _db);
         }
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
@@ -141,8 +145,8 @@ namespace GestLog.Views.Tools.GestionEquipos
                                 Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>()
                             };
 
-                            // Asignar nuevo DataContext usando el equipo reconstruido (sin DbContext)
-                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, null);
+                            // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
+                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, _db);
                         }
                     }
                     catch
