@@ -9,6 +9,7 @@
     <Window.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToEmojiConverter x:Key="BooleanToEmojiConverter"/>
+        <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#504F4E"/>
         </Style>
@@ -31,6 +32,85 @@
             <Setter Property="CaretBrush" Value="#222222"/>
             <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
             <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/>
+        </Style>
+
+        <!-- Estilos de botón reutilizables -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#2B8E3F" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#247C35" />
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#1A000000" BlurRadius="6" ShadowDepth="2" Opacity="0.2"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#C0392B" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#A93226" />
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#1A000000" BlurRadius="6" ShadowDepth="2" Opacity="0.2"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Plantilla detallada para un slot RAM (valores como TextBox seleccionables) -->
@@ -106,7 +186,10 @@
 
                 <!-- Derecha: botón Editar alineado a la derecha en la misma fila -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Button Content="Editar" Width="90" Height="30" Margin="8,0,0,0" Click="BtnEditar_Click" Background="#2B8E3F" Foreground="White" FontWeight="SemiBold" />
+                    <Button Content="Editar" Width="90" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Click="BtnEditar_Click" />
+                    <Button Content="Dar de baja" Width="110" Style="{StaticResource DangerButtonStyle}" Margin="8,0,0,0" Click="BtnDarDeBaja_Click"
+                            IsEnabled="{Binding CanDarDeBajaEquipo}"
+                            Opacity="{Binding CanDarDeBajaEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -231,7 +314,7 @@
         </Border>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-            <Button Content="Cerrar" Width="100" Height="34" Margin="0,0,8,0" Click="BtnCerrar_Click" Background="#C0392B" Foreground="White"/>
+            <Button Content="Cerrar" Width="100" Height="34" Margin="0,0,8,0" Click="BtnCerrar_Click" Style="{StaticResource DangerButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

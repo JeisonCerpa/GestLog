@@ -121,7 +121,21 @@ public partial class EquiposViewModel : ObservableObject, IDisposable
                     _logger.LogError(ex, "[EquiposViewModel] Error en mensaje SeguimientosActualizados");
                 }
             });
-            
+
+            // Suscribirse a actualizaciones globales de equipos para recargar la lista cuando sea necesario
+            WeakReferenceMessenger.Default.Register<EquiposActualizadosMessage>(this, async (r, m) =>
+            {
+                try
+                {
+                    // Evitar recargas demasiado frecuentes: delegar a LoadEquiposAsync que aplica debounce
+                    await LoadEquiposAsync(forceReload: false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[EquiposViewModel] Error en mensaje EquiposActualizados");
+                }
+            });
+
             EquiposView = CollectionViewSource.GetDefaultView(Equipos);
             if (EquiposView != null)
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);

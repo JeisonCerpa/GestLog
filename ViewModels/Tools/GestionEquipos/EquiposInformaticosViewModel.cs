@@ -147,7 +147,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     return;
                 }
 
-                var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(detalle);
+                var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(detalle, _db);
                 var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
                 if (owner != null) ventana.Owner = owner;
                 

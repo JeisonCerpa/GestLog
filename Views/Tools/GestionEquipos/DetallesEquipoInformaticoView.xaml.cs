@@ -1,30 +1,25 @@
 using System.Windows;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.ViewModels.Tools.GestionEquipos;
-using GestLog.Modules.DatabaseConnection;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using System.Globalization;
-using System.Text;
+using GestLog.Modules.DatabaseConnection; // agregado para poder recibir GestLogDbContext
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
     public partial class DetallesEquipoInformaticoView : Window
     {
-        public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo)
+        // Constructor antiguo preservado y redirigido a la nueva sobrecarga
+        public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo) : this(equipo, null)
+        {
+        }
+
+        // Nueva sobrecarga que recibe el DbContext (nullable) y lo pasa al ViewModel
+        public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo, GestLogDbContext? db)
         {
             InitializeComponent();
 
-            // Intentar obtener GestLogDbContext desde Application.Current.Properties si fue registrado
-            GestLogDbContext? db = null;
-            try
-            {
-                if (System.Windows.Application.Current?.Properties.Contains("DbContext") == true)
-                    db = System.Windows.Application.Current.Properties["DbContext"] as GestLogDbContext;
-            }
-            catch { }
-
-            // Pasar null si no se encuentra; ViewModel maneja null
+            // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
             DataContext = new DetallesEquipoInformaticoViewModel(equipo, db);
         }
 
@@ -112,40 +107,17 @@ namespace GestLog.Views.Tools.GestionEquipos
                 }
 
                 var result = editarWindow.ShowDialog();
-                // Si se guardó (DialogResult == true), refrescar la vista de detalles
+                // Si se guardó (DialogResult == true), reconstruir la vista de detalles desde el VM de edición (no usamos reflexión para obtener DbContext)
                 if (result == true)
                 {
                     try
                     {
-                        // Intentar obtener un DbContext compartido desde Application.Current.Properties
-                        GestLogDbContext? db = null;
-                        try
-                        {
-                            if (System.Windows.Application.Current?.Properties.Contains("DbContext") == true)
-                                db = System.Windows.Application.Current.Properties["DbContext"] as GestLogDbContext;
-                        }
-                        catch { }
-
                         // Determinar código del equipo (puede haber cambiado durante la edición)
                         string? codigoParaCargar = null;
                         if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vm2)
                             codigoParaCargar = vm2.Codigo;
 
-                        if (!string.IsNullOrWhiteSpace(codigoParaCargar) && db != null)
-                        {
-                            // Recargar desde BD incluyendo colecciones
-                            var equipoRef = db.EquiposInformaticos
-                                .Include(e => e.SlotsRam)
-                                .Include(e => e.Discos)
-                                .FirstOrDefault(e => e.Codigo == codigoParaCargar);                            if (equipoRef != null)
-                            {
-                                // Reasignar DataContext con la entidad recargada
-                                this.DataContext = new DetallesEquipoInformaticoViewModel(equipoRef, db);
-                                return;
-                            }
-                        }
-
-                        // Fallback: si no hay DbContext compartido o no se encontró en BD, reconstruir entidad desde el VM de edición
+                        // Fallback: reconstruir entidad desde el VM de edición (si existe vm2)
                         if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vmFallback)
                         {
                             var equipoReconstruido = new EquipoInformaticoEntity
@@ -167,7 +139,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                                 Estado = vmFallback.Estado,
                                 SlotsRam = vmFallback.ListaRam?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(),
                                 Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>()
-                            };                            // Asignar nuevo DataContext usando el equipo reconstruido (sin DbContext)
+                            };
+
+                            // Asignar nuevo DataContext usando el equipo reconstruido (sin DbContext)
                             this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, null);
                         }
                     }
@@ -180,6 +154,51 @@ namespace GestLog.Views.Tools.GestionEquipos
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Error al abrir el editor: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnDarDeBaja_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!(this.DataContext is GestLog.ViewModels.Tools.GestionEquipos.DetallesEquipoInformaticoViewModel vm))
+                {
+                    System.Windows.MessageBox.Show("No se pudo obtener la información del equipo.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(vm.Codigo))
+                {
+                    System.Windows.MessageBox.Show("Código de equipo inválido.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var result = System.Windows.MessageBox.Show($"¿Está seguro que desea dar de baja el equipo '{vm.NombreEquipo}' (código: {vm.Codigo})? Esta acción marcará la fecha de baja.", "Confirmar baja de equipo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result != MessageBoxResult.Yes)
+                    return;
+
+                // Delegar la operación al ViewModel
+                if (vm.DarDeBaja(out string mensaje, out bool persistedToDb))
+                {
+                    if (persistedToDb)
+                    {
+                        System.Windows.MessageBox.Show(mensaje, "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show(mensaje, "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+
+                    this.Close();
+                    return;
+                }
+
+                // Si vm.DarDeBaja regresó false hubo un error
+                System.Windows.MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al dar de baja el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
