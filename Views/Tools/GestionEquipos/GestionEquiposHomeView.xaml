@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:GestLog.Views.Tools.GestionEquipos"
-             xmlns:mantenimientos="clr-namespace:GestLog.Modules.GestionMantenimientos.Views"
+             xmlns:mantenimientos="clr-namespace:GestLog.Views.Tools.GestionEquipos"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1100">
     <Grid Background="White" Margin="10">

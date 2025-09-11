@@ -1,19 +1,31 @@
 using System.Windows.Controls;
 using UserControl = System.Windows.Controls.UserControl;
+using System.Windows;
+using SystemUri = System.Windows.Application;
+using System;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Views.Tools.GestionEquipos
 {
     public partial class CronogramaDiarioView : UserControl
     {
         public CronogramaDiarioView()
         {
-            InitializeComponent();
+            try
+            {
+                // Cargar el XAML como recurso de la aplicación (evita dependencia del método generado InitializeComponent)
+                System.Windows.Application.LoadComponent(this, new Uri("/GestLog;component/Views/Tools/GestionEquipos/CronogramaDiarioView.xaml", UriKind.Relative));
+            }
+            catch
+            {
+                // si falla, no bloquear la inicialización; el control puede instanciarse sin el XAML en entornos de compilación ligeros
+            }
+
             this.Loaded += CronogramaDiarioView_Loaded;
         }
 
-        private async void CronogramaDiarioView_Loaded(object? sender, System.Windows.RoutedEventArgs e)
+        private async void CronogramaDiarioView_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {

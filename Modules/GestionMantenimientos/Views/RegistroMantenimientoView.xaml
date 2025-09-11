@@ -1,8 +1,0 @@
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="GestLog.Modules.GestionMantenimientos.Views.RegistroMantenimientoView"
-        Title="Registro Mantenimiento" Height="300" Width="400">
-    <Grid>
-        <!-- Registro de mantenimiento (antiguo) - reemplazado por RegistrarMantenimientoView -->
-    </Grid>
-</Window>
