@@ -203,9 +203,23 @@ namespace GestLog.Views.Tools
                 System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            // Navegación al módulo de Gestión de Equipos
-            var gestionEquiposView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
-            _mainWindow?.NavigateToView(gestionEquiposView, "Gestión de Equipos Informáticos");
+            try
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var gestionVm = serviceProvider.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
+                var gestionEquiposView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+                if (gestionVm != null)
+                {
+                    gestionEquiposView.DataContext = gestionVm;
+                }
+
+                _mainWindow?.NavigateToView(gestionEquiposView, "Gestión de Equipos Informáticos");
+            }
+            catch (System.Exception ex)
+            {
+                var errorHandler = LoggingService.GetErrorHandler();
+                errorHandler.HandleException(ex, "Mostrar Gestión de Equipos desde herramientas");
+            }
         }
 
         private void BtnEquiposInformaticos_Click(object sender, RoutedEventArgs e)
@@ -216,9 +230,23 @@ namespace GestLog.Views.Tools
                 System.Windows.MessageBox.Show("No tiene permisos para acceder a Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            // Navegación al módulo de Equipos Informáticos
-            var equiposInformaticosView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
-            _mainWindow?.NavigateToView(equiposInformaticosView, "Equipos Informáticos");
+            try
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var gestionVm = serviceProvider.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
+                var equiposInformaticosView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+                if (gestionVm != null)
+                {
+                    equiposInformaticosView.DataContext = gestionVm;
+                }
+
+                _mainWindow?.NavigateToView(equiposInformaticosView, "Equipos Informáticos");
+            }
+            catch (System.Exception ex)
+            {
+                var errorHandler = LoggingService.GetErrorHandler();
+                errorHandler.HandleException(ex, "Mostrar Equipos Informáticos desde herramientas");
+            }
         }
     }
 }

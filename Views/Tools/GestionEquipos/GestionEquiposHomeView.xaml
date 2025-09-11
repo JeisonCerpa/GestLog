@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:GestLog.Views.Tools.GestionEquipos"
+             xmlns:mantenimientos="clr-namespace:GestLog.Modules.GestionMantenimientos.Views"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1100">
     <Grid Background="White" Margin="10">
@@ -48,7 +49,20 @@
             </TabItem>
             <TabItem Header="Cronograma">
                 <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
-                    <TextBlock Text="Cronograma y asignaciones diarias" Margin="16"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <mantenimientos:CronogramaDiarioView x:Name="cronogramaView" DataContext="{Binding CronogramaVm}" />
+
+                        <!-- Indicador de depuración: mostrar cuántos items están en Planificados dentro del DataContext del control cronograma -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="8">
+                            <TextBlock Text="Cronograma DataContext planificados: " VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding DataContext.Planificados.Count, ElementName=cronogramaView}" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,0,0" />
+                        </StackPanel>
+                    </Grid>
                 </Border>
             </TabItem>
             <TabItem Header="Historial">

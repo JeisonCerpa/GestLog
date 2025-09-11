@@ -1,0 +1,86 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:GestLog.Modules.GestionMantenimientos.ViewModels"
+             x:Class="GestLog.Modules.GestionMantenimientos.Views.CronogramaDiarioView">
+    <Border Background="#FAFAFA" Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                <!-- Selectores semana / año en lugar de DatePicker -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Semana:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#333" />
+                        <ComboBox Width="80" ItemsSource="{Binding Weeks}" SelectedItem="{Binding SelectedWeek, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Año:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#333" />
+                        <ComboBox Width="90" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <!-- Botón "Cargar" eliminado: la carga ocurre al cambiar semana/año -->
+
+                    <TextBlock Text="{Binding Planificados.Count, StringFormat='Mantenimientos cargados: {0}'}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#333" />
+                </StackPanel>
+            </DockPanel>
+
+            <!-- Tablero semanal: 5 columnas (Lunes-Viernes) -->
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Days}" HorizontalAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="5" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="6" Background="White" CornerRadius="6" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                                <DockPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,0,0,6" />
+
+                                    <Separator DockPanel.Dock="Top" Margin="0,0,0,6" />
+
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,6" Padding="6" Background="#F7F7F7" CornerRadius="4">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                                        <StackPanel Width="220">
+                                                            <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding Responsable}" FontSize="11" Foreground="#666" />
+                                                        </StackPanel>
+
+                                                        <Button Content="Registrar" HorizontalAlignment="Right" Margin="8,0,0,0"
+                                                                Command="{Binding DataContext.OpenRegistrarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+
+                                        <ItemsControl.Template>
+                                            <ControlTemplate TargetType="ItemsControl">
+                                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                    <ItemsPresenter />
+                                                </ScrollViewer>
+                                            </ControlTemplate>
+                                        </ItemsControl.Template>
+
+                                    </ItemsControl>
+
+                                    <!-- Mensaje si no hay items -->
+                                    <TextBlock Text="No hay mantenimientos" Foreground="#999" HorizontalAlignment="Center" Visibility="{Binding Items.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

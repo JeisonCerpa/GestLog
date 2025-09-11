@@ -31,6 +31,8 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> EquiposInformaticos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
+        public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea> MantenimientoPlantillas { get; set; }
+        public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea> SeguimientoTareas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -173,6 +175,28 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany()
                     .HasForeignKey(e => e.IdPermiso)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración para MantenimientoPlantillaTarea
+            modelBuilder.Entity<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea>(entity =>
+            {
+                entity.ToTable("MantenimientoPlantillaTarea");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.Orden).IsRequired();
+                entity.Property(e => e.Predeterminada).IsRequired();
+            });
+
+            // Configuración para SeguimientoMantenimientoTarea
+            modelBuilder.Entity<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea>(entity =>
+            {
+                entity.ToTable("SeguimientoMantenimientoTarea");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.NombreTarea).IsRequired().HasMaxLength(300);
+                entity.Property(e => e.Observaciones).HasMaxLength(1000);
+                entity.Property(e => e.RepuestoUsado).HasMaxLength(200);
+                entity.HasIndex(e => e.SeguimientoMantenimientoId);
             });
         }
 
