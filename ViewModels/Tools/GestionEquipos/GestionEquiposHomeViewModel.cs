@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using GestLog.Modules.GestionEquipos.ViewModels;
+using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {

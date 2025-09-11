@@ -1,15 +1,19 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:GestLog.Modules.GestionEquipos.ViewModels"
+             xmlns:vm="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.ViewModels"
+             xmlns:converters="clr-namespace:GestLog.Converters"
              x:Class="GestLog.Views.Tools.GestionEquipos.CronogramaDiarioView">
+    <UserControl.Resources>
+        <converters:CronogramaTipoToBackgroundConverter x:Key="CronogramaTipoToBackgroundConverter" />
+        <converters:CronogramaTipoToBorderConverter x:Key="CronogramaTipoToBorderConverter" />
+        <converters:CronogramaTipoToButtonTextConverter x:Key="CronogramaTipoToButtonTextConverter" />
+    </UserControl.Resources>
     <Border Background="#FAFAFA" Padding="12">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            </Grid.RowDefinitions>            <DockPanel Grid.Row="0" Margin="0,0,0,12">
                 <!-- Selectores semana / año en lugar de DatePicker -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -20,11 +24,32 @@
                     <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Año:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#333" />
                         <ComboBox Width="90" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear, Mode=TwoWay}" />
+                    </StackPanel>                    <!-- Botón para crear nuevo plan -->
+                    <Border CornerRadius="4" Margin="12,0,0,0" VerticalAlignment="Center" Background="#007ACC">
+                        <Button Content="Crear Plan" Padding="8,4"
+                                Command="{Binding CrearPlanCommand}" 
+                                Background="Transparent" Foreground="White" BorderThickness="0" />
+                    </Border>
+                    
+                    <!-- Botón para gestionar planes existentes -->
+                    <Border CornerRadius="4" Margin="8,0,0,0" VerticalAlignment="Center" Background="#28A745">
+                        <Button Content="Gestionar Planes" Padding="8,4"
+                                Command="{Binding GestionarPlanesCommand}" 
+                                Background="Transparent" Foreground="White" BorderThickness="0" />
+                    </Border>
+
+                    <TextBlock Text="{Binding StatusMessage}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#333" />
+                    
+                    <!-- Leyenda -->
+                    <StackPanel Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Leyenda:" FontWeight="SemiBold" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#333" />
+                        <Border Background="#F7F7F7" BorderBrush="#DDD" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
+                            <TextBlock Text="Mantenimiento" FontSize="10" />
+                        </Border>
+                        <Border Background="#E8F5E9" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="2" Padding="4,2">
+                            <TextBlock Text="Plan Semanal" FontSize="10" />
+                        </Border>
                     </StackPanel>
-
-                    <!-- Botón "Cargar" eliminado: la carga ocurre al cambiar semana/año -->
-
-                    <TextBlock Text="{Binding Planificados.Count, StringFormat='Mantenimientos cargados: {0}'}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#333" />
                 </StackPanel>
             </DockPanel>
 
@@ -47,15 +72,19 @@
 
                                     <ItemsControl ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Margin="0,0,0,6" Padding="6" Background="#F7F7F7" CornerRadius="4">
+                                            <DataTemplate>                                                <Border Margin="0,0,0,6" Padding="6" 
+                                                        Background="{Binding Converter={StaticResource CronogramaTipoToBackgroundConverter}}" 
+                                                        BorderBrush="{Binding Converter={StaticResource CronogramaTipoToBorderConverter}}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4">
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Stretch">
                                                         <StackPanel Width="220">
                                                             <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" />
-                                                            <TextBlock Text="{Binding Responsable}" FontSize="11" Foreground="#666" />
+                                                            <TextBlock Text="{Binding Sede}" FontSize="11" Foreground="#666" />
                                                         </StackPanel>
 
-                                                        <Button Content="Registrar" HorizontalAlignment="Right" Margin="8,0,0,0"
+                                                        <Button Content="{Binding Converter={StaticResource CronogramaTipoToButtonTextConverter}}" 
+                                                                HorizontalAlignment="Right" Margin="8,0,0,0"
                                                                 Command="{Binding DataContext.OpenRegistrarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}" />
                                                     </StackPanel>

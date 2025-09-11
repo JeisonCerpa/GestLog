@@ -18,21 +18,19 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
             catch { }
             this.Loaded += CronogramaDiarioView_Loaded;
-        }
-
-        private async void CronogramaDiarioView_Loaded(object? sender, RoutedEventArgs e)
+        }        private async void CronogramaDiarioView_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {
                 if (DataContext == null)
                 {
                     var sp = LoggingService.GetServiceProvider();
-                    var vm = sp.GetService(typeof(GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel)) as GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel;
+                    var vm = sp.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel)) as GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel;
                     if (vm != null)
                         DataContext = vm;
                 }
 
-                if (DataContext is GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel vm2 && vm2.Planificados.Count == 0)
+                if (DataContext is GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel vm2 && vm2.Planificados.Count == 0)
                 {
                     await vm2.LoadAsync(System.Threading.CancellationToken.None);
                 }

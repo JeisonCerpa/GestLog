@@ -16,6 +16,8 @@ using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.ViewModels;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Services;
 
 namespace GestLog
 {
@@ -55,12 +57,13 @@ namespace GestLog
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesión
             services.AddSingleton<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddSingleton<CatalogosManagementViewModel>();
-            services.AddSingleton<GestionPermisosRolViewModel>();
-
-            // Servicios y ViewModels para Gestión de Mantenimientos
+            services.AddSingleton<GestionPermisosRolViewModel>();            // Servicios y ViewModels para Gestión de Mantenimientos
             services.AddScoped<IMantenimientoService, MaintenanceService>();
-            // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
-            services.AddTransient<GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel>();
+            
+            // Servicios para Gestión de Equipos Informáticos
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();
+              // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>();
             // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel>();
