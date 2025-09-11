@@ -14,14 +14,9 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             try
             {
-                // Cargar el XAML como recurso de la aplicación (evita dependencia del método generado InitializeComponent)
                 System.Windows.Application.LoadComponent(this, new Uri("/GestLog;component/Views/Tools/GestionEquipos/CronogramaDiarioView.xaml", UriKind.Relative));
             }
-            catch
-            {
-                // si falla, no bloquear la inicialización; el control puede instanciarse sin el XAML en entornos de compilación ligeros
-            }
-
+            catch { }
             this.Loaded += CronogramaDiarioView_Loaded;
         }
 
@@ -29,28 +24,20 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             try
             {
-                // Si no hay DataContext, intentar resolver desde DI
-                if (this.DataContext == null)
+                if (DataContext == null)
                 {
                     var sp = LoggingService.GetServiceProvider();
-                    var vm = sp.GetService(typeof(GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel)) as GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel;
+                    var vm = sp.GetService(typeof(GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel)) as GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel;
                     if (vm != null)
-                        this.DataContext = vm;
+                        DataContext = vm;
                 }
 
-                if (this.DataContext is GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel vm2)
+                if (DataContext is GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel vm2 && vm2.Planificados.Count == 0)
                 {
-                    // Ejecutar carga inicial si no hay items
-                    if (vm2.Planificados.Count == 0)
-                    {
-                        await vm2.LoadAsync(System.Threading.CancellationToken.None);
-                    }
+                    await vm2.LoadAsync(System.Threading.CancellationToken.None);
                 }
             }
-            catch
-            {
-                // no bloquear UI por errores de carga
-            }
+            catch { }
         }
     }
 }

@@ -1,6 +1,6 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:GestLog.Modules.GestionMantenimientos.ViewModels"
+             xmlns:vm="clr-namespace:GestLog.Modules.GestionEquipos.ViewModels"
              x:Class="GestLog.Views.Tools.GestionEquipos.CronogramaDiarioView">
     <Border Background="#FAFAFA" Padding="12">
         <Grid>

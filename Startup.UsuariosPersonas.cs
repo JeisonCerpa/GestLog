@@ -20,7 +20,8 @@ using GestLog.Modules.GestionMantenimientos.ViewModels;
 namespace GestLog
 {
     public static class StartupUsuariosPersonas
-    {        public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
+    {        
+        public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
         {
             Console.WriteLine("🔧 Configurando servicios de Usuarios y Personas...");
             
@@ -39,9 +40,13 @@ namespace GestLog
             {
                 var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
                 return new RolRepository(dbContextFactory);
-            });            services.AddScoped<IPermisoService, PermisoService>();
+            });            
+            services.AddScoped<IPermisoService, PermisoService>();
             services.AddScoped<IPermisoRepository, PermisoRepository>();
-            services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();            services.AddScoped<IAuditoriaService, AuditoriaService>();services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            // ViewModels de Usuarios
+            services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();            
+            services.AddScoped<IAuditoriaService, AuditoriaService>();
+            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            
+            // ViewModels de Usuarios
             
             services.AddSingleton<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
             
@@ -55,7 +60,7 @@ namespace GestLog
             // Servicios y ViewModels para Gestión de Mantenimientos
             services.AddScoped<IMantenimientoService, MaintenanceService>();
             // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel>();
+            services.AddTransient<GestLog.Modules.GestionEquipos.ViewModels.CronogramaDiarioViewModel>();
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>();
             // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel>();
@@ -74,7 +79,8 @@ namespace GestLog
                 var dbConfigProvider = provider.GetRequiredService<IDatabaseConfigurationProvider>();
                 var connectionString = dbConfigProvider.GetConnectionStringAsync().GetAwaiter().GetResult();
                 return new TipoDocumentoRepository(connectionString);
-            });            // ViewModels de Personas (agregar cuando existan)
+            });            
+            // ViewModels de Personas (agregar cuando existan)
             services.AddSingleton<PersonaManagementViewModel>();
             services.AddSingleton<IModalService, ModalService>();
             

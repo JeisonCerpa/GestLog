@@ -1,14 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using GestLog.Modules.GestionEquipos.ViewModels;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
     public class GestionEquiposHomeViewModel : ObservableObject
     {
-        public GestionEquiposHomeViewModel(GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel cronogramaVm)
+        public GestionEquiposHomeViewModel(CronogramaDiarioViewModel cronogramaVm)
         {
             CronogramaVm = cronogramaVm;
         }
 
-        public GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaDiarioViewModel CronogramaVm { get; }
+        public CronogramaDiarioViewModel CronogramaVm { get; }
     }
 }

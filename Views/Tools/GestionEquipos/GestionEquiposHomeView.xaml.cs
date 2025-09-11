@@ -9,34 +9,27 @@ namespace GestLog.Views.Tools.GestionEquipos
     {
         public GestionEquiposHomeView()
         {
-            InitializeComponent();
-            // Si no se asignó un DataContext al crear la vista, resolver desde el contenedor DI
+            try
+            {
+                System.Windows.Application.LoadComponent(this, new System.Uri("/GestLog;component/Views/Tools/GestionEquipos/GestionEquiposHomeView.xaml", System.UriKind.Relative));
+            }
+            catch { }
+            // Resolver DataContext
             try
             {
                 var serviceProvider = LoggingService.GetServiceProvider();
-
-                // Intentar obtener el ViewModel desde DataContext o resolverlo desde el contenedor
-                var vm = this.DataContext as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
-                if (vm == null && serviceProvider != null)
-                {
-                    vm = serviceProvider.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
-                    if (vm != null)
-                    {
-                        this.DataContext = vm;
-                    }
-                }
-
-                // Siempre intentar cargar el cronograma (el ViewModel del cronograma inicializa semana/año al actual)
+                var vm = DataContext as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel ?? serviceProvider?.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
+                if (vm != null)
+                    DataContext = vm;
                 try
                 {
-                    vm?.CronogramaVm?.LoadCommand?.Execute(null);
+                    var cronogramaVm = vm?.CronogramaVm;
+                    if (cronogramaVm != null && cronogramaVm.Planificados.Count == 0)
+                        _ = cronogramaVm.LoadAsync(System.Threading.CancellationToken.None);
                 }
                 catch { }
             }
-            catch
-            {
-                // no bloquear la carga de la vista si DI no está disponible
-            }
+            catch { }
         }
     }
 }
