@@ -12,25 +12,20 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
-{
-    /// <summary>
-    /// Clase para representar una tarea del checklist de forma amigable
+{    /// <summary>
+    /// Clase para representar una tarea del plan de cronograma (plantilla de tareas a realizar)
     /// </summary>
     public partial class TareaChecklistViewModel : ObservableObject
     {
         [ObservableProperty]
         private string descripcion = string.Empty;
         
-        [ObservableProperty]
-        private bool completado = false;
-        
         public int Id { get; set; }
         
-        public TareaChecklistViewModel(int id, string descripcion, bool completado = false)
+        public TareaChecklistViewModel(int id, string descripcion)
         {
             Id = id;
             Descripcion = descripcion;
-            Completado = completado;
         }
     }
 
@@ -132,10 +127,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private void ConfigurarTareasChecklistPorDefecto()
         {
             TareasChecklist.Clear();
-            TareasChecklist.Add(new TareaChecklistViewModel(1, "Ejecución de Analisis de Virus Avast"));
-            TareasChecklist.Add(new TareaChecklistViewModel(2, "Ejecución de Malwarebytes"));
-            TareasChecklist.Add(new TareaChecklistViewModel(3, "Limpieza de Archivos Temporales"));
-            TareasChecklist.Add(new TareaChecklistViewModel(4, "Backup"));
+            TareasChecklist.Add(new TareaChecklistViewModel(1, "Limpieza del Software con antivirus"));
+            TareasChecklist.Add(new TareaChecklistViewModel(2, "Eliminación de archivos temporales"));
+            TareasChecklist.Add(new TareaChecklistViewModel(3, "Respaldo de archivos digitales"));
+            TareasChecklist.Add(new TareaChecklistViewModel(4, "Actualizaciones del sistema"));
+            TareasChecklist.Add(new TareaChecklistViewModel(5, "Limpieza superficial de tarjetas"));
+            TareasChecklist.Add(new TareaChecklistViewModel(6, "Limpieza de disipadores de calor"));
+            TareasChecklist.Add(new TareaChecklistViewModel(7, "Limpieza de contactos de memoria RAM"));
+            TareasChecklist.Add(new TareaChecklistViewModel(8, "Limpieza de teclado"));
+            TareasChecklist.Add(new TareaChecklistViewModel(9, "Limpieza de mouse"));
+            TareasChecklist.Add(new TareaChecklistViewModel(10, "Limpieza de monitor"));
         }
 
         /// <summary>
@@ -144,15 +145,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private string GenerarChecklistJson()
         {
             if (!TareasChecklist.Any())
-                return string.Empty;
-
-            try
+                return string.Empty;            try
             {
                 var items = TareasChecklist.Select(t => new
                 {
                     id = t.Id,
-                    descripcion = t.Descripcion,
-                    completado = t.Completado
+                    descripcion = t.Descripcion
                 });
 
                 var checklist = new { items };
@@ -293,24 +291,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             try
             {
                 IsSaving = true;
-                StatusMessage = "Creando plan...";
-
-                // Validaciones básicas
+                StatusMessage = "Creando plan...";                // Validaciones básicas
                 if (string.IsNullOrWhiteSpace(CodigoEquipo))
                 {
                     StatusMessage = "El código del equipo es obligatorio";
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(Descripcion))
-                {
-                    StatusMessage = "La descripción es obligatoria";
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(Responsable))
-                {
-                    StatusMessage = "El responsable es obligatorio";
                     return;
                 }
 
@@ -326,15 +310,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         StatusMessage = $"El formato del checklist no es válido: {ex.Message}";
                         return;
                     }
-                }
-
-                // Crear el plan
+                }                // Crear el plan
                 var nuevoPlan = new PlanCronogramaEquipo
                 {
                     PlanId = Guid.NewGuid(),
                     CodigoEquipo = CodigoEquipo.Trim(),
-                    Descripcion = Descripcion.Trim(),
-                    Responsable = Responsable.Trim(),
+                    Descripcion = string.IsNullOrWhiteSpace(Descripcion) ? null : Descripcion.Trim(),
+                    Responsable = string.IsNullOrWhiteSpace(Responsable) ? null : Responsable.Trim(),
                     DiaProgramado = (byte)DiaEjecucion,
                     ChecklistJson = string.IsNullOrWhiteSpace(ChecklistJson) ? null : ChecklistJson.Trim(),
                     FechaCreacion = DateTime.Now,

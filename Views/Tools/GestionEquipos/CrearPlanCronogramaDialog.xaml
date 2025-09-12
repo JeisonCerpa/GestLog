@@ -27,10 +27,7 @@
                     </StackPanel>
                 </Border>
 
-                <Grid Margin="0,0,0,10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                <Grid Margin="0,0,0,10">                    <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -49,31 +46,16 @@
                               Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}"
                               IsTextSearchEnabled="False"
                               StaysOpenOnEdit="True"
-                              ToolTip="Escriba para filtrar equipos por código, nombre o usuario"/>
-
-                    <!-- Descripción -->
-                    <TextBlock Text="Descripción:*" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
-                    <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
-                             Grid.Row="1" Grid.Column="1" Margin="0,4" Padding="8"
-                             Height="60" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-                             ToolTip="Descripción detallada del plan de mantenimiento"/>
-
-                    <!-- Responsable -->
-                    <TextBlock Text="Responsable:*" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <TextBox Text="{Binding Responsable, UpdateSourceTrigger=PropertyChanged}" 
-                             Grid.Row="2" Grid.Column="1" Margin="0,4" Padding="8"
-                             ToolTip="Persona responsable de ejecutar el plan"/>
-
-                    <!-- Día de Ejecución -->
-                    <TextBlock Text="Día Ejecución:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
+                              ToolTip="Escriba para filtrar equipos por código, nombre o usuario"/>                    <!-- Día de Ejecución -->
+                    <TextBlock Text="Día Ejecución:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
                     <ComboBox ItemsSource="{Binding DiasDisponibles}"
                               SelectedValue="{Binding DiaEjecucion, UpdateSourceTrigger=PropertyChanged}"
                               SelectedValuePath="Valor"
                               DisplayMemberPath="Nombre"
-                              Grid.Row="3" Grid.Column="1" Margin="0,4" Padding="8"
+                              Grid.Row="1" Grid.Column="1" Margin="0,4" Padding="8"
                               ToolTip="Día de la semana preferido para ejecutar el plan"/>                    <!-- Checklist de Tareas -->
-                    <TextBlock Text="Lista de Tareas:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
-                    <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,4">
+                    <TextBlock Text="Lista de Tareas:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
+                    <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,4">
                         <!-- Área para agregar nueva tarea -->
                         <Border Background="#F8F9FA" BorderBrush="#DEE2E6" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
                             <Grid>
@@ -99,29 +81,21 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="White" 
-                                                    BorderBrush="#DEE2E6" BorderThickness="0,0,0,1" Padding="8,6">
-                                                <Grid>
+                                                    BorderBrush="#DEE2E6" BorderThickness="0,0,0,1" Padding="8,6">                                                <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     
-                                                    <CheckBox IsChecked="{Binding Completado}" 
-                                                              Grid.Column="0" Margin="0,0,8,0" 
-                                                              VerticalAlignment="Center"
-                                                              ToolTip="Marcar como completado"/>
-                                                    
                                                     <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
-                                                             Grid.Column="1" Margin="0,0,8,0" 
+                                                             Grid.Column="0" Margin="0,0,8,0" 
                                                              BorderThickness="0" Background="Transparent"
                                                              VerticalAlignment="Center"
                                                              ToolTip="Editar descripción de la tarea"/>
-                                                    
-                                                    <Button Content="✖" 
+                                                      <Button Content="✖"
                                                             Command="{Binding DataContext.EliminarTareaCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}"
-                                                            Grid.Column="2" Padding="6,2" FontSize="10"
+                                                            Grid.Column="1" Padding="6,2" FontSize="10"
                                                             Background="#DC3545" BorderBrush="#DC3545" Foreground="White"
                                                             ToolTip="Eliminar esta tarea"/>
                                                 </Grid>
@@ -131,10 +105,8 @@
                                 </ItemsControl>
                             </ScrollViewer>
                         </Border>
-                    </StackPanel>
-
-                    <!-- Mensaje de estado -->
-                    <TextBlock Text="{Binding StatusMessage}" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
+                    </StackPanel>                    <!-- Mensaje de estado -->
+                    <TextBlock Text="{Binding StatusMessage}" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                                Margin="0,8,0,0" Foreground="#D32F2F" FontWeight="Bold" TextWrapping="Wrap"
                                Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
                 </Grid>
@@ -144,9 +116,10 @@
                     <StackPanel>
                         <TextBlock Text="ℹ️ Información sobre Planes de Cronograma" FontWeight="Bold" Foreground="#555" Margin="0,0,0,8"/>                        <TextBlock Text="• Los planes definen actividades de mantenimiento que se ejecutan de forma programada" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
                         <TextBlock Text="• El día de ejecución indica cuándo de la semana se debe realizar preferiblemente" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
-                        <TextBlock Text="• Puede agregar, editar y eliminar tareas del checklist según sea necesario" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
-                        <TextBlock Text="• Use el checkbox para marcar tareas como completadas por defecto" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
-                        <TextBlock Text="• Los campos marcados con * son obligatorios" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• Puede agregar, editar y eliminar tareas del plan según sea necesario" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• Las tareas se marcarán como completadas durante la ejecución del mantenimiento" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• La descripción y responsable se pueden completar durante la ejecución del plan" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• Solo el código del equipo es obligatorio para crear el plan" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
                     </StackPanel>
                 </Border>
 
