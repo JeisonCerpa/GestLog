@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.DatabaseConnection;
@@ -36,6 +38,26 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             {
                 _logger.LogError(ex, "[EquipoInformaticoService] Error al obtener equipo {codigo}", codigo);
                 return null;
+            }
+        }
+
+        public async Task<IEnumerable<EquipoInformaticoEntity>> GetAllAsync()
+        {
+            try
+            {
+                using var context = _dbContextFactory.CreateDbContext();
+                var equipos = await context.EquiposInformaticos
+                    .OrderBy(e => e.Codigo)
+                    .ToListAsync();
+                
+                _logger.LogDebug("[EquipoInformaticoService] Obtenidos {cantidad} equipos informáticos", equipos.Count);
+                
+                return equipos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[EquipoInformaticoService] Error al obtener todos los equipos");
+                return new List<EquipoInformaticoEntity>();
             }
         }
     }

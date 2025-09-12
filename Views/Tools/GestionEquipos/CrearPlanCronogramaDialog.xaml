@@ -39,13 +39,17 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="140"/>
                         <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Código del Equipo -->
+                    </Grid.ColumnDefinitions>                    <!-- Código del Equipo -->
                     <TextBlock Text="Código Equipo:*" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <TextBox Text="{Binding CodigoEquipo, UpdateSourceTrigger=PropertyChanged}" 
-                             Grid.Row="0" Grid.Column="1" Margin="0,4" Padding="8"
-                             ToolTip="Código único del equipo informático"/>
+                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,4" Padding="8"
+                              ItemsSource="{Binding EquiposDisponibles}"
+                              SelectedItem="{Binding EquipoSeleccionado, UpdateSourceTrigger=PropertyChanged}"
+                              DisplayMemberPath="DisplayText"
+                              IsEditable="True"
+                              Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}"
+                              IsTextSearchEnabled="False"
+                              StaysOpenOnEdit="True"
+                              ToolTip="Escriba para filtrar equipos por código, nombre o usuario"/>
 
                     <!-- Descripción -->
                     <TextBlock Text="Descripción:*" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
@@ -67,15 +71,67 @@
                               SelectedValuePath="Valor"
                               DisplayMemberPath="Nombre"
                               Grid.Row="3" Grid.Column="1" Margin="0,4" Padding="8"
-                              ToolTip="Día de la semana preferido para ejecutar el plan"/>
-
-                    <!-- Checklist JSON -->
-                    <TextBlock Text="Checklist (JSON):" Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
-                    <TextBox Text="{Binding ChecklistJson, UpdateSourceTrigger=PropertyChanged}" 
-                             Grid.Row="4" Grid.Column="1" Margin="0,4" Padding="8"
-                             Height="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-                             FontFamily="Consolas" FontSize="11"
-                             ToolTip="Lista de verificación en formato JSON (opcional)"/>
+                              ToolTip="Día de la semana preferido para ejecutar el plan"/>                    <!-- Checklist de Tareas -->
+                    <TextBlock Text="Lista de Tareas:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Top" FontWeight="Bold" Margin="0,8,0,0"/>
+                    <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,4">
+                        <!-- Área para agregar nueva tarea -->
+                        <Border Background="#F8F9FA" BorderBrush="#DEE2E6" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding NuevaTareaTexto, UpdateSourceTrigger=PropertyChanged}" 
+                                         Grid.Column="0" Margin="0,0,8,0" Padding="6"
+                                         ToolTip="Escriba la descripción de una nueva tarea"/>
+                                <Button Content="+ Agregar" 
+                                        Command="{Binding AgregarTareaCommand}"
+                                        Grid.Column="1" Padding="12,6" 
+                                        Background="#28A745" BorderBrush="#28A745" Foreground="White"
+                                        ToolTip="Agregar nueva tarea al checklist"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Lista de tareas existentes -->
+                        <Border BorderBrush="#DEE2E6" BorderThickness="1" CornerRadius="4" MaxHeight="200">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding TareasChecklist}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" 
+                                                    BorderBrush="#DEE2E6" BorderThickness="0,0,0,1" Padding="8,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <CheckBox IsChecked="{Binding Completado}" 
+                                                              Grid.Column="0" Margin="0,0,8,0" 
+                                                              VerticalAlignment="Center"
+                                                              ToolTip="Marcar como completado"/>
+                                                    
+                                                    <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
+                                                             Grid.Column="1" Margin="0,0,8,0" 
+                                                             BorderThickness="0" Background="Transparent"
+                                                             VerticalAlignment="Center"
+                                                             ToolTip="Editar descripción de la tarea"/>
+                                                    
+                                                    <Button Content="✖" 
+                                                            Command="{Binding DataContext.EliminarTareaCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Grid.Column="2" Padding="6,2" FontSize="10"
+                                                            Background="#DC3545" BorderBrush="#DC3545" Foreground="White"
+                                                            ToolTip="Eliminar esta tarea"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
 
                     <!-- Mensaje de estado -->
                     <TextBlock Text="{Binding StatusMessage}" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
@@ -86,10 +142,10 @@
                 <!-- Información adicional -->
                 <Border Background="#F5F5F5" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,16,0,0">
                     <StackPanel>
-                        <TextBlock Text="ℹ️ Información sobre Planes de Cronograma" FontWeight="Bold" Foreground="#555" Margin="0,0,0,8"/>
-                        <TextBlock Text="• Los planes definen actividades de mantenimiento que se ejecutan de forma programada" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="ℹ️ Información sobre Planes de Cronograma" FontWeight="Bold" Foreground="#555" Margin="0,0,0,8"/>                        <TextBlock Text="• Los planes definen actividades de mantenimiento que se ejecutan de forma programada" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
                         <TextBlock Text="• El día de ejecución indica cuándo de la semana se debe realizar preferiblemente" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
-                        <TextBlock Text="• El checklist JSON es opcional y puede contener tareas específicas a verificar" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• Puede agregar, editar y eliminar tareas del checklist según sea necesario" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
+                        <TextBlock Text="• Use el checkbox para marcar tareas como completadas por defecto" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
                         <TextBlock Text="• Los campos marcados con * son obligatorios" Foreground="#666" TextWrapping="Wrap" Margin="0,2"/>
                     </StackPanel>
                 </Border>

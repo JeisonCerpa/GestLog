@@ -12,32 +12,36 @@ namespace GestLog.Views.Tools.GestionEquipos
     {
         public PlanCronogramaEquipo? PlanCreado { get; private set; }
         
-        private readonly CrearPlanCronogramaViewModel _viewModel;
-
-        public CrearPlanCronogramaDialog(string? codigoEquipoInicial = null)
+        private readonly CrearPlanCronogramaViewModel _viewModel;        public CrearPlanCronogramaDialog(string? codigoEquipoInicial = null)
         {
             InitializeComponent();
 
             // Obtener ViewModel del contenedor DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var planService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService>();
+            var equipoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService>();
             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
             
-            _viewModel = new CrearPlanCronogramaViewModel(planService, logger);
+            _viewModel = new CrearPlanCronogramaViewModel(planService, equipoService, logger);
             
             // Si se proporciona un código de equipo inicial, configurarlo
             if (!string.IsNullOrWhiteSpace(codigoEquipoInicial))
             {
-                _viewModel.CodigoEquipo = codigoEquipoInicial;
+                _viewModel.EstablecerEquipoInicial(codigoEquipoInicial);
             }
-
-            // Configurar información de semana actual
-            InfoSemanaTextBlock.Text = _viewModel.ObtenerInfoSemanaActual();
 
             // Suscribirse al evento de plan creado
             _viewModel.PlanCreado += OnPlanCreado;
 
             DataContext = _viewModel;
+            
+            // Configurar información de semana actual después de cargar
+            Loaded += (s, e) => {
+                if (FindName("InfoSemanaTextBlock") is System.Windows.Controls.TextBlock tb)
+                {
+                    tb.Text = _viewModel.ObtenerInfoSemanaActual();
+                }
+            };
         }
 
         private void OnPlanCreado(PlanCronogramaEquipo plan)

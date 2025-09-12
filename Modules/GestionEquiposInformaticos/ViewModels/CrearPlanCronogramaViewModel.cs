@@ -8,35 +8,100 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
+    /// <summary>
+    /// Clase para representar una tarea del checklist de forma amigable
+    /// </summary>
+    public partial class TareaChecklistViewModel : ObservableObject
+    {
+        [ObservableProperty]
+        private string descripcion = string.Empty;
+        
+        [ObservableProperty]
+        private bool completado = false;
+        
+        public int Id { get; set; }
+        
+        public TareaChecklistViewModel(int id, string descripcion, bool completado = false)
+        {
+            Id = id;
+            Descripcion = descripcion;
+            Completado = completado;
+        }
+    }
+
+    /// <summary>
+    /// Clase para representar un equipo en el ComboBox con información completa
+    /// </summary>
+    public class EquipoComboItem
+    {
+        public string Codigo { get; set; } = string.Empty;
+        public string NombreEquipo { get; set; } = string.Empty;
+        public string UsuarioAsignado { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Texto completo mostrado en el ComboBox
+        /// </summary>
+        public string DisplayText => 
+            $"{Codigo} - {(!string.IsNullOrWhiteSpace(NombreEquipo) ? NombreEquipo : "Sin nombre")} " +
+            $"({(!string.IsNullOrWhiteSpace(UsuarioAsignado) ? UsuarioAsignado : "Sin asignar")})";
+            
+        /// <summary>
+        /// Texto para búsqueda (incluye todos los campos)
+        /// </summary>
+        public string SearchText => 
+            $"{Codigo} {NombreEquipo} {UsuarioAsignado}".ToLowerInvariant();
+    }
+
     /// <summary>
     /// ViewModel para el diálogo de creación de planes de cronograma de equipos informáticos
     /// </summary>
     public partial class CrearPlanCronogramaViewModel : ObservableObject
     {
         private readonly IPlanCronogramaService _planCronogramaService;
-        private readonly IGestLogLogger _logger;
+        private readonly IEquipoInformaticoService _equipoInformaticoService;
+        private readonly IGestLogLogger _logger;        // Propiedad calculada para obtener el código del equipo seleccionado
+        public string CodigoEquipo => EquipoSeleccionado?.Codigo ?? string.Empty;
 
+        // Listas para el ComboBox de equipos
+        private List<EquipoComboItem> _todosLosEquipos = new();
+        
         [ObservableProperty]
-        private string codigoEquipo = string.Empty;
+        private ObservableCollection<EquipoComboItem> equiposDisponibles = new();
+        
+        [ObservableProperty]
+        private EquipoComboItem? equipoSeleccionado;
+          [ObservableProperty]
+        private string filtroEquipo = string.Empty;
 
         [ObservableProperty]
         private string descripcion = string.Empty;
 
         [ObservableProperty]
-        private string responsable = string.Empty;        [ObservableProperty]
-        private int diaEjecucion = 1; // Lunes por defecto
+        private string responsable = string.Empty;
 
         [ObservableProperty]
-        private string checklistJson = string.Empty;
+        private int diaEjecucion = 1; // Lunes por defecto
+
+        // Lista de tareas del checklist (reemplaza el JSON directo)
+        [ObservableProperty]
+        private ObservableCollection<TareaChecklistViewModel> tareasChecklist = new();
+        
+        [ObservableProperty]
+        private string nuevaTareaTexto = string.Empty;
 
         [ObservableProperty]
         private string statusMessage = string.Empty;
 
         [ObservableProperty]
         private bool isSaving = false;
+
+        // Propiedad calculada para generar el JSON automáticamente
+        public string ChecklistJson => GenerarChecklistJson();
 
         // Opciones para el día de la semana
         public ObservableCollection<DiaOpcion> DiasDisponibles { get; } = new ObservableCollection<DiaOpcion>
@@ -50,23 +115,174 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             new DiaOpcion { Valor = 0, Nombre = "Domingo" }
         };
 
-        public CrearPlanCronogramaViewModel(IPlanCronogramaService planCronogramaService, IGestLogLogger logger)
+        public CrearPlanCronogramaViewModel(IPlanCronogramaService planCronogramaService, IEquipoInformaticoService equipoInformaticoService, IGestLogLogger logger)
         {
             _planCronogramaService = planCronogramaService ?? throw new ArgumentNullException(nameof(planCronogramaService));
+            _equipoInformaticoService = equipoInformaticoService ?? throw new ArgumentNullException(nameof(equipoInformaticoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            // Configurar checklist por defecto
-            ChecklistJson = """
+            // Cargar equipos informáticos
+            _ = CargarEquiposAsync();
+            
+            // Configurar tareas por defecto del checklist
+            ConfigurarTareasChecklistPorDefecto();
+        }        /// <summary>
+        /// Configura las tareas por defecto del checklist
+        /// </summary>
+        private void ConfigurarTareasChecklistPorDefecto()
+        {
+            TareasChecklist.Clear();
+            TareasChecklist.Add(new TareaChecklistViewModel(1, "Ejecución de Analisis de Virus Avast"));
+            TareasChecklist.Add(new TareaChecklistViewModel(2, "Ejecución de Malwarebytes"));
+            TareasChecklist.Add(new TareaChecklistViewModel(3, "Limpieza de Archivos Temporales"));
+            TareasChecklist.Add(new TareaChecklistViewModel(4, "Backup"));
+        }
+
+        /// <summary>
+        /// Genera el JSON del checklist a partir de la lista de tareas
+        /// </summary>
+        private string GenerarChecklistJson()
+        {
+            if (!TareasChecklist.Any())
+                return string.Empty;
+
+            try
             {
-              "items": [
-                { "id": 1, "descripcion": "Verificar estado del hardware", "completado": false },
-                { "id": 2, "descripcion": "Limpiar archivos temporales", "completado": false },
-                { "id": 3, "descripcion": "Actualizar software crítico", "completado": false },
-                { "id": 4, "descripcion": "Verificar funcionamiento de periféricos", "completado": false },
-                { "id": 5, "descripcion": "Revisar espacio en disco", "completado": false }
-              ]
+                var items = TareasChecklist.Select(t => new
+                {
+                    id = t.Id,
+                    descripcion = t.Descripcion,
+                    completado = t.Completado
+                });
+
+                var checklist = new { items };
+                return System.Text.Json.JsonSerializer.Serialize(checklist, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
             }
-            """;
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Agrega una nueva tarea al checklist
+        /// </summary>
+        [RelayCommand]
+        private void AgregarTarea()
+        {
+            if (string.IsNullOrWhiteSpace(NuevaTareaTexto)) return;
+
+            var nuevoId = TareasChecklist.Any() ? TareasChecklist.Max(t => t.Id) + 1 : 1;
+            TareasChecklist.Add(new TareaChecklistViewModel(nuevoId, NuevaTareaTexto.Trim()));
+            NuevaTareaTexto = string.Empty;
+        }
+
+        /// <summary>
+        /// Elimina una tarea del checklist
+        /// </summary>
+        [RelayCommand]
+        private void EliminarTarea(TareaChecklistViewModel? tarea)
+        {
+            if (tarea != null)
+            {
+                TareasChecklist.Remove(tarea);
+            }
+        }
+
+        /// <summary>
+        /// Carga todos los equipos informáticos disponibles
+        /// </summary>
+        private async Task CargarEquiposAsync()
+        {
+            try
+            {
+                var equipos = await _equipoInformaticoService.GetAllAsync();
+                
+                _todosLosEquipos = equipos.Select(e => new EquipoComboItem
+                {
+                    Codigo = e.Codigo ?? string.Empty,
+                    NombreEquipo = e.NombreEquipo ?? string.Empty,
+                    UsuarioAsignado = e.UsuarioAsignado ?? string.Empty
+                }).OrderBy(e => e.Codigo).ToList();
+
+                // Inicializar la lista filtrada con todos los equipos
+                AplicarFiltroEquipos();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CrearPlanCronograma] Error al cargar equipos informáticos");
+                StatusMessage = "Error al cargar equipos informáticos";
+            }
+        }
+
+        /// <summary>
+        /// Aplica el filtro a la lista de equipos disponibles
+        /// </summary>
+        private void AplicarFiltroEquipos()
+        {
+            EquiposDisponibles.Clear();
+            
+            var filtro = FiltroEquipo.ToLowerInvariant().Trim();
+            var equiposFiltrados = string.IsNullOrWhiteSpace(filtro)
+                ? _todosLosEquipos
+                : _todosLosEquipos.Where(e => e.SearchText.Contains(filtro));
+
+            foreach (var equipo in equiposFiltrados.Take(50)) // Limitar a 50 resultados
+            {
+                EquiposDisponibles.Add(equipo);
+            }
+        }
+
+        /// <summary>
+        /// Método llamado cuando cambia el filtro de equipo
+        /// </summary>
+        partial void OnFiltroEquipoChanged(string value)
+        {
+            AplicarFiltroEquipos();
+        }        /// <summary>
+        /// Método para establecer un equipo inicial si se proporciona un código
+        /// </summary>
+        public async Task EstablecerEquipoInicialAsync(string? codigoEquipo)
+        {
+            if (string.IsNullOrWhiteSpace(codigoEquipo)) return;
+            
+            // Esperar a que se carguen los equipos si es necesario
+            var intentos = 0;
+            while (_todosLosEquipos.Count == 0 && intentos < 10)
+            {
+                await Task.Delay(100);
+                intentos++;
+            }
+            
+            var equipo = _todosLosEquipos.FirstOrDefault(e => 
+                string.Equals(e.Codigo, codigoEquipo, StringComparison.OrdinalIgnoreCase));
+            
+            if (equipo != null)
+            {
+                EquipoSeleccionado = equipo;
+                FiltroEquipo = equipo.Codigo; // Mostrar el código en el filtro
+            }
+        }
+
+        /// <summary>
+        /// Método para establecer un equipo inicial si se proporciona un código (síncrono)
+        /// </summary>
+        public void EstablecerEquipoInicial(string? codigoEquipo)
+        {
+            if (string.IsNullOrWhiteSpace(codigoEquipo)) return;
+            
+            var equipo = _todosLosEquipos.FirstOrDefault(e => 
+                string.Equals(e.Codigo, codigoEquipo, StringComparison.OrdinalIgnoreCase));
+            
+            if (equipo != null)
+            {
+                EquipoSeleccionado = equipo;
+                FiltroEquipo = equipo.Codigo; // Mostrar el código en el filtro
+            }
         }
 
         [RelayCommand]
@@ -110,7 +326,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         StatusMessage = $"El formato del checklist no es válido: {ex.Message}";
                         return;
                     }
-                }                // Crear el plan
+                }
+
+                // Crear el plan
                 var nuevoPlan = new PlanCronogramaEquipo
                 {
                     PlanId = Guid.NewGuid(),
@@ -123,7 +341,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     Activo = true
                 };
 
-                var planCreado = await _planCronogramaService.CreateAsync(nuevoPlan);                _logger.LogInformation("[CrearPlanCronograma] Plan creado exitosamente: {PlanId} para equipo {CodigoEquipo}", 
+                var planCreado = await _planCronogramaService.CreateAsync(nuevoPlan);
+                _logger.LogInformation("[CrearPlanCronograma] Plan creado exitosamente: {PlanId} para equipo {CodigoEquipo}", 
                     planCreado.PlanId, planCreado.CodigoEquipo);
 
                 StatusMessage = "Plan creado exitosamente";
