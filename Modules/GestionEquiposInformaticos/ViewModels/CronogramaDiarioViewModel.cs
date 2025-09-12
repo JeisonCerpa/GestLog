@@ -5,11 +5,13 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Services.Core.Logging;
+using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -18,16 +20,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
     /// Respeta SRP: solo coordina carga y organización semanal diaria de mantenimientos planificados.
     /// </summary>
     public partial class CronogramaDiarioViewModel : ObservableObject
-    {
-        private readonly ICronogramaService _cronogramaService;
+    {        private readonly ICronogramaService _cronogramaService;
         private readonly IPlanCronogramaService _planCronogramaService;
         private readonly IGestLogLogger _logger;
-
-        public CronogramaDiarioViewModel(ICronogramaService cronogramaService, IPlanCronogramaService planCronogramaService, IGestLogLogger logger)
+        private readonly IEquipoInformaticoService _equipoInformaticoService;
+        private readonly IUsuarioService _usuarioService;public CronogramaDiarioViewModel(ICronogramaService cronogramaService, IPlanCronogramaService planCronogramaService, IGestLogLogger logger, IEquipoInformaticoService equipoInformaticoService, IUsuarioService usuarioService)
         {
             _cronogramaService = cronogramaService;
             _planCronogramaService = planCronogramaService;
             _logger = logger;
+            _equipoInformaticoService = equipoInformaticoService;
+            _usuarioService = usuarioService;
             SelectedYear = System.DateTime.Now.Year;
         }
 
@@ -54,21 +57,25 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         public async Task LoadAsync(CancellationToken ct)
         {
             if (Weeks.Count == 0)
-                for (int i = 1; i <= 52; i++) Weeks.Add(i);
+                for (int i = 1; i <= 53; i++) Weeks.Add(i);
             if (Years.Count == 0)
-                Years.Add(SelectedYear);
+            {
+                var currentYear = DateTime.Now.Year;
+                for (int y = currentYear - 1; y <= currentYear + 1; y++)
+                    Years.Add(y);
+            }
             if (SelectedWeek == 0)
             {
                 var hoy = System.DateTime.Now;
-                var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-                SelectedWeek = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, System.DayOfWeek.Monday);
+                // Usar ISOWeek para obtener la semana actual de forma consistente
+                SelectedWeek = System.Globalization.ISOWeek.GetWeekOfYear(hoy);
             }
             await RefreshAsync(ct);
         }
 
         private async Task RefreshAsync(CancellationToken ct)
         {
-            if (SelectedWeek <= 0 || SelectedWeek > 52 || IsLoading) return;
+            if (SelectedWeek <= 0 || SelectedWeek > 53 || IsLoading) return;
             try
             {
                 IsLoading = true;
@@ -90,31 +97,129 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             index = (System.Math.Abs(c.Codigo.GetHashCode()) % 5);
                         Days[index].Items.Add(c);
                     }
-                }
-
-                // Cargar planes de cronograma de equipos
+                }                // Cargar planes de cronograma de equipos CON navegación de equipo
                 var planesEquipos = await _planCronogramaService.GetAllAsync();
-                var planesActivos = planesEquipos.Where(p => p.Activo).ToList();
+                var planesActivos = planesEquipos.Where(p => p.Activo).ToList();                // Caches locales para evitar múltiples requests
+                var equipoNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var usuarioNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 
+                // Mostrar planes sólo a partir de su semana efectiva (semana ISO de FechaCreacion)
                 foreach (var plan in planesActivos)
                 {
                     // DiaProgramado: 1=Lunes, 2=Martes, ..., 7=Domingo
                     // Solo mostramos L-V (1-5)
-                    if (plan.DiaProgramado >= 1 && plan.DiaProgramado <= 5)
+                    if (plan.DiaProgramado < 1 || plan.DiaProgramado > 5) continue;
+
+                    // Calcular semana ISO y año de la FechaCreacion del plan (más robusto: ISOWeek)
+                    int semanaCreacion = System.Globalization.ISOWeek.GetWeekOfYear(plan.FechaCreacion);
+                    int anioCreacion = System.Globalization.ISOWeek.GetYear(plan.FechaCreacion);
+
+                    int semanaEfectiva = semanaCreacion;
+                    int anioEfectivo = anioCreacion;
+
+                    // Determinar si el plan debe mostrarse en la semana actual seleccionada
+                    bool mostrar = false;
+                    if (SelectedYear > anioEfectivo) mostrar = true;
+                    else if (SelectedYear == anioEfectivo && SelectedWeek >= semanaEfectiva) mostrar = true;
+
+                    if (!mostrar) continue;
+
+                    // Normalizar código de equipo para keys
+                    var codigoEquipo = plan.CodigoEquipo;
+                    var codigoKey = string.IsNullOrWhiteSpace(codigoEquipo) ? string.Empty : codigoEquipo!;                    // Resolver nombre del equipo (navegación si existe, o servicio si no)
+                    string? equipoNombre = plan.Equipo?.NombreEquipo;
+                    string? usuarioAsignado = plan.Equipo?.UsuarioAsignado;// Si no tenemos los datos del equipo cargados, intentar obtenerlos del contexto
+                    if ((string.IsNullOrWhiteSpace(equipoNombre) || string.IsNullOrWhiteSpace(usuarioAsignado)) && !string.IsNullOrWhiteSpace(codigoKey))
                     {
-                        // Crear un DTO temporal para mostrar en la vista
-                        var planDto = new CronogramaMantenimientoDto
+                        if (!equipoNameCache.TryGetValue(codigoKey, out var cachedEquipoName))
                         {
-                            Codigo = plan.CodigoEquipo,
-                            Nombre = plan.Descripcion,
-                            Marca = "Plan Semanal",
-                            Sede = plan.Responsable,
-                            Anio = SelectedYear
-                        };
-                        
-                        int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index
-                        Days[dayIndex].Items.Add(planDto);
+                            try
+                            {
+                                // Obtener el equipo informático directamente
+                                var equipoInfo = await _equipoInformaticoService.GetByCodigoAsync(codigoKey);
+                                
+                                if (equipoInfo != null)
+                                {
+                                    // Priorizar datos del equipo sobre datos del plan
+                                    if (string.IsNullOrWhiteSpace(equipoNombre))
+                                        equipoNombre = equipoInfo.NombreEquipo;
+                                    if (string.IsNullOrWhiteSpace(usuarioAsignado))
+                                        usuarioAsignado = equipoInfo.UsuarioAsignado;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "[CronogramaDiarioViewModel] Error al obtener equipo {codigo}", codigoKey);
+                            }
+
+                            // Guardar en cache solo si tenemos una clave válida
+                            if (!string.IsNullOrWhiteSpace(codigoKey))
+                            {
+                                equipoNameCache[codigoKey] = equipoNombre ?? string.Empty;
+                            }
+                        }
+                        else
+                        {
+                            equipoNombre = cachedEquipoName;
+                        }
                     }
+
+                    // Usar el nombre del equipo solo si está disponible, sino el código
+                    var nombreFinal = !string.IsNullOrWhiteSpace(equipoNombre) ? equipoNombre : codigoKey;
+                      // Usar el usuario asignado solo si está disponible, sino vacío
+                    var usuarioFinal = usuarioAsignado ?? string.Empty;
+
+                    // Resolver usuario asignado: preferir el usuario asignado en el equipo; si no existe, usar el Responsable del plan
+                    string usuarioAsignadoKey = usuarioFinal?.Trim() ?? string.Empty;
+
+                    string usuarioResolved = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(usuarioAsignadoKey))
+                    {
+                        if (usuarioNameCache.TryGetValue(usuarioAsignadoKey, out var cachedUser))
+                        {
+                            usuarioResolved = cachedUser;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                if (Guid.TryParse(usuarioAsignadoKey, out var uid))
+                                {
+                                    var usuario = await _usuarioService.ObtenerUsuarioPorIdAsync(uid);
+                                    usuarioResolved = usuario?.NombrePersona ?? usuario?.NombreUsuario ?? usuarioAsignadoKey;
+                                }
+                                else
+                                {
+                                    var encontrados = await _usuarioService.BuscarUsuariosAsync(usuarioAsignadoKey);
+                                    var first = encontrados?.FirstOrDefault();
+                                    usuarioResolved = first?.NombrePersona ?? first?.NombreUsuario ?? usuarioAsignadoKey;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "[CronogramaDiarioViewModel] Error al resolver usuario {res}", usuarioAsignadoKey);
+                                usuarioResolved = usuarioAsignadoKey;
+                            }
+
+                            usuarioNameCache[usuarioAsignadoKey] = usuarioResolved ?? usuarioAsignadoKey;
+                        }
+                    }
+
+                    // Crear un DTO temporal para mostrar en la vista
+                    var planDto = new CronogramaMantenimientoDto
+                    {
+                        Codigo = plan.CodigoEquipo,
+                        // Nombre = Equipo amigable
+                        Nombre = nombreFinal,
+                        Marca = "Plan Semanal",
+                        // Usuario asignado
+                        Sede = usuarioResolved,
+                        Anio = SelectedYear
+                    };
+
+                    int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index
+                    if (dayIndex >= 0 && dayIndex < Days.Count)
+                        Days[dayIndex].Items.Add(planDto);
                 }
 
                 int totalItems = Planificados.Count + planesActivos.Count(p => p.DiaProgramado >= 1 && p.DiaProgramado <= 5);
@@ -143,12 +248,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             // Verificar si es un plan semanal o mantenimiento tradicional
             if (mantenimiento.Marca == "Plan Semanal")
             {
-                StatusMessage = $"Ejecutar plan semanal para {mantenimiento.Codigo}";
+                // Mostrar nombre de equipo y usuario asignado en lugar del código
+                var nombreEquipo = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo;
+                var usuario = !string.IsNullOrWhiteSpace(mantenimiento.Sede) ? mantenimiento.Sede : "(sin asignar)";
+                StatusMessage = $"Ejecutar plan semanal para {nombreEquipo} - Usuario: {usuario}";
                 // Aquí podríamos abrir un diálogo específico para ejecutar planes semanales
             }
             else
             {
-                StatusMessage = $"Registrar mantenimiento para {mantenimiento.Codigo}";
+                var nombreEquipo = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo;
+                StatusMessage = $"Registrar mantenimiento para {nombreEquipo}";
                 // Aquí se abre el diálogo tradicional de registro de mantenimiento
             }
         }
