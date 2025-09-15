@@ -1,0 +1,67 @@
+<!-- filepath: e:\Softwares\GestLog\Views\Tools\GestionEquipos\RegistroEjecucionPlanDialog.xaml -->
+<Window x:Class="GestLog.Views.Tools.GestionEquipos.RegistroEjecucionPlanDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ejecución Plan Semanal" Height="520" Width="640" WindowStartupLocation="CenterOwner" Background="#FAFAFA">
+    <Border Margin="16" Background="White" CornerRadius="8" Padding="18" BorderBrush="#DDD" BorderThickness="1">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                <TextBlock Text="Ejecución de Plan Semanal" FontSize="20" FontWeight="Bold" Foreground="#0A5E8A"/>
+                <TextBlock Text="Complete el checklist y confirme la ejecución." FontSize="12" Foreground="#555"/>
+            </StackPanel>
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Equipo:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding CodigoEquipo}" Grid.Row="0" Grid.Column="1" FontWeight="Bold"/>
+                <TextBlock Text="Descripción Plan:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding DescripcionPlan}" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True"/>
+                <TextBlock Text="Responsable:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding ResponsablePlan, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="0,4"/>
+                <TextBlock Text="Semana (Año):" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding SemanaISO}" Grid.Row="3" Grid.Column="1"/>
+                <TextBlock Text="Fecha Objetivo:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding FechaObjetivo, StringFormat=dd/MM/yyyy}" Grid.Row="4" Grid.Column="1"/>
+            </Grid>
+            <GroupBox Header="Checklist" Margin="0,0,0,10">
+                <Border BorderBrush="#DDD" BorderThickness="1" Padding="4" Background="#F9F9F9">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="240">
+                        <ItemsControl ItemsSource="{Binding Checklist}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="4,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="28"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding Completado}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Descripcion}" Grid.Column="1" TextWrapping="Wrap" Margin="4,0"/>
+                                            <!-- Eliminado PlaceholderText no soportado en WPF -->
+                                            <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="4,0" ToolTip="Observación"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </GroupBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Guardar" Width="110" Margin="0,0,8,0" Command="{Binding GuardarCommand}"/>
+                <Button Content="Cerrar" Width="110" IsCancel="True" Click="Cerrar_Click"/>
+            </StackPanel>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#D32F2F" FontWeight="Bold" Margin="0,10,0,0"/>
+        </DockPanel>
+    </Border>
+</Window>

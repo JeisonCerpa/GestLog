@@ -23,6 +23,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public bool IsCodigoReadOnly { get; set; } = false;
         public bool IsCodigoEnabled { get; set; } = true;
         public int Anio { get; set; } // Año del cronograma
+        // Indica si este item representa un plan semanal (no un cronograma tradicional)
+        public bool EsPlanSemanal { get; set; } = false; // NUEVO
+        // Indica si el plan semanal ya fue ejecutado en la semana seleccionada
+        public bool PlanEjecutadoSemana { get; set; } = false; // NUEVO
+        // NUEVO: derivado para color atrasado
+        public bool EsAtrasadoSemana { get; set; } = false;
 
         public CronogramaMantenimientoDto() { }
 
@@ -38,6 +44,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Semanas = (bool[])other.Semanas.Clone();
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
+            EsPlanSemanal = other.EsPlanSemanal; // copiar
+            PlanEjecutadoSemana = other.PlanEjecutadoSemana; // copiar
         }
     }
 }

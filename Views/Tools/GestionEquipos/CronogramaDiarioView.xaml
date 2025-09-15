@@ -7,13 +7,15 @@
         <converters:CronogramaTipoToBackgroundConverter x:Key="CronogramaTipoToBackgroundConverter" />
         <converters:CronogramaTipoToBorderConverter x:Key="CronogramaTipoToBorderConverter" />
         <converters:CronogramaTipoToButtonTextConverter x:Key="CronogramaTipoToButtonTextConverter" />
+        <converters:PlanEjecucionEstadoToBackgroundConverter x:Key="PlanEjecucionEstadoToBackgroundConverter" />
     </UserControl.Resources>
     <Border Background="#FAFAFA" Padding="12">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-            </Grid.RowDefinitions>            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
                 <!-- Selectores semana / año en lugar de DatePicker -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -24,7 +26,8 @@
                     <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Año:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#333" />
                         <ComboBox Width="90" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear, Mode=TwoWay}" />
-                    </StackPanel>                    <!-- Botón para crear nuevo plan -->
+                    </StackPanel>
+                    <!-- Botón para crear nuevo plan -->
                     <Border CornerRadius="4" Margin="12,0,0,0" VerticalAlignment="Center" Background="#007ACC">
                         <Button Content="Crear Plan" Padding="8,4"
                                 Command="{Binding CrearPlanCommand}" 
@@ -46,8 +49,14 @@
                         <Border Background="#F7F7F7" BorderBrush="#DDD" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
                             <TextBlock Text="Mantenimiento" FontSize="10" />
                         </Border>
-                        <Border Background="#E8F5E9" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="2" Padding="4,2">
-                            <TextBlock Text="Plan Semanal" FontSize="10" />
+                        <Border Background="#E3F2FD" BorderBrush="#64B5F6" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
+                            <TextBlock Text="Plan Pendiente" FontSize="10" />
+                        </Border>
+                        <Border Background="#FFECB3" BorderBrush="#FFA000" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
+                            <TextBlock Text="Plan Atrasado" FontSize="10" />
+                        </Border>
+                        <Border Background="#C8E6C9" BorderBrush="#2E7D32" BorderThickness="1" CornerRadius="2" Padding="4,2">
+                            <TextBlock Text="Plan Ejecutado" FontSize="10" />
                         </Border>
                     </StackPanel>
                 </StackPanel>
@@ -72,8 +81,9 @@
 
                                     <ItemsControl ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>                                                <Border Margin="0,0,0,6" Padding="6" 
-                                                        Background="{Binding Converter={StaticResource CronogramaTipoToBackgroundConverter}}" 
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,6" Padding="6" 
+                                                        Background="{Binding Converter={StaticResource PlanEjecucionEstadoToBackgroundConverter}}" 
                                                         BorderBrush="{Binding Converter={StaticResource CronogramaTipoToBorderConverter}}"
                                                         BorderThickness="1"
                                                         CornerRadius="4">

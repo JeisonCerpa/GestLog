@@ -1,0 +1,131 @@
+<UserControl x:Class="GestLog.Views.Tools.GestionEquipos.HistorialEjecucionesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:GestLog.Converters"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="1000"
+             Loaded="UserControl_Loaded">
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    <Grid Background="#F5F7FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Filtros -->
+        <Border Background="White" Padding="8" CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Margin="10,10,10,0">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="Año" FontSize="11" Foreground="#555"/>
+                        <ComboBox Width="90" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="Código equipo" FontSize="11" Foreground="#555"/>
+                        <TextBox Width="140" Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="Descripción plan" FontSize="11" Foreground="#555"/>
+                        <TextBox Width="180" Text="{Binding FiltroDescripcion, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="Máx filas" FontSize="11" Foreground="#555"/>
+                        <TextBox Width="70" Text="{Binding MaxRows}"/>
+                    </StackPanel>
+                    <Button Content="Cargar" Command="{Binding CargarCommand}" Padding="14,6" Margin="0,16,0,0"/>
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding StatusMessage}" VerticalAlignment="Bottom" Margin="8,0,0,0" Foreground="#333"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Contenido principal: listado + detalle lado a lado -->
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="500" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Listado -->
+            <Border Background="White" CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,10,0">
+                <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" RowHeaderWidth="0"
+                          HeadersVisibility="Column" GridLinesVisibility="None" AlternatingRowBackground="#F8FAFC" SelectedItem="{Binding SelectedEjecucion}"
+                          EnableRowVirtualization="True" EnableColumnVirtualization="True">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="Foreground" Value="#333"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="6,4"/>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding CodigoEquipo}" Width="90"/>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding NombreEquipo}" Width="150"/>
+                        <DataGridTextColumn Header="Año" Binding="{Binding AnioISO}" Width="60"/>
+                        <DataGridTextColumn Header="Semana" Binding="{Binding SemanaISO}" Width="70"/>
+                        <DataGridTextColumn Header="Objetivo" Binding="{Binding FechaObjetivo, StringFormat=d}" Width="90"/>
+                        <DataGridTextColumn Header="Ejecución" Binding="{Binding FechaEjecucion, StringFormat=G}" Width="130"/>
+                        <DataGridTextColumn Header="Estado" Binding="{Binding EstadoDescripcion}" Width="90"/>
+                        <DataGridTextColumn Header="Responsable" Binding="{Binding UsuarioEjecuta}" Width="120"/>
+                        <DataGridTextColumn Header="Asignado a" Binding="{Binding UsuarioAsignadoEquipo}" Width="120"/>
+                        <DataGridTemplateColumn Header="Resumen" Width="170">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Resumen}" ToolTip="{Binding ToolTipResumen}" VerticalAlignment="Center"/>
+                                        <Button Content="Ver" Margin="8,0,0,0" Padding="6,2" Command="{Binding DataContext.VerDetalleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Panel detalle -->
+            <Border Grid.Column="1" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="14" Width="380"
+                    Visibility="{Binding MostrarDetalle, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,10">
+                            <TextBlock Text="Detalle de Ejecución" FontWeight="SemiBold" FontSize="14" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                <Button Content="Cerrar" Command="{Binding CerrarDetalleCommand}" Padding="8,3" />
+                            </StackPanel>
+                        </DockPanel>
+                        <UniformGrid Columns="2" Rows="4" Margin="0,0,0,12" HorizontalAlignment="Stretch">
+                            <TextBlock Text="Equipo:" FontWeight="Bold" Margin="0,0,6,4"/>
+                            <TextBlock Text="{Binding SelectedEjecucion.NombreEquipo}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Responsable:" FontWeight="Bold" Margin="0,0,6,4"/>
+                            <TextBlock Text="{Binding SelectedEjecucion.UsuarioEjecuta}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Asignado a:" FontWeight="Bold" Margin="0,0,6,4"/>
+                            <TextBlock Text="{Binding SelectedEjecucion.UsuarioAsignadoEquipo}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Resumen:" FontWeight="Bold" Margin="0,0,6,4"/>
+                            <TextBlock Text="{Binding SelectedEjecucion.Resumen}" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                        </UniformGrid>
+                        <TextBlock Text="Checklist" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <DataGrid ItemsSource="{Binding SelectedEjecucion.DetalleItems}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" HeadersVisibility="Column" RowHeaderWidth="0" 
+                                  EnableRowVirtualization="True" GridLinesVisibility="None">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="40"/>
+                                <DataGridTextColumn Header="Ítem" Binding="{Binding Descripcion}" Width="*"/>
+                                <DataGridTextColumn Header="Estado" Binding="{Binding EstadoTexto}" Width="80"/>
+                                <DataGridTextColumn Header="Obs" Binding="{Binding Observacion}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="12,0,0,10">
+            <TextBlock Text="Máx " Foreground="#666" FontSize="11"/>
+            <TextBlock Text="{Binding MaxRows}" Foreground="#666" FontSize="11"/>
+            <TextBlock Text=" filas" Foreground="#666" FontSize="11"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

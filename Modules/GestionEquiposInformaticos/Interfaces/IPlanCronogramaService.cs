@@ -16,5 +16,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces
         Task<List<EjecucionSemanal>> GetEjecucionesByPlanAsync(Guid planId, int anio);
         Task<EjecucionSemanal> RegistrarEjecucionAsync(Guid planId, int anioISO, int semanaISO, DateTime fechaEjecucion, string usuarioEjecuta, string? resultadoJson = null);
         Task<List<PlanCronogramaEquipo>> GetPlanesParaSemanaAsync(int anioISO, int semanaISO);
+        Task<List<EjecucionSemanal>> GetEjecucionesByAnioAsync(int anioISO);
     }
 }

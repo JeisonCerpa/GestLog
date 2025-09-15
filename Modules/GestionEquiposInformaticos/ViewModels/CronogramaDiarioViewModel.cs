@@ -12,6 +12,10 @@ using System.Threading.Tasks;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.Usuarios.Interfaces; // añadido para ICurrentUserService
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -20,17 +24,29 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
     /// Respeta SRP: solo coordina carga y organización semanal diaria de mantenimientos planificados.
     /// </summary>
     public partial class CronogramaDiarioViewModel : ObservableObject
-    {        private readonly ICronogramaService _cronogramaService;
+    {        
+        private readonly ICronogramaService _cronogramaService;
         private readonly IPlanCronogramaService _planCronogramaService;
         private readonly IGestLogLogger _logger;
         private readonly IEquipoInformaticoService _equipoInformaticoService;
-        private readonly IUsuarioService _usuarioService;public CronogramaDiarioViewModel(ICronogramaService cronogramaService, IPlanCronogramaService planCronogramaService, IGestLogLogger logger, IEquipoInformaticoService equipoInformaticoService, IUsuarioService usuarioService)
+        private readonly IUsuarioService _usuarioService;
+        private readonly ISeguimientoService _seguimientoService; // NUEVO: para registrar ejecuciones
+        private readonly ICurrentUserService _currentUserService; // NUEVO: usuario actual
+        private readonly IRegistroMantenimientoEquipoDialogService? _registroDialogService; // nuevo servicio desacoplado
+        private readonly IRegistroEjecucionPlanDialogService? _registroEjecucionPlanDialogService; // nuevo servicio ejecucion plan
+        private readonly Dictionary<CronogramaMantenimientoDto, PlanCronogramaEquipo> _planMap = new(); // mapa plan
+
+        public CronogramaDiarioViewModel(ICronogramaService cronogramaService, IPlanCronogramaService planCronogramaService, IGestLogLogger logger, IEquipoInformaticoService equipoInformaticoService, IUsuarioService usuarioService, ISeguimientoService seguimientoService, ICurrentUserService currentUserService, IRegistroMantenimientoEquipoDialogService? registroDialogService = null, IRegistroEjecucionPlanDialogService? registroEjecucionPlanDialogService = null)
         {
             _cronogramaService = cronogramaService;
             _planCronogramaService = planCronogramaService;
             _logger = logger;
             _equipoInformaticoService = equipoInformaticoService;
             _usuarioService = usuarioService;
+            _seguimientoService = seguimientoService; // asignar servicio
+            _currentUserService = currentUserService; // asignar usuario actual
+            _registroDialogService = registroDialogService; // puede ser null (fallback al diálogo antiguo si existiera)
+            _registroEjecucionPlanDialogService = registroEjecucionPlanDialogService;
             SelectedYear = System.DateTime.Now.Year;
         }
 
@@ -82,6 +98,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 StatusMessage = $"Cargando semana {SelectedWeek}...";
                 Planificados.Clear();
                 Days.Clear();
+                _planMap.Clear();
                 var dias = new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes" };
                 foreach (var d in dias) Days.Add(new DayScheduleViewModel(d));
                 
@@ -209,17 +226,22 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     var planDto = new CronogramaMantenimientoDto
                     {
                         Codigo = plan.CodigoEquipo,
-                        // Nombre = Equipo amigable
                         Nombre = nombreFinal,
                         Marca = "Plan Semanal",
-                        // Usuario asignado
                         Sede = usuarioResolved,
-                        Anio = SelectedYear
+                        Anio = SelectedYear,
+                        EsPlanSemanal = true, // marcar
+                        PlanEjecutadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true, // completado
+                        EsAtrasadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) != true &&
+                                           new DateTime(SelectedYear, 1, 4).AddDays((SelectedWeek - 1) * 7 - ((int)new DateTime(SelectedYear, 1, 4).DayOfWeek - 1)) < DateTime.Today // aproximación inicio semana < hoy
                     };
 
                     int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index
                     if (dayIndex >= 0 && dayIndex < Days.Count)
+                    {
                         Days[dayIndex].Items.Add(planDto);
+                        _planMap[planDto] = plan; // asociar
+                    }
                 }
 
                 int totalItems = Planificados.Count + planesActivos.Count(p => p.DiaProgramado >= 1 && p.DiaProgramado <= 5);
@@ -237,29 +259,160 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         }
 
         [RelayCommand]
-        private void OpenRegistrar(CronogramaMantenimientoDto? mantenimiento)
+        private async Task OpenRegistrar(CronogramaMantenimientoDto? mantenimiento)
         {
             if (mantenimiento == null)
             {
                 StatusMessage = "Elemento no válido";
                 return;
             }
-            
-            // Verificar si es un plan semanal o mantenimiento tradicional
-            if (mantenimiento.Marca == "Plan Semanal")
+
+            // Si corresponde a un plan semanal, abrir nuevo flujo de ejecución
+            if (_planMap.TryGetValue(mantenimiento, out var planEntity))
             {
-                // Mostrar nombre de equipo y usuario asignado en lugar del código
-                var nombreEquipo = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo;
-                var usuario = !string.IsNullOrWhiteSpace(mantenimiento.Sede) ? mantenimiento.Sede : "(sin asignar)";
-                StatusMessage = $"Ejecutar plan semanal para {nombreEquipo} - Usuario: {usuario}";
-                // Aquí podríamos abrir un diálogo específico para ejecutar planes semanales
+                try
+                {
+                    var hoy = DateTime.Now;
+                    int semanaActual = System.Globalization.ISOWeek.GetWeekOfYear(hoy);
+                    int anioActual = System.Globalization.ISOWeek.GetYear(hoy);
+                    if (SelectedYear > anioActual || (SelectedYear == anioActual && SelectedWeek > semanaActual))
+                    {
+                        StatusMessage = "No se puede registrar una ejecución en semana futura";
+                        return;
+                    }
+                    if (_registroEjecucionPlanDialogService == null)
+                    {
+                        StatusMessage = "Servicio de ejecución semanal no disponible";
+                        return;
+                    }
+                    var responsableActual = _currentUserService?.GetCurrentUserFullName() ?? Environment.UserName;
+                    var ok = await _registroEjecucionPlanDialogService.TryShowAsync(planEntity.PlanId, SelectedYear, SelectedWeek, responsableActual);
+                    if (ok)
+                    {
+                        StatusMessage = "Ejecución registrada";
+                        await RefreshAsync(CancellationToken.None);
+                    }
+                    else
+                    {
+                        StatusMessage = "Registro cancelado";
+                    }
+                    return; // no continuar con flujo antiguo
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[CronogramaDiarioViewModel] Error en ejecución semanal");
+                    StatusMessage = "Error al registrar ejecución semanal";
+                    return;
+                }
             }
-            else
+
+            try
             {
-                var nombreEquipo = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo;
-                StatusMessage = $"Registrar mantenimiento para {nombreEquipo}";
-                // Aquí se abre el diálogo tradicional de registro de mantenimiento
+                // Validar que no se intente registrar en una semana futura
+                var hoy = DateTime.Now;
+                int semanaActual = System.Globalization.ISOWeek.GetWeekOfYear(hoy);
+                int anioActual = System.Globalization.ISOWeek.GetYear(hoy);
+                if (SelectedYear > anioActual || (SelectedYear == anioActual && SelectedWeek > semanaActual))
+                {
+                    StatusMessage = "No se puede registrar en una semana futura";
+                    return;
+                }
+
+                // Resolver responsable: prioridad usuario actual autenticado
+                string responsableActual = string.Empty;
+                try
+                {
+                    if (_currentUserService?.IsAuthenticated == true)
+                    {
+                        responsableActual = _currentUserService.GetCurrentUserFullName();
+                        if (string.IsNullOrWhiteSpace(responsableActual))
+                        {
+                            var userId = _currentUserService.GetCurrentUserId();
+                            responsableActual = userId.HasValue ? userId.ToString()! : Environment.UserName;
+                        }
+                    }
+                }
+                catch { responsableActual = Environment.UserName; }
+
+                if (string.IsNullOrWhiteSpace(responsableActual))
+                    responsableActual = Environment.UserName;
+
+                // Preparar DTO de seguimiento
+                var seguimiento = new SeguimientoMantenimientoDto
+                {
+                    Codigo = mantenimiento.Codigo ?? string.Empty,
+                    Nombre = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo,
+                    TipoMtno = TipoMantenimiento.Preventivo, // Default, se puede ajustar en el diálogo
+                    Descripcion = string.Empty,
+                    Responsable = responsableActual, // actualizado
+                    FechaRegistro = DateTime.Now,
+                    FechaRealizacion = DateTime.Now,
+                    Semana = SelectedWeek,
+                    Anio = SelectedYear,
+                    Estado = EstadoSeguimientoMantenimiento.Pendiente,
+                    Observaciones = mantenimiento.Marca == "Plan Semanal" ? $"Generado desde plan semanal (Semana {SelectedWeek})" : string.Empty
+                };
+
+                // Abrir diálogo propio desacoplado (si está registrado) en lugar del SeguimientoDialog
+                SeguimientoMantenimientoDto? result = null;
+                bool confirmado = false;
+                if (_registroDialogService != null)
+                {
+                    confirmado = _registroDialogService.TryShowRegistroDialog(seguimiento, out result);
+                }
+                else
+                {
+                    // Fallback temporal: usar diálogo antiguo si el servicio no está disponible
+                    var dialogFallback = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, modoRestringido: true);
+                    var parentWindowFallback = System.Windows.Application.Current.Windows
+                        .OfType<System.Windows.Window>()
+                        .FirstOrDefault(w => w.IsActive) ?? System.Windows.Application.Current.MainWindow;
+                    if (parentWindowFallback != null)
+                        dialogFallback.Owner = parentWindowFallback;
+                    if (dialogFallback.ShowDialog() == true)
+                        result = dialogFallback.Seguimiento;
+                    confirmado = result != null;
+                }
+
+                if (confirmado && result != null)
+                {
+                    // Validar duplicado antes de persistir (codigo + semana + año)
+                    var existentes = await _seguimientoService.GetAllAsync();
+                    if (existentes.Any(s => s.Codigo == result.Codigo && s.Semana == result.Semana && s.Anio == result.Anio))
+                    {
+                        StatusMessage = "Ya existe un registro para este código en la semana seleccionada";
+                        return;
+                    }
+
+                    await _seguimientoService.AddAsync(result);
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    StatusMessage = "Mantenimiento registrado";
+                }
+                else
+                {
+                    StatusMessage = "Registro cancelado";
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al registrar mantenimiento");
+                StatusMessage = "Error al registrar mantenimiento";
+            }
+        }
+
+        // Utilidad local para calcular primer día de semana ISO (duplicado ligero para evitar dependencia circular)
+        private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+            var firstThursday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            int firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            var weekNum = weekOfYear;
+            if (firstWeek <= 1)
+                weekNum -= 1;
+            var result = firstThursday.AddDays(weekNum * 7);
+            return result.AddDays(-3);
         }
 
         [RelayCommand]

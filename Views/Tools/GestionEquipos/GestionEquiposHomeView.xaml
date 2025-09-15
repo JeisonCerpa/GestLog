@@ -67,7 +67,7 @@
             </TabItem>
             <TabItem Header="Historial">
                 <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
-                    <TextBlock Text="Historial de cambios y auditoría" Margin="16"/>
+                    <views:HistorialEjecucionesView DataContext="{Binding HistorialVm}" />
                 </Border>
             </TabItem>
         </TabControl>

@@ -226,6 +226,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             return planesParaSemana;
         }
 
+        public async Task<List<EjecucionSemanal>> GetEjecucionesByAnioAsync(int anioISO)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+#pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL
+            return await context.EjecucionesSemanales
+                .Include(e => e.Plan).ThenInclude(p => p.Equipo)
+                .Where(e => e.AnioISO == anioISO)
+                .ToListAsync();
+#pragma warning restore CS8602
+        }
+
         private void ValidarPlan(PlanCronogramaEquipo plan)
         {
             if (string.IsNullOrWhiteSpace(plan.CodigoEquipo))

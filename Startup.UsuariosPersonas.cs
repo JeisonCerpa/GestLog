@@ -63,8 +63,11 @@ namespace GestLog
             // Servicios para Gestión de Equipos Informáticos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService, GestLog.Modules.GestionEquiposInformaticos.Services.EquipoInformaticoService>();
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroMantenimientoEquipoDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroMantenimientoEquipoDialogService>();
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();
               // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.HistorialEjecucionesViewModel>();
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>();
             // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel>();
