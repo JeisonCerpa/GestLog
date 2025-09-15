@@ -12,7 +12,9 @@ namespace GestLog.Views.Tools.GestionEquipos
     {
         public PlanCronogramaEquipo? PlanCreado { get; private set; }
         
-        private readonly CrearPlanCronogramaViewModel _viewModel;        public CrearPlanCronogramaDialog(string? codigoEquipoInicial = null)
+        private readonly CrearPlanCronogramaViewModel _viewModel;
+
+        public CrearPlanCronogramaDialog(string? codigoEquipoInicial = null)
         {
             InitializeComponent();
 

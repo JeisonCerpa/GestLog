@@ -64,6 +64,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                 if (!equipoExiste)
                     throw new ArgumentException($"No se encontró el equipo con código: {plan.CodigoEquipo}");
 
+                // Garantizar que campos opcionales no sean null para evitar errores en BD
+                plan.Descripcion = plan.Descripcion?.Trim() ?? string.Empty;
+                plan.Responsable = plan.Responsable?.Trim() ?? string.Empty;
+
                 context.PlanesCronogramaEquipos.Add(plan);
                 await context.SaveChangesAsync();
                 

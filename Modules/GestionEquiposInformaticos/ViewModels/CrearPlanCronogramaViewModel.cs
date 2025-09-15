@@ -12,7 +12,8 @@ using System.ComponentModel;
 using System.Collections.Generic;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
-{    /// <summary>
+{
+    /// <summary>
     /// Clase para representar una tarea del plan de cronograma (plantilla de tareas a realizar)
     /// </summary>
     public partial class TareaChecklistViewModel : ObservableObject
@@ -44,12 +45,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         public string DisplayText => 
             $"{Codigo} - {(!string.IsNullOrWhiteSpace(NombreEquipo) ? NombreEquipo : "Sin nombre")} " +
             $"({(!string.IsNullOrWhiteSpace(UsuarioAsignado) ? UsuarioAsignado : "Sin asignar")})";
-            
-        /// <summary>
-        /// Texto para búsqueda (incluye todos los campos)
-        /// </summary>
-        public string SearchText => 
-            $"{Codigo} {NombreEquipo} {UsuarioAsignado}".ToLowerInvariant();
+
+        // Override para que ComboBox.Text (cuando usa SelectedItem.ToString()) sea solo el Código.
+        public override string ToString() => Codigo;
     }
 
     /// <summary>
@@ -59,19 +57,26 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
     {
         private readonly IPlanCronogramaService _planCronogramaService;
         private readonly IEquipoInformaticoService _equipoInformaticoService;
-        private readonly IGestLogLogger _logger;        // Propiedad calculada para obtener el código del equipo seleccionado
-        public string CodigoEquipo => EquipoSeleccionado?.Codigo ?? string.Empty;
+        private readonly IGestLogLogger _logger;
 
-        // Listas para el ComboBox de equipos
-        private List<EquipoComboItem> _todosLosEquipos = new();
-        
+        // Siguiendo exactamente el patrón que funciona en AgregarEquipoInformaticoViewModel
         [ObservableProperty]
         private ObservableCollection<EquipoComboItem> equiposDisponibles = new();
         
         [ObservableProperty]
+        private ObservableCollection<EquipoComboItem> equiposFiltrados = new();
+        
+        [ObservableProperty]
         private EquipoComboItem? equipoSeleccionado;
-          [ObservableProperty]
+        
+        [ObservableProperty]
         private string filtroEquipo = string.Empty;
+
+        // Flag para evitar manejar cambios de filtro cuando se actualiza programáticamente
+        private bool _suppressFiltroEquipoChanged = false;
+
+        [ObservableProperty]
+        private string codigoEquipo = string.Empty;
 
         [ObservableProperty]
         private string descripcion = string.Empty;
@@ -94,6 +99,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
         [ObservableProperty]
         private bool isSaving = false;
+
+        [ObservableProperty]
+        private string? selectedEquipoCodigo;
 
         // Propiedad calculada para generar el JSON automáticamente
         public string ChecklistJson => GenerarChecklistJson();
@@ -121,7 +129,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             
             // Configurar tareas por defecto del checklist
             ConfigurarTareasChecklistPorDefecto();
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Configura las tareas por defecto del checklist
         /// </summary>
         private void ConfigurarTareasChecklistPorDefecto()
@@ -145,7 +155,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private string GenerarChecklistJson()
         {
             if (!TareasChecklist.Any())
-                return string.Empty;            try
+                return string.Empty;
+
+            try
             {
                 var items = TareasChecklist.Select(t => new
                 {
@@ -192,94 +204,156 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         }
 
         /// <summary>
-        /// Carga todos los equipos informáticos disponibles
+        /// Cargar equipos informáticos desde el servicio
         /// </summary>
-        private async Task CargarEquiposAsync()
+        public async Task CargarEquiposAsync()
         {
             try
             {
                 var equipos = await _equipoInformaticoService.GetAllAsync();
                 
-                _todosLosEquipos = equipos.Select(e => new EquipoComboItem
+                var equiposCombo = equipos.Select(e => new EquipoComboItem
                 {
                     Codigo = e.Codigo ?? string.Empty,
                     NombreEquipo = e.NombreEquipo ?? string.Empty,
                     UsuarioAsignado = e.UsuarioAsignado ?? string.Empty
                 }).OrderBy(e => e.Codigo).ToList();
 
-                // Inicializar la lista filtrada con todos los equipos
-                AplicarFiltroEquipos();
+                // Actualizar ambas listas exactamente como PersonasDisponibles y PersonasFiltradas
+                EquiposDisponibles.Clear();
+                foreach (var equipo in equiposCombo)
+                {
+                    EquiposDisponibles.Add(equipo);
+                }
+                
+                EquiposFiltrados.Clear();
+                foreach (var equipo in equiposCombo)
+                {
+                    EquiposFiltrados.Add(equipo);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CrearPlanCronograma] Error al cargar equipos informáticos");
                 StatusMessage = "Error al cargar equipos informáticos";
             }
-        }
-
-        /// <summary>
-        /// Aplica el filtro a la lista de equipos disponibles
+        }        /// <summary>
+        /// Se ejecuta automáticamente cuando cambia la selección del equipo
+        /// Actualiza CodigoEquipo y FiltroEquipo cuando se selecciona un elemento de la lista
         /// </summary>
-        private void AplicarFiltroEquipos()
+        partial void OnEquipoSeleccionadoChanged(EquipoComboItem? value)
         {
-            EquiposDisponibles.Clear();
-            
-            var filtro = FiltroEquipo.ToLowerInvariant().Trim();
-            var equiposFiltrados = string.IsNullOrWhiteSpace(filtro)
-                ? _todosLosEquipos
-                : _todosLosEquipos.Where(e => e.SearchText.Contains(filtro));
-
-            foreach (var equipo in equiposFiltrados.Take(50)) // Limitar a 50 resultados
+            _logger.LogDebug("[CrearPlanCronograma] OnEquipoSeleccionadoChanged -> nuevo={nuevo} (null? {esNull})", value?.Codigo ?? "(null)", value == null);
+            if (value != null)
             {
-                EquiposDisponibles.Add(equipo);
+                CodigoEquipo = value.Codigo;
+                SelectedEquipoCodigo = value.Codigo;
+                // Deferimos la asignación del texto para evitar que el ciclo interno de actualización del ComboBox lo sobrescriba.
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _suppressFiltroEquipoChanged = true;
+                    FiltroEquipo = value.Codigo; // Mostrar solo el código
+                    _suppressFiltroEquipoChanged = false;
+                    _logger.LogDebug("[CrearPlanCronograma] FiltroEquipo forzado tras selección (Dispatcher) = {filtro}", FiltroEquipo);
+                }), System.Windows.Threading.DispatcherPriority.Background);
+                _logger.LogDebug("[CrearPlanCronograma] Equipo seleccionado confirmado: {codigo} - {nombre}", value.Codigo, value.NombreEquipo);
             }
         }
 
         /// <summary>
-        /// Método llamado cuando cambia el filtro de equipo
+        /// Se ejecuta cuando el usuario escribe en el ComboBox para filtrar equipos
         /// </summary>
         partial void OnFiltroEquipoChanged(string value)
         {
-            AplicarFiltroEquipos();
-        }        /// <summary>
-        /// Método para establecer un equipo inicial si se proporciona un código
-        /// </summary>
-        public async Task EstablecerEquipoInicialAsync(string? codigoEquipo)
-        {
-            if (string.IsNullOrWhiteSpace(codigoEquipo)) return;
-            
-            // Esperar a que se carguen los equipos si es necesario
-            var intentos = 0;
-            while (_todosLosEquipos.Count == 0 && intentos < 10)
+            _logger.LogDebug("[CrearPlanCronograma] OnFiltroEquipoChanged -> value='{value}', suppress={suppress}, seleccionado={sel}", value, _suppressFiltroEquipoChanged, EquipoSeleccionado?.Codigo ?? "(null)");
+            if (_suppressFiltroEquipoChanged) return;
+
+            var texto = value ?? string.Empty;
+
+            if (EquipoSeleccionado == null)
             {
-                await Task.Delay(100);
-                intentos++;
+                CodigoEquipo = texto;
+                SelectedEquipoCodigo = texto;
+                SincronizarSeleccionPorCodigo(texto);
             }
-            
-            var equipo = _todosLosEquipos.FirstOrDefault(e => 
-                string.Equals(e.Codigo, codigoEquipo, StringComparison.OrdinalIgnoreCase));
-            
-            if (equipo != null)
+            else
             {
-                EquipoSeleccionado = equipo;
-                FiltroEquipo = equipo.Codigo; // Mostrar el código en el filtro
+                if (string.IsNullOrWhiteSpace(texto))
+                {
+                    _logger.LogDebug("[CrearPlanCronograma] Texto limpiado manualmente; reset selección.");
+                    EquipoSeleccionado = null;
+                    CodigoEquipo = string.Empty;
+                    SelectedEquipoCodigo = null;
+                }
+                else if (!texto.Equals(EquipoSeleccionado.Codigo, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogDebug("[CrearPlanCronograma] Texto ya no coincide con código seleccionado actual ({sel}); se mantiene selección temporalmente.", EquipoSeleccionado.Codigo);
+                }
+            }
+
+            FiltrarEquipos(texto);
+        }
+
+        private void SincronizarSeleccionPorCodigo(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo)) return;
+            var existente = EquiposDisponibles.FirstOrDefault(e => string.Equals(e.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+            if (existente != null && !object.ReferenceEquals(existente, EquipoSeleccionado))
+            {
+                EquipoSeleccionado = existente;
             }
         }
 
         /// <summary>
-        /// Método para establecer un equipo inicial si se proporciona un código (síncrono)
+        /// Filtra la lista de equipos basado en el texto de búsqueda
+        /// </summary>
+        private void FiltrarEquipos(string? filtro)
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+            {
+                // Si no hay filtro, mostrar todos los equipos
+                EquiposFiltrados.Clear();
+                foreach (var equipo in EquiposDisponibles)
+                {
+                    EquiposFiltrados.Add(equipo);
+                }
+                return;
+            }
+
+            // Filtrar equipos que coincidan con el texto
+            var equiposFiltrados = EquiposDisponibles.Where(e =>
+                (!string.IsNullOrEmpty(e.Codigo) && e.Codigo.Contains(filtro, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(e.NombreEquipo) && e.NombreEquipo.Contains(filtro, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(e.UsuarioAsignado) && e.UsuarioAsignado.Contains(filtro, StringComparison.OrdinalIgnoreCase))
+            ).Take(50).ToList(); // Limitar a 50 resultados para rendimiento
+
+            EquiposFiltrados.Clear();
+            foreach (var equipo in equiposFiltrados)
+            {
+                EquiposFiltrados.Add(equipo);
+            }
+        }
+
+        /// <summary>
+        /// Método para establecer un equipo inicial si se proporciona un código
         /// </summary>
         public void EstablecerEquipoInicial(string? codigoEquipo)
         {
             if (string.IsNullOrWhiteSpace(codigoEquipo)) return;
             
-            var equipo = _todosLosEquipos.FirstOrDefault(e => 
+            var equipo = EquiposDisponibles.FirstOrDefault(e => 
                 string.Equals(e.Codigo, codigoEquipo, StringComparison.OrdinalIgnoreCase));
             
             if (equipo != null)
             {
                 EquipoSeleccionado = equipo;
-                FiltroEquipo = equipo.Codigo; // Mostrar el código en el filtro
+                FiltroEquipo = equipo.Codigo;
+            }
+            else
+            {
+                // Si no se encuentra en la lista actual, establecer como texto de filtro
+                FiltroEquipo = codigoEquipo;
+                CodigoEquipo = codigoEquipo;
             }
         }
 
@@ -291,8 +365,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             try
             {
                 IsSaving = true;
-                StatusMessage = "Creando plan...";                // Validaciones básicas
-                if (string.IsNullOrWhiteSpace(CodigoEquipo))
+                StatusMessage = "Creando plan...";
+
+                // Validación: usar el código del equipo seleccionado o el texto escrito
+                var codigoParaUsar = !string.IsNullOrWhiteSpace(CodigoEquipo) ? CodigoEquipo : FiltroEquipo?.Trim();
+                
+                if (string.IsNullOrWhiteSpace(codigoParaUsar))
                 {
                     StatusMessage = "El código del equipo es obligatorio";
                     return;
@@ -310,13 +388,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         StatusMessage = $"El formato del checklist no es válido: {ex.Message}";
                         return;
                     }
-                }                // Crear el plan
+                }
+
+                // Crear el plan
                 var nuevoPlan = new PlanCronogramaEquipo
                 {
                     PlanId = Guid.NewGuid(),
-                    CodigoEquipo = CodigoEquipo.Trim(),
-                    Descripcion = string.IsNullOrWhiteSpace(Descripcion) ? null : Descripcion.Trim(),
-                    Responsable = string.IsNullOrWhiteSpace(Responsable) ? null : Responsable.Trim(),
+                    CodigoEquipo = codigoParaUsar,
+                    Descripcion = string.IsNullOrWhiteSpace(Descripcion) ? string.Empty : Descripcion.Trim(),
+                    Responsable = string.IsNullOrWhiteSpace(Responsable) ? string.Empty : Responsable.Trim(),
                     DiaProgramado = (byte)DiaEjecucion,
                     ChecklistJson = string.IsNullOrWhiteSpace(ChecklistJson) ? null : ChecklistJson.Trim(),
                     FechaCreacion = DateTime.Now,

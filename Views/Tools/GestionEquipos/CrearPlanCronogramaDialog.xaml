@@ -37,16 +37,21 @@
                         <ColumnDefinition Width="140"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>                    <!-- Código del Equipo -->
-                    <TextBlock Text="Código Equipo:*" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
-                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,4" Padding="8"
-                              ItemsSource="{Binding EquiposDisponibles}"
-                              SelectedItem="{Binding EquipoSeleccionado, UpdateSourceTrigger=PropertyChanged}"
-                              DisplayMemberPath="DisplayText"
+                    <TextBlock Text="Código Equipo:*" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>                    <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,4" Padding="8"
+                              ItemsSource="{Binding EquiposFiltrados}"
+                              SelectedItem="{Binding EquipoSeleccionado}"
+                              SelectedValuePath="Codigo"
+                              SelectedValue="{Binding SelectedEquipoCodigo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Text="{Binding FiltroEquipo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               IsEditable="True"
-                              Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}"
                               IsTextSearchEnabled="False"
-                              StaysOpenOnEdit="True"
-                              ToolTip="Escriba para filtrar equipos por código, nombre o usuario"/>                    <!-- Día de Ejecución -->
+                              ToolTip="Escriba para filtrar equipos por código, nombre o usuario. Seleccione un equipo de la lista.">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayText}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox><!-- Día de Ejecución -->
                     <TextBlock Text="Día Ejecución:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold"/>
                     <ComboBox ItemsSource="{Binding DiasDisponibles}"
                               SelectedValue="{Binding DiaEjecucion, UpdateSourceTrigger=PropertyChanged}"
