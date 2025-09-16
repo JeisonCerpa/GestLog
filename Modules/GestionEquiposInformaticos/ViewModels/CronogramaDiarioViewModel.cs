@@ -250,11 +250,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     {
                         Days[dayIndex].Items.Add(planDto);
                         _planMap[planDto] = plan; // asociar
-                    }
-                }
+                    }                }
 
-                int totalItems = Planificados.Count + planesActivos.Count(p => p.DiaProgramado >= 1 && p.DiaProgramado <= 5);
-                StatusMessage = $"Semana {SelectedWeek}: {Planificados.Count} mantenimientos, {planesActivos.Count(p => p.DiaProgramado >= 1 && p.DiaProgramado <= 5)} planes.";
+                // Contar planes totales y realizados en la semana seleccionada
+                int totalPlanes = planesActivos.Count(p => p.DiaProgramado >= 1 && p.DiaProgramado <= 5);
+                int planesRealizados = planesActivos.Count(p => 
+                    p.DiaProgramado >= 1 && p.DiaProgramado <= 5 && 
+                    p.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true);
+                
+                StatusMessage = $"{totalPlanes} planes, {planesRealizados} realizados";
             }
             catch (System.Exception ex)
             {

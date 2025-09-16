@@ -209,22 +209,13 @@
                            Style="{StaticResource ConfigButtonStyle}"/>
                 </StackPanel>
             </Grid>
-        </Border>
-        <!-- Main Content -->
+        </Border>        <!-- Main Content -->
         <Grid Grid.Row="1">
             <ContentControl x:Name="contentPanel">
                 <ContentControl.Background>
                     <SolidColorBrush Color="#FAFAFA"/>
                 </ContentControl.Background>
             </ContentControl>
-            <!-- Logo en esquina inferior derecha del body -->
-            <Image Source="/Assets/logo.png" 
-                   Width="180" Height="48" 
-                   HorizontalAlignment="Right" 
-                   VerticalAlignment="Bottom" 
-                   Margin="0,0,20,20"
-                   Opacity="0.6"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
         </Grid>
     </Grid>
 </Window>

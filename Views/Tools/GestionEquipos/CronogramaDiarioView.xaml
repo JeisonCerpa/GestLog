@@ -26,7 +26,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>            <DockPanel Grid.Row="0" Margin="0,0,0,12">
-                <!-- Selector de calendario popup -->
+                <!-- Navegación: Selector de calendario popup -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
                     <!-- Botón para mostrar calendario -->
                     <Button x:Name="CalendarButton" 
@@ -169,35 +169,22 @@
                             </StackPanel>
                         </Border>
                     </Popup>
-
+                </StackPanel>
+                
+                <!-- Acciones: Botones de gestión -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" DockPanel.Dock="Right">
                     <!-- Botón para crear nuevo plan -->
-                    <Border CornerRadius="4" Margin="24,0,0,0" VerticalAlignment="Center" Background="#007ACC">
+                    <Border CornerRadius="4" Margin="0,0,8,0" VerticalAlignment="Center" Background="#007ACC">
                         <Button Content="Crear Plan" Padding="8,4"
                                 Command="{Binding CrearPlanCommand}" 
                                 Background="Transparent" Foreground="White" BorderThickness="0" />
                     </Border>
                     
                     <!-- Botón para gestionar planes existentes -->
-                    <Border CornerRadius="4" Margin="8,0,0,0" VerticalAlignment="Center" Background="#28A745">
+                    <Border CornerRadius="4" VerticalAlignment="Center" Background="#28A745">
                         <Button Content="Gestionar Planes" Padding="8,4"
                                 Command="{Binding GestionarPlanesCommand}" 
                                 Background="Transparent" Foreground="White" BorderThickness="0" />
-                    </Border>
-                    
-                    <TextBlock Text="{Binding StatusMessage}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#333" />
-                </StackPanel>
-                
-                <!-- Leyenda -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                    <TextBlock Text="Leyenda:" FontWeight="SemiBold" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#333" />
-                    <Border Background="#E3F2FD" BorderBrush="#64B5F6" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
-                        <TextBlock Text="Plan Pendiente" FontSize="10" />
-                    </Border>
-                    <Border Background="#FFECB3" BorderBrush="#FFA000" BorderThickness="1" CornerRadius="2" Padding="4,2" Margin="0,0,8,0">
-                        <TextBlock Text="Plan Atrasado" FontSize="10" />
-                    </Border>
-                    <Border Background="#C8E6C9" BorderBrush="#2E7D32" BorderThickness="1" CornerRadius="2" Padding="4,2">
-                        <TextBlock Text="Plan Ejecutado" FontSize="10" />
                     </Border>
                 </StackPanel>
             </DockPanel>

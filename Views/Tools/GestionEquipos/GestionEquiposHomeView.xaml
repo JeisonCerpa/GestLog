@@ -5,8 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:GestLog.Views.Tools.GestionEquipos"
              xmlns:mantenimientos="clr-namespace:GestLog.Views.Tools.GestionEquipos"
+             xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1100">
+    
+    <UserControl.Resources>
+        <converters:PlanesStatsConverter x:Key="PlanesStatsConverter" />
+    </UserControl.Resources>
+
     <Grid Background="White" Margin="10">
         <TabControl x:Name="tabEquipos" Background="#F5F5F5" BorderThickness="0" Padding="0">
             <TabControl.Resources>
@@ -53,15 +59,30 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <mantenimientos:CronogramaDiarioView x:Name="cronogramaView" DataContext="{Binding CronogramaVm}" />
-
-                        <!-- Indicador de depuración: mostrar cuántos items están en Planificados dentro del DataContext del control cronograma -->
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="8">
-                            <TextBlock Text="Cronograma DataContext planificados: " VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding DataContext.Planificados.Count, ElementName=cronogramaView}" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,0,0" />
-                        </StackPanel>
+                        </Grid.RowDefinitions>                        <mantenimientos:CronogramaDiarioView x:Name="cronogramaView" DataContext="{Binding CronogramaVm}" />                        <!-- Indicador de estadísticas de planes -->
+                        <DockPanel Grid.Row="1" Margin="8">
+                            <!-- Contador de planes (izquierda) -->
+                            <TextBlock Text="{Binding DataContext.StatusMessage, ElementName=cronogramaView}" 
+                                       FontWeight="Medium" 
+                                       VerticalAlignment="Center" 
+                                       Foreground="#333"
+                                       FontSize="12" 
+                                       DockPanel.Dock="Left" />
+                            
+                            <!-- Leyenda (derecha) -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                                <TextBlock Text="Leyenda:" FontWeight="SemiBold" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#333" FontSize="11" />
+                                <Border Background="#E3F2FD" BorderBrush="#64B5F6" BorderThickness="1" CornerRadius="2" Padding="3,1" Margin="0,0,6,0">
+                                    <TextBlock Text="Pendiente" FontSize="9" />
+                                </Border>
+                                <Border Background="#FFECB3" BorderBrush="#FFA000" BorderThickness="1" CornerRadius="2" Padding="3,1" Margin="0,0,6,0">
+                                    <TextBlock Text="Atrasado" FontSize="9" />
+                                </Border>
+                                <Border Background="#C8E6C9" BorderBrush="#2E7D32" BorderThickness="1" CornerRadius="2" Padding="3,1">
+                                    <TextBlock Text="Ejecutado" FontSize="9" />
+                                </Border>
+                            </StackPanel>
+                        </DockPanel>
                     </Grid>
                 </Border>
             </TabItem>
