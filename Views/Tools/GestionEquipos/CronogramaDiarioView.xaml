@@ -8,6 +8,10 @@
         <converters:CronogramaTipoToBorderConverter x:Key="CronogramaTipoToBorderConverter" />
         <converters:CronogramaTipoToButtonTextConverter x:Key="CronogramaTipoToButtonTextConverter" />
         <converters:PlanEjecucionEstadoToBackgroundConverter x:Key="PlanEjecucionEstadoToBackgroundConverter" />
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <!-- Agregados: converters usados pero no definidos -->
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
     </UserControl.Resources>
     <Border Background="#FAFAFA" Padding="12">
         <Grid>
@@ -63,8 +67,9 @@
             </DockPanel>
 
             <!-- Tablero semanal: 5 columnas (Lunes-Viernes) -->
+            <!-- Cambio: HorizontalScrollBarVisibility ahora Auto para evitar corte de botones cuando no hay ancho suficiente -->
             <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Days}" HorizontalAlignment="Stretch">
+                <ItemsControl ItemsSource="{Binding Days}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="5" />
@@ -76,9 +81,7 @@
                             <Border Margin="6" Background="White" CornerRadius="6" Padding="8" BorderBrush="#DDD" BorderThickness="1">
                                 <DockPanel>
                                     <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,0,0,6" />
-
                                     <Separator DockPanel.Dock="Top" Margin="0,0,0,6" />
-
                                     <ItemsControl ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -87,17 +90,39 @@
                                                         BorderBrush="{Binding Converter={StaticResource CronogramaTipoToBorderConverter}}"
                                                         BorderThickness="1"
                                                         CornerRadius="4">
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Stretch">
-                                                        <StackPanel Width="220">
-                                                            <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" />
-                                                            <TextBlock Text="{Binding Sede}" FontSize="11" Foreground="#666" />
+                                                    <!-- Reemplazo StackPanel horizontal por Grid responsive para evitar corte de botones -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <!-- Info equipo -->
+                                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                            <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding Sede}" FontSize="11" Foreground="#666" TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
-
-                                                        <Button Content="{Binding Converter={StaticResource CronogramaTipoToButtonTextConverter}}" 
-                                                                HorizontalAlignment="Right" Margin="8,0,0,0"
+                                                        <!-- Botón Registrar (solo si no ejecutado) -->
+                                                        <Button Grid.Column="1"
+                                                                Content="{Binding Converter={StaticResource CronogramaTipoToButtonTextConverter}}" 
+                                                                Margin="0,0,6,0"
+                                                                Padding="10,4"
+                                                                MinWidth="70"
+                                                                HorizontalAlignment="Right"
                                                                 Command="{Binding DataContext.OpenRegistrarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}" />
-                                                    </StackPanel>
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                                        <!-- Botón Detalle ejecución (solo ejecutado) -->
+                                                        <Button Grid.Column="2"
+                                                                Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip="Ver detalle ejecución"
+                                                                Padding="4" Width="22" Height="22"
+                                                                Background="Transparent" BorderBrush="Transparent" Cursor="Hand"
+                                                                Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <Ellipse Width="6" Height="6" Fill="#555"/>
+                                                        </Button>
+                                                    </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -120,6 +145,47 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+            <!-- Panel superpuesto de detalle -->
+            <Grid x:Name="DetalleOverlay" Visibility="{Binding MostrarDetallePlan, Converter={StaticResource BooleanToVisibilityConverter}}" 
+                  Background="#80000000">
+                <Border Width="480" MaxHeight="620" Background="White" CornerRadius="8" Padding="18" 
+                        HorizontalAlignment="Right" Margin="0,20,20,20" BorderBrush="#DDD" BorderThickness="1">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="Detalle del Plan" FontWeight="SemiBold" FontSize="16" DockPanel.Dock="Left"/>
+                                <Button Content="Cerrar" DockPanel.Dock="Right" Padding="10,4" Command="{Binding CerrarDetallePlanCommand}" />
+                            </DockPanel>
+                            <UniformGrid Columns="2" Rows="4" Margin="0,0,0,12">
+                                <TextBlock Text="Código:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding SelectedPlanDetalle.Codigo}"/>
+                                <TextBlock Text="Equipo:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding SelectedPlanDetalle.Nombre}"/>
+                                <TextBlock Text="Asignado:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding SelectedPlanDetalle.Sede}"/>
+                                <TextBlock Text="Estado:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding DetalleEstadoTexto}"/>
+                                <TextBlock Text="Objetivo:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding DetalleFechaObjetivo, StringFormat=d}"/>
+                                <TextBlock Text="Ejecución:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding DetalleFechaEjecucion, StringFormat=G}"/>
+                                <TextBlock Text="Resumen:" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding DetalleResumen}" TextWrapping="Wrap"/>
+                            </UniformGrid>
+                            <TextBlock Text="Checklist" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <DataGrid ItemsSource="{Binding DetalleChecklist}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="None" Height="240">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="40"/>
+                                    <DataGridTextColumn Header="Ítem" Binding="{Binding Descripcion}" Width="*"/>
+                                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80"/>
+                                    <DataGridTextColumn Header="Obs" Binding="{Binding Observacion}" Width="140"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>

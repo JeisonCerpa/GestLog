@@ -7,6 +7,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Services.Core.Logging;
+using GestLog.Utilities; // añadido para helper ISO
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services
 {
@@ -57,14 +58,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                 
                 using var context = _dbContextFactory.CreateDbContext();
                 
-                // Verificar que el equipo existe
                 var equipoExiste = await context.EquiposInformaticos
                     .AnyAsync(e => e.Codigo == plan.CodigoEquipo);
                     
                 if (!equipoExiste)
                     throw new ArgumentException($"No se encontró el equipo con código: {plan.CodigoEquipo}");
 
-                // Garantizar que campos opcionales no sean null para evitar errores en BD
                 plan.Descripcion = plan.Descripcion?.Trim() ?? string.Empty;
                 plan.Responsable = plan.Responsable?.Trim() ?? string.Empty;
 
@@ -156,14 +155,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                 if (plan == null)
                     throw new ArgumentException($"No se encontró el plan con ID: {planId}");
 
-                // Buscar ejecución existente o crear nueva
                 var ejecucion = await context.EjecucionesSemanales
                     .FirstOrDefaultAsync(e => e.PlanId == planId && e.AnioISO == anioISO && e.SemanaISO == semanaISO);
 
                 if (ejecucion == null)
                 {
-                    // Calcular fecha objetivo basada en el día programado de la semana
-                    var fechaObjetivo = CalcularFechaObjetivo(anioISO, semanaISO, plan.DiaProgramado);
+                    var fechaObjetivo = DateTimeWeekHelper.GetFechaObjetivoSemana(anioISO, semanaISO, plan.DiaProgramado);
                     
                     ejecucion = new EjecucionSemanal
                     {
@@ -202,27 +199,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
         {
             using var context = _dbContextFactory.CreateDbContext();
             
-            // Obtener todos los planes activos y filtrar por día de la semana
             var planes = await context.PlanesCronogramaEquipos
                 .Include(p => p.Equipo)
                 .Include(p => p.Ejecuciones.Where(e => e.AnioISO == anioISO && e.SemanaISO == semanaISO))
                 .ToListAsync();
 
-            // Filtrar planes que corresponden al día de la semana actual
-            var fechaInicioSemana = CalcularFechaInicioSemana(anioISO, semanaISO);
+            var monday = DateTimeWeekHelper.FirstDateOfWeekISO8601(anioISO, semanaISO);
             var planesParaSemana = new List<PlanCronogramaEquipo>();
 
             foreach (var plan in planes)
             {
-                var fechaObjetivo = fechaInicioSemana.AddDays(plan.DiaProgramado - 1);
-                var semanaObjetivo = GetSemanaISO(fechaObjetivo);
-                
-                if (semanaObjetivo.semana == semanaISO && semanaObjetivo.anio == anioISO)
+                var fechaObjetivo = monday.AddDays(plan.DiaProgramado - 1);
+                var (anio, semana) = DateTimeWeekHelper.GetIsoYearWeek(fechaObjetivo);
+                if (anio == anioISO && semana == semanaISO)
                 {
                     planesParaSemana.Add(plan);
                 }
             }
-
             return planesParaSemana;
         }
 
@@ -246,43 +239,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                 throw new ArgumentException("El día programado debe estar entre 1 (Lunes) y 7 (Domingo)");
         }
 
-        private DateTime CalcularFechaObjetivo(int anioISO, int semanaISO, byte diaProgramado)
-        {
-            var fechaInicioSemana = CalcularFechaInicioSemana(anioISO, semanaISO);
-            return fechaInicioSemana.AddDays(diaProgramado - 1);
-        }
-
-        private DateTime CalcularFechaInicioSemana(int anio, int semana)
-        {
-            // Calcular el lunes de la primera semana del año ISO
-            var jan1 = new DateTime(anio, 1, 1);
-            var daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
-            var firstThursday = jan1.AddDays(daysOffset);
-            var firstMondayOfFirstWeek = firstThursday.AddDays(-3);
-            
-            // Ajustar si la primera semana pertenece al año anterior
-            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-            var firstWeek = cal.GetWeekOfYear(firstThursday, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-            
-            if (firstWeek > 1)
-                firstMondayOfFirstWeek = firstMondayOfFirstWeek.AddDays(7);
-            
-            return firstMondayOfFirstWeek.AddDays((semana - 1) * 7);
-        }
-
-        private (int anio, int semana) GetSemanaISO(DateTime fecha)
-        {
-            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-            var anio = fecha.Year;
-            var semana = cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-            
-            // Ajustar año si la semana pertenece al siguiente año
-            if (fecha.Month == 12 && semana == 1)
-                anio++;
-            else if (fecha.Month == 1 && semana > 50)
-                anio--;
-                
-            return (anio, semana);
-        }
+        // Métodos de cálculo de fechas eliminados: se usa DateTimeWeekHelper centralizado.
     }
 }

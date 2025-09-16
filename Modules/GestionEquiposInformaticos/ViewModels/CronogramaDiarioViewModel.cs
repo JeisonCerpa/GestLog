@@ -16,6 +16,8 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.Usuarios.Interfaces; // añadido para ICurrentUserService
+using GestLog.Utilities; // NUEVO helper semanas centralizado
+using System.Text.Json; // para parse checklist
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -66,6 +68,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private bool isLoading;
         [ObservableProperty]
         private string? statusMessage;
+        [ObservableProperty] private bool mostrarDetallePlan; // panel detalle visible
+        [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle; // dto seleccionado
+        [ObservableProperty] private ObservableCollection<PlanDetalleChecklistItem> detalleChecklist = new();
+        [ObservableProperty] private string? detalleEstadoTexto;
+        [ObservableProperty] private DateTime? detalleFechaObjetivo;
+        [ObservableProperty] private DateTime? detalleFechaEjecucion;
+        [ObservableProperty] private string? detalleResumen;
 
         partial void OnSelectedWeekChanged(int value) => _ = RefreshAsync(CancellationToken.None);
         partial void OnSelectedYearChanged(int value) => _ = RefreshAsync(CancellationToken.None);
@@ -232,8 +241,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         Anio = SelectedYear,
                         EsPlanSemanal = true, // marcar
                         PlanEjecutadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true, // completado
-                        EsAtrasadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) != true &&
-                                           new DateTime(SelectedYear, 1, 4).AddDays((SelectedWeek - 1) * 7 - ((int)new DateTime(SelectedYear, 1, 4).DayOfWeek - 1)) < DateTime.Today // aproximación inicio semana < hoy
+                        // Es atrasado solo si la fecha objetivo ya pasó (fecha objetivo < hoy) y no ejecutado
+                        EsAtrasadoSemana = DateTimeWeekHelper.IsPlanAtrasado(SelectedYear, SelectedWeek, plan.DiaProgramado, 
+                                                plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true)
                     };
 
                     int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index
@@ -492,6 +502,69 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al crear plan");
                 StatusMessage = "Error al abrir el diálogo de creación de plan";
             }
+        }
+
+        [RelayCommand]
+        private void VerDetallePlan(CronogramaMantenimientoDto? dto)
+        {
+            if (dto == null) return;
+            if (!_planMap.TryGetValue(dto, out var planEntity)) return; // solo planes
+            SelectedPlanDetalle = dto;
+            DetalleChecklist.Clear();
+            // Estado y fechas
+            var fechaObjetivo = DateTimeWeekHelper.GetFechaObjetivoSemana(SelectedYear, SelectedWeek, planEntity.DiaProgramado);
+            DetalleFechaObjetivo = fechaObjetivo;
+            var ejecucion = planEntity.Ejecuciones?.FirstOrDefault(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek);
+            DetalleFechaEjecucion = ejecucion?.FechaEjecucion;
+            bool ejecutado = ejecucion?.Estado == 2;
+            bool atrasado = !ejecutado && fechaObjetivo.Date < DateTime.Today;
+            DetalleEstadoTexto = ejecutado ? "Ejecutado" : atrasado ? "Atrasado" : "Pendiente";
+            // Parse checklist si existe
+            if (!string.IsNullOrWhiteSpace(ejecucion?.ResultadoJson))
+            {
+                try
+                {
+                    var doc = JsonDocument.Parse(ejecucion.ResultadoJson);
+                    if (doc.RootElement.TryGetProperty("items", out var arr) && arr.ValueKind == JsonValueKind.Array)
+                    {
+                        int total = 0, ok = 0, obs = 0, pend = 0;
+                        foreach (var it in arr.EnumerateArray())
+                        {
+                            bool comp = it.TryGetProperty("Completado", out var cEl) && cEl.ValueKind == JsonValueKind.True;
+                            string desc = it.TryGetProperty("Descripcion", out var dEl) ? (dEl.GetString() ?? string.Empty) :
+                                           it.TryGetProperty("descripcion", out var d2El) ? (d2El.GetString() ?? string.Empty) : string.Empty;
+                            string? ob = it.TryGetProperty("Observacion", out var oEl) ? oEl.GetString() :
+                                          it.TryGetProperty("observacion", out var o2El) ? o2El.GetString() : null;
+                            int? id = it.TryGetProperty("Id", out var idEl) ? idEl.GetInt32() :
+                                       it.TryGetProperty("id", out var id2El) ? id2El.GetInt32() : (int?)null;
+                            DetalleChecklist.Add(new PlanDetalleChecklistItem { Id = id, Descripcion = desc, Completado = comp, Observacion = ob });
+                            total++; if (comp) ok++; else if (!string.IsNullOrWhiteSpace(ob)) obs++; else pend++;
+                        }
+                        DetalleResumen = $"{ok}/{total} ítems OK, Observados {obs}, Pendientes {pend}";
+                    }
+                }
+                catch { /* ignorar parse errors */ }
+            }
+            else
+            {
+                DetalleResumen = ejecutado ? "Ejecutado sin checklist" : "Sin ejecución registrada";
+            }
+            MostrarDetallePlan = true;
+        }
+
+        [RelayCommand]
+        private void CerrarDetallePlan()
+        {
+            MostrarDetallePlan = false;
+        }
+
+        public class PlanDetalleChecklistItem : ObservableObject
+        {
+            public int? Id { get; set; }
+            public string Descripcion { get; set; } = string.Empty;
+            public bool Completado { get; set; }
+            public string? Observacion { get; set; }
+            public string Estado => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
         }
     }
 
