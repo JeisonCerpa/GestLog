@@ -73,8 +73,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         [ObservableProperty] private ObservableCollection<PlanDetalleChecklistItem> detalleChecklist = new();
         [ObservableProperty] private string? detalleEstadoTexto;
         [ObservableProperty] private DateTime? detalleFechaObjetivo;
-        [ObservableProperty] private DateTime? detalleFechaEjecucion;
-        [ObservableProperty] private string? detalleResumen;
+        [ObservableProperty] private DateTime? detalleFechaEjecucion;        [ObservableProperty] private string? detalleResumen;
 
         partial void OnSelectedWeekChanged(int value) => _ = RefreshAsync(CancellationToken.None);
         partial void OnSelectedYearChanged(int value) => _ = RefreshAsync(CancellationToken.None);
