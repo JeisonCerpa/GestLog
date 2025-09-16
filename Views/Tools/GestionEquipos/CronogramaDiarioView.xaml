@@ -67,9 +67,9 @@
             </DockPanel>
 
             <!-- Tablero semanal: 5 columnas (Lunes-Viernes) -->
-            <!-- Cambio: HorizontalScrollBarVisibility ahora Auto para evitar corte de botones cuando no hay ancho suficiente -->
-            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Days}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True">
+            <!-- Eliminado ScrollViewer externo que impedía el estiramiento completo -->
+            <Grid Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding Days}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" SnapsToDevicePixels="True">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="5" />
@@ -78,73 +78,68 @@
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="6" Background="White" CornerRadius="6" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                            <Border Margin="6" Background="White" CornerRadius="6" Padding="8" BorderBrush="#DDD" BorderThickness="1" HorizontalAlignment="Stretch">
                                 <DockPanel>
-                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,0,0,6" />
-                                    <Separator DockPanel.Dock="Top" Margin="0,0,0,6" />
-                                    <ItemsControl ItemsSource="{Binding Items}">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,0,0,4" />
+                                    <Separator DockPanel.Dock="Top" Margin="0,0,0,4" />
+                                    <!-- Mover mensaje antes del ItemsControl para que éste sea el último y se expanda (LastChildFill) -->                                    <TextBlock Text="No hay mantenimientos" Foreground="#999" HorizontalAlignment="Center" DockPanel.Dock="Top" Visibility="{Binding Items.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+                                    <ItemsControl ItemsSource="{Binding Items}" HorizontalContentAlignment="Stretch">
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Margin="0,0,0,6" Padding="6" 
+                                                <Border Margin="0,0,0,4" Padding="4" 
                                                         Background="{Binding Converter={StaticResource PlanEjecucionEstadoToBackgroundConverter}}" 
                                                         BorderBrush="{Binding Converter={StaticResource CronogramaTipoToBorderConverter}}"
                                                         BorderThickness="1"
-                                                        CornerRadius="4">
-                                                    <!-- Reemplazo StackPanel horizontal por Grid responsive para evitar corte de botones -->
+                                                        CornerRadius="4"
+                                                        SnapsToDevicePixels="True"
+                                                        UseLayoutRounding="True"
+                                                        HorizontalAlignment="Stretch">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
-                                                            <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <!-- Info equipo -->
-                                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                        <StackPanel Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                            <TextBlock Text="{Binding Sede}" FontSize="11" Foreground="#666" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding Sede}" FontSize="10" Foreground="#666" TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
-                                                        <!-- Botón Registrar (solo si no ejecutado) -->
-                                                        <Button Grid.Column="1"
-                                                                Content="{Binding Converter={StaticResource CronogramaTipoToButtonTextConverter}}" 
-                                                                Margin="0,0,6,0"
-                                                                Padding="10,4"
-                                                                MinWidth="70"
-                                                                HorizontalAlignment="Right"
-                                                                Command="{Binding DataContext.OpenRegistrarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}"
-                                                                Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                                        <!-- Botón Detalle ejecución (solo ejecutado) -->
-                                                        <Button Grid.Column="2"
-                                                                Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}"
-                                                                ToolTip="Ver detalle ejecución"
-                                                                Padding="4" Width="22" Height="22"
-                                                                Background="Transparent" BorderBrush="Transparent" Cursor="Hand"
-                                                                Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                            <Ellipse Width="6" Height="6" Fill="#555"/>
-                                                        </Button>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Content="{Binding Converter={StaticResource CronogramaTipoToButtonTextConverter}}" 
+                                                                    Margin="0,0,4,0"
+                                                                    Padding="6,2"
+                                                                    Command="{Binding DataContext.OpenRegistrarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                                            <Button Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip="Ver detalle ejecución"
+                                                                    Padding="2" Width="18" Height="18"
+                                                                    Background="Transparent" BorderBrush="Transparent" Cursor="Hand"
+                                                                    Visibility="{Binding PlanEjecutadoSemana, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <Ellipse Width="5" Height="5" Fill="#444"/>
+                                                            </Button>
+                                                        </StackPanel>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
-
-                                        <ItemsControl.Template>
-                                            <ControlTemplate TargetType="ItemsControl">
-                                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                                    <ItemsPresenter />
-                                                </ScrollViewer>
-                                            </ControlTemplate>
-                                        </ItemsControl.Template>
-
                                     </ItemsControl>
-
-                                    <!-- Mensaje si no hay items -->
-                                    <TextBlock Text="No hay mantenimientos" Foreground="#999" HorizontalAlignment="Center" Visibility="{Binding Items.Count, Converter={StaticResource CountToVisibilityConverter}}" />
                                 </DockPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </Grid>
             <!-- Panel superpuesto de detalle -->
             <Grid x:Name="DetalleOverlay" Visibility="{Binding MostrarDetallePlan, Converter={StaticResource BooleanToVisibilityConverter}}" 
                   Background="#80000000">
