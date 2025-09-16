@@ -53,7 +53,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         _configurationService.ConfigurationChanged += OnConfigurationChanged;
         
         // Cargar configuración inicial
-        _ = LoadSmtpConfiguration();
+        LoadSmtpConfiguration();
         
         _logger.LogInformation("SmtpConfigurationViewModel inicializado - Servidor: {Server}, Configurado: {IsConfigured}", 
             SmtpServer ?? "VACIO", IsEmailConfigured);
@@ -171,7 +171,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
 
     public async Task LoadSmtpConfigurationAsync()
     {
-        await LoadSmtpConfiguration();
+        await Task.Run(() => LoadSmtpConfiguration());
     }
 
     private bool CanConfigureSmtp() => !IsConfiguring && 
@@ -182,7 +182,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Carga configuración SMTP con nueva estrategia: Windows Credential Manager primero, JSON como fallback
     /// </summary>
-    public async Task LoadSmtpConfiguration()
+    public void LoadSmtpConfiguration()
     {
         try
         {
@@ -332,7 +332,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         try
         {
             _logger.LogInformation("Recargando configuración SMTP manualmente...");
-            _ = LoadSmtpConfiguration();
+            LoadSmtpConfiguration();
         }
         catch (Exception ex)
         {
@@ -380,7 +380,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     {
         if (e.SettingPath.StartsWith("smtp", StringComparison.OrdinalIgnoreCase))
         {
-            _ = LoadSmtpConfiguration();
+            LoadSmtpConfiguration();
         }
     }
 

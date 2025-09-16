@@ -10,6 +10,7 @@ using System.Windows.Controls.Primitives;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Threading;
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -77,9 +78,7 @@ namespace GestLog.Views.Tools.GestionEquipos
                 _selectedWeekText = FindName("SelectedWeekText") as TextBlock;
             }
             catch { }
-        }
-
-        private void InitializeWeekSelector()
+        }        private void InitializeWeekSelector()
         {
             try
             {
@@ -92,6 +91,12 @@ namespace GestLog.Views.Tools.GestionEquipos
                 if (_weekSelector != null && currentWeekInfo != null)
                 {
                     _weekSelector.SelectedItem = currentWeekInfo;
+                    
+                    // Hacer scroll hasta la semana actual usando Dispatcher para asegurar que el ListBox esté renderizado
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ScrollToCurrentWeek(currentWeekInfo);
+                    }), DispatcherPriority.Loaded);
                 }
                 
                 UpdateMonthYearText();
@@ -134,27 +139,71 @@ namespace GestLog.Views.Tools.GestionEquipos
                 }
             }
             catch { }
-        }
-
-        private void CalendarButton_Click(object sender, RoutedEventArgs e)
+        }        private void CalendarButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 if (_calendarPopup != null)
                 {
                     _calendarPopup.IsOpen = !_calendarPopup.IsOpen;
+                    
+                    // Si se está abriendo el popup, hacer scroll hasta la semana actual
+                    if (_calendarPopup.IsOpen)
+                    {
+                        // Usar Dispatcher para asegurar que el ListBox esté renderizado antes del scroll
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            ScrollToSelectedWeek();
+                        }), System.Windows.Threading.DispatcherPriority.Loaded);
+                    }
                 }
             }
             catch { }
         }
 
-        private void PrevMonthButton_Click(object sender, RoutedEventArgs e)
+        private void ScrollToCurrentWeek(WeekInfo weekInfo)
+        {
+            try
+            {
+                if (_weekSelector != null && weekInfo != null)
+                {
+                    _weekSelector.ScrollIntoView(weekInfo);
+                }
+            }
+            catch { }
+        }
+
+        private void ScrollToSelectedWeek()
+        {
+            try
+            {
+                if (_weekSelector?.SelectedItem is WeekInfo selectedWeek)
+                {
+                    _weekSelector.ScrollIntoView(selectedWeek);
+                }
+            }
+            catch { }
+        }        private void PrevMonthButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 _currentDisplayDate = _currentDisplayDate.AddYears(-1);
                 GenerateWeeksForYear(_currentDisplayDate.Year);
                 UpdateMonthYearText();
+                
+                // Seleccionar primera semana del año y hacer scroll
+                var firstWeek = _weeks.FirstOrDefault();
+                if (_weekSelector != null && firstWeek != null)
+                {
+                    _weekSelector.SelectedItem = firstWeek;
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        _weekSelector.ScrollIntoView(firstWeek);
+                    }), DispatcherPriority.Loaded);
+                    
+                    UpdateSelectedWeekText(firstWeek.StartDate);
+                    UpdateViewModelWeek(firstWeek.StartDate);
+                }
             }
             catch { }
         }
@@ -166,6 +215,20 @@ namespace GestLog.Views.Tools.GestionEquipos
                 _currentDisplayDate = _currentDisplayDate.AddYears(1);
                 GenerateWeeksForYear(_currentDisplayDate.Year);
                 UpdateMonthYearText();
+                
+                // Seleccionar primera semana del año y hacer scroll
+                var firstWeek = _weeks.FirstOrDefault();
+                if (_weekSelector != null && firstWeek != null)
+                {
+                    _weekSelector.SelectedItem = firstWeek;
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        _weekSelector.ScrollIntoView(firstWeek);
+                    }), DispatcherPriority.Loaded);
+                    
+                    UpdateSelectedWeekText(firstWeek.StartDate);
+                    UpdateViewModelWeek(firstWeek.StartDate);
+                }
             }
             catch { }
         }
