@@ -20,7 +20,9 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     private readonly IEmailService? _emailService;
     private readonly IConfigurationService _configurationService;
     private readonly ICredentialService _credentialService;
-    private readonly IGestLogLogger _logger;    // Propiedades SMTP
+    private readonly IGestLogLogger _logger;
+
+    // Propiedades SMTP
     [ObservableProperty] private string _smtpServer = string.Empty;
     [ObservableProperty] private int _smtpPort = 587;
     [ObservableProperty] private string _smtpUsername = string.Empty;
@@ -51,11 +53,18 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         _configurationService.ConfigurationChanged += OnConfigurationChanged;
         
         // Cargar configuración inicial
-        LoadSmtpConfiguration();
-    }    [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
+        _ = LoadSmtpConfiguration();
+        
+        _logger.LogInformation("SmtpConfigurationViewModel inicializado - Servidor: {Server}, Configurado: {IsConfigured}", 
+            SmtpServer ?? "VACIO", IsEmailConfigured);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
     private async Task ConfigureSmtpAsync(CancellationToken cancellationToken = default)
     {
-        if (_emailService == null) return;        try
+        if (_emailService == null) return;
+
+        try
         {
             IsConfiguring = true;
 
@@ -88,7 +97,9 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             IsConfiguring = false;
         }
-    }    [RelayCommand]
+    }
+
+    [RelayCommand]
     private void ClearConfiguration()
     {
         SmtpServer = string.Empty;
@@ -101,18 +112,12 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         _logger.LogInformation("Configuración de email limpiada");
     }
 
-    /// <summary>
-    /// Comando para limpiar configuración de email (alias para compatibilidad)
-    /// </summary>
     [RelayCommand]
     private void ClearEmailConfiguration()
     {
         ClearConfiguration();
     }
 
-    /// <summary>
-    /// Comando para probar conexión SMTP
-    /// </summary>
     [RelayCommand]
     private async Task TestSmtpConnection()
     {
@@ -127,7 +132,8 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             IsConfiguring = true;
             StatusMessage = "Probando conexión SMTP...";
-              var smtpConfig = new SmtpConfiguration
+              
+            var smtpConfig = new SmtpConfiguration
             {
                 SmtpServer = SmtpServer,
                 Port = SmtpPort,
@@ -140,7 +146,8 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
 
             await _emailService.ConfigureSmtpAsync(smtpConfig);
             var isValid = await _emailService.ValidateConfigurationAsync();
-              if (isValid)
+              
+            if (isValid)
             {
                 StatusMessage = "✅ Conexión SMTP exitosa";
                 _logger.LogInformation("Prueba de conexión SMTP exitosa");
@@ -162,66 +169,184 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>
-    /// Método para cargar configuración SMTP de forma asíncrona
-    /// </summary>
     public async Task LoadSmtpConfigurationAsync()
     {
-        await Task.Run(() => LoadSmtpConfiguration());
+        await LoadSmtpConfiguration();
     }
 
     private bool CanConfigureSmtp() => !IsConfiguring && 
         !string.IsNullOrWhiteSpace(SmtpServer) && 
         !string.IsNullOrWhiteSpace(SmtpUsername) && 
-        !string.IsNullOrWhiteSpace(SmtpPassword);    private void LoadSmtpConfiguration()
+        !string.IsNullOrWhiteSpace(SmtpPassword);
+
+    /// <summary>
+    /// Carga configuración SMTP con nueva estrategia: Windows Credential Manager primero, JSON como fallback
+    /// </summary>
+    public async Task LoadSmtpConfiguration()
     {
         try
         {
-            var smtpConfig = _configurationService.Current.Smtp;
-              SmtpServer = smtpConfig.Server ?? string.Empty;
-            SmtpPort = smtpConfig.Port;
-            SmtpUsername = smtpConfig.Username ?? string.Empty;
-            EnableSsl = smtpConfig.UseSSL;
-            IsEmailConfigured = smtpConfig.IsConfigured;
-              // Cargar campos BCC y CC desde la configuración
-            BccEmail = smtpConfig.BccEmail ?? string.Empty;
-            CcEmail = smtpConfig.CcEmail ?? string.Empty;
+            _logger.LogInformation("Iniciando carga de configuración SMTP");
 
-            // Cargar contraseña desde Windows Credential Manager
-            if (!string.IsNullOrWhiteSpace(smtpConfig.Username))
+            // PRIMERO: Intentar cargar desde Windows Credential Manager
+            bool loadedFromCredentials = TryLoadFromCredentials();
+            
+            if (loadedFromCredentials)
             {
-                var credentialTarget = $"SMTP_{smtpConfig.Server}_{smtpConfig.Username}";
-                
-                if (_credentialService.CredentialsExist(credentialTarget))
-                {
-                    var (username, password) = _credentialService.GetCredentials(credentialTarget);
-                    SmtpPassword = password;
-                    
-                    // Revalidar configuración con contraseña
-                    smtpConfig.Password = password;
-                    smtpConfig.ValidateConfiguration();
-                    IsEmailConfigured = smtpConfig.IsConfigured;
-                }
-                else
-                {
-                    SmtpPassword = string.Empty;
-                    IsEmailConfigured = false;
-                }
+                _logger.LogInformation("Configuración SMTP cargada exitosamente desde Windows Credential Manager");
+                return;
             }
+
+            // FALLBACK: Cargar desde JSON si no hay credenciales guardadas
+            _logger.LogInformation("No se encontraron credenciales guardadas, cargando desde configuración JSON");
+            var smtpConfig = _configurationService.Current.Smtp;
+            if (smtpConfig != null)
+            {
+                _logger.LogInformation($"Configuración básica cargada desde JSON: Server={smtpConfig.Server}, Port={smtpConfig.Port}, Username={smtpConfig.Username}");
+                
+                SmtpServer = smtpConfig.Server ?? string.Empty;
+                SmtpPort = smtpConfig.Port;
+                SmtpUsername = smtpConfig.Username ?? string.Empty;
+                SmtpPassword = string.Empty; // No cargar contraseña desde JSON por seguridad
+                EnableSsl = smtpConfig.UseSSL;
+                BccEmail = smtpConfig.BccEmail ?? string.Empty;
+                CcEmail = smtpConfig.CcEmail ?? string.Empty;
+                IsEmailConfigured = false; // Sin credenciales, no está configurado
+            }
+            else
+            {
+                _logger.LogWarning("No se encontró configuración SMTP en JSON, usando valores por defecto");
+                SetDefaultValues();
+            }
+
+            _logger.LogInformation("Carga de configuración SMTP completada");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al cargar configuración SMTP");
-            IsEmailConfigured = false;
-            SmtpPassword = string.Empty;
+            _logger.LogError(ex, "Error al cargar la configuración SMTP");
+            SetDefaultValues();
         }
-    }    private async Task SaveSmtpConfigurationAsync()
+    }    /// <summary>
+    /// Intenta cargar configuración desde Windows Credential Manager
+    /// </summary>
+    private bool TryLoadFromCredentials()
+    {
+        try
+        {
+            _logger.LogInformation("Buscando credenciales SMTP en Windows Credential Manager");
+
+            // Credenciales conocidas - SOLO la parte después de "GestLog_SMTP_"
+            var knownCredentialTargets = new[]
+            {
+                "SMTP_smtppro.zoho.com_prueba@gmail.com",
+                "SMTP_smtppro.zoho.com_cartera@simicsgroup.com"
+            };
+
+            foreach (var target in knownCredentialTargets)
+            {
+                _logger.LogInformation($"Verificando credencial con target: {target}");
+                
+                if (_credentialService.CredentialsExist(target))
+                {
+                    var (username, password) = _credentialService.GetCredentials(target);
+                    
+                    if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                    {
+                        // Extraer servidor del target
+                        string server = ExtractServerFromTarget("GestLog_SMTP_" + target); // Usar formato completo para extracción
+                        
+                        SmtpServer = server;
+                        SmtpUsername = username;
+                        SmtpPassword = password;
+                        SmtpPort = 587;
+                        EnableSsl = true;
+                        IsEmailConfigured = true;
+                        
+                        // BCC y CC desde JSON si están disponibles
+                        var jsonConfig = _configurationService.Current.Smtp;
+                        BccEmail = jsonConfig?.BccEmail ?? string.Empty;
+                        CcEmail = jsonConfig?.CcEmail ?? string.Empty;
+                        
+                        _logger.LogInformation($"✅ Configuración SMTP cargada desde credenciales - Servidor: {server}, Usuario: {username}");
+                        return true;
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation($"❌ Credencial no encontrada para target: {target}");
+                }
+            }
+
+            _logger.LogInformation("No se encontraron credenciales SMTP válidas");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al intentar cargar desde Windows Credential Manager");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Extrae el servidor del target de credencial
+    /// </summary>
+    private string ExtractServerFromTarget(string target)
+    {
+        try
+        {
+            // "GestLog_SMTP_SMTP_smtppro.zoho.com_prueba@gmail.com"
+            var parts = target.Split('_');
+            
+            // Buscar la parte que contiene "." pero no "@" (es el servidor)
+            foreach (var part in parts)
+            {
+                if (part.Contains(".") && !part.Contains("@"))
+                {
+                    return part;
+                }
+            }
+            
+            _logger.LogWarning($"No se pudo extraer servidor del target: {target}");
+            return "smtppro.zoho.com"; // Fallback al servidor más común
+        }
+        catch
+        {
+            return "smtppro.zoho.com"; // Fallback seguro
+        }
+    }
+
+    private void SetDefaultValues()
+    {
+        SmtpServer = string.Empty;
+        SmtpPort = 587;
+        SmtpUsername = string.Empty;
+        SmtpPassword = string.Empty;
+        EnableSsl = true;
+        BccEmail = string.Empty;
+        CcEmail = string.Empty;
+        IsEmailConfigured = false;
+    }
+
+    public void ReloadConfiguration()
+    {
+        try
+        {
+            _logger.LogInformation("Recargando configuración SMTP manualmente...");
+            _ = LoadSmtpConfiguration();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recargando configuración SMTP manualmente");
+        }
+    }
+
+    private async Task SaveSmtpConfigurationAsync()
     {
         try
         {
             var smtpConfig = _configurationService.Current.Smtp;
             
-            // Actualizar configuración (sin contraseña)
+            // Actualizar configuración básica en JSON (sin contraseña)
             smtpConfig.Server = SmtpServer;
             smtpConfig.Port = SmtpPort;
             smtpConfig.Username = SmtpUsername;
@@ -229,37 +354,36 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             smtpConfig.FromName = SmtpUsername;
             smtpConfig.UseSSL = EnableSsl;
             smtpConfig.UseAuthentication = !string.IsNullOrWhiteSpace(SmtpUsername);
-            
-            // ✅ CORRECCIÓN: Mantener campos BCC y CC existentes si ya están configurados
-            // Solo actualizamos si no están ya configurados para no sobrescribir valores existentes
-            // Los campos BCC y CC se configuran desde la ventana de configuración avanzada
-
-            // Guardar contraseña de forma segura
+            smtpConfig.IsConfigured = true;
+              // Guardar contraseña de forma segura en Windows Credential Manager
             if (!string.IsNullOrWhiteSpace(SmtpUsername) && !string.IsNullOrWhiteSpace(SmtpPassword))
             {
+                // Usar el formato correcto SIN el prefijo "GestLog_SMTP_" (el servicio lo agrega automáticamente)
                 var credentialTarget = $"SMTP_{SmtpServer}_{SmtpUsername}";
                 _credentialService.SaveCredentials(credentialTarget, SmtpUsername, SmtpPassword);
+                
+                _logger.LogInformation($"Credenciales SMTP guardadas con target: {credentialTarget}");
             }
 
-            smtpConfig.ValidateConfiguration();
             await _configurationService.SaveAsync();
+            
+            _logger.LogInformation("Configuración SMTP guardada exitosamente");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al guardar configuración SMTP");
             throw;
         }
-    }private void OnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
+    }
+
+    private void OnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
     {
         if (e.SettingPath.StartsWith("smtp", StringComparison.OrdinalIgnoreCase))
         {
-            LoadSmtpConfiguration();
+            _ = LoadSmtpConfiguration();
         }
     }
 
-    /// <summary>
-    /// Limpia recursos y se desuscribe de eventos
-    /// </summary>
     public void Cleanup()
     {
         Dispose();

@@ -74,6 +74,9 @@ public partial class DocumentGenerationViewModel : ObservableObject
         try
         {
             await _mainViewModel.InitializeAsync();
+            
+            // 🔧 Verificar que la configuración SMTP se haya cargado correctamente
+            await EnsureSmtpConfigurationLoaded();
               // Suscribirse a eventos de cambio de propiedad de los sub-ViewModels
             _mainViewModel.PdfGeneration.PropertyChanged += (s, e) => 
             {
@@ -114,6 +117,27 @@ public partial class DocumentGenerationViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inicializando DocumentGenerationViewModel");
+        }
+    }    /// <summary>
+    /// Asegura que la configuración SMTP esté completamente cargada
+    /// </summary>
+    private async Task EnsureSmtpConfigurationLoaded()
+    {
+        try
+        {
+            _logger.LogInformation("Verificando carga de configuración SMTP");
+            
+            // Usar el SmtpConfiguration del MainViewModel (correcto)
+            await _mainViewModel.SmtpConfiguration.LoadSmtpConfigurationAsync();
+            
+            // Dar tiempo para que se procesen los cambios de propiedad
+            await Task.Delay(100);
+            
+            _logger.LogInformation($"Configuración SMTP cargada: Servidor={_mainViewModel.SmtpConfiguration.SmtpServer}, Configurado={_mainViewModel.SmtpConfiguration.IsEmailConfigured}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar configuración SMTP");
         }
     }
 
@@ -262,9 +286,7 @@ public partial class DocumentGenerationViewModel : ObservableObject
     { 
         get => _mainViewModel.AutomaticEmail.EmailRecipients; 
         set => _mainViewModel.AutomaticEmail.EmailRecipients = value; 
-    }
-
-    public string EmailCc 
+    }    public string EmailCc 
     { 
         get => _mainViewModel.AutomaticEmail.EmailCc; 
         set => _mainViewModel.AutomaticEmail.EmailCc = value; 
@@ -333,6 +355,31 @@ public partial class DocumentGenerationViewModel : ObservableObject
     private void CancelEmailSending() => _mainViewModel.AutomaticEmail.CancelEmailSendingCommand.Execute(null);
     [RelayCommand(CanExecute = nameof(CanTestSmtp))]
     private async Task TestSmtpConnection() => await _mainViewModel.SmtpConfiguration.TestSmtpConnectionCommand.ExecuteAsync(null);
+
+    /// <summary>
+    /// Comando para recargar manualmente la configuración SMTP
+        /// <summary>
+    /// Comando para recargar manualmente la configuración SMTP
+    /// </summary>
+    [RelayCommand]
+    private async Task ReloadSmtpConfiguration()
+    {
+        try
+        {
+            _logger.LogInformation("Recargando configuración SMTP manualmente desde DocumentGenerationViewModel...");
+            StatusMessage = "Recargando configuración SMTP...";
+            
+            await EnsureSmtpConfigurationLoaded();
+            
+            StatusMessage = $"✅ Configuración SMTP recargada - Servidor: {_mainViewModel.SmtpConfiguration.SmtpServer}";
+            _logger.LogInformation("✅ Configuración SMTP recargada exitosamente");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "❌ Error recargando configuración SMTP";
+            _logger.LogError(ex, "❌ Error recargando configuración SMTP");
+        }
+    }
 
     #endregion
 

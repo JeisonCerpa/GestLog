@@ -196,16 +196,21 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
     private bool CanSendDocumentsAutomatically()
     {
         return AutomaticEmail?.CanSendAutomatically == true;
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Inicializa todos los componentes después de la construcción
     /// </summary>
     public async Task InitializeAsync()
-    {        try
+    {        
+        try
         {
             // Cargar configuración SMTP
             await SmtpConfiguration.LoadSmtpConfigurationAsync();
+            
+            // 🔧 Verificar que la configuración se haya cargado correctamente
+            _logger.LogInformation("📧 Configuración SMTP después de inicializar - Servidor: {Server}, Usuario: {Username}, Configurado: {IsConfigured}", 
+                SmtpConfiguration.SmtpServer ?? "VACIO", 
+                SmtpConfiguration.SmtpUsername ?? "VACIO", 
+                SmtpConfiguration.IsEmailConfigured);
             
             // NOTA: Los documentos se cargarán cuando se seleccione el archivo Excel de emails
             // await DocumentManagement.LoadPreviouslyGeneratedDocuments();
