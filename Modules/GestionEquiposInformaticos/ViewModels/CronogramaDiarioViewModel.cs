@@ -505,15 +505,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al crear plan");
                 StatusMessage = "Error al abrir el diálogo de creación de plan";
             }
-        }
-
-        [RelayCommand]
+        }        [RelayCommand]
         private void VerDetallePlan(CronogramaMantenimientoDto? dto)
         {
             if (dto == null) return;
             if (!_planMap.TryGetValue(dto, out var planEntity)) return; // solo planes
+            
+            // Actualizar propiedades de detalle
             SelectedPlanDetalle = dto;
             DetalleChecklist.Clear();
+            
             // Estado y fechas
             var fechaObjetivo = DateTimeWeekHelper.GetFechaObjetivoSemana(SelectedYear, SelectedWeek, planEntity.DiaProgramado);
             DetalleFechaObjetivo = fechaObjetivo;
@@ -522,6 +523,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             bool ejecutado = ejecucion?.Estado == 2;
             bool atrasado = !ejecutado && fechaObjetivo.Date < DateTime.Today;
             DetalleEstadoTexto = ejecutado ? "Ejecutado" : atrasado ? "Atrasado" : "Pendiente";
+            
             // Parse checklist si existe
             if (!string.IsNullOrWhiteSpace(ejecucion?.ResultadoJson))
             {
@@ -551,8 +553,30 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             else
             {
                 DetalleResumen = ejecutado ? "Ejecutado sin checklist" : "Sin ejecución registrada";
+            }            // Abrir ventana modal
+            try
+            {
+                var modalWindow = new GestLog.Views.Tools.GestionEquipos.PlanDetalleModalWindow
+                {
+                    DataContext = this
+                };
+
+                // Obtener la ventana padre actual
+                var parentWindow = System.Windows.Application.Current.Windows
+                    .OfType<System.Windows.Window>()
+                    .FirstOrDefault(w => w.IsActive) ?? System.Windows.Application.Current.MainWindow;
+
+                // Configurar la ventana modal para que siga a la ventana padre
+                modalWindow.ConfigurarParaVentanaPadre(parentWindow);
+
+                modalWindow.ShowDialog();
             }
-            MostrarDetallePlan = true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al abrir ventana de detalle");
+                // Fallback al overlay si falla la ventana modal
+                MostrarDetallePlan = true;
+            }
         }
 
         [RelayCommand]

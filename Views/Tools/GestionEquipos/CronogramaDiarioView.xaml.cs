@@ -292,5 +292,33 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
             catch { }
         }
+        
+        // Manejadores para el overlay modal
+        private void DetalleOverlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // Cerrar overlay al hacer clic en el fondo
+            if (DataContext is GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel vm)
+            {
+                vm.CerrarDetallePlanCommand?.Execute(null);
+            }
+        }
+
+        private void DetallePanel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // Evitar que el clic en el panel cierre el overlay
+            e.Handled = true;
+        }
+        
+        private void CronogramaDiarioView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Cerrar overlay con Escape
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                if (DataContext is GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel vm)
+                {
+                    vm.CerrarDetallePlanCommand?.Execute(null);
+                }
+            }
+        }
     }
 }

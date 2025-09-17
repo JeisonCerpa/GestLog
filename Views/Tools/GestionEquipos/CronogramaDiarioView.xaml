@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.ViewModels"
              xmlns:converters="clr-namespace:GestLog.Converters"
-             x:Class="GestLog.Views.Tools.GestionEquipos.CronogramaDiarioView">    <UserControl.Resources>
+             x:Class="GestLog.Views.Tools.GestionEquipos.CronogramaDiarioView"
+             KeyDown="CronogramaDiarioView_KeyDown">    <UserControl.Resources>
         <converters:CronogramaTipoToBackgroundConverter x:Key="CronogramaTipoToBackgroundConverter" />
         <converters:CronogramaTipoToBorderConverter x:Key="CronogramaTipoToBorderConverter" />
         <converters:CronogramaTipoToButtonTextConverter x:Key="CronogramaTipoToButtonTextConverter" />
@@ -330,49 +331,7 @@
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Grid>
-            <!-- Panel superpuesto de detalle -->
-            <Grid x:Name="DetalleOverlay" Visibility="{Binding MostrarDetallePlan, Converter={StaticResource BooleanToVisibilityConverter}}" 
-                  Background="#80000000">
-                <Border Width="480" MaxHeight="620" Background="White" CornerRadius="8" Padding="18" 
-                        HorizontalAlignment="Right" Margin="0,20,20,20" BorderBrush="#DDD" BorderThickness="1">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock Text="Detalle del Plan" FontWeight="SemiBold" FontSize="16" DockPanel.Dock="Left"/>
-                                <Button Content="Cerrar" DockPanel.Dock="Right" Padding="10,4" Command="{Binding CerrarDetallePlanCommand}" />
-                            </DockPanel>
-                            <UniformGrid Columns="2" Rows="4" Margin="0,0,0,12">
-                                <TextBlock Text="Código:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding SelectedPlanDetalle.Codigo}"/>
-                                <TextBlock Text="Equipo:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding SelectedPlanDetalle.Nombre}"/>
-                                <TextBlock Text="Asignado:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding SelectedPlanDetalle.Sede}"/>
-                                <TextBlock Text="Estado:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding DetalleEstadoTexto}"/>
-                                <TextBlock Text="Objetivo:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding DetalleFechaObjetivo, StringFormat=d}"/>
-                                <TextBlock Text="Ejecución:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding DetalleFechaEjecucion, StringFormat=G}"/>
-                                <TextBlock Text="Resumen:" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding DetalleResumen}" TextWrapping="Wrap"/>
-                            </UniformGrid>
-                            <TextBlock Text="Checklist" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <DataGrid ItemsSource="{Binding DetalleChecklist}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                      HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="None" Height="240">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="40"/>
-                                    <DataGridTextColumn Header="Ítem" Binding="{Binding Descripcion}" Width="*"/>
-                                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="80"/>
-                                    <DataGridTextColumn Header="Obs" Binding="{Binding Observacion}" Width="140"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </Grid>
+                </ItemsControl>            </Grid>
         </Grid>
     </Border>
 </UserControl>
