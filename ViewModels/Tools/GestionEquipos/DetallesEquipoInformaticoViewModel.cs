@@ -14,11 +14,11 @@ using System.Linq;
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
     public class DetallesEquipoInformaticoViewModel : ObservableObject
-    {
-        private readonly GestLogDbContext? _db;
+    {        private readonly GestLogDbContext? _db;
         public EquipoInformaticoEntity Equipo { get; }
         public ObservableCollection<SlotRamEntity> SlotsRam { get; }
         public ObservableCollection<DiscoEntity> Discos { get; }
+        public ObservableCollection<ConexionEntity> Conexiones { get; }
 
         public DetallesEquipoInformaticoViewModel(EquipoInformaticoEntity equipo, GestLogDbContext? db)
         {
@@ -36,30 +36,31 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     // cuando la entidad ya trae colecciones (p. ej. proviene de AsNoTracking) o cuando
                     // reconstruimos la entidad desde el VM de edición (ya contiene listas).
                     if (entry.State != EntityState.Detached)
-                    {
-                        if (!entry.Collection(e => e.SlotsRam).IsLoaded && (Equipo.SlotsRam == null || !Equipo.SlotsRam.Any()))
+                    {                        if (!entry.Collection(e => e.SlotsRam).IsLoaded && (Equipo.SlotsRam == null || !Equipo.SlotsRam.Any()))
                             entry.Collection(e => e.SlotsRam).Load();
 
                         if (!entry.Collection(e => e.Discos).IsLoaded && (Equipo.Discos == null || !Equipo.Discos.Any()))
                             entry.Collection(e => e.Discos).Load();
+
+                        if (!entry.Collection(e => e.Conexiones).IsLoaded && (Equipo.Conexiones == null || !Equipo.Conexiones.Any()))
+                            entry.Collection(e => e.Conexiones).Load();
                     }
                 }
                 catch
                 {
                     // Si falla (p. ej. entidad no rastreada), continuamos con lo que venga en 'equipo'
                 }
-            }
-
-            SlotsRam = new ObservableCollection<SlotRamEntity>(Equipo.SlotsRam ?? new List<SlotRamEntity>());
+            }            SlotsRam = new ObservableCollection<SlotRamEntity>(Equipo.SlotsRam ?? new List<SlotRamEntity>());
             Discos = new ObservableCollection<DiscoEntity>(Equipo.Discos ?? new List<DiscoEntity>());
+            Conexiones = new ObservableCollection<ConexionEntity>(Equipo.Conexiones ?? new List<ConexionEntity>());
 
             // Actualizar cabeceras cuando cambien las colecciones
             SlotsRam.CollectionChanged += (s, e) => OnPropertyChanged(nameof(RamHeader));
             Discos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DiscoHeader));
-        }
-
-        public string RamHeader => $"Memoria RAM ({SlotsRam?.Count ?? 0})";
+            Conexiones.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ConexionesHeader));
+        }        public string RamHeader => $"Memoria RAM ({SlotsRam?.Count ?? 0})";
         public string DiscoHeader => $"Discos ({Discos?.Count ?? 0})";
+        public string ConexionesHeader => $"Conexiones de Red ({Conexiones?.Count ?? 0})";
 
         // Propiedades de conveniencia usadas en la vista (passthrough)
         public string Codigo => Equipo.Codigo;

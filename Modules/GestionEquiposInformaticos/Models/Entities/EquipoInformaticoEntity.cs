@@ -66,9 +66,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
         
         public DateTime? FechaModificacion { get; set; }
-        
-        // Navegación - Relaciones 1:N
+          // Navegación - Relaciones 1:N
         public virtual ICollection<SlotRamEntity> SlotsRam { get; set; } = new List<SlotRamEntity>();
         public virtual ICollection<DiscoEntity> Discos { get; set; } = new List<DiscoEntity>();
+        public virtual ICollection<ConexionEntity> Conexiones { get; set; } = new List<ConexionEntity>();
     }
 }

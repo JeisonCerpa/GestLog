@@ -27,10 +27,10 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.Usuarios.Models.Permiso> Permisos { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.UsuarioRol> UsuarioRoles { get; set; }
         public DbSet<GestLog.Modules.Usuarios.Models.RolPermiso> RolPermisos { get; set; }
-        public DbSet<GestLog.Modules.Usuarios.Models.UsuarioPermiso> UsuarioPermisos { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> EquiposInformaticos { get; set; }
+        public DbSet<GestLog.Modules.Usuarios.Models.UsuarioPermiso> UsuarioPermisos { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> EquiposInformaticos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea> MantenimientoPlantillas { get; set; }
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea> SeguimientoTareas { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
@@ -206,14 +206,30 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.ToTable("EjecucionSemanal");
                 entity.HasIndex(e => new { e.PlanId, e.AnioISO, e.SemanaISO }).IsUnique();
                 entity.Property(e => e.Estado).IsRequired();
-            });
-            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo>(entity =>
             {
                 entity.ToTable("PlanCronogramaEquipo");
                 entity.Property(p => p.DiaProgramado).IsRequired();
                 entity.HasMany(p => p.Ejecuciones)
                       .WithOne(e => e.Plan!)
                       .HasForeignKey(e => e.PlanId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });            // Configuración para ConexionEntity
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(entity =>
+            {
+                entity.ToTable("ConexionesEquiposInformaticos");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.CodigoEquipo).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Adaptador).HasMaxLength(255);
+                entity.Property(e => e.DireccionMAC).HasMaxLength(17);
+                entity.Property(e => e.DireccionIPv4).HasMaxLength(15);
+                entity.Property(e => e.MascaraSubred).HasMaxLength(15);
+                entity.Property(e => e.PuertoEnlace).HasMaxLength(15);
+                
+                // Configurar relación con EquipoInformaticoEntity
+                entity.HasOne(c => c.EquipoInformatico)
+                      .WithMany(e => e.Conexiones)
+                      .HasForeignKey(c => c.CodigoEquipo)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

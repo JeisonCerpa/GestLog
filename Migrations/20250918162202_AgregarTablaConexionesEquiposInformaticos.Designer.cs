@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    partial class GestLogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250918162202_AgregarTablaConexionesEquiposInformaticos")]
+    partial class AgregarTablaConexionesEquiposInformaticos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,6 +42,17 @@ namespace GestLog.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<bool>("DHCPHabilitado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("DNS1")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("DNS2")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
                     b.Property<string>("DireccionIPv4")
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
@@ -46,6 +60,10 @@ namespace GestLog.Migrations
                     b.Property<string>("DireccionMAC")
                         .HasMaxLength(17)
                         .HasColumnType("nvarchar(17)");
+
+                    b.Property<string>("Estado")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("MascaraSubred")
                         .HasMaxLength(15)
@@ -55,11 +73,19 @@ namespace GestLog.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
+                    b.Property<string>("TipoConexion")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Velocidad")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CodigoEquipo");
 
-                    b.ToTable("ConexionesEquiposInformaticos", (string)null);
+                    b.ToTable("Conexiones", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity", b =>

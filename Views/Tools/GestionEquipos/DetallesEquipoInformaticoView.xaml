@@ -5,11 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
-        Title="Detalles Equipo" Height="720" Width="1000" WindowStartupLocation="CenterOwner" Background="#FAFAFA">
-    <Window.Resources>
+        Title="Detalles Equipo" Height="720" Width="1000" WindowStartupLocation="CenterOwner" Background="#FAFAFA">    <Window.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToEmojiConverter x:Key="BooleanToEmojiConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+        
+        <!-- Recursos de colores necesarios -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0F7530"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#27AE60"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
+        <SolidColorBrush x:Key="BorderLightBrush" Color="#EDF2F7"/>
+        
+        <!-- Efectos necesarios -->
+        <DropShadowEffect x:Key="DropShadowEffect" 
+                          Color="#1A000000" 
+                          Direction="315" 
+                          ShadowDepth="4" 
+                          Opacity="0.2" 
+                          BlurRadius="8"/>
+                          
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#504F4E"/>
         </Style>
@@ -137,9 +154,7 @@
                     <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" IsReadOnly="True" AcceptsReturn="True"/>
                 </StackPanel>
             </Border>
-        </DataTemplate>
-
-        <!-- Plantilla detallada para un disco (valores como TextBox seleccionables) -->
+        </DataTemplate>        <!-- Plantilla detallada para un disco (valores como TextBox seleccionables) -->
         <DataTemplate x:Key="DiscoItemTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
                 <StackPanel Orientation="Vertical">
@@ -156,6 +171,30 @@
                         <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
                         <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
                         <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>        <!-- Plantilla simple para una conexión de red (consistente con RAM/Discos) -->
+        <DataTemplate x:Key="ConexionItemTemplate">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Adaptador: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Adaptador, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                        <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="Activo" IsReadOnly="True" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="IP: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding DireccionIPv4, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                        <TextBlock Text="MAC: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding DireccionMAC, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="Máscara: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding MascaraSubred, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                        <TextBlock Text="Gateway: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding PuertoEnlace, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -291,15 +330,29 @@
                         </StackPanel>
                     </Expander>
 
-                    <Separator Margin="0,8"/>
-
-                    <!-- Discos -->
+                    <Separator Margin="0,8"/>                    <!-- Discos -->
                     <Expander Header="{Binding DiscoHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
                         <StackPanel>
                             <TextBlock Text="Cantidad de discos: " Style="{StaticResource LabelStyle}" />
                             <TextBox Text="{Binding Discos.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
 
                             <ItemsControl ItemsSource="{Binding Discos}" ItemTemplate="{StaticResource DiscoItemTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+
+                    <Separator Margin="0,8"/>                    <!-- Conexiones de Red -->
+                    <Expander Header="{Binding ConexionesHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
+                        <StackPanel>
+                            <TextBlock Text="Cantidad de conexiones: " Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding Conexiones.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
+
+                            <ItemsControl ItemsSource="{Binding Conexiones}" ItemTemplate="{StaticResource ConexionItemTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Vertical"/>

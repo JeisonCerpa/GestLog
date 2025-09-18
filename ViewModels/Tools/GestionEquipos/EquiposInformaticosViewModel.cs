@@ -134,12 +134,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
 
             // Asegurarnos de obtener una entidad fresca desde la base de datos (evitar devolver la instancia rastreada y stale)
             try
-            {
-                // SIEMPRE recargar desde BD - no confiar en la instancia de la lista que puede estar desactualizada
+            {                // SIEMPRE recargar desde BD - no confiar en la instancia de la lista que puede estar desactualizada
                 var detalle = _db.EquiposInformaticos
                     .AsNoTracking() // Usar AsNoTracking para obtener datos frescos sin tracking
                     .Include(e => e.SlotsRam)
                     .Include(e => e.Discos)
+                    .Include(e => e.Conexiones)
                     .FirstOrDefault(e => e.Codigo == equipo.Codigo);
 
                 if (detalle == null)

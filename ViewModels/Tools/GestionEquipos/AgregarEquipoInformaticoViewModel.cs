@@ -85,6 +85,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private string estado = "Activo";
 
+        [ObservableProperty]
+        private ObservableCollection<ConexionEntity> listaConexiones = new();
+
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
         public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
 
@@ -103,9 +106,13 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private bool canAgregarDiscoManual;
         [ObservableProperty]
-        private bool canAgregarRam;
+        private bool canAgregarRam;        [ObservableProperty]
+        private bool canEliminarDisco;
+
         [ObservableProperty]
-        private bool canEliminarDisco;        
+        private bool canAgregarConexionManual;
+        [ObservableProperty]
+        private bool canEliminarConexion;
         private int _isSaving = 0; // 0 = no guardando, 1 = guardando
         public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
         {
@@ -124,8 +131,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        
-        public void RecalcularPermisos()
+        }        public void RecalcularPermisos()
         {
             CanGuardarEquipo = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanObtenerCamposAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
@@ -133,6 +139,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanAgregarDiscoManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanAgregarConexionManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanEliminarConexion = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
         public async Task InicializarAsync()
@@ -252,12 +260,11 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     {
                         MessageBox.Show("Ya existe un equipo con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
-                    }
-
-                    // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
+                    }                    // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
                     var equipo = dbContext.EquiposInformaticos
                         .Include(e => e.SlotsRam)
                         .Include(e => e.Discos)
+                        .Include(e => e.Conexiones)
                         .FirstOrDefault(e => e.Codigo == OriginalCodigo);
 
                     if (equipo == null)
@@ -272,28 +279,29 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         _logger.LogInformation("Cambio de PK detectado: {Original} -> {Nuevo}. Usando flujo de actualización segura.", OriginalCodigo, Codigo);                        using var transaction = await dbContext.Database.BeginTransactionAsync();
                         try
                         {
-                            _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);
-
-                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
+                            _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
                             _logger.LogInformation("🔓 Deshabilitando constraints FK temporalmente...");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam NOCHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos NOCHECK CONSTRAINT FK_Discos_EquipoInformatico");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos NOCHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
 
                             // 1. Actualizar la Primary Key en EquiposInformaticos
                             var rowsEquipo = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE EquiposInformaticos SET Codigo = {Codigo} WHERE Codigo = {OriginalCodigo}");
-                            _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);
-
-                            // 2. Actualizar las Foreign Keys en tablas relacionadas
+                            _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);                            // 2. Actualizar las Foreign Keys en tablas relacionadas
                             var rowsSlots = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE SlotsRam SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
                             _logger.LogInformation("💾 SlotsRam actualizados: {RowsAffected} filas", rowsSlots);
 
                             var rowsDiscos = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE Discos SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
                             _logger.LogInformation("💿 Discos actualizados: {RowsAffected} filas", rowsDiscos);
 
+                            var rowsConexiones = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE ConexionesEquiposInformaticos SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            _logger.LogInformation("🌐 Conexiones actualizadas: {RowsAffected} filas", rowsConexiones);
+
                             // 3. Rehabilitar las constraints FK
                             _logger.LogInformation("🔒 Rehabilitando constraints FK...");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
+                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
 
                             // Invalidar cualquier entidad rastreada para evitar conflictos de ChangeTracker
                             try
@@ -317,12 +325,11 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             catch (Exception ex)
                             {
                                 _logger.LogWarning(ex, "No se pudo limpiar ChangeTracker antes de recargar (no crítico)");
-                            }
-
-                            // Volver a cargar la entidad ya con el nuevo código
+                            }                            // Volver a cargar la entidad ya con el nuevo código
                             var equipoRecargado = dbContext.EquiposInformaticos
                                 .Include(e => e.SlotsRam)
                                 .Include(e => e.Discos)
+                                .Include(e => e.Conexiones)
                                 .FirstOrDefault(e => e.Codigo == Codigo);
 
                             if (equipoRecargado == null)
@@ -419,11 +426,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                     {
                                         // Limpiar ChangeTracker y recargar
                                         foreach (var entry in dbContext.ChangeTracker.Entries().ToList())
-                                            entry.State = EntityState.Detached;
-
-                                        equipoRecargado = dbContext.EquiposInformaticos
+                                            entry.State = EntityState.Detached;                                        equipoRecargado = dbContext.EquiposInformaticos
                                             .Include(e => e.SlotsRam)
                                             .Include(e => e.Discos)
+                                            .Include(e => e.Conexiones)
                                             .FirstOrDefault(e => e.Codigo == Codigo);
 
                                         if (equipoRecargado == null)
@@ -513,10 +519,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             
                             // CRÍTICO: Rehabilitar constraints FK incluso si hay error
                             try
-                            {
-                                _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
+                            {                                _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
+                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
                             }
                             catch (Exception constraintEx)
                             {
@@ -606,8 +612,23 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                 CapacidadGB = disco.CapacidadGB,
                                 Marca = disco.Marca,
                                 Modelo = disco.Modelo
+                            };                            dbContext.Discos.Add(nuevoDisco);
+                        }                        // Reemplazar conexiones: eliminar las antiguas y añadir las actuales
+                        if (equipo.Conexiones != null && equipo.Conexiones.Any())
+                            dbContext.Conexiones.RemoveRange(equipo.Conexiones);
+
+                        foreach (var conexion in ListaConexiones)
+                        {
+                            var nuevaConexion = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity
+                            {
+                                CodigoEquipo = Codigo,
+                                Adaptador = conexion.Adaptador,
+                                DireccionMAC = conexion.DireccionMAC,
+                                DireccionIPv4 = conexion.DireccionIPv4,
+                                MascaraSubred = conexion.MascaraSubred,
+                                PuertoEnlace = conexion.PuertoEnlace
                             };
-                            dbContext.Discos.Add(nuevoDisco);
+                            dbContext.Conexiones.Add(nuevaConexion);
                         }
 
                         try
@@ -700,8 +721,20 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             CapacidadGB = disco.CapacidadGB,
                             Marca = disco.Marca,
                             Modelo = disco.Modelo
+                        };                        dbContext.Discos.Add(nuevoDisco);
+                    }                    // Agregar conexiones
+                    foreach (var conexion in ListaConexiones)
+                    {
+                        var nuevaConexion = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity
+                        {
+                            CodigoEquipo = Codigo,
+                            Adaptador = conexion.Adaptador,
+                            DireccionMAC = conexion.DireccionMAC,
+                            DireccionIPv4 = conexion.DireccionIPv4,
+                            MascaraSubred = conexion.MascaraSubred,
+                            PuertoEnlace = conexion.PuertoEnlace
                         };
-                        dbContext.Discos.Add(nuevoDisco);
+                        dbContext.Conexiones.Add(nuevaConexion);
                     }
 
                     try
@@ -756,9 +789,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 win.DialogResult = false;
             }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
+        }        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
         public async Task ObtenerCamposAutomaticosAsync()
         {
             if (IsLoadingRam) return;
@@ -767,18 +798,37 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 await Task.Run(() => ObtenerCamposAutomaticos());
                 // También obtener discos automáticamente
-                await ObtenerDiscosAutomaticosAsync();                
+                await ObtenerDiscosAutomaticosAsync();
+                
+                // También obtener conexiones automáticamente
+                _logger.LogInformation("🔍 Iniciando detección automática de conexiones de red");
+                var conexionesDetectadas = await Task.Run(() => ObtenerConexionesAutomaticas());
+                
+                // Limpiar la lista actual y agregar las nuevas conexiones
+                ListaConexiones.Clear();
+                foreach (var conexion in conexionesDetectadas)
+                {
+                    ListaConexiones.Add(conexion);
+                }
+                
+                _logger.LogInformation("✅ Detección automática de conexiones completada. {Count} conexiones encontradas", conexionesDetectadas.Count);
+                
                 // Detección automática del sistema operativo
                 if (string.IsNullOrWhiteSpace(So))
                 {
                     So = System.Environment.OSVersion.VersionString;
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error durante la detección automática");
+                MessageBox.Show($"Error durante la detección automática: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             finally
             {
                 IsLoadingRam = false;
             }
-        }        
+        }
         private void ObtenerCamposAutomaticos()
         {
             _logger.LogInformation("🔍 Iniciando detección automática de campos del equipo");
@@ -1081,8 +1131,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     Ocupado = false,
                     Observaciones = "Manual"
                 }));
-            }
-            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {(r.CapacidadGB.HasValue? r.CapacidadGB.ToString()+"GB":"vacío")} {r.TipoMemoria} {r.Marca} (Ocupado={r.Ocupado})"))}");
+            }            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {(r.CapacidadGB.HasValue? r.CapacidadGB.ToString()+"GB":"vacío")} {r.TipoMemoria} {r.Marca} (Ocupado={r.Ocupado})"))}");
         }
 
         private string[] ParseCsvLine(string line)
@@ -1268,6 +1317,150 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 Observaciones = "Manual"
             };
             ListaRam.Add(nuevoSlot);
+        }        // Comandos para gestión de conexiones de red
+        private List<ConexionEntity> ObtenerConexionesAutomaticas()
+        {
+            var conexiones = new List<ConexionEntity>();
+            
+            try
+            {
+                // Script PowerShell mejorado para obtener solo conexiones activas (excluyendo VMware)
+                var script = @"
+function Convert-PrefixLengthToSubnetMask {
+    param ([int]$prefixLength)
+
+    $mask = [math]::Pow(2, 32) - [math]::Pow(2, 32 - $prefixLength)
+    $bytes = [BitConverter]::GetBytes([uint32]$mask)
+
+    if ([BitConverter]::IsLittleEndian) {
+        [array]::Reverse($bytes)
+    }
+
+    return ($bytes | ForEach-Object { $_ }) -join '.'
+}
+
+Get-NetIPConfiguration | Where-Object {
+    $_.IPv4Address -ne $null -and 
+    (Get-NetAdapter -InterfaceDescription $_.InterfaceDescription).Status -eq 'Up' -and
+    $_.InterfaceDescription -notmatch 'VMware'
+} | ForEach-Object {
+    $adapter = Get-NetAdapter -InterfaceDescription $_.InterfaceDescription
+    $mac = $adapter.MacAddress
+    $ipObj = $_.IPv4Address
+    $subnet = Convert-PrefixLengthToSubnetMask $ipObj.PrefixLength
+
+    [PSCustomObject]@{
+        Adaptador     = $_.InterfaceAlias
+        IPv4          = $ipObj.IPAddress
+        MascaraSubred = $subnet
+        Gateway       = $_.IPv4DefaultGateway.NextHop
+        MAC           = $mac
+    }
+} | ConvertTo-Json -Depth 2
+";
+
+                var output = EjecutarPowerShellCompleto(script);
+                
+                if (!string.IsNullOrWhiteSpace(output))
+                {
+                    // Si hay un solo objeto, PowerShell no devuelve un array JSON
+                    if (!output.Trim().StartsWith("["))
+                    {
+                        output = "[" + output + "]";
+                    }
+                    
+                    // Parsear el JSON manualmente para mayor control
+                    var lineas = output.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    var conexionActual = new ConexionEntity();
+                    bool dentroDeObjeto = false;
+                    
+                    foreach (var linea in lineas)
+                    {
+                        var lineaLimpia = linea.Trim();
+                        
+                        if (lineaLimpia == "{")
+                        {
+                            dentroDeObjeto = true;
+                            conexionActual = new ConexionEntity();
+                            continue;
+                        }
+                        
+                        if (lineaLimpia == "}" || lineaLimpia == "},")
+                        {
+                            if (dentroDeObjeto && !string.IsNullOrWhiteSpace(conexionActual.Adaptador))
+                            {
+                                conexiones.Add(conexionActual);
+                            }
+                            dentroDeObjeto = false;
+                            continue;
+                        }
+                        
+                        if (dentroDeObjeto && lineaLimpia.Contains(":"))
+                        {
+                            var partes = lineaLimpia.Split(new[] { ':' }, 2);
+                            if (partes.Length == 2)
+                            {
+                                var clave = partes[0].Trim().Trim('"');
+                                var valor = partes[1].Trim().TrimEnd(',').Trim('"');                                switch (clave)
+                                {
+                                    case "Adaptador":
+                                        conexionActual.Adaptador = valor;
+                                        break;
+                                    case "MAC":
+                                        conexionActual.DireccionMAC = valor;
+                                        break;
+                                    case "IPv4":
+                                        conexionActual.DireccionIPv4 = valor;
+                                        break;
+                                    case "MascaraSubred":
+                                        conexionActual.MascaraSubred = valor;
+                                        break;
+                                    case "Gateway":
+                                        conexionActual.PuertoEnlace = valor;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al ejecutar script PowerShell para detectar conexiones");
+            }
+            
+            return conexiones;
+        }        [RelayCommand(CanExecute = nameof(CanAgregarConexionManual))]
+        public void AgregarConexionManual()
+        {
+            var nuevaConexion = new ConexionEntity
+            {
+                Adaptador = "Nueva Conexión",
+                DireccionMAC = "",
+                DireccionIPv4 = "",
+                MascaraSubred = "",
+                PuertoEnlace = ""
+            };
+            ListaConexiones.Add(nuevaConexion);
+        }
+
+        [RelayCommand(CanExecute = nameof(CanEliminarConexion))]
+        public void EliminarConexion(ConexionEntity conexion)
+        {
+            if (conexion != null && ListaConexiones.Contains(conexion))
+            {
+                ListaConexiones.Remove(conexion);
+            }
+        }
+
+        // Método público para cargar conexiones en modo edición
+        public void CargarConexionesParaEdicion(ObservableCollection<ConexionEntity> conexiones)
+        {
+            ListaConexiones.Clear();
+            foreach (var conexion in conexiones)
+            {
+                ListaConexiones.Add(conexion);
+            }
         }
     }
 }

@@ -58,11 +58,10 @@ namespace GestLog.Views.Tools.GestionEquipos
 
                         // Marcar modo edición y guardar código original para identificación en BD
                         vm.IsEditing = true;
-                        vm.OriginalCodigo = det.Codigo;
-
-                        // Cargar listas de RAM y discos
+                        vm.OriginalCodigo = det.Codigo;                        // Cargar listas de RAM y discos
                         vm.ListaRam = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(det.SlotsRam);
                         vm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(det.Discos);
+                        vm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(det.Conexiones);
 
                         // Guardar el nombre del usuario asignado para usarlo una vez inicializado el VM de edición
                         usuarioAsignadoOriginal = det.UsuarioAsignado;
@@ -123,8 +122,7 @@ namespace GestLog.Views.Tools.GestionEquipos
 
                         // Fallback: reconstruir entidad desde el VM de edición (si existe vm2)
                         if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vmFallback)
-                        {
-                            var equipoReconstruido = new EquipoInformaticoEntity
+                        {                            var equipoReconstruido = new EquipoInformaticoEntity
                             {
                                 Codigo = vmFallback.Codigo,
                                 UsuarioAsignado = vmFallback.PersonaAsignada?.NombreCompleto ?? string.Empty,
@@ -142,7 +140,8 @@ namespace GestLog.Views.Tools.GestionEquipos
                                 CodigoAnydesk = vmFallback.CodigoAnydesk,
                                 Estado = vmFallback.Estado,
                                 SlotsRam = vmFallback.ListaRam?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(),
-                                Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>()
+                                Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(),
+                                Conexiones = vmFallback.ListaConexiones?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>()
                             };
 
                             // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
