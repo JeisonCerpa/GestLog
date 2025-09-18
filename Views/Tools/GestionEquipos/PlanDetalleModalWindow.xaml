@@ -250,29 +250,32 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </Window.Resources>    <!-- Overlay con gradiente sutil y renderizado optimizado -->
+    </Window.Resources>    <!-- Overlay con gradiente sutil y renderizado optimizado con cache de hardware -->
     <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
           UseLayoutRounding="True"
-          SnapsToDevicePixels="True">
+          SnapsToDevicePixels="True"
+          CacheMode="BitmapCache">
         <Grid.Background>
             <RadialGradientBrush>
                 <GradientStop Color="#B0000000" Offset="0"/>
                 <GradientStop Color="#90000000" Offset="1"/>
             </RadialGradientBrush>
         </Grid.Background>
-        
-        <!-- Animación de entrada mejorada -->
+          <!-- Animación de entrada optimizada con CubicEase -->
         <Grid.Triggers>
             <EventTrigger RoutedEvent="Grid.Loaded">
                 <BeginStoryboard>
                     <Storyboard>
                         <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                                         From="0" To="1" Duration="0:0:0.25"/>
+                                         From="0" To="1" Duration="0:0:0.35">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut"/>
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
                     </Storyboard>
                 </BeginStoryboard>
             </EventTrigger>
-        </Grid.Triggers>
-          <!-- Panel principal con renderizado nítido optimizado -->
+        </Grid.Triggers>        <!-- Panel principal con renderizado optimizado y cache de hardware -->
         <Border Width="680" MaxHeight="720" 
                 Background="{StaticResource SurfaceBrush}" 
                 CornerRadius="8" 
@@ -284,23 +287,36 @@
                 Effect="{StaticResource WindowShadow}"
                 MouseLeftButtonDown="Panel_MouseLeftButtonDown"
                 UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
+                SnapsToDevicePixels="True"
+                CacheMode="BitmapCache">
             
-            <!-- Animación de entrada más suave -->
+            <!-- Animaciones de entrada y salida optimizadas con CubicEase -->
             <Border.Triggers>
                 <EventTrigger RoutedEvent="Border.Loaded">
                     <BeginStoryboard>
                         <Storyboard>
-                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
-                                             From="0.96" To="1" Duration="0:0:0.25">
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
+                                             From="0.92" To="1" Duration="0:0:0.35">
                                 <DoubleAnimation.EasingFunction>
-                                    <QuadraticEase EasingMode="EaseOut"/>
+                                    <CubicEase EasingMode="EaseOut"/>
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
-                                             From="0.96" To="1" Duration="0:0:0.25">
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
+                                             From="0.92" To="1" Duration="0:0:0.35">
                                 <DoubleAnimation.EasingFunction>
-                                    <QuadraticEase EasingMode="EaseOut"/>
+                                    <CubicEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.Y)" 
+                                             From="40" To="0" Duration="0:0:0.35">
+                                <DoubleAnimation.EasingFunction>
+                                    <CubicEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                             From="0" To="1" Duration="0:0:0.25">
+                                <DoubleAnimation.EasingFunction>
+                                    <CubicEase EasingMode="EaseOut"/>
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
                         </Storyboard>
@@ -308,7 +324,10 @@
                 </EventTrigger>
             </Border.Triggers>
             <Border.RenderTransform>
-                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform X="0" Y="0"/>
+                </TransformGroup>
             </Border.RenderTransform>
               <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <Grid.RowDefinitions>
@@ -363,14 +382,17 @@
                                 ToolTip="Cerrar (Esc)" 
                                 VerticalAlignment="Center"/>
                     </DockPanel>
-                </Border>                <!-- Contenido principal con fondo mejorado y renderizado nítido -->
+                </Border>                <!-- Contenido principal con fondo mejorado y renderizado optimizado con cache -->
                 <ScrollViewer Grid.Row="1" 
                               VerticalScrollBarVisibility="Auto" 
                               Padding="24,20"
                               Background="{StaticResource LightGrayBrush}"
                               UseLayoutRounding="True"
-                              SnapsToDevicePixels="True">
-                    <StackPanel>
+                              SnapsToDevicePixels="True"
+                              CacheMode="BitmapCache">
+                    <StackPanel CacheMode="BitmapCache"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
                           <!-- Información principal con diseño optimizado y renderizado nítido -->
                         <Border Background="{StaticResource SurfaceBrush}" 
                                 CornerRadius="6" 

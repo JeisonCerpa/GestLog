@@ -11,9 +11,37 @@
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType"
              TextOptions.TextHintingMode="Fixed"
-             RenderOptions.EdgeMode="Aliased">
-    <UserControl.Resources>
+             RenderOptions.EdgeMode="Aliased">    <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+          <!-- Storyboards para animaciones fluidas del panel de detalle -->
+        <Storyboard x:Key="ShowDetailPanelStoryboard">
+            <DoubleAnimation Storyboard.TargetName="DetailPanel"
+                           Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                           From="400" To="0" Duration="0:0:0.35">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="DetailPanel"
+                           Storyboard.TargetProperty="Opacity"
+                           From="0" To="1" Duration="0:0:0.25"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="HideDetailPanelStoryboard">
+            <DoubleAnimation Storyboard.TargetName="DetailPanel"
+                           Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                           From="0" To="400" Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="DetailPanel"
+                           Storyboard.TargetProperty="Opacity"
+                           From="1" To="0" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <!-- Timeline para optimización de hardware -->
+        <Timeline x:Key="OptimizationTimeline" Duration="0:0:0" RepeatBehavior="1x"/>
         
         <!-- Efectos optimizados para renderizado nítido -->
         <DropShadowEffect x:Key="HeaderShadow" 
@@ -398,16 +426,18 @@
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
-        </Border>        <!-- Contenido principal: listado + detalle optimizado -->
+        </Border>        <!-- Contenido principal: listado + detalle optimizado para animaciones fluidas -->
         <Grid Grid.Row="2" Margin="20,12,20,0"
               UseLayoutRounding="True" 
-              SnapsToDevicePixels="True">
+              SnapsToDevicePixels="True"
+              RenderOptions.EdgeMode="Aliased"
+              TextOptions.TextFormattingMode="Display">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="600" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!-- DataGrid principal con diseño corporativo -->
+            <!-- DataGrid principal con diseño corporativo optimizado -->
             <Border Grid.Column="0"
                     Background="{StaticResource SurfaceBrush}" 
                     CornerRadius="8" 
@@ -677,8 +707,9 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-            </Border>            <!-- Panel de detalle modernizado -->
-            <Border Grid.Column="1" 
+            </Border>            <!-- Panel de detalle modernizado con animaciones fluidas -->
+            <Border x:Name="DetailPanel"
+                    Grid.Column="1" 
                     Background="{StaticResource SurfaceBrush}" 
                     BorderBrush="{StaticResource BorderLightBrush}" 
                     BorderThickness="1" 
@@ -688,7 +719,56 @@
                     Effect="{StaticResource CardShadow}"
                     UseLayoutRounding="True"
                     SnapsToDevicePixels="True"
-                    Visibility="{Binding MostrarDetalle, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    Opacity="0"
+                    Visibility="Collapsed"
+                    CacheMode="BitmapCache">
+                <!-- Optimización: TranslateTransform para animaciones fluidas -->
+                <Border.RenderTransform>
+                    <TranslateTransform X="400"/>
+                </Border.RenderTransform>
+                <!-- Triggers para animaciones automáticas -->
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding MostrarDetalle}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                           From="400" To="0" Duration="0:0:0.35">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                           From="0" To="1" Duration="0:0:0.25"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                           From="0" To="400" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseIn"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                           From="1" To="0" Duration="0:0:0.2"/>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                <DiscreteObjectKeyFrame KeyTime="0:0:0.25" Value="{x:Static Visibility.Collapsed}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -733,14 +813,18 @@
                                    ToolTip="Cerrar panel de detalle"/>
                         </DockPanel>
                     </Border>
-                    
-                    <!-- Contenido del detalle -->
+                      <!-- Contenido del detalle optimizado para animaciones fluidas -->
                     <ScrollViewer Grid.Row="1" 
                                   VerticalScrollBarVisibility="Auto"
                                   Padding="20"
                                   UseLayoutRounding="True"
-                                  SnapsToDevicePixels="True">
-                        <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                  SnapsToDevicePixels="True"
+                                  ScrollViewer.CanContentScroll="True"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling">
+                        <StackPanel UseLayoutRounding="True" 
+                                   SnapsToDevicePixels="True"
+                                   CacheMode="BitmapCache">
                             
                             <!-- Información principal -->
                             <Border Background="{StaticResource SurfaceBrush}" 
@@ -872,20 +956,24 @@
                                                    VerticalAlignment="Center"
                                                    FontSize="12"/>
                                     </DockPanel>
-                                    
-                                    <!-- DataGrid del checklist -->
+                                      <!-- DataGrid del checklist optimizado para animaciones -->
                                     <Border CornerRadius="4" 
                                             BorderThickness="1" 
                                             BorderBrush="{StaticResource BorderBrush}"
                                             UseLayoutRounding="True"
-                                            SnapsToDevicePixels="True">
+                                            SnapsToDevicePixels="True"
+                                            CacheMode="BitmapCache">
                                         <DataGrid ItemsSource="{Binding SelectedEjecucion.DetalleItems}" 
                                                   Style="{StaticResource CorporateDataGrid}"
                                                   AutoGenerateColumns="False" 
                                                   CanUserAddRows="False" 
                                                   CanUserDeleteRows="False" 
                                                   IsReadOnly="True" 
-                                                  EnableRowVirtualization="True" 
+                                                  EnableRowVirtualization="True"
+                                                  EnableColumnVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True"
                                                   MaxHeight="300"
                                                   MinHeight="120">
                                             <DataGrid.Columns>
