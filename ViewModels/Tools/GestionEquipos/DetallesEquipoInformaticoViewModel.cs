@@ -19,6 +19,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         public ObservableCollection<SlotRamEntity> SlotsRam { get; }
         public ObservableCollection<DiscoEntity> Discos { get; }
         public ObservableCollection<ConexionEntity> Conexiones { get; }
+        public ObservableCollection<PerifericoEquipoInformaticoEntity> Perifericos { get; }
 
         public DetallesEquipoInformaticoViewModel(EquipoInformaticoEntity equipo, GestLogDbContext? db)
         {
@@ -54,13 +55,32 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             Discos = new ObservableCollection<DiscoEntity>(Equipo.Discos ?? new List<DiscoEntity>());
             Conexiones = new ObservableCollection<ConexionEntity>(Equipo.Conexiones ?? new List<ConexionEntity>());
 
+            // Cargar periféricos asignados a este equipo
+            var perifericosAsignados = new List<PerifericoEquipoInformaticoEntity>();
+            if (_db != null)
+            {
+                try
+                {
+                    perifericosAsignados = _db.PerifericosEquiposInformaticos
+                        .Where(p => p.CodigoEquipoAsignado == Equipo.Codigo)
+                        .ToList();
+                }
+                catch
+                {
+                    // Si falla la consulta, continuar con lista vacía
+                }
+            }
+            Perifericos = new ObservableCollection<PerifericoEquipoInformaticoEntity>(perifericosAsignados);
+
             // Actualizar cabeceras cuando cambien las colecciones
             SlotsRam.CollectionChanged += (s, e) => OnPropertyChanged(nameof(RamHeader));
             Discos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DiscoHeader));
             Conexiones.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ConexionesHeader));
+            Perifericos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(PerifericosHeader));
         }        public string RamHeader => $"Memoria RAM ({SlotsRam?.Count ?? 0})";
         public string DiscoHeader => $"Discos ({Discos?.Count ?? 0})";
         public string ConexionesHeader => $"Conexiones de Red ({Conexiones?.Count ?? 0})";
+        public string PerifericosHeader => $"Periféricos Asignados ({Perifericos?.Count ?? 0})";
 
         // Propiedades de conveniencia usadas en la vista (passthrough)
         public string Codigo => Equipo.Codigo;

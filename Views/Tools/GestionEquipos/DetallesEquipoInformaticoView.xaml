@@ -199,6 +199,36 @@
                 </StackPanel>
             </Border>
         </DataTemplate>
+
+        <!-- Plantilla para un periférico asignado -->
+        <DataTemplate x:Key="PerifericoItemTemplate">
+            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Código: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                        <TextBlock Text="Dispositivo: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Dispositivo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                        <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="Serial: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding SerialNumber, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                        <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding EstadoDescripcion, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding Observaciones, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock Text="Observaciones: " Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding Observaciones, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -353,6 +383,23 @@
                             <TextBox Text="{Binding Conexiones.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
 
                             <ItemsControl ItemsSource="{Binding Conexiones}" ItemTemplate="{StaticResource ConexionItemTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>                    </Expander>
+
+                    <Separator Margin="0,8"/>
+
+                    <!-- Periféricos Asignados -->
+                    <Expander Header="{Binding PerifericosHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
+                        <StackPanel>
+                            <TextBlock Text="Cantidad de periféricos: " Style="{StaticResource LabelStyle}" />
+                            <TextBox Text="{Binding Perifericos.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
+
+                            <ItemsControl ItemsSource="{Binding Perifericos}" ItemTemplate="{StaticResource PerifericoItemTemplate}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Vertical"/>

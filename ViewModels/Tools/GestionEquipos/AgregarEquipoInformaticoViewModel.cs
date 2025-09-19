@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
+using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.DatabaseConnection;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -88,6 +89,13 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private ObservableCollection<ConexionEntity> listaConexiones = new();
 
+        // Gestión de periféricos asignables
+        [ObservableProperty]
+        private ObservableCollection<PerifericoEquipoInformaticoDto> perifericosDisponibles = new();
+
+        [ObservableProperty]
+        private ObservableCollection<PerifericoEquipoInformaticoDto> perifericosAsignados = new();
+
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
         public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
 
@@ -106,13 +114,22 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private bool canAgregarDiscoManual;
         [ObservableProperty]
-        private bool canAgregarRam;        [ObservableProperty]
+        private bool canAgregarRam;        
+        [ObservableProperty]
         private bool canEliminarDisco;
 
         [ObservableProperty]
         private bool canAgregarConexionManual;
         [ObservableProperty]
         private bool canEliminarConexion;
+
+        // Propiedades de permisos para gestión de periféricos
+        [ObservableProperty]
+        private bool canAsignarPeriferico;
+
+        [ObservableProperty]
+        private bool canDesasignarPeriferico;
+
         private int _isSaving = 0; // 0 = no guardando, 1 = guardando
         public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
         {
@@ -131,7 +148,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        public void RecalcularPermisos()
+        }        
+        public void RecalcularPermisos()
         {
             CanGuardarEquipo = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanObtenerCamposAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
@@ -141,6 +159,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarConexionManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarConexion = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+
+            // Permisos para gestión de periféricos
+            CanAsignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanDesasignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }
 
         public async Task InicializarAsync()
@@ -210,8 +232,13 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             // Mantener el filtro para que el usuario vea el nombre en caso de no encontrar coincidencia exacta
                             FiltroPersonaAsignada = objetivoTexto.Trim();
                         }
-                    }
-                });
+                    }                });
+
+                // Cargar periféricos disponibles si tenemos un código de equipo
+                if (!string.IsNullOrWhiteSpace(Codigo))
+                {
+                    await CargarPerifericosDisponiblesAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -260,7 +287,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     {
                         MessageBox.Show("Ya existe un equipo con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
-                    }                    // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
+                    }                    
+                    // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
                     var equipo = dbContext.EquiposInformaticos
                         .Include(e => e.SlotsRam)
                         .Include(e => e.Discos)
@@ -276,10 +304,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     // Si cambió el código primario, realizar flujo seguro: actualizar PK y FKs via SQL dentro de transacción
                     if (!string.Equals(OriginalCodigo, Codigo, StringComparison.OrdinalIgnoreCase))
                     {
-                        _logger.LogInformation("Cambio de PK detectado: {Original} -> {Nuevo}. Usando flujo de actualización segura.", OriginalCodigo, Codigo);                        using var transaction = await dbContext.Database.BeginTransactionAsync();
+                        _logger.LogInformation("Cambio de PK detectado: {Original} -> {Nuevo}. Usando flujo de actualización segura.", OriginalCodigo, Codigo);                        
+                        using var transaction = await dbContext.Database.BeginTransactionAsync();
                         try
                         {
-                            _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
+                            _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);                            
+                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
                             _logger.LogInformation("🔓 Deshabilitando constraints FK temporalmente...");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam NOCHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                             await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos NOCHECK CONSTRAINT FK_Discos_EquipoInformatico");
@@ -287,7 +317,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
 
                             // 1. Actualizar la Primary Key en EquiposInformaticos
                             var rowsEquipo = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE EquiposInformaticos SET Codigo = {Codigo} WHERE Codigo = {OriginalCodigo}");
-                            _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);                            // 2. Actualizar las Foreign Keys en tablas relacionadas
+                            _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);                            
+                            // 2. Actualizar las Foreign Keys en tablas relacionadas
                             var rowsSlots = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE SlotsRam SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
                             _logger.LogInformation("💾 SlotsRam actualizados: {RowsAffected} filas", rowsSlots);
 
@@ -325,7 +356,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             catch (Exception ex)
                             {
                                 _logger.LogWarning(ex, "No se pudo limpiar ChangeTracker antes de recargar (no crítico)");
-                            }                            // Volver a cargar la entidad ya con el nuevo código
+                            }                            
+                            // Volver a cargar la entidad ya con el nuevo código
                             var equipoRecargado = dbContext.EquiposInformaticos
                                 .Include(e => e.SlotsRam)
                                 .Include(e => e.Discos)
@@ -426,7 +458,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                     {
                                         // Limpiar ChangeTracker y recargar
                                         foreach (var entry in dbContext.ChangeTracker.Entries().ToList())
-                                            entry.State = EntityState.Detached;                                        equipoRecargado = dbContext.EquiposInformaticos
+                                            entry.State = EntityState.Detached;                                        
+                                        equipoRecargado = dbContext.EquiposInformaticos
                                             .Include(e => e.SlotsRam)
                                             .Include(e => e.Discos)
                                             .Include(e => e.Conexiones)
@@ -513,13 +546,15 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
 
                             _logger.LogInformation("Actualización de código completada y datos guardados: {Codigo}", Codigo);
                             MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }                        catch (Exception ex)
+                        }                        
+                        catch (Exception ex)
                         {
                             _logger.LogError(ex, "❌ Error en flujo de actualización de PK al cambiar {Original} -> {Nuevo}", OriginalCodigo, Codigo);
                             
                             // CRÍTICO: Rehabilitar constraints FK incluso si hay error
                             try
-                            {                                _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
+                            {                                
+                                _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
@@ -612,8 +647,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                 CapacidadGB = disco.CapacidadGB,
                                 Marca = disco.Marca,
                                 Modelo = disco.Modelo
-                            };                            dbContext.Discos.Add(nuevoDisco);
-                        }                        // Reemplazar conexiones: eliminar las antiguas y añadir las actuales
+                            };                            
+                            dbContext.Discos.Add(nuevoDisco);
+                        }                        
+                        // Reemplazar conexiones: eliminar las antiguas y añadir las actuales
                         if (equipo.Conexiones != null && equipo.Conexiones.Any())
                             dbContext.Conexiones.RemoveRange(equipo.Conexiones);
 
@@ -627,8 +664,29 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                 DireccionIPv4 = conexion.DireccionIPv4,
                                 MascaraSubred = conexion.MascaraSubred,
                                 PuertoEnlace = conexion.PuertoEnlace
-                            };
-                            dbContext.Conexiones.Add(nuevaConexion);
+                            };                            dbContext.Conexiones.Add(nuevaConexion);
+                        }
+
+                        // Actualizar asignaciones de periféricos (solo para el modo edición sin cambio de código)
+                        // Primero, desasignar todos los periféricos que estaban asignados al equipo
+                        var perifericosAsignadosAntes = await dbContext.PerifericosEquiposInformaticos
+                            .Where(p => p.CodigoEquipoAsignado == Codigo)
+                            .ToListAsync();
+                        
+                        foreach (var p in perifericosAsignadosAntes)
+                        {
+                            p.CodigoEquipoAsignado = null;
+                        }
+
+                        // Luego, asignar los periféricos que están actualmente en la lista
+                        foreach (var periferico in PerifericosAsignados)
+                        {
+                            var entity = await dbContext.PerifericosEquiposInformaticos
+                                .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
+                            if (entity != null)
+                            {
+                                entity.CodigoEquipoAsignado = Codigo;
+                            }
                         }
 
                         try
@@ -721,8 +779,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             CapacidadGB = disco.CapacidadGB,
                             Marca = disco.Marca,
                             Modelo = disco.Modelo
-                        };                        dbContext.Discos.Add(nuevoDisco);
-                    }                    // Agregar conexiones
+                        };                        
+                        dbContext.Discos.Add(nuevoDisco);
+                    }                    
+                    // Agregar conexiones
                     foreach (var conexion in ListaConexiones)
                     {
                         var nuevaConexion = new GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity
@@ -732,9 +792,19 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             DireccionMAC = conexion.DireccionMAC,
                             DireccionIPv4 = conexion.DireccionIPv4,
                             MascaraSubred = conexion.MascaraSubred,
-                            PuertoEnlace = conexion.PuertoEnlace
-                        };
+                            PuertoEnlace = conexion.PuertoEnlace                        };
                         dbContext.Conexiones.Add(nuevaConexion);
+                    }
+
+                    // Guardar asignaciones de periféricos al equipo actual
+                    foreach (var periferico in PerifericosAsignados)
+                    {
+                        var entity = await dbContext.PerifericosEquiposInformaticos
+                            .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
+                        if (entity != null)
+                        {
+                            entity.CodigoEquipoAsignado = Codigo;
+                        }
                     }
 
                     try
@@ -789,7 +859,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 win.DialogResult = false;
             }
-        }        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
+        }        
+        [RelayCommand(CanExecute = nameof(CanObtenerCamposAutomaticos))]
         public async Task ObtenerCamposAutomaticosAsync()
         {
             if (IsLoadingRam) return;
@@ -1131,7 +1202,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     Ocupado = false,
                     Observaciones = "Manual"
                 }));
-            }            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {(r.CapacidadGB.HasValue? r.CapacidadGB.ToString()+"GB":"vacío")} {r.TipoMemoria} {r.Marca} (Ocupado={r.Ocupado})"))}");
+            }            
+            _logger.LogDebug($"[RAM] Lista final de RAM: {string.Join(", ", ListaRam.Select(r => $"Slot {r.NumeroSlot}: {(r.CapacidadGB.HasValue? r.CapacidadGB.ToString()+"GB":"vacío")} {r.TipoMemoria} {r.Marca} (Ocupado={r.Ocupado})"))}");
         }
 
         private string[] ParseCsvLine(string line)
@@ -1317,7 +1389,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 Observaciones = "Manual"
             };
             ListaRam.Add(nuevoSlot);
-        }        // Comandos para gestión de conexiones de red
+        }        
+        // Comandos para gestión de conexiones de red
         private List<ConexionEntity> ObtenerConexionesAutomaticas()
         {
             var conexiones = new List<ConexionEntity>();
@@ -1401,7 +1474,8 @@ Get-NetIPConfiguration | Where-Object {
                             if (partes.Length == 2)
                             {
                                 var clave = partes[0].Trim().Trim('"');
-                                var valor = partes[1].Trim().TrimEnd(',').Trim('"');                                switch (clave)
+                                var valor = partes[1].Trim().TrimEnd(',').Trim('"');                                
+                                switch (clave)
                                 {
                                     case "Adaptador":
                                         conexionActual.Adaptador = valor;
@@ -1430,7 +1504,8 @@ Get-NetIPConfiguration | Where-Object {
             }
             
             return conexiones;
-        }        [RelayCommand(CanExecute = nameof(CanAgregarConexionManual))]
+        }        
+        [RelayCommand(CanExecute = nameof(CanAgregarConexionManual))]
         public void AgregarConexionManual()
         {
             var nuevaConexion = new ConexionEntity
@@ -1460,6 +1535,132 @@ Get-NetIPConfiguration | Where-Object {
             foreach (var conexion in conexiones)
             {
                 ListaConexiones.Add(conexion);
+            }
+        }
+
+        // Métodos para gestión de periféricos
+        public async Task CargarPerifericosDisponiblesAsync()
+        {
+            try
+            {
+                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
+                    .UseSqlServer(GetProductionConnectionString())
+                    .Options;
+
+                using var dbContext = new GestLogDbContext(options);
+                
+                // Cargar todos los periféricos que no están asignados o están asignados al equipo actual
+                var perifericosQuery = dbContext.PerifericosEquiposInformaticos
+                    .Where(p => p.CodigoEquipoAsignado == null || p.CodigoEquipoAsignado == Codigo)
+                    .OrderBy(p => p.Codigo);
+
+                var perifericos = await perifericosQuery.ToListAsync();
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    PerifericosDisponibles.Clear();
+                    PerifericosAsignados.Clear();
+
+                    foreach (var entity in perifericos)
+                    {
+                        var dto = new PerifericoEquipoInformaticoDto(entity);
+                        
+                        if (entity.CodigoEquipoAsignado == Codigo)
+                        {
+                            PerifericosAsignados.Add(dto);
+                        }
+                        else
+                        {
+                            PerifericosDisponibles.Add(dto);
+                        }
+                    }
+                });
+
+                _logger.LogInformation("Cargados {DisponiblesCount} periféricos disponibles y {AsignadosCount} asignados", 
+                    PerifericosDisponibles.Count, PerifericosAsignados.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar periféricos disponibles");
+                MessageBox.Show("Error al cargar periféricos disponibles", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanAsignarPeriferico))]
+        public async Task AsignarPerifericoAsync(PerifericoEquipoInformaticoDto periferico)
+        {
+            if (periferico == null || string.IsNullOrWhiteSpace(Codigo)) return;
+
+            try
+            {
+                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
+                    .UseSqlServer(GetProductionConnectionString())
+                    .Options;
+
+                using var dbContext = new GestLogDbContext(options);
+                
+                var entity = await dbContext.PerifericosEquiposInformaticos
+                    .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
+
+                if (entity != null)
+                {
+                    entity.CodigoEquipoAsignado = Codigo;
+                    await dbContext.SaveChangesAsync();
+
+                    // Actualizar las listas localmente
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        PerifericosDisponibles.Remove(periferico);
+                        periferico.CodigoEquipoAsignado = Codigo;
+                        PerifericosAsignados.Add(periferico);
+                    });
+
+                    _logger.LogInformation("Periférico {Codigo} asignado al equipo {CodigoEquipo}", periferico.Codigo, Codigo);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al asignar periférico {Codigo}", periferico.Codigo);
+                MessageBox.Show($"Error al asignar periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanDesasignarPeriferico))]
+        public async Task DesasignarPerifericoAsync(PerifericoEquipoInformaticoDto periferico)
+        {
+            if (periferico == null) return;
+
+            try
+            {
+                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
+                    .UseSqlServer(GetProductionConnectionString())
+                    .Options;
+
+                using var dbContext = new GestLogDbContext(options);
+                
+                var entity = await dbContext.PerifericosEquiposInformaticos
+                    .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
+
+                if (entity != null)
+                {
+                    entity.CodigoEquipoAsignado = null;
+                    await dbContext.SaveChangesAsync();
+
+                    // Actualizar las listas localmente
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        PerifericosAsignados.Remove(periferico);
+                        periferico.CodigoEquipoAsignado = null;
+                        PerifericosDisponibles.Add(periferico);
+                    });
+
+                    _logger.LogInformation("Periférico {Codigo} desasignado del equipo", periferico.Codigo);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al desasignar periférico {Codigo}", periferico.Codigo);
+                MessageBox.Show($"Error al desasignar periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

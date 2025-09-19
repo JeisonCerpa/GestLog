@@ -85,10 +85,14 @@
                         </DockPanel>
                     </Grid>
                 </Border>
-            </TabItem>
-            <TabItem Header="Historial">
+            </TabItem>            <TabItem Header="Historial">
                 <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
                     <views:HistorialEjecucionesView DataContext="{Binding HistorialVm}" />
+                </Border>
+            </TabItem>
+            <TabItem Header="Periféricos">
+                <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
+                    <views:PerifericosView DataContext="{Binding PerifericosVm}" />
                 </Border>
             </TabItem>
         </TabControl>

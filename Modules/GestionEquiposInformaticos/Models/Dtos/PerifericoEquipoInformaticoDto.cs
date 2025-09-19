@@ -1,0 +1,175 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+
+namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
+{
+    /// <summary>
+    /// DTO para periféricos de equipos informáticos con binding bidireccional
+    /// </summary>
+    public partial class PerifericoEquipoInformaticoDto : ObservableObject
+    {
+        [ObservableProperty]
+        private int? _id;
+
+        [ObservableProperty]
+        private string _codigo = string.Empty;
+
+        [ObservableProperty]
+        private string _dispositivo = string.Empty;
+
+        [ObservableProperty]
+        private DateTime? _fechaCompra;
+
+        [ObservableProperty]
+        private decimal? _costo;
+
+        [ObservableProperty]
+        private string? _marca;
+
+        [ObservableProperty]
+        private string? _modelo;
+
+        [ObservableProperty]
+        private string? _serial;
+
+        [ObservableProperty]
+        private string? _codigoEquipoAsignado;
+
+        [ObservableProperty]
+        private string? _usuarioAsignado;
+
+        [ObservableProperty]
+        private SedePeriferico _sede = SedePeriferico.AdministrativaBarranquilla;
+
+        [ObservableProperty]
+        private EstadoPeriferico _estado = EstadoPeriferico.EnUso;
+
+        [ObservableProperty]
+        private string? _observaciones;
+
+        [ObservableProperty]
+        private DateTime _fechaCreacion = DateTime.Now;
+
+        [ObservableProperty]
+        private DateTime _fechaModificacion = DateTime.Now;
+
+        /// <summary>
+        /// Nombre del equipo asignado (para mostrar en la UI)
+        /// </summary>
+        [ObservableProperty]
+        private string? _nombreEquipoAsignado;
+
+        /// <summary>
+        /// Indica si el periférico está asignado a algo (equipo o usuario)
+        /// </summary>
+        public bool EstaAsignado => !string.IsNullOrEmpty(CodigoEquipoAsignado) || !string.IsNullOrEmpty(UsuarioAsignado);
+
+        /// <summary>
+        /// Texto descriptivo de la asignación
+        /// </summary>
+        public string TextoAsignacion
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(CodigoEquipoAsignado))
+                    return $"Equipo: {NombreEquipoAsignado ?? CodigoEquipoAsignado}";
+                if (!string.IsNullOrEmpty(UsuarioAsignado))
+                    return $"Usuario: {UsuarioAsignado}";
+                return "Sin asignar";
+            }
+        }
+
+        /// <summary>
+        /// Fecha de compra formateada
+        /// </summary>
+        public string FechaCompraFormatted => FechaCompra?.ToString("dd/MM/yyyy") ?? "No especificada";
+
+        /// <summary>
+        /// Costo formateado como moneda
+        /// </summary>
+        public string CostoFormatted => Costo?.ToString("C0") ?? "No especificado";
+
+        /// <summary>
+        /// Descripción del estado para mostrar en UI
+        /// </summary>
+        public string EstadoDescripcion
+        {
+            get
+            {
+                return Estado switch
+                {
+                    EstadoPeriferico.EnUso => "En Uso",
+                    EstadoPeriferico.AlmacenadoFuncionando => "Almacenado (Funcionando)",
+                    EstadoPeriferico.DadoDeBaja => "Dado de Baja",
+                    _ => Estado.ToString()
+                };
+            }
+        }
+
+        /// <summary>
+        /// Descripción de la sede para mostrar en UI
+        /// </summary>
+        public string SedeDescripcion
+        {
+            get
+            {
+                return Sede switch
+                {
+                    SedePeriferico.AdministrativaBarranquilla => "Administrativa - Barranquilla",
+                    SedePeriferico.TallerBarranquilla => "Taller - Barranquilla",
+                    SedePeriferico.BodegaBayunca => "Bodega - Bayunca",
+                    _ => Sede.ToString()
+                };
+            }
+        }
+
+        /// <summary>
+        /// Constructor por defecto
+        /// </summary>
+        public PerifericoEquipoInformaticoDto() { }
+
+        /// <summary>
+        /// Constructor de copia
+        /// </summary>
+        public PerifericoEquipoInformaticoDto(PerifericoEquipoInformaticoDto other)
+        {
+            Id = other.Id;
+            Codigo = other.Codigo;
+            Dispositivo = other.Dispositivo;
+            FechaCompra = other.FechaCompra;
+            Costo = other.Costo;
+            Marca = other.Marca;
+            Modelo = other.Modelo;
+            Serial = other.Serial;
+            CodigoEquipoAsignado = other.CodigoEquipoAsignado;
+            UsuarioAsignado = other.UsuarioAsignado;
+            Sede = other.Sede;
+            Estado = other.Estado;
+            Observaciones = other.Observaciones;
+            FechaCreacion = other.FechaCreacion;
+            FechaModificacion = other.FechaModificacion;
+            NombreEquipoAsignado = other.NombreEquipoAsignado;
+        }        /// <summary>
+        /// Constructor desde Entity
+        /// </summary>
+        public PerifericoEquipoInformaticoDto(Entities.PerifericoEquipoInformaticoEntity entity)
+        {
+            Id = null; // Entity usa Codigo como PK, no Id
+            Codigo = entity.Codigo;
+            Dispositivo = entity.Dispositivo;
+            FechaCompra = entity.FechaCompra;
+            Costo = entity.Costo;
+            Marca = entity.Marca;
+            Modelo = entity.Modelo;
+            Serial = entity.SerialNumber; // Entity usa SerialNumber
+            CodigoEquipoAsignado = entity.CodigoEquipoAsignado;
+            UsuarioAsignado = entity.UsuarioAsignado;
+            Sede = entity.Sede;
+            Estado = entity.Estado;
+            Observaciones = entity.Observaciones;
+            FechaCreacion = entity.FechaCreacion;
+            FechaModificacion = entity.FechaModificacion;
+            NombreEquipoAsignado = entity.EquipoAsignado?.NombreEquipo;
+        }
+    }
+}

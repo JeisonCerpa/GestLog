@@ -31,6 +31,7 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea> MantenimientoPlantillas { get; set; }
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea> SeguimientoTareas { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
@@ -71,12 +72,23 @@ namespace GestLog.Modules.DatabaseConnection
             // Configuración explícita para decimales en SeguimientoMantenimiento
             modelBuilder.Entity<SeguimientoMantenimiento>()
                 .Property(s => s.Costo)
-                .HasPrecision(18, 2);
-
-            // Configuración para precision en Costo de EquipoInformaticoEntity (evita warning EF Core)
+                .HasPrecision(18, 2);            // Configuración para precision en Costo de EquipoInformaticoEntity (evita warning EF Core)
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity>()
                 .Property(e => e.Costo)
                 .HasPrecision(18, 2);
+
+            // Configuración para PerifericoEquipoInformaticoEntity
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
+                .Property(p => p.Costo)
+                .HasPrecision(18, 2);
+            
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
+                .Property(p => p.Estado)
+                .HasConversion<int>();
+            
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
+                .Property(p => p.Sede)
+                .HasConversion<int>();
 
             modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
             {
