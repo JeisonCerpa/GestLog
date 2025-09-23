@@ -151,9 +151,10 @@ public static class LoggingService
             {
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
-                var logger = sp.GetRequiredService<IGestLogLogger>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, logger, currentUserService);
+                var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger);
             });
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
 

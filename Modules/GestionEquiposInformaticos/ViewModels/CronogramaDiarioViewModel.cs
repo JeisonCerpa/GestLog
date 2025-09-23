@@ -5,6 +5,8 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Services.Core.Logging;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading;
@@ -20,16 +22,13 @@ using GestLog.Utilities; // NUEVO helper semanas centralizado
 using System.Text.Json; // para parse checklist
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para el cronograma diario (vista semanal detallada L-V) correspondiente al módulo GestionEquiposInformaticos.
     /// Respeta SRP: solo coordina carga y organización semanal diaria de mantenimientos planificados.
     /// </summary>
-    public partial class CronogramaDiarioViewModel : ObservableObject
-    {        
+    public partial class CronogramaDiarioViewModel : DatabaseAwareViewModel    {        
         private readonly ICronogramaService _cronogramaService;
         private readonly IPlanCronogramaService _planCronogramaService;
-        private readonly IGestLogLogger _logger;
         private readonly IEquipoInformaticoService _equipoInformaticoService;
         private readonly IUsuarioService _usuarioService;
         private readonly ISeguimientoService _seguimientoService; // NUEVO: para registrar ejecuciones
@@ -38,11 +37,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private readonly IRegistroEjecucionPlanDialogService? _registroEjecucionPlanDialogService; // nuevo servicio ejecucion plan
         private readonly Dictionary<CronogramaMantenimientoDto, PlanCronogramaEquipo> _planMap = new(); // mapa plan
 
-        public CronogramaDiarioViewModel(ICronogramaService cronogramaService, IPlanCronogramaService planCronogramaService, IGestLogLogger logger, IEquipoInformaticoService equipoInformaticoService, IUsuarioService usuarioService, ISeguimientoService seguimientoService, ICurrentUserService currentUserService, IRegistroMantenimientoEquipoDialogService? registroDialogService = null, IRegistroEjecucionPlanDialogService? registroEjecucionPlanDialogService = null)
+        public CronogramaDiarioViewModel(
+            ICronogramaService cronogramaService, 
+            IPlanCronogramaService planCronogramaService, 
+            IEquipoInformaticoService equipoInformaticoService, 
+            IUsuarioService usuarioService, 
+            ISeguimientoService seguimientoService, 
+            ICurrentUserService currentUserService,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger,
+            IRegistroMantenimientoEquipoDialogService? registroDialogService = null, 
+            IRegistroEjecucionPlanDialogService? registroEjecucionPlanDialogService = null)
+            : base(databaseService, logger)
         {
             _cronogramaService = cronogramaService;
             _planCronogramaService = planCronogramaService;
-            _logger = logger;
             _equipoInformaticoService = equipoInformaticoService;
             _usuarioService = usuarioService;
             _seguimientoService = seguimientoService; // asignar servicio
@@ -590,8 +599,32 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             public int? Id { get; set; }
             public string Descripcion { get; set; } = string.Empty;
             public bool Completado { get; set; }
-            public string? Observacion { get; set; }
-            public string Estado => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
+            public string? Observacion { get; set; }            public string Estado => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
+        }        /// <summary>
+        /// Implementación del método abstracto para auto-refresh automático
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                _logger.LogInformation("[CronogramaDiarioViewModel] Refrescando datos automáticamente");
+                await LoadAsync(CancellationToken.None);
+                _logger.LogInformation("[CronogramaDiarioViewModel] Datos refrescados exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al refrescar datos");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Override para manejar cuando se pierde la conexión específicamente para cronograma diario
+        /// </summary>
+        protected override void OnConnectionLost()
+        {
+            // El ViewModel no tiene StatusMessage, usar logging en su lugar
+            _logger.LogWarning("[CronogramaDiarioViewModel] Sin conexión - Cronograma diario no disponible");
         }
     }
 

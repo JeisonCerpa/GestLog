@@ -6,13 +6,16 @@ using System.Windows.Input;
 using GestLog.Modules.Usuarios.Models;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
 using Modules.Usuarios.Interfaces;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Modules.Usuarios.Helpers;
 
 namespace Modules.Usuarios.ViewModels
-{    public class RolManagementViewModel : INotifyPropertyChanged
+{    public class RolManagementViewModel : DatabaseAwareViewModel
     {        private readonly IRolService _rolService;
         private readonly ICurrentUserService _currentUserService;
         private CurrentUserInfo _currentUser;
@@ -64,7 +67,12 @@ namespace Modules.Usuarios.ViewModels
         public ICommand AbrirNuevoRolCommand { get; }
         public ICommand AbrirEditarRolCommand { get; }
         public ICommand EliminarRolCommand { get; }
-        public ICommand AbrirVerRolCommand { get; }        public RolManagementViewModel(IRolService rolService, ICurrentUserService currentUserService)
+        public ICommand AbrirVerRolCommand { get; }        public RolManagementViewModel(
+            IRolService rolService, 
+            ICurrentUserService currentUserService,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger)
+            : base(databaseService, logger)
         {
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Constructor iniciado");
             _rolService = rolService ?? throw new ArgumentNullException(nameof(rolService));
@@ -94,17 +102,12 @@ namespace Modules.Usuarios.ViewModels
             CancelarModalRolCommand = new RelayCommand(_ => { IsModalRolVisible = false; MensajeValidacion = string.Empty; return Task.CompletedTask; }, _ => true);
             
             // Configurar permisos reactivos
-            RecalcularPermisos();
-            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+            RecalcularPermisos();            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             
             System.Diagnostics.Debug.WriteLine("RolManagementViewModel: Constructor completado");
             System.Diagnostics.Debug.WriteLine($"RolManagementViewModel: Roles collection inicializada con {Roles.Count} elementos");
         }
-        public event PropertyChangedEventHandler? PropertyChanged;        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            System.Diagnostics.Debug.WriteLine($"PropertyChanged disparado para: {propertyName}");
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName ?? string.Empty));
-        }
+
         private async Task RegistrarRolAsync()
         {
             MensajeEstado = string.Empty;
@@ -465,9 +468,34 @@ namespace Modules.Usuarios.ViewModels
                     // No re-lanzar la excepción aquí para evitar crashear la UI
                 }
             }
-            
-            public event EventHandler? CanExecuteChanged;
+              public event EventHandler? CanExecuteChanged;
             public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Implementación del método abstracto para auto-refresh automático
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                _logger.LogInformation("[RolManagementViewModel] Refrescando datos automáticamente");
+                await BuscarRolesAsync();
+                _logger.LogInformation("[RolManagementViewModel] Datos refrescados exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[RolManagementViewModel] Error al refrescar datos");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Override para manejar cuando se pierde la conexión específicamente para roles
+        /// </summary>
+        protected override void OnConnectionLost()
+        {
+            MensajeEstado = "Sin conexión - Gestión de roles no disponible";
         }
     }
 }

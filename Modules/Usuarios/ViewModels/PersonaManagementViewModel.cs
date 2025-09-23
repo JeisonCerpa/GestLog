@@ -4,6 +4,9 @@ using GestLog.Modules.Personas.Models;
 using GestLog.Modules.Usuarios.Models;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
 using Modules.Personas.Interfaces;
 using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
@@ -16,7 +19,7 @@ using Modules.Usuarios.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{    public partial class PersonaManagementViewModel : ObservableObject
+{    public partial class PersonaManagementViewModel : DatabaseAwareViewModel
     {
         private readonly IPersonaService _personaService;
         private readonly ICargoService _cargoService;
@@ -68,7 +71,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private bool canActivatePersona = false;
 
-        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";        public PersonaManagementViewModel(IPersonaService personaService, ICargoService cargoService, ICargoRepository cargoRepository, ITipoDocumentoRepository tipoDocumentoRepository, ICurrentUserService currentUserService)
+        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";        public PersonaManagementViewModel(
+            IPersonaService personaService, 
+            ICargoService cargoService, 
+            ICargoRepository cargoRepository, 
+            ITipoDocumentoRepository tipoDocumentoRepository, 
+            ICurrentUserService currentUserService,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger)
+            : base(databaseService, logger)
         {
             _personaService = personaService;
             _cargoService = cargoService;
@@ -328,6 +339,30 @@ namespace GestLog.Modules.Usuarios.ViewModels
             CanDeletePersona = _currentUser.HasPermission("Personas.Editar"); // Usar Editar para eliminar/desactivar
             CanViewPersona = _currentUser.HasPermission("Personas.Ver");
             CanActivatePersona = _currentUser.HasPermission("Personas.ActivarDesactivar");
+        }        /// <summary>
+        /// Implementación del método abstracto para auto-refresh automático
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                _logger.LogInformation("[PersonaManagementViewModel] Refrescando datos automáticamente");
+                await InicializarAsync();
+                _logger.LogInformation("[PersonaManagementViewModel] Datos refrescados exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[PersonaManagementViewModel] Error al refrescar datos");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Override para manejar cuando se pierde la conexión específicamente para personas
+        /// </summary>
+        protected override void OnConnectionLost()
+        {
+            MensajeValidacion = "Sin conexión - Gestión de personas no disponible";
         }
     }
 }

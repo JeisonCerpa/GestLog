@@ -7,6 +7,8 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -15,15 +17,12 @@ using Microsoft.Win32;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para la gestión del cronograma de mantenimientos.
     /// </summary>
-    public partial class CronogramaViewModel : ObservableObject
-{
-    private readonly ICronogramaService _cronogramaService;
+    public partial class CronogramaViewModel : DatabaseAwareViewModel
+{    private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
-    private readonly IGestLogLogger _logger;
     private readonly ICurrentUserService _currentUserService;
     private CurrentUserInfo _currentUser;
 
@@ -61,15 +60,18 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     private ObservableCollection<int> aniosDisponibles = new();
 
     [ObservableProperty]
-    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();
-
-    public CronogramaViewModel(ICronogramaService cronogramaService, ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
+    private ObservableCollection<CronogramaMantenimientoDto> cronogramasFiltrados = new();    public CronogramaViewModel(
+        ICronogramaService cronogramaService, 
+        ISeguimientoService seguimientoService, 
+        ICurrentUserService currentUserService,
+        IDatabaseConnectionService databaseService,
+        IGestLogLogger logger)
+        : base(databaseService, logger)
     {
         try
         {
             _cronogramaService = cronogramaService;
             _seguimientoService = seguimientoService;
-            _logger = logger;
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
@@ -485,8 +487,34 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"), // Verde
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // Ámbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#BDBDBD"), // Gris
-            _ => XLColor.White
-        };
+            _ => XLColor.White        };
+    }
+
+    /// <summary>
+    /// Implementación del método abstracto para auto-refresh automático
+    /// </summary>
+    protected override async Task RefreshDataAsync()
+    {
+        try
+        {
+            _logger.LogInformation("[CronogramaViewModel] Refrescando datos automáticamente");
+            await LoadCronogramasAsync();
+            AgruparPorSemana();
+            _logger.LogInformation("[CronogramaViewModel] Datos refrescados exitosamente");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[CronogramaViewModel] Error al refrescar datos");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Override para manejar cuando se pierde la conexión específicamente para cronogramas
+    /// </summary>
+    protected override void OnConnectionLost()
+    {
+        StatusMessage = "Sin conexión - Gestión de cronogramas no disponible";
     }
 }
 }

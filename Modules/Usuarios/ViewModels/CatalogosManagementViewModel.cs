@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.Usuarios.Models;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
 using Modules.Usuarios.Interfaces;
 using GestLog.Views.Usuarios;
 using System.Collections.ObjectModel;
@@ -9,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {
-    public partial class CatalogosManagementViewModel : ObservableObject
+    public partial class CatalogosManagementViewModel : DatabaseAwareViewModel
     {
         private readonly ICargoService _cargoService;
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
@@ -37,9 +40,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private TipoDocumento? tipoDocumentoEnEdicion;
         [ObservableProperty]
-        private bool isModalTipoDocumentoVisible;
-
-        public CatalogosManagementViewModel(ICargoService cargoService, ITipoDocumentoRepository tipoDocumentoRepository, IModalService modalService)
+        private bool isModalTipoDocumentoVisible;        public CatalogosManagementViewModel(
+            ICargoService cargoService, 
+            ITipoDocumentoRepository tipoDocumentoRepository, 
+            IModalService modalService,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger)
+            : base(databaseService, logger)
         {
             _cargoService = cargoService;
             _tipoDocumentoRepository = tipoDocumentoRepository;
@@ -304,10 +311,36 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 System.Windows.MessageBoxButton.YesNo,
                 System.Windows.MessageBoxImage.Warning);
             if (result == System.Windows.MessageBoxResult.Yes)
-            {
-                await _tipoDocumentoRepository.EliminarAsync(tipo.IdTipoDocumento);
+            {                await _tipoDocumentoRepository.EliminarAsync(tipo.IdTipoDocumento);
                 TiposDocumento = new ObservableCollection<TipoDocumento>(await _tipoDocumentoRepository.ObtenerTodosAsync());
             }
+        }
+
+        /// <summary>
+        /// Implementación del método abstracto para auto-refresh automático
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                _logger.LogInformation("[CatalogosManagementViewModel] Refrescando datos automáticamente");
+                await InitializeAsync();
+                _logger.LogInformation("[CatalogosManagementViewModel] Datos refrescados exitosamente");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CatalogosManagementViewModel] Error al refrescar datos");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Override para manejar cuando se pierde la conexión específicamente para catálogos
+        /// </summary>
+        protected override void OnConnectionLost()
+        {
+            MensajeErrorCargo = "Sin conexión - Gestión de catálogos no disponible";
+            MensajeErrorTipoDocumento = "Sin conexión - Gestión de catálogos no disponible";
         }
     }
 }
