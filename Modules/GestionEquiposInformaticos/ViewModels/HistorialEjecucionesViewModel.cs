@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
@@ -50,12 +52,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         public string EstadoTexto => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
     }
 
-    public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel
+    public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel, IDisposable
     {
         private readonly IPlanCronogramaService _planService;
-        private readonly IEquipoInformaticoService _equipoService;
-
-        public HistorialEjecucionesViewModel(
+        private readonly IEquipoInformaticoService _equipoService;        public HistorialEjecucionesViewModel(
             IPlanCronogramaService planService, 
             IEquipoInformaticoService equipoService,
             IDatabaseConnectionService databaseService,
@@ -66,6 +66,34 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             _equipoService = equipoService;
             Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
             SelectedYear = DateTime.Now.Year;
+
+            // Suscribirse a mensajes de actualización para refresh automático
+            WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
+            {
+                try
+                {
+                    _logger.LogInformation("[HistorialEjecucionesViewModel] Refrescando por mensaje EjecucionesPlanesActualizadas");
+                    await LoadAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error al refrescar por mensaje");
+                }
+            });
+
+            // También suscribirse a mensajes de seguimientos por compatibilidad
+            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
+            {
+                try
+                {
+                    _logger.LogInformation("[HistorialEjecucionesViewModel] Refrescando por mensaje SeguimientosActualizados");
+                    await LoadAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error al refrescar por mensaje seguimientos");
+                }
+            });
         }
 
         [ObservableProperty] private ObservableCollection<EjecucionHistorialItem> items = new();
@@ -224,11 +252,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         protected override async Task RefreshDataAsync()
         {
             await LoadAsync();
-        }
-
-        protected override void OnConnectionLost()
+        }        protected override void OnConnectionLost()
         {
             StatusMessage = "Sin conexión - Datos no disponibles";
+        }
+
+        /// <summary>
+        /// Limpieza de recursos y desuscripción de mensajes
+        /// </summary>
+        public new void Dispose()
+        {
+            // Desuscribirse de mensajes
+            WeakReferenceMessenger.Default.Unregister<EjecucionesPlanesActualizadasMessage>(this);
+            WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
+            
+            base.Dispose();
         }
     }
 }

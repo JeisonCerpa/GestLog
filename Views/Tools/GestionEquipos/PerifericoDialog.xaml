@@ -154,20 +154,24 @@
                                          Text="{Binding PerifericoActual.Codigo, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource InputStyle}"/>
                             </StackPanel>
-                            
-                            <StackPanel Grid.Row="0" Grid.Column="2">
+                              <StackPanel Grid.Row="0" Grid.Column="2">
                                 <TextBlock Text="Dispositivo *" Style="{StaticResource LabelTextStyle}"/>
-                                <TextBox x:Name="TxtDispositivo" 
-                                         Text="{Binding PerifericoActual.Dispositivo, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
+                                <ComboBox x:Name="CmbDispositivo" 
+                                          Text="{Binding FiltroDispositivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding DispositivosFiltrados}"
+                                          IsEditable="True"
+                                          IsTextSearchEnabled="False"
+                                          Style="{StaticResource InputStyle}"/>
                             </StackPanel>
-                            
-                            <!-- Fila 2: Marca y Modelo -->
+                              <!-- Fila 2: Marca y Modelo -->
                             <StackPanel Grid.Row="1" Grid.Column="0">
                                 <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
-                                <TextBox x:Name="TxtMarca" 
-                                         Text="{Binding PerifericoActual.Marca, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
+                                <ComboBox x:Name="CmbMarca" 
+                                          Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding MarcasFiltradas}"
+                                          IsEditable="True"
+                                          IsTextSearchEnabled="False"
+                                          Style="{StaticResource InputStyle}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="1" Grid.Column="2">

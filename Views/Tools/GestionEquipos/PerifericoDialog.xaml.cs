@@ -1,5 +1,6 @@
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+using GestLog.Modules.GestionEquiposInformaticos.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -12,17 +13,22 @@ using System.Windows;
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.DatabaseConnection;
 using MessageBox = System.Windows.MessageBox;
 using GestLog.Services;
+using System.Threading;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{    /// <summary>
-    /// ViewModel para el diálogo de periféricos
+{
+    /// <summary>
+    /// ViewModel para el diálogo de periféricos con autocompletado basado en datos existentes
     /// </summary>
     public partial class PerifericoDialogViewModel : ObservableObject
     {
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        private readonly DispositivoAutocompletadoService _dispositivoService;
+        private readonly MarcaAutocompletadoService _marcaService;
 
         [ObservableProperty]
         private PerifericoEquipoInformaticoDto perifericoActual = new();
@@ -33,7 +39,7 @@ namespace GestLog.Views.Tools.GestionEquipos
         [ObservableProperty]
         private string textoBotonPrincipal = "Guardar";
 
-        // Propiedades para ComboBox con filtro de Usuario Asignado
+        // Usuario Asignado
         [ObservableProperty]
         private ObservableCollection<PersonaConEquipoDto> personasConEquipoDisponibles = new();
 
@@ -46,62 +52,255 @@ namespace GestLog.Views.Tools.GestionEquipos
         [ObservableProperty]
         private ObservableCollection<PersonaConEquipoDto> personasConEquipoFiltradas = new();
 
-        // Variable para suprimir cambios automáticos durante la sincronización
+        // Dispositivos con autocompletado
+        [ObservableProperty]
+        private ObservableCollection<string> dispositivosDisponibles = new();
+
+        [ObservableProperty]
+        private string filtroDispositivo = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<string> dispositivosFiltrados = new();
+
+        // Marcas con autocompletado
+        [ObservableProperty]
+        private ObservableCollection<string> marcasDisponibles = new();
+
+        [ObservableProperty]
+        private string filtroMarca = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<string> marcasFiltradas = new();
+
         private bool _suppressFiltroUsuarioChanged = false;
+        private bool _suppressFiltroDispositivoChanged = false;
+        private bool _suppressFiltroMarcaChanged = false;
+
+        // Nuevos campos para debounce/cancelación
+        private CancellationTokenSource? _dispositivoFilterCts;
+        private CancellationTokenSource? _marcaFilterCts;
 
         public List<EstadoPeriferico> EstadosDisponibles { get; } = Enum.GetValues<EstadoPeriferico>().ToList();
         public List<SedePeriferico> SedesDisponibles { get; } = Enum.GetValues<SedePeriferico>().ToList();
 
-        public bool DialogResult { get; private set; }
-
-        public PerifericoDialogViewModel(IDbContextFactory<GestLogDbContext> dbContextFactory)
+        public bool DialogResult { get; private set; }        public PerifericoDialogViewModel(
+            IDbContextFactory<GestLogDbContext> dbContextFactory,
+            DispositivoAutocompletadoService dispositivoService,
+            MarcaAutocompletadoService marcaService)
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            _dispositivoService = dispositivoService ?? throw new ArgumentNullException(nameof(dispositivoService));
+            _marcaService = marcaService ?? throw new ArgumentNullException(nameof(marcaService));
             
-            // Configurar valores por defecto para un nuevo periférico
             PerifericoActual.FechaCompra = DateTime.Now;
             PerifericoActual.Estado = EstadoPeriferico.EnUso;
             PerifericoActual.Sede = SedePeriferico.AdministrativaBarranquilla;
-            PerifericoActual.Costo = 0; // Inicializar en 0 para que el usuario ingrese el valor
+            PerifericoActual.Costo = 0;
             
-            // Configurar filtrado reactivo
             PropertyChanged += OnPropertyChanged;
+            
+            _ = Task.Run(CargarDatosAutocompletadoAsync);
         }
 
         private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(FiltroUsuarioAsignado))
-            {
                 OnFiltroUsuarioAsignadoChanged();
-            }
             else if (e.PropertyName == nameof(PersonaConEquipoSeleccionada))
-            {
                 OnPersonaConEquipoSeleccionadaChanged();
+            else if (e.PropertyName == nameof(FiltroDispositivo))
+                OnFiltroDispositivoChanged();
+            else if (e.PropertyName == nameof(FiltroMarca))
+                OnFiltroMarcaChanged();
+        }
+
+        private async Task CargarDatosAutocompletadoAsync()
+        {
+            try
+            {
+                var dispositivosTask = _dispositivoService.ObtenerTodosAsync();
+                var marcasTask = _marcaService.ObtenerTodosAsync();
+                
+                await Task.WhenAll(dispositivosTask, marcasTask);
+                
+                var dispositivos = await dispositivosTask;
+                var marcas = await marcasTask;
+                
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    DispositivosDisponibles.Clear();
+                    DispositivosFiltrados.Clear();
+                    foreach (var dispositivo in dispositivos)
+                    {
+                        DispositivosDisponibles.Add(dispositivo);
+                        DispositivosFiltrados.Add(dispositivo);
+                    }
+                    
+                    MarcasDisponibles.Clear();
+                    MarcasFiltradas.Clear();
+                    foreach (var marca in marcas)
+                    {
+                        MarcasDisponibles.Add(marca);
+                        MarcasFiltradas.Add(marca);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error cargando datos: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Se ejecuta automáticamente cuando cambia la selección del usuario
-        /// Actualiza UsuarioAsignado, CodigoEquipoAsignado y FiltroUsuarioAsignado cuando se selecciona un elemento de la lista
-        /// </summary>
+        private async void OnFiltroDispositivoChanged()
+        {
+            if (_suppressFiltroDispositivoChanged) return;
+
+            PerifericoActual.Dispositivo = FiltroDispositivo?.Trim() ?? string.Empty;
+
+            // Cancelar búsqueda anterior y crear una nueva CTS para debounce
+            _dispositivoFilterCts?.Cancel();
+            _dispositivoFilterCts?.Dispose();
+            _dispositivoFilterCts = new CancellationTokenSource();
+            var token = _dispositivoFilterCts.Token;
+
+            try
+            {
+                // Debounce corto para evitar actualizar ItemsSource en cada tecla
+                await Task.Delay(250, token);
+                if (token.IsCancellationRequested) return;
+
+                await FiltrarDispositivosAsync(token);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro dispositivo: {ex.Message}");
+            }
+        }
+
+        private async void OnFiltroMarcaChanged()
+        {
+            if (_suppressFiltroMarcaChanged) return;
+
+            PerifericoActual.Marca = FiltroMarca?.Trim() ?? string.Empty;
+
+            // Cancelar búsqueda anterior y crear una nueva CTS para debounce
+            _marcaFilterCts?.Cancel();
+            _marcaFilterCts?.Dispose();
+            _marcaFilterCts = new CancellationTokenSource();
+            var token = _marcaFilterCts.Token;
+
+            try
+            {
+                await Task.Delay(250, token);
+                if (token.IsCancellationRequested) return;
+
+                await FiltrarMarcasAsync(token);
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro marca: {ex.Message}");
+            }
+        }
+
+        private async Task FiltrarDispositivosAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var filtroActual = FiltroDispositivo ?? string.Empty;
+                var dispositivosFiltrados = await _dispositivoService.BuscarAsync(filtroActual);
+
+                if (cancellationToken.IsCancellationRequested) return;
+
+                // Preservar el texto actual del filtro para evitar que el ComboBox lo borre al actualizar ItemsSource
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        var textoPreservado = FiltroDispositivo ?? string.Empty;
+
+                        DispositivosFiltrados.Clear();
+                        foreach (var dispositivo in dispositivosFiltrados)
+                        {
+                            DispositivosFiltrados.Add(dispositivo);
+                        }
+
+                        // Restaurar el texto sin disparar el handler
+                        _suppressFiltroDispositivoChanged = true;
+                        FiltroDispositivo = textoPreservado;
+                        _suppressFiltroDispositivoChanged = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error actualizando dispositivos filtrados: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error filtrando dispositivos: {ex.Message}");
+            }
+        }
+
+        private async Task FiltrarMarcasAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var filtroActual = FiltroMarca ?? string.Empty;
+                var marcasFiltradas = await _marcaService.BuscarAsync(filtroActual);
+
+                if (cancellationToken.IsCancellationRequested) return;
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        var textoPreservado = FiltroMarca ?? string.Empty;
+
+                        MarcasFiltradas.Clear();
+                        foreach (var marca in marcasFiltradas)
+                        {
+                            MarcasFiltradas.Add(marca);
+                        }
+
+                        _suppressFiltroMarcaChanged = true;
+                        FiltroMarca = textoPreservado;
+                        _suppressFiltroMarcaChanged = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error actualizando marcas filtradas: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error filtrando marcas: {ex.Message}");
+            }
+        }
+
         private void OnPersonaConEquipoSeleccionadaChanged()
         {
             if (PersonaConEquipoSeleccionada != null)
             {
-                // Capturar la referencia local para evitar problemas de concurrencia
                 var personaSeleccionada = PersonaConEquipoSeleccionada;
                 
-                // IMPORTANTE: Asignar INMEDIATAMENTE a PerifericoActual para mantener los datos estables
                 PerifericoActual.UsuarioAsignado = personaSeleccionada.NombreCompleto;
                 PerifericoActual.CodigoEquipoAsignado = personaSeleccionada.CodigoEquipo;
                 
-                // Deferimos la asignación del texto para evitar que el ciclo interno de actualización del ComboBox lo sobrescriba
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
                         _suppressFiltroUsuarioChanged = true;
-                        FiltroUsuarioAsignado = personaSeleccionada.NombreCompleto; // Usar la referencia local
+                        FiltroUsuarioAsignado = personaSeleccionada.NombreCompleto;
                         _suppressFiltroUsuarioChanged = false;
                     }
                     catch (Exception ex)
@@ -112,7 +311,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
             else
             {
-                // Solo limpiar el código de equipo, mantener el usuario si hay texto en el filtro
                 if (string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
                 {
                     PerifericoActual.UsuarioAsignado = string.Empty;
@@ -121,9 +319,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
         }
 
-        /// <summary>
-        /// Se ejecuta cuando el usuario escribe en el ComboBox para filtrar usuarios
-        /// </summary>
         private void OnFiltroUsuarioAsignadoChanged()
         {
             if (_suppressFiltroUsuarioChanged) return;
@@ -134,7 +329,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 PerifericoActual.UsuarioAsignado = texto;
                 
-                // Si no hay selección y el texto está vacío, limpiar también el código del equipo
                 if (string.IsNullOrWhiteSpace(texto))
                 {
                     PerifericoActual.CodigoEquipoAsignado = string.Empty;
@@ -146,17 +340,15 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 if (string.IsNullOrWhiteSpace(texto))
                 {
-                    // Usuario borró el texto, limpiar selección
                     PersonaConEquipoSeleccionada = null;
                     PerifericoActual.UsuarioAsignado = "";
                     PerifericoActual.CodigoEquipoAsignado = string.Empty;
                 }
                 else if (!PersonaConEquipoSeleccionada.NombreCompleto.Equals(texto, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Usuario cambió el texto, buscar nueva coincidencia
                     PersonaConEquipoSeleccionada = null;
                     PerifericoActual.UsuarioAsignado = texto;
-                    PerifericoActual.CodigoEquipoAsignado = string.Empty; // Limpiar código hasta nueva selección válida
+                    PerifericoActual.CodigoEquipoAsignado = string.Empty;
                     SincronizarSeleccionPorNombre(texto);
                 }
             }
@@ -164,9 +356,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             FiltrarPersonasConEquipo();
         }
 
-        /// <summary>
-        /// Busca y selecciona una persona por nombre completo
-        /// </summary>
         private void SincronizarSeleccionPorNombre(string nombreCompleto)
         {
             if (string.IsNullOrWhiteSpace(nombreCompleto)) return;
@@ -199,32 +388,37 @@ namespace GestLog.Views.Tools.GestionEquipos
                 Observaciones = periferico.Observaciones
             };
 
+            _suppressFiltroDispositivoChanged = true;
+            _suppressFiltroMarcaChanged = true;
+            
+            FiltroDispositivo = periferico.Dispositivo ?? string.Empty;
+            FiltroMarca = periferico.Marca ?? string.Empty;
+            
+            _suppressFiltroDispositivoChanged = false;
+            _suppressFiltroMarcaChanged = false;
+
             TituloDialog = "Editar Periférico";
             TextoBotonPrincipal = "Actualizar";
             
-            // Buscar y seleccionar la persona con equipo correspondiente si existe
             _ = Task.Run(async () => await BuscarPersonaConEquipoExistente(periferico.UsuarioAsignado));
-        }        /// <summary>
-        /// Carga las personas que tienen equipos asignados con el formato requerido
-        /// </summary>
+        }
+
         public async Task CargarPersonasConEquipoAsync()
-        {            try
+        {
+            try
             {
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 
-                // Primero verificar si hay equipos con usuarios asignados
                 var equiposConUsuarios = await dbContext.EquiposInformaticos
                     .Where(e => !string.IsNullOrEmpty(e.UsuarioAsignado) && !string.IsNullOrEmpty(e.NombreEquipo))
                     .Select(e => new { e.UsuarioAsignado, e.Codigo, e.NombreEquipo })
                     .ToListAsync();
                 
-                // Luego verificar si hay personas activas - construyendo el nombre completo
                 var personasActivas = await dbContext.Personas
                     .Where(p => p.Activo && !string.IsNullOrEmpty(p.Nombres) && !string.IsNullOrEmpty(p.Apellidos))
                     .Select(p => new { p.IdPersona, NombreCompleto = (p.Nombres ?? "") + " " + (p.Apellidos ?? "") })
                     .ToListAsync();
                 
-                // Hacer el JOIN manualmente para mejor control
                 var personasConEquipos = new List<PersonaConEquipoDto>();
 
                 foreach (var equipo in equiposConUsuarios)
@@ -263,7 +457,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
             catch (Exception ex)
             {
-                // Mostrar error al usuario
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show($"Error al cargar usuarios con equipos: {ex.Message}", 
@@ -272,9 +465,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
         }
 
-        /// <summary>
-        /// Busca y selecciona una persona con equipo basada en el nombre de usuario y código de equipo existentes
-        /// </summary>
         private async Task BuscarPersonaConEquipoExistente(string? usuarioAsignado)
         {
             if (string.IsNullOrWhiteSpace(usuarioAsignado)) return;
@@ -288,7 +478,6 @@ namespace GestLog.Views.Tools.GestionEquipos
                 
                 PersonaConEquipoDto? encontrada = null;
                 
-                // Primero intentar buscar por usuario Y código de equipo (coincidencia exacta)
                 if (!string.IsNullOrWhiteSpace(codigoEquipoAsignado))
                 {
                     encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p => 
@@ -296,27 +485,16 @@ namespace GestLog.Views.Tools.GestionEquipos
                         p.CodigoEquipo.Equals(codigoEquipoAsignado, StringComparison.OrdinalIgnoreCase));
                 }
                 
-                // Si no se encontró coincidencia exacta, buscar solo por usuario
                 if (encontrada == null)
                 {
                     encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p => 
                         NormalizeString(p.NombreCompleto) == objetivo);
-                }
-                
-                // Si aún no se encontró, búsqueda flexible
-                if (encontrada == null)
-                {
-                    encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
-                        NormalizeString(p.NombreCompleto).Contains(objetivo) || 
-                        objetivo.Contains(NormalizeString(p.NombreCompleto)));
                 }
 
                 if (encontrada != null)
                 {
                     PersonaConEquipoSeleccionada = encontrada;
                     FiltroUsuarioAsignado = encontrada.NombreCompleto;
-                    
-                    // Actualizar también el código del equipo en el periférico actual
                     PerifericoActual.CodigoEquipoAsignado = encontrada.CodigoEquipo;
                 }
                 else
@@ -326,13 +504,8 @@ namespace GestLog.Views.Tools.GestionEquipos
             });
         }
 
-        /// <summary>
-        /// Filtra las personas con equipo basado en el texto de filtro
-        /// </summary>
         private void FiltrarPersonasConEquipo()
         {
-            if (PersonasConEquipoDisponibles == null) return;
-
             PersonasConEquipoFiltradas.Clear();
 
             if (string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
@@ -353,9 +526,8 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 PersonasConEquipoFiltradas.Add(persona);
             }
-        }        /// <summary>
-        /// Normaliza un string para filtrado (sin acentos, minúsculas)
-        /// </summary>
+        }
+
         private static string NormalizeString(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return string.Empty;
@@ -368,50 +540,39 @@ namespace GestLog.Views.Tools.GestionEquipos
         [RelayCommand]
         private void Guardar()
         {
-            // IMPORTANTE: Asignar los valores ANTES de la validación para asegurar que están disponibles
             if (PersonaConEquipoSeleccionada != null)
             {
                 PerifericoActual.UsuarioAsignado = PersonaConEquipoSeleccionada.NombreCompleto;
                 PerifericoActual.CodigoEquipoAsignado = PersonaConEquipoSeleccionada.CodigoEquipo;
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
             {
-                // Mejor lógica de fallback
-                if (!string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
+                var personaEncontrada = PersonasConEquipoDisponibles?.FirstOrDefault(p => 
+                    p.NombreCompleto.Equals(FiltroUsuarioAsignado.Trim(), StringComparison.OrdinalIgnoreCase));
+                
+                if (personaEncontrada != null)
                 {
-                    // Intentar encontrar una coincidencia exacta en la lista disponible
-                    var personaEncontrada = PersonasConEquipoDisponibles?.FirstOrDefault(p => 
-                        p.NombreCompleto.Equals(FiltroUsuarioAsignado.Trim(), StringComparison.OrdinalIgnoreCase));
-                    
-                    if (personaEncontrada != null)
-                    {
-                        // Encontramos una coincidencia exacta, usar esos datos
-                        PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto;
-                        PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo;
-                    }
-                    else
-                    {
-                        // No hay coincidencia exacta, usar solo el texto del filtro como usuario
-                        PerifericoActual.UsuarioAsignado = FiltroUsuarioAsignado.Trim();
-                        PerifericoActual.CodigoEquipoAsignado = null; // Sin código de equipo específico
-                    }
+                    PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto;
+                    PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo;
                 }
                 else
                 {
-                    // No hay nada seleccionado ni escrito, limpiar los campos
-                    PerifericoActual.UsuarioAsignado = null;
+                    PerifericoActual.UsuarioAsignado = FiltroUsuarioAsignado.Trim();
                     PerifericoActual.CodigoEquipoAsignado = null;
                 }
+            }
+            else
+            {
+                PerifericoActual.UsuarioAsignado = null;
+                PerifericoActual.CodigoEquipoAsignado = null;
             }
             
             if (ValidarFormulario())
             {
                 DialogResult = true;
                 
-                // Notificar al Window que cierre el diálogo
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // Buscar el Window padre que contiene este ViewModel
                     if (System.Windows.Application.Current.Windows.Cast<Window>()
                         .FirstOrDefault(w => w.DataContext == this) is PerifericoDialog dialog)
                     {
@@ -447,21 +608,33 @@ namespace GestLog.Views.Tools.GestionEquipos
 
             return true;
         }
-    }    /// <summary>
+    }
+
+    /// <summary>
     /// Code-behind para el diálogo de periféricos
     /// </summary>
     public partial class PerifericoDialog : Window
     {
         public PerifericoDialogViewModel ViewModel { get; }
-        
+
         public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             InitializeComponent();
-            ViewModel = new PerifericoDialogViewModel(dbContextFactory);
+
+            // Obtener servicios del contenedor DI
+            var dispositivoService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<DispositivoAutocompletadoService>();
+            var marcaService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<MarcaAutocompletadoService>();
+
+            // Fallback en caso de que no estén registrados
+            if (dispositivoService == null)
+                dispositivoService = new DispositivoAutocompletadoService(dbContextFactory);
+            if (marcaService == null)
+                marcaService = new MarcaAutocompletadoService(dbContextFactory);
+
+            ViewModel = new PerifericoDialogViewModel(dbContextFactory, dispositivoService, marcaService);
             DataContext = ViewModel;
-            
-            // Cargar personas con equipos al inicializar
-            Loaded += async (s, e) => 
+
+            Loaded += async (s, e) =>
             {
                 await ViewModel.CargarPersonasConEquipoAsync();
             };

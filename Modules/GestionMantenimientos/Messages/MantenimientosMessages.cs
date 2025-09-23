@@ -17,3 +17,8 @@ public class MantenimientosActualizadosMessage : ValueChangedMessage<bool>
 {
     public MantenimientosActualizadosMessage(bool value = true) : base(value) { }
 }
+
+public class EjecucionesPlanesActualizadasMessage : ValueChangedMessage<bool>
+{
+    public EjecucionesPlanesActualizadasMessage(bool value = true) : base(value) { }
+}

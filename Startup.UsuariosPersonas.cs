@@ -60,12 +60,15 @@ namespace GestLog
             services.AddSingleton<CatalogosManagementViewModel>();
             services.AddSingleton<GestionPermisosRolViewModel>();            // Servicios y ViewModels para Gestión de Mantenimientos
             services.AddScoped<IMantenimientoService, MaintenanceService>();
-            
-            // Servicios para Gestión de Equipos Informáticos
+              // Servicios para Gestión de Equipos Informáticos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService, GestLog.Modules.GestionEquiposInformaticos.Services.EquipoInformaticoService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroMantenimientoEquipoDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroMantenimientoEquipoDialogService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();            // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();
+            
+            // Servicios de autocompletado para periféricos
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.DispositivoAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();// Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
             
             // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  

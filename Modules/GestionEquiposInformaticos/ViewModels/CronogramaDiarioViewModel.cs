@@ -307,12 +307,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         StatusMessage = "Servicio de ejecución semanal no disponible";
                         return;
                     }
-                    var responsableActual = _currentUserService?.GetCurrentUserFullName() ?? Environment.UserName;
-                    var ok = await _registroEjecucionPlanDialogService.TryShowAsync(planEntity.PlanId, SelectedYear, SelectedWeek, responsableActual);
+                    var responsableActual = _currentUserService?.GetCurrentUserFullName() ?? Environment.UserName;                    var ok = await _registroEjecucionPlanDialogService.TryShowAsync(planEntity.PlanId, SelectedYear, SelectedWeek, responsableActual);
                     if (ok)
                     {
                         StatusMessage = "Ejecución registrada";
                         await RefreshAsync(CancellationToken.None);
+                        
+                        // Notificar actualización de ejecuciones de planes
+                        WeakReferenceMessenger.Default.Send(new EjecucionesPlanesActualizadasMessage());
                     }
                     else
                     {
@@ -404,10 +406,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     {
                         StatusMessage = "Ya existe un registro para este código en la semana seleccionada";
                         return;
-                    }
-
-                    await _seguimientoService.AddAsync(result);
+                    }                    await _seguimientoService.AddAsync(result);
                     WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    // También notificar ejecuciones de planes para mantener historial actualizado
+                    WeakReferenceMessenger.Default.Send(new EjecucionesPlanesActualizadasMessage());
                     StatusMessage = "Mantenimiento registrado";
                 }
                 else

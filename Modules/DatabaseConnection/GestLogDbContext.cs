@@ -30,8 +30,8 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.Usuarios.Models.UsuarioPermiso> UsuarioPermisos { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> EquiposInformaticos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }
+        
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea> MantenimientoPlantillas { get; set; }
         public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea> SeguimientoTareas { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
