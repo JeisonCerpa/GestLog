@@ -10,17 +10,23 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{    public partial class AgregarEquipoInformaticoView : Window
+{
+    public partial class AgregarEquipoInformaticoView : Window
     {
         public AgregarEquipoInformaticoView()
         {
             InitializeComponent();
             
-            // Configurar DataContext usando DI para resolver dependencias
+            // ✅ MIGRADO: Configurar DataContext usando DI para resolver dependencias DatabaseAwareViewModel
             var app = (App)System.Windows.Application.Current;
             var serviceProvider = app.ServiceProvider;
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
-            var viewModel = new GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel(currentUserService);
+            var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLog.Modules.DatabaseConnection.GestLogDbContext>>();
+            var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+            
+            var viewModel = new GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel(
+                currentUserService, dbContextFactory, databaseService, logger);
             DataContext = viewModel;
             
             // Cargar personas cuando se carga la ventana, pero sólo si no están ya cargadas (evita sobrescribir selección al abrir en modo editar)

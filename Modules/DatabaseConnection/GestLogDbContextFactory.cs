@@ -39,10 +39,19 @@ namespace GestLog.Modules.DatabaseConnection
 
             string connectionString = integrated
                 ? $"Server={server};Database={database};Integrated Security=True;TrustServerCertificate={trustCert};"
-                : $"Server={server};Database={database};User Id={user};Password={password};TrustServerCertificate={trustCert};";
-
-            var optionsBuilder = new DbContextOptionsBuilder<GestLogDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+                : $"Server={server};Database={database};User Id={user};Password={password};TrustServerCertificate={trustCert};";            var optionsBuilder = new DbContextOptionsBuilder<GestLogDbContext>();
+            optionsBuilder.UseSqlServer(connectionString, sqlOptions =>
+            {
+                // Configurar resiliencia para errores transitorios
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: new int[] { 2, 20, 64, 233, 10053, 10054, 10060, 40197, 40501, 40613 });
+                  // Timeout balanceado: rápido pero permisivo para SSL handshake
+                sqlOptions.CommandTimeout(15);
+            })
+            .EnableSensitiveDataLogging(false) // Para producción
+            .EnableDetailedErrors(false); // Para producción
 
             return new GestLogDbContext(optionsBuilder.Options);
         }

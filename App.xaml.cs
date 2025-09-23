@@ -40,14 +40,22 @@ public partial class App : System.Windows.Application
         try
         {
             LoggingService.InitializeServices();
-            _logger = LoggingService.GetLogger();
-
-            splash.ShowStatus("Verificando conexión a la base de datos...");
+            _logger = LoggingService.GetLogger();            splash.ShowStatus("Verificando conexión a la base de datos...");
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
             bool conexionOk = false;
             if (databaseService != null)
             {
-                conexionOk = await databaseService.TestConnectionAsync();
+                // Usar timeout de 10 segundos para el splash screen con método rápido
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                try
+                {
+                    conexionOk = await databaseService.TestConnectionQuickAsync(timeoutCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger?.Logger.LogWarning("⚠️ Timeout verificando conexión durante splash screen");
+                    conexionOk = false;
+                }
             }
             if (!conexionOk)
             {

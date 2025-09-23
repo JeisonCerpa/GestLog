@@ -4,6 +4,9 @@ using GestLog.ViewModels.Tools.GestionEquipos;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.Usuarios.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using GestLog.Services.Interfaces;
+using GestLog.Services.Core.Logging;
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -14,9 +17,11 @@ namespace GestLog.Views.Tools.GestionEquipos
             this.InitializeComponent();
             var app = (App)System.Windows.Application.Current;
             var serviceProvider = app.ServiceProvider;
-            var dbContext = serviceProvider.GetRequiredService<GestLogDbContext>();
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
             var currentUserService = serviceProvider.GetRequiredService<ICurrentUserService>();
-            this.DataContext = new EquiposInformaticosViewModel(dbContext, currentUserService);
+            var databaseService = serviceProvider.GetRequiredService<IDatabaseConnectionService>();
+            var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
+            this.DataContext = new EquiposInformaticosViewModel(dbContextFactory, currentUserService, databaseService, logger);
         }
     }
 }

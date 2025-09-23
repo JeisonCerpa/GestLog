@@ -14,6 +14,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.DatabaseConnection;
 using MessageBox = System.Windows.MessageBox;
+using GestLog.Services;
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -206,20 +207,10 @@ namespace GestLog.Views.Tools.GestionEquipos
         /// Carga las personas que tienen equipos asignados con el formato requerido
         /// </summary>
         public async Task CargarPersonasConEquipoAsync()
-        {
-            try
+        {            try
             {
                 var connectionString = GetProductionConnectionString();
-                var options = new DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(connectionString, sqlOptions => 
-                    {
-                        sqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(30),
-                            errorNumbersToAdd: null);
-                        sqlOptions.CommandTimeout(60);
-                    })
-                    .Options;
+                var options = EntityFrameworkConfigurationHelper.CreateStandardOptions(connectionString, 60);
 
                 using var dbContext = new GestLogDbContext(options);
 
@@ -376,14 +367,13 @@ namespace GestLog.Views.Tools.GestionEquipos
             var normalized = input.Normalize(NormalizationForm.FormD);
             var chars = normalized.Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark).ToArray();
             return new string(chars).Normalize(NormalizationForm.FormC).Trim().ToLowerInvariant();
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Obtiene la cadena de conexión de producción
         /// </summary>
         private static string GetProductionConnectionString()
         {
-            return "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=true;Connection Timeout=30;";
+            var baseConnectionString = "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=true;";
+            return EntityFrameworkConfigurationHelper.EnhanceConnectionString(baseConnectionString);
         }
 
         [RelayCommand]

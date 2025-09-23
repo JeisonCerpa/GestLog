@@ -1,88 +1,65 @@
+// ✅ MIGRADO A DatabaseAwareViewModel - AUTO-REFRESH CON TIMEOUT ULTRARRÁPIDO
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
-using System.Linq;
+using GestLog.ViewModels.Base;
+using GestLog.Services.Interfaces;
+using GestLog.Services.Core.Logging;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
-    public class DetallesEquipoInformaticoViewModel : ObservableObject
-    {        private readonly GestLogDbContext? _db;
-        public EquipoInformaticoEntity Equipo { get; }
-        public ObservableCollection<SlotRamEntity> SlotsRam { get; }
-        public ObservableCollection<DiscoEntity> Discos { get; }
-        public ObservableCollection<ConexionEntity> Conexiones { get; }
-        public ObservableCollection<PerifericoEquipoInformaticoEntity> Perifericos { get; }
+    /// <summary>
+    /// ViewModel para mostrar detalles de un equipo informático específico.
+    /// ✅ MIGRADO: Hereda de DatabaseAwareViewModel para auto-refresh automático con timeout ultrarrápido.
+    /// </summary>
+    public class DetallesEquipoInformaticoViewModel : DatabaseAwareViewModel
+    {
+        #region ✅ NUEVAS DEPENDENCIAS - AUTO-REFRESH
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        #endregion
 
-        public DetallesEquipoInformaticoViewModel(EquipoInformaticoEntity equipo, GestLogDbContext? db)
-        {
-            _db = db; // puede ser null
-            Equipo = equipo ?? throw new ArgumentNullException(nameof(equipo));
+        #region Propiedades del Equipo
+        /// <summary>
+        /// Entidad del equipo informático principal
+        /// </summary>
+        public EquipoInformaticoEntity Equipo { get; private set; }
 
-            // Intentar cargar colecciones relacionadas desde el DbContext (si se proporcionó y la entidad está siendo rastreada)
-            if (_db != null)
-            {
-                try
-                {
-                    var entry = _db.Entry(Equipo);
+        /// <summary>
+        /// Colección de slots de RAM del equipo
+        /// </summary>
+        public ObservableCollection<SlotRamEntity> SlotsRam { get; private set; }
 
-                    // Solo cargar automáticamente si la entidad está siendo rastreada para evitar duplicados
-                    // cuando la entidad ya trae colecciones (p. ej. proviene de AsNoTracking) o cuando
-                    // reconstruimos la entidad desde el VM de edición (ya contiene listas).
-                    if (entry.State != EntityState.Detached)
-                    {                        if (!entry.Collection(e => e.SlotsRam).IsLoaded && (Equipo.SlotsRam == null || !Equipo.SlotsRam.Any()))
-                            entry.Collection(e => e.SlotsRam).Load();
+        /// <summary>
+        /// Colección de discos del equipo
+        /// </summary>
+        public ObservableCollection<DiscoEntity> Discos { get; private set; }
 
-                        if (!entry.Collection(e => e.Discos).IsLoaded && (Equipo.Discos == null || !Equipo.Discos.Any()))
-                            entry.Collection(e => e.Discos).Load();
+        /// <summary>
+        /// Colección de conexiones de red del equipo
+        /// </summary>
+        public ObservableCollection<ConexionEntity> Conexiones { get; private set; }
 
-                        if (!entry.Collection(e => e.Conexiones).IsLoaded && (Equipo.Conexiones == null || !Equipo.Conexiones.Any()))
-                            entry.Collection(e => e.Conexiones).Load();
-                    }
-                }
-                catch
-                {
-                    // Si falla (p. ej. entidad no rastreada), continuamos con lo que venga en 'equipo'
-                }
-            }            SlotsRam = new ObservableCollection<SlotRamEntity>(Equipo.SlotsRam ?? new List<SlotRamEntity>());
-            Discos = new ObservableCollection<DiscoEntity>(Equipo.Discos ?? new List<DiscoEntity>());
-            Conexiones = new ObservableCollection<ConexionEntity>(Equipo.Conexiones ?? new List<ConexionEntity>());
+        /// <summary>
+        /// Colección de periféricos asignados al equipo
+        /// </summary>
+        public ObservableCollection<PerifericoEquipoInformaticoEntity> Perifericos { get; private set; }
+        #endregion
 
-            // Cargar periféricos asignados a este equipo
-            var perifericosAsignados = new List<PerifericoEquipoInformaticoEntity>();
-            if (_db != null)
-            {
-                try
-                {
-                    perifericosAsignados = _db.PerifericosEquiposInformaticos
-                        .Where(p => p.CodigoEquipoAsignado == Equipo.Codigo)
-                        .ToList();
-                }
-                catch
-                {
-                    // Si falla la consulta, continuar con lista vacía
-                }
-            }
-            Perifericos = new ObservableCollection<PerifericoEquipoInformaticoEntity>(perifericosAsignados);
-
-            // Actualizar cabeceras cuando cambien las colecciones
-            SlotsRam.CollectionChanged += (s, e) => OnPropertyChanged(nameof(RamHeader));
-            Discos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DiscoHeader));
-            Conexiones.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ConexionesHeader));
-            Perifericos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(PerifericosHeader));
-        }        public string RamHeader => $"Memoria RAM ({SlotsRam?.Count ?? 0})";
+        #region Propiedades Calculadas (Headers dinámicos)
+        public string RamHeader => $"Memoria RAM ({SlotsRam?.Count ?? 0})";
         public string DiscoHeader => $"Discos ({Discos?.Count ?? 0})";
         public string ConexionesHeader => $"Conexiones de Red ({Conexiones?.Count ?? 0})";
         public string PerifericosHeader => $"Periféricos Asignados ({Perifericos?.Count ?? 0})";
+        #endregion
 
-        // Propiedades de conveniencia usadas en la vista (passthrough)
+        #region Propiedades de Conveniencia (Passthrough del Equipo)
         public string Codigo => Equipo.Codigo;
         public string? NombreEquipo => Equipo.NombreEquipo;
         public string? UsuarioAsignado => Equipo.UsuarioAsignado;
@@ -98,49 +75,233 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         public string? Observaciones => Equipo.Observaciones;
         public DateTime FechaCreacion => Equipo.FechaCreacion;
         public DateTime? FechaModificacion => Equipo.FechaModificacion;
-        // Propiedades formateadas para enlazar desde XAML (uso de cultura española)
-        private static readonly CultureInfo SpanishCulture = new CultureInfo("es-ES");
-        public string FechaCreacionFormatted => $"Creado: {Equipo.FechaCreacion.ToString("f", SpanishCulture)}";
-        public string FechaModificacionFormatted => Equipo.FechaModificacion.HasValue ? $"Modificado: {Equipo.FechaModificacion.Value.ToString("g", SpanishCulture)}" : "Modificado: -";
         public string? Estado => Equipo.Estado;
         public string? Sede => Equipo.Sede;
+        #endregion
+
+        #region Propiedades Formateadas (Cultura Española)
+        private static readonly CultureInfo SpanishCulture = new CultureInfo("es-ES");
+        public string FechaCreacionFormatted => $"Creado: {Equipo.FechaCreacion.ToString("f", SpanishCulture)}";
+        public string FechaModificacionFormatted => Equipo.FechaModificacion.HasValue 
+            ? $"Modificado: {Equipo.FechaModificacion.Value.ToString("g", SpanishCulture)}" 
+            : "Modificado: -";
+        #endregion
+
+        #region ✅ CONSTRUCTOR MIGRADO - DatabaseAwareViewModel
+        /// <summary>
+        /// Constructor migrado a DatabaseAwareViewModel con auto-refresh automático
+        /// </summary>
+        public DetallesEquipoInformaticoViewModel(
+            EquipoInformaticoEntity equipo,
+            IDbContextFactory<GestLogDbContext> dbContextFactory,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger) 
+            : base(databaseService, logger) // ✅ MIGRADO: Llama al constructor base para auto-refresh
+        {
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            Equipo = equipo ?? throw new ArgumentNullException(nameof(equipo));
+
+            // Inicializar colecciones vacías
+            SlotsRam = new ObservableCollection<SlotRamEntity>();
+            Discos = new ObservableCollection<DiscoEntity>();
+            Conexiones = new ObservableCollection<ConexionEntity>();
+            Perifericos = new ObservableCollection<PerifericoEquipoInformaticoEntity>();
+
+            // ✅ MIGRADO: Configurar eventos de cambio de colección para headers dinámicos
+            ConfigurarEventosColecciones();
+
+            // ✅ MIGRADO: Carga inicial de datos de forma asíncrona (auto-refresh se activa automáticamente)
+            _ = InicializarAsync();
+        }
+        #endregion
+
+        #region ✅ MÉTODOS MIGRADOS - DatabaseAwareViewModel        /// <summary>
+        /// ✅ MIGRADO: Implementación requerida para DatabaseAwareViewModel
+        /// Carga los datos del equipo desde la base de datos de forma segura
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+                // Cargar equipo actualizado con todas las relaciones
+                var equipoActualizado = await context.EquiposInformaticos
+                    .Include(e => e.SlotsRam)
+                    .Include(e => e.Discos)
+                    .Include(e => e.Conexiones)
+                    .FirstOrDefaultAsync(e => e.Codigo == Equipo.Codigo);
+
+                if (equipoActualizado != null)
+                {
+                    // Actualizar entidad principal
+                    ActualizarEquipoPrincipal(equipoActualizado);
+
+                    // Actualizar colecciones relacionadas
+                    await ActualizarColeccionesAsync(context);
+                }
+
+                _logger.LogDebug("[DetallesEquipoInformaticoViewModel] Datos actualizados exitosamente para equipo {Codigo}", Equipo.Codigo);
+            }
+            catch (Exception ex)
+            {
+                // ✅ PATRÓN: Manejo silencioso de errores de conexión (no bloquea UI)
+                _logger.LogWarning(ex, "[DetallesEquipoInformaticoViewModel] Error actualizando datos para equipo {Codigo} - continuando con datos locales", Equipo.Codigo);
+            }
+        }        /// <summary>
+        /// ✅ NUEVO: Método de inicialización asíncrona para carga inicial
+        /// </summary>
+        private async Task InicializarAsync()
+        {
+            try
+            {
+                // Carga inicial de datos
+                await RefreshDataAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[DetallesEquipoInformaticoViewModel] Error en inicialización para equipo {Codigo}", Equipo.Codigo);
+            }
+        }
+        #endregion
+
+        #region Métodos Auxiliares de Actualización
 
         /// <summary>
+        /// Actualiza las propiedades del equipo principal manteniendo la referencia original
+        /// </summary>
+        private void ActualizarEquipoPrincipal(EquipoInformaticoEntity equipoActualizado)
+        {
+            // Actualizar propiedades escalares sin cambiar la referencia del objeto
+            Equipo.NombreEquipo = equipoActualizado.NombreEquipo;
+            Equipo.UsuarioAsignado = equipoActualizado.UsuarioAsignado;
+            Equipo.Marca = equipoActualizado.Marca;
+            Equipo.Modelo = equipoActualizado.Modelo;
+            Equipo.SO = equipoActualizado.SO;
+            Equipo.SerialNumber = equipoActualizado.SerialNumber;
+            Equipo.Procesador = equipoActualizado.Procesador;
+            Equipo.CodigoAnydesk = equipoActualizado.CodigoAnydesk;
+            Equipo.Costo = equipoActualizado.Costo;
+            Equipo.FechaCompra = equipoActualizado.FechaCompra;
+            Equipo.FechaBaja = equipoActualizado.FechaBaja;
+            Equipo.Observaciones = equipoActualizado.Observaciones;
+            Equipo.FechaModificacion = equipoActualizado.FechaModificacion;
+            Equipo.Estado = equipoActualizado.Estado;
+            Equipo.Sede = equipoActualizado.Sede;
+
+            // Notificar cambios en propiedades calculadas
+            OnPropertyChanged(nameof(NombreEquipo));
+            OnPropertyChanged(nameof(UsuarioAsignado));
+            OnPropertyChanged(nameof(Marca));
+            OnPropertyChanged(nameof(Modelo));
+            OnPropertyChanged(nameof(SO));
+            OnPropertyChanged(nameof(SerialNumber));
+            OnPropertyChanged(nameof(Procesador));
+            OnPropertyChanged(nameof(CodigoAnydesk));
+            OnPropertyChanged(nameof(Costo));
+            OnPropertyChanged(nameof(FechaCompra));
+            OnPropertyChanged(nameof(FechaBaja));
+            OnPropertyChanged(nameof(Observaciones));
+            OnPropertyChanged(nameof(FechaModificacion));
+            OnPropertyChanged(nameof(Estado));
+            OnPropertyChanged(nameof(Sede));
+            OnPropertyChanged(nameof(FechaModificacionFormatted));
+        }
+
+        /// <summary>
+        /// Actualiza las colecciones relacionadas del equipo
+        /// </summary>
+        private async Task ActualizarColeccionesAsync(GestLogDbContext context)
+        {
+            // Actualizar Slots de RAM
+            var slotsActualizados = await context.SlotsRam
+                .Where(s => s.CodigoEquipo == Equipo.Codigo)
+                .ToListAsync();
+            ActualizarColeccion(SlotsRam, slotsActualizados);
+
+            // Actualizar Discos
+            var discosActualizados = await context.Discos
+                .Where(d => d.CodigoEquipo == Equipo.Codigo)
+                .ToListAsync();
+            ActualizarColeccion(Discos, discosActualizados);
+
+            // Actualizar Conexiones
+            var conexionesActualizadas = await context.Conexiones
+                .Where(c => c.CodigoEquipo == Equipo.Codigo)
+                .ToListAsync();
+            ActualizarColeccion(Conexiones, conexionesActualizadas);
+
+            // Actualizar Periféricos Asignados
+            var perifericosAsignados = await context.PerifericosEquiposInformaticos
+                .Where(p => p.CodigoEquipoAsignado == Equipo.Codigo)
+                .ToListAsync();
+            ActualizarColeccion(Perifericos, perifericosAsignados);
+        }
+
+        /// <summary>
+        /// Método genérico para actualizar colecciones de forma eficiente
+        /// </summary>
+        private void ActualizarColeccion<T>(ObservableCollection<T> coleccionLocal, 
+            System.Collections.Generic.List<T> datosActualizados) where T : class
+        {
+            // Limpiar y repoblar la colección
+            coleccionLocal.Clear();
+            foreach (var item in datosActualizados)
+            {
+                coleccionLocal.Add(item);
+            }
+        }
+
+        /// <summary>
+        /// Configura eventos de cambio de colección para actualizar headers dinámicos
+        /// </summary>
+        private void ConfigurarEventosColecciones()
+        {
+            SlotsRam.CollectionChanged += (s, e) => OnPropertyChanged(nameof(RamHeader));
+            Discos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(DiscoHeader));
+            Conexiones.CollectionChanged += (s, e) => OnPropertyChanged(nameof(ConexionesHeader));
+            Perifericos.CollectionChanged += (s, e) => OnPropertyChanged(nameof(PerifericosHeader));
+        }
+        #endregion
+
+        #region Métodos de Negocio (Estados del Equipo)        /// <summary>
         /// Intenta dar de baja el equipo: si hay DbContext persiste los cambios; si no, actualiza la entidad en memoria.
         /// Devuelve true si la operación se completó (aunque sea solo en memoria), false si hubo error fatal.
         /// </summary>
         public bool DarDeBaja(out string mensaje, out bool persistedToDb)
         {
-            // Delegar a SetEstado para centralizar reglas de negocio y persistencia.
             try
             {
-                var result = SetEstado("Dado de baja", out mensaje, out persistedToDb);
-                return result;
+                return SetEstado("Dado de baja", out mensaje, out persistedToDb);
             }
             catch (Exception ex)
             {
                 mensaje = $"Error al dar de baja: {ex.Message}";
                 persistedToDb = false;
+                _logger.LogError(ex, "[DetallesEquipoInformaticoViewModel] Error al dar de baja equipo {Codigo}", Equipo.Codigo);
                 return false;
             }
         }
 
         /// <summary>
         /// Establece un nuevo estado al equipo. Si el estado es 'Activo', limpia FechaBaja; si es 'Dado de baja', establece FechaBaja a ahora.
-        /// Persiste en DB si hay DbContext.
+        /// Persiste en DB si hay DbContext disponible.
         /// </summary>
         public bool SetEstado(string nuevoEstado, out string mensaje, out bool persistedToDb)
         {
             mensaje = string.Empty;
             persistedToDb = false;
+
             try
             {
                 bool esActivo = string.Equals(nuevoEstado, "Activo", StringComparison.OrdinalIgnoreCase);
-                bool esDadoBaja = string.Equals(nuevoEstado, "Dado de baja", StringComparison.OrdinalIgnoreCase) || string.Equals(nuevoEstado, "DadoDeBaja", StringComparison.OrdinalIgnoreCase);
+                bool esDadoBaja = string.Equals(nuevoEstado, "Dado de baja", StringComparison.OrdinalIgnoreCase) || 
+                                 string.Equals(nuevoEstado, "DadoDeBaja", StringComparison.OrdinalIgnoreCase);
 
-                if (_db != null)
+                // Intentar persitir en base de datos
+                using (var context = _dbContextFactory.CreateDbContext())
                 {
-                    var equipoRef = _db.EquiposInformaticos.FirstOrDefault(e => e.Codigo == Equipo.Codigo);
+                    var equipoRef = context.EquiposInformaticos.FirstOrDefault(e => e.Codigo == Equipo.Codigo);
                     if (equipoRef != null)
                     {
                         equipoRef.Estado = nuevoEstado;
@@ -152,22 +313,35 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         if (esDadoBaja)
                             equipoRef.FechaBaja = DateTime.Now;
 
-                        _db.SaveChanges();
+                        context.SaveChanges();
 
                         // Sincronizar entidad en memoria
                         Equipo.Estado = equipoRef.Estado;
                         Equipo.FechaModificacion = equipoRef.FechaModificacion;
                         Equipo.FechaBaja = equipoRef.FechaBaja;
 
-                        try { WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage()); } catch { }
+                        // Notificar cambios
+                        OnPropertyChanged(nameof(Estado));
+                        OnPropertyChanged(nameof(FechaModificacion));
+                        OnPropertyChanged(nameof(FechaBaja));
+                        OnPropertyChanged(nameof(FechaModificacionFormatted));                        // Enviar mensaje de actualización
+                        try 
+                        { 
+                            WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage()); 
+                        } 
+                        catch (Exception msgEx) 
+                        { 
+                            _logger.LogWarning(msgEx, "[DetallesEquipoInformaticoViewModel] Error enviando mensaje de actualización");
+                        }
 
-                        mensaje = esActivo ? "Equipo marcado como activo y fecha de baja eliminada." : (esDadoBaja ? "Equipo dado de baja correctamente." : "Estado actualizado correctamente.");
+                        mensaje = esActivo ? "Equipo marcado como activo y fecha de baja eliminada." 
+                            : (esDadoBaja ? "Equipo dado de baja correctamente." : "Estado actualizado correctamente.");
                         persistedToDb = true;
                         return true;
                     }
                 }
 
-                // Fallback en memoria
+                // Fallback en memoria si no se puede persistir
                 Equipo.Estado = nuevoEstado;
                 Equipo.FechaModificacion = DateTime.Now;
                 if (esActivo)
@@ -175,16 +349,24 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 if (esDadoBaja)
                     Equipo.FechaBaja = DateTime.Now;
 
-                mensaje = esActivo ? "Estado actualizado en memoria: equipo marcado como activo y fecha de baja eliminada." : (esDadoBaja ? "Estado actualizado en memoria: equipo marcado como dado de baja." : "Estado actualizado en memoria.");
+                // Notificar cambios
+                OnPropertyChanged(nameof(Estado));
+                OnPropertyChanged(nameof(FechaModificacion));
+                OnPropertyChanged(nameof(FechaBaja));
+                OnPropertyChanged(nameof(FechaModificacionFormatted));
+
+                mensaje = esActivo ? "Estado actualizado en memoria: equipo marcado como activo y fecha de baja eliminada." 
+                    : (esDadoBaja ? "Estado actualizado en memoria: equipo marcado como dado de baja." : "Estado actualizado en memoria.");
                 persistedToDb = false;
                 return true;
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 mensaje = $"Error al actualizar estado: {ex.Message}";
                 persistedToDb = false;
+                _logger.LogError(ex, "[DetallesEquipoInformaticoViewModel] Error al actualizar estado del equipo {Codigo} a {Estado}", Equipo.Codigo, nuevoEstado);
                 return false;
             }
         }
+        #endregion
     }
 }

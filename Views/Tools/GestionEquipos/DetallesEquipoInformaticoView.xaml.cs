@@ -4,6 +4,7 @@ using GestLog.ViewModels.Tools.GestionEquipos;
 using System.Linq;
 using System.Globalization;
 using GestLog.Modules.DatabaseConnection; // agregado para poder recibir GestLogDbContext
+using Microsoft.Extensions.DependencyInjection; // ✅ MIGRADO: Para resolver dependencias
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -15,16 +16,22 @@ namespace GestLog.Views.Tools.GestionEquipos
         // Constructor antiguo preservado y redirigido a la nueva sobrecarga
         public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo) : this(equipo, null)
         {
-        }
-
-        // Nueva sobrecarga que recibe el DbContext (nullable) y lo pasa al ViewModel
+        }        // Nueva sobrecarga que recibe el DbContext (nullable) y lo pasa al ViewModel
         public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo, GestLogDbContext? db)
         {
             InitializeComponent();
 
             // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
             _db = db;
-            DataContext = new DetallesEquipoInformaticoViewModel(equipo, _db);
+            
+            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
+            var app = (App)System.Windows.Application.Current;
+            var serviceProvider = app.ServiceProvider;
+            var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
+            var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+            
+            DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger);
         }
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
@@ -142,10 +149,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                                 SlotsRam = vmFallback.ListaRam?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(),
                                 Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(),
                                 Conexiones = vmFallback.ListaConexiones?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>()
-                            };
-
-                            // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
-                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, _db);
+                            };                            // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
+                            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
+                            var app = (App)System.Windows.Application.Current;
+                            var serviceProvider = app.ServiceProvider;
+                            var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
+                            var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                            var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+                            
+                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, dbContextFactory, databaseService, logger);
                         }
                     }
                     catch

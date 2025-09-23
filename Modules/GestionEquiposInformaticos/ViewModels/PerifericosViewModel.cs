@@ -11,35 +11,29 @@ using System.Threading;
 using System.Windows;
 using MessageBox = System.Windows.MessageBox;
 using GestLog.Views.Tools.GestionEquipos;
+using GestLog.Services;
+using GestLog.Services.Interfaces;
+using GestLog.Models.Events;
+using GestLog.ViewModels.Base;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para la gestión de periféricos informáticos
     /// Respeta SRP: solo coordina la gestión CRUD de periféricos
+    /// Hereda auto-refresh automático de DatabaseAwareViewModel
     /// </summary>
-    public partial class PerifericosViewModel : ObservableObject
+    public partial class PerifericosViewModel : DatabaseAwareViewModel
     {
-        private readonly IGestLogLogger _logger;
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
 
-        // Control de concurrencia para evitar múltiples inicializaciones simultáneas
-        private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
         private bool _isInitialized = false;
 
         [ObservableProperty]
-        private ObservableCollection<PerifericoEquipoInformaticoDto> _perifericos = new();
-
-        [ObservableProperty]
+        private ObservableCollection<PerifericoEquipoInformaticoDto> _perifericos = new();        [ObservableProperty]
         private PerifericoEquipoInformaticoDto? _perifericoSeleccionado;
 
         [ObservableProperty]
         private string _filtro = string.Empty;
-
-        [ObservableProperty]
-        private bool _isLoading;
-
-        [ObservableProperty]
-        private string _statusMessage = "Listo";
 
         [ObservableProperty]
         private int _totalPerifericos;
@@ -61,109 +55,133 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// <summary>
         /// Lista de todas las sedes disponibles para el ComboBox
         /// </summary>
-        public Array SedesDisponibles { get; } = Enum.GetValues(typeof(SedePeriferico));
-
-        /// <summary>
+        public Array SedesDisponibles { get; } = Enum.GetValues(typeof(SedePeriferico));        /// <summary>
         /// Constructor principal con inyección de dependencias
         /// </summary>
-        public PerifericosViewModel(IGestLogLogger logger, GestLogDbContext dbContext)
+        public PerifericosViewModel(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory, IDatabaseConnectionService databaseService)
+            : base(databaseService, logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            // No usar el DbContext inyectado para evitar problemas de concurrencia
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             
-            // Inicializar automáticamente con control de concurrencia
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await InicializarAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "[PerifericosViewModel] Error al inicializar automáticamente");
-                }
-            });
-        }
-
-        /// <summary>
-        /// Inicializa el ViewModel cargando los datos
+            // La suscripción al auto-refresh se hace automáticamente en la clase base
+            // NO ejecutar Task.Run desde el constructor
+            // La inicialización se hace desde la vista cuando sea necesario
+            _logger.LogInformation("[PerifericosViewModel] ViewModel creado con auto-refresh automático, listo para inicialización");
+        }/// <summary>
+        /// Inicializa el ViewModel con detección ultrarrápida de problemas de conexión
         /// </summary>
         public async Task InicializarAsync(CancellationToken cancellationToken = default)
         {
-            // Usar semáforo para evitar inicializaciones concurrentes
-            await _initializationSemaphore.WaitAsync(cancellationToken);
+            // Verificar si ya está inicializado o hay una operación en curso
+            if (_isInitialized || IsLoading)
+            {
+                _logger.LogInformation("[PerifericosViewModel] Ya está inicializado o en curso, omitiendo");
+                return;
+            }
+
             try
             {
-                if (_isInitialized)
-                {
-                    _logger.LogInformation("[PerifericosViewModel] Ya está inicializado, omitiendo");
-                    return;
-                }
-
                 _logger.LogInformation("[PerifericosViewModel] Inicializando gestión de periféricos");
-                // Llamar al método interno sin semáforo para evitar deadlock
-                await CargarPerifericosInternoAsync(cancellationToken);
-                _isInitialized = true;
-            }            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[PerifericosViewModel] Error al inicializar");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // TIMEOUT ULTRARRÁPIDO de solo 1 segundo para experiencia fluida
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+                
+                // Llamar directamente sin Task.Run para evitar deadlocks
+                await CargarPerifericosInternoAsync(combinedCts.Token);
+                
+                _isInitialized = true;
+                _logger.LogInformation("[PerifericosViewModel] Inicialización completada exitosamente");
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("[PerifericosViewModel] Timeout rápido - sin conexión BD");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    StatusMessage = "Error al cargar periféricos";
+                    StatusMessage = "Sin conexión - Módulo no disponible";
+                    _isInitialized = true; // Marcar como inicializado para evitar reintentos
                 });
             }
-            finally
+            catch (OperationCanceledException)
             {
-                _initializationSemaphore.Release();
+                _logger.LogInformation("[PerifericosViewModel] Inicialización cancelada por usuario");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Operación cancelada";
+                });
             }
-        }
-
-        /// <summary>
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[PerifericosViewModel] Error al inicializar");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Error al inicializar módulo";
+                    _isInitialized = true; // Marcar como inicializado para evitar reintentos
+                });
+            }
+        }/// <summary>
         /// Carga todos los periféricos desde la base de datos
         /// </summary>
         [RelayCommand]
         public async Task CargarPerifericosAsync(CancellationToken cancellationToken = default)
         {
-            // Usar semáforo para evitar cargas concurrentes
-            await _initializationSemaphore.WaitAsync(cancellationToken);
-            try
+            // Verificar si ya hay una operación en curso
+            if (IsLoading)
             {
-                await CargarPerifericosInternoAsync(cancellationToken);
+                _logger.LogInformation("[PerifericosViewModel] Carga ya en curso, omitiendo");
+                return;
             }
-            finally
-            {
-                _initializationSemaphore.Release();
-            }
-        }        /// <summary>
-        /// Método interno para cargar periféricos sin usar semáforo (para evitar deadlocks)
+
+            // Usar timeout para evitar bloqueos prolongados
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);            await CargarPerifericosInternoAsync(combinedCts.Token);
+        }
+
+        /// <summary>
+        /// Implementación del método abstracto para auto-refresh automático
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            // Reset estado de inicialización para permitir recarga
+            _isInitialized = false;
+            
+            // Recargar datos usando el método público
+            await CargarPerifericosAsync();
+        }/// <summary>
+        /// Método interno para cargar periféricos con detección ultrarrápida de problemas de conexión
         /// </summary>
         private async Task CargarPerifericosInternoAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                // Ejecutar las modificaciones de propiedades vinculadas a la UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI inmediatamente
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     IsLoading = true;
-                    StatusMessage = "Cargando periféricos...";
+                    StatusMessage = "Verificando conexión...";
                 });
 
-                // Crear un DbContext independiente para evitar concurrencia
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetConnectionString())
-                    .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning))
-                    .Options;
+                _logger.LogInformation("[PerifericosViewModel] Iniciando carga de periféricos desde base de datos");
 
-                using var dbContext = new GestLogDbContext(options);
-                  var entities = await dbContext.PerifericosEquiposInformaticos
+                // Usar DbContextFactory con timeout ultrarrápido
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                  // Timeout balanceado: suficiente para SSL handshake
+                dbContext.Database.SetCommandTimeout(15);
+
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Consultando periféricos...";
+                });
+                
+                var entities = await dbContext.PerifericosEquiposInformaticos
                     .Include(p => p.EquipoAsignado)
                     .OrderBy(p => p.Codigo)
                     .ToListAsync(cancellationToken);
 
-                // Ejecutar las modificaciones de la ObservableCollection y las propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                _logger.LogInformation("[PerifericosViewModel] Datos cargados desde BD, procesando {Count} registros", entities.Count);
+
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     Perifericos.Clear();
                     foreach (var entity in entities)
@@ -176,24 +194,55 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = $"Cargados {Perifericos.Count} periféricos";
                 });
 
-                _logger.LogInformation("[PerifericosViewModel] Cargados {Count} periféricos", Perifericos.Count);
+                _logger.LogInformation("[PerifericosViewModel] Carga completada exitosamente - {Count} periféricos", Perifericos.Count);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("[PerifericosViewModel] Carga cancelada por usuario");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Operación cancelada";
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("[PerifericosViewModel] Timeout ultrarrápido - sin conexión");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Sin conexión a base de datos";
+                });
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == -1 || ex.Number == 26 || ex.Number == 10060)
+            {
+                // Errores específicos de conexión - no generar logs verbosos
+                _logger.LogInformation("[PerifericosViewModel] Sin conexión BD (Error {Number})", ex.Number);
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Base de datos no disponible";
+                });
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("pool") || ex.Message.Contains("timeout"))
+            {
+                _logger.LogInformation("[PerifericosViewModel] Pool de conexiones saturado");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Servidor saturado - Intente más tarde";
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[PerifericosViewModel] Error al cargar periféricos");
+                _logger.LogError(ex, "[PerifericosViewModel] Error inesperado al cargar periféricos");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona en caso de error
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    StatusMessage = "Error al cargar periféricos";
+                    StatusMessage = $"Error: {ex.Message}";
                 });
-                
-                MessageBox.Show("Error al cargar periféricos. Ver logs para más detalles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona al finalizar
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     IsLoading = false;
                 });
@@ -220,12 +269,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     var nuevoPeriferico = dialogViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(nuevoPeriferico, esNuevo: true);
                 }
-            }            catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al agregar periférico");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al agregar periférico";
                 });
@@ -254,13 +304,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 {
                     var perifericoEditado = dialogViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(perifericoEditado, esNuevo: false);
-                }            }
+                }
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al editar periférico");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al editar periférico";
                 });
@@ -285,22 +336,19 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 if (resultado == MessageBoxResult.Yes)
                 {
-                    // Usar DbContext independiente
-                    var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                        .UseSqlServer(GetConnectionString())
-                        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning))
-                        .Options;
-
-                    using var dbContext = new GestLogDbContext(options);
+                    // Usar DbContextFactory en lugar de crear manualmente
+                    using var dbContext = _dbContextFactory.CreateDbContext();
                     
                     var entity = await dbContext.PerifericosEquiposInformaticos
-                        .FirstOrDefaultAsync(p => p.Codigo == PerifericoSeleccionado.Codigo);                    if (entity != null)
+                        .FirstOrDefaultAsync(p => p.Codigo == PerifericoSeleccionado.Codigo);
+
+                    if (entity != null)
                     {
                         dbContext.PerifericosEquiposInformaticos.Remove(entity);
                         await dbContext.SaveChangesAsync();
 
-                        // Ejecutar las modificaciones de la ObservableCollection y propiedades UI en el hilo de la UI
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        // Actualizar UI de forma asíncrona
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                         {
                             Perifericos.Remove(PerifericoSeleccionado);
                             ActualizarEstadisticas();
@@ -310,12 +358,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         _logger.LogInformation("[PerifericosViewModel] Periférico eliminado: {Codigo}", PerifericoSeleccionado.Codigo);
                     }
                 }
-            }            catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al eliminar periférico");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al eliminar periférico";
                 });
@@ -334,13 +383,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                // Usar DbContext independiente
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetConnectionString())
-                    .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning))
-                    .Options;
-
-                using var dbContext = new GestLogDbContext(options);
+                // Usar DbContextFactory en lugar de crear manualmente
+                using var dbContext = _dbContextFactory.CreateDbContext();
 
                 PerifericoEquipoInformaticoEntity entity;
 
@@ -395,10 +439,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 entity.UsuarioAsignado = string.IsNullOrEmpty(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado;
                 entity.Sede = dto.Sede;
                 entity.Estado = dto.Estado;
-                entity.Observaciones = dto.Observaciones;                await dbContext.SaveChangesAsync();
+                entity.Observaciones = dto.Observaciones;
 
-                // Ejecutar las modificaciones de la ObservableCollection y propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                await dbContext.SaveChangesAsync();
+
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     if (esNuevo)
                     {
@@ -420,12 +466,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 });
 
                 _logger.LogInformation("[PerifericosViewModel] Periférico {Accion}: {Codigo}", esNuevo ? "agregado" : "actualizado", dto.Codigo);
-            }            catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al guardar periférico");
                 
-                // Ejecutar las modificaciones de propiedades UI en el hilo de la UI
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                // Actualizar UI de forma asíncrona
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al guardar periférico";
                 });
@@ -460,9 +507,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             dto.Observaciones = entity.Observaciones;
             dto.FechaModificacion = entity.FechaModificacion;
             dto.NombreEquipoAsignado = entity.EquipoAsignado?.NombreEquipo;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Actualiza las estadísticas mostradas en la vista
         /// </summary>
         private void ActualizarEstadisticas()
@@ -474,12 +519,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         }
 
         /// <summary>
-        /// Obtiene la cadena de conexión para crear DbContext independientes
+        /// Override para manejar cuando se pierde la conexión específicamente para periféricos
         /// </summary>
-        private string GetConnectionString()
+        protected override void OnConnectionLost()
         {
-            // Usar la misma cadena de conexión que funciona en el resto de la aplicación
-            return "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=True;Connection Timeout=30;";
+            StatusMessage = "Sin conexión - Módulo de periféricos no disponible";
         }
     }
 }

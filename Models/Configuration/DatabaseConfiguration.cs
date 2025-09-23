@@ -41,6 +41,11 @@ public class DatabaseConfiguration
     public int CommandTimeout { get; set; } = 30;
 
     /// <summary>
+    /// Timeout específico para verificación rápida del splash screen (segundos)
+    /// </summary>
+    public int SplashScreenTimeout { get; set; } = 5;
+
+    /// <summary>
     /// Usar autenticación integrada de Windows
     /// </summary>
     public bool UseIntegratedSecurity { get; set; } = false;

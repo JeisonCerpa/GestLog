@@ -1,3 +1,4 @@
+// ✅ MIGRADO A DatabaseAwareViewModel - AUTO-REFRESH CON TIMEOUT ULTRARRÁPIDO
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
@@ -21,11 +22,23 @@ using Modules.Personas.Interfaces;
 using System.Globalization;
 using System.Threading;
 using GestLog.Services.Equipos;
+using GestLog.Services;
+
+// ✅ NUEVAS DEPENDENCIAS PARA AUTO-REFRESH
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
-    public partial class AgregarEquipoInformaticoViewModel : ObservableObject
+    /// <summary>
+    /// ViewModel para agregar/editar equipos informáticos.
+    /// ✅ MIGRADO: Hereda de DatabaseAwareViewModel para auto-refresh automático con timeout ultrarrápido.
+    /// </summary>
+    public partial class AgregarEquipoInformaticoViewModel : DatabaseAwareViewModel
     {
+        #region ✅ NUEVAS DEPENDENCIAS - AUTO-REFRESH
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        #endregion
         [ObservableProperty]
         private bool isLoadingRam;
 
@@ -97,13 +110,11 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private ObservableCollection<PerifericoEquipoInformaticoDto> perifericosAsignados = new();
 
         public string[] TiposRam { get; } = new[] { "DDR3", "DDR4", "DDR5", "LPDDR4", "LPDDR5" };
-        public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };
-
-        [ObservableProperty]
+        public string[] TiposDisco { get; } = new[] { "HDD", "SSD", "NVMe", "eMMC" };        [ObservableProperty]
         private bool isLoadingDiscos;        
         private readonly ICurrentUserService _currentUserService;
         private CurrentUserInfo _currentUser;
-        private readonly IGestLogLogger _logger;
+        // ✅ REMOVIDO: _logger ahora se hereda de DatabaseAwareViewModel
 
         [ObservableProperty]
         private bool canGuardarEquipo;
@@ -128,21 +139,73 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private bool canAsignarPeriferico;
 
         [ObservableProperty]
-        private bool canDesasignarPeriferico;
-
-        private int _isSaving = 0; // 0 = no guardando, 1 = guardando
-        public AgregarEquipoInformaticoViewModel(ICurrentUserService currentUserService)
+        private bool canDesasignarPeriferico;        private int _isSaving = 0; // 0 = no guardando, 1 = guardando
+        
+        /// <summary>
+        /// ✅ MIGRADO: Constructor actualizado con dependencias para DatabaseAwareViewModel
+        /// </summary>
+        public AgregarEquipoInformaticoViewModel(
+            ICurrentUserService currentUserService,
+            IDbContextFactory<GestLogDbContext> dbContextFactory,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger)
+            : base(databaseService, logger) // ✅ MIGRADO: Llama al constructor base para auto-refresh
         {
             _currentUserService = currentUserService;
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
-            
-            // Obtener logger del service provider
-            var serviceProvider = LoggingService.GetServiceProvider();
-            _logger = serviceProvider.GetRequiredService<IGestLogLogger>();
-            
-            RecalcularPermisos();
+              RecalcularPermisos();
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
         }
+        
+        #region ✅ MÉTODOS MIGRADOS - DatabaseAwareViewModel
+        /// <summary>
+        /// ✅ MIGRADO: Implementación requerida para DatabaseAwareViewModel
+        /// Recarga las personas disponibles y otros datos necesarios
+        /// </summary>
+        protected override async Task RefreshDataAsync()
+        {
+            try
+            {
+                _logger.LogDebug("[AgregarEquipoInformaticoViewModel] Refrescando datos automáticamente");
+                
+                await using var context = await _dbContextFactory.CreateDbContextAsync();
+                
+                // Cargar personas activas
+                var personas = await context.Personas
+                    .Where(p => p.Activo)
+                    .ToListAsync();
+
+                // Actualizar colecciones en el hilo de UI
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // Actualizar PersonasDisponibles preservando referencias enlazadas
+                    if (PersonasDisponibles == null)
+                        PersonasDisponibles = new ObservableCollection<Persona>(personas);
+                    else
+                    {
+                        PersonasDisponibles.Clear();
+                        foreach (var p in personas) PersonasDisponibles.Add(p);
+                    }
+
+                    if (PersonasFiltradas == null)
+                        PersonasFiltradas = new ObservableCollection<Persona>(personas);
+                    else
+                    {
+                        PersonasFiltradas.Clear();
+                        foreach (var p in personas) PersonasFiltradas.Add(p);
+                    }
+                });
+
+                _logger.LogDebug("[AgregarEquipoInformaticoViewModel] Datos refrescados exitosamente");
+            }
+            catch (Exception ex)
+            {
+                // ✅ PATRÓN: Manejo silencioso de errores de conexión (no bloquea UI)
+                _logger.LogWarning(ex, "[AgregarEquipoInformaticoViewModel] Error actualizando datos - continuando con datos locales");
+            }
+        }
+        #endregion
 
         private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
@@ -163,21 +226,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             // Permisos para gestión de periféricos
             CanAsignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanDesasignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
-        }
-
-        public async Task InicializarAsync()
+        }        public async Task InicializarAsync()
         {
             try
             {
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetProductionConnectionString())
-                    .Options;
+                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 
                 // Ejecutar la consulta en background para no bloquear la UI
-                var personas = await Task.Run(() =>
+                var personas = await Task.Run(async () =>
                 {
-                    using var dbContext = new GestLogDbContext(options);
-                    return dbContext.Personas.Where(p => p.Activo).ToList();
+                    return await dbContext.Personas.Where(p => p.Activo).ToListAsync();
                 }).ConfigureAwait(false);
 
                 // Asignar/actualizar las colecciones en el hilo de UI
@@ -244,14 +303,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             {
                 _logger.LogError(ex, "Error al cargar las personas para usuario asignado");
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se pudieron cargar los usuarios disponibles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
-            }
-        }
-
-        private string GetProductionConnectionString()
-        {
-            // Configuración de conexión de producción
-            return "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=True;Connection Timeout=30;";
-        }
+            }        }
+        
+        // ✅ REMOVIDO: GetProductionConnectionString() - ya no necesario con DbContextFactory
 
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task GuardarEquipoAsync()
@@ -266,18 +320,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             try
             {
                 if (string.IsNullOrWhiteSpace(Codigo) || string.IsNullOrWhiteSpace(NombreEquipo))
-                {
-                    MessageBox.Show("El código y el nombre del equipo son obligatorios.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                {                    MessageBox.Show("El código y el nombre del equipo son obligatorios.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetProductionConnectionString())
-                    .Options;
-
-                _logger.LogInformation("Iniciando GuardarEquipoAsync. IsEditing={IsEditing} OriginalCodigo={OriginalCodigo} Codigo={Codigo}", IsEditing, OriginalCodigo, Codigo);
-
-                using var dbContext = new GestLogDbContext(options);
+                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 
                 // Si estamos en modo edición, actualizar
                 if (IsEditing)
@@ -1536,18 +1584,13 @@ Get-NetIPConfiguration | Where-Object {
             {
                 ListaConexiones.Add(conexion);
             }
-        }
-
-        // Métodos para gestión de periféricos
+        }        // Métodos para gestión de periféricos
         public async Task CargarPerifericosDisponiblesAsync()
         {
             try
             {
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetProductionConnectionString())
-                    .Options;
-
-                using var dbContext = new GestLogDbContext(options);
+                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 
                 // Cargar todos los periféricos que no están asignados o están asignados al equipo actual
                 var perifericosQuery = dbContext.PerifericosEquiposInformaticos
@@ -1584,20 +1627,15 @@ Get-NetIPConfiguration | Where-Object {
                 _logger.LogError(ex, "Error al cargar periféricos disponibles");
                 MessageBox.Show("Error al cargar periféricos disponibles", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanAsignarPeriferico))]
+        }        [RelayCommand(CanExecute = nameof(CanAsignarPeriferico))]
         public async Task AsignarPerifericoAsync(PerifericoEquipoInformaticoDto periferico)
         {
             if (periferico == null || string.IsNullOrWhiteSpace(Codigo)) return;
 
             try
             {
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetProductionConnectionString())
-                    .Options;
-
-                using var dbContext = new GestLogDbContext(options);
+                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 
                 var entity = await dbContext.PerifericosEquiposInformaticos
                     .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
@@ -1623,20 +1661,15 @@ Get-NetIPConfiguration | Where-Object {
                 _logger.LogError(ex, "Error al asignar periférico {Codigo}", periferico.Codigo);
                 MessageBox.Show($"Error al asignar periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanDesasignarPeriferico))]
+        }        [RelayCommand(CanExecute = nameof(CanDesasignarPeriferico))]
         public async Task DesasignarPerifericoAsync(PerifericoEquipoInformaticoDto periferico)
         {
             if (periferico == null) return;
 
             try
             {
-                var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<GestLogDbContext>()
-                    .UseSqlServer(GetProductionConnectionString())
-                    .Options;
-
-                using var dbContext = new GestLogDbContext(options);
+                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 
                 var entity = await dbContext.PerifericosEquiposInformaticos
                     .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);

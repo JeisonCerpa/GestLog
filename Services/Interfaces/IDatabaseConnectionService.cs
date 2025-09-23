@@ -64,6 +64,11 @@ public interface IDatabaseConnectionService : IDisposable
     Task<bool> TestConnectionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Prueba la conexión rápidamente sin resiliencia (ideal para splash screen)
+    /// </summary>
+    Task<bool> TestConnectionQuickAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Ejecuta una consulta SQL y retorna un DataTable
     /// </summary>
     Task<DataTable> ExecuteQueryAsync(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default);

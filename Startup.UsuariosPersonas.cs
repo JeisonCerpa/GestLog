@@ -78,15 +78,9 @@ namespace GestLog
             {
                 var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
                 return new PersonaRepository(dbContextFactory);
-            });
-            // Registrar proveedor seguro de configuración de base de datos
+            });            // Registrar proveedor seguro de configuración de base de datos
             services.AddSingleton<IDatabaseConfigurationProvider, SecureDatabaseConfigurationService>();
-            services.AddScoped<ITipoDocumentoRepository>(provider =>
-            {
-                var dbConfigProvider = provider.GetRequiredService<IDatabaseConfigurationProvider>();
-                var connectionString = dbConfigProvider.GetConnectionStringAsync().GetAwaiter().GetResult();
-                return new TipoDocumentoRepository(connectionString);
-            });            
+            services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>();
             // ViewModels de Personas (agregar cuando existan)
             services.AddSingleton<PersonaManagementViewModel>();
             services.AddSingleton<IModalService, ModalService>();

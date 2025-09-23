@@ -189,6 +189,30 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
             _logger.LogWarning(ex, "⚠️ Prueba de conexión falló");
             return false;
         }
+    }    /// <summary>
+    /// Prueba la conexión rápidamente sin resiliencia (ideal para splash screen)
+    /// </summary>
+    public async Task<bool> TestConnectionQuickAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("⚡ Prueba rápida de conexión (sin resiliencia)");
+            
+            // Usar conexión directa sin Circuit Breaker ni Exponential Backoff
+            using var connection = await CreateConnectionInternalAsync(cancellationToken);
+            using var command = new SqlCommand("SELECT 1", connection);
+            command.CommandTimeout = _config.SplashScreenTimeout; // Timeout específico del splash screen
+            
+            var result = await command.ExecuteScalarAsync(cancellationToken);
+            
+            _logger.LogDebug("✅ Prueba rápida de conexión exitosa");
+            return result != null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("⚠️ Prueba rápida de conexión falló: {Message}", ex.Message);
+            return false;
+        }
     }
 
     /// <summary>
