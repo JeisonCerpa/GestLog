@@ -10,6 +10,7 @@ using GestLog.Modules.Usuarios.Interfaces; // Para autenticación
 using GestLog.Modules.Usuarios.Services; // Para servicios de autenticación
 using GestLog.Services.Interfaces;
 using GestLog.Services;
+using GestLog.Services.Core.Logging; // ✅ NUEVO: Para IGestLogLogger
 using GestLog.Views.Usuarios;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
@@ -64,11 +65,29 @@ namespace GestLog
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService, GestLog.Modules.GestionEquiposInformaticos.Services.EquipoInformaticoService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroMantenimientoEquipoDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroMantenimientoEquipoDialogService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();              // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();            // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
-            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.HistorialEjecucionesViewModel>();
+            
+            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.HistorialEjecucionesViewModel>(sp =>
+            {
+                var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService>();
+                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService>();
+                var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);
+            });
+            
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.PerifericosViewModel>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>();
+            
+            // RegistrarMantenimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>(sp =>
+            {
+                var mantenimientoService = sp.GetRequiredService<IMantenimientoService>();
+                var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel(mantenimientoService, databaseService, logger);
+            });
             // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel>();
 

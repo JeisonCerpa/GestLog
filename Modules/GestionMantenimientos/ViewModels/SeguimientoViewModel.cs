@@ -8,6 +8,8 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -17,10 +19,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 /// <summary>
 /// ViewModel para el seguimiento de mantenimientos.
 /// </summary>
-public partial class SeguimientoViewModel : ObservableObject, IDisposable
+public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 {
     private readonly ISeguimientoService _seguimientoService;
-    private readonly IGestLogLogger _logger;
     private readonly ICurrentUserService _currentUserService;
     private CurrentUserInfo _currentUser;
 
@@ -53,7 +54,9 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
     private DateTime? fechaDesde;
 
     [ObservableProperty]
-    private DateTime? fechaHasta;    [ObservableProperty]
+    private DateTime? fechaHasta;
+
+    [ObservableProperty]
     private System.ComponentModel.ICollectionView? seguimientosView;
 
     // Optimización: Control de carga para evitar actualizaciones innecesarias
@@ -64,17 +67,23 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
     private const int MIN_RELOAD_INTERVAL_MS = 1500; // Mínimo 1.5 segundos entre cargas
     private const int MIN_OBSERVACIONES_UPDATE_INTERVAL_MS = 5000; // Mínimo 5 segundos entre actualizaciones de observaciones
 
-    public SeguimientoViewModel(ISeguimientoService seguimientoService, IGestLogLogger logger, ICurrentUserService currentUserService)
+    public SeguimientoViewModel(
+        ISeguimientoService seguimientoService, 
+        ICurrentUserService currentUserService,
+        IDatabaseConnectionService databaseService,
+        IGestLogLogger logger)
+        : base(databaseService, logger)
     {
         try
         {
             _seguimientoService = seguimientoService;
-            _logger = logger;
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
             RecalcularPermisos();
-            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;            // Suscribirse a mensajes de actualización de seguimientos
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
+
+            // Suscribirse a mensajes de actualización de seguimientos
             // OPTIMIZACIÓN: Solo recargar cuando sea realmente necesario
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
             {
@@ -92,7 +101,8 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
             if (SeguimientosView != null)
                 SeguimientosView.Filter = FiltrarSeguimiento;
-                  // Cargar datos automáticamente al crear el ViewModel
+
+            // Cargar datos automáticamente al crear el ViewModel
             Task.Run(async () => 
             {
                 try
@@ -124,7 +134,9 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
         CanEditSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EditarSeguimiento");
         CanDeleteSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EliminarSeguimiento");
         CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
-    }    [RelayCommand]
+    }
+
+    [RelayCommand]
     public async Task LoadSeguimientosAsync(bool forceReload = true)
     {
         // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias
@@ -183,10 +195,12 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             
             if (cancellationToken.IsCancellationRequested)
                 return;
+
             var hoy = DateTime.Now;
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
             int semanaActual = cal.GetWeekOfYear(hoy, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
             int anioActual = hoy.Year;
+
             foreach (var s in lista)
             {
                 var estadoCalculado = CalcularEstadoSeguimiento(s, semanaActual, anioActual, hoy);
@@ -199,6 +213,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 }
                 s.RefrescarCacheFiltro(); // Refresca la caché de campos normalizados
             }
+
             Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
             _lastLoadTime = DateTime.Now;
@@ -223,6 +238,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
         int diff = s.Semana - semanaActual;
         var fechaInicioSemana = FirstDateOfWeekISO8601(s.Anio, s.Semana);
         var fechaFinSemana = fechaInicioSemana.AddDays(6);
+
         if (s.Anio < anioActual || (s.Anio == anioActual && diff < -1))
         {
             if (s.FechaRegistro == null)
@@ -233,6 +249,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
             return EstadoSeguimientoMantenimiento.NoRealizado;
         }
+
         if (s.Anio == anioActual && diff == -1)
         {
             if (s.FechaRegistro == null)
@@ -243,6 +260,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
             return EstadoSeguimientoMantenimiento.Atrasado;
         }
+
         if (s.Anio == anioActual && diff == 0)
         {
             if (s.FechaRegistro == null)
@@ -253,10 +271,12 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 return EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
             return EstadoSeguimientoMantenimiento.Pendiente;
         }
+
         if (s.Anio == anioActual && diff > 0)
         {
             return EstadoSeguimientoMantenimiento.Pendiente;
         }
+
         return EstadoSeguimientoMantenimiento.Pendiente;
     }
 
@@ -272,7 +292,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
         return result.AddDays(-3);
-    }    
+    }
 
     [RelayCommand]
     public async Task ActualizarObservacionesPendientesAsync()
@@ -280,7 +300,8 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
         IsLoading = true;
         StatusMessage = "Actualizando observaciones de seguimientos...";
         try
-        {            await _seguimientoService.ActualizarObservacionesPendientesAsync();
+        {
+            await _seguimientoService.ActualizarObservacionesPendientesAsync();
             StatusMessage = "Observaciones actualizadas correctamente.";
             await LoadSeguimientosAsync(forceReload: true); // Forzar recarga tras actualizar observaciones
         }
@@ -322,6 +343,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
     {
         if (SelectedSeguimiento == null)
             return;
+
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(SelectedSeguimiento);
         if (dialog.ShowDialog() == true)
         {
@@ -345,6 +367,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
     {
         if (SelectedSeguimiento == null)
             return;
+
         try
         {
             await _seguimientoService.DeleteAsync(SelectedSeguimiento.Codigo!);
@@ -367,6 +390,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             Title = "Exportar seguimientos a Excel",
             FileName = $"Seguimientos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
         };
+
         if (dialog.ShowDialog() == true)
         {
             IsLoading = true;
@@ -397,6 +421,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             Title = "Exportar seguimientos filtrados a Excel",
             FileName = $"SeguimientosFiltrados_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
         };
+
         if (dialog.ShowDialog() == true)
         {
             IsLoading = true;
@@ -408,6 +433,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 {
                     using var workbook = new ClosedXML.Excel.XLWorkbook();
                     var ws = workbook.Worksheets.Add("Seguimientos");
+
                     ws.Cell(1, 1).Value = "Código";
                     ws.Cell(1, 2).Value = "Nombre";
                     ws.Cell(1, 3).Value = "Tipo Mtno";
@@ -416,6 +442,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                     ws.Cell(1, 6).Value = "Semana";
                     ws.Cell(1, 7).Value = "Año";
                     ws.Cell(1, 8).Value = "Estado";
+
                     int row = 2;
                     foreach (var s in filtrados)
                     {
@@ -429,9 +456,11 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                         ws.Cell(row, 8).Value = s.Estado.ToString();
                         row++;
                     }
+
                     ws.Columns().AdjustToContents();
                     workbook.SaveAs(dialog.FileName);
                 });
+
                 StatusMessage = $"Exportación completada: {dialog.FileName}";
             }
             catch (Exception ex)
@@ -456,14 +485,17 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
     {
         // No refrescar automáticamente
     }
+
     partial void OnFechaDesdeChanged(DateTime? value)
     {
         // No refrescar automáticamente
     }
+
     partial void OnFechaHastaChanged(DateTime? value)
     {
         // No refrescar automáticamente
     }
+
     partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
     {
         if (value != null)
@@ -471,14 +503,17 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             foreach (var s in value)
                 s.RefrescarCacheFiltro();
         }
+
         SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
         if (SeguimientosView != null)
             SeguimientosView.Filter = FiltrarSeguimiento;
         SeguimientosView?.Refresh();
     }
+
     private bool FiltrarSeguimiento(object obj)
     {
         if (obj is not SeguimientoMantenimientoDto s) return false;
+
         // Filtro múltiple por texto
         if (!string.IsNullOrWhiteSpace(FiltroSeguimiento))
         {
@@ -486,6 +521,7 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 .Select(t => RemoverTildes(t.Trim()).ToLowerInvariant().Replace(" ", ""))
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .ToList();
+
             var campos = new[]
             {
                 s.CodigoNorm,
@@ -497,19 +533,24 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
                 s.AnioNorm,
                 s.EstadoNorm
             };
+
             if (!terminos.All(termino => campos.Any(campo => campo.Contains(termino))))
                 return false;
         }
+
         // Filtro por fechas
         if (FechaDesde.HasValue && (s.FechaRegistro == null || s.FechaRegistro < FechaDesde.Value))
             return false;
         if (FechaHasta.HasValue && (s.FechaRegistro == null || s.FechaRegistro > FechaHasta.Value))
             return false;
+
         // Filtro por estado: no mostrar "Pendiente"
         if (s.Estado == EstadoSeguimientoMantenimiento.Pendiente)
             return false;
+
         return true;
     }
+
     private string RemoverTildes(string texto)
     {
         return texto
@@ -517,7 +558,8 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
             .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
             .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
             .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
-            .Replace("ñ", "n").Replace("Ñ", "N");    }
+            .Replace("ñ", "n").Replace("Ñ", "N");
+    }
 
     private string SepararCamelCase(string texto)
     {
@@ -525,36 +567,27 @@ public partial class SeguimientoViewModel : ObservableObject, IDisposable
         return System.Text.RegularExpressions.Regex.Replace(texto, "([a-z])([A-Z])", "$1 $2");
     }
 
-    // Implementar IDisposable para limpieza de recursos
-    private bool _disposed = false;
-
-    protected virtual void Dispose(bool disposing)
+    // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+    protected override async Task RefreshDataAsync()
     {
-        if (!_disposed && disposing)
-        {
-            _loadCancellationToken?.Cancel();
-            _loadCancellationToken?.Dispose();
-            
-            // Desuscribirse de mensajes
-            WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
-            
-            if (_currentUserService != null)
-                _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
-                
-            _disposed = true;
-        }
+        await LoadSeguimientosAsync(forceReload: true);
     }
 
-    public void Dispose()
+    protected override void OnConnectionLost()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~SeguimientoViewModel()
+        StatusMessage = "Sin conexión - Módulo no disponible";
+    }    // Implementar IDisposable para limpieza de recursos
+    public new void Dispose()
     {
-        Dispose(false);
+        _loadCancellationToken?.Cancel();
+        _loadCancellationToken?.Dispose();
+        
+        // Desuscribirse de mensajes
+        WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
+        
+        if (_currentUserService != null)
+            _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
+        
+        base.Dispose();
     }
-
-    // TODO: Agregar comandos para importar/exportar y backup de seguimientos
 }

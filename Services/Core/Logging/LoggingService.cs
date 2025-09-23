@@ -142,12 +142,22 @@ public static class LoggingService
             });
 
             // Servicios de Gestión de Mantenimientos
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
             services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService, GestLog.Modules.GestionMantenimientos.Services.SeguimientoService>();
 
             // ViewModels de Gestión de Mantenimientos
-            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>();            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>(sp =>
+            {
+                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+                var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel(equipoService, logger, cronogramaService, seguimientoService, currentUserService, databaseService);
+            });
+
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
             {
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
@@ -156,7 +166,16 @@ public static class LoggingService
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger);
             });
-            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
+
+            // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>(sp =>
+            {
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+                var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel(seguimientoService, currentUserService, databaseService, logger);
+            });
 
             // Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);

@@ -17,18 +17,19 @@ using System.Linq;
 using System.Threading;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
 /// <summary>
 /// ViewModel para la gestión de equipos.
 /// </summary>
-public partial class EquiposViewModel : ObservableObject, IDisposable
-{
-    private readonly IEquipoService _equipoService;
-    private readonly IGestLogLogger _logger;
+public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
+{    private readonly IEquipoService _equipoService;
     private readonly ICronogramaService _cronogramaService;
-    private readonly ISeguimientoService _seguimientoService;    private readonly ICurrentUserService _currentUserService;
+    private readonly ISeguimientoService _seguimientoService;
+    private readonly ICurrentUserService _currentUserService;
     private CurrentUserInfo _currentUser;
 
     [ObservableProperty]
@@ -77,12 +78,12 @@ public partial class EquiposViewModel : ObservableObject, IDisposable
         IGestLogLogger logger,
         ICronogramaService cronogramaService,
         ISeguimientoService seguimientoService,
-        ICurrentUserService currentUserService)
-    {
-        try
+        ICurrentUserService currentUserService,
+        IDatabaseConnectionService databaseService)
+        : base(databaseService, logger)
+    {        try
         {
             _equipoService = equipoService;
-            _logger = logger;
             _cronogramaService = cronogramaService;
             _seguimientoService = seguimientoService;
             _currentUserService = currentUserService;
@@ -622,40 +623,35 @@ public partial class EquiposViewModel : ObservableObject, IDisposable
         // Notificar cambios en las propiedades alias
         OnPropertyChanged(nameof(CanAddEquipo));
         OnPropertyChanged(nameof(CanDeleteEquipo));
-        OnPropertyChanged(nameof(CanImportEquipo));        OnPropertyChanged(nameof(CanExportEquipo));
+        OnPropertyChanged(nameof(CanImportEquipo));        OnPropertyChanged(nameof(CanExportEquipo));    }
+
+    // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+    protected override async Task RefreshDataAsync()
+    {
+        await LoadEquiposAsync(forceReload: true);
+    }
+
+    protected override void OnConnectionLost()
+    {
+        StatusMessage = "Sin conexión - Módulo no disponible";
     }
 
     // Implementar IDisposable para limpieza de recursos
-    private bool _disposed = false;
-
-    protected virtual void Dispose(bool disposing)
+    public new void Dispose()
     {
-        if (!_disposed && disposing)
-        {
-            _loadCancellationToken?.Cancel();
-            _loadCancellationToken?.Dispose();
-            _debounceToken?.Cancel();
-            _debounceToken?.Dispose();
-            
-            // Desuscribirse de mensajes
-            WeakReferenceMessenger.Default.Unregister<CronogramasActualizadosMessage>(this);
-            WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
-            
-            if (_currentUserService != null)
-                _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
-                
-            _disposed = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~EquiposViewModel()
-    {
-        Dispose(false);
+        _loadCancellationToken?.Cancel();
+        _loadCancellationToken?.Dispose();
+        _debounceToken?.Cancel();
+        _debounceToken?.Dispose();
+        
+        // Desuscribirse de mensajes
+        WeakReferenceMessenger.Default.Unregister<CronogramasActualizadosMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<EquiposActualizadosMessage>(this);
+        
+        if (_currentUserService != null)
+            _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
+        
+        base.Dispose();
     }
 }

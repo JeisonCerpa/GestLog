@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -47,15 +50,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         public string EstadoTexto => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
     }
 
-    public partial class HistorialEjecucionesViewModel : ObservableObject
+    public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel
     {
         private readonly IPlanCronogramaService _planService;
-        private readonly IEquipoInformaticoService _equipoService; // Nuevo servicio para obtener nombres
+        private readonly IEquipoInformaticoService _equipoService;
 
-        public HistorialEjecucionesViewModel(IPlanCronogramaService planService, IEquipoInformaticoService equipoService)
+        public HistorialEjecucionesViewModel(
+            IPlanCronogramaService planService, 
+            IEquipoInformaticoService equipoService,
+            IDatabaseConnectionService databaseService,
+            IGestLogLogger logger)
+            : base(databaseService, logger)
         {
             _planService = planService;
-            _equipoService = equipoService; // asignación
+            _equipoService = equipoService;
             Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
             SelectedYear = DateTime.Now.Year;
         }
@@ -212,6 +220,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 IsBusy = false;
             }
+        }        // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+        protected override async Task RefreshDataAsync()
+        {
+            await LoadAsync();
+        }
+
+        protected override void OnConnectionLost()
+        {
+            StatusMessage = "Sin conexión - Datos no disponibles";
         }
     }
 }
