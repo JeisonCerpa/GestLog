@@ -66,9 +66,7 @@ public partial class App : System.Windows.Application
             {
                 splash.ShowStatus("Conexión a la base de datos OK");
                 await System.Threading.Tasks.Task.Delay(500);
-            }
-
-            splash.ShowStatus("Verificando actualizaciones...");
+            }            splash.ShowStatus("Verificando actualizaciones...");
             var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
             bool hayActualizacion = false;
             if (updateService != null)
@@ -93,6 +91,12 @@ public partial class App : System.Windows.Application
                 splash.ShowStatus("No hay actualizaciones");
                 await System.Threading.Tasks.Task.Delay(500);
             }
+
+            // Inicializar conexión a base de datos con monitoreo automático
+            splash.ShowStatus("Inicializando servicio de base de datos...");
+            await InitializeDatabaseConnectionAsync();
+            splash.ShowStatus("Servicio de base de datos inicializado");
+            await System.Threading.Tasks.Task.Delay(500);
 
             // Bloque try-catch adicional para inicialización de ventana principal y restauración de sesión
             try
