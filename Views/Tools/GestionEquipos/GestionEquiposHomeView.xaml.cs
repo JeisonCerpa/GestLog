@@ -63,34 +63,36 @@ namespace GestLog.Views.Tools.GestionEquipos
                 // Buscar la vista de periféricos en el árbol visual
                 _perifericosView = FindPerifericosView();
             }
-        }
-
-        private async void GestionEquiposHomeView_IsVisibleChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+        }        private async void GestionEquiposHomeView_IsVisibleChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
         {
-            // Cuando la vista principal se hace visible, recargar periféricos si la pestaña está seleccionada
-            if ((bool)e.NewValue && _perifericosView != null)
+            // Cuando la vista principal se hace visible, verificar que los datos de periféricos estén disponibles
+            if ((bool)e.NewValue)
             {
-                await RefreshPerifericosIfNeeded();
+                await EnsurePerifericosDataLoaded();
             }
-        }        private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        }private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.Source is System.Windows.Controls.TabControl tabControl)
             {
                 var selectedTab = tabControl.SelectedItem as System.Windows.Controls.TabItem;
                 if (selectedTab?.Header?.ToString() == "Periféricos")
                 {
-                    await RefreshPerifericosIfNeeded();
+                    // Cuando se selecciona el tab de periféricos, verificar que los datos estén cargados
+                    await EnsurePerifericosDataLoaded();
                 }
             }
         }
 
-        private async System.Threading.Tasks.Task RefreshPerifericosIfNeeded()
+        private async System.Threading.Tasks.Task EnsurePerifericosDataLoaded()
         {
             try
             {
-                if (_perifericosView != null)
+                // Verificar que el ViewModel tenga datos, si no los tiene, cargarlos
+                if (DataContext is GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel vm && 
+                    vm.PerifericosVm != null && 
+                    vm.PerifericosVm.Perifericos.Count == 0)
                 {
-                    await _perifericosView.RefreshDataAsync();
+                    await vm.PerifericosVm.CargarPerifericosAsync();
                 }
             }
             catch { }

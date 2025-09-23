@@ -17,12 +17,13 @@ using MessageBox = System.Windows.MessageBox;
 using GestLog.Services;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para el diálogo de periféricos
     /// </summary>
     public partial class PerifericoDialogViewModel : ObservableObject
     {
+        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+
         [ObservableProperty]
         private PerifericoEquipoInformaticoDto perifericoActual = new();
 
@@ -53,8 +54,10 @@ namespace GestLog.Views.Tools.GestionEquipos
 
         public bool DialogResult { get; private set; }
 
-        public PerifericoDialogViewModel()
+        public PerifericoDialogViewModel(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            
             // Configurar valores por defecto para un nuevo periférico
             PerifericoActual.FechaCompra = DateTime.Now;
             PerifericoActual.Estado = EstadoPeriferico.EnUso;
@@ -201,18 +204,13 @@ namespace GestLog.Views.Tools.GestionEquipos
             
             // Buscar y seleccionar la persona con equipo correspondiente si existe
             _ = Task.Run(async () => await BuscarPersonaConEquipoExistente(periferico.UsuarioAsignado));
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Carga las personas que tienen equipos asignados con el formato requerido
         /// </summary>
         public async Task CargarPersonasConEquipoAsync()
         {            try
             {
-                var connectionString = GetProductionConnectionString();
-                var options = EntityFrameworkConfigurationHelper.CreateStandardOptions(connectionString, 60);
-
-                using var dbContext = new GestLogDbContext(options);
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 
                 // Primero verificar si hay equipos con usuarios asignados
                 var equiposConUsuarios = await dbContext.EquiposInformaticos
@@ -355,9 +353,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 PersonasConEquipoFiltradas.Add(persona);
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Normaliza un string para filtrado (sin acentos, minúsculas)
         /// </summary>
         private static string NormalizeString(string input)
@@ -367,13 +363,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             var normalized = input.Normalize(NormalizationForm.FormD);
             var chars = normalized.Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark).ToArray();
             return new string(chars).Normalize(NormalizationForm.FormC).Trim().ToLowerInvariant();
-        }        /// <summary>
-        /// Obtiene la cadena de conexión de producción
-        /// </summary>
-        private static string GetProductionConnectionString()
-        {
-            var baseConnectionString = "Server=SIMICSGROUPWKS1\\SIMICSBD;Database=BD_ Pruebas;User Id=sa;Password=REMOVED_SECRET;TrustServerCertificate=true;";
-            return EntityFrameworkConfigurationHelper.EnhanceConnectionString(baseConnectionString);
         }
 
         [RelayCommand]
@@ -458,19 +447,17 @@ namespace GestLog.Views.Tools.GestionEquipos
 
             return true;
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Code-behind para el diálogo de periféricos
     /// </summary>
     public partial class PerifericoDialog : Window
     {
         public PerifericoDialogViewModel ViewModel { get; }
         
-        public PerifericoDialog()
+        public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             InitializeComponent();
-            ViewModel = new PerifericoDialogViewModel();
+            ViewModel = new PerifericoDialogViewModel(dbContextFactory);
             DataContext = ViewModel;
             
             // Cargar personas con equipos al inicializar
@@ -480,7 +467,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             };
         }
 
-        public PerifericoDialog(PerifericoEquipoInformaticoDto perifericoParaEditar) : this()
+        public PerifericoDialog(PerifericoEquipoInformaticoDto perifericoParaEditar, IDbContextFactory<GestLogDbContext> dbContextFactory) : this(dbContextFactory)
         {
             ViewModel.ConfigurarParaEdicion(perifericoParaEditar);
         }

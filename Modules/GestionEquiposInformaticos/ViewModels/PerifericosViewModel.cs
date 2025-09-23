@@ -30,6 +30,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
         [ObservableProperty]
         private ObservableCollection<PerifericoEquipoInformaticoDto> _perifericos = new();        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(EditarPerifericoCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarPerifericoCommand))]
         private PerifericoEquipoInformaticoDto? _perifericoSeleccionado;
 
         [ObservableProperty]
@@ -247,9 +249,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     IsLoading = false;
                 });
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Comando para agregar un nuevo periférico
         /// </summary>
         [RelayCommand]
@@ -257,16 +257,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                var dialogViewModel = new PerifericoDialogViewModel();
-                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog
-                {
-                    DataContext = dialogViewModel
-                };
+                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(_dbContextFactory);
 
                 if (dialog.ShowDialog() == true)
                 {
                     // Obtener el periférico creado desde el ViewModel del diálogo
-                    var nuevoPeriferico = dialogViewModel.PerifericoActual;
+                    var nuevoPeriferico = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(nuevoPeriferico, esNuevo: true);
                 }
             }
@@ -280,9 +276,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = "Error al agregar periférico";
                 });
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Comando para editar el periférico seleccionado
         /// </summary>
         [RelayCommand(CanExecute = nameof(CanEditarEliminarPeriferico))]
@@ -292,17 +286,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
             try
             {
-                var dialogViewModel = new PerifericoDialogViewModel();
-                dialogViewModel.ConfigurarParaEdicion(PerifericoSeleccionado);
-                
-                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog
-                {
-                    DataContext = dialogViewModel
-                };
+                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(PerifericoSeleccionado, _dbContextFactory);
 
                 if (dialog.ShowDialog() == true)
                 {
-                    var perifericoEditado = dialogViewModel.PerifericoActual;
+                    var perifericoEditado = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(perifericoEditado, esNuevo: false);
                 }
             }
@@ -441,9 +429,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 entity.Estado = dto.Estado;
                 entity.Observaciones = dto.Observaciones;
 
-                await dbContext.SaveChangesAsync();
-
-                // Actualizar UI de forma asíncrona
+                await dbContext.SaveChangesAsync();                // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     if (esNuevo)
@@ -453,11 +439,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     }
                     else
                     {
-                        // Actualizar el DTO existente
-                        var dtoExistente = Perifericos.FirstOrDefault(p => p.Codigo == dto.Codigo);
-                        if (dtoExistente != null)
+                        // Para ediciones, reemplazar completamente el DTO para asegurar que se actualice la vista
+                        var indice = Perifericos.ToList().FindIndex(p => p.Codigo == dto.Codigo);
+                        if (indice >= 0)
                         {
-                            ActualizarDto(dtoExistente, entity);
+                            var dtoActualizado = ConvertirEntityADto(entity);
+                            Perifericos[indice] = dtoActualizado;
+                            
+                            // Actualizar la selección si es necesario
+                            if (PerifericoSeleccionado?.Codigo == dto.Codigo)
+                            {
+                                PerifericoSeleccionado = dtoActualizado;
+                            }
                         }
                     }
 
@@ -487,9 +480,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private PerifericoEquipoInformaticoDto ConvertirEntityADto(PerifericoEquipoInformaticoEntity entity)
         {
             return new PerifericoEquipoInformaticoDto(entity);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Actualiza un DTO existente con datos de la entidad
         /// </summary>
         private void ActualizarDto(PerifericoEquipoInformaticoDto dto, PerifericoEquipoInformaticoEntity entity)
@@ -507,7 +498,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             dto.Observaciones = entity.Observaciones;
             dto.FechaModificacion = entity.FechaModificacion;
             dto.NombreEquipoAsignado = entity.EquipoAsignado?.NombreEquipo;
-        }        /// <summary>
+        }/// <summary>
         /// Actualiza las estadísticas mostradas en la vista
         /// </summary>
         private void ActualizarEstadisticas()

@@ -13,9 +13,7 @@ namespace GestLog.Views.Tools.GestionEquipos
     /// </summary>
     public partial class PerifericosView : System.Windows.Controls.UserControl
     {
-        private readonly IGestLogLogger? _logger;
-
-        public PerifericosView()
+        private readonly IGestLogLogger? _logger;        public PerifericosView()
         {
             // Llamar InitializeComponent() para cargar el XAML
             InitializeComponent();
@@ -34,29 +32,27 @@ namespace GestLog.Views.Tools.GestionEquipos
                 
                 _logger?.LogInformation("[PerifericosView] ViewModel asignado al DataContext con auto-refresh");
                 
-                // INICIALIZACIÓN ULTRARRÁPIDA - Sin delays ni eventos
-                // Inicializar inmediatamente en el constructor para experiencia fluida
-                _ = InicializarUltraRapido(viewModel);
+                // INICIALIZACIÓN CUANDO LA VISTA SE HACE VISIBLE
+                // Usar Loaded en lugar de constructor para evitar problemas de timing
+                Loaded += async (s, e) => await InicializarCuandoSeaVisible(viewModel);
             }
-            
-            // Manejar cleanup cuando se cierre la vista
-            Unloaded += OnViewUnloaded;
-        }
-
-        private async Task InicializarUltraRapido(PerifericosViewModel viewModel)
+        }        private async Task InicializarCuandoSeaVisible(PerifericosViewModel viewModel)
         {
             try
             {
-                _logger?.LogInformation("[PerifericosView] Iniciando inicialización ultrarrápida");
+                _logger?.LogInformation("[PerifericosView] Iniciando inicialización cuando la vista es visible");
                 
-                // Sin delay - inicializar inmediatamente
-                await viewModel.InicializarAsync();
+                // Solo inicializar si no se ha hecho antes o si no hay datos
+                if (viewModel.Perifericos.Count == 0)
+                {
+                    await viewModel.InicializarAsync();
+                }
                 
-                _logger?.LogInformation("[PerifericosView] Inicialización ultrarrápida completada");
+                _logger?.LogInformation("[PerifericosView] Inicialización completada");
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "[PerifericosView] Error en inicialización inmediata");
+                _logger?.LogError(ex, "[PerifericosView] Error en inicialización");
             }
         }        /// <summary>
         /// Método público para recargar los datos desde el exterior
@@ -66,31 +62,6 @@ namespace GestLog.Views.Tools.GestionEquipos
             if (DataContext is PerifericosViewModel vm)
             {
                 await vm.CargarPerifericosAsync();
-            }
-        }
-
-        /// <summary>
-        /// Maneja la limpieza del ViewModel cuando se cierra la vista
-        /// </summary>
-        private void OnViewUnloaded(object sender, System.Windows.RoutedEventArgs e)
-        {
-            try
-            {
-                _logger?.LogInformation("[PerifericosView] Vista siendo descargada - limpiando ViewModel");
-                
-                // Limpiar suscripción al evento
-                Unloaded -= OnViewUnloaded;
-                
-                // Dispose del ViewModel si implementa IDisposable
-                if (DataContext is IDisposable disposableViewModel)
-                {
-                    disposableViewModel.Dispose();
-                    _logger?.LogInformation("[PerifericosView] ViewModel disposed correctamente");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "[PerifericosView] Error al limpiar ViewModel");
             }
         }
     }
