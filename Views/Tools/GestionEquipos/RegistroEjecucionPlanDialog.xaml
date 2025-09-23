@@ -2,66 +2,226 @@
 <Window x:Class="GestLog.Views.Tools.GestionEquipos.RegistroEjecucionPlanDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ejecución Plan Semanal" Height="520" Width="640" WindowStartupLocation="CenterOwner" Background="#FAFAFA">
-    <Border Margin="16" Background="White" CornerRadius="8" Padding="18" BorderBrush="#DDD" BorderThickness="1">
-        <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                <TextBlock Text="Ejecución de Plan Semanal" FontSize="20" FontWeight="Bold" Foreground="#0A5E8A"/>
-                <TextBlock Text="Complete el checklist y confirme la ejecución." FontSize="12" Foreground="#555"/>
-            </StackPanel>
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Registrar Ejecución de Plan" Height="640" Width="920" WindowStartupLocation="CenterOwner" Background="#F6F7F9" ResizeMode="CanResize">
+
+    <Window.Resources>
+        <!-- Paleta y estilos coherentes con DetallesEquipoInformaticoView -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0F7530"/>
+        <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="PageBackground" Color="#F6F7F9"/>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2B8E3F"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="BorderBrush" Value="#E6E9EC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#2B8E3F" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#247C35" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GhostButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#607D8B" />
+            <Setter Property="BorderBrush" Value="#E0E6EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="MinWidth" Value="120" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FAFBFC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Plantilla de item del checklist, más aire y separación -->
+        <DataTemplate x:Key="ChecklistItemTemplate">
+            <Border Background="Transparent" Padding="8" Margin="0,4,0,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox IsChecked="{Binding Completado}" VerticalAlignment="Center" Margin="4"/>
+                    <TextBlock Text="{Binding Descripcion}" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,0"/>
+                    <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="8,0" VerticalAlignment="Center" ToolTip="Observación"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+            <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="160"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Text="Equipo:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding CodigoEquipo}" Grid.Row="0" Grid.Column="1" FontWeight="Bold"/>
-                <TextBlock Text="Descripción Plan:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding DescripcionPlan}" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True"/>
-                <TextBlock Text="Responsable:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding ResponsablePlan, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="0,4"/>
-                <TextBlock Text="Semana (Año):" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding SemanaISO}" Grid.Row="3" Grid.Column="1"/>
-                <TextBlock Text="Fecha Objetivo:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding FechaObjetivo, StringFormat=dd/MM/yyyy}" Grid.Row="4" Grid.Column="1"/>
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="Registro de ejecución" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                    <TextBlock Text="Registre la ejecución semanal del plan y deje observaciones si aplica." Foreground="#666" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <TextBlock Text="Semana:" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="{Binding SemanaISO}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                    <TextBlock Text="Equipo:" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="{Binding CodigoEquipo}" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
             </Grid>
-            <GroupBox Header="Checklist" Margin="0,0,0,10">
-                <Border BorderBrush="#DDD" BorderThickness="1" Padding="4" Background="#F9F9F9">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="240">
-                        <ItemsControl ItemsSource="{Binding Checklist}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="4,6">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="28"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="160"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox IsChecked="{Binding Completado}" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Descripcion}" Grid.Column="1" TextWrapping="Wrap" Margin="4,0"/>
-                                            <!-- Eliminado PlaceholderText no soportado en WPF -->
-                                            <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="4,0" ToolTip="Observación"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+        </Border>
+
+        <!-- Contenido principal: dos columnas -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Lista checklist (columna principal) -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Checklist" Style="{StaticResource LabelStyle}" FontSize="14" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding FechaObjetivo, StringFormat='Fecha objetivo: {0:dd/MM/yyyy}'}" Foreground="#666" VerticalAlignment="Center" Grid.Column="1" Margin="12,0,0,0"/>
+                    </Grid>
+
+                    <Separator Margin="8,8,0,8"/>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="420">
+                        <ItemsControl ItemsSource="{Binding Checklist}" ItemTemplate="{StaticResource ChecklistItemTemplate}"/>
                     </ScrollViewer>
-                </Border>
-            </GroupBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Guardar" Width="110" Margin="0,0,8,0" Command="{Binding GuardarCommand}"/>
-                <Button Content="Cerrar" Width="110" IsCancel="True" Click="Cerrar_Click"/>
-            </StackPanel>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#D32F2F" FontWeight="Bold" Margin="0,10,0,0"/>
-        </DockPanel>
-    </Border>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Tarjeta lateral con meta datos y resumen -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Información" Style="{StaticResource LabelStyle}"/>
+                    <Grid Margin="0,8,0,12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Plan:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DescripcionPlan}" Grid.Row="0" Grid.Column="1" IsReadOnly="True" BorderThickness="0" Background="Transparent"/>
+
+                        <TextBlock Text="Responsable:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding ResponsablePlan, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0"/>
+
+                        <TextBlock Text="Usuario actual:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding UsuarioEjecuta}" Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" IsReadOnly="True" BorderThickness="0" Background="Transparent"/>
+                    </Grid>
+
+                    <Separator/>
+
+                    <TextBlock Text="Resumen de ejecución" Style="{StaticResource LabelStyle}" Margin="0,8,0,6"/>
+                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="#444"/>
+
+                    <StackPanel Margin="0,16,0,0">
+                        <TextBlock Text="Acciones" Style="{StaticResource LabelStyle}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                            <Button Content="Guardar" Command="{Binding GuardarCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                            <Button Content="Cerrar" IsCancel="True" Click="Cerrar_Click" Style="{StaticResource GhostButton}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Footer fijo con mensaje y acciones rápidas -->
+        <Border Grid.Row="2" Background="Transparent" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#D32F2F" FontWeight="Bold"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Guardar" Command="{Binding GuardarCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Cerrar" IsCancel="True" Click="Cerrar_Click" Style="{StaticResource GhostButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+    </Grid>
 </Window>
