@@ -7,6 +7,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces; // añadido para IPlanCronogramaService
+using System.Collections.Specialized; // para CollectionChanged
+using System.ComponentModel; // para PropertyChanged
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -36,20 +38,73 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         [ObservableProperty] private ObservableCollection<ChecklistItemExecution> checklist = new();
         [ObservableProperty] private string statusMessage = string.Empty;
 
+        // Nuevas propiedades para contador dinámico
+        [ObservableProperty] private int totalItems;
+        [ObservableProperty] private int completedItems;
+
         public RegistroEjecucionPlanViewModel(IPlanCronogramaService planService, IGestLogLogger logger)
         {
             _planService = planService;
             _logger = logger;
+
+            // Suscribirse a cambios en la colección para gestionar suscripciones a los items
+            Checklist.CollectionChanged += Checklist_CollectionChanged;
+        }
+
+        private void Checklist_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (ChecklistItemExecution? oldItem in e.OldItems)
+                {
+                    if (oldItem is not null)
+                        oldItem.PropertyChanged -= Item_PropertyChanged;
+                }
+            }
+            if (e.NewItems != null)
+            {
+                foreach (ChecklistItemExecution? newItem in e.NewItems)
+                {
+                    if (newItem is not null)
+                        newItem.PropertyChanged += Item_PropertyChanged;
+                }
+            }
+            RecalculateCounts();
+        }
+
+        private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ChecklistItemExecution.Completado))
+            {
+                RecalculateCounts();
+            }
+        }
+
+        private void RecalculateCounts()
+        {
+            TotalItems = Checklist?.Count ?? 0;
+            CompletedItems = Checklist?.Count(c => c.Completado) ?? 0;
         }
 
         public void Load(PlanCronogramaEquipo plan, int anio, int semana, string usuario)
         {
+            // Evitar desreferencia si plan es null
+            if (plan == null)
+            {
+                _logger.LogWarning("[RegistroEjecucionPlanViewModel] Load recibido con plan null");
+                return;
+            }
+
+            // Log inicial para depuración: confirmar que Load es invocado y valores principales
+            _logger.LogInformation("[RegistroEjecucionPlanViewModel] Load llamado para PlanId={PlanId}, CodigoEquipo={Codigo}", new object[] { plan.PlanId, plan.CodigoEquipo ?? string.Empty });
+
             PlanId = plan.PlanId;
-            CodigoEquipo = plan.CodigoEquipo;
-            DescripcionPlan = plan.Descripcion;
+            CodigoEquipo = plan.CodigoEquipo ?? string.Empty;
+            DescripcionPlan = plan.Descripcion ?? string.Empty;
             ResponsablePlan = string.IsNullOrWhiteSpace(plan.Responsable) ? usuario : plan.Responsable;
             AnioISO = anio;
             SemanaISO = semana;
+
             // Calcular fecha objetivo (lunes de la semana + diaProgramado-1)
             var jan1 = new DateTime(anio,1,1);
             int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
@@ -61,7 +116,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             var result = firstThursday.AddDays(weekNum * 7).AddDays(-3); // lunes
             FechaObjetivo = result.AddDays(plan.DiaProgramado -1);
             FechaEjecucion = DateTime.Now;
+
             Checklist.Clear();
+
+            _logger.LogInformation("[RegistroEjecucionPlanViewModel] DescripcionPlan exists: {HasDesc}, ResponsablePlan set to: {Responsable}", new object[] { !string.IsNullOrWhiteSpace(DescripcionPlan), ResponsablePlan ?? string.Empty });
+
             if (!string.IsNullOrWhiteSpace(plan.ChecklistJson))
             {
                 try
@@ -76,12 +135,19 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             Checklist.Add(new ChecklistItemExecution { Id = id, Descripcion = desc });
                         }
                     }
+
+                    _logger.LogInformation("[RegistroEjecucionPlanViewModel] ChecklistJson parseado, items agregados: {Count}", new object[] { Checklist.Count });
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "[RegistroEjecucionPlanViewModel] Error parseando checklist JSON");
                 }
             }
+
+            // Asegurar que el contador refleja lo cargado
+            RecalculateCounts();
+
+            _logger.LogInformation("[RegistroEjecucionPlanViewModel] Load completo. FechaObjetivo={FechaObjetivo}, FechaEjecucion={FechaEjecucion}, TotalItems={Total}", new object[] { FechaObjetivo, FechaEjecucion, TotalItems });
         }
 
         public string BuildResultadoJson()
