@@ -142,7 +142,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     await ActualizarColeccionesAsync(context);
                 }
 
-                _logger.LogDebug("[DetallesEquipoInformaticoViewModel] Datos actualizados exitosamente para equipo {Codigo}", Equipo.Codigo);
+                // Nota: se removió LogDebug muy verboso para reducir ruido de logs en producción
             }
             catch (Exception ex)
             {
@@ -363,16 +363,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                         OnPropertyChanged(nameof(Perifericos));
                                     });
 
-                                    // Enviar mensaje para notificar a otros módulos que los periféricos fueron recargados
-                                    try
-                                    {
-                                        WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Equipo.Codigo));
-                                        _logger.LogInformation("[DetallesEquipoInformaticoViewModel] Enviado PerifericosActualizadosMessage tras recarga (Equipo {Codigo})", Equipo.Codigo);
-                                    }
-                                    catch (Exception exMsg)
-                                    {
-                                        _logger.LogWarning(exMsg, "[DetallesEquipoInformaticoViewModel] Error enviando PerifericosActualizadosMessage tras recarga para {Codigo}", Equipo.Codigo);
-                                    }
+                                    // Se elimina el envío redundante y el log informativo interno para reducir verbosidad.
+                                    // El envío se realizará una sola vez al final del método SetEstado.
                                 }
                                 catch (Exception exBg)
                                 {
@@ -427,6 +419,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         try
                         {
                             WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Equipo.Codigo));
+                            // Cambiado a LogDebug para no saturar los logs, warnings/errors se conservan
+                            _logger.LogDebug("[DetallesEquipoInformaticoViewModel] PerifericosActualizadosMessage enviado para {Codigo}", Equipo.Codigo);
                         }
                         catch (Exception exMsgPer)
                         {
