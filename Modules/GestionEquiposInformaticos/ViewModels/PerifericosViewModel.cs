@@ -285,15 +285,22 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
+                    // Log del resultado del diálogo y contenido del DTO
+                    _logger.LogInformation("[PerifericosViewModel] AgregarPerifericoAsync - dialog result = true. Periferico: {@Periferico}", dialog.ViewModel.PerifericoActual);
+
                     // Obtener el periférico creado desde el ViewModel del diálogo
                     var nuevoPeriferico = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(nuevoPeriferico, esNuevo: true);
+                }
+                else
+                {
+                    _logger.LogInformation("[PerifericosViewModel] AgregarPerifericoAsync - dialog result = false/cancel");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al agregar periférico");
-                
+
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
@@ -314,14 +321,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
+                    // Log del resultado del diálogo y contenido del DTO editado
+                    _logger.LogInformation("[PerifericosViewModel] EditarPerifericoAsync - dialog result = true. Periferico: {@Periferico}", dialog.ViewModel.PerifericoActual);
+
                     var perifericoEditado = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(perifericoEditado, esNuevo: false);
+                }
+                else
+                {
+                    _logger.LogInformation("[PerifericosViewModel] EditarPerifericoAsync - dialog result = false/cancel");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[PerifericosViewModel] Error al editar periférico");
-                
+
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
@@ -393,8 +407,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// </summary>
         private async Task GuardarPerifericoAsync(PerifericoEquipoInformaticoDto dto, bool esNuevo)
         {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
             try
             {
+                var codigo = dto.Codigo ?? "-";
+
+                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync start. Codigo={Codigo} EsNuevo={EsNuevo} UsuarioAsignado={Usuario} CodigoEquipoAsignado={Equipo}",
+                    new object[] { codigo, esNuevo, dto.UsuarioAsignado ?? "-", dto.CodigoEquipoAsignado ?? "-" });
+
                 // Usar DbContextFactory en lugar de crear manualmente
                 using var dbContext = _dbContextFactory.CreateDbContext();
 
@@ -408,6 +429,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                     if (existe)
                     {
+                        _logger.LogWarning("[PerifericosViewModel] Ya existe un periférico con código {Codigo}", new object[] { dto.Codigo ?? "-" });
                         MessageBox.Show("Ya existe un periférico con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
@@ -432,6 +454,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                     if (existingEntity == null)
                     {
+                        _logger.LogWarning("[PerifericosViewModel] No se encontró el periférico a actualizar. Codigo={Codigo}", new object[] { dto.Codigo ?? "-" });
                         MessageBox.Show("No se encontró el periférico a actualizar.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
@@ -440,7 +463,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
 
                 // Mapear DTO a Entity
-                entity.Codigo = dto.Codigo;
+                entity.Codigo = dto.Codigo ?? codigo;
                 entity.Dispositivo = dto.Dispositivo;
                 entity.FechaCompra = dto.FechaCompra;
                 entity.Costo = dto.Costo;
@@ -453,7 +476,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 entity.Estado = dto.Estado;
                 entity.Observaciones = dto.Observaciones;
 
-                await dbContext.SaveChangesAsync();                // Actualizar UI de forma asíncrona
+                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync - antes de SaveChangesAsync. Codigo={Codigo}",
+                    new object[] { codigo });
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync - SaveChangesAsync completado. Codigo={Codigo}",
+                    new object[] { codigo });
+
+                // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     if (esNuevo)
@@ -464,14 +493,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     else
                     {
                         // Para ediciones, reemplazar completamente el DTO para asegurar que se actualice la vista
-                        var indice = Perifericos.ToList().FindIndex(p => p.Codigo == dto.Codigo);
+                        var indice = Perifericos.ToList().FindIndex(p => p.Codigo == codigo);
                         if (indice >= 0)
                         {
                             var dtoActualizado = ConvertirEntityADto(entity);
                             Perifericos[indice] = dtoActualizado;
-                            
+
                             // Actualizar la selección si es necesario
-                            if (PerifericoSeleccionado?.Codigo == dto.Codigo)
+                            if (PerifericoSeleccionado?.Codigo == codigo)
                             {
                                 PerifericoSeleccionado = dtoActualizado;
                             }
@@ -482,18 +511,19 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = esNuevo ? "Periférico agregado exitosamente" : "Periférico actualizado exitosamente";
                 });
 
-                _logger.LogInformation("[PerifericosViewModel] Periférico {Accion}: {Codigo}", esNuevo ? "agregado" : "actualizado", dto.Codigo);
+                _logger.LogInformation("[PerifericosViewModel] Periférico {Accion}: {Codigo}", new object[] { esNuevo ? "agregado" : "actualizado", codigo });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[PerifericosViewModel] Error al guardar periférico");
-                
+                var codigoCatch = dto?.Codigo ?? "-";
+                _logger.LogError(ex, "[PerifericosViewModel] Error al guardar periférico Codigo={Codigo}", new object[] { codigoCatch });
+
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al guardar periférico";
                 });
-                
+
                 MessageBox.Show("Error al guardar el periférico. Ver logs para más detalles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
