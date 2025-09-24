@@ -99,7 +99,12 @@
                         <ColumnDefinition Width="220"/>
                     </Grid.ColumnDefinitions>
                     <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
-                    <TextBlock Text="{Binding Descripcion}" Grid.Column="1" TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,0"/>
+                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0">
+                        <!-- Mostrar placeholder si falta descripción para que el item no parezca 'invisible' -->
+                        <TextBlock Text="{Binding Descripcion, TargetNullValue=(sin descripción), FallbackValue=(sin descripción)}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <!-- Debug: mostrar Id en texto pequeño para localizar items invisibles -->
+                        <TextBlock Text="{Binding Id, StringFormat=Id: {0}}" Foreground="#888" FontSize="11" Margin="0,4,0,0"/>
+                    </StackPanel>
                     <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="8,0" VerticalAlignment="Center" ToolTip="Observación"/>
                 </Grid>
             </Border>
@@ -157,9 +162,14 @@
 
                     <Separator Margin="8,8,0,8"/>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="420">
-                        <ItemsControl ItemsSource="{Binding Checklist}" ItemTemplate="{StaticResource ChecklistItemTemplate}"/>
-                    </ScrollViewer>
+                    <!-- Usar ListBox con MaxHeight y scroll incorporado. Desactivar virtualización para evitar casos donde un item no se renderice por reciclado/medida. -->
+                    <ListBox ItemsSource="{Binding Checklist}"
+                             ItemTemplate="{StaticResource ChecklistItemTemplate}"
+                             MaxHeight="420"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             VirtualizingStackPanel.IsVirtualizing="False"
+                             BorderThickness="0"
+                             Background="Transparent"/>
 
                 </StackPanel>
             </Border>
@@ -207,6 +217,11 @@
                             </MultiBinding>
                         </TextBlock.Text>
                     </TextBlock>
+
+                    <!-- Resumen en vivo: porcentaje y observaciones -->
+                    <ProgressBar Height="10" Minimum="0" Maximum="100" Value="{Binding PercentComplete}" Margin="0,6,0,8" />
+                    <TextBlock Text="{Binding PercentComplete, StringFormat={}{0}%}" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding ResumenEnVivo}" TextWrapping="Wrap" Foreground="#444" Margin="0,4,0,8"/>
 
                     <TextBlock Text="Resumen de ejecución" Style="{StaticResource LabelStyle}" Margin="0,8,0,6"/>
                     <TextBlock TextWrapping="Wrap" Foreground="#444">
