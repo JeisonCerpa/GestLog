@@ -30,8 +30,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
             var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
             
-            DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger);
+            DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
         }
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
@@ -156,8 +157,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                             var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
                             var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+                            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
                             
-                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, dbContextFactory, databaseService, logger);
+                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, dbContextFactory, databaseService, logger, seguimientoService);
                         }
                     }
                     catch

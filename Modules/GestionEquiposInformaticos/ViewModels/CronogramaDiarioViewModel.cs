@@ -133,7 +133,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     }
                 }                // Cargar planes de cronograma de equipos CON navegación de equipo
                 var planesEquipos = await _planCronogramaService.GetAllAsync();
-                var planesActivos = planesEquipos.Where(p => p.Activo).ToList();                // Caches locales para evitar múltiples requests
+                
+                // Filtrar planes: mostrar activos + inactivos que tengan ejecuciones en la semana seleccionada
+                var planesActivos = planesEquipos.Where(p => 
+                    p.Activo || 
+                    (p.Ejecuciones != null && p.Ejecuciones.Any(e => 
+                        e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2)) // completado
+                ).ToList();// Caches locales para evitar múltiples requests
                 var equipoNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 var usuarioNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 

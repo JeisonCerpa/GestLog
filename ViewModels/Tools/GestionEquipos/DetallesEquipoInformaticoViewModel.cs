@@ -13,6 +13,7 @@ using GestLog.ViewModels.Base;
 using GestLog.Services.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -24,6 +25,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
     {
         #region ✅ NUEVAS DEPENDENCIAS - AUTO-REFRESH
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        private readonly IGestionEquiposInformaticosSeguimientoCronogramaService _seguimientoService;
         #endregion
 
         #region Propiedades del Equipo
@@ -96,10 +98,12 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             EquipoInformaticoEntity equipo,
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             IDatabaseConnectionService databaseService,
-            IGestLogLogger logger) 
+            IGestLogLogger logger,
+            IGestionEquiposInformaticosSeguimientoCronogramaService seguimientoService)
             : base(databaseService, logger) // ✅ MIGRADO: Llama al constructor base para auto-refresh
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            _seguimientoService = seguimientoService ?? throw new ArgumentNullException(nameof(seguimientoService));
             Equipo = equipo ?? throw new ArgumentNullException(nameof(equipo));
 
             // Inicializar colecciones vacías
@@ -345,6 +349,29 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         Equipo.FechaModificacion = equipoRef.FechaModificacion;
                         Equipo.FechaBaja = equipoRef.FechaBaja;
 
+                        // Si la operación fue una baja persistida, iniciar en background la desactivación de planes y eliminación de seguimientos futuros
+                        if (esDadoBaja)
+                        {
+                            try
+                            {
+                                _ = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        await _seguimientoService.DeletePendientesFuturasByEquipoCodigoAsync(Equipo.Codigo);
+                                    }
+                                    catch (Exception exSvc)
+                                    {
+                                        _logger.LogWarning(exSvc, "[DetallesEquipoInformaticoViewModel] Error ejecutando limpieza de cronograma para {Codigo}", Equipo.Codigo);
+                                    }
+                                });
+                            }
+                            catch (Exception exTask)
+                            {
+                                _logger.LogWarning(exTask, "[DetallesEquipoInformaticoViewModel] No se pudo iniciar la tarea de limpieza de cronograma para {Codigo}", Equipo.Codigo);
+                            }
+                        }
+
                         // Forzar recarga de periféricos desde DB para asegurar actualización de la UI
                         try
                         {
@@ -428,7 +455,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         }
 
                         mensaje = esActivo ? "Equipo marcado como activo y fecha de baja eliminada." 
-                            : (esDadoBaja ? "Equipo dado de baja correctamente." : "Estado actualizado correctamente.");
+                            : (esDadoBaja ? "Equipo dado de baja correctamente. Se inició la desactivación de planes y eliminación de seguimientos futuros (soft-disable)." : "Estado actualizado correctamente.");
                         persistedToDb = true;
                         return true;
                     }
