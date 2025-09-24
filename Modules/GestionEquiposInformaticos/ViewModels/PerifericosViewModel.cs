@@ -77,16 +77,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 WeakReferenceMessenger.Default.Register<PerifericosActualizadosMessage>(this, (recipient, message) =>
                 {
-                    try
-                    {
-                        _logger.LogInformation("[PerifericosViewModel] PerifericosActualizadosMessage recibido (Equipo {Codigo}) - solicitando recarga", message.Value ?? "-");
-                        // Fire-and-forget: CargarPerifericosAsync gestiona concurrencia/IsLoading internamente
-                        _ = CargarPerifericosAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "[PerifericosViewModel] Error manejando PerifericosActualizadosMessage");
-                    }
+                    // Fire-and-forget: recarga cuando otro VM actualice periféricos
+                    _ = CargarPerifericosAsync();
                 });
             }
             catch (Exception ex)
@@ -285,16 +277,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // Log del resultado del diálogo y contenido del DTO
-                    _logger.LogInformation("[PerifericosViewModel] AgregarPerifericoAsync - dialog result = true. Periferico: {@Periferico}", dialog.ViewModel.PerifericoActual);
-
-                    // Obtener el periférico creado desde el ViewModel del diálogo
                     var nuevoPeriferico = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(nuevoPeriferico, esNuevo: true);
-                }
-                else
-                {
-                    _logger.LogInformation("[PerifericosViewModel] AgregarPerifericoAsync - dialog result = false/cancel");
                 }
             }
             catch (Exception ex)
@@ -321,15 +305,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // Log del resultado del diálogo y contenido del DTO editado
-                    _logger.LogInformation("[PerifericosViewModel] EditarPerifericoAsync - dialog result = true. Periferico: {@Periferico}", dialog.ViewModel.PerifericoActual);
-
                     var perifericoEditado = dialog.ViewModel.PerifericoActual;
                     await GuardarPerifericoAsync(perifericoEditado, esNuevo: false);
-                }
-                else
-                {
-                    _logger.LogInformation("[PerifericosViewModel] EditarPerifericoAsync - dialog result = false/cancel");
                 }
             }
             catch (Exception ex)
@@ -413,9 +390,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 var codigo = dto.Codigo ?? "-";
 
-                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync start. Codigo={Codigo} EsNuevo={EsNuevo} UsuarioAsignado={Usuario} CodigoEquipoAsignado={Equipo}",
-                    new object[] { codigo, esNuevo, dto.UsuarioAsignado ?? "-", dto.CodigoEquipoAsignado ?? "-" });
-
                 // Usar DbContextFactory en lugar de crear manualmente
                 using var dbContext = _dbContextFactory.CreateDbContext();
 
@@ -476,11 +450,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 entity.Estado = dto.Estado;
                 entity.Observaciones = dto.Observaciones;
 
-                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync - antes de SaveChangesAsync. Codigo={Codigo}",
-                    new object[] { codigo });
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[PerifericosViewModel] GuardarPerifericoAsync - SaveChangesAsync completado. Codigo={Codigo}",
-                    new object[] { codigo });
 
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
