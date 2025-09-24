@@ -145,9 +145,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error cargando datos: {ex.Message}");
+                // Se removió log de depuración verbose. Mantener silencio o manejar errores críticos si aparecen.
             }
         }
 
@@ -175,9 +175,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 // ignore
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro dispositivo: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -204,9 +204,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 // ignore
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro marca: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -237,15 +237,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroDispositivo = textoPreservado;
                         _suppressFiltroDispositivoChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error actualizando dispositivos filtrados: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error filtrando dispositivos: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -274,15 +274,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroMarca = textoPreservado;
                         _suppressFiltroMarcaChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error actualizando marcas filtradas: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error filtrando marcas: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -303,9 +303,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroUsuarioAsignado = personaSeleccionada.NombreCompleto;
                         _suppressFiltroUsuarioChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error en dispatcher: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 }), System.Windows.Threading.DispatcherPriority.Background);
             }
@@ -614,10 +614,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                     PerifericoActual.Marca = string.Empty;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // No bloquear guardado por un problema menor de resolución; registrar en Debug
-                System.Diagnostics.Debug.WriteLine($"Error resolviendo dispositivo/marca: {ex.Message}");
+                // No bloquear guardado por un problema menor de resolución; se removió log de depuración verbose.
             }
 
             if (ValidarFormulario())
