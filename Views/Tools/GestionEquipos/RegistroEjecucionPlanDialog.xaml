@@ -91,21 +91,27 @@
 
         <!-- Plantilla de item del checklist, más aire y separación -->
         <DataTemplate x:Key="ChecklistItemTemplate">
-            <Border Background="Transparent" Padding="8" Margin="0,4,0,4">
-                <Grid>
+            <!-- Altura mínima uniforme para que los TextBox de observación se alineen entre filas -->
+            <Border Background="Transparent" Padding="8" Margin="0,4,0,4" MinHeight="44">
+                <Grid VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="36"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="320"/>
                     </Grid.ColumnDefinitions>
+
+                    <!-- Centrar verticalmente para que el TextBox se alinee al centro del bloque de descripción -->
                     <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
+
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0">
                         <!-- Mostrar placeholder si falta descripción para que el item no parezca 'invisible' -->
-                        <TextBlock Text="{Binding Descripcion, TargetNullValue=(sin descripción), FallbackValue=(sin descripción)}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Descripcion, TargetNullValue=(sin descripción), FallbackValue=(sin descripción)}" TextWrapping="Wrap" VerticalAlignment="Top" TextTrimming="CharacterEllipsis"/>
                         <!-- Debug: mostrar Id en texto pequeño para localizar items invisibles -->
-                        <TextBlock Text="{Binding Id, StringFormat=Id: {0}}" Foreground="#888" FontSize="11" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding Id, StringFormat=Id: {0}}" Foreground="#888" FontSize="11" Margin="0,4,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="8,0" VerticalAlignment="Center" ToolTip="Observación"/>
+
+                    <!-- Observación centrada verticalmente para mantener alineación uniforme -->
+                    <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="8,0" VerticalAlignment="Center" MinHeight="26" VerticalContentAlignment="Center" MinWidth="240" ToolTip="Observación"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -150,8 +156,15 @@
 
             <!-- Lista checklist (columna principal) -->
             <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
-                <StackPanel>
-                    <Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header del checklist -->
+                    <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -160,18 +173,49 @@
                         <TextBlock Text="{Binding FechaObjetivo, StringFormat='Fecha objetivo: {0:dd/MM/yyyy}'}" Foreground="#666" VerticalAlignment="Center" Grid.Column="1" Margin="12,0,0,0"/>
                     </Grid>
 
-                    <Separator Margin="8,8,0,8"/>
+                    <Separator Grid.Row="1" Margin="8,8,0,8"/>
 
-                    <!-- Usar ListBox con MaxHeight y scroll incorporado. Desactivar virtualización para evitar casos donde un item no se renderice por reciclado/medida. -->
-                    <ListBox ItemsSource="{Binding Checklist}"
-                             ItemTemplate="{StaticResource ChecklistItemTemplate}"
-                             MaxHeight="420"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                             VirtualizingStackPanel.IsVirtualizing="False"
-                             BorderThickness="0"
-                             Background="Transparent"/>
+                    <!-- ListView con scroll; la tercera fila (*) permite que ocupe el espacio disponible y muestre scroll -->
+                    <ListView Grid.Row="2" x:Name="ChecklistListView" ItemsSource="{Binding Checklist}" Margin="0" HorizontalContentAlignment="Stretch" VerticalAlignment="Stretch"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <ListView.View>
+                            <GridView>
+                                <!-- Columna principal: Id + Descripción. Width fijo para dejar más espacio a Observación -->
+                                <GridViewColumn Header="Ítem" Width="340">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" MinHeight="30" VerticalAlignment="Center">
+                                                <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4" />
+                                                <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,4,0" />
+                                                <!-- pequeño debug id si existía en la plantilla original -->
+                                                <TextBlock Text="{Binding Id, StringFormat='Id: {0}'}" Foreground="Transparent" Visibility="Collapsed" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
 
-                </StackPanel>
+                                <!-- Columna Observación: más ancha y TextBox más largo, menos alto -->
+                                <GridViewColumn Header="Observación" Width="460">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Observacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     VerticalAlignment="Center"
+                                                     HorizontalAlignment="Stretch"
+                                                     MinHeight="26"
+                                                     MinWidth="300"
+                                                     Padding="4"
+                                                     />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                </Grid>
             </Border>
 
             <!-- Tarjeta lateral con meta datos y resumen -->
