@@ -145,9 +145,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error cargando datos: {ex.Message}");
+                // Se removió log de depuración verbose. Mantener silencio o manejar errores críticos si aparecen.
             }
         }
 
@@ -175,9 +175,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 // ignore
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro dispositivo: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -204,9 +204,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 // ignore
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error en debounce filtro marca: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -237,15 +237,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroDispositivo = textoPreservado;
                         _suppressFiltroDispositivoChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error actualizando dispositivos filtrados: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error filtrando dispositivos: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -274,15 +274,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroMarca = textoPreservado;
                         _suppressFiltroMarcaChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error actualizando marcas filtradas: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error filtrando marcas: {ex.Message}");
+                // Se removió log de depuración verbose.
             }
         }
 
@@ -303,9 +303,9 @@ namespace GestLog.Views.Tools.GestionEquipos
                         FiltroUsuarioAsignado = personaSeleccionada.NombreCompleto;
                         _suppressFiltroUsuarioChanged = false;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error en dispatcher: {ex.Message}");
+                        // Se removió log de depuración verbose.
                     }
                 }), System.Windows.Threading.DispatcherPriority.Background);
             }
@@ -549,7 +549,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 var personaEncontrada = PersonasConEquipoDisponibles?.FirstOrDefault(p => 
                     p.NombreCompleto.Equals(FiltroUsuarioAsignado.Trim(), StringComparison.OrdinalIgnoreCase));
-                
+
                 if (personaEncontrada != null)
                 {
                     PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto;
@@ -566,11 +566,63 @@ namespace GestLog.Views.Tools.GestionEquipos
                 PerifericoActual.UsuarioAsignado = null;
                 PerifericoActual.CodigoEquipoAsignado = null;
             }
-            
+
+            // --- NUEVO: Resolver Dispositivo y Marca robustamente (soporta SelectedItem en ComboBox o texto libre)
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(FiltroDispositivo))
+                {
+                    var textoDisp = FiltroDispositivo.Trim();
+
+                    // Intentar buscar coincidencia en la lista filtrada (si existe)
+                    object? match = null;
+                    if (DispositivosFiltrados != null)
+                    {
+                        match = DispositivosFiltrados.FirstOrDefault(d =>
+                        {
+                            var s = d?.ToString();
+                            return !string.IsNullOrWhiteSpace(s) && string.Equals(s, textoDisp, StringComparison.OrdinalIgnoreCase);
+                        });
+                    }
+
+                    // Asignar valor seguro (no null)
+                    PerifericoActual.Dispositivo = (match?.ToString() ?? textoDisp) ?? string.Empty;
+                }
+                else
+                {
+                    PerifericoActual.Dispositivo = string.Empty;
+                }
+
+                if (!string.IsNullOrWhiteSpace(FiltroMarca))
+                {
+                    var textoMarca = FiltroMarca.Trim();
+
+                    object? matchMarca = null;
+                    if (MarcasFiltradas != null)
+                    {
+                        matchMarca = MarcasFiltradas.FirstOrDefault(m =>
+                        {
+                            var s = m?.ToString();
+                            return !string.IsNullOrWhiteSpace(s) && string.Equals(s, textoMarca, StringComparison.OrdinalIgnoreCase);
+                        });
+                    }
+
+                    PerifericoActual.Marca = (matchMarca?.ToString() ?? textoMarca) ?? string.Empty;
+                }
+                else
+                {
+                    PerifericoActual.Marca = string.Empty;
+                }
+            }
+            catch (Exception)
+            {
+                // No bloquear guardado por un problema menor de resolución; se removió log de depuración verbose.
+            }
+
             if (ValidarFormulario())
             {
                 DialogResult = true;
-                
+
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     if (System.Windows.Application.Current.Windows.Cast<Window>()

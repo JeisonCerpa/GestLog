@@ -151,9 +151,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 try
                 {
-                    // Log básico del JSON para diagnóstico si falta información
-                    _logger.LogDebug("[RegistroEjecucionPlanViewModel] ChecklistJson length={Length}", new object[] { plan.ChecklistJson.Length });
-
                     var doc = System.Text.Json.JsonDocument.Parse(plan.ChecklistJson);
                     var root = doc.RootElement;
 
@@ -236,20 +233,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     }
 
                     // Si la BD contenía 10 items pero algún item quedó sin descripción, registrar advertencia
-                    if (added > 0 && added < (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array ? doc.RootElement.GetArrayLength() : -1))
+                    if (added > 0 && root.ValueKind == System.Text.Json.JsonValueKind.Array && added < root.GetArrayLength())
                     {
                         _logger.LogWarning("[RegistroEjecucionPlanViewModel] Se agregaron {Added} items desde JSON pero el array original tiene diferente longitud.", new object[] { added });
                     }
 
                     _logger.LogInformation("[RegistroEjecucionPlanViewModel] ChecklistJson parseado, items agregados: {Count}", new object[] { Checklist.Count });
 
-                    // Log detallado para depuración: listar cada item con índice, Id y preview de descripción
-                    for (int i = 0; i < Checklist.Count; i++)
-                    {
-                        var item = Checklist[i];
-                        var preview = string.IsNullOrWhiteSpace(item.Descripcion) ? "(vacío)" : (item.Descripcion.Length > 80 ? item.Descripcion.Substring(0, 80) + "..." : item.Descripcion);
-                        _logger.LogInformation("[RegistroEjecucionPlanViewModel] Item[{Index}]: Id={Id}, DescripcionLen={Len}, Preview={Preview}", new object[] { i, item.Id, item.Descripcion?.Length ?? 0, preview });
-                    }
+                    // Se removió logging detallado por item para reducir ruido en producción.
 
                 }
                 catch (Exception ex)
