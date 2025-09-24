@@ -15,6 +15,8 @@ using GestLog.Services;
 using GestLog.Services.Interfaces;
 using GestLog.Models.Events;
 using GestLog.ViewModels.Base;
+using GestLog.Modules.GestionMantenimientos.Messages;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {    /// <summary>
@@ -69,6 +71,28 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             // NO ejecutar Task.Run desde el constructor
             // La inicialización se hace desde la vista cuando sea necesario
             _logger.LogInformation("[PerifericosViewModel] ViewModel creado con auto-refresh automático, listo para inicialización");
+
+            // Suscribirse a mensaje de periféricos actualizados para recargar datos cuando otro VM modifique asignaciones
+            try
+            {
+                WeakReferenceMessenger.Default.Register<PerifericosActualizadosMessage>(this, (recipient, message) =>
+                {
+                    try
+                    {
+                        _logger.LogInformation("[PerifericosViewModel] PerifericosActualizadosMessage recibido (Equipo {Codigo}) - solicitando recarga", message.Value ?? "-");
+                        // Fire-and-forget: CargarPerifericosAsync gestiona concurrencia/IsLoading internamente
+                        _ = CargarPerifericosAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[PerifericosViewModel] Error manejando PerifericosActualizadosMessage");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[PerifericosViewModel] No se pudo registrar el handler de PerifericosActualizadosMessage");
+            }
         }/// <summary>
         /// Inicializa el ViewModel con detección ultrarrápida de problemas de conexión
         /// </summary>

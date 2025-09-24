@@ -12,6 +12,7 @@ using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.ViewModels.Base;
 using GestLog.Services.Interfaces;
 using GestLog.Services.Core.Logging;
+using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -313,12 +314,100 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         if (esDadoBaja)
                             equipoRef.FechaBaja = DateTime.Now;
 
+                        // Si damos de baja el equipo, desasignar periféricos asociados y marcarlos como AlmacenadoFuncionando
+                        if (esDadoBaja)
+                        {
+                            try
+                            {
+                                var perifAsignados = context.PerifericosEquiposInformaticos
+                                    .Where(p => p.CodigoEquipoAsignado == Equipo.Codigo)
+                                    .ToList();
+
+                                foreach (var p in perifAsignados)
+                                {
+                                    p.CodigoEquipoAsignado = null;
+                                    // además de desasignar el código del equipo, limpiar el usuario asignado
+                                    p.UsuarioAsignado = null;
+                                    p.Estado = EstadoPeriferico.AlmacenadoFuncionando;
+                                    p.FechaModificacion = DateTime.Now;
+                                }
+                            }
+                            catch (Exception exPer)
+                            {
+                                _logger.LogWarning(exPer, "[DetallesEquipoInformaticoViewModel] Error desasignando periféricos al dar de baja el equipo {Codigo}", Equipo.Codigo);
+                            }
+                        }
+
                         context.SaveChanges();
 
                         // Sincronizar entidad en memoria
                         Equipo.Estado = equipoRef.Estado;
                         Equipo.FechaModificacion = equipoRef.FechaModificacion;
                         Equipo.FechaBaja = equipoRef.FechaBaja;
+
+                        // Forzar recarga de periféricos desde DB para asegurar actualización de la UI
+                        try
+                        {
+                            // Ejecutar recarga en segundo plano (no bloquear el hilo que llamó a SetEstado)
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await using var reloadContext = await _dbContextFactory.CreateDbContextAsync();
+                                    await ActualizarColeccionesAsync(reloadContext);
+
+                                    // Notificar cambios en el hilo UI
+                                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        OnPropertyChanged(nameof(PerifericosHeader));
+                                        OnPropertyChanged(nameof(Perifericos));
+                                    });
+
+                                    // Enviar mensaje para notificar a otros módulos que los periféricos fueron recargados
+                                    try
+                                    {
+                                        WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Equipo.Codigo));
+                                        _logger.LogInformation("[DetallesEquipoInformaticoViewModel] Enviado PerifericosActualizadosMessage tras recarga (Equipo {Codigo})", Equipo.Codigo);
+                                    }
+                                    catch (Exception exMsg)
+                                    {
+                                        _logger.LogWarning(exMsg, "[DetallesEquipoInformaticoViewModel] Error enviando PerifericosActualizadosMessage tras recarga para {Codigo}", Equipo.Codigo);
+                                    }
+                                }
+                                catch (Exception exBg)
+                                {
+                                    _logger.LogWarning(exBg, "[DetallesEquipoInformaticoViewModel] Error en recarga en background de periféricos tras dar de baja {Codigo}", Equipo.Codigo);
+                                }
+                            });
+                        }
+                        catch (Exception exUi)
+                        {
+                            _logger.LogWarning(exUi, "[DetallesEquipoInformaticoViewModel] No se pudo iniciar recarga en background tras dar de baja {Codigo}, intentando actualizar en memoria", Equipo.Codigo);
+
+                            // Fallback: intentar actualizar los periféricos en memoria si la recarga falla
+                            try
+                            {
+                                var perifericosEnUi = Perifericos?.Where(p => p.CodigoEquipoAsignado == Equipo.Codigo).ToList();
+                                if (perifericosEnUi != null && perifericosEnUi.Any())
+                                {
+                                    foreach (var p in perifericosEnUi)
+                                    {
+                                        p.CodigoEquipoAsignado = null;
+                                        // limpiar usuario en la colección en memoria
+                                        p.UsuarioAsignado = null;
+                                        p.Estado = EstadoPeriferico.AlmacenadoFuncionando;
+                                        p.FechaModificacion = DateTime.Now;
+                                    }
+                                    // Notificar cambio de header y colección
+                                    OnPropertyChanged(nameof(PerifericosHeader));
+                                    OnPropertyChanged(nameof(Perifericos));
+                                }
+                            }
+                            catch (Exception exMem)
+                            {
+                                _logger.LogWarning(exMem, "[DetallesEquipoInformaticoViewModel] Error fallback actualizando periféricos en memoria tras dar de baja {Codigo}", Equipo.Codigo);
+                            }
+                        }
 
                         // Notificar cambios
                         OnPropertyChanged(nameof(Estado));
@@ -332,6 +421,16 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         catch (Exception msgEx) 
                         { 
                             _logger.LogWarning(msgEx, "[DetallesEquipoInformaticoViewModel] Error enviando mensaje de actualización");
+                        }
+
+                        // Enviar mensaje específico de periféricos actualizados para notificar vistas que listan periféricos
+                        try
+                        {
+                            WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Equipo.Codigo));
+                        }
+                        catch (Exception exMsgPer)
+                        {
+                            _logger.LogWarning(exMsgPer, "[DetallesEquipoInformaticoViewModel] Error enviando PerifericosActualizadosMessage para {Codigo}", Equipo.Codigo);
                         }
 
                         mensaje = esActivo ? "Equipo marcado como activo y fecha de baja eliminada." 
@@ -348,6 +447,31 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     Equipo.FechaBaja = null;
                 if (esDadoBaja)
                     Equipo.FechaBaja = DateTime.Now;
+
+                // Si damos de baja y no se pudo persistir, actualizar periféricos en memoria
+                if (esDadoBaja)
+                {
+                    try
+                    {
+                        var perifMem = Perifericos?.Where(p => p.CodigoEquipoAsignado == Equipo.Codigo).ToList();
+                        if (perifMem != null && perifMem.Any())
+                        {
+                            foreach (var p in perifMem)
+                            {
+                                p.CodigoEquipoAsignado = null;
+                                p.UsuarioAsignado = null;
+                                p.Estado = EstadoPeriferico.AlmacenadoFuncionando;
+                                p.FechaModificacion = DateTime.Now;
+                            }
+                            OnPropertyChanged(nameof(PerifericosHeader));
+                            OnPropertyChanged(nameof(Perifericos));
+                        }
+                    }
+                    catch (Exception exMem)
+                    {
+                        _logger.LogWarning(exMem, "[DetallesEquipoInformaticoViewModel] Error actualizando periféricos en memoria tras marcar baja para {Codigo}", Equipo.Codigo);
+                    }
+                }
 
                 // Notificar cambios
                 OnPropertyChanged(nameof(Estado));
