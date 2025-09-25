@@ -9,6 +9,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -160,7 +161,21 @@
                     <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                     <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="100" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
                     <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" MinWidth="100" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <!-- Columna Estado con indicador de color + texto. Uso de converter con TargetNullValue/FallbackValue para seguridad -->
+                    <DataGridTemplateColumn Header="Estado" MinWidth="140" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Indicador de color y texto. ToolTip seguro usando TargetNullValue/FallbackValue -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            ToolTip="{Binding Estado, TargetNullValue='Estado desconocido', FallbackValue='Estado desconocido'}">
+                                    <Ellipse Width="14" Height="14" VerticalAlignment="Center"
+                                             Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}, TargetNullValue=#F0F0F0, FallbackValue=#F0F0F0}"
+                                             Stroke="#BFBFBF" StrokeThickness="0.5"/>
+                                    <TextBlock Text="{Binding Estado, TargetNullValue='Desconocido', FallbackValue='Desconocido'}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Acción" MinWidth="180" Width="180">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
