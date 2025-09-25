@@ -27,6 +27,9 @@ using GestLog.Services;
 // ✅ NUEVAS DEPENDENCIAS PARA AUTO-REFRESH
 using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -135,8 +138,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private bool canEliminarConexion;
 
         // Propiedades de permisos para gestión de periféricos
-        [ObservableProperty]
-        private bool canAsignarPeriferico;
+        // Eliminado: canAsignarPeriferico. Se reutiliza CanGuardarEquipo para controlar la acción de asignar periféricos.
 
         [ObservableProperty]
         private bool canDesasignarPeriferico;        private int _isSaving = 0; // 0 = no guardando, 1 = guardando
@@ -224,7 +226,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanEliminarConexion = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
 
             // Permisos para gestión de periféricos
-            CanAsignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            // Usar CanGuardarEquipo para controlar si se puede asignar un periférico (mismo permiso que crear equipo)
             CanDesasignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }        public async Task InicializarAsync()
         {
@@ -1634,33 +1636,65 @@ Get-NetIPConfiguration | Where-Object {
                 _logger.LogError(ex, "Error al cargar periféricos disponibles");
                 MessageBox.Show("Error al cargar periféricos disponibles", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }        [RelayCommand(CanExecute = nameof(CanAsignarPeriferico))]
+        }        [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task AsignarPerifericoAsync(PerifericoEquipoInformaticoDto periferico)
         {
-            if (periferico == null || string.IsNullOrWhiteSpace(Codigo)) return;
+            if (periferico == null) return;
 
             try
             {
-                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                // Si estamos creando un equipo (Codigo aún vacío), sólo actualizar las colecciones en memoria.
+                if (string.IsNullOrWhiteSpace(Codigo))
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (PerifericosDisponibles.Contains(periferico))
+                        {
+                            PerifericosDisponibles.Remove(periferico);
+                            // Dejar CodigoEquipoAsignado tal como está (se guardará al crear el equipo)
+                            periferico.CodigoEquipoAsignado = Codigo; // normalmente empty
+                            // Establecer nombre del equipo si está disponible para que la UI muestre la asignación inmediata
+                            periferico.NombreEquipoAsignado = !string.IsNullOrWhiteSpace(NombreEquipo) ? NombreEquipo : Codigo;
+                            // Marcar como en uso al asignar
+                            periferico.Estado = EstadoPeriferico.EnUso;
+                            PerifericosAsignados.Add(periferico);
+                        }
+                    });
+
+                    _logger.LogInformation("Periférico {Codigo} asignado en memoria (nuevo equipo, sin guardar)", periferico.Codigo);
+                    return;
+                }
+
+                // Modo edición: actualizar en base de datos inmediatamente
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-                
                 var entity = await dbContext.PerifericosEquiposInformaticos
                     .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
 
                 if (entity != null)
                 {
                     entity.CodigoEquipoAsignado = Codigo;
+                    // Marcar entidad como en uso al asignar
+                    entity.Estado = EstadoPeriferico.EnUso;
                     await dbContext.SaveChangesAsync();
 
-                    // Actualizar las listas localmente
+                    // Actualizar las listas localmente y DTO para refrescar la UI
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         PerifericosDisponibles.Remove(periferico);
                         periferico.CodigoEquipoAsignado = Codigo;
+                        periferico.NombreEquipoAsignado = !string.IsNullOrWhiteSpace(NombreEquipo) ? NombreEquipo : Codigo;
+                        periferico.Estado = EstadoPeriferico.EnUso;
                         PerifericosAsignados.Add(periferico);
                     });
 
                     _logger.LogInformation("Periférico {Codigo} asignado al equipo {CodigoEquipo}", periferico.Codigo, Codigo);
+
+                    // Notificar a otros ViewModels que los periféricos fueron actualizados (para recarga global)
+                    try
+                    {
+                        WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Codigo));
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
@@ -1675,15 +1709,33 @@ Get-NetIPConfiguration | Where-Object {
 
             try
             {
-                // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
+                // Si estamos en modo creación (Codigo vacío), sólo actualizar colecciones en memoria
+                if (string.IsNullOrWhiteSpace(Codigo))
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        PerifericosAsignados.Remove(periferico);
+                        periferico.CodigoEquipoAsignado = null;
+                        // Limpiar nombre del equipo y marcar como almacenado al desasignar
+                        periferico.NombreEquipoAsignado = null;
+                        periferico.Estado = EstadoPeriferico.AlmacenadoFuncionando;
+                        PerifericosDisponibles.Add(periferico);
+                    });
+
+                    _logger.LogInformation("Periférico {Codigo} desasignado en memoria (nuevo equipo)", periferico.Codigo);
+                    return;
+                }
+
+                // Modo edición: persistir en BD
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-                
                 var entity = await dbContext.PerifericosEquiposInformaticos
                     .FirstOrDefaultAsync(p => p.Codigo == periferico.Codigo);
 
                 if (entity != null)
                 {
                     entity.CodigoEquipoAsignado = null;
+                    // Marcar como almacenado al desasignar
+                    entity.Estado = EstadoPeriferico.AlmacenadoFuncionando;
                     await dbContext.SaveChangesAsync();
 
                     // Actualizar las listas localmente
@@ -1691,10 +1743,19 @@ Get-NetIPConfiguration | Where-Object {
                     {
                         PerifericosAsignados.Remove(periferico);
                         periferico.CodigoEquipoAsignado = null;
+                        periferico.NombreEquipoAsignado = null;
+                        periferico.Estado = EstadoPeriferico.AlmacenadoFuncionando;
                         PerifericosDisponibles.Add(periferico);
                     });
 
                     _logger.LogInformation("Periférico {Codigo} desasignado del equipo", periferico.Codigo);
+
+                    // Notificar a otros ViewModels que los periféricos fueron actualizados (para recarga global)
+                    try
+                    {
+                        WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Codigo));
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)

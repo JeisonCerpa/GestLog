@@ -196,15 +196,20 @@
                         </StackPanel>
                     </StackPanel>
                     <!-- Botón desasignar -->
-                    <Button Content="Desasignar" 
-                            Command="{Binding DataContext.DesasignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                            CommandParameter="{Binding}" 
-                            Style="{StaticResource CardButtonStyle}" 
-                            Width="90" Height="32" Grid.Column="1" Margin="8,0,0,0" 
+                    <Button Content="Desasignar"
+                            Command="{Binding DataContext.DesasignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource CardButtonStyle}"
+                            Width="90" Height="32" Grid.Column="1" Margin="8,0,0,0"
                             Background="#C0392B" Foreground="#FFFFFF" BorderBrush="#C0392B" BorderThickness="1"
+                            FontWeight="Bold" FontSize="14" Cursor="Hand" Padding="8,0,8,0"
                             IsEnabled="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}}"
                             Opacity="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+                        <Button.Effect>
+                            <DropShadowEffect Color="#C0392B" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
+                        </Button.Effect>
+                    </Button>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -250,11 +255,16 @@
                             Command="{Binding DataContext.AsignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                             CommandParameter="{Binding}" 
                             Style="{StaticResource CardButtonStyle}" 
-                            Width="80" Height="32" Grid.Column="1" Margin="8,0,0,0" 
-                            Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1"
-                            IsEnabled="{Binding DataContext.CanAsignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Opacity="{Binding DataContext.CanAsignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                            Width="90" Height="32" Grid.Column="1" Margin="8,0,0,0" 
+                            Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1"
+                            FontWeight="Bold" FontSize="14" Cursor="Hand" Padding="8,0,8,0"
+                            IsEnabled="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Opacity="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
+                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+                        <Button.Effect>
+                            <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
+                        </Button.Effect>
+                    </Button>
                 </Grid>
             </Border>
         </DataTemplate>

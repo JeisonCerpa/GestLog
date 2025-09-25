@@ -62,7 +62,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         /// <summary>
         /// Indica si el periférico está asignado a algo (equipo o usuario)
         /// </summary>
-        public bool EstaAsignado => !string.IsNullOrEmpty(CodigoEquipoAsignado) || !string.IsNullOrEmpty(UsuarioAsignado);
+        // Considerar también NombreEquipoAsignado para permitir mostrar asignación temporal antes de persistir el equipo
+        public bool EstaAsignado => !string.IsNullOrEmpty(CodigoEquipoAsignado) || !string.IsNullOrEmpty(UsuarioAsignado) || !string.IsNullOrEmpty(NombreEquipoAsignado);
 
         /// <summary>
         /// Texto descriptivo de la asignación
@@ -71,7 +72,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         {
             get
             {
-                if (!string.IsNullOrEmpty(CodigoEquipoAsignado))
+                // Preferir mostrar el nombre de equipo si existe (útil cuando se asigna a un equipo nuevo sin Código aún)
+                if (!string.IsNullOrEmpty(CodigoEquipoAsignado) || !string.IsNullOrEmpty(NombreEquipoAsignado))
                     return $"Equipo: {NombreEquipoAsignado ?? CodigoEquipoAsignado}";
                 if (!string.IsNullOrEmpty(UsuarioAsignado))
                     return $"Usuario: {UsuarioAsignado}";
@@ -106,21 +108,28 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
             }
         }
 
-        /// <summary>
-        /// Descripción de la sede para mostrar en UI
-        /// </summary>
-        public string SedeDescripcion
+        // Partial methods generados por [ObservableProperty] se pueden usar para propagar cambios dependientes
+        partial void OnCodigoEquipoAsignadoChanged(string? value)
         {
-            get
-            {
-                return Sede switch
-                {
-                    SedePeriferico.AdministrativaBarranquilla => "Administrativa - Barranquilla",
-                    SedePeriferico.TallerBarranquilla => "Taller - Barranquilla",
-                    SedePeriferico.BodegaBayunca => "Bodega - Bayunca",
-                    _ => Sede.ToString()
-                };
-            }
+            OnPropertyChanged(nameof(EstaAsignado));
+            OnPropertyChanged(nameof(TextoAsignacion));
+        }
+
+        partial void OnUsuarioAsignadoChanged(string? value)
+        {
+            OnPropertyChanged(nameof(EstaAsignado));
+            OnPropertyChanged(nameof(TextoAsignacion));
+        }
+
+        partial void OnNombreEquipoAsignadoChanged(string? value)
+        {
+            OnPropertyChanged(nameof(EstaAsignado));
+            OnPropertyChanged(nameof(TextoAsignacion));
+        }
+
+        partial void OnEstadoChanged(EstadoPeriferico value)
+        {
+            OnPropertyChanged(nameof(EstadoDescripcion));
         }
 
         /// <summary>
