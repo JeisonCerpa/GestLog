@@ -293,11 +293,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         }
                     }                });
 
-                // Cargar periféricos disponibles si tenemos un código de equipo
-                if (!string.IsNullOrWhiteSpace(Codigo))
-                {
-                    await CargarPerifericosDisponiblesAsync();
-                }
+                // Cargar periféricos disponibles siempre al inicializar el diálogo.
+                // Si Codigo está vacío, la consulta interna devolverá solo periféricos no asignados.
+                await CargarPerifericosDisponiblesAsync();
             }
             catch (Exception ex)
             {
@@ -1592,10 +1590,19 @@ Get-NetIPConfiguration | Where-Object {
                 // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 
-                // Cargar todos los periféricos que no están asignados o están asignados al equipo actual
-                var perifericosQuery = dbContext.PerifericosEquiposInformaticos
-                    .Where(p => p.CodigoEquipoAsignado == null || p.CodigoEquipoAsignado == Codigo)
-                    .OrderBy(p => p.Codigo);
+                // Construir la consulta teniendo en cuenta si estamos creando (Codigo vacío)
+                var perifericosQuery = dbContext.PerifericosEquiposInformaticos.AsQueryable();
+                if (string.IsNullOrWhiteSpace(Codigo))
+                {
+                    // Modo "Nuevo": solo periféricos no asignados
+                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == null);
+                }
+                else
+                {
+                    // Modo Edición/Existente: periféricos no asignados o asignados a este equipo
+                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == null || p.CodigoEquipoAsignado == Codigo);
+                }
+                perifericosQuery = perifericosQuery.OrderBy(p => p.Codigo);
 
                 var perifericos = await perifericosQuery.ToListAsync();
 
