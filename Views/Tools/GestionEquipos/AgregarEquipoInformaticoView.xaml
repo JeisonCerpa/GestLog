@@ -326,7 +326,7 @@
                                     <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
                                         <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" 
                                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <ComboBox Height="32" SelectedItem="{Binding Estado, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo" SelectedIndex="0"
+                                        <ComboBox Height="32" SelectedValue="{Binding Estado, Mode=TwoWay}" SelectedValuePath="Content" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo"
                                                   SnapsToDevicePixels="True" UseLayoutRounding="True">
                                             <ComboBoxItem Content="Activo" />
                                             <ComboBoxItem Content="Dado de baja" />

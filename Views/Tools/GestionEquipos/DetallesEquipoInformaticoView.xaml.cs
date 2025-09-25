@@ -71,6 +71,19 @@ namespace GestLog.Views.Tools.GestionEquipos
                         vm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(det.Discos);
                         vm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(det.Conexiones);
 
+                        // Transferir Estado y Sede al VM de edición antes de InicializarAsync para preservar la selección en el ComboBox Estado
+                        try
+                        {
+                            vm.Estado = string.IsNullOrWhiteSpace(det.Estado) ? string.Empty : det.Estado;
+                        }
+                        catch { /* no crítico */ }
+
+                        try
+                        {
+                            vm.Sede = string.IsNullOrWhiteSpace(det.Sede) ? vm.Sede : det.Sede;
+                        }
+                        catch { /* no crítico */ }
+
                         // Guardar el nombre del usuario asignado para usarlo una vez inicializado el VM de edición
                         usuarioAsignadoOriginal = det.UsuarioAsignado;
                     }

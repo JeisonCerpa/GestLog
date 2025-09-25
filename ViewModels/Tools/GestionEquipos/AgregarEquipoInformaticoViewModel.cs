@@ -100,7 +100,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private ObservableCollection<Persona> personasFiltradas = new();
 
         [ObservableProperty]
-        private string estado = "Activo";
+        private string estado = string.Empty;
 
         [ObservableProperty]
         private ObservableCollection<ConexionEntity> listaConexiones = new();
