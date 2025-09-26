@@ -92,10 +92,15 @@ public class ConfigurationService : IConfigurationService
             if (File.Exists(_configFilePath))
             {
                 var json = await File.ReadAllTextAsync(_configFilePath);
+                _logger.LogInformation($"DEBUG: JSON crudo leído desde disco: {json}");
+                GestLog.Models.Configuration.SmtpSettings.SuspendValidation(true);
                 var loadedConfig = JsonSerializer.Deserialize<AppConfiguration>(json, _jsonOptions);
+                GestLog.Models.Configuration.SmtpSettings.SuspendValidation(false);
                 
                 if (loadedConfig != null)
                 {
+                    _logger.LogInformation($"DEBUG: Configuración deserializada desde JSON: {json}");
+                    _logger.LogInformation($"DEBUG: smtp deserializado: {System.Text.Json.JsonSerializer.Serialize(loadedConfig.Smtp)}");
                     _current = loadedConfig;
                     SetupPropertyChangeHandlers(_current);
                     _hasUnsavedChanges = false;

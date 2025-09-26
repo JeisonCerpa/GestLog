@@ -200,6 +200,8 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             // FALLBACK: Cargar desde JSON si no hay credenciales guardadas
             _logger.LogInformation("No se encontraron credenciales guardadas, cargando desde configuración JSON");
             var smtpConfig = _configurationService.Current.Smtp;
+            _logger.LogInformation($"DEBUG: Objeto de configuración actual: {_configurationService.Current}");
+            _logger.LogInformation($"DEBUG: smtpConfig recibido: {System.Text.Json.JsonSerializer.Serialize(smtpConfig)}");
             if (smtpConfig != null)
             {
                 _logger.LogInformation($"Configuración básica cargada desde JSON: Server={smtpConfig.Server}, Port={smtpConfig.Port}, Username={smtpConfig.Username}");
@@ -211,7 +213,22 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 EnableSsl = smtpConfig.UseSSL;
                 BccEmail = smtpConfig.BccEmail ?? string.Empty;
                 CcEmail = smtpConfig.CcEmail ?? string.Empty;
-                IsEmailConfigured = false; // Sin credenciales, no está configurado
+                _logger.LogInformation($"DEBUG: Valores asignados tras cargar JSON: Server={SmtpServer}, Port={SmtpPort}, Username={SmtpUsername}, Bcc={BccEmail}, Cc={CcEmail}");
+                // Nueva lógica: determinar si la configuración es válida aunque falte la contraseña
+                if (!smtpConfig.UseAuthentication)
+                {
+                    // Si no requiere autenticación, la configuración puede considerarse válida
+                    IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.FromEmail);
+                }
+                else
+                {
+                    // Si requiere autenticación, solo puede considerarse válida si hay usuario (pero no hay contraseña)
+                    IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.Username);
+                    if (IsEmailConfigured)
+                    {
+                        _logger.LogWarning("La configuración SMTP requiere contraseña. Ingrese la contraseña para completar la configuración.");
+                    }
+                }
             }
             else
             {

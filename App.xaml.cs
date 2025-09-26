@@ -29,6 +29,9 @@ public partial class App : System.Windows.Application
         // Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
         
+        // Cargar configuración de la aplicación ANTES de cualquier acceso a configuración
+        await LoadApplicationConfigurationAsync();
+        
         // Mostrar SplashScreen antes de cualquier lógica
         var splash = new GestLog.Views.SplashScreen();
         splash.Show();

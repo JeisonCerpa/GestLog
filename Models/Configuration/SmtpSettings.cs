@@ -10,14 +10,17 @@ public class SmtpSettings : INotifyPropertyChanged
 {
     private string _server = string.Empty;
     private int _port = 587;
-    private bool _useSSL = true;    private bool _useAuthentication = true;
+    private bool _useSSL = true;    
+    private bool _useAuthentication = true;
     private string _username = string.Empty;
     private string _password = string.Empty;
     private string _fromEmail = string.Empty;
-    private string _fromName = string.Empty;    private int _timeout = 30000;
+    private string _fromName = string.Empty;    
+    private int _timeout = 30000;
     private bool _isConfigured = false;
     private string _bccEmail = string.Empty;
     private string _ccEmail = string.Empty;
+    private static bool _suspendValidation = false;
 
     /// <summary>
     /// Servidor SMTP (ejemplo: smtp.gmail.com)
@@ -151,6 +154,11 @@ public class SmtpSettings : INotifyPropertyChanged
         };
     }
 
+    public static void SuspendValidation(bool suspend)
+    {
+        _suspendValidation = suspend;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -158,7 +166,7 @@ public class SmtpSettings : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         
         // Revalidar configuración cuando cambie cualquier propiedad
-        if (propertyName != nameof(IsConfigured))
+        if (!_suspendValidation && propertyName != nameof(IsConfigured))
         {
             ValidateConfiguration();
         }

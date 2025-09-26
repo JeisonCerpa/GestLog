@@ -460,11 +460,16 @@ namespace GestLog.Views.Tools.GestionCartera
                 if (shouldSaveCredentials && !string.IsNullOrEmpty(email))
                 {
                     var credentialTarget = $"SMTP_{_currentSettings.Server}_{email}";
-                    
+
+                    // Eliminar cualquier credencial previa para este target antes de guardar la nueva
+                    // Esto previene duplicados en el Windows Credential Manager
+                    _credentialService?.DeleteCredentials(credentialTarget);
+
                     var saved = _credentialService?.SaveCredentials(
                         credentialTarget,
                         email,
-                        password) ?? false;                    if (saved)
+                        password) ?? false;
+                    if (saved)
                     {
                         // Asignar la contraseña guardada al objeto de configuración
                         _currentSettings.Password = password;
