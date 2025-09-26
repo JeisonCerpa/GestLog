@@ -132,8 +132,6 @@ public partial class DocumentGenerationViewModel : ObservableObject
             
             // Dar tiempo para que se procesen los cambios de propiedad
             await Task.Delay(100);
-            
-            _logger.LogInformation($"Configuración SMTP cargada: Servidor={_mainViewModel.SmtpConfiguration.SmtpServer}, Configurado={_mainViewModel.SmtpConfiguration.IsEmailConfigured}");
         }
         catch (Exception ex)
         {

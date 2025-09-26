@@ -93,7 +93,7 @@ public partial class PdfGenerationViewModel : BaseDocumentGenerationViewModel
             if (File.Exists(defaultTemplatePath))
             {
                 TemplateFilePath = defaultTemplatePath;
-                _logger.LogInformation("🖼️ Plantilla predeterminada encontrada: {Path}", defaultTemplatePath);
+                _logger.LogDebug("🖼️ Plantilla predeterminada encontrada: {Path}", defaultTemplatePath);
             }
             else
             {

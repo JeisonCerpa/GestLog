@@ -75,7 +75,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var configService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
             bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
             this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
-            _logger.LogInformation($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
+            _logger.LogDebug($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
         }
         catch (System.Exception ex)
         {
@@ -89,7 +89,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            _logger.LogUserInteraction("🏠", "LoadHomeView", "Cargando vista principal");
+            _logger.LogUserInteraction("🏠", "LoadHomeView", "Cargando vista principal", true);
             
             using var scope = _logger.BeginOperationScope("LoadHomeView");
             
@@ -102,7 +102,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             
             IsAuthenticated = true;
             
-            _logger.LogUserInteraction("✅", "LoadHomeView", "Vista Home cargada exitosamente");
+            _logger.LogUserInteraction("✅", "LoadHomeView", "Vista Home cargada exitosamente", true);
         }
         catch (System.Exception ex)
         {
@@ -115,7 +115,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            _logger.LogUserInteraction("🧭", "NavigateToView", "Navegando a vista: {ViewTitle}", title);
+            _logger.LogUserInteraction("🧭", "NavigateToView", $"Navegando a vista: {title}", true);
             
             using var scope = _logger.BeginOperationScope("NavigateToView", new { ViewTitle = title });
             
@@ -132,7 +132,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             txtCurrentView.Text = title;
             btnBack.Visibility = Visibility.Visible;
             
-            _logger.LogUserInteraction("✅", "NavigateToView", "Navegación completada a: {ViewTitle}", title);
+            _logger.LogUserInteraction("✅", "NavigateToView", $"Navegación completada a: {title}", true);
         }
         catch (System.Exception ex)
         {

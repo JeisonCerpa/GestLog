@@ -45,13 +45,13 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
             _logger.LogDebug("🔧 Construyendo cadena de conexión unificada...");
 
             var currentEnv = await _environmentService.DetectEnvironmentAsync(cancellationToken);
-            _logger.LogInformation("📍 Entorno detectado: {Environment}", currentEnv);
+            _logger.LogDebug("📍 Entorno detectado: {Environment}", currentEnv);
 
             // Prioridad 1: Variables de entorno
             var config = await GetConfigFromEnvironmentVariablesAsync();
             if (config.IsComplete)
             {
-                _logger.LogInformation("✅ Configuración obtenida de variables de entorno");
+                _logger.LogDebug("✅ Configuración obtenida de variables de entorno");
                 return BuildConnectionString(config);
             }
 

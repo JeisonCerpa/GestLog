@@ -41,7 +41,7 @@ namespace GestLog.Modules.Usuarios.Services
             if (restored != null)
             {
                 _currentUser = restored;
-                _logger.LogInformation("Sesión restaurada automáticamente para usuario: {Username}", restored.Username);
+                _logger.LogDebug("Sesión restaurada automáticamente para usuario: {Username}", restored.Username);
                 
                 // Refrescar permisos y roles desde la base de datos para asegurar información actualizada
                 _ = RefreshUserPermissionsAsync();
@@ -138,7 +138,7 @@ namespace GestLog.Modules.Usuarios.Services
                 _currentUser.Permissions = allPermissions;
                 _currentUser.LastActivity = DateTime.UtcNow;
 
-                _logger.LogInformation("Permisos y roles actualizados para usuario: {Username}. Roles: {RoleCount}, Permisos: {PermissionCount}", 
+                _logger.LogDebug("Permisos y roles actualizados para usuario: {Username}. Roles: {RoleCount}, Permisos: {PermissionCount}", 
                     _currentUser.Username, roles.Count, allPermissions.Count);
             }
             catch (Exception ex)

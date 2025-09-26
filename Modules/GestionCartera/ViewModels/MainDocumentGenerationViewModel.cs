@@ -50,8 +50,6 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         
         // Suscribirse a cambios de configuración
         _configurationService.ConfigurationChanged += OnConfigurationChanged;
-
-        _logger.LogInformation("🚀 MainDocumentGenerationViewModel inicializado correctamente");
     }
 
     /// <summary>
@@ -206,12 +204,6 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
             // Cargar configuración SMTP
             await SmtpConfiguration.LoadSmtpConfigurationAsync();
             
-            // 🔧 Verificar que la configuración se haya cargado correctamente
-            _logger.LogInformation("📧 Configuración SMTP después de inicializar - Servidor: {Server}, Usuario: {Username}, Configurado: {IsConfigured}", 
-                SmtpConfiguration.SmtpServer ?? "VACIO", 
-                SmtpConfiguration.SmtpUsername ?? "VACIO", 
-                SmtpConfiguration.IsEmailConfigured);
-            
             // NOTA: Los documentos se cargarán cuando se seleccione el archivo Excel de emails
             // await DocumentManagement.LoadPreviouslyGeneratedDocuments();
             
@@ -220,7 +212,6 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
             AutomaticEmail.UpdateEmailConfiguration(SmtpConfiguration.IsEmailConfigured);
             
             GlobalStatusMessage = "Componentes inicializados correctamente";
-            _logger.LogInformation("MainDocumentGenerationViewModel inicializado completamente");
         }
         catch (Exception ex)
         {

@@ -311,7 +311,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🚀 Iniciando servicio de resiliencia de base de datos...");
+        _logger.LogDebug("🚀 Iniciando servicio de resiliencia de base de datos...");
         
         _serviceTokenSource = new CancellationTokenSource();
         
@@ -326,7 +326,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
             if (connected)
             {
                 ChangeState(DatabaseConnectionState.Connected, "Conexión inicial con resiliencia establecida");
-                _logger.LogInformation("✅ Conexión inicial establecida exitosamente");
+                _logger.LogDebug("✅ Conexión inicial establecida exitosamente");
             }
             else
             {
@@ -339,7 +339,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
             {
                 var interval = _resilienceConfig.HealthCheck.Interval;
                 _healthCheckTimer.Change(interval, interval);
-                _logger.LogInformation("🔄 Health checks iniciados cada {Interval}", interval);
+                _logger.LogDebug("🔄 Health checks iniciados cada {Interval}", interval);
             }
         }
         catch (Exception ex)
@@ -557,7 +557,7 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
         var previousState = _currentState;
         _currentState = newState;
 
-        _logger.LogInformation("📊 Estado BD: {Previous} → {New} | {Reason}", 
+        _logger.LogDebug("📊 Estado BD: {Previous} → {New} | {Reason}", 
             previousState, newState, reason);
 
         ConnectionStateChanged?.Invoke(this, new DatabaseConnectionStateChangedEventArgs(

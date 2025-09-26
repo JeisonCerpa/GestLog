@@ -217,7 +217,7 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            _logger?.Logger.LogInformation("💾 Inicializando conexión a base de datos...");
+            _logger?.Logger.LogDebug("💾 Inicializando conexión a base de datos...");
 
             // Obtener el servicio de base de datos
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
@@ -228,7 +228,7 @@ public partial class App : System.Windows.Application
             // Suscribirse a cambios de estado para logging
             databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
 
-            _logger?.Logger.LogInformation("✅ Servicio de base de datos inicializado");
+            _logger?.Logger.LogDebug("✅ Servicio de base de datos inicializado");
         }
         catch (Exception ex)
         {

@@ -38,16 +38,12 @@ namespace GestLog.Views.Tools.GestionCartera
                 
                 _currentSettings = _configurationService.Current.Smtp ?? new SmtpSettings();
                 
-                _logger?.LogInformation("Configuración SMTP encontrada: Server={Server}, IsConfigured={IsConfigured}", 
-                    _currentSettings.Server ?? "", _currentSettings.IsConfigured);
-                
                 // Suscribirse al evento Loaded SOLO para cargar la configuración cuando la ventana esté completamente inicializada
                 this.Loaded += (sender, e) => {                LoadConfigurationToUI();
                     UpdateUI();
                 };
                 
                 // NO cargar inmediatamente - esperar a que la ventana se cargue completamente
-                _logger?.LogInformation("Constructor SmtpConfigurationWindow completado - esperando evento Loaded");
             }
             catch (Exception ex)
             {
@@ -223,8 +219,7 @@ namespace GestLog.Views.Tools.GestionCartera
                     return;
                 }
 
-                _logger?.LogInformation("🔍 CONTROLES ENCONTRADOS: Host={HasHost}, Port={HasPort}, SSL={HasSSL}, Email={HasEmail}, Password={HasPassword}",
-                    hostTextBox != null, portTextBox != null, sslCheckBox != null, emailTextBox != null, passwordBox != null);                if (hostTextBox != null)
+                if (hostTextBox != null)
                 {
                     hostTextBox.Text = _currentSettings.Server ?? string.Empty;
                 }
@@ -258,7 +253,6 @@ namespace GestLog.Views.Tools.GestionCartera
                 if (_currentSettings.UseAuthentication && !string.IsNullOrEmpty(_currentSettings.Username))
                 {
                     var credentialTarget = $"SMTP_{_currentSettings.Server}_{_currentSettings.Username}";
-                    _logger?.LogInformation("🔍 Buscando credenciales con target: '{CredentialTarget}'", credentialTarget);
                     
                     var credentials = _credentialService?.GetCredentials(credentialTarget);
                     
@@ -271,12 +265,6 @@ namespace GestLog.Views.Tools.GestionCartera
                             passwordBox.Password = credentials.Value.password;
                         
                         // Asignar la contraseña recuperada al objeto de configuración                        _currentSettings.Password = credentials.Value.password;
-                        
-                        _logger?.LogInformation("Credenciales SMTP cargadas desde Windows Credential Manager");
-                    }
-                    else
-                    {
-                        _logger?.LogInformation("No se encontraron credenciales guardadas");
                     }
                 }
                 else
@@ -288,9 +276,6 @@ namespace GestLog.Views.Tools.GestionCartera
                     }
                 }                UpdateStatus(_currentSettings.IsConfigured ? "Configuración cargada" : "No configurado",
                            _currentSettings.IsConfigured ? Colors.Green : Colors.Red);
-                
-                _logger?.LogInformation("Configuración SMTP cargada en UI - Server: {Server}, Username: {Username}, Configurado: {IsConfigured}", 
-                    _currentSettings.Server ?? "", _currentSettings.Username ?? "", _currentSettings.IsConfigured);
             }
             catch (Exception ex)
             {
@@ -473,7 +458,6 @@ namespace GestLog.Views.Tools.GestionCartera
                     {
                         // Asignar la contraseña guardada al objeto de configuración
                         _currentSettings.Password = password;
-                        _logger?.LogInformation("Credenciales SMTP guardadas exitosamente");
                     }
                     else
                     {

@@ -55,7 +55,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         // Cargar configuración inicial
         LoadSmtpConfiguration();
         
-        _logger.LogInformation("SmtpConfigurationViewModel inicializado - Servidor: {Server}, Configurado: {IsConfigured}", 
+        _logger.LogDebug("SmtpConfigurationViewModel inicializado - Servidor: {Server}, Configurado: {IsConfigured}", 
             SmtpServer ?? "VACIO", IsEmailConfigured);
     }
 
@@ -186,26 +186,18 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     {
         try
         {
-            _logger.LogInformation("Iniciando carga de configuración SMTP");
-
             // PRIMERO: Intentar cargar desde Windows Credential Manager
             bool loadedFromCredentials = TryLoadFromCredentials();
             
             if (loadedFromCredentials)
             {
-                _logger.LogInformation("Configuración SMTP cargada exitosamente desde Windows Credential Manager");
                 return;
             }
 
             // FALLBACK: Cargar desde JSON si no hay credenciales guardadas
-            _logger.LogInformation("No se encontraron credenciales guardadas, cargando desde configuración JSON");
             var smtpConfig = _configurationService.Current.Smtp;
-            _logger.LogInformation($"DEBUG: Objeto de configuración actual: {_configurationService.Current}");
-            _logger.LogInformation($"DEBUG: smtpConfig recibido: {System.Text.Json.JsonSerializer.Serialize(smtpConfig)}");
             if (smtpConfig != null)
             {
-                _logger.LogInformation($"Configuración básica cargada desde JSON: Server={smtpConfig.Server}, Port={smtpConfig.Port}, Username={smtpConfig.Username}");
-                
                 SmtpServer = smtpConfig.Server ?? string.Empty;
                 SmtpPort = smtpConfig.Port;
                 SmtpUsername = smtpConfig.Username ?? string.Empty;
@@ -213,7 +205,6 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 EnableSsl = smtpConfig.UseSSL;
                 BccEmail = smtpConfig.BccEmail ?? string.Empty;
                 CcEmail = smtpConfig.CcEmail ?? string.Empty;
-                _logger.LogInformation($"DEBUG: Valores asignados tras cargar JSON: Server={SmtpServer}, Port={SmtpPort}, Username={SmtpUsername}, Bcc={BccEmail}, Cc={CcEmail}");
                 // Nueva lógica: determinar si la configuración es válida aunque falte la contraseña
                 if (!smtpConfig.UseAuthentication)
                 {
@@ -224,7 +215,8 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 {
                     // Si requiere autenticación, solo puede considerarse válida si hay usuario (pero no hay contraseña)
                     IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.Username);
-                    if (IsEmailConfigured)
+                    // Solo mostrar advertencia si la contraseña NO está presente en el ViewModel (ni en Credential Manager ni en la UI)
+                    if (IsEmailConfigured && string.IsNullOrWhiteSpace(SmtpPassword))
                     {
                         _logger.LogWarning("La configuración SMTP requiere contraseña. Ingrese la contraseña para completar la configuración.");
                     }
@@ -235,8 +227,6 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 _logger.LogWarning("No se encontró configuración SMTP en JSON, usando valores por defecto");
                 SetDefaultValues();
             }
-
-            _logger.LogInformation("Carga de configuración SMTP completada");
         }
         catch (Exception ex)
         {
@@ -250,7 +240,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     {
         try
         {
-            _logger.LogInformation("Buscando credenciales SMTP en Windows Credential Manager");
+            _logger.LogDebug("Buscando credenciales SMTP en Windows Credential Manager");
 
             // Credenciales conocidas - SOLO la parte después de "GestLog_SMTP_"
             var knownCredentialTargets = new[]
@@ -261,7 +251,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
 
             foreach (var target in knownCredentialTargets)
             {
-                _logger.LogInformation($"Verificando credencial con target: {target}");
+                _logger.LogDebug($"Verificando credencial con target: {target}");
                 
                 if (_credentialService.CredentialsExist(target))
                 {
@@ -290,11 +280,11 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 }
                 else
                 {
-                    _logger.LogInformation($"❌ Credencial no encontrada para target: {target}");
+                    _logger.LogDebug($"❌ Credencial no encontrada para target: {target}");
                 }
             }
 
-            _logger.LogInformation("No se encontraron credenciales SMTP válidas");
+            _logger.LogDebug("No se encontraron credenciales SMTP válidas");
             return false;
         }
         catch (Exception ex)

@@ -151,6 +151,17 @@ public static class GestLogLoggerExtensions
     }
 
     /// <summary>
+    /// Log de interacciones de usuario (nivel configurable)
+    /// </summary>
+    public static void LogUserInteraction(this IGestLogLogger logger, string icon, string action, string message, bool asDebug, params object[] args)
+    {
+        if (asDebug)
+            logger.Logger.LogDebug($"{icon} {message}", args);
+        else
+            logger.Logger.LogInformation($"{icon} {message}", args);
+    }
+
+    /// <summary>
     /// Log de inicio de aplicación
     /// </summary>
     public static void LogApplicationStarted(this IGestLogLogger logger, string message, params object[] args)

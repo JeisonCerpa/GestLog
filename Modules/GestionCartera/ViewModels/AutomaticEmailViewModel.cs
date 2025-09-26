@@ -20,9 +20,11 @@ public partial class AutomaticEmailViewModel : ObservableObject
 {
     private readonly IEmailService? _emailService;
     private readonly IExcelEmailService? _excelEmailService;
-    private readonly IGestLogLogger _logger;    [ObservableProperty] private string _selectedEmailExcelFilePath = string.Empty;
+    private readonly IGestLogLogger _logger;    
+    [ObservableProperty] private string _selectedEmailExcelFilePath = string.Empty;
     [ObservableProperty] private bool _hasEmailExcel = false;
-    [ObservableProperty] private bool _isSendingEmail = false;    [ObservableProperty] private int _companiesWithEmail = 0;
+    [ObservableProperty] private bool _isSendingEmail = false;    
+    [ObservableProperty] private int _companiesWithEmail = 0;
     [ObservableProperty] private int _companiesWithoutEmail = 0;
     [ObservableProperty] private string _logText = string.Empty;
     
@@ -30,12 +32,14 @@ public partial class AutomaticEmailViewModel : ObservableObject
     [ObservableProperty] private string _companiesStatusText = "Sin archivo Excel";
     [ObservableProperty] private bool _hasDocumentsGenerated = false;
     [ObservableProperty] private string _documentStatusWarning = string.Empty;
-      // Propiedades de progreso para envío de emails
+    
+    // Propiedades de progreso para envío de emails
     [ObservableProperty] private double _emailProgressValue = 0.0;
     [ObservableProperty] private string _emailStatusMessage = string.Empty;
     [ObservableProperty] private int _currentEmailDocument = 0;
     [ObservableProperty] private int _totalEmailDocuments = 0;
-      // Sistema de cancelación para emails
+    
+    // Sistema de cancelación para emails
     private CancellationTokenSource? _emailCancellationTokenSource;
     
     // Servicio de progreso suavizado para animaciones fluidas
@@ -61,17 +65,11 @@ public partial class AutomaticEmailViewModel : ObservableObject
     {
         get
         {
-            // 🔍 DEBUG: Agregar logging detallado para diagnosticar por qué el botón de cancelar no se habilita
-            _logger.LogInformation("🔍 DEBUG - Evaluando CanCancelEmailSending:");
-            _logger.LogInformation("   IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
-            _logger.LogInformation("   _emailCancellationTokenSource != null: {HasToken}", _emailCancellationTokenSource != null);
-            
             var canCancel = IsSendingEmail && _emailCancellationTokenSource != null;
-            _logger.LogInformation("   Resultado CanCancel: {CanCancel}", canCancel);
-            
             return canCancel;
         }
-    }    public AutomaticEmailViewModel(
+    }    
+    public AutomaticEmailViewModel(
         IEmailService? emailService,
         IExcelEmailService? excelEmailService,
         IGestLogLogger logger)
@@ -87,15 +85,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
         CompaniesStatusText = "Sin archivo Excel";
         DocumentStatusWarning = string.Empty;
         HasDocumentsGenerated = false;
-        
-        // 🔍 DEBUG: Verificar valores iniciales
-        _logger.LogInformation("🔍 DEBUG - Constructor AutomaticEmailViewModel:");
-        _logger.LogInformation("   CompaniesWithEmail: {CompaniesWithEmail}", CompaniesWithEmail);
-        _logger.LogInformation("   CompaniesStatusText: '{CompaniesStatusText}'", CompaniesStatusText);
-        _logger.LogInformation("   DocumentStatusWarning: '{DocumentStatusWarning}'", DocumentStatusWarning);
-        _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
-        _logger.LogInformation("   HasDocumentsGenerated: {HasDocumentsGenerated}", HasDocumentsGenerated);
-    }[RelayCommand]
+    }
+    
+    [RelayCommand]
     public async Task SelectEmailExcelFileAsync()
     {
         try
@@ -124,40 +116,33 @@ public partial class AutomaticEmailViewModel : ObservableObject
             _logger.LogError(ex, "Error al seleccionar archivo Excel de correos");
             LogText += $"\n❌ Error: {ex.Message}";
         }
-    }    /// <summary>
+    }    
+    
+    /// <summary>
     /// Cancela el envío de emails en curso
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanCancelEmailSending))]
     public void CancelEmailSending()
     {
-        _logger.LogInformation("🔍 DEBUG - CancelEmailSending ejecutado");
-        _logger.LogInformation("⏹️ Usuario solicitó cancelación del envío de emails");
-        _logger.LogInformation("   Estado actual IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
-        _logger.LogInformation("   Token disponible: {HasToken}", _emailCancellationTokenSource != null);
-        
         // Cancelar la operación
         if (_emailCancellationTokenSource != null)
         {
             _emailCancellationTokenSource.Cancel();
-            _logger.LogInformation("🔄 Token de cancelación de emails activado");
-        }
-        else
-        {
-            _logger.LogWarning("⚠️ No hay token de cancelación disponible");
         }
         
         // Actualizar la UI
         EmailStatusMessage = "Cancelando envío de emails...";
-        _logger.LogInformation("📧 UI actualizada con mensaje de cancelación");
         
         // Notificar cambio en la capacidad de cancelar
         OnPropertyChanged(nameof(CanCancelEmailSending));
-        _logger.LogDebug("🔔 Notificación enviada para CanCancelEmailSending");
-    }/// <summary>
+    }
+    
+    /// <summary>
     /// Analiza el matching entre documentos generados y correos del Excel
     /// </summary>
     private async Task AnalyzeEmailMatchingAsync()
-    {        if (_excelEmailService == null || string.IsNullOrWhiteSpace(SelectedEmailExcelFilePath) || !HasEmailExcel)
+    {        
+        if (_excelEmailService == null || string.IsNullOrWhiteSpace(SelectedEmailExcelFilePath) || !HasEmailExcel)
         {
             CompaniesWithEmail = 0;
             CompaniesWithoutEmail = 0;
@@ -179,7 +164,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
             
             // Obtener información básica del archivo de correos
             var validationInfo = await _excelEmailService.GetValidationInfoAsync(SelectedEmailExcelFilePath);
-              if (!validationInfo.IsValid)
+            
+            if (!validationInfo.IsValid)
             {
                 LogText += "\n❌ No se puede analizar: archivo de correos no válido";
                 CompaniesWithEmail = 0;
@@ -197,12 +183,12 @@ public partial class AutomaticEmailViewModel : ObservableObject
             }
 
             // Obtener el conteo real de empresas con correos a través del diccionario completo
-            // Esto fuerza la construcción del índice completo y nos da el conteo real
             var emailMappings = await _excelEmailService.GetEmailsFromExcelAsync(SelectedEmailExcelFilePath);
             var realCompaniesWithEmail = emailMappings.Count;
             
             LogText += $"\n📋 Archivo de correos: {realCompaniesWithEmail} empresas con correos válidos";
-              // Mostrar información básica del archivo Excel independientemente de los documentos generados
+            
+            // Mostrar información básica del archivo Excel independientemente de los documentos generados
             CompaniesWithEmail = realCompaniesWithEmail; // Conteo real basado en el índice completo
             
             // ✨ CORRECCIÓN: Notificar cambio de CompaniesWithEmail
@@ -220,7 +206,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
             {
                 LogText += "\n💡 Información mostrada basada en el archivo Excel";
                 LogText += "\n💡 Genere documentos primero para ver análisis de efectividad completo";
-                  // ✨ MEJORA: Indicar claramente que es información del Excel, no análisis de documentos
+                
+                // ✨ MEJORA: Indicar claramente que es información del Excel, no análisis de documentos
                 CompaniesStatusText = $"📊 En archivo Excel: {realCompaniesWithEmail}";
                 DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
                 HasDocumentsGenerated = false;
@@ -231,13 +218,12 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 OnPropertyChanged(nameof(DocumentStatusWarning));
                 OnPropertyChanged(nameof(HasDocumentsGenerated));
                 
-                _logger.LogInformation("📊 Mostrando info del Excel - StatusText: {StatusText}, Warning: {Warning}", 
-                    CompaniesStatusText, DocumentStatusWarning);
                 return;
             }
 
             LogText += $"\n🎯 Analizando efectividad para {GeneratedDocuments.Count} documentos generados...";
-              // ✨ MEJORA: Indicar que ahora sí tenemos análisis de documentos real
+            
+            // ✨ MEJORA: Indicar que ahora sí tenemos análisis de documentos real
             CompaniesStatusText = $"📄 Con email: {CompaniesWithEmail} de {GeneratedDocuments.Count}";
             DocumentStatusWarning = string.Empty;
             HasDocumentsGenerated = true;
@@ -250,11 +236,13 @@ public partial class AutomaticEmailViewModel : ObservableObject
             // ANÁLISIS PRINCIPAL: ¿Cuántos documentos generados tienen email disponible?
             await AnalyzeDocumentEmailMatchingAsync();
             
-        }        catch (Exception ex)
+        }        
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error analizando matching de correos");
             LogText += $"\n❌ Error en análisis: {ex.Message}";
-              // ✨ MEJORA: Estado de error claro
+            
+            // ✨ MEJORA: Estado de error claro
             CompaniesWithEmail = 0; // ✨ CORRECCIÓN: Resetear también la propiedad original
             CompaniesStatusText = "❌ Error en análisis";
             DocumentStatusWarning = "Error procesando información";
@@ -266,7 +254,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
             OnPropertyChanged(nameof(DocumentStatusWarning));
             OnPropertyChanged(nameof(HasDocumentsGenerated));
         }
-    }/// <summary>
+    }
+    
+    /// <summary>
     /// Analiza el matching específico entre documentos generados y correos disponibles
     /// ENFOQUE CORRECTO: Partir de los documentos y verificar cuáles tienen email
     /// </summary>
@@ -327,9 +317,13 @@ public partial class AutomaticEmailViewModel : ObservableObject
             var totalDocuments = GeneratedDocuments.Count;
             var effectivenessPercentage = totalDocuments > 0 
                 ? (documentsWithEmail * 100.0 / totalDocuments) 
-                : 0;            // Actualizar propiedades para la UI
+                : 0;
+            
+            // Actualizar propiedades para la UI
             CompaniesWithEmail = documentsWithEmail;
-            CompaniesWithoutEmail = documentsWithoutEmail;            // ✨ MEJORA: Actualizar texto de estado para mostrar efectividad real
+            CompaniesWithoutEmail = documentsWithoutEmail;
+            
+            // ✨ MEJORA: Actualizar texto de estado para mostrar efectividad real
             CompaniesStatusText = $"📄 Con email: {documentsWithEmail} de {totalDocuments}";
             DocumentStatusWarning = effectivenessPercentage < 50 ? "⚠️ Baja efectividad de envío" : string.Empty;
             HasDocumentsGenerated = true;
@@ -454,12 +448,6 @@ public partial class AutomaticEmailViewModel : ObservableObject
                             };
                             
                             documents.Add(document);
-                            _logger.LogDebug("📄 Documento cargado: {Archivo} - {Empresa} (NIT: {Nit})", 
-                                archivo, empresa, nit);
-                        }
-                        else
-                        {
-                            _logger.LogWarning("⚠️ Archivo no encontrado: {FilePath}", ruta);
                         }
                     }
                     
@@ -471,8 +459,6 @@ public partial class AutomaticEmailViewModel : ObservableObject
                     ruta = null;
                 }
             }
-            
-            _logger.LogInformation("✅ Documentos cargados desde archivo: {Count} documentos", documents.Count);
         }
         catch (Exception ex)
         {
@@ -486,7 +472,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
         IReadOnlyList<GeneratedPdfInfo> documents, 
         SmtpConfigurationViewModel smtpConfig,
         CancellationToken cancellationToken = default)
-    {        if (_emailService == null || _excelEmailService == null)
+    {        
+        if (_emailService == null || _excelEmailService == null)
         {
             _logger.LogWarning("Servicios de email no disponibles para envío automático");
             return false;
@@ -502,7 +489,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
         {
             _logger.LogWarning("No hay archivo Excel seleccionado para mapear emails");
             return false;
-        }        try
+        }
+        
+        try
         {
             IsSendingEmail = true;
             
@@ -542,7 +531,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
             _logger.LogError(ex, "Error durante el envío automático");
             LogText += $"\n❌ Error durante envío automático: {ex.Message}";
             return false;
-        }        finally
+        }        
+        finally
         {
             IsSendingEmail = false;
             
@@ -553,7 +543,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
             // Actualizar comandos
             OnPropertyChanged(nameof(CanCancelEmailSending));
             CancelEmailSendingCommand.NotifyCanExecuteChanged();
-              // Completar progreso si quedó incompleto
+            
+            // Completar progreso si quedó incompleto
             if (EmailProgressValue > 0 && EmailProgressValue < 100)
             {
                 _smoothProgress.Report(100);
@@ -561,7 +552,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 EmailStatusMessage = "Proceso finalizado";
             }
         }
-    }    private async void ValidateEmailExcelFileAsync()
+    }
+    
+    private async void ValidateEmailExcelFileAsync()
     {
         try
         {
@@ -591,27 +584,33 @@ public partial class AutomaticEmailViewModel : ObservableObject
             {
                 _logger.LogInformation("✅ Archivo Excel de correos válido: {ValidNits} NITs, {ValidEmails} emails", 
                     validationResult.ValidNitRows, validationResult.ValidEmailRows);
-                  LogText += $"\n✅ Archivo válido:";
+                
+                LogText += $"\n✅ Archivo válido:";
                 LogText += $"\n   📊 {validationResult.TotalRows} filas de datos";
-                LogText += $"\n   🏢 {validationResult.ValidNitRows} registros NIT válidos";                LogText += $"\n   📧 {validationResult.ValidEmailRows} emails válidos";
+                LogText += $"\n   🏢 {validationResult.ValidNitRows} registros NIT válidos";
+                LogText += $"\n   📧 {validationResult.ValidEmailRows} emails válidos";
                 
                 HasEmailExcel = true;
-                  // ✨ MEJORA: Establecer estado inicial correcto al validar archivo Excel
-                // ✅ CORRECCIÓN CRÍTICA: Mantener funcionalidad original de CompaniesWithEmail
+                
+                // ✨ MEJORA: Establecer estado inicial correcto al validar archivo Excel
                 CompaniesWithEmail = validationResult.ValidNitRows; // Esto es lo que faltaba!
                 
                 if (GeneratedDocuments.Count == 0)
-                {                    CompaniesStatusText = $"📊 En archivo Excel: {validationResult.ValidNitRows}";
-                    DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";                    HasDocumentsGenerated = false;
+                {
+                    CompaniesStatusText = $"📊 En archivo Excel: {validationResult.ValidNitRows}";
+                    DocumentStatusWarning = "⚠️ Genere documentos primero para análisis completo";
+                    HasDocumentsGenerated = false;
                     
                     // Notificar cambios de propiedades
                     OnPropertyChanged(nameof(CompaniesWithEmail));
                     OnPropertyChanged(nameof(CompaniesStatusText));
                     OnPropertyChanged(nameof(DocumentStatusWarning));
                     OnPropertyChanged(nameof(HasDocumentsGenerated));
-                }                else
+                }                
+                else
                 {
-                    CompaniesStatusText = "📄 Analizando documentos generados...";                    DocumentStatusWarning = string.Empty;
+                    CompaniesStatusText = "📄 Analizando documentos generados...";
+                    DocumentStatusWarning = string.Empty;
                     HasDocumentsGenerated = true;
                     
                     // Notificar cambios de propiedades
@@ -620,7 +619,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
                     OnPropertyChanged(nameof(DocumentStatusWarning));
                     OnPropertyChanged(nameof(HasDocumentsGenerated));
                 }
-            }            else
+            }            
+            else
             {
                 _logger.LogWarning("❌ Archivo Excel de correos no válido: {Message}", validationResult.Message);
                 LogText += $"\n❌ Archivo no válido: {validationResult.Message}";
@@ -634,11 +634,13 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 {
                     LogText += $"\n   📋 Columnas encontradas: {string.Join(", ", validationResult.FoundColumns)}";
                 }
-                  LogText += "\n   ℹ️ Formato esperado: TIPO_DOC, NUM_ID, DIGITO_VER, EMPRESA, EMAIL";
+                
+                LogText += "\n   ℹ️ Formato esperado: TIPO_DOC, NUM_ID, DIGITO_VER, EMPRESA, EMAIL";
                 
                 HasEmailExcel = false;
                 SelectedEmailExcelFilePath = string.Empty;
-                  // ✨ RESETEAR estados cuando archivo no es válido
+                
+                // ✨ RESETEAR estados cuando archivo no es válido
                 CompaniesWithEmail = 0; // ¡Resetear también la propiedad original!
                 CompaniesStatusText = "Archivo inválido";
                 DocumentStatusWarning = "Seleccione un archivo Excel válido";
@@ -650,14 +652,16 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 OnPropertyChanged(nameof(DocumentStatusWarning));
                 OnPropertyChanged(nameof(HasDocumentsGenerated));
             }
-        }        catch (Exception ex)
+        }        
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Error al validar archivo Excel de correos");
             LogText += $"\n❌ Error inesperado: {ex.Message}";
             LogText += "\n   💡 Verifique que el archivo no esté abierto en otra aplicación";
             HasEmailExcel = false;
             SelectedEmailExcelFilePath = string.Empty;
-              // ✨ RESETEAR estados en caso de error
+            
+            // ✨ RESETEAR estados en caso de error
             CompaniesWithEmail = 0; // ¡Resetear también la propiedad original!
             CompaniesStatusText = "❌ Error validando archivo";
             DocumentStatusWarning = "Error procesando archivo Excel";
@@ -669,7 +673,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
             OnPropertyChanged(nameof(DocumentStatusWarning));
             OnPropertyChanged(nameof(HasDocumentsGenerated));
         }
-    }private async Task ConfigureSmtpFromConfigAsync(SmtpConfigurationViewModel config)
+    }
+    
+    private async Task ConfigureSmtpFromConfigAsync(SmtpConfigurationViewModel config)
     {
         if (_emailService == null) return;
 
@@ -684,11 +690,10 @@ public partial class AutomaticEmailViewModel : ObservableObject
             CcEmail = config.CcEmail        // ✅ CORRECCIÓN: Agregar CC
         };
 
-        _logger.LogInformation("🔧 Configurando EmailService con BCC: '{BccEmail}', CC: '{CcEmail}'", 
-            smtpConfig.BccEmail, smtpConfig.CcEmail);
-
         await _emailService.ConfigureSmtpAsync(smtpConfig);
-    }    private async Task<bool> ProcessAutomaticEmailSendingAsync(
+    }
+    
+    private async Task<bool> ProcessAutomaticEmailSendingAsync(
         IReadOnlyList<GeneratedPdfInfo> documents, 
         CancellationToken cancellationToken)
     {
@@ -698,7 +703,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
         var emailsFailed = 0;
         var orphansSent = 0;
         var totalEmails = documents.Count;
-        var processedDocuments = 0;        // Actualizar totales iniciales
+        var processedDocuments = 0;
+        
+        // Actualizar totales iniciales
         TotalEmailDocuments = totalEmails;
         CurrentEmailDocument = 0;
         _smoothProgress.SetValueDirectly(0);
@@ -717,7 +724,8 @@ public partial class AutomaticEmailViewModel : ObservableObject
             cancellationToken.ThrowIfCancellationRequested();
 
             try
-            {                // Actualizar progreso con animación suave
+            {
+                // Actualizar progreso con animación suave
                 processedDocuments++;
                 CurrentEmailDocument = processedDocuments;
                 var progressPercentage = (double)processedDocuments / totalEmails * 100;
@@ -770,7 +778,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 emailsFailed++;
                 LogText += $" ❌ Error: {ex.Message}";
             }
-        }        // Enviar documentos huérfanos consolidados al BCC
+        }
+        
+        // Enviar documentos huérfanos consolidados al BCC
         if (orphanDocuments.Any() && !string.IsNullOrWhiteSpace(bccEmail))
         {
             try
@@ -815,7 +825,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
         {
             LogText += $"\n⚠️ {orphanDocuments.Count} documento(s) sin correo y sin BCC configurado";
             emailsFailed += orphanDocuments.Count;
-        }        // Completar progreso with animación suave
+        }
+        
+        // Completar progreso with animación suave
         _smoothProgress.Report(100);
         await Task.Delay(200); // Pausa visual para mostrar completado
         EmailStatusMessage = $"Completado: {emailsSent + orphansSent} emails enviados";
@@ -831,35 +843,26 @@ public partial class AutomaticEmailViewModel : ObservableObject
         }
 
         return emailsSent > 0 || orphansSent > 0;
-    }    /// <summary>
+    }
+    
+    /// <summary>
     /// Determina si se puede enviar automáticamente
     /// </summary>
     private bool CanSendDocumentsAutomatically()
     {
-        // 🔍 DEBUG: Agregar logging detallado para diagnosticar por qué el botón no se habilita
-        _logger.LogInformation("🔍 DEBUG - Evaluando CanSendDocumentsAutomatically:");
-        _logger.LogInformation("   IsSendingEmail: {IsSendingEmail}", IsSendingEmail);
-        _logger.LogInformation("   IsEmailConfigured: {IsEmailConfigured}", IsEmailConfigured);
-        _logger.LogInformation("   HasEmailExcel: {HasEmailExcel}", HasEmailExcel);
-        _logger.LogInformation("   GeneratedDocuments.Count: {Count}", GeneratedDocuments.Count);
-        
         var canSend = !IsSendingEmail && 
                      IsEmailConfigured && 
                      HasEmailExcel && 
                      GeneratedDocuments.Count > 0;
 
-        _logger.LogInformation("   Resultado CanSend: {CanSend}", canSend);
-
         // ✨ MEJORA: Actualizar mensajes de estado según las condiciones
         if (!canSend && HasEmailExcel && !HasDocumentsGenerated)
         {
             DocumentStatusWarning = "⚠️ Genere documentos primero para habilitar envío";
-            _logger.LogInformation("   Estado: Documentos no generados");
         }
         else if (!canSend && !IsEmailConfigured && HasDocumentsGenerated)
         {
             DocumentStatusWarning = "⚠️ Configure SMTP para habilitar envío";
-            _logger.LogInformation("   Estado: SMTP no configurado");
         }
         
         return canSend;
@@ -872,7 +875,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
     {
         IsEmailConfigured = isConfigured;
         OnPropertyChanged(nameof(CanSendAutomatically));
-    }    /// <summary>
+    }
+    
+    /// <summary>
     /// Actualiza la lista de documentos generados
     /// </summary>
     public void UpdateGeneratedDocuments(IReadOnlyList<GeneratedPdfInfo> documents)
@@ -894,7 +899,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
         }
         
         OnPropertyChanged(nameof(CanSendAutomatically));
-    }/// <summary>
+    }
+    
+    /// <summary>
     /// Limpia recursos
     /// </summary>
     public void Cleanup()
@@ -1082,182 +1089,15 @@ public partial class AutomaticEmailViewModel : ObservableObject
     </tr>
   </tbody>
 </table>
-</div>";    }    /// <summary>
-    /// Genera el cuerpo de email para documentos sin correo destinatario con firma completa
-    /// </summary>
-    private string GetOrphanEmailBodyWithSignature(string empresaName, string nit)
-    {
-        return @"<div style='font-family: Arial, sans-serif; line-height: 1.6; text-align: justify;'>
-<p><strong>DOCUMENTOS SIN CORREO ELECTRÓNICO DESTINATARIO</strong></p>
-
-<p>Se adjuntan los documentos de estado de cartera para los cuales no se encontró correo electrónico registrado:</p>
-
-<p>Empresa: <strong>" + empresaName + @"</strong><br/>
-NIT: " + nit + @"</p>
-
-<p>Cordialmente,</p>
-
-<table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial'>
-  <tbody>
-    <tr>
-      <td>
-        <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial;width:385px'>
-          <tbody>
-            <tr>
-              <td width='80' style='vertical-align:middle'>
-                <span style='margin-right:20px;display:block'>
-                  <img src='http://simicsgroup.com/wp-content/uploads/2023/08/Logo-v6_Icono2021Firma.png' role='presentation' width='80' style='max-width:80px'>
-                </span>
-              </td>
-              <td style='vertical-align:middle'>
-                <h3 style='margin:0;font-size:14px;color:#000'>
-                  <span>JUAN MANUEL</span> <span>CUERVO PINILLA</span>
-                </h3>
-                <p style='margin:0;font-weight:500;color:#000;font-size:12px;line-height:15px'>
-                  <span>Gerente Financiero</span>
-                </p>
-                <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial'>
-                  <tbody>
-                    <tr height='15' style='vertical-align:middle'>
-                      <td width='30' style='vertical-align:middle'>
-                        <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial'>
-                          <tbody>
-                            <tr>
-                              <td style='vertical-align:bottom'>
-                                <span style='display:block'>
-                                  <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image002.png' width='11' style='display:block'>
-                                </span>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                      <td style='padding:0;color:#000'>
-                        <a href='tel:+34654623277' style='text-decoration:none;color:#000;font-size:11px'>
-                          <span>+34-654623277</span>
-                        </a> |
-                        <a href='tel:+573163114545' style='text-decoration:none;color:#000;font-size:11px'>
-                          <span>+57-3163114545</span>
-                        </a>
-                      </td>
-                    </tr>
-                    <tr height='15' style='vertical-align:middle'>
-                      <td width='30' style='vertical-align:middle'>
-                        <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial'>
-                          <tbody>
-                            <tr>
-                              <td style='vertical-align:bottom'>
-                                <span style='display:block'>
-                                  <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image003.png' width='11' style='display:block'>
-                                </span>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                      <td style='padding:0;color:#000'>
-                        <a href='mailto:juan.cuervo@simicsgroup.com' style='text-decoration:none;color:#000;font-size:11px'>
-                          <span>juan.cuervo@simicsgroup.com</span>
-                        </a>
-                      </td>
-                    </tr>
-                    <tr height='15' style='vertical-align:middle'>
-                      <td width='30' style='vertical-align:middle'>
-                        <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial'>
-                          <tbody>
-                            <tr>
-                              <td style='vertical-align:bottom'>
-                                <span style='display:block'>
-                                  <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image004.png' width='11' style='display:block'>
-                                </span>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                      <td style='padding:0;color:#000'>
-                        <span style='font-size:11px;color:#000'>
-                          <span>CR 53 No. 96-24 Oficina 3D</span>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr height='15' style='vertical-align:middle'>
-                      <td width='30' style='vertical-align:middle'></td>
-                      <td style='padding:0;color:#000'>
-                        <span style='font-size:11px;color:#000'>
-                          <span>Barranquilla, Colombia</span>
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial;width:385px'>
-          <tbody>
-            <tr height='60' style='vertical-align:middle'>
-              <th style='width:100%'>
-                <img src='http://simicsgroup.com/wp-content/uploads/2023/08/Logo-v6_2021-1Firma.png' width='200' style='max-width:200px;display:inline-block'>
-              </th>
-            </tr>
-            <tr height='25' style='text-align:center'>
-              <td style='width:100%'>
-                <a href='https://www.simicsgroup.com/' style='text-decoration:none;color:#000;font-size:11px;text-align:center'>
-                  <span>www.simicsgroup.com</span>
-                </a>
-              </td>
-            </tr>
-            <tr height='25' style='text-align:center'>
-              <td style='text-align:center;vertical-align:top'>
-                <table cellpadding='0' cellspacing='0' style='vertical-align:-webkit-baseline-middle;font-size:small;font-family:Arial;display:inline-block'>
-                  <tbody>
-                    <tr style='text-align:right'>
-                      <td>
-                        <a href='https://www.linkedin.com/company/simicsgroupsas' style='display:inline-block;padding:0'>
-                          <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image006.png' alt='linkedin' height='24' style='max-width:135px;display:block'>
-                        </a>
-                      </td>
-                      <td width='5'>
-                        <div></div>
-                      </td>
-                      <td>
-                        <a href='https://www.instagram.com/simicsgroupsas/' style='display:inline-block;padding:0'>
-                          <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image007.png' alt='instagram' height='24' style='max-width:135px;display:block'>
-                        </a>
-                      </td>
-                      <td width='5'>
-                        <div></div>
-                      </td>
-                      <td>
-                        <a href='https://www.facebook.com/SIMICSGroupSAS/' style='display:inline-block;padding:0'>
-                          <img src='http://simicsgroup.com/wp-content/uploads/2023/08/image008.png' alt='facebook' height='24' style='max-width:135px;display:block'>
-                        </a>
-                      </td>
-                      <td width='5'>
-                        <div></div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </td>
-    </tr>
-  </tbody>
-</table>
 </div>";
-    }    /// <summary>
+    }
+    
+    /// <summary>
     /// Genera el cuerpo de email consolidado para múltiples documentos sin destinatario
     /// </summary>
-    private string GetConsolidatedOrphanEmailBody(List<GeneratedPdfInfo> orphanDocuments)    {        // ✅ CORRECCIÓN MEJORADA: Usar lista HTML <ul><li> para garantizar formato vertical
+    private string GetConsolidatedOrphanEmailBody(List<GeneratedPdfInfo> orphanDocuments)
+    {        
+        // ✅ CORRECCIÓN MEJORADA: Usar lista HTML <ul><li> para garantizar formato vertical
         var companiesListItems = string.Join("", orphanDocuments.Select((doc, index) => 
             $"<li><strong>{doc.NombreEmpresa}</strong> (NIT: {doc.Nit})</li>"));
 
@@ -1431,7 +1271,9 @@ NIT: " + nit + @"</p>
   </tbody>
 </table>
 </div>";
-    }    // Este comando será llamado desde el MainViewModel con el parámetro correcto
+    }
+    
+    // Este comando será llamado desde el MainViewModel con el parámetro correcto
     public async Task<bool> SendDocumentsAutomaticallyWithConfig(SmtpConfigurationViewModel smtpConfig)
     {
         return await SendDocumentsAutomaticallyAsync(GeneratedDocuments, smtpConfig, CancellationToken.None);
