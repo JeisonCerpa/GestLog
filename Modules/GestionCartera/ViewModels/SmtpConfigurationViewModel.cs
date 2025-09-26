@@ -38,6 +38,9 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     // Propiedades adicionales para compatibilidad
     [ObservableProperty] private string _statusMessage = string.Empty;
 
+    // Campo privado para controlar el ciclo de advertencia
+    private bool _warnedMissingPassword = false;
+
     public SmtpConfigurationViewModel(
         IEmailService? emailService, 
         IConfigurationService configurationService,
@@ -79,6 +82,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 CcEmail = CcEmail
             };
 
+            _logger.LogInformation($"[TRACE] Configurando SMTP para envío. Usuario: '{SmtpUsername}', Contraseña: '{(string.IsNullOrWhiteSpace(SmtpPassword) ? "VACIA" : "***OCULTA***")}'");
             await _emailService.ConfigureSmtpAsync(smtpConfig, cancellationToken);
             IsEmailConfigured = await _emailService.ValidateConfigurationAsync(cancellationToken);
             
@@ -188,37 +192,33 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             // PRIMERO: Intentar cargar desde Windows Credential Manager
             bool loadedFromCredentials = TryLoadFromCredentials();
-            
-            if (loadedFromCredentials)
+            // Si la contraseña fue cargada correctamente desde credenciales, no mostrar advertencia
+            if (!string.IsNullOrWhiteSpace(SmtpPassword))
             {
+                _warnedMissingPassword = false;
                 return;
             }
-
-            // FALLBACK: Cargar desde JSON si no hay credenciales guardadas
+            // Cargar el resto de la configuración desde JSON (sin contraseña)
             var smtpConfig = _configurationService.Current.Smtp;
             if (smtpConfig != null)
             {
                 SmtpServer = smtpConfig.Server ?? string.Empty;
                 SmtpPort = smtpConfig.Port;
                 SmtpUsername = smtpConfig.Username ?? string.Empty;
-                SmtpPassword = string.Empty; // No cargar contraseña desde JSON por seguridad
                 EnableSsl = smtpConfig.UseSSL;
                 BccEmail = smtpConfig.BccEmail ?? string.Empty;
                 CcEmail = smtpConfig.CcEmail ?? string.Empty;
-                // Nueva lógica: determinar si la configuración es válida aunque falte la contraseña
                 if (!smtpConfig.UseAuthentication)
                 {
-                    // Si no requiere autenticación, la configuración puede considerarse válida
                     IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.FromEmail);
                 }
                 else
                 {
-                    // Si requiere autenticación, solo puede considerarse válida si hay usuario (pero no hay contraseña)
                     IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.Username);
-                    // Solo mostrar advertencia si la contraseña NO está presente en el ViewModel (ni en Credential Manager ni en la UI)
-                    if (IsEmailConfigured && string.IsNullOrWhiteSpace(SmtpPassword))
+                    // Solo mostrar advertencia si el usuario intenta enviar y la contraseña está vacía
+                    if (IsEmailConfigured && string.IsNullOrWhiteSpace(SmtpPassword) && !_warnedMissingPassword)
                     {
-                        _logger.LogWarning("La configuración SMTP requiere contraseña. Ingrese la contraseña para completar la configuración.");
+                        _warnedMissingPassword = true;
                     }
                 }
             }
@@ -233,58 +233,42 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             _logger.LogError(ex, "Error al cargar la configuración SMTP");
             SetDefaultValues();
         }
-    }    /// <summary>
+    }
+
+    /// <summary>
     /// Intenta cargar configuración desde Windows Credential Manager
     /// </summary>
     private bool TryLoadFromCredentials()
     {
         try
         {
-            _logger.LogDebug("Buscando credenciales SMTP en Windows Credential Manager");
-
-            // Credenciales conocidas - SOLO la parte después de "GestLog_SMTP_"
             var knownCredentialTargets = new[]
             {
+                $"SMTP_{SmtpServer}_{SmtpUsername}",
                 "SMTP_smtppro.zoho.com_prueba@gmail.com",
                 "SMTP_smtppro.zoho.com_cartera@simicsgroup.com"
             };
-
             foreach (var target in knownCredentialTargets)
             {
-                _logger.LogDebug($"Verificando credencial con target: {target}");
-                
                 if (_credentialService.CredentialsExist(target))
                 {
                     var (username, password) = _credentialService.GetCredentials(target);
-                    
                     if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
                     {
-                        // Extraer servidor del target
-                        string server = ExtractServerFromTarget("GestLog_SMTP_" + target); // Usar formato completo para extracción
-                        
+                        string server = ExtractServerFromTarget("GestLog_SMTP_" + target);
                         SmtpServer = server;
                         SmtpUsername = username;
                         SmtpPassword = password;
                         SmtpPort = 587;
                         EnableSsl = true;
                         IsEmailConfigured = true;
-                        
-                        // BCC y CC desde JSON si están disponibles
                         var jsonConfig = _configurationService.Current.Smtp;
                         BccEmail = jsonConfig?.BccEmail ?? string.Empty;
                         CcEmail = jsonConfig?.CcEmail ?? string.Empty;
-                        
-                        _logger.LogInformation($"✅ Configuración SMTP cargada desde credenciales - Servidor: {server}, Usuario: {username}");
                         return true;
                     }
                 }
-                else
-                {
-                    _logger.LogDebug($"❌ Credencial no encontrada para target: {target}");
-                }
             }
-
-            _logger.LogDebug("No se encontraron credenciales SMTP válidas");
             return false;
         }
         catch (Exception ex)
@@ -352,7 +336,6 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         try
         {
             var smtpConfig = _configurationService.Current.Smtp;
-            
             // Actualizar configuración básica en JSON (sin contraseña)
             smtpConfig.Server = SmtpServer;
             smtpConfig.Port = SmtpPort;
@@ -362,18 +345,26 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             smtpConfig.UseSSL = EnableSsl;
             smtpConfig.UseAuthentication = !string.IsNullOrWhiteSpace(SmtpUsername);
             smtpConfig.IsConfigured = true;
-              // Guardar contraseña de forma segura en Windows Credential Manager
+            // Guardar contraseña de forma segura en Windows Credential Manager
             if (!string.IsNullOrWhiteSpace(SmtpUsername) && !string.IsNullOrWhiteSpace(SmtpPassword))
             {
-                // Usar el formato correcto SIN el prefijo "GestLog_SMTP_" (el servicio lo agrega automáticamente)
                 var credentialTarget = $"SMTP_{SmtpServer}_{SmtpUsername}";
-                _credentialService.SaveCredentials(credentialTarget, SmtpUsername, SmtpPassword);
-                
-                _logger.LogInformation($"Credenciales SMTP guardadas con target: {credentialTarget}");
+                _logger.LogInformation($"[TRACE] Intentando guardar credenciales SMTP en Credential Manager. Target: {credentialTarget}, Usuario: {SmtpUsername}");
+                var saved = _credentialService.SaveCredentials(credentialTarget, SmtpUsername, SmtpPassword);
+                if (saved)
+                {
+                    _logger.LogInformation($"[TRACE] Credenciales SMTP guardadas correctamente en Credential Manager. Target: {credentialTarget}");
+                }
+                else
+                {
+                    _logger.LogWarning($"[TRACE] Error al guardar credenciales SMTP en Credential Manager. Target: {credentialTarget}");
+                }
             }
-
+            else
+            {
+                _logger.LogWarning($"[TRACE] No se guardaron credenciales SMTP porque el usuario o la contraseña están vacíos. Usuario: '{SmtpUsername}', Contraseña vacía: '{string.IsNullOrWhiteSpace(SmtpPassword)}'");
+            }
             await _configurationService.SaveAsync();
-            
             _logger.LogInformation("Configuración SMTP guardada exitosamente");
         }
         catch (Exception ex)
