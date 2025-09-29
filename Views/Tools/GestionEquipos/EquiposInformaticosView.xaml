@@ -169,6 +169,11 @@
                                 <Setter Property="Foreground" Value="#888"/>
                                 <Setter Property="Opacity" Value="0.6"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                <Setter Property="Foreground" Value="#888"/>
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding Estado}" Value="EnMantenimiento">
                                 <Setter Property="Foreground" Value="#8A6B00"/>
                                 <Setter Property="FontStyle" Value="Italic"/>
@@ -209,11 +214,96 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="80" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                    <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                    <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="100" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
-                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}"/>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="80" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextBlockStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" MinWidth="120" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextBlockStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Usuario Asignado" Binding="{Binding UsuarioAsignado}" MinWidth="120" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextBlockStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="100" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextBlockStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="120" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextBlockStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                        <Setter Property="Foreground" Value="#888"/>
+                                        <Setter Property="Opacity" Value="0.6"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                     <!-- Columna Estado con indicador de color + texto. Uso de converter con TargetNullValue/FallbackValue para seguridad -->
                     <DataGridTemplateColumn Header="Estado" MinWidth="140" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
@@ -224,7 +314,29 @@
                                     <Ellipse Width="14" Height="14" VerticalAlignment="Center"
                                              Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}, TargetNullValue=#F0F0F0, FallbackValue=#F0F0F0}"
                                              Stroke="#BFBFBF" StrokeThickness="0.5"/>
-                                    <TextBlock Text="{Binding Estado, TargetNullValue='Desconocido', FallbackValue='Desconocido'}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Estado, TargetNullValue='Desconocido', FallbackValue='Desconocido'}" Margin="8,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#504F4E"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                        <Setter Property="Foreground" Value="#888"/>
+                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                                                        <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                        <Setter Property="Foreground" Value="#888"/>
+                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
+                                                        <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                        <Setter Property="Opacity" Value="0.85"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -250,6 +362,10 @@
                     <Style TargetType="DataGridRow">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                                <Setter Property="Background" Value="#FFEDEDED"/>
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
                                 <Setter Property="Background" Value="#FFEDEDED"/>
                                 <Setter Property="Opacity" Value="0.6"/>
                             </DataTrigger>
