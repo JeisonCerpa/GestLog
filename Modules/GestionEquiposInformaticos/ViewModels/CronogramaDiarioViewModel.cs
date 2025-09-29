@@ -119,19 +119,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 var dias = new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes" };
                 foreach (var d in dias) Days.Add(new DayScheduleViewModel(d));
                 
-                // Cargar cronogramas de mantenimiento existentes
-                var cronogramas = await _cronogramaService.GetCronogramasAsync();
-                foreach (var c in cronogramas)
-                {
-                    if (c.Anio == SelectedYear && c.Semanas != null && c.Semanas.Length >= SelectedWeek && c.Semanas[SelectedWeek - 1])
-                    {
-                        Planificados.Add(c);
-                        int index = 0;
-                        if (!string.IsNullOrWhiteSpace(c.Codigo))
-                            index = (System.Math.Abs(c.Codigo.GetHashCode()) % 5);
-                        Days[index].Items.Add(c);
-                    }
-                }                // Cargar planes de cronograma de equipos CON navegación de equipo
+                // Cargar planes de cronograma de equipos CON navegación de equipo
                 var planesEquipos = await _planCronogramaService.GetAllAsync();
                 
                 // Filtrar planes: mostrar activos + inactivos que tengan ejecuciones en la semana seleccionada
