@@ -473,3 +473,21 @@ GestLog incluye un sistema robusto de actualización automática usando Velopack
 - En caso de problemas de permisos, se guía al usuario
 
 ---
+
+## Colores y semántica de estados en Gestión de Equipos Informáticos
+
+- **Activo**: Verde (#2B8E3F)
+- **En mantenimiento**: Ámbar (#F9B233)
+- **En reparación**: Naranja/ámbar oscuro (#A85B00)
+- **Dado de baja**: Gris muy claro (#EDEDED), opacidad baja, texto tachado. Representa equipos fuera de uso definitivo.
+- **Inactivo**: Gris medio/oscuro (#9E9E9E), opacidad 0.85, sin tachado. Representa equipos guardados pero reutilizables.
+
+### Decisión
+Se diferencia visual y semánticamente "Dado de baja" (gris muy claro, opacidad baja, tachado) de "Inactivo" (gris medio/oscuro, opacidad 0.85, sin tachado) para evitar confusión y mejorar la experiencia de usuario.
+
+### Ubicación
+- Converter: EstadoToColorConverter.cs
+- Estilos: EquiposInformaticosView.xaml
+
+---
+Última actualización: 26/09/2025

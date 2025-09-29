@@ -90,6 +90,58 @@
                 <Button Content="Exportar filtrados"
                         Command="{Binding ExportarEquiposFiltradosCommand}"
                         Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="28"/>
+                <!-- ToggleButton para mostrar/ocultar equipos dados de baja -->
+                <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32" Margin="16,0,0,0"
+                              IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}"
+                              ToolTip="Mostrar equipos dados de baja"
+                              VerticalAlignment="Center">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton">
+                            <Setter Property="Background" Value="#F0F0F0"/>
+                            <Setter Property="BorderBrush" Value="#DDD"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Grid>
+                                            <Border x:Name="SwitchBorder" Background="#F0F0F0" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16" Height="32" Width="110">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#A85B00" BlurRadius="8" ShadowDepth="1" Opacity="0.18"/>
+                                                </Border.Effect>
+                                            </Border>
+                                            <Ellipse x:Name="SwitchKnob" Width="24" Height="24" Margin="4,4,0,4" Fill="#C8C8C8" HorizontalAlignment="Left"/>
+                                            <TextBlock x:Name="SwitchText" Text="Dados de baja" Foreground="#504F4E" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,18,0"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="SwitchKnob" Property="Fill" Value="#888"/>
+                                                <Setter TargetName="SwitchBorder" Property="Background" Value="#C8C8C8"/>
+                                                <Setter TargetName="SwitchKnob" Property="Margin" Value="82,4,0,4"/>
+                                                <Setter TargetName="SwitchKnob" Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="#888" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="False">
+                                                <Setter TargetName="SwitchKnob" Property="Fill" Value="#C8C8C8"/>
+                                                <Setter TargetName="SwitchBorder" Property="Background" Value="#F0F0F0"/>
+                                                <Setter TargetName="SwitchKnob" Property="Margin" Value="4,4,0,4"/>
+                                                <Setter TargetName="SwitchKnob" Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect Color="#706F6F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
             </StackPanel>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="0">
@@ -115,6 +167,7 @@
                             <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
                                 <Setter Property="TextDecorations" Value="Strikethrough"/>
                                 <Setter Property="Foreground" Value="#888"/>
+                                <Setter Property="Opacity" Value="0.6"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding Estado}" Value="EnMantenimiento">
                                 <Setter Property="Foreground" Value="#8A6B00"/>
@@ -126,7 +179,7 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
                                 <Setter Property="Foreground" Value="#9E9E9E"/>
-                                <Setter Property="Opacity" Value="0.75"/>
+                                <Setter Property="Opacity" Value="0.85"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -207,8 +260,8 @@
                                 <Setter Property="Background" Value="#FFF3E0"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
-                                <Setter Property="Background" Value="#F5F5F5"/>
-                                <Setter Property="Opacity" Value="0.75"/>
+                                <Setter Property="Background" Value="#FFF5F5F5"/>
+                                <Setter Property="Opacity" Value="0.85"/>
                             </DataTrigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="#E6F4EA"/>

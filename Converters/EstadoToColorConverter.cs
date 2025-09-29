@@ -35,9 +35,9 @@ namespace GestLog.Converters
 
                 // Dado de baja -> gris claro/neutral
                 if (estadoStr == "dadodebaja" || estadoStr == "dado de baja" || estadoStr == "dadode baja")
-                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 200, 200)); // #C8C8C8
+                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(237, 237, 237)); // #EDEDED (más claro)
 
-                // Inactivo -> gris
+                // Inactivo -> gris medio/oscuro
                 if (estadoStr == "inactivo")
                     return new SolidColorBrush(System.Windows.Media.Color.FromRgb(158, 158, 158)); // #9E9E9E
 

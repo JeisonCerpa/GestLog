@@ -47,6 +47,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private string filtroEquipo = string.Empty;
 
         [ObservableProperty]
+        private bool showDadoDeBaja = false;
+
+        [ObservableProperty]
         private ICollectionView? equiposView;
 
         public EquiposInformaticosViewModel(
@@ -146,9 +149,17 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             System.Windows.Application.Current?.Dispatcher.Invoke(() => EquiposView?.Refresh());
         }
 
+        partial void OnShowDadoDeBajaChanged(bool value)
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() => EquiposView?.Refresh());
+        }
+
         private bool FiltrarEquipo(object obj)
         {
             if (obj is not EquipoInformaticoEntity eq) return false;
+            // Filtrar por estado DadoDeBaja según toggle
+            if (!ShowDadoDeBaja && (eq.Estado?.Trim().ToLowerInvariant() == "dadodebaja" || eq.Estado?.Trim().ToLowerInvariant() == "dado de baja"))
+                return false;
             if (string.IsNullOrWhiteSpace(FiltroEquipo)) return true;
             
             var terminos = FiltroEquipo.Split(';')
