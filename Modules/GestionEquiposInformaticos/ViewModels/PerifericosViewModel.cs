@@ -67,11 +67,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             
-            // La suscripción al auto-refresh se hace automáticamente en la clase base
-            // NO ejecutar Task.Run desde el constructor
-            // La inicialización se hace desde la vista cuando sea necesario
-            _logger.LogInformation("[PerifericosViewModel] ViewModel creado con auto-refresh automático, listo para inicialización");
-
             // Suscribirse a mensaje de periféricos actualizados para recargar datos cuando otro VM modifique asignaciones
             try
             {
@@ -85,7 +80,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 _logger.LogWarning(ex, "[PerifericosViewModel] No se pudo registrar el handler de PerifericosActualizadosMessage");
             }
-        }/// <summary>
+        }        /// <summary>
         /// Inicializa el ViewModel con detección ultrarrápida de problemas de conexión
         /// </summary>
         public async Task InicializarAsync(CancellationToken cancellationToken = default)
@@ -93,13 +88,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             // Verificar si ya está inicializado o hay una operación en curso
             if (_isInitialized || IsLoading)
             {
-                _logger.LogInformation("[PerifericosViewModel] Ya está inicializado o en curso, omitiendo");
+                _logger.LogDebug("[PerifericosViewModel] Ya inicializado, omitiendo");
                 return;
             }
 
             try
             {
-                _logger.LogInformation("[PerifericosViewModel] Inicializando gestión de periféricos");
+                _logger.LogDebug("[PerifericosViewModel] Inicializando");
                 
                 // TIMEOUT ULTRARRÁPIDO de solo 1 segundo para experiencia fluida
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
@@ -109,11 +104,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 await CargarPerifericosInternoAsync(combinedCts.Token);
                 
                 _isInitialized = true;
-                _logger.LogInformation("[PerifericosViewModel] Inicialización completada exitosamente");
+                _logger.LogDebug("[PerifericosViewModel] Inicialización completada");
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                _logger.LogInformation("[PerifericosViewModel] Timeout rápido - sin conexión BD");
+                _logger.LogDebug("[PerifericosViewModel] Timeout - sin conexión BD");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Sin conexión - Módulo no disponible";
@@ -122,7 +117,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("[PerifericosViewModel] Inicialización cancelada por usuario");
+                _logger.LogDebug("[PerifericosViewModel] Inicialización cancelada");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Operación cancelada";
@@ -137,7 +132,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     _isInitialized = true; // Marcar como inicializado para evitar reintentos
                 });
             }
-        }/// <summary>
+        }        /// <summary>
         /// Carga todos los periféricos desde la base de datos
         /// </summary>
         [RelayCommand]
@@ -146,7 +141,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             // Verificar si ya hay una operación en curso
             if (IsLoading)
             {
-                _logger.LogInformation("[PerifericosViewModel] Carga ya en curso, omitiendo");
+                _logger.LogDebug("[PerifericosViewModel] Carga ya en curso, omitiendo");
                 return;
             }
 
@@ -165,7 +160,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             
             // Recargar datos usando el método público
             await CargarPerifericosAsync();
-        }/// <summary>
+        }        /// <summary>
         /// Método interno para cargar periféricos con detección ultrarrápida de problemas de conexión
         /// </summary>
         private async Task CargarPerifericosInternoAsync(CancellationToken cancellationToken = default)
@@ -179,7 +174,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = "Verificando conexión...";
                 });
 
-                _logger.LogInformation("[PerifericosViewModel] Iniciando carga de periféricos desde base de datos");
+                _logger.LogDebug("[PerifericosViewModel] Consultando periféricos");
 
                 // Usar DbContextFactory con timeout ultrarrápido
                 using var dbContext = _dbContextFactory.CreateDbContext();
@@ -196,7 +191,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     .OrderBy(p => p.Codigo)
                     .ToListAsync(cancellationToken);
 
-                _logger.LogInformation("[PerifericosViewModel] Datos cargados desde BD, procesando {Count} registros", entities.Count);
+                _logger.LogDebug("[PerifericosViewModel] Cargados {Count} periféricos", entities.Count);
 
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -211,12 +206,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     ActualizarEstadisticas();
                     StatusMessage = $"Cargados {Perifericos.Count} periféricos";
                 });
-
-                _logger.LogInformation("[PerifericosViewModel] Carga completada exitosamente - {Count} periféricos", Perifericos.Count);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                _logger.LogInformation("[PerifericosViewModel] Carga cancelada por usuario");
+                _logger.LogDebug("[PerifericosViewModel] Carga cancelada");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Operación cancelada";
@@ -224,7 +217,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("[PerifericosViewModel] Timeout ultrarrápido - sin conexión");
+                _logger.LogDebug("[PerifericosViewModel] Timeout - sin conexión");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Sin conexión a base de datos";
@@ -233,7 +226,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == -1 || ex.Number == 26 || ex.Number == 10060)
             {
                 // Errores específicos de conexión - no generar logs verbosos
-                _logger.LogInformation("[PerifericosViewModel] Sin conexión BD (Error {Number})", ex.Number);
+                _logger.LogDebug("[PerifericosViewModel] Sin conexión BD (Error {Number})", ex.Number);
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Base de datos no disponible";
@@ -241,7 +234,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("pool") || ex.Message.Contains("timeout"))
             {
-                _logger.LogInformation("[PerifericosViewModel] Pool de conexiones saturado");
+                _logger.LogDebug("[PerifericosViewModel] Pool de conexiones saturado");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Servidor saturado - Intente más tarde";
@@ -265,7 +258,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     IsLoading = false;
                 });
             }
-        }        /// <summary>
+        }/// <summary>
         /// Comando para agregar un nuevo periférico
         /// </summary>
         [RelayCommand]

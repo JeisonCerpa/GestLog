@@ -21,9 +21,7 @@ namespace GestLog.ViewModels.Base
         protected string _statusMessage = "Listo";
 
         [ObservableProperty]
-        protected bool _isLoading = false;
-
-        /// <summary>
+        protected bool _isLoading = false;        /// <summary>
         /// Constructor base para ViewModels que usan base de datos
         /// </summary>
         protected DatabaseAwareViewModel(IDatabaseConnectionService databaseService, IGestLogLogger logger)
@@ -34,7 +32,8 @@ namespace GestLog.ViewModels.Base
             // Suscribirse automáticamente al auto-refresh
             _databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
             
-            _logger.LogInformation("[{ViewModelType}] ViewModel con auto-refresh creado", GetType().Name);
+            // Log reducido - solo Debug para evitar ruido
+            _logger.LogDebug("[{ViewModelType}] ViewModel inicializado", GetType().Name);
         }
 
         /// <summary>
@@ -48,9 +47,7 @@ namespace GestLog.ViewModels.Base
         protected virtual void OnConnectionLost()
         {
             StatusMessage = "Sin conexión - Datos no disponibles";
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Maneja automáticamente los cambios de estado de conexión
         /// </summary>
         private void OnDatabaseConnectionStateChanged(object? sender, DatabaseConnectionStateChangedEventArgs e)
@@ -60,7 +57,8 @@ namespace GestLog.ViewModels.Base
             switch (e.CurrentState)
             {
                 case DatabaseConnectionState.Connected:
-                    _logger.LogInformation("[{ViewModelType}] Conexión BD restaurada - refrescando automáticamente", GetType().Name);
+                    // Log reducido - solo cuando se reconecta
+                    _logger.LogInformation("[{ViewModelType}] Conexión restaurada, actualizando datos", GetType().Name);
                     
                     // Auto-refresh en el hilo de UI
                     System.Windows.Application.Current?.Dispatcher.BeginInvoke(async () =>
@@ -70,8 +68,6 @@ namespace GestLog.ViewModels.Base
                             StatusMessage = "Reconectando...";
                             await RefreshDataAsync();
                             StatusMessage = "Datos actualizados automáticamente";
-                            
-                            _logger.LogInformation("[{ViewModelType}] Auto-refresh completado", GetType().Name);
                         }
                         catch (Exception ex)
                         {
@@ -82,16 +78,15 @@ namespace GestLog.ViewModels.Base
                     break;
 
                 case DatabaseConnectionState.Disconnected:
-                    _logger.LogInformation("[{ViewModelType}] Conexión BD perdida", GetType().Name);
+                    // Log reducido - solo Warning cuando se pierde conexión
+                    _logger.LogWarning("[{ViewModelType}] Conexión perdida", GetType().Name);
                     System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
                     {
                         OnConnectionLost();
                     });
                     break;
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Cleanup automático - llamar desde las vistas o usar IDisposable
         /// </summary>
         public virtual void Dispose()
@@ -101,7 +96,7 @@ namespace GestLog.ViewModels.Base
             try
             {
                 _databaseService.ConnectionStateChanged -= OnDatabaseConnectionStateChanged;
-                _logger.LogInformation("[{ViewModelType}] ViewModel disposed correctamente", GetType().Name);
+                _logger.LogDebug("[{ViewModelType}] ViewModel disposed", GetType().Name);
             }
             catch (Exception ex)
             {

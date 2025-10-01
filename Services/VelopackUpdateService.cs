@@ -17,9 +17,7 @@ namespace GestLog.Services
         {
             _logger = logger;
             _updateUrl = updateUrl;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Verifica si hay actualizaciones disponibles SIN descargarlas
         /// </summary>
         public async Task<bool> CheckForUpdatesAsync()
@@ -55,9 +53,15 @@ namespace GestLog.Services
                     return false;
                 }
             }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("VelopackLocator"))
+            {
+                // Aplicación no está ejecutándose desde Velopack - esto es normal en desarrollo
+                _logger.LogDebug("ℹ️ Actualizaciones no disponibles (modo desarrollo)");
+                return false;
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error verificando actualizaciones");
+                _logger.LogWarning(ex, "⚠️ No se pudo verificar actualizaciones");
                 return false;
             }
         }

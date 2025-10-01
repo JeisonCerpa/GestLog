@@ -65,14 +65,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             _planService = planService;
             _equipoService = equipoService;
             Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
-            SelectedYear = DateTime.Now.Year;
-
-            // Suscribirse a mensajes de actualización para refresh automático
+            SelectedYear = DateTime.Now.Year;            // Suscribirse a mensajes de actualización para refresh automático
             WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
             {
                 try
                 {
-                    _logger.LogInformation("[HistorialEjecucionesViewModel] Refrescando por mensaje EjecucionesPlanesActualizadas");
+                    _logger.LogDebug("[HistorialEjecucionesViewModel] Refrescando por mensaje");
                     await LoadAsync();
                 }
                 catch (Exception ex)
@@ -86,7 +84,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 try
                 {
-                    _logger.LogInformation("[HistorialEjecucionesViewModel] Refrescando por mensaje SeguimientosActualizados");
+                    _logger.LogDebug("[HistorialEjecucionesViewModel] Refrescando por mensaje seguimientos");
                     await LoadAsync();
                 }
                 catch (Exception ex)

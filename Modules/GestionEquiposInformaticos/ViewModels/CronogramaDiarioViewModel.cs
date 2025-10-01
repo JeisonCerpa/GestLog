@@ -603,9 +603,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                _logger.LogInformation("[CronogramaDiarioViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[CronogramaDiarioViewModel] Refrescando datos");
                 await LoadAsync(CancellationToken.None);
-                _logger.LogInformation("[CronogramaDiarioViewModel] Datos refrescados exitosamente");
             }
             catch (Exception ex)
             {
