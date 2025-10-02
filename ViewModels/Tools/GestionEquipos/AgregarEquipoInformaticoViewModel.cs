@@ -1414,6 +1414,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             var nuevoDisco = new DiscoEntity
             {
+                NumeroDisco = ListaDiscos.Count, // ✅ Asignar número único basado en la posición
                 Tipo = "SSD",
                 CapacidadGB = 256,
                 Marca = string.Empty,
