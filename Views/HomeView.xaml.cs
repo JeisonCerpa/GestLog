@@ -20,9 +20,11 @@ namespace GestLog.Views
         {
             var herramientasView = new HerramientasView();
             _mainWindow?.NavigateToView(herramientasView, "Herramientas");
-        }        private void btnInfo_Click(object sender, RoutedEventArgs e)
-        {            System.Windows.MessageBox.Show(
-                "GestLog v1.0.21\n\n" +
+        }        
+        private void btnInfo_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.MessageBox.Show(
+                "GestLog v1.0.22\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
@@ -31,7 +33,7 @@ namespace GestLog.Views
                 "• Envío de Catálogo - Envío masivo de catálogo\n\n" +
                 "Estado: ✅ Operativo\n" +
                 "Actualizaciones: ✅ Sistema Velopack completamente funcional\n" +
-                "🔇 Logs optimizados - Reducción del 90% en logs rutinarios\n",
+                "Cambios en v1.0.22: 🔧 Arreglo numeración discos, reordenamiento vista herramientas",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

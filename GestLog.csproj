@@ -6,16 +6,20 @@
     <ImplicitUsings>enable</ImplicitUsings>    
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>      <!-- Información de versión de la aplicación -->      <AssemblyVersion>1.0.21.0</AssemblyVersion>
-    <FileVersion>1.0.21.0</FileVersion>
-    <Version>1.0.21</Version>
-    <AssemblyInformationalVersion>1.0.21</AssemblyInformationalVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>    
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>      
+    <!-- Información de versión de la aplicación -->      
+    <AssemblyVersion>1.0.22.0</AssemblyVersion>
+    <FileVersion>1.0.22.0</FileVersion>
+    <Version>1.0.22</Version>
+    <AssemblyInformationalVersion>1.0.22</AssemblyInformationalVersion>
     <Product>GestLog</Product>
     <Company>SIMICS Group SAS</Company>
     <Copyright>© 2025 SIMICS Group SAS. Todos los derechos reservados.</Copyright>
     <AssemblyTitle>GestLog - Sistema de Gestión</AssemblyTitle>
-    <Description>Sistema integral de gestión empresarial</Description>      <AssemblyMetadata>
-      <AssemblyMetadata Include="ProductVersion" Value="1.0.21" />
+    <Description>Sistema integral de gestión empresarial</Description>      
+    <AssemblyMetadata>
+      <AssemblyMetadata Include="ProductVersion" Value="1.0.22" />
     </AssemblyMetadata>
     <!-- Configuración del icono de la aplicación -->
     <ApplicationIcon>Assets\image001.ico</ApplicationIcon>
