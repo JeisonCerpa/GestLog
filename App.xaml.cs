@@ -23,9 +23,13 @@ namespace GestLog;
 public partial class App : System.Windows.Application
 {
     private IGestLogLogger? _logger;    
-    public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();
-    protected override async void OnStartup(StartupEventArgs e)
+    public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
+        // ✅ PRIMERO: Inicializar Velopack ANTES de cualquier otra operación
+#if !DEBUG
+        VelopackApp.Build().Run();
+#endif
+
         // Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
         
@@ -76,18 +80,30 @@ public partial class App : System.Windows.Application
             {
                 hayActualizacion = await updateService.CheckForUpdatesAsync();
             }
+            
             if (hayActualizacion)
             {
                 splash.ShowStatus("¡Actualización disponible!");
-                splash.ShowUpdateButtons();
-                var result = splash.ShowDialog();
-                if (result == true && updateService != null)
+                await System.Threading.Tasks.Task.Delay(1000);
+                
+                // ✅ CERRAR el splash ANTES de mostrar el diálogo modal
+                splash.Close();
+                
+                // Mostrar diálogo y procesar actualización
+                if (updateService != null)
                 {
-                    await updateService.NotifyAndPromptForUpdateAsync();
-                    // Puedes cerrar la app si es necesario, o continuar
+                    var updatedAndRestarting = await updateService.NotifyAndPromptForUpdateAsync();
+                    if (updatedAndRestarting)
+                    {
+                        // La aplicación se reiniciará automáticamente, no continuar
+                        return;
+                    }
                 }
-                // Si el usuario omite, sigue el flujo normal
-                splash.HideUpdateButtons();
+                
+                // Si el usuario rechaza la actualización, recrear el splash para continuar
+                splash = new GestLog.Views.SplashScreen();
+                splash.Show();
+                await System.Threading.Tasks.Task.Delay(300);
             }
             else
             {
@@ -138,18 +154,12 @@ public partial class App : System.Windows.Application
                 LoggingService.InitializeServices();
                 _logger = LoggingService.GetLogger();
                 _logger.LogUnhandledException(ex, "App.OnStartup");
-            }
-            catch
+            }            catch
             {
                 System.Windows.Application.Current.Shutdown(1);
                 return;
             }
         }
-
-        // Inicializar Velopack al arranque solo si no es DEBUG
-#if !DEBUG
-        VelopackApp.Build().Run();
-#endif
 
     }
     /// <summary>

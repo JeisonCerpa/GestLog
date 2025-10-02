@@ -17,33 +17,23 @@ namespace GestLog.Services
         {
             _logger = logger;
             _updateUrl = updateUrl;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Verifica si hay actualizaciones disponibles SIN descargarlas
         /// </summary>
         public async Task<bool> CheckForUpdatesAsync()
         {
-            _logger.LogInformation("🔍 [INICIO] CheckForUpdatesAsync llamado");
             try
             {
-                _logger.LogInformation("🔍 Verificando actualizaciones disponibles...");
-                _logger.LogInformation($"🌐 URL del servidor: {_updateUrl}");
-                
-                _logger.LogInformation("📦 Creando UpdateManager...");
+                _logger.LogDebug("🔍 Verificando actualizaciones disponibles...");
                 var updater = new UpdateManager(_updateUrl);
-                _logger.LogInformation($"✅ UpdateManager creado. Versión actual: {updater.CurrentVersion}");
-                
-                _logger.LogInformation("🌐 Llamando a CheckForUpdatesAsync...");
                 var updateInfo = await updater.CheckForUpdatesAsync();
-                _logger.LogInformation($"📡 Respuesta del servidor recibida. UpdateInfo es null: {updateInfo == null}");
                 
                 if (updateInfo != null)
                 {
                     var currentVersion = updater.CurrentVersion;
                     var availableVersion = updateInfo.TargetFullRelease?.Version;
                     
-                    _logger.LogInformation($"📋 Versión actual: {currentVersion}, Versión disponible: {availableVersion}");
+                    _logger.LogDebug($"📋 Versión actual: {currentVersion}, Versión disponible: {availableVersion}");
                     
                     // Solo devolver true si hay una versión NUEVA disponible
                     if (availableVersion != null && currentVersion != null && availableVersion > currentVersion)
@@ -53,30 +43,25 @@ namespace GestLog.Services
                     }
                     else
                     {
-                        _logger.LogInformation($"ℹ️ Ya tienes la versión más reciente: {currentVersion}");
+                        _logger.LogDebug($"ℹ️ Ya tienes la versión más reciente: {currentVersion}");
                         return false;
                     }
                 }
                 else
                 {
-                    _logger.LogInformation("ℹ️ No se encontró información de actualizaciones en el servidor");
+                    _logger.LogDebug("ℹ️ No se encontró información de actualizaciones en el servidor");
                     return false;
                 }
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("VelopackLocator"))
             {
                 // Aplicación no está ejecutándose desde Velopack - esto es normal en desarrollo
-                _logger.LogInformation("ℹ️ [CATCH-VELOPACK] Actualizaciones no disponibles (modo desarrollo)");
-                _logger.LogInformation($"🔍 Excepción: {ex.GetType().Name}");
-                _logger.LogInformation($"📝 Mensaje: {ex.Message}");
+                _logger.LogDebug("ℹ️ Actualizaciones no disponibles (modo desarrollo)");
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("⚠️ [CATCH-GENERAL] Error NO esperado al verificar actualizaciones");
-                _logger.LogInformation($"🔍 Tipo: {ex.GetType().Name}");
-                _logger.LogInformation($"📝 Mensaje: {ex.Message}");
-                _logger.LogInformation($"📚 Stack: {ex.StackTrace}");
+                _logger.LogWarning(ex, "⚠️ No se pudo verificar actualizaciones");
                 return false;
             }
         }
