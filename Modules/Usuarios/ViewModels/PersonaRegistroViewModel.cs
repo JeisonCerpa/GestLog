@@ -13,9 +13,12 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using GestLog.ViewModels.Base;
 using System.Runtime.CompilerServices;
+using System.Linq;
+using System.Globalization;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{    public partial class PersonaRegistroViewModel : ValidatableViewModel
+{    
+    public partial class PersonaRegistroViewModel : ValidatableViewModel
     {
         private readonly ICurrentUserService _currentUserService;
         private CurrentUserInfo _currentUser;
@@ -35,14 +38,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         public ObservableCollection<Cargo> Cargos { get; }
         private readonly IPersonaService _personaService;
+        private readonly ICargoRepository _cargoRepository;
 
         public ObservableCollection<TipoDocumento> TiposDocumento { get; }
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
-        private readonly ICargoRepository _cargoRepository;
 
         private string _documentoError = string.Empty;
         private string _correoError = string.Empty;
-        private bool _validandoDocumento;        private bool _validandoCorreo;
+        private bool _validandoDocumento;        
+        private bool _validandoCorreo;
 
         // Propiedades de permisos
         private bool _canSavePersona = false;
@@ -66,7 +70,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             get => _validandoDocumento;
             set { _validandoDocumento = value; OnPropertyChanged(); }
-        }        public bool ValidandoCorreo
+        }        
+        public bool ValidandoCorreo
         {
             get => _validandoCorreo;
             set { _validandoCorreo = value; OnPropertyChanged(); }
@@ -74,8 +79,10 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo && CanSavePersona;
 
-        private bool CanGuardar() => PuedeGuardar;        // Comando para guardar
-        public CommunityToolkit.Mvvm.Input.AsyncRelayCommand SaveCommand { get; }
+        private bool CanGuardar() => PuedeGuardar;        
+        
+        // Comando para guardar
+        public CommunityToolkit.Mvvm.Input.AsyncRelayCommand SaveCommand { get; }        
 
         public PersonaRegistroViewModel(Persona persona, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository, ICurrentUserService currentUserService)
         {
@@ -85,8 +92,11 @@ namespace GestLog.Modules.Usuarios.ViewModels
             _cargoRepository = cargoRepository;
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
-              TiposDocumento = new ObservableCollection<TipoDocumento>();
-            Cargos = new ObservableCollection<Cargo>();            // Inicializar comandos
+              
+            TiposDocumento = new ObservableCollection<TipoDocumento>();
+            Cargos = new ObservableCollection<Cargo>();            
+            
+            // Inicializar comandos
             SaveCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(GuardarAsync, CanGuardar);
 
             // Configurar permisos reactivos
@@ -95,6 +105,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
             _ = CargarTiposDocumentoAsync();
             _ = CargarCargosAsync();
+            
             PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(DocumentoError) || e.PropertyName == nameof(CorreoError) ||
@@ -217,7 +228,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     _ = ValidarDocumentoAsync();
                 if (propertyName == nameof(Persona.Correo))
                     _ = ValidarCorreoAsync();
-            }            return changed;
+            }            
+            return changed;
         }
 
         // === MÉTODOS DE GESTIÓN DE PERMISOS ===
@@ -225,7 +237,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        private void RecalcularPermisos()
+        }        
+        
+        private void RecalcularPermisos()
         {
             CanSavePersona = _currentUser.HasPermission("Personas.Crear");
         }
@@ -252,7 +266,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
             catch (Exception)
             {
-                // Manejar errores de guardado
                 throw;
             }
         }

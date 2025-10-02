@@ -81,11 +81,15 @@
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">
                             <TextBlock Text="Teléfono" FontWeight="SemiBold"/>
                             <TextBox Text="{Binding Persona.Telefono, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
-                        </StackPanel>
-                        <!-- Cargo -->
+                        </StackPanel>                        <!-- Cargo -->
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,16,0">
                             <TextBlock Text="Cargo" FontWeight="SemiBold"/>
-                            <ComboBox ItemsSource="{Binding Cargos}" SelectedItem="{Binding Persona.Cargo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" DisplayMemberPath="Nombre" MinWidth="220" Height="32"/>
+                            <ComboBox MinWidth="220" Height="32" IsEditable="True"
+                                      ItemsSource="{Binding Cargos}"
+                                      SelectedItem="{Binding Persona.Cargo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                      DisplayMemberPath="Nombre"
+                                      Background="#FFFFFF" ToolTip="Buscar y seleccionar cargo"
+                                      SnapsToDevicePixels="True" UseLayoutRounding="True" />
                         </StackPanel>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,28,0,0" HorizontalAlignment="Left">

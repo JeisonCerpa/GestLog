@@ -48,11 +48,15 @@
                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">
                     <TextBlock Text="Teléfono" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
                     <validation:ValidatingTextBox Text="{Binding Persona.Telefono, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="220" Height="32"/>
-                </StackPanel>
-                <!-- Cargo -->
+                </StackPanel>                <!-- Cargo -->
                 <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,16,0">
                     <TextBlock Text="Cargo" FontWeight="SemiBold" Style="{StaticResource BodyTextStyle}"/>
-                    <validation:ValidatingComboBox ItemsSource="{Binding Cargos}" SelectedItem="{Binding Persona.Cargo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" DisplayMemberPath="Nombre" Width="220" Height="32"/>
+                    <ComboBox Height="32" Width="220" IsEditable="True"
+                              ItemsSource="{Binding Cargos}"
+                              SelectedItem="{Binding Persona.Cargo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              DisplayMemberPath="Nombre"
+                              Background="#FFFFFF" ToolTip="Buscar y seleccionar cargo"
+                              SnapsToDevicePixels="True" UseLayoutRounding="True" />
                 </StackPanel>
             </Grid>
             <StackPanel Orientation="Horizontal" Margin="0,28,0,0" HorizontalAlignment="Left">

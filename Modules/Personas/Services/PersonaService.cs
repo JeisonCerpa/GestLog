@@ -7,6 +7,7 @@ using Modules.Usuarios.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace Modules.Personas.Services
 {
@@ -32,11 +33,14 @@ namespace Modules.Personas.Services
                     _logger.LogWarning($"Duplicate document: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
                     throw new Exception($"Ya existe una persona con el documento '{persona.NumeroDocumento}'.");
                 }
-                if (await _personaRepository.ExisteCorreoAsync(persona.Correo))
+                if (!string.IsNullOrWhiteSpace(persona.Correo) && await _personaRepository.ExisteCorreoAsync(persona.Correo))
                 {
                     _logger.LogWarning($"Duplicate email: {persona.Correo}");
                     throw new CorreoDuplicadoException(persona.Correo);
                 }
+                // Convertir nombres y apellidos a Title Case
+                persona.Nombres = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Nombres.ToLower());
+                persona.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Apellidos.ToLower());
                 var result = await _personaRepository.AgregarAsync(persona);
                 _logger.LogInformation($"Person registered: {persona.NumeroDocumento}");
                 await _auditoriaService.RegistrarEventoAsync(new Auditoria {
@@ -77,11 +81,14 @@ namespace Modules.Personas.Services
                     _logger.LogWarning($"Duplicate document on edit: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
                     throw new Exception($"Ya existe una persona con el documento '{persona.NumeroDocumento}'.");
                 }
-                if (await _personaRepository.ExisteCorreoAsync(persona.Correo) && existente.Correo != persona.Correo)
+                if (!string.IsNullOrWhiteSpace(persona.Correo) && await _personaRepository.ExisteCorreoAsync(persona.Correo) && existente.Correo != persona.Correo)
                 {
                     _logger.LogWarning($"Duplicate email on edit: {persona.Correo}");
                     throw new CorreoDuplicadoException(persona.Correo);
                 }
+                // Convertir nombres y apellidos a Title Case
+                persona.Nombres = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Nombres.ToLower());
+                persona.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Apellidos.ToLower());
                 var result = await _personaRepository.ActualizarAsync(persona);
                 _logger.LogInformation($"Person edited: {persona.NumeroDocumento}");
                 await _auditoriaService.RegistrarEventoAsync(new Auditoria {
@@ -186,6 +193,7 @@ namespace Modules.Personas.Services
 
         public async Task<bool> ValidarCorreoUnicoAsync(string correo)
         {
+            if (string.IsNullOrWhiteSpace(correo)) return true;
             return !await _personaRepository.ExisteCorreoAsync(correo);
         }
     }
