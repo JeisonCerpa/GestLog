@@ -1369,6 +1369,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     if (string.IsNullOrWhiteSpace(marca) || marca == "(Unidades de disco estándar)") marca = modelo;
                     var disco = new DiscoEntity
                     {
+                        NumeroDisco = discoNum, // asignar número secuencial (1..N)
                         Tipo = tipo,
                         CapacidadGB = capacidadGB,
                         Marca = marca,
@@ -1383,6 +1384,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     Application.Current.Dispatcher.Invoke(() => MessageBox.Show("No se detectaron discos automáticamente. Se ha añadido un disco vacío para edición manual.", "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Warning));
                     Application.Current.Dispatcher.Invoke(() => ListaDiscos.Add(new DiscoEntity
                     {
+                        NumeroDisco = ListaDiscos.Count + 1,
                         Tipo = "HDD",
                         CapacidadGB = null,
                         Marca = string.Empty,
@@ -1400,6 +1402,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show("Error al detectar los discos automáticamente. Se ha añadido un disco vacío para edición manual.", "Discos automáticos", MessageBoxButton.OK, MessageBoxImage.Error));
                 Application.Current.Dispatcher.Invoke(() => ListaDiscos.Add(new DiscoEntity
                 {
+                    NumeroDisco = ListaDiscos.Count + 1,
                     Tipo = "HDD",
                     CapacidadGB = null,
                     Marca = string.Empty,
@@ -1414,7 +1417,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         {
             var nuevoDisco = new DiscoEntity
             {
-                NumeroDisco = ListaDiscos.Count, // ✅ Asignar número único basado en la posición
+                NumeroDisco = ListaDiscos.Count + 1, // Asignar número único basado en la posición (1..N)
                 Tipo = "SSD",
                 CapacidadGB = 256,
                 Marca = string.Empty,
