@@ -308,7 +308,7 @@
                                     <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
                                         <TextBlock Text="Código *" FontWeight="Bold" Foreground="#504F4E" 
                                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <TextBox Height="32" Text="{Binding Codigo}" Background="#FFFFFF" ToolTip="Código interno del equipo" 
+                                        <TextBox Height="32" Text="{Binding Codigo}" CharacterCasing="Upper" Background="#FFFFFF" ToolTip="Código interno del equipo" 
                                                  SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
