@@ -72,11 +72,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         {
             get
             {
-                // Preferir mostrar el nombre de equipo si existe (útil cuando se asigna a un equipo nuevo sin Código aún)
-                if (!string.IsNullOrEmpty(CodigoEquipoAsignado) || !string.IsNullOrEmpty(NombreEquipoAsignado))
-                    return $"Equipo: {NombreEquipoAsignado ?? CodigoEquipoAsignado}";
+                // Mostrar como en el ComboBox: "Usuario (CodigoEquipo NombreEquipo)" cuando haya usuario y equipo
+                string teamInfo = string.Empty;
+                if (!string.IsNullOrEmpty(CodigoEquipoAsignado) && !string.IsNullOrEmpty(NombreEquipoAsignado))
+                    teamInfo = $"{CodigoEquipoAsignado} {NombreEquipoAsignado}";
+                else if (!string.IsNullOrEmpty(CodigoEquipoAsignado))
+                    teamInfo = CodigoEquipoAsignado;
+                else if (!string.IsNullOrEmpty(NombreEquipoAsignado))
+                    teamInfo = NombreEquipoAsignado;
+
                 if (!string.IsNullOrEmpty(UsuarioAsignado))
-                    return $"Usuario: {UsuarioAsignado}";
+                {
+                    return string.IsNullOrEmpty(teamInfo) ? UsuarioAsignado : $"{UsuarioAsignado} ({teamInfo})";
+                }
+
+                if (!string.IsNullOrEmpty(teamInfo))
+                    return teamInfo;
+
                 return "Sin asignar";
             }
         }

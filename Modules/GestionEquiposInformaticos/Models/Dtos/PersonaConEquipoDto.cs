@@ -39,8 +39,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         public string TextoNormalizado { get; set; } = string.Empty;
 
         /// <summary>
-        /// Override para que ComboBox.Text (cuando usa SelectedItem.ToString()) sea solo el NombreCompleto
+        /// Override para que ComboBox.Text (cuando usa SelectedItem.ToString()) muestre el DisplayText (nombre + equipo)
         /// </summary>
-        public override string ToString() => NombreCompleto;
+        public override string ToString() => DisplayText;
     }
 }

@@ -299,15 +299,17 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 var personaSeleccionada = PersonaConEquipoSeleccionada;
                 
+                // Mantener UsuarioAsignado en el DTO como el nombre (para persistencia), pero mostrar en el TextBox el nombre + equipo
                 PerifericoActual.UsuarioAsignado = personaSeleccionada.NombreCompleto;
                 PerifericoActual.CodigoEquipoAsignado = personaSeleccionada.CodigoEquipo;
                 
+                // Mostrar nombre completo + información del equipo en el TextBox (DisplayText)
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
                         _suppressFiltroUsuarioChanged = true;
-                        FiltroUsuarioAsignado = personaSeleccionada.NombreCompleto;
+                        FiltroUsuarioAsignado = personaSeleccionada.DisplayText;
                         _suppressFiltroUsuarioChanged = false;
                     }
                     catch (Exception)
@@ -367,8 +369,11 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             if (string.IsNullOrWhiteSpace(nombreCompleto)) return;
 
+            var objetivoNorm = NormalizeString(nombreCompleto);
+            
+            // Intentar emparejar por NombreCompleto o por DisplayText (nombre + equipo)
             var encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
-                p.NombreCompleto.Equals(nombreCompleto.Trim(), StringComparison.OrdinalIgnoreCase));
+                NormalizeString(p.NombreCompleto) == objetivoNorm || NormalizeString(p.DisplayText) == objetivoNorm);
 
             if (encontrada != null)
             {
@@ -502,7 +507,8 @@ namespace GestLog.Views.Tools.GestionEquipos
                 if (encontrada != null)
                 {
                     PersonaConEquipoSeleccionada = encontrada;
-                    FiltroUsuarioAsignado = encontrada.NombreCompleto;
+                    // Mostrar nombre + equipo en el filtro
+                    FiltroUsuarioAsignado = encontrada.DisplayText;
                     PerifericoActual.CodigoEquipoAsignado = encontrada.CodigoEquipo;
                 }
                 else
