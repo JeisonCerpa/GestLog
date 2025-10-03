@@ -265,11 +265,11 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Fecha creación" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding FechaCreacion, StringFormat=d, Mode=OneWay}" IsReadOnly="True"/>
+                    <TextBox Text="{Binding FechaCreacion, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Fecha modificación" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding FechaModificacion, StringFormat=d, Mode=OneWay}" IsReadOnly="True"/>
+                    <TextBox Text="{Binding FechaModificacion, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,0,24,0">
                     <TextBlock Text="Estado" Style="{StaticResource LabelStyle}"/>
@@ -323,10 +323,10 @@
                             <TextBox Text="{Binding Costo, StringFormat=C, Mode=OneWay}" IsReadOnly="True" />
 
                             <TextBlock Text="Fecha de compra" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding FechaCompra, StringFormat=d, Mode=OneWay}" IsReadOnly="True" />
+                            <TextBox Text="{Binding FechaCompra, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True" />
 
                             <TextBlock Text="Fecha baja" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding FechaBaja, StringFormat=d, Mode=OneWay}" IsReadOnly="True" />
+                            <TextBox Text="{Binding FechaBaja, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True" />
 
                             <TextBlock Text="Observaciones" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
                             <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />

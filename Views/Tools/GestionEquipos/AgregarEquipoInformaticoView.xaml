@@ -433,7 +433,7 @@
                                             <StackPanel Grid.Column="1" />
                                             <!-- DatePicker pequeño sincronizado -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                <DatePicker Width="36" Height="32" SelectedDate="{Binding FechaCompra, Mode=TwoWay}" Background="#FFFFFF" Margin="6,0,0,0">
+                                                <DatePicker Width="36" Height="32" SelectedDate="{Binding FechaCompra, Mode=TwoWay, StringFormat=dd/MM/yyyy}" Background="#FFFFFF" Margin="6,0,0,0" Language="es-ES">
                                                     <DatePicker.Resources>
                                                         <Style TargetType="DatePickerTextBox">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
