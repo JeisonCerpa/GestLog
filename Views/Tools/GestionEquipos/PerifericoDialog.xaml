@@ -251,7 +251,8 @@
                                 <TextBlock Text="Sede *" Style="{StaticResource LabelTextStyle}"/>
                                 <ComboBox x:Name="CmbSede" 
                                           ItemsSource="{Binding SedesDisponibles}"
-                                          SelectedItem="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectedValuePath="Content"
+                                          SelectedValue="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                           Style="{StaticResource InputStyle}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
