@@ -18,6 +18,8 @@ using GestLog.Modules.DatabaseConnection;
 using MessageBox = System.Windows.MessageBox;
 using GestLog.Services;
 using System.Threading;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Messages;
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -83,7 +85,12 @@ namespace GestLog.Views.Tools.GestionEquipos
         public List<EstadoPeriferico> EstadosDisponibles { get; } = Enum.GetValues<EstadoPeriferico>().ToList();
         public List<SedePeriferico> SedesDisponibles { get; } = Enum.GetValues<SedePeriferico>().ToList();
 
-        public bool DialogResult { get; private set; }        public PerifericoDialogViewModel(
+        public bool DialogResult { get; private set; }        
+        
+        [ObservableProperty]
+        private bool isEditing = false;
+
+        public PerifericoDialogViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             DispositivoAutocompletadoService dispositivoService,
             MarcaAutocompletadoService marcaService)
@@ -399,6 +406,7 @@ namespace GestLog.Views.Tools.GestionEquipos
 
             TituloDialog = "Editar Periférico";
             TextoBotonPrincipal = "Actualizar";
+            IsEditing = true;
             
             _ = Task.Run(async () => await BuscarPersonaConEquipoExistente(periferico.UsuarioAsignado));
         }
@@ -659,6 +667,52 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
 
             return true;
+        }
+
+        [RelayCommand]
+        private async Task EliminarAsync()
+        {
+            if (string.IsNullOrWhiteSpace(PerifericoActual?.Codigo)) return;
+
+            var resultado = MessageBox.Show(
+                $"¿Está seguro de que desea eliminar el periférico '{PerifericoActual.Codigo}'?",
+                "Confirmar eliminación",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (resultado != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+                var entity = await dbContext.PerifericosEquiposInformaticos
+                    .FirstOrDefaultAsync(p => p.Codigo == PerifericoActual.Codigo);
+
+                if (entity != null)
+                {
+                    dbContext.PerifericosEquiposInformaticos.Remove(entity);
+                    await dbContext.SaveChangesAsync();
+
+                    // Enviar mensaje para refrescar listas
+                    WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage());
+
+                    // Cerrar diálogo: no marcar DialogResult = true para evitar que el caller intente guardar
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (System.Windows.Application.Current.Windows.Cast<Window>()
+                            .FirstOrDefault(w => w.DataContext == this) is PerifericoDialog dialog)
+                        {
+                            // Cerrar sin establecer DialogResult -> ShowDialog() retornará false y el padre no intentará guardar
+                            dialog.Close();
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al eliminar el periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

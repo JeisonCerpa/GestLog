@@ -13,6 +13,7 @@
 
     <Window.Resources>
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
           <!-- Paleta de colores GestLog -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
         <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
@@ -320,6 +321,13 @@
         <!-- Footer con botones -->
         <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="32,20">
+                <Button Content="Eliminar" 
+                        Command="{Binding EliminarCommand}"
+                        Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Background="{StaticResource ErrorBrush}"
+                        Foreground="White"
+                        />
                 <Button Content="Cancelar" 
                         Style="{StaticResource SecondaryButtonStyle}"
                         Click="BtnCancelar_Click"/>
