@@ -445,7 +445,7 @@
                                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
                                         <TextBlock Text="Sede" FontWeight="Bold" Foreground="#504F4E" 
                                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <ComboBox Height="32" SelectedItem="{Binding Sede, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0"
+                                        <ComboBox Height="32" SelectedValue="{Binding Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Content" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0"
                                                   SnapsToDevicePixels="True" UseLayoutRounding="True">
                                             <ComboBoxItem Content="Administrativa - Barranquilla" />
                                             <ComboBoxItem Content="Taller - Barranquilla" />
