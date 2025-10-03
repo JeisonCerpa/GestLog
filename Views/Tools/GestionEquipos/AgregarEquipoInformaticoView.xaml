@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
         xmlns:modelsEntities="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Models.Entities"
+        xmlns:local="clr-namespace:GestLog.Behaviors"
         mc:Ignorable="d"
         Title="Agregar Equipo Informático"
         Height="720" Width="1100"
@@ -24,6 +25,7 @@
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
         <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
+        <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
         <DataTemplate x:Key="SlotRamTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
                     UseLayoutRounding="True" SnapsToDevicePixels="True">
@@ -415,8 +417,31 @@
                                     <StackPanel Grid.Column="1" Grid.Row="2" Margin="8,0,0,8">
                                         <TextBlock Text="Fecha de Compra" FontWeight="Bold" Foreground="#504F4E" 
                                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <DatePicker Height="32" SelectedDate="{Binding FechaCompra}" Background="#FFFFFF" 
-                                                    SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="8" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <!-- TextBox único para entrada manual con máscara dd/MM/yyyy -->
+                                            <TextBox Grid.Column="0" Width="140" Height="32" 
+                                                     local:DateMaskBehavior.EnableMask="True"
+                                                     Text="{Binding FechaCompra, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DateTimeToStringConverter}}"
+                                                     Background="#FFFFFF" ToolTip="dd/MM/yyyy - puede escribirse manualmente o usar el calendario"
+                                                     HorizontalContentAlignment="Center" />
+                                            <!-- espacio -->
+                                            <StackPanel Grid.Column="1" />
+                                            <!-- DatePicker pequeño sincronizado -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                <DatePicker Width="36" Height="32" SelectedDate="{Binding FechaCompra, Mode=TwoWay}" Background="#FFFFFF" Margin="6,0,0,0">
+                                                    <DatePicker.Resources>
+                                                        <Style TargetType="DatePickerTextBox">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </Style>
+                                                    </DatePicker.Resources>
+                                                </DatePicker>
+                                            </StackPanel>
+                                        </Grid>
                                     </StackPanel>
                                 </Grid>
                                 <!-- Resto de campos debajo -->

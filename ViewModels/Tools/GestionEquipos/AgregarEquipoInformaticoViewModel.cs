@@ -73,6 +73,74 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private decimal? costo;
         [ObservableProperty]
         private DateTime? fechaCompra;
+        // Minicampos para entrada manual: día / mes / año
+        [ObservableProperty]
+        private string fechaDia = string.Empty;
+        [ObservableProperty]
+        private string fechaMes = string.Empty;
+        [ObservableProperty]
+        private string fechaAno = string.Empty;
+
+        // Cuando cambia FechaCompra (por binding o DatePicker), actualizar los minicampos
+        partial void OnFechaCompraChanged(DateTime? value)
+        {
+            if (value.HasValue)
+            {
+                FechaDia = value.Value.Day.ToString("D2");
+                FechaMes = value.Value.Month.ToString("D2");
+                FechaAno = value.Value.Year.ToString();
+            }
+            else
+            {
+                FechaDia = string.Empty;
+                FechaMes = string.Empty;
+                FechaAno = string.Empty;
+            }
+        }
+
+        // Cuando cualquiera de los minicampos cambia, intentar construir FechaCompra
+        partial void OnFechaDiaChanged(string value) => UpdateFechaFromParts();
+        partial void OnFechaMesChanged(string value) => UpdateFechaFromParts();
+        partial void OnFechaAnoChanged(string value) => UpdateFechaFromParts();
+
+        private void UpdateFechaFromParts()
+        {
+            // Si los tres están vacíos, limpiar FechaCompra
+            if (string.IsNullOrWhiteSpace(FechaDia) && string.IsNullOrWhiteSpace(FechaMes) && string.IsNullOrWhiteSpace(FechaAno))
+            {
+                if (FechaCompra != null) FechaCompra = null;
+                return;
+            }
+
+            // Intentar parsear valores numéricos
+            if (int.TryParse(FechaDia, out var d) && int.TryParse(FechaMes, out var m) && int.TryParse(FechaAno, out var y))
+            {
+                // Soporte práctico: si el año es de 2 dígitos, asumimos 2000+ (ej. '23' => 2023)
+                if (y >= 0 && y < 100)
+                {
+                    y += 2000;
+                }
+
+                try
+                {
+                    if (y >= 1 && m >= 1 && m <= 12)
+                    {
+                        var maxDay = DateTime.DaysInMonth(y, m);
+                        if (d >= 1 && d <= maxDay)
+                        {
+                            var newDate = new DateTime(y, m, d);
+                            if (FechaCompra != newDate)
+                                FechaCompra = newDate;
+                            return;
+                        }
+                    }
+                }
+                catch { /* Ignorar errores de validación */ }
+            }
+
+            // Si la combinación no es válida, no modificamos FechaCompra (el usuario puede corregir)
+        }
+
         [ObservableProperty]
         private string codigoAnydesk = string.Empty;
 
@@ -610,7 +678,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                 _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
                                 await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
-                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
+                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico_EquipoInformatico");
                             }
                             catch (Exception constraintEx)
                             {
