@@ -23,7 +23,7 @@ namespace GestLog.Views
         }        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.28\n\n" +
+                "GestLog v1.0.29\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
@@ -32,7 +32,7 @@ namespace GestLog.Views
                 "• Envío de Catálogo - Envío masivo de catálogo\n\n" +
                 "Estado: ✅ Operativo\n" +
                 "Actualizaciones: ✅ Sistema Velopack 100% funcional\n" +
-                "Cambios en v1.0.28: 🐛 Fix crítico del error ShowDialog en splash screen durante actualizaciones",
+                "Cambios en v1.0.29: 🐛 Fix crítico del error ShowDialog en splash screen durante actualizaciones",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
