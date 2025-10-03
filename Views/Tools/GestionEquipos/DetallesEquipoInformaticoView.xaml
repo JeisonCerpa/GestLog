@@ -256,9 +256,6 @@
                 <!-- Derecha: botón Editar alineado a la derecha en la misma fila -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                     <Button Content="Editar" Width="90" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Click="BtnEditar_Click" />
-                    <Button Content="Dar de baja" Width="110" Style="{StaticResource DangerButtonStyle}" Margin="8,0,0,0" Click="BtnDarDeBaja_Click"
-                            IsEnabled="{Binding CanDarDeBajaEquipo}"
-                            Opacity="{Binding CanDarDeBajaEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
                 </StackPanel>
             </Grid>
         </Border>

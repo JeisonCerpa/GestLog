@@ -1810,5 +1810,64 @@ Get-NetIPConfiguration | Where-Object {
                 MessageBox.Show($"Error al desasignar periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
+        public async Task DarDeBajaAsync()
+        {
+            try
+            {
+                if (!IsEditing)
+                {
+                    MessageBox.Show("Dar de baja solo está disponible al editar un equipo existente.", "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(Codigo))
+                {
+                    MessageBox.Show("Código inválido.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var confirmar = MessageBox.Show($"¿Está seguro que desea dar de baja el equipo '{NombreEquipo}' (código: {Codigo})? Esta acción marcará la fecha de baja.", "Confirmar baja de equipo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirmar != MessageBoxResult.Yes) return;
+
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+                var equipo = await dbContext.EquiposInformaticos.FirstOrDefaultAsync(e => e.Codigo == Codigo);
+                if (equipo == null)
+                {
+                    MessageBox.Show("No se encontró el equipo en la base de datos.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                equipo.Estado = "Dado de baja";
+                equipo.FechaModificacion = DateTime.Now;
+                equipo.FechaBaja = DateTime.Now;
+
+                // Desasignar periféricos
+                var perifericosAsignados = await dbContext.PerifericosEquiposInformaticos.Where(p => p.CodigoEquipoAsignado == Codigo).ToListAsync();
+                foreach (var p in perifericosAsignados)
+                {
+                    p.CodigoEquipoAsignado = null;
+                    p.UsuarioAsignado = null;
+                    p.Estado = GestLog.Modules.GestionEquiposInformaticos.Models.Enums.EstadoPeriferico.AlmacenadoFuncionando;
+                    p.FechaModificacion = DateTime.Now;
+                }
+
+                await dbContext.SaveChangesAsync();
+
+                try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
+                try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.PerifericosActualizadosMessage(Codigo)); } catch { }
+
+                MessageBox.Show("Equipo dado de baja correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Cerrar ventana de edición si existe
+                var win = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                if (win != null) Application.Current.Dispatcher.Invoke(() => win.DialogResult = true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al dar de baja el equipo {Codigo}", Codigo);
+                MessageBox.Show($"Error al dar de baja el equipo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }
