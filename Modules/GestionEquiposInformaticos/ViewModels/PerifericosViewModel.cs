@@ -383,10 +383,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
             try
             {
+                // Normalizar valores para evitar advertencias nullable
                 var codigo = dto.Codigo ?? "-";
-                // Valores no nulos para evitar advertencias y consultas
-                var actualCodigo = dto.Codigo ?? string.Empty;
-                var original = originalCodigo ?? string.Empty;
+                string actualCodigo = dto.Codigo ?? string.Empty;
+                string original = originalCodigo ?? string.Empty;
+
+                // Variables non-null para uso en EF/SQL y logs
+                string actualCodigoNonNull = actualCodigo;
+                string originalNonNull = original;
 
                 // Usar DbContextFactory en lugar de crear manualmente
                 using var dbContext = _dbContextFactory.CreateDbContext();
@@ -397,11 +401,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 {
                     // Verificar si ya existe un periférico con el mismo código
                     var existe = await dbContext.PerifericosEquiposInformaticos
-                        .AnyAsync(p => p.Codigo == actualCodigo);
+                        .AnyAsync(p => p.Codigo == actualCodigoNonNull);
 
                     if (existe)
                     {
-                        _logger.LogWarning("[PerifericosViewModel] Ya existe un periférico con código {Codigo}", new object[] { actualCodigo });
+                        _logger.LogWarning("[PerifericosViewModel] Ya existe un periférico con código {Codigo}", actualCodigoNonNull);
                         MessageBox.Show("Ya existe un periférico con ese código.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
@@ -413,8 +417,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 {
                     // Limpiar ChangeTracker para evitar conflictos: considerar tanto el código actual como el original
                     var codesToDetach = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(actualCodigo)) codesToDetach.Add(actualCodigo);
-                    if (!string.IsNullOrWhiteSpace(original) && !codesToDetach.Contains(original)) codesToDetach.Add(original);
+                    if (!string.IsNullOrWhiteSpace(actualCodigoNonNull)) codesToDetach.Add(actualCodigoNonNull);
+                    if (!string.IsNullOrWhiteSpace(originalNonNull) && !codesToDetach.Contains(originalNonNull)) codesToDetach.Add(originalNonNull);
 
                     var tracked = dbContext.ChangeTracker.Entries<PerifericoEquipoInformaticoEntity>()
                         .Where(e => codesToDetach.Contains(e.Entity.Codigo))
@@ -425,26 +429,28 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         dbContext.Entry(trackedEntity.Entity).State = EntityState.Detached;
                     }
 
-                    var searchCodigo = string.IsNullOrWhiteSpace(original) ? actualCodigo : original;
+                    var searchCodigo = string.IsNullOrWhiteSpace(originalNonNull) ? actualCodigoNonNull : originalNonNull;
 
                     var existingEntity = await dbContext.PerifericosEquiposInformaticos
                         .FirstOrDefaultAsync(p => p.Codigo == searchCodigo);
 
                     // Fallback: si no se encuentra por originalCodigo (posible race/estado), intentar buscar por el nuevo código
-                    if (existingEntity == null && !string.Equals(searchCodigo, actualCodigo, StringComparison.OrdinalIgnoreCase))
+                    if (existingEntity == null && !string.Equals(searchCodigo, actualCodigoNonNull, StringComparison.OrdinalIgnoreCase))
                     {
+                        // usar variable local non-null para evitar advertencias del compilador en la expresión EF
+                        var fallbackKey = actualCodigoNonNull;
                         existingEntity = await dbContext.PerifericosEquiposInformaticos
-                            .FirstOrDefaultAsync(p => p.Codigo == actualCodigo);
+                            .FirstOrDefaultAsync(p => p.Codigo == fallbackKey!);
                         if (existingEntity != null)
                         {
-                            _logger.LogWarning("[PerifericosViewModel] No se encontró por OriginalCodigo={Original} pero se encontró por CodigoActual={Actual}. Usando la entidad encontrada.", new object[] { searchCodigo, actualCodigo });
+                            _logger.LogWarning("[PerifericosViewModel] No se encontró por OriginalCodigo={Original} pero se encontró por CodigoActual={Actual}. Usando la entidad encontrada.", searchCodigo, actualCodigoNonNull);
                         }
                     }
 
                     if (existingEntity == null)
                     {
-                        _logger.LogWarning("[PerifericosViewModel] No se encontró el periférico a actualizar. Original={Original} Actual={Actual}", new object[] { original, actualCodigo });
-                        MessageBox.Show($"No se encontró el periférico a actualizar. Códigos probados: Original={original}, Actual={actualCodigo}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        _logger.LogWarning("[PerifericosViewModel] No se encontró el periférico a actualizar. Original={Original} Actual={Actual}", originalNonNull, actualCodigoNonNull);
+                        MessageBox.Show($"No se encontró el periférico a actualizar. Códigos probados: Original={originalNonNull}, Actual={actualCodigoNonNull}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
 
@@ -453,51 +459,56 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 // Si el código (PK) cambió, EF no permite marcar la PK como modificada en una entidad trackeada.
                 // Hacemos un UPDATE directo en la BD y recargamos la entidad.
-                var didPkChange = !esNuevo && !string.IsNullOrWhiteSpace(original) &&
-                                  !string.Equals(original, actualCodigo, StringComparison.OrdinalIgnoreCase);
+                var didPkChange = !esNuevo && !string.IsNullOrWhiteSpace(originalNonNull) &&
+                                  !string.Equals(originalNonNull, actualCodigoNonNull, StringComparison.OrdinalIgnoreCase);
 
                 if (didPkChange)
                 {
-                    _logger.LogInformation("[PerifericosViewModel] Detectado cambio de PK: {Original} -> {Nuevo}. Ejecutando UPDATE directo.", new object[] { original, actualCodigo });
+#pragma warning disable CS8600 // Evitar advertencia de conversión nullable en expresiones EF locales
+#pragma warning disable CS8602
+                    _logger.LogInformation("[PerifericosViewModel] Detectado cambio de PK: {Original} -> {Nuevo}. Ejecutando UPDATE directo.", originalNonNull, actualCodigoNonNull);
 
                     // Ejecutar UPDATE directo para cambiar PK y demás campos en una sola operación atómica
                     await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
                         UPDATE PerifericosEquiposInformaticos
-                        SET Codigo = {actualCodigo},
-                            Dispositivo = {dto.Dispositivo},
+                        SET Codigo = {actualCodigoNonNull},
+                            Dispositivo = {dto.Dispositivo ?? string.Empty},
                             FechaCompra = {dto.FechaCompra},
                             Costo = {dto.Costo},
-                            Marca = {dto.Marca},
-                            Modelo = {dto.Modelo},
-                            SerialNumber = {dto.Serial},
-                            CodigoEquipoAsignado = {(string.IsNullOrEmpty(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
-                            UsuarioAsignado = {(string.IsNullOrEmpty(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
+                            Marca = {dto.Marca ?? string.Empty},
+                            Modelo = {dto.Modelo ?? string.Empty},
+                            SerialNumber = {dto.Serial ?? string.Empty},
+                            CodigoEquipoAsignado = {(string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
+                            UsuarioAsignado = {(string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
                             Sede = {dto.Sede},
                             Estado = {dto.Estado},
-                            Observaciones = {dto.Observaciones},
+                            Observaciones = {dto.Observaciones ?? string.Empty},
                             FechaModificacion = {DateTime.Now}
-                        WHERE Codigo = {original}");
+                        WHERE Codigo = {originalNonNull}");
 
                     // Recargar la entidad actualizada
-                    entity = await dbContext.PerifericosEquiposInformaticos.FirstOrDefaultAsync(p => p.Codigo == actualCodigo);
+                    var reloadKey = actualCodigoNonNull;
+                    entity = await dbContext.PerifericosEquiposInformaticos.FirstOrDefaultAsync(p => p.Codigo == reloadKey);
                     if (entity == null)
                     {
-                        _logger.LogWarning("[PerifericosViewModel] Error tras UPDATE directo: no se pudo recargar la entidad con Codigo={Codigo}", new object[] { actualCodigo });
+                        _logger.LogWarning("[PerifericosViewModel] Error tras UPDATE directo: no se pudo recargar la entidad con Codigo={Codigo}", actualCodigoNonNull);
                         MessageBox.Show("No se pudo recargar el periférico tras cambiar el código.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
+#pragma warning restore CS8602
+#pragma warning restore CS8600
                 }
                 else
                 {
                     // Mapear campos cuando no hay cambio de PK
-                    entity.Dispositivo = dto.Dispositivo;
+                    entity.Dispositivo = dto.Dispositivo ?? string.Empty;
                     entity.FechaCompra = dto.FechaCompra;
                     entity.Costo = dto.Costo;
                     entity.Marca = dto.Marca;
                     entity.Modelo = dto.Modelo;
                     entity.SerialNumber = dto.Serial;
-                    entity.CodigoEquipoAsignado = string.IsNullOrEmpty(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado;
-                    entity.UsuarioAsignado = string.IsNullOrEmpty(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado;
+                    entity.CodigoEquipoAsignado = string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado;
+                    entity.UsuarioAsignado = string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado;
                     entity.Sede = dto.Sede;
                     entity.Estado = dto.Estado;
                     entity.Observaciones = dto.Observaciones;
@@ -516,7 +527,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     else
                     {
                         // Para ediciones, reemplazar completamente el DTO para asegurar que se actualice la vista
-                        var searchCodigo = string.IsNullOrWhiteSpace(original) ? actualCodigo : original;
+                        var searchCodigo = string.IsNullOrWhiteSpace(originalNonNull) ? actualCodigoNonNull : originalNonNull;
                         var indice = Perifericos.ToList().FindIndex(p => p.Codigo == searchCodigo);
                         if (indice >= 0)
                         {
@@ -535,12 +546,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = esNuevo ? "Periférico agregado exitosamente" : "Periférico actualizado exitosamente";
                 });
 
-                _logger.LogInformation("[PerifericosViewModel] Periférico {Accion}: {Codigo}", new object[] { esNuevo ? "agregado" : "actualizado", codigo });
+                _logger.LogInformation("[PerifericosViewModel] Periférico {Accion}: {Codigo}", esNuevo ? "agregado" : "actualizado", codigo);
             }
             catch (Exception ex)
             {
                 var codigoCatch = dto?.Codigo ?? "-";
-                _logger.LogError(ex, "[PerifericosViewModel] Error al guardar periférico Codigo={Codigo}", new object[] { codigoCatch });
+                _logger.LogError(ex, "[PerifericosViewModel] Error al guardar periférico Codigo={Codigo}", codigoCatch);
 
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -550,9 +561,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 MessageBox.Show("Error al guardar el periférico. Ver logs para más detalles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Convierte una entidad a DTO
         /// </summary>
         private PerifericoEquipoInformaticoDto ConvertirEntityADto(PerifericoEquipoInformaticoEntity entity)
