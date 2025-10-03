@@ -9,6 +9,8 @@ using System.Linq;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces; // añadido para IPlanCronogramaService
 using System.Collections.Specialized; // para CollectionChanged
 using System.ComponentModel; // para PropertyChanged
+using System.Text;
+using System.Globalization;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -246,6 +248,40 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "[RegistroEjecucionPlanViewModel] Error parseando checklist JSON");
+                }
+            }
+
+            // Inicializar items por defecto como completados si la descripción coincide
+            var defaultDescriptions = new[]
+            {
+                "Limpieza del Software con Antivirus",
+                "Eliminación de Archivos Temporales",
+                "Respaldo de archivos digitales"
+            };
+
+            string NormalizeForCompare(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+                var normalized = s.Normalize(NormalizationForm.FormD);
+                var sb = new StringBuilder();
+                foreach (var ch in normalized)
+                {
+                    var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                    if (cat != UnicodeCategory.NonSpacingMark) sb.Append(ch);
+                }
+                return sb.ToString().ToLowerInvariant().Trim();
+            }
+
+            var defaultsSet = new HashSet<string>(defaultDescriptions.Select(d => NormalizeForCompare(d)));
+            foreach (var item in Checklist)
+            {
+                if (!item.Completado)
+                {
+                    var norm = NormalizeForCompare(item.Descripcion);
+                    if (defaultsSet.Contains(norm))
+                    {
+                        item.Completado = true; // esto disparará PropertyChanged y actualizará los contadores
+                    }
                 }
             }
 

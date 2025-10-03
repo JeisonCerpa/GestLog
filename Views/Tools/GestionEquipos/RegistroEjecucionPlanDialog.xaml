@@ -4,6 +4,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:GestLog.Converters"
+        xmlns:local="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
         Title="Registrar Ejecución de Plan" Height="640" Width="920" WindowStartupLocation="CenterOwner" Background="#F6F7F9" ResizeMode="CanResize">
 
@@ -116,6 +118,8 @@
             </Border>
         </DataTemplate>
 
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
     </Window.Resources>
 
     <Grid Margin="18">
@@ -185,7 +189,7 @@
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" MinHeight="30" VerticalAlignment="Center">
-                                                <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4" />
+                                                <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
                                                 <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,4,0" />
                                                 <!-- pequeño debug id si existía en la plantilla original -->
                                                 <TextBlock Text="{Binding Id, StringFormat='Id: {0}'}" Foreground="Transparent" Visibility="Collapsed" />
