@@ -597,6 +597,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             await transaction.CommitAsync();
 
                             _logger.LogInformation("Actualización de código completada y datos guardados: {Codigo}", Codigo);
+                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
                             MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         }                        
                         catch (Exception ex)
@@ -745,6 +746,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         {
                             await dbContext.SaveChangesAsync();
                             _logger.LogInformation("Equipo '{Codigo}' actualizado correctamente.", Codigo);
+                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
                             MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         catch (Exception ex)
@@ -863,6 +865,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     {
                         await dbContext.SaveChangesAsync();
                         _logger.LogInformation("Equipo '{Codigo}' creado correctamente.", Codigo);
+                        try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
                         MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
