@@ -1464,6 +1464,23 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             }
         }
 
+        // Comando para eliminar un disco desde la UI
+        [RelayCommand(CanExecute = nameof(CanEliminarDisco))]
+        public void EliminarDisco(DiscoEntity disco)
+        {
+            if (disco == null) return;
+            if (ListaDiscos.Contains(disco))
+            {
+                ListaDiscos.Remove(disco);
+                // Recalcular numeración de discos para mantener secuencia 1..N
+                int idx = 1;
+                foreach (var d in ListaDiscos)
+                {
+                    d.NumeroDisco = idx++;
+                }
+            }
+        }
+
         // Comandos para gestión de conexiones de red
         private List<ConexionEntity> ObtenerConexionesAutomaticas()
         {
