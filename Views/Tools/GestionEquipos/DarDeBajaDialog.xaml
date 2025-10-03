@@ -1,0 +1,21 @@
+<Window x:Class="GestLog.Views.Tools.GestionEquipos.DarDeBajaDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Observación de baja" Height="220" Width="480" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Language="es-ES">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Por favor indique la observación para la baja del equipo:" TextWrapping="Wrap" />
+
+        <TextBox Grid.Row="1" Name="ObservacionTextBox" Text="{Binding Observacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MinHeight="80"/>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Width="90" Margin="0,0,8,0" Click="Ok_Click">Aceptar</Button>
+            <Button Width="90" Click="Cancel_Click">Cancelar</Button>
+        </StackPanel>
+    </Grid>
+</Window>

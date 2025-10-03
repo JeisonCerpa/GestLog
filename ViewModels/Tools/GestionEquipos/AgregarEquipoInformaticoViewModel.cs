@@ -1895,8 +1895,40 @@ Get-NetIPConfiguration | Where-Object {
                     return;
                 }
 
-                var confirmar = MessageBox.Show($"¿Está seguro que desea dar de baja el equipo '{NombreEquipo}' (código: {Codigo})? Esta acción marcará la fecha de baja.", "Confirmar baja de equipo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (confirmar != MessageBoxResult.Yes) return;
+                // Mostrar diálogo modal para solicitar observación de baja
+                string? observacionBaja = null;
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        var dlg = new GestLog.Views.Tools.GestionEquipos.DarDeBajaDialog();
+                        dlg.Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+                        var dr = dlg.ShowDialog();
+                        if (dr == true)
+                        {
+                            observacionBaja = dlg.Observacion ?? string.Empty;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // En caso de error al abrir diálogo, registrar y continuar con cancelación
+                        _logger.LogError(ex, "Error al abrir el diálogo de observación de baja");
+                    }
+                });
+
+                // Si el usuario canceló el diálogo o no proporcionó observación, cancelar la operación
+                if (observacionBaja == null)
+                {
+                    // Usuario canceló
+                    return;
+                }
+
+                // Opcional: validar que la observación no esté vacía. Si lo prefieres, elimina este bloque para permitir observaciones vacías.
+                if (string.IsNullOrWhiteSpace(observacionBaja))
+                {
+                    var r = MessageBox.Show("La observación está vacía. ¿Desea continuar sin observación?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (r != MessageBoxResult.Yes) return;
+                }
 
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 var equipo = await dbContext.EquiposInformaticos.FirstOrDefaultAsync(e => e.Codigo == Codigo);
@@ -1904,6 +1936,23 @@ Get-NetIPConfiguration | Where-Object {
                 {
                     MessageBox.Show("No se encontró el equipo en la base de datos.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
+                }
+
+                // Anexar la observación de baja en el campo Observaciones preservando el contenido previo
+                try
+                {
+                    var sb = new System.Text.StringBuilder();
+                    if (!string.IsNullOrWhiteSpace(equipo.Observaciones))
+                    {
+                        sb.AppendLine(equipo.Observaciones?.Trim());
+                    }
+                    sb.AppendLine($"Observación de baja ({DateTime.Now:dd/MM/yyyy HH:mm}): {observacionBaja}");
+                    equipo.Observaciones = sb.ToString().Trim();
+                }
+                catch
+                {
+                    // Si por alguna razón no se puede anexar, al menos asignar la observación sola
+                    equipo.Observaciones = observacionBaja;
                 }
 
                 equipo.Estado = "Dado de baja";
