@@ -23,22 +23,56 @@
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
-        <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>        <DataTemplate x:Key="SlotRamTemplate">
+        <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
+        <DataTemplate x:Key="SlotRamTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
                     UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <!-- Ahora la tarjeta tiene dos filas: fila 0 -> Slot + botón; fila 1 -> campos debajo -->
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Vertical" Grid.Column="0" Margin="0,0,12,0">
-                        <TextBlock Text="Slot:" FontWeight="Bold" Foreground="#504F4E" 
+
+                    <!-- Fila superior: Slot y número -->
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Slot:" FontWeight="Bold" Foreground="#504F4E"
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBlock Text="{Binding NumeroSlot}" Foreground="#706F6F" 
+                        <TextBlock Text="{Binding NumeroSlot}" Foreground="#706F6F" Margin="8,0,0,0"
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                     </StackPanel>
-                    <StackPanel Orientation="Vertical" Grid.Column="1">
+
+                    <!-- Botón eliminar en la misma fila, alineado a la derecha -->
+                    <Button Grid.Row="0" Grid.Column="1" Command="{Binding DataContext.EliminarRamCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Width="28" Height="28"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,0,0,0"
+                            ToolTip="Eliminar RAM"
+                            IsEnabled="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Opacity="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Focusable="False"
+                            Panel.ZIndex="10">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="#C0392B" CornerRadius="16" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Viewbox Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Canvas Width="12" Height="12">
+                                <Path Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M2,2 L10,10 M10,2 L2,10" />
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+
+                    <!-- Fila inferior: campos desplegados debajo (ocupan ambas columnas) -->
+                    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
                         <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         <TextBox Text="{Binding TipoMemoria}" Margin="0,0,0,4" Background="#FAFAFA" 
@@ -67,24 +101,56 @@
                 </Grid>
             </Border>
         </DataTemplate>
-        <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
+        <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
+        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
                     UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <!-- Estructura de dos filas: fila 0 -> Disco + botón; fila 1 -> campos debajo -->
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <!-- Número de disco -->
-                    <StackPanel Orientation="Vertical" Grid.Column="0" Margin="0,0,12,0">
+
+                    <!-- Fila superior: Disco y número -->
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Text="Disco:" FontWeight="Bold" Foreground="#504F4E" 
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" 
+                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" Margin="8,0,0,0" 
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                     </StackPanel>
-                    <!-- Campos editables -->
-                    <StackPanel Orientation="Vertical" Grid.Column="1">
+
+                    <!-- Botón eliminar en la misma fila -->
+                    <Button Grid.Row="0" Grid.Column="1" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Width="28" Height="28"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,0,0,0"
+                            ToolTip="Eliminar Disco"
+                            IsEnabled="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Opacity="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Focusable="False"
+                            Panel.ZIndex="10">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="#C0392B" CornerRadius="16" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Viewbox Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Canvas Width="12" Height="12">
+                                <Path Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M2,2 L10,10 M10,2 L2,10" />
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+
+                    <!-- Fila inferior: campos debajo que ocupan ambas columnas -->
+                    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
                         <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         <ComboBox ItemsSource="{Binding DataContext.TiposDisco, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -103,12 +169,11 @@
                                    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                         <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
                                  SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                    </StackPanel>                    <!-- Botón eliminar -->
-                    <Button Content="Eliminar" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Style="{StaticResource CardButtonStyle}" Width="80" Height="32" Grid.Column="2" Margin="8,0,0,0" 
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                    </StackPanel>
                 </Grid>
             </Border>
-        </DataTemplate>        <!-- Template para Conexiones de Red -->
+        </DataTemplate>
+        <!-- Template para Conexiones de Red -->
         <DataTemplate x:Key="ConexionTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
                     UseLayoutRounding="True" SnapsToDevicePixels="True">
@@ -272,7 +337,8 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
         <Grid Margin="32">
             <Border Background="#FFFFFF" CornerRadius="12" Padding="0" Effect="{DynamicResource DropShadowEffect}">
-                <StackPanel>                    <!-- Encabezado -->
+                <StackPanel>
+                    <!-- Encabezado -->
                     <Border Background="#F4FFF6" CornerRadius="12,12,0,0" Padding="32,24,32,24" BorderBrush="#2B8E3F" BorderThickness="0,0,0,1"
                             UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -290,7 +356,8 @@
                             <ColumnDefinition Width="1.2*" />
                         </Grid.ColumnDefinitions>
                         <!-- Datos del equipo -->
-                        <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="8" Padding="24" Margin="0,24,0,24" BorderBrush="#DDD" BorderThickness="1">                            <StackPanel>
+                        <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="8" Padding="24" Margin="0,24,0,24" BorderBrush="#DDD" BorderThickness="1">
+                            <StackPanel>
                                 <TextBlock Text="Datos principales" FontSize="16" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,12" 
                                            TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
                                 <Separator Margin="0,0,0,12" />
@@ -354,7 +421,8 @@
                                 </Grid>
                                 <!-- Resto de campos debajo -->
                                 <TextBlock Text="Información adicional" FontSize="15" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,8" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />                                <Grid>
+                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
@@ -464,7 +532,8 @@
                                 </Button.Effect>
                             </Button>
                         </StackPanel>
-                    </Grid>                    <!-- Sección RAM -->
+                    </Grid>
+                    <!-- Sección RAM -->
                     <GroupBox Header="Memoria RAM" Margin="32,0,32,0" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
                               UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel>
@@ -477,7 +546,8 @@
                             </ItemsControl>
                             <Button Content="Agregar RAM" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" IsEnabled="{Binding CanGuardarEquipo}" Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
                         </StackPanel>
-                    </GroupBox>                    <!-- Sección Discos -->
+                    </GroupBox>
+                    <!-- Sección Discos -->
                     <GroupBox Header="Discos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
                               UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <StackPanel>
@@ -495,14 +565,16 @@
                     <!-- Sección Conexiones de Red -->
                     <GroupBox Header="Conexiones de Red" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
                               UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <StackPanel>                            <!-- Botones de acciones -->
+                        <StackPanel>
+                            <!-- Botones de acciones -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <Button Content="Agregar Manual" Width="120" Height="32" Margin="0,0,0,0" Padding="8,0,8,0" 
                                         Command="{Binding AgregarConexionManualCommand}" 
                                         IsEnabled="{Binding CanGuardarEquipo}" 
                                         Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" 
                                         Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" 
-                                        SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />                            </StackPanel>
+                                        SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
+                            </StackPanel>
                             <!-- Lista de conexiones -->
                             <ItemsControl ItemsSource="{Binding ListaConexiones}" ItemTemplate="{StaticResource ConexionTemplate}">
                                 <ItemsControl.ItemsPanel>
@@ -510,7 +582,8 @@
                                         <StackPanel Orientation="Vertical"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
-                            </ItemsControl>                        </StackPanel>
+                            </ItemsControl>
+                        </StackPanel>
                     </GroupBox>
 
                     <!-- Sección Periféricos -->
@@ -521,7 +594,8 @@
                             <Expander Header="Periféricos Asignados" IsExpanded="True" Background="#F7FFF7" Padding="6" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="Cantidad de periféricos asignados: " FontWeight="Bold" Foreground="#504F4E" 
-                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />                                    <TextBlock Text="{Binding PerifericosAsignados.Count, StringFormat='{}{0} periféricos'}" 
+                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                    <TextBlock Text="{Binding PerifericosAsignados.Count, StringFormat='{}{0} periféricos'}" 
                                                Margin="0,0,0,8" Foreground="#706F6F" 
                                                TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
 
@@ -539,7 +613,8 @@
                             <Expander Header="Periféricos Disponibles" IsExpanded="False" Background="#FFF7F7" Padding="6">
                                 <StackPanel>
                                     <TextBlock Text="Cantidad de periféricos disponibles: " FontWeight="Bold" Foreground="#504F4E" 
-                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />                                    <TextBlock Text="{Binding PerifericosDisponibles.Count, StringFormat='{}{0} periféricos'}" 
+                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                                    <TextBlock Text="{Binding PerifericosDisponibles.Count, StringFormat='{}{0} periféricos'}" 
                                                Margin="0,0,0,8" Foreground="#706F6F" 
                                                TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
 

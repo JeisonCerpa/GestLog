@@ -131,6 +131,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         private bool canAgregarRam;        
         [ObservableProperty]
         private bool canEliminarDisco;
+        [ObservableProperty]
+        private bool canEliminarRam;
 
         [ObservableProperty]
         private bool canAgregarConexionManual;
@@ -222,12 +224,14 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             CanAgregarDiscoManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanEliminarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarConexionManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarConexion = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
 
             // Permisos para gestión de periféricos
             // Usar CanGuardarEquipo para controlar si se puede asignar un periférico (mismo permiso que crear equipo)
             CanDesasignarPeriferico = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanEliminarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
         }        public async Task InicializarAsync()
         {
             try
@@ -1441,7 +1445,25 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 Observaciones = "Manual"
             };
             ListaRam.Add(nuevoSlot);
-        }        
+        }
+
+        // Comando para eliminar un slot de RAM desde la UI
+        [RelayCommand(CanExecute = nameof(CanEliminarRam))]
+        public void EliminarRam(SlotRamEntity slot)
+        {
+            if (slot == null) return;
+            if (ListaRam.Contains(slot))
+            {
+                ListaRam.Remove(slot);
+                // Recalcular numeración de slots para mantener secuencia 1..N
+                int idx = 1;
+                foreach (var s in ListaRam)
+                {
+                    s.NumeroSlot = idx++;
+                }
+            }
+        }
+
         // Comandos para gestión de conexiones de red
         private List<ConexionEntity> ObtenerConexionesAutomaticas()
         {
