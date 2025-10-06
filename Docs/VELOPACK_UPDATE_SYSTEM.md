@@ -41,6 +41,18 @@ vpk --version
 
 ## 📦 Proceso de Empaquetado
 
+### **Resumen**
+
+```powershell
+cd "E:\Softwares\GestLog" `
+; dotnet clean `
+; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false `
+; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe" `
+; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" `
+; dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0"
+
+```
+
 ### **Paso 1: Actualizar Versión**
 
 #### **1.1 Actualizar GestLog.csproj**
