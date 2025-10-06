@@ -411,6 +411,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     }
 
                     entity = new PerifericoEquipoInformaticoEntity();
+                    // Asignar la PK antes de Add para evitar insertar el valor por defecto (string.Empty)
+                    entity.Codigo = actualCodigoNonNull;
                     dbContext.PerifericosEquiposInformaticos.Add(entity);
                 }
                 else
