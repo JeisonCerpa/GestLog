@@ -77,36 +77,21 @@
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <ListView x:Name="PlanesListView" ItemsSource="{Binding Planes}" SelectionMode="Single">
                 <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Código Equipo" DisplayMemberBinding="{Binding CodigoEquipo}" Width="120"/>
-                        <!-- Mostrar Nombre del equipo: priorizar navigation Equipo.NombreEquipo, si no existe mostrar CodigoEquipo -->
+                    <GridView>                        <GridViewColumn Header="Código Equipo" DisplayMemberBinding="{Binding CodigoEquipo}" Width="120"/>
+                        <!-- Mostrar Nombre del equipo (ya garantizado en código C#) -->
                         <GridViewColumn Header="Nombre Equipo" Width="180">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <PriorityBinding>
-                                                <Binding Path="Equipo.NombreEquipo" />
-                                                <Binding Path="CodigoEquipo" />
-                                            </PriorityBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding Equipo.NombreEquipo, FallbackValue=''}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <!-- Mostrar Usuario Asignado: priorizar Equipo.UsuarioAsignado, si no existe usar Responsable del plan -->
+                        <!-- Mostrar Usuario Asignado (ya garantizado en código C#) -->
                         <GridViewColumn Header="Usuario Asignado" Width="160">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <PriorityBinding>
-                                                <Binding Path="Equipo.UsuarioAsignado" />
-                                                <Binding Path="Responsable" />
-                                            </PriorityBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding Equipo.UsuarioAsignado, FallbackValue=''}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -159,18 +144,14 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="8">
-                        <StackPanel Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="8">                        <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Código Equipo" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <!-- Reemplazado TextBox por ComboBox que mostrará sólo equipos activos -->
-                            <ComboBox x:Name="CmbEquipoEditar" Width="240"
-                                      ItemsSource="{Binding EquiposActivos}"
-                                      DisplayMemberPath="DisplayText"
-                                      SelectedValuePath="Codigo"
-                                      SelectedValue="{Binding SelectedEquipoEditarCodigo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      IsEditable="True"
-                                      IsTextSearchEnabled="False"
-                                      ToolTip="Seleccione un equipo activo" />
+                            <!-- Campo de solo lectura - no se permite cambiar el equipo al editar un plan -->
+                            <TextBox x:Name="TxtCodigoEquipoEditar" Width="240"
+                                     IsReadOnly="True"
+                                     Background="#F5F5F5"
+                                     BorderBrush="#CCCCCC"
+                                     ToolTip="El equipo no se puede cambiar. Elimine el plan y cree uno nuevo si necesita asignar otro equipo." />
                         </StackPanel>
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Día programado" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
