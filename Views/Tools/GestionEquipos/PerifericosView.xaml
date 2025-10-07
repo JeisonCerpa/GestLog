@@ -207,14 +207,13 @@
                           HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
                           FontSize="13" RowHeight="40">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="120" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="180" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="120" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Modelo" Binding="{Binding Modelo}" Width="120" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Serial" Binding="{Binding Serial}" Width="140" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="200" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="180" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Width="160" IsReadOnly="True">
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="2*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True"/>
+                        <!-- Se conserva solo texto de asignación (usuario/ubicación) -->
+                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="2*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="2*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Width="1*" IsReadOnly="True">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="Medium"/>
@@ -232,15 +231,18 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Fecha Compra" Binding="{Binding FechaCompraFormatted}" Width="120" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Costo" Binding="{Binding CostoFormatted}" Width="100" IsReadOnly="True">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextAlignment" Value="Right"/>
-                                    <Setter Property="FontWeight" Value="Medium"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
+                        <!-- Columna de acciones: Detalles (botón rectangular con bordes redondeados) -->
+                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Detalles"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding DataContext.VerDetallesPerifericoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Width="88" Height="32"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 

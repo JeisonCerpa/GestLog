@@ -14,6 +14,8 @@
     <Window.Resources>
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
           <!-- Paleta de colores GestLog -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
         <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
@@ -153,7 +155,8 @@
                                 <TextBlock Text="Código *" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBox x:Name="TxtCodigo" 
                                          Text="{Binding PerifericoActual.Codigo, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
+                                         Style="{StaticResource InputStyle}" 
+                                         IsReadOnly="{Binding IsReadOnlyMode}"/>
                             </StackPanel>
                               <StackPanel Grid.Row="0" Grid.Column="2">
                                 <TextBlock Text="Dispositivo *" Style="{StaticResource LabelTextStyle}"/>
@@ -162,33 +165,37 @@
                                           ItemsSource="{Binding DispositivosFiltrados}"
                                           IsEditable="True"
                                           IsTextSearchEnabled="False"
-                                          Style="{StaticResource InputStyle}"/>
+                                          Style="{StaticResource InputStyle}"
+                                          IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
                             </StackPanel>
                               <!-- Fila 2: Marca y Modelo -->
-                            <StackPanel Grid.Row="1" Grid.Column="0">
-                                <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
+                             <StackPanel Grid.Row="1" Grid.Column="0">
+                                 <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
                                 <ComboBox x:Name="CmbMarca" 
                                           Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           ItemsSource="{Binding MarcasFiltradas}"
                                           IsEditable="True"
                                           IsTextSearchEnabled="False"
-                                          Style="{StaticResource InputStyle}"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="1" Grid.Column="2">
-                                <TextBlock Text="Modelo" Style="{StaticResource LabelTextStyle}"/>
+                                          Style="{StaticResource InputStyle}"
+                                          IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
+                             </StackPanel>
+                             
+                             <StackPanel Grid.Row="1" Grid.Column="2">
+                                 <TextBlock Text="Modelo" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBox x:Name="TxtModelo" 
                                          Text="{Binding PerifericoActual.Modelo, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
-                            </StackPanel>
-                            
-                            <!-- Fila 3: Serial (span completo) -->
-                            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
-                                <TextBlock Text="Número de Serie" Style="{StaticResource LabelTextStyle}"/>
+                                         Style="{StaticResource InputStyle}"
+                                         IsReadOnly="{Binding IsReadOnlyMode}"/>
+                             </StackPanel>
+                             
+                             <!-- Fila 3: Serial (span completo) -->
+                             <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                                 <TextBlock Text="Número de Serie" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBox x:Name="TxtSerial" 
                                          Text="{Binding PerifericoActual.Serial, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
-                            </StackPanel>
+                                         Style="{StaticResource InputStyle}"
+                                         IsReadOnly="{Binding IsReadOnlyMode}"/>
+                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>                <!-- Sección: Información Financiera -->
@@ -213,14 +220,16 @@
                                 <TextBlock Text="Fecha de Compra" Style="{StaticResource LabelTextStyle}"/>
                                 <DatePicker x:Name="DpFechaCompra" 
                                             SelectedDate="{Binding PerifericoActual.FechaCompra, UpdateSourceTrigger=PropertyChanged}"
-                                            Style="{StaticResource InputStyle}"/>
+                                            Style="{StaticResource InputStyle}"
+                                            IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Costo (COP)" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBox x:Name="TxtCosto" 
                                          Text="{Binding PerifericoActual.Costo, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}"
-                                         Style="{StaticResource InputStyle}"/>
+                                         Style="{StaticResource InputStyle}"
+                                         IsReadOnly="{Binding IsReadOnlyMode}"/>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -253,7 +262,8 @@
                                           ItemsSource="{Binding SedesDisponibles}"
                                           SelectedValuePath="Content"
                                           SelectedValue="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                          Style="{StaticResource InputStyle}">
+                                          Style="{StaticResource InputStyle}"
+                                          IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
@@ -267,7 +277,8 @@
                                 <ComboBox x:Name="CmbEstado" 
                                           ItemsSource="{Binding EstadosDisponibles}"
                                           SelectedItem="{Binding PerifericoActual.Estado, UpdateSourceTrigger=PropertyChanged}"
-                                          Style="{StaticResource InputStyle}">
+                                          Style="{StaticResource InputStyle}"
+                                          IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
@@ -288,7 +299,8 @@
                                           Style="{StaticResource InputStyle}"
                                           Background="{StaticResource SurfaceBrush}"
                                           BorderBrush="{StaticResource BorderBrush}"
-                                          ToolTip="Buscar y seleccionar usuario con equipo asignado. Formato: Nombre Completo (Código Equipo)"/>
+                                          ToolTip="Buscar y seleccionar usuario con equipo asignado. Formato: Nombre Completo (Código Equipo)"
+                                          IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -312,7 +324,8 @@
                                  VerticalScrollBarVisibility="Auto"
                                  Style="{StaticResource InputStyle}"
                                  Margin="0,0,0,0"
-                                 ToolTip="Ingrese cualquier información adicional relevante sobre el periférico"/>
+                                 ToolTip="Ingrese cualquier información adicional relevante sobre el periférico"
+                                 IsReadOnly="{Binding IsReadOnlyMode}"/>
                     </StackPanel>
                 </Border>
                 
@@ -324,17 +337,17 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="32,20">
                 <Button Content="Eliminar" 
                         Command="{Binding EliminarCommand}"
-                        Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Visibility="{Binding ShowDeleteButton, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Background="{StaticResource ErrorBrush}"
-                        Foreground="White"
-                        />
+                        Foreground="White"/>
                 <Button Content="Cancelar" 
                         Style="{StaticResource SecondaryButtonStyle}"
                         Click="BtnCancelar_Click"/>
                 <Button Content="{Binding TextoBotonPrincipal}" 
                         Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{Binding GuardarCommand}"/>
+                        Command="{Binding GuardarCommand}"
+                        Visibility="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
             </StackPanel>
         </Border>
     </Grid>

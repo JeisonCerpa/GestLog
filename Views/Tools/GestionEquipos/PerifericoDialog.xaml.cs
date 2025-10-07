@@ -90,6 +90,12 @@ namespace GestLog.Views.Tools.GestionEquipos
         [ObservableProperty]
         private bool isEditing = false;
 
+        [ObservableProperty]
+        private bool isReadOnlyMode = false;
+
+        [ObservableProperty]
+        private bool showDeleteButton = false;
+
         public PerifericoDialogViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             DispositivoAutocompletadoService dispositivoService,

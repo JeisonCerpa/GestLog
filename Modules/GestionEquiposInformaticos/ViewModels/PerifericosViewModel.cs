@@ -375,6 +375,32 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         public bool CanEditarEliminarPeriferico => PerifericoSeleccionado != null;
 
         /// <summary>
+        /// Abre el diálogo de detalles para el periférico seleccionado (modo solo lectura)
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanEditarEliminarPeriferico))]
+        public async Task VerDetallesPerifericoAsync(PerifericoEquipoInformaticoDto? periferico = null)
+        {
+            var p = periferico ?? PerifericoSeleccionado;
+            if (p == null) return;
+
+            try
+            {
+                // Abrir diálogo de periférico en modo solo lectura
+                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(p, _dbContextFactory);
+                dialog.ViewModel.IsReadOnlyMode = true;
+                dialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[PerifericosViewModel] Error al abrir detalles del periférico {Codigo}", p.Codigo);
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = "Error al abrir detalles del periférico";
+                });
+            }
+        }
+
+        /// <summary>
         /// Guarda un periférico en la base de datos
         /// </summary>
         private async Task GuardarPerifericoAsync(PerifericoEquipoInformaticoDto dto, bool esNuevo, string? originalCodigo = null)
