@@ -501,6 +501,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             equipoRecargado.SO = So;
                             equipoRecargado.SerialNumber = SerialNumber;
                             equipoRecargado.Observaciones = Observaciones;
+                            // Asegurar persistencia de estos campos al actualizar un equipo existente
+                            equipoRecargado.Costo = Costo;
+                            equipoRecargado.FechaCompra = FechaCompra;
+                            equipoRecargado.CodigoAnydesk = CodigoAnydesk;
                             equipoRecargado.FechaModificacion = DateTime.Now;
                             {
                                 // Antes: equipoRecargado.Estado = Estado;
@@ -602,6 +606,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                         equipoRecargado.SO = So;
                                         equipoRecargado.SerialNumber = SerialNumber;
                                         equipoRecargado.Observaciones = Observaciones;
+                                        // Asegurar persistencia de estos campos al actualizar un equipo existente
+                                        equipoRecargado.Costo = Costo;
+                                        equipoRecargado.FechaCompra = FechaCompra;
+                                        equipoRecargado.CodigoAnydesk = CodigoAnydesk;
                                         equipoRecargado.FechaModificacion = DateTime.Now;
                                         {
                                             // Antes: equipoRecargado.Estado = Estado;
@@ -720,6 +728,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         equipo.SO = So;
                         equipo.SerialNumber = SerialNumber;
                         equipo.Observaciones = Observaciones;
+                        // Asegurar persistencia de estos campos al actualizar un equipo existente
+                        equipo.Costo = Costo;
+                        equipo.FechaCompra = FechaCompra;
+                        equipo.CodigoAnydesk = CodigoAnydesk;
                         equipo.FechaModificacion = DateTime.Now;
                         {
                             // Antes: equipo.Estado = Estado;

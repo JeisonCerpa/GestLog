@@ -314,7 +314,7 @@
                             <TextBlock Text="Procesador" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
                             <TextBox Text="{Binding Procesador, Mode=OneWay}" IsReadOnly="True" />
 
-                            <TextBlock Text="Código AnyDesk" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Conexión remota" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
                             <TextBox Text="{Binding CodigoAnydesk, Mode=OneWay}" IsReadOnly="True" />
                         </StackPanel>
 
