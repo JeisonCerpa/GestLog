@@ -5,11 +5,48 @@
         Title="Gestión de Planes de Cronograma" 
         Height="600" Width="900"
         WindowStartupLocation="CenterOwner"
-        Background="#F5F5F5">
-      <Window.Resources>
+        Background="#FAFAFA">
+    <Window.Resources>
         <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
         <converters:DiaProgramadoToNombreDiaConverter x:Key="DiaProgramadoToNombreDiaConverter" />
         <converters:BooleanToColorConverter x:Key="BooleanToColorConverter" />
+
+        <!-- Paleta y estilos coherentes con GestLog -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="#C0392B"/>
+        </Style>
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.08"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="20">
@@ -20,20 +57,59 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Encabezado -->
-        <TextBlock Grid.Row="0" Text="Gestión de Planes de Cronograma" 
-                   FontSize="18" FontWeight="Bold" 
-                   Margin="0,0,0,20" 
-                   Foreground="#333"/>
+        <!-- Encabezado rediseñado -->
+        <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Background="{StaticResource PrimaryBrush}" Padding="16" Margin="0,0,0,12">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Border Background="White" Width="44" Height="44" CornerRadius="8" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,12,0">
+                        <Image Source="/Assets/image001.ico" Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Gestión de Planes de Cronograma" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                        <TextBlock Text="Crear, activar y eliminar planes de mantenimiento" FontSize="12" Foreground="#E6F5EA"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusText, FallbackValue='Listo'}" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="White" FontSize="12" HorizontalAlignment="Right"/>
+            </DockPanel>
+        </Border>
 
-        <!-- Lista de planes -->
-        <Border Grid.Row="1" Background="White" CornerRadius="6" Padding="10" BorderBrush="#DDD" BorderThickness="1">
+        <!-- Lista de planes (tarjeta) -->
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <ListView x:Name="PlanesListView" ItemsSource="{Binding Planes}" SelectionMode="Single">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Código Equipo" DisplayMemberBinding="{Binding CodigoEquipo}" Width="120"/>
-                        <GridViewColumn Header="Descripción" DisplayMemberBinding="{Binding Descripcion}" Width="200"/>
-                        <GridViewColumn Header="Responsable" DisplayMemberBinding="{Binding Responsable}" Width="150"/>
+                        <!-- Mostrar Nombre del equipo: priorizar navigation Equipo.NombreEquipo, si no existe mostrar CodigoEquipo -->
+                        <GridViewColumn Header="Nombre Equipo" Width="180">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <PriorityBinding>
+                                                <Binding Path="Equipo.NombreEquipo" />
+                                                <Binding Path="CodigoEquipo" />
+                                            </PriorityBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Mostrar Usuario Asignado: priorizar Equipo.UsuarioAsignado, si no existe usar Responsable del plan -->
+                        <GridViewColumn Header="Usuario Asignado" Width="160">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <PriorityBinding>
+                                                <Binding Path="Equipo.UsuarioAsignado" />
+                                                <Binding Path="Responsable" />
+                                            </PriorityBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Día Programado" Width="120">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -60,24 +136,23 @@
                     </GridView>
                 </ListView.View>
             </ListView>
-        </Border>        <!-- Botones de acción -->
+        </Border>
+
+        <!-- Botones de acción centrados -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <Button Content="Activar/Desactivar" Padding="12,6" Margin="5" 
-                    Click="ToggleActivoButton_Click" Background="#FFC107" Foreground="White" BorderThickness="0"/>
-            <Button Content="Eliminar" Padding="12,6" Margin="5" 
-                    Click="EliminarButton_Click" Background="#DC3545" Foreground="White" BorderThickness="0"/>
+            <Button Content="Activar/Desactivar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,6" Margin="6" Click="ToggleActivoButton_Click"/>
+            <Button Content="Eliminar" Style="{StaticResource DangerButtonStyle}" Padding="12,6" Margin="6" Click="EliminarButton_Click"/>
         </StackPanel>
 
-        <!-- Estado y botones de cierre -->
+        <!-- Estado y botón cerrar alineado a la derecha dentro de la línea inferior -->
         <Grid Grid.Row="3" Margin="0,20,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
+
             <TextBlock x:Name="StatusTextBlock" Grid.Column="0" Text="Listo" VerticalAlignment="Center" Foreground="#666"/>
-              <Button Grid.Column="1" Content="Cerrar" Padding="12,6" 
-                    Click="CerrarButton_Click" Background="#6C757D" Foreground="White" BorderThickness="0"/>
+            <Button Grid.Column="1" Content="Cerrar" Padding="12,6" Style="{StaticResource PrimaryButtonStyle}" Background="#6C757D" Click="CerrarButton_Click" Margin="6,0,0,0"/>
         </Grid>
     </Grid>
 </Window>

@@ -7,6 +7,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using Modules.Usuarios.Interfaces;
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -54,13 +55,61 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 StatusMessage = "Cargando planes...";
                 var planes = await _planCronogramaService.GetAllAsync();
-                
+
+                // Intentar resolver servicio de equipos desde el ServiceProvider para poblar la navegación Equipo
+                IEquipoInformaticoService? equipoService = null;
+                try
+                {
+                    var app = (App)System.Windows.Application.Current!;
+                    var sp = app.ServiceProvider;
+                    // Usar GetService para evitar excepción si no está registrado
+                    equipoService = sp.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService)) as GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[GestionarPlanesDialog] No se pudo resolver IEquipoInformaticoService desde DI");
+                }
+
                 Planes.Clear();
                 foreach (var plan in planes.OrderBy(p => p.CodigoEquipo).ThenBy(p => p.DiaProgramado))
                 {
+                    // Si el servicio está disponible y necesitamos completar datos del equipo, obtenerlos
+                    if (equipoService != null && !string.IsNullOrWhiteSpace(plan.CodigoEquipo))
+                    {
+                        bool necesitaRefresh = plan.Equipo == null || string.IsNullOrWhiteSpace(plan.Equipo.NombreEquipo) || string.IsNullOrWhiteSpace(plan.Equipo.UsuarioAsignado);
+                        if (necesitaRefresh)
+                        {
+                            try
+                            {
+                                var equipo = await equipoService.GetByCodigoAsync(plan.CodigoEquipo);
+                                if (equipo != null)
+                                {
+                                    // Reemplazar o asignar la navegación para asegurar datos completos
+                                    plan.Equipo = equipo;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "[GestionarPlanesDialog] Error al obtener equipo {Codigo} para plan {PlanId}", plan.CodigoEquipo, plan.PlanId);
+                            }
+                        }
+                    }
+
+                    // Si aún no hay usuario asignado en el equipo, usar Responsable del plan como fallback para mostrar en la columna
+                    if (plan.Equipo != null && string.IsNullOrWhiteSpace(plan.Equipo.UsuarioAsignado) && !string.IsNullOrWhiteSpace(plan.Responsable))
+                    {
+                        plan.Equipo.UsuarioAsignado = plan.Responsable;
+                    }
+
+                    // Si no hay NombreEquipo, garantizar que muestre al menos el código
+                    if (plan.Equipo != null && string.IsNullOrWhiteSpace(plan.Equipo.NombreEquipo))
+                    {
+                        plan.Equipo.NombreEquipo = plan.CodigoEquipo;
+                    }
+
                     Planes.Add(plan);
                 }
-                
+
                 StatusMessage = $"Se cargaron {Planes.Count} planes";
             }
             catch (Exception ex)
