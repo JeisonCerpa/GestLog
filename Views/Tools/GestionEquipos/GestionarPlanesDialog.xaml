@@ -139,9 +139,55 @@
         </Border>
 
         <!-- Botones de acción centrados -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <Button Content="Activar/Desactivar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,6" Margin="6" Click="ToggleActivoButton_Click"/>
-            <Button Content="Eliminar" Style="{StaticResource DangerButtonStyle}" Padding="12,6" Margin="6" Click="EliminarButton_Click"/>
+        <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Editar" x:Name="BtnEditar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,6" Margin="6" Click="EditarButton_Click"/>
+                <Button Content="Activar/Desactivar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,6" Margin="6" Click="ToggleActivoButton_Click"/>
+                <Button Content="Eliminar" Style="{StaticResource DangerButtonStyle}" Padding="12,6" Margin="6" Click="EliminarButton_Click"/>
+            </StackPanel>
+
+            <!-- Panel de edición inline (oculto por defecto) -->
+            <Border x:Name="EditPanel" Style="{StaticResource CardBorderStyle}" Visibility="Collapsed" Margin="0,12,0,0" Width="720">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="8">
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="Código Equipo" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBox x:Name="TxtCodigoEditar" IsReadOnly="True" Width="240" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="Día programado" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <ComboBox x:Name="CmbDiaEditar" Width="200" SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="1">1 - Lunes</ComboBoxItem>
+                                <ComboBoxItem Tag="2">2 - Martes</ComboBoxItem>
+                                <ComboBoxItem Tag="3">3 - Miércoles</ComboBoxItem>
+                                <ComboBoxItem Tag="4">4 - Jueves</ComboBoxItem>
+                                <ComboBoxItem Tag="5">5 - Viernes</ComboBoxItem>
+                                <ComboBoxItem Tag="6">6 - Sábado</ComboBoxItem>
+                                <ComboBoxItem Tag="7">7 - Domingo</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Responsable" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBox x:Name="TxtResponsableEditar" Width="240" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" HorizontalAlignment="Right" Margin="8">
+                        <Button Content="Guardar" x:Name="BtnGuardarEdicion" Style="{StaticResource PrimaryButtonStyle}" Width="120" Margin="8,0,0,0" Click="GuardarEdicionButton_Click"/>
+                        <Button Content="Cancelar" x:Name="BtnCancelarEdicion" Style="{StaticResource DangerButtonStyle}" Width="120" Margin="8,0,0,0" Click="CancelarEdicionButton_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </StackPanel>
 
         <!-- Estado y botón cerrar alineado a la derecha dentro de la línea inferior -->

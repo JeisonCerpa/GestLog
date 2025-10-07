@@ -34,6 +34,8 @@ namespace GestLog.Views.Tools.GestionEquipos
             } 
         }
 
+        private PlanCronogramaEquipo? _planEnEdicion = null;
+
         public GestionarPlanesDialog(IPlanCronogramaService planCronogramaService, IGestLogLogger logger)
         {
             InitializeComponent();
@@ -182,6 +184,82 @@ namespace GestLog.Views.Tools.GestionEquipos
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
+        }
+
+        private void EditarButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlanesListView.SelectedItem is PlanCronogramaEquipo plan)
+            {
+                _planEnEdicion = plan;
+                // Mostrar panel y poblar campos
+                EditPanel.Visibility = Visibility.Visible;
+                TxtCodigoEditar.Text = plan.CodigoEquipo;
+                TxtResponsableEditar.Text = plan.Responsable;
+
+                // Seleccionar día
+                foreach (ComboBoxItem item in CmbDiaEditar.Items)
+                {
+                    if (item.Tag != null && byte.TryParse(item.Tag.ToString(), out var val) && val == plan.DiaProgramado)
+                    {
+                        CmbDiaEditar.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                StatusMessage = "Seleccione un plan para editar";
+            }
+        }
+
+        private async void GuardarEdicionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_planEnEdicion == null)
+            {
+                StatusMessage = "No hay un plan en edición";
+                return;
+            }
+
+            try
+            {
+                // Validar día
+                if (CmbDiaEditar.SelectedItem is not ComboBoxItem selectedItem || selectedItem.Tag == null)
+                {
+                    StatusMessage = "Seleccione un día válido";
+                    return;
+                }
+
+                if (!byte.TryParse(selectedItem.Tag.ToString(), out var nuevoDia))
+                {
+                    StatusMessage = "Día inválido";
+                    return;
+                }
+
+                // Actualizar entidad y persistir
+                _planEnEdicion.DiaProgramado = nuevoDia;
+                _planEnEdicion.Responsable = TxtResponsableEditar.Text?.Trim() ?? string.Empty;
+
+                await _planCronogramaService.UpdateAsync(_planEnEdicion);
+                StatusMessage = "Plan actualizado";
+                _logger.LogInformation("[GestionarPlanesDialog] Plan {PlanId} actualizado", _planEnEdicion.PlanId);
+
+                // Ocultar panel y refrescar lista
+                EditPanel.Visibility = Visibility.Collapsed;
+                _planEnEdicion = null;
+                await CargarPlanesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[GestionarPlanesDialog] Error al guardar edición de plan");
+                StatusMessage = "Error al guardar cambios";
+            }
+        }
+
+        private void CancelarEdicionButton_Click(object sender, RoutedEventArgs e)
+        {
+            EditPanel.Visibility = Visibility.Collapsed;
+            _planEnEdicion = null;
+            StatusMessage = "Edición cancelada";
         }
     }
 }

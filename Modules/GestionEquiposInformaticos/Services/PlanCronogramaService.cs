@@ -97,6 +97,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                     throw new ArgumentException($"No se encontró el plan con ID: {plan.PlanId}");
 
                 existing.DiaProgramado = plan.DiaProgramado;
+                // Persistir también Responsable y Descripción si se modificaron desde la UI
+                existing.Responsable = plan.Responsable?.Trim() ?? string.Empty;
+                existing.Descripcion = plan.Descripcion?.Trim() ?? string.Empty;
                 existing.ChecklistJson = plan.ChecklistJson;
                 
                 await context.SaveChangesAsync();
