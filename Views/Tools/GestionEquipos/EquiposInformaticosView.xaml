@@ -390,6 +390,10 @@
         <!-- Botones flotantes para agregar, importar y exportar equipo -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                     Margin="0,0,32,32" Panel.ZIndex="10">
+            <Button Width="56" Height="56" Content="&#xE72C;" ToolTip="Actualizar lista de equipos"
+                    Command="{Binding CargarEquiposCommand}"
+                    Click="ActualizarButton_Click"
+                    Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets"/>
             <Button Width="56" Height="56" Content="⭱" ToolTip="Exportar todos los equipos"
                     Command="{Binding ExportarEquiposCommand}"
                     IsEnabled="{Binding CanExportarDatos}"
@@ -399,14 +403,12 @@
                     Command="{Binding ImportarEquiposCommand}"
                     IsEnabled="{Binding CanCrearEquipo}"
                     Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
-                    Style="{StaticResource CircularButtonStyle}"
-                    Margin="12,0,0,0"/>
-            <Button Width="56" Height="56" Content="+" ToolTip="Agregar nuevo equipo"
+                    Style="{StaticResource CircularButtonStyle}" Margin="12,0,0,0"/>
+            <Button Width="56" Height="56" Content="&#xE710;" ToolTip="Agregar nuevo equipo"
                     Command="{Binding AgregarEquipoCommand}"
                     IsEnabled="{Binding CanCrearEquipo}"
                     Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
-                    Style="{StaticResource CircularButtonStyle}"
-                    Margin="12,0,0,0"/>
+                    Style="{StaticResource CircularButtonStyle}" Margin="12,0,0,0" FontFamily="Segoe MDL2 Assets"/>
         </StackPanel>
     </Grid>
 </UserControl>

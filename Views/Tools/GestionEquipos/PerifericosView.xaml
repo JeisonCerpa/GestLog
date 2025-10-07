@@ -85,6 +85,25 @@
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
         </Style>
+
+        <!-- Estilo circular reutilizable (similar a EquiposInformaticosView) -->
+        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderBrush" Value="#E5E5E5"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -151,11 +170,15 @@
                     <TextBlock Text="Dados de Baja" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="4" HorizontalAlignment="Center" Orientation="Horizontal">
-                    <Button Content="Actualizar" Command="{Binding CargarPerifericosCommand}" 
-                            Style="{StaticResource SecondaryButtonStyle}" Width="100" Margin="0,0,8,0"/>
-                    <Button Content="Nuevo" Command="{Binding AgregarPerifericoCommand}" 
-                            Style="{StaticResource PrimaryButtonStyle}" Width="100"/>
+                <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
+                    <!-- Botón 'Actualizar' usando glyph MDL2 -->
+                    <Button Content="&#xE72C;" Command="{Binding CargarPerifericosCommand}"
+                            ToolTip="Actualizar lista de periféricos"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
+                    <!-- Botón 'Nuevo' usando glyph MDL2 -->
+                    <Button Content="&#xE710;" Command="{Binding AgregarPerifericoCommand}"
+                            ToolTip="Agregar nuevo periférico"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
                 </StackPanel>
             </Grid>
         </Border>

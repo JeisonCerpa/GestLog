@@ -129,6 +129,27 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             }
         }
 
+        // Comando público para recargar manualmente la lista de equipos desde la vista
+        [RelayCommand]
+        public async Task CargarEquipos()
+        {
+            try
+            {
+                IsLoading = true;
+                await CargarEquiposAsync();
+                StatusMessage = $"Cargados {ListaEquiposInformaticos.Count} equipos";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al cargar equipos manualmente");
+                StatusMessage = "Error al actualizar equipos";
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
         private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };

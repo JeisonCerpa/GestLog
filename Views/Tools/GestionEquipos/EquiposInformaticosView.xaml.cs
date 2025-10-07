@@ -23,5 +23,21 @@ namespace GestLog.Views.Tools.GestionEquipos
             var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
             this.DataContext = new EquiposInformaticosViewModel(dbContextFactory, currentUserService, databaseService, logger);
         }
+
+        private void ActualizarButton_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (this.DataContext is EquiposInformaticosViewModel vm)
+            {
+                // Preferir ejecutar el comando si está disponible
+                if (vm.CargarEquiposCommand != null && vm.CargarEquiposCommand.CanExecute(null))
+                {
+                    vm.CargarEquiposCommand.Execute(null);
+                    return;
+                }
+
+                // Si el comando no está disponible o no puede ejecutarse, llamar al método público
+                _ = vm.CargarEquipos();
+            }
+        }
     }
 }
