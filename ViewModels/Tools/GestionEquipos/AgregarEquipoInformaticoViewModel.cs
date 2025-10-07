@@ -1002,6 +1002,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             IsLoadingRam = true;
             try
             {
+                _logger.LogInformation("[AgregarEquipoInformaticoViewModel] Iniciando ObtenerCamposAutomaticosAsync (overlay activado)");
                 await Task.Run(() => ObtenerCamposAutomaticos());
                 // También obtener discos automáticamente
                 await ObtenerDiscosAutomaticosAsync();
@@ -1033,6 +1034,7 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             finally
             {
                 IsLoadingRam = false;
+                _logger.LogInformation("[AgregarEquipoInformaticoViewModel] ObtenerCamposAutomaticosAsync finalizado (overlay desactivado)");
             }
         }
         private void ObtenerCamposAutomaticos()
