@@ -212,7 +212,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 var equipos = await _equipoInformaticoService.GetAllAsync();
                 
-                var equiposCombo = equipos.Select(e => new EquipoComboItem
+                // Filtrar solo equipos cuyo Estado sea "Activo"
+                var equiposActivos = equipos
+                    .Where(e => string.Equals(e.Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(e => e.Codigo)
+                    .ToList();
+
+                var equiposCombo = equiposActivos.Select(e => new EquipoComboItem
                 {
                     Codigo = e.Codigo ?? string.Empty,
                     NombreEquipo = e.NombreEquipo ?? string.Empty,
@@ -237,7 +243,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 _logger.LogError(ex, "[CrearPlanCronograma] Error al cargar equipos informáticos");
                 StatusMessage = "Error al cargar equipos informáticos";
             }
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Se ejecuta automáticamente cuando cambia la selección del equipo
         /// Actualiza CodigoEquipo y FiltroEquipo cuando se selecciona un elemento de la lista
         /// </summary>

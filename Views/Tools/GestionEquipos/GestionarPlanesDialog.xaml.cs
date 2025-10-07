@@ -20,7 +20,8 @@ namespace GestLog.Views.Tools.GestionEquipos
         private readonly IGestLogLogger _logger;
         
         public ObservableCollection<PlanCronogramaEquipo> Planes { get; set; } = new();
-        
+        public ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.ViewModels.EquipoComboItem> EquiposActivos { get; set; } = new ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.ViewModels.EquipoComboItem>();
+
         private string _statusMessage = "Listo";
         public string StatusMessage 
         { 
@@ -35,6 +36,25 @@ namespace GestLog.Views.Tools.GestionEquipos
         }
 
         private PlanCronogramaEquipo? _planEnEdicion = null;
+
+        private string? _selectedEquipoEditarCodigo;
+        public string? SelectedEquipoEditarCodigo
+        {
+            get => _selectedEquipoEditarCodigo;
+            set
+            {
+                _selectedEquipoEditarCodigo = value;
+                // Actualizar selección en el ComboBox si existe
+                try
+                {
+                    if (CmbEquipoEditar != null && !string.IsNullOrWhiteSpace(value))
+                    {
+                        CmbEquipoEditar.SelectedValue = value;
+                    }
+                }
+                catch { /* ignore if control not yet initialized */ }
+            }
+        }
 
         public GestionarPlanesDialog(IPlanCronogramaService planCronogramaService, IGestLogLogger logger)
         {
@@ -70,6 +90,34 @@ namespace GestLog.Views.Tools.GestionEquipos
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "[GestionarPlanesDialog] No se pudo resolver IEquipoInformaticoService desde DI");
+                }
+
+                // Si tenemos servicio de equipos, obtener sólo los equipos activos para el selector
+                EquiposActivos.Clear();
+                if (equipoService != null)
+                {
+                    try
+                    {
+                        var todos = await equipoService.GetAllAsync();
+                        var activos = todos.Where(e => string.Equals(e.Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                                           .OrderBy(e => e.Codigo)
+                                           .ToList();
+
+                        // Mapear a EquipoComboItem (clase del VM CrearPlan)
+                        foreach (var e in activos)
+                        {
+                            EquiposActivos.Add(new GestLog.Modules.GestionEquiposInformaticos.ViewModels.EquipoComboItem
+                            {
+                                Codigo = e.Codigo ?? string.Empty,
+                                NombreEquipo = e.NombreEquipo ?? string.Empty,
+                                UsuarioAsignado = e.UsuarioAsignado ?? string.Empty
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[GestionarPlanesDialog] Error al obtener equipos activos para el selector");
+                    }
                 }
 
                 Planes.Clear();
@@ -193,7 +241,16 @@ namespace GestLog.Views.Tools.GestionEquipos
                 _planEnEdicion = plan;
                 // Mostrar panel y poblar campos
                 EditPanel.Visibility = Visibility.Visible;
-                TxtCodigoEditar.Text = plan.CodigoEquipo;
+                // Seleccionar equipo en el combo (solo equipos activos estarán listados)
+                try
+                {
+                    if (CmbEquipoEditar != null)
+                    {
+                        CmbEquipoEditar.SelectedValue = plan.CodigoEquipo;
+                    }
+                }
+                catch { }
+
                 TxtResponsableEditar.Text = plan.Responsable;
 
                 // Seleccionar día
@@ -238,6 +295,12 @@ namespace GestLog.Views.Tools.GestionEquipos
                 // Actualizar entidad y persistir
                 _planEnEdicion.DiaProgramado = nuevoDia;
                 _planEnEdicion.Responsable = TxtResponsableEditar.Text?.Trim() ?? string.Empty;
+
+                // Si el usuario seleccionó un equipo distinto en el combo, actualizar CodigoEquipo
+                if (!string.IsNullOrWhiteSpace(SelectedEquipoEditarCodigo) && !string.Equals(SelectedEquipoEditarCodigo, _planEnEdicion.CodigoEquipo, StringComparison.OrdinalIgnoreCase))
+                {
+                    _planEnEdicion.CodigoEquipo = SelectedEquipoEditarCodigo;
+                }
 
                 await _planCronogramaService.UpdateAsync(_planEnEdicion);
                 StatusMessage = "Plan actualizado";

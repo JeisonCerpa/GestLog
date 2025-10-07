@@ -162,7 +162,15 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="8">
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Código Equipo" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBox x:Name="TxtCodigoEditar" IsReadOnly="True" Width="240" />
+                            <!-- Reemplazado TextBox por ComboBox que mostrará sólo equipos activos -->
+                            <ComboBox x:Name="CmbEquipoEditar" Width="240"
+                                      ItemsSource="{Binding EquiposActivos}"
+                                      DisplayMemberPath="DisplayText"
+                                      SelectedValuePath="Codigo"
+                                      SelectedValue="{Binding SelectedEquipoEditarCodigo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      IsEditable="True"
+                                      IsTextSearchEnabled="False"
+                                      ToolTip="Seleccione un equipo activo" />
                         </StackPanel>
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Día programado" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
