@@ -112,6 +112,58 @@ Plantilla reutilizable para vistas tipo listado con DataGrid en GestLog. Basada 
 </DataGrid>
 ```
 
+### Evitar que el contenido se corte (auto‑sizing y estilo de celdas)
+Para que las columnas no recorten texto importante y la tabla aproveche todo el ancho disponible, siga estas recomendaciones:
+
+- Establezca `ColumnWidth="*"` en el `DataGrid` para que las columnas llenen el espacio restante de forma proporcional.
+- Use `Width="SizeToCells"` (o `SizeToCells`) en columnas pequeñas con contenido limitado (p. ej. Código, Marca, Estado) para que el ancho se ajuste a su contenido.
+- Use `Width="*"` en columnas que deben expandirse y ocupar el espacio disponible (p. ej. Nombre, Usuario/Asignación, Ubicación). Combine con `MinWidth` para evitar que se compriman demasiado.
+- Configure `MinWidth` razonables por columna (ej.: Código=110, Nombre=240, Usuario=220) para evitar recorte extremo en ventanas pequeñas.
+- Aplique `ElementStyle="{StaticResource DataGridTextBlockStyle}"` a todas las columnas de texto. Ese estilo debe incluir `Margin`, `TextTrimming="CharacterEllipsis"` y `TextWrapping="NoWrap"` para añadir espacio interno y recortar con puntos suspensivos cuando sea necesario.
+- Use `SizeToCells` junto con `MinWidth` cuando quiera que la columna se ajuste a su contenido pero no se haga más pequeña que un mínimo útil.
+
+Ejemplo de uso combinado (XAML):
+
+```xml
+<DataGrid ColumnWidth="*" RowStyle="{StaticResource DataGridRowEstadoStyle}" ElementStyle="{x:Null}">
+    <DataGrid.Columns>
+        <!-- Columnas pequeñas auto-ajustables -->
+        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+        <!-- Columnas que se expanden para rellenar el espacio -->
+        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" MinWidth="240" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+        <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignado}" Width="*" MinWidth="220" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+        <!-- Columnas intermedias -->
+        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+        <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="SizeToCells" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" ElementStyle="{StaticResource DataGridTextBlockStyle}">
+            <!-- Template con Ellipse + TextBlock -->
+        </DataGridTemplateColumn>
+    </DataGrid.Columns>
+</DataGrid>
+```
+
+Detalle del estilo recomendado para TextBlock en celdas:
+
+```xml
+<Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+  <Setter Property="VerticalAlignment" Value="Center"/>
+  <Setter Property="Margin" Value="8,0,8,0"/>
+  <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  <Setter Property="TextWrapping" Value="NoWrap"/>
+  <!-- DataTrigger para tachado si está dado de baja -->
+  <Style.Triggers>
+    <DataTrigger Binding="{Binding Estado, Converter={StaticResource EstadoToDadoDeBajaConverter}}" Value="True">
+      <Setter Property="TextDecorations" Value="Strikethrough"/>
+    </DataTrigger>
+  </Style.Triggers>
+</Style>
+```
+
+Consejos prácticos:
+- Si una columna muestra frecuentemente textos largos (descripciones), considere usar `Width="2*"` o mayor para darle prioridad en el reparto del espacio.
+- Revise la vista en varias resoluciones y ajuste `MinWidth` si detecta recorte en pantallas pequeñas.
+- Evite usar `TextWrapping="Wrap"` en filas con altura fija (RowHeight) a menos que también permita alturas variables, de lo contrario el texto se truncará o la UI se desalineará.
+
 ### Ordenamiento por Estado (mejor práctica)
 Para ordenar de forma consistente por el estado mostrado, lo mejor es exponer una propiedad calculada en la entidad o ViewModel que represente el orden lógico del estado (p. ej. `EstadoOrden` int). Luego indique `SortMemberPath` en la columna de Estado para que el DataGrid ordene por esa propiedad numérica en lugar del texto visual.
 

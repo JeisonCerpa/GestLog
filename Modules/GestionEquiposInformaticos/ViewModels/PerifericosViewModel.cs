@@ -17,6 +17,9 @@ using GestLog.Models.Events;
 using GestLog.ViewModels.Base;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using CommunityToolkit.Mvvm.Messaging;
+using System.Linq;
+using System.Windows.Data;
+using System.ComponentModel;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {    /// <summary>
@@ -31,7 +34,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private bool _isInitialized = false;
 
         [ObservableProperty]
-        private ObservableCollection<PerifericoEquipoInformaticoDto> _perifericos = new();        [ObservableProperty]
+        private ObservableCollection<PerifericoEquipoInformaticoDto> _perifericos = new();
+        [ObservableProperty]
+        private ICollectionView? _perifericosView;
+
+        [ObservableProperty]
+        private bool _showDadoDeBaja = false;
+
+        [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarPerifericoCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarPerifericoCommand))]
         private PerifericoEquipoInformaticoDto? _perifericoSeleccionado;
@@ -66,6 +76,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             : base(databaseService, logger)
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            
+            // Inicializar vista filtrable para la lista de periféricos
+            PerifericosView = CollectionViewSource.GetDefaultView(Perifericos);
+            if (PerifericosView != null)
+                PerifericosView.Filter = new Predicate<object>(FiltrarPerifericos);
+
+            // Cuando cambie la colección, recalcular estadísticas y refrescar la vista
+            Perifericos.CollectionChanged += (s, e) =>
+            {
+                ActualizarEstadisticas();
+                PerifericosView?.Refresh();
+            };
             
             // Suscribirse a mensaje de periféricos actualizados para recargar datos cuando otro VM modifique asignaciones
             try
@@ -203,7 +225,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         Perifericos.Add(dto);
                     }
 
+                    // Actualizar estadísticas y refrescar la vista filtrada
                     ActualizarEstadisticas();
+                    PerifericosView?.Refresh();
                     StatusMessage = $"Cargados {Perifericos.Count} periféricos";
                 });
             }
@@ -630,6 +654,36 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         protected override void OnConnectionLost()
         {
             StatusMessage = "Sin conexión - Módulo de periféricos no disponible";
+        }
+
+        // Filtrado usado por ICollectionView
+        private bool FiltrarPerifericos(object obj)
+        {
+            if (obj is not PerifericoEquipoInformaticoDto p) return false;
+
+            // Ocultar dados de baja si toggle desactivado
+            if (!ShowDadoDeBaja && p.Estado == EstadoPeriferico.DadoDeBaja)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(Filtro)) return true;
+
+            var q = Filtro.Trim();
+            return (p.Codigo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.Dispositivo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.Marca?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.TextoAsignacion?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.NombreEquipoAsignado?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+        // Refrescar vista cuando cambian filtros
+        partial void OnFiltroChanged(string value)
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() => PerifericosView?.Refresh());
+        }
+
+        partial void OnShowDadoDeBajaChanged(bool value)
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() => PerifericosView?.Refresh());
         }
     }
 }

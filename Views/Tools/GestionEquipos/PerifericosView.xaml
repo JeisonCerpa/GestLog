@@ -12,6 +12,10 @@
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+        <!-- Converters para presentación por Estado (unificar comportamiento con EquiposInformaticosView) -->
+        <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
+        <conv:EstadoToBoolConverter x:Key="EstadoToDadoDeBajaConverter" TargetEstado="DadoDeBaja"/>
+        <conv:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
         
         <!-- Paleta de colores GestLog -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
@@ -47,36 +51,22 @@
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
         
-        <!-- Estilo para TextBlocks dentro del DataGrid: tachado si el estado es DadoDeBaja -->
+        <!-- Estilo para TextBlocks dentro del DataGrid: añade margen y recorte; aplica tachado vía converter cuando corresponde -->
         <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Estado, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="DadoDeBaja">
-                    <Setter Property="TextDecorations" Value="Strikethrough"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Estado, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="DadosDeBaja">
+                <DataTrigger Binding="{Binding Estado, Converter={StaticResource EstadoToDadoDeBajaConverter}}" Value="True">
                     <Setter Property="TextDecorations" Value="Strikethrough"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
         
-        <!-- RowStyle para ajustar opacidad en inactivos y dados de baja -->
+        <!-- RowStyle para ajustar opacidad según Estado mediante converter (más robusto que múltiples DataTriggers) -->
         <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
-            <Setter Property="Opacity" Value="1"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
-                    <Setter Property="Opacity" Value="0.5"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Estado}" Value="DadosDeBaja">
-                    <Setter Property="Opacity" Value="0.5"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
-                    <Setter Property="Opacity" Value="0.75"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Estado}" Value="Inactivos">
-                    <Setter Property="Opacity" Value="0.75"/>
-                </DataTrigger>
-            </Style.Triggers>
+            <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
         </Style>
         
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
@@ -225,12 +215,74 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Filtros -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                    <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                    <TextBox Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" Width="300" Padding="8" 
-                             VerticalAlignment="Center" BorderBrush="{StaticResource BorderBrush}"/>
-                </StackPanel>
+                <!-- Filtros: izquierda = filtro + botón, derecha = toggle Dados de baja -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
+                        <TextBox Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" Width="300" Padding="8" 
+                                 VerticalAlignment="Center" BorderBrush="{StaticResource BorderBrush}"/>
+                    </StackPanel>
+
+                    <!-- Toggle a la derecha para mostrar/ocultar dados de baja -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32"
+                                      IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}"
+                                      ToolTip="Mostrar periféricos dados de baja"
+                                      VerticalAlignment="Center">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                    <Setter Property="BorderBrush" Value="#DDD"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Grid>
+                                                    <Border x:Name="SwitchBorder" Background="#F0F0F0" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16" Height="32" Width="110">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect Color="#A85B00" BlurRadius="8" ShadowDepth="1" Opacity="0.18"/>
+                                                        </Border.Effect>
+                                                    </Border>
+                                                    <Ellipse x:Name="SwitchKnob" Width="24" Height="24" Margin="4,4,0,4" Fill="#C8C8C8" HorizontalAlignment="Left"/>
+                                                    <TextBlock x:Name="SwitchText" Text="Dados de baja" Foreground="#504F4E" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,18,0"/>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#888"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="82,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#888" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="False">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#F0F0F0"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="4,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#706F6F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                    </StackPanel>
+                </Grid>
 
                 <!-- DataGrid -->
                 <DataGrid Grid.Row="1" ItemsSource="{Binding Perifericos}" SelectedItem="{Binding PerifericoSeleccionado}"
@@ -246,24 +298,18 @@
                         <!-- Se conserva solo texto de asignación (usuario/ubicación) -->
                         <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Width="1*" IsReadOnly="True" SortMemberPath="Estado">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="FontWeight" Value="Medium"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Estado}" Value="EnUso">
-                                            <Setter Property="Foreground" Value="#27AE60"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Estado}" Value="AlmacenadoFuncionando">
-                                            <Setter Property="Foreground" Value="#F39C12"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
-                                            <Setter Property="Foreground" Value="#C0392B"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="Estado">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
+                                        <Ellipse Width="14" Height="14" VerticalAlignment="Center"
+                                                 Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}"
+                                                 Stroke="#BFBFBF" StrokeThickness="0.5"/>
+                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <!-- Columna de acciones: Detalles (botón rectangular con bordes redondeados) -->
                         <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
