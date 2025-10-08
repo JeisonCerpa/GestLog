@@ -123,8 +123,8 @@
             </Border.Background>
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,16,0" Width="48" Height="48">
-                        <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="24" 
+                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
+                        <TextBlock Text="🖱" FontFamily="Segoe UI Emoji" FontSize="26"
                                    Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
