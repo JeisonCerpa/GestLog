@@ -20,7 +20,8 @@ namespace GestLog.Views
         {
             var herramientasView = new HerramientasView();
             _mainWindow?.NavigateToView(herramientasView, "Herramientas");
-        }        private void btnInfo_Click(object sender, RoutedEventArgs e)
+        }        
+        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
                 "GestLog v1.0.30\n\n" +

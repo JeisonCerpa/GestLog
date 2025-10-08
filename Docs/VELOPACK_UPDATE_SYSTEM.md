@@ -77,15 +77,14 @@ private void btnInfo_Click(object sender, RoutedEventArgs e)
 {
     System.Windows.MessageBox.Show(
         "GestLog v1.0.X\n\n" +
-        "Sistema modular de gestión integrada\n" +
+        "Sistema de gestión integrada.\n" +
         "Desarrollado con .NET 9 y WPF\n\n" +
-        "Módulos integrados:\n" +
-        "• DaaterProccesor - Procesamiento de datos Excel\n" +
-        "• Gestión de Cartera - Estados de cuenta PDF\n" +
-        "• Envío de Catálogo - Envío masivo de catálogo\n\n" +
-        "Estado: ✅ Operativo\n" +        "Actualizaciones: ✅ Sistema Velopack completamente funcional\n" +
-        "Seguridad: 🔐 Privilegios de administrador mediante manifiesto\n" +
-        "Comportamiento: 🎯 Detección silenciosa, aplicación con confirmación del usuario",
+        "Cambios principales desde la versión anterior:\n" +
+        "• (Resumen) - Incluir aquí las correcciones, mejoras y nuevas funcionalidades.\n" +
+        "• Ejemplo: corrección de bloqueo en splash, mejoras en actualizaciones, actualización de dependencias.\n\n" +
+        "Estado: ✅ Operativo\n" +
+        "Actualizaciones: ✅ Sistema Velopack completamente funcional\n\n" +
+        "Nota: Reemplace este resumen por el changelog real antes de publicar.",
         "Información del Sistema",
         MessageBoxButton.OK,
         MessageBoxImage.Information
