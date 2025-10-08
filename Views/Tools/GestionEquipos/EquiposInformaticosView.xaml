@@ -50,6 +50,11 @@
         </Style>        <!-- Estilo para TextBlocks dentro del DataGrid: añade tachado cuando Estado indica dado de baja -->
         <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <!-- Añadir margen interno para separar el contenido de las líneas de la celda y evitar que se corte -->
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <!-- Truncar con puntos suspensivos cuando el contenido sea demasiado largo -->
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
             <Style.Triggers>
                 <!-- Usar converter para determinar si el estado es "Dado de baja" -->
                 <DataTrigger Binding="{Binding Estado, Converter={StaticResource EstadoToDadoDeBajaConverter}}" Value="True">
@@ -313,14 +318,15 @@
                           SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
                           FontSize="13" RowHeight="40"
-                          RowStyle="{StaticResource DataGridRowEstadoStyle}">
+                          RowStyle="{StaticResource DataGridRowEstadoStyle}"
+                          ColumnWidth="*">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignado}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTemplateColumn Header="Estado" Width="1*" IsReadOnly="True" SortMemberPath="EstadoOrden">
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignado}" Width="*" MinWidth="220" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="EstadoOrden">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
