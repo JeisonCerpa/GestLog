@@ -52,6 +52,18 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
         [ObservableProperty]
         private ICollectionView? equiposView;
 
+        // Estadísticas de estados (contadores) mostrados en la barra
+        [ObservableProperty]
+        private int equiposActivos;
+        [ObservableProperty]
+        private int equiposEnMantenimiento;
+        [ObservableProperty]
+        private int equiposEnReparacion;
+        [ObservableProperty]
+        private int equiposInactivos;
+        [ObservableProperty]
+        private int equiposDadosBaja;
+
         public EquiposInformaticosViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             ICurrentUserService currentUserService,
@@ -68,6 +80,9 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
             EquiposView = CollectionViewSource.GetDefaultView(ListaEquiposInformaticos);
             if (EquiposView != null)
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+            
+            // Suscribir cambios en la colección para recalcular las estadísticas automáticamente
+            ListaEquiposInformaticos.CollectionChanged += (s, e) => RecalcularEstadisticas();
                 
             // Inicialización asíncrona
             _ = InicializarAsync();
@@ -236,6 +251,8 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         ListaEquiposInformaticos.Add(eq);
 
                     EquiposView?.Refresh();
+                    // Recalcular estadísticas después de actualizar la lista
+                    RecalcularEstadisticas();
                 });
             }
             catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == -1 || ex.Number == 26 || ex.Number == 10060)
@@ -337,6 +354,61 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                     _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al exportar");
                     System.Windows.MessageBox.Show($"Error al exportar: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanCrearEquipo))]
+        private void ImportarEquipos()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Archivos CSV (*.csv)|*.csv|Archivos Excel (*.xlsx)|*.xlsx|Todos los archivos (*.*)|*.*",
+                Title = "Importar equipos informáticos"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    // Implementación simplificada de importación
+                    // TODO: Parsear e insertar registros según formato (CSV/XLSX)
+                    System.Windows.MessageBox.Show($"Archivo seleccionado: {dialog.FileName}\nFuncionalidad de importación no implementada.", "Importar", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+                    // Recargar lista después de una importación hipotética
+                    _ = CargarEquiposAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al importar equipos");
+                    System.Windows.MessageBox.Show($"Error al importar: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // Recalcula los contadores por estado a partir de la colección actual
+        private void RecalcularEstadisticas()
+        {
+            try
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    var list = ListaEquiposInformaticos ?? new System.Collections.ObjectModel.ObservableCollection<EquipoInformaticoEntity>();
+                    EquiposActivos = list.Count(e => {
+                        var s = (e.Estado ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant();
+                        return s.Contains("enuso") || s.Contains("activo");
+                    });
+                    EquiposEnMantenimiento = list.Count(e => ((e.Estado ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant().Contains("enmantenimiento")));
+                    EquiposEnReparacion = list.Count(e => ((e.Estado ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant().Contains("enreparacion")));
+                    EquiposInactivos = list.Count(e => ((e.Estado ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant().Contains("inactivo")));
+                    EquiposDadosBaja = list.Count(e => {
+                        var s = (e.Estado ?? string.Empty).Replace(" ", string.Empty).ToLowerInvariant();
+                        return s.Contains("dadodebaja");
+                    });
+                });
+            }
+            catch
+            {
+                // No interrumpir la UI por fallos al recalcular estadísticas
             }
         }
 
