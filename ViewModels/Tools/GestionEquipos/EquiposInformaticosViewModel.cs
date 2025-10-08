@@ -241,7 +241,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 var equipos = await dbContext.EquiposInformaticos
                     .AsNoTracking()
                     .OrderBy(e => e.Codigo)
-                    .ToListAsync(timeoutCts.Token);
+                    .ToListAsync(timeoutCts.Token);                // DEBUG: Log de valores únicos de Estado para diagnóstico
+                var estadosUnicos = equipos.Select(e => e.Estado).Distinct().ToList();
+                _logger.LogInformation("[EquiposInformaticosViewModel] Estados únicos encontrados: {Estados}", 
+                    string.Join(", ", estadosUnicos.Select(e => $"'{e}'")));
 
                 // Actualizar en hilo UI
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>

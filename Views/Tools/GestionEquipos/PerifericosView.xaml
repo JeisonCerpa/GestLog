@@ -47,6 +47,38 @@
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
         
+        <!-- Estilo para TextBlocks dentro del DataGrid: tachado si el estado es DadoDeBaja -->
+        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Estado, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="DadoDeBaja">
+                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Estado, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="DadosDeBaja">
+                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- RowStyle para ajustar opacidad en inactivos y dados de baja -->
+        <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
+            <Setter Property="Opacity" Value="1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Estado}" Value="DadoDeBaja">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Estado}" Value="DadosDeBaja">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
+                    <Setter Property="Opacity" Value="0.75"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Estado}" Value="Inactivos">
+                    <Setter Property="Opacity" Value="0.75"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -205,15 +237,16 @@
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
-                          FontSize="13" RowHeight="40">
+                          FontSize="13" RowHeight="40"
+                          RowStyle="{StaticResource DataGridRowEstadoStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <!-- Se conserva solo texto de asignación (usuario/ubicación) -->
-                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Width="1*" IsReadOnly="True">
+                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Estado" Binding="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Width="1*" IsReadOnly="True" SortMemberPath="Estado">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="Medium"/>

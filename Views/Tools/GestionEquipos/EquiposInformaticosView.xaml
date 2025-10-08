@@ -4,12 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:GestLog.Converters"
+             xmlns:enums="clr-namespace:GestLog.Modules.GestionMantenimientos.Models.Enums"
              mc:Ignorable="d"
-             d:DesignHeight="500" d:DesignWidth="900">
-    <UserControl.Resources>
+             d:DesignHeight="500" d:DesignWidth="900">    <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
+        <conv:EstadoToBoolConverter x:Key="EstadoToDadoDeBajaConverter" TargetEstado="DadoDeBaja"/>
+        <conv:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
         <!-- Copiado de PerifericosView para unificar estética de headers/grid -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
         <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
@@ -45,6 +47,20 @@
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="Foreground" Value="#706F6F"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>        <!-- Estilo para TextBlocks dentro del DataGrid: añade tachado cuando Estado indica dado de baja -->
+        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <!-- Usar converter para determinar si el estado es "Dado de baja" -->
+                <DataTrigger Binding="{Binding Estado, Converter={StaticResource EstadoToDadoDeBajaConverter}}" Value="True">
+                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- RowStyle para ajustar opacidad en inactivos y dados de baja usando converter -->
+        <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
+            <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
         </Style>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
@@ -296,14 +312,15 @@
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
-                          FontSize="13" RowHeight="40">
+                          FontSize="13" RowHeight="40"
+                          RowStyle="{StaticResource DataGridRowEstadoStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignado}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="2*" IsReadOnly="True"/>
-                        <DataGridTemplateColumn Header="Estado" Width="1*" IsReadOnly="True">
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="1*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignado}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" Width="2*" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTemplateColumn Header="Estado" Width="1*" IsReadOnly="True" SortMemberPath="EstadoOrden">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
@@ -311,7 +328,7 @@
                                         <Ellipse Width="14" Height="14" VerticalAlignment="Center"
                                                  Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}, TargetNullValue=#F0F0F0, FallbackValue=#F0F0F0}"
                                                  Stroke="#BFBFBF" StrokeThickness="0.5"/>
-                                        <TextBlock Text="{Binding Estado, TargetNullValue='Desconocido', FallbackValue='Desconocido'}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Estado, TargetNullValue='Desconocido', FallbackValue='Desconocido'}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

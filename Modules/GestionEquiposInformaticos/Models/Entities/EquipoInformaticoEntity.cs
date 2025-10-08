@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
@@ -66,7 +67,37 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
         
         public DateTime? FechaModificacion { get; set; }
-          // Navegación - Relaciones 1:N
+
+        // Propiedad calculada para ordenar lógicamente por estado en UI (no mapeada a BD)
+        [NotMapped]
+        public int EstadoOrden
+        {
+            get
+            {
+                // Normalizar el texto para comparar variantes como "Dado de baja", "dadodebaja", etc.
+                var s = (Estado ?? string.Empty).Trim().ToLowerInvariant().Replace(" ", "");
+
+                // Orden lógico: Activo=0, En Mantenimiento=1, En Reparación=2, Inactivo=3, DadoDeBaja=4, Otros=5
+                return s switch
+                {
+                    // Activo / En uso
+                    "activo" => 0,
+                    "enuso" => 0,
+                    // En mantenimiento
+                    "enmantenimiento" => 1,
+                    // En reparacion
+                    "enreparacion" => 2,
+                    "enreparación" => 2,
+                    // Inactivo
+                    "inactivo" => 3,
+                    // Dado de baja
+                    "dadodebaja" => 4,
+                    _ => 5,
+                };
+            }
+        }
+
+        // Navegación - Relaciones 1:N
         public virtual ICollection<SlotRamEntity> SlotsRam { get; set; } = new List<SlotRamEntity>();
         public virtual ICollection<DiscoEntity> Discos { get; set; } = new List<DiscoEntity>();
         public virtual ICollection<ConexionEntity> Conexiones { get; set; } = new List<ConexionEntity>();
