@@ -341,9 +341,17 @@
                         Style="{StaticResource PrimaryButtonStyle}"
                         Background="{StaticResource ErrorBrush}"
                         Foreground="White"/>
+                
+                <!-- Editar: visible solo en modo solo lectura -->
+                <Button Content="Editar"
+                        Command="{Binding EditarCommand}"
+                        Visibility="{Binding IsReadOnlyMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                
                 <Button Content="Cancelar" 
                         Style="{StaticResource SecondaryButtonStyle}"
                         Click="BtnCancelar_Click"/>
+                
                 <Button Content="{Binding TextoBotonPrincipal}" 
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{Binding GuardarCommand}"

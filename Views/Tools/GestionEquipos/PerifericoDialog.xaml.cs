@@ -726,6 +726,22 @@ namespace GestLog.Views.Tools.GestionEquipos
                 MessageBox.Show($"Error al eliminar el periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        [RelayCommand(CanExecute = nameof(CanStartEdit))]
+        private void Editar()
+        {
+            // Cambiar a modo edición
+            IsReadOnlyMode = false;
+            IsEditing = true;
+            TituloDialog = "Editar Periférico";
+            TextoBotonPrincipal = "Actualizar";
+            ShowDeleteButton = true;
+        }
+
+        private bool CanStartEdit()
+        {
+            return IsReadOnlyMode;
+        }
     }
 
     /// <summary>
