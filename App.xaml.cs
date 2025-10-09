@@ -113,9 +113,71 @@ public partial class App : System.Windows.Application
 
             // Inicializar conexión a base de datos con monitoreo automático
             splash.ShowStatus("Inicializando servicio de base de datos...");
-            await InitializeDatabaseConnectionAsync();
-            splash.ShowStatus("Servicio de base de datos inicializado");
-            await System.Threading.Tasks.Task.Delay(500);
+
+            // Crear un CTS con timeout para no bloquear indefinidamente el splash
+            using (var dbInitCts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+            {
+                // Reutilizar la variable `databaseService` ya declarada más arriba
+                databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+
+                EventHandler<GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs>? localDbStateHandler = null;
+
+                if (databaseService != null)
+                {
+                    // Suscribir un handler local para actualizar el splash en tiempo real
+                    localDbStateHandler = (sender, evt) =>
+                    {
+                        try
+                        {
+                            var statusText = evt.CurrentState switch
+                            {
+                                GestLog.Models.Events.DatabaseConnectionState.Connected => "Conexión a la base de datos establecida",
+                                GestLog.Models.Events.DatabaseConnectionState.Connecting => "Conectando a la base de datos...",
+                                GestLog.Models.Events.DatabaseConnectionState.Reconnecting => "Reconectando a la base de datos...",
+                                GestLog.Models.Events.DatabaseConnectionState.Disconnected => "Sin conexión a la base de datos",
+                                GestLog.Models.Events.DatabaseConnectionState.Error => $"Error en conexión: {evt.Message ?? "Sin detalles"}",
+                                _ => "Inicializando servicio de base de datos..."
+                            };
+
+                            // Asegurar actualización en el hilo de la UI
+                            splash.Dispatcher.Invoke(() => splash.ShowStatus(statusText));
+                        }
+                        catch { /* evitar que el handler tire */ }
+                    };
+
+                    databaseService.ConnectionStateChanged += localDbStateHandler;
+                }
+
+                try
+                {
+                    // Pasar el token con timeout a la inicialización
+                    await InitializeDatabaseConnectionAsync(dbInitCts.Token);
+                    splash.ShowStatus("Servicio de base de datos inicializado");
+                    await System.Threading.Tasks.Task.Delay(500);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger?.Logger.LogWarning("⚠️ Timeout durante inicialización del servicio de base de datos");
+                    splash.ShowStatus("Inicialización de la base de datos excedió el tiempo. Continuando sin BD");
+                    await System.Threading.Tasks.Task.Delay(1500);
+                }
+                catch (Exception exDbInit)
+                {
+                    _logger?.Logger.LogError(exDbInit, "❌ Error durante InitializeDatabaseConnectionAsync");
+                    splash.ShowStatus($"Error inicializando BD: {exDbInit.Message}");
+                    await System.Threading.Tasks.Task.Delay(1500);
+                }
+                finally
+                {
+                    // Desuscribir el handler local si fue registrado
+                    try
+                    {
+                        if (databaseService != null && localDbStateHandler != null)
+                            databaseService.ConnectionStateChanged -= localDbStateHandler;
+                    }
+                    catch { }
+                }
+            }
 
             // Bloque try-catch adicional para inicialización de ventana principal y restauración de sesión
             try
@@ -223,7 +285,7 @@ public partial class App : System.Windows.Application
     /// <summary>
     /// Inicializa la conexión a base de datos automáticamente
     /// </summary>
-    private async Task InitializeDatabaseConnectionAsync()
+    private async Task InitializeDatabaseConnectionAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -232,13 +294,24 @@ public partial class App : System.Windows.Application
             // Obtener el servicio de base de datos
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
 
-            // Iniciar el servicio con monitoreo automático
-            await databaseService.StartAsync();
+            if (databaseService == null)
+            {
+                _logger?.Logger.LogWarning("⚠️ Servicio de base de datos no disponible en el contenedor DI");
+                return;
+            }
+
+            // Iniciar el servicio con monitoreo automático (propagar token de cancelación)
+            await databaseService.StartAsync(cancellationToken);
 
             // Suscribirse a cambios de estado para logging
             databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
 
             _logger?.Logger.LogDebug("✅ Servicio de base de datos inicializado");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger?.Logger.LogWarning("⚠️ Inicialización del servicio de base de datos cancelada por token");
+            throw;
         }
         catch (Exception ex)
         {
