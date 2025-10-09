@@ -6,7 +6,9 @@
              xmlns:conv="clr-namespace:GestLog.Converters"
              xmlns:enums="clr-namespace:GestLog.Modules.GestionMantenimientos.Models.Enums"
              mc:Ignorable="d"
-             d:DesignHeight="500" d:DesignWidth="900">    <UserControl.Resources>
+             d:DesignHeight="500" d:DesignWidth="900">   
+
+    <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
@@ -310,16 +312,26 @@
                             </ToggleButton.Style>
                         </ToggleButton>
                     </StackPanel>
-                </Grid>
-
-                <!-- DataGrid (idéntico en atributos visuales a PerifericosView) -->
+                </Grid>                <!-- DataGrid (idéntico en atributos visuales a PerifericosView) -->
                 <DataGrid Grid.Row="1" ItemsSource="{Binding EquiposView}" SelectedItem="{Binding EquipoSeleccionado}"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                           HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
                           FontSize="13" RowHeight="40"
                           RowStyle="{StaticResource DataGridRowEstadoStyle}"
-                          ColumnWidth="*">
+                          ColumnWidth="*"
+                          EnableColumnVirtualization="False"
+                          VirtualizingPanel.VirtualizationMode="Standard"
+                          ScrollViewer.CanContentScroll="True">
+
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
@@ -338,15 +350,17 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
+                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="Detalles"
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             Command="{Binding DataContext.VerDetallesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
-                                            Width="88" Height="32"/>
+                                            Width="88" Height="32"
+                                            Focusable="False"
+                                            IsHitTestVisible="True"
+                                            ClickMode="Release"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

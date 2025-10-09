@@ -74,13 +74,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// </summary>
         public PerifericosViewModel(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory, IDatabaseConnectionService databaseService)
             : base(databaseService, logger)
-        {
-            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+        {            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             
-            // Inicializar vista filtrable para la lista de periféricos
-            PerifericosView = CollectionViewSource.GetDefaultView(Perifericos);
-            if (PerifericosView != null)
-                PerifericosView.Filter = new Predicate<object>(FiltrarPerifericos);
+            // NO inicializar PerifericosView aquí - se hará después de cargar datos en InicializarAsync
+            // Esto evita problemas de rendering cuando el filtro se aplica sobre una colección vacía
 
             // Cuando cambie la colección, recalcular estadísticas y refrescar la vista
             Perifericos.CollectionChanged += (s, e) =>
@@ -211,9 +208,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 var entities = await dbContext.PerifericosEquiposInformaticos
                     .Include(p => p.EquipoAsignado)
                     .OrderBy(p => p.Codigo)
-                    .ToListAsync(cancellationToken);
-
-                _logger.LogDebug("[PerifericosViewModel] Cargados {Count} periféricos", entities.Count);
+                    .ToListAsync(cancellationToken);                _logger.LogDebug("[PerifericosViewModel] Cargados {Count} periféricos", entities.Count);
 
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -223,6 +218,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     {
                         var dto = ConvertirEntityADto(entity);
                         Perifericos.Add(dto);
+                    }
+
+                    // IMPORTANTE: Inicializar el CollectionView DESPUÉS de cargar datos
+                    // Si se inicializa antes (en el constructor), el filtro se aplica sobre colección vacía
+                    // causando problemas de rendering en el DataGrid
+                    if (PerifericosView == null)
+                    {
+                        PerifericosView = CollectionViewSource.GetDefaultView(Perifericos);
+                        if (PerifericosView != null)
+                            PerifericosView.Filter = new Predicate<object>(FiltrarPerifericos);
                     }
 
                     // Actualizar estadísticas y refrescar la vista filtrada
@@ -391,9 +396,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     StatusMessage = "Error al eliminar periférico";
                 });
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Verifica si se puede editar o eliminar un periférico
         /// </summary>
         public bool CanEditarEliminarPeriferico => PerifericoSeleccionado != null;
@@ -401,11 +404,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// <summary>
         /// Abre el diálogo de detalles para el periférico seleccionado (modo solo lectura)
         /// </summary>
-        [RelayCommand(CanExecute = nameof(CanEditarEliminarPeriferico))]
+        [RelayCommand] // SIN CanExecute - el botón siempre debe estar habilitado
         public async Task VerDetallesPerifericoAsync(PerifericoEquipoInformaticoDto? periferico = null)
         {
             var p = periferico ?? PerifericoSeleccionado;
-            if (p == null) return;
+            if (p == null) return; // Validación interna en caso de que no haya parámetro ni selección
 
             try
             {

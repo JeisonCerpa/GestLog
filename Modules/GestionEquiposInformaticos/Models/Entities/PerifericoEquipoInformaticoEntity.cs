@@ -78,6 +78,24 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         }
 
         /// <summary>
+        /// Orden numérico del estado para permitir ordenación correcta en DataGrid
+        /// </summary>
+        [NotMapped]
+        public int EstadoOrden
+        {
+            get
+            {
+                return Estado switch
+                {
+                    EstadoPeriferico.EnUso => 1,
+                    EstadoPeriferico.AlmacenadoFuncionando => 2,
+                    EstadoPeriferico.DadoDeBaja => 3,
+                    _ => 99
+                };
+            }
+        }
+
+        /// <summary>
         /// Relación de navegación opcional con el equipo asignado
         /// </summary>
         [ForeignKey(nameof(CodigoEquipoAsignado))]

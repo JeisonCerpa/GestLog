@@ -12,12 +12,10 @@
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
-        <!-- Converters para presentación por Estado (unificar comportamiento con EquiposInformaticosView) -->
         <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
         <conv:EstadoToBoolConverter x:Key="EstadoToDadoDeBajaConverter" TargetEstado="DadoDeBaja"/>
         <conv:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
-        
-        <!-- Paleta de colores GestLog -->
+
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
         <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
@@ -25,8 +23,7 @@
         <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
         <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/>
-        
-        <!-- Estilos -->
+
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -34,7 +31,7 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        
+
         <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="14"/>
@@ -42,7 +39,7 @@
             <Setter Property="Opacity" Value="0.9"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        
+
         <Style x:Key="StatsTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -50,8 +47,7 @@
             <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
-        
-        <!-- Estilo para TextBlocks dentro del DataGrid: añade margen y recorte; aplica tachado vía converter cuando corresponde -->
+
         <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="8,0,8,0"/>
@@ -63,12 +59,11 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        
-        <!-- RowStyle para ajustar opacidad según Estado mediante converter (más robusto que múltiples DataTriggers) -->
+
         <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
             <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
         </Style>
-        
+
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -99,16 +94,11 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
         </Style>
-        
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-        </Style>
 
-        <!-- Estilo circular reutilizable (similar a EquiposInformaticosView) -->
         <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Width" Value="56"/>
             <Setter Property="Height" Value="56"/>
@@ -135,7 +125,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header: estructura idéntica a EquiposInformaticosView -->
         <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -146,22 +136,21 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
-                        <TextBlock Text="🖱" FontFamily="Segoe UI Emoji" FontSize="26"
-                                   Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="🖱" FontFamily="Segoe UI Emoji" FontSize="26" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Gestión de Periféricos" Style="{StaticResource HeaderTextStyle}"/>
                         <TextBlock Text="Administración de periféricos informáticos" Style="{StaticResource SubHeaderTextStyle}"/>
                     </StackPanel>
                 </StackPanel>
-                
+
                 <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
                     <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Estadísticas -->
+        <!-- Estadísticas: mantener estructura idéntica, adaptando bindings a Periféricos -->
         <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -193,21 +182,14 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
-                    <!-- Botón 'Actualizar' usando glyph MDL2 -->
-                    <Button Content="&#xE72C;" Command="{Binding CargarPerifericosCommand}"
-                            ToolTip="Actualizar lista de periféricos"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
-                    <!-- Botón 'Nuevo' usando glyph MDL2 -->
-                    <Button Content="&#xE710;" Command="{Binding AgregarPerifericoCommand}"
-                            ToolTip="Agregar nuevo periférico"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
+                    <Button Content="&#xE72C;" Command="{Binding CargarPerifericosCommand}" ToolTip="Actualizar lista de periféricos" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                    <Button Content="&#xE710;" Command="{Binding AgregarPerifericoCommand}" ToolTip="Agregar nuevo periférico" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Contenido principal -->
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" 
-                CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+        <!-- Contenido principal: filtros + DataGrid (idéntico en estructura al de Equipos) -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -215,7 +197,7 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Filtros: izquierda = filtro + botón, derecha = toggle Dados de baja -->
+                <!-- Filtros: igual estructura que Equipos pero con binding Filtro -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -224,16 +206,13 @@
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                         <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                        <TextBox Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" Width="300" Padding="8" 
-                                 VerticalAlignment="Center" BorderBrush="{StaticResource BorderBrush}"/>
+                        <TextBox Width="300" Padding="8" VerticalAlignment="Center" Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"/>
+                        <!-- En Equipos había botón 'Exportar filtrados' ligado a Equipos; lo omitimos si no existe en ViewModel -->
                     </StackPanel>
 
-                    <!-- Toggle a la derecha para mostrar/ocultar dados de baja -->
+                    <!-- Toggle a la derecha (igual que Equipos) -->
                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32"
-                                      IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}"
-                                      ToolTip="Mostrar periféricos dados de baja"
-                                      VerticalAlignment="Center">
+                        <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32" IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}" ToolTip="Mostrar periféricos dados de baja" VerticalAlignment="Center">
                             <ToggleButton.Style>
                                 <Style TargetType="ToggleButton">
                                     <Setter Property="Background" Value="#F0F0F0"/>
@@ -282,56 +261,59 @@
                             </ToggleButton.Style>
                         </ToggleButton>
                     </StackPanel>
-                </Grid>
-
-                <!-- DataGrid: usar ColumnWidth='*' y favor columnas largas con '2*' para evitar recortes y ocupar todo el ancho -->
+                </Grid>                <!-- DataGrid con estilos completos (idéntico a EquiposInformaticosView) -->
                 <DataGrid Grid.Row="1" ItemsSource="{Binding PerifericosView}" SelectedItem="{Binding PerifericoSeleccionado}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-                          SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
-                          HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
-                          FontSize="13" RowHeight="40"
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False" 
+                          CanUserDeleteRows="False"
+                          SelectionMode="Single" 
+                          RowHeaderWidth="0" 
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="{StaticResource BorderBrush}" 
+                          AlternatingRowBackground="#F9F9F9"
+                          FontSize="13" 
+                          RowHeight="40"
                           RowStyle="{StaticResource DataGridRowEstadoStyle}"
-                          ColumnWidth="SizeToCells"
+                          ColumnWidth="*"
                           EnableColumnVirtualization="False"
-                          HorizontalAlignment="Stretch"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          CanUserResizeColumns="True">
+                          VirtualizingPanel.VirtualizationMode="Standard"
+                          ScrollViewer.CanContentScroll="True">
+
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="SizeToCells" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <!-- Se conserva solo texto de asignación (usuario/ubicación) -->
-                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="SizeToCells" MinWidth="220" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="*" MinWidth="220" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="Estado">
+                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="EstadoOrden">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
-                                        <Ellipse Width="14" Height="14" VerticalAlignment="Center"
-                                                 Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}"
-                                                 Stroke="#BFBFBF" StrokeThickness="0.5"/>
+                                        <Ellipse Width="14" Height="14" VerticalAlignment="Center" Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}" Stroke="#BFBFBF" StrokeThickness="0.5"/>
                                         <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <!-- Columna de acciones: Detalles (botón rectangular con bordes redondeados) -->
-                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
+                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Detalles"
+                                    <Button Content="Detalles" 
                                             Style="{StaticResource SecondaryButtonStyle}"
-                                            Command="{Binding DataContext.VerDetallesPerifericoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            Width="88" Height="32"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <!-- Filler column para que el DataGrid ocupe todo el ancho disponible -->
-                        <DataGridTemplateColumn Header="" Width="*" IsReadOnly="True">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border Background="Transparent" />
+                                            Command="{Binding DataContext.VerDetallesPerifericoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}" 
+                                            Width="88" 
+                                            Height="32"
+                                            Focusable="False"
+                                            IsHitTestVisible="True"
+                                            ClickMode="Release"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -340,14 +322,13 @@
 
                 <!-- Botones de acción -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                    <!-- Editar movido al diálogo de detalles -->
+                    <!-- espacio para acciones adicionales si se requieren -->
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Loading overlay -->
-        <Border Grid.Row="0" Grid.RowSpan="3" Background="#80000000" 
-                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="0" Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,16"/>
                 <TextBlock Text="Cargando..." Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
