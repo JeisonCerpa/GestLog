@@ -14,6 +14,7 @@ using AutoUpdaterDotNET;
 using static AutoUpdaterDotNET.Mode;
 using System.Reflection;
 using Velopack;
+using System.Diagnostics;
 
 namespace GestLog;
 
@@ -115,12 +116,44 @@ public partial class App : System.Windows.Application
             splash.ShowStatus("Inicializando servicio de base de datos...");
 
             // Crear un CTS con timeout para no bloquear indefinidamente el splash
-            using (var dbInitCts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+            using (var dbInitCts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
             {
                 // Reutilizar la variable `databaseService` ya declarada más arriba
                 databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
 
                 EventHandler<GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs>? localDbStateHandler = null;
+
+                // Contador para mostrar tiempo restante en el splash
+                var initTimeout = TimeSpan.FromSeconds(15);
+                var endTime = DateTime.UtcNow + initTimeout;
+                var countdown = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                System.EventHandler? countdownTickHandler = null;
+                countdownTickHandler = (s, ev) =>
+                {
+                    try
+                    {
+                        var remaining = endTime - DateTime.UtcNow;
+                        if (remaining <= TimeSpan.Zero)
+                        {
+                            // Timeout alcanzado: detener timer
+                            countdown.Stop();
+                            return;
+                        }
+
+                        // Solo mostrar el contador si aún no hay estado claro de conexión
+                        var showCount = databaseService == null ||
+                            databaseService.CurrentState == GestLog.Models.Events.DatabaseConnectionState.Unknown ||
+                            databaseService.CurrentState == GestLog.Models.Events.DatabaseConnectionState.Connecting;
+
+                        if (showCount)
+                        {
+                            var secs = (int)Math.Ceiling(remaining.TotalSeconds);
+                            splash.Dispatcher.Invoke(() => splash.ShowStatus($"Inicializando servicio de base de datos... ({secs}s restantes)"));
+                        }
+                    }
+                    catch { /* no romper el timer por excepciones */ }
+                };
+                countdown.Tick += countdownTickHandler;
 
                 if (databaseService != null)
                 {
@@ -150,6 +183,9 @@ public partial class App : System.Windows.Application
 
                 try
                 {
+                    // Iniciar el contador antes de llamar a la inicialización
+                    countdown.Start();
+
                     // Pasar el token con timeout a la inicialización
                     await InitializeDatabaseConnectionAsync(dbInitCts.Token);
                     splash.ShowStatus("Servicio de base de datos inicializado");
@@ -174,6 +210,15 @@ public partial class App : System.Windows.Application
                     {
                         if (databaseService != null && localDbStateHandler != null)
                             databaseService.ConnectionStateChanged -= localDbStateHandler;
+                    }
+                    catch { }
+
+                    try
+                    {
+                        countdown.Stop();
+                        if (countdownTickHandler != null)
+                            countdown.Tick -= countdownTickHandler;
+                        // endTime no requiere pararse
                     }
                     catch { }
                 }
