@@ -20,6 +20,9 @@ using GestLog.Services;
 using System.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Services.Core.Logging;
+
+#pragma warning disable CS8602 // Desreferencia de referencia posiblemente NULL (silenciado intencionalmente para esta clase de UI)
 
 namespace GestLog.Views.Tools.GestionEquipos
 {
@@ -28,6 +31,9 @@ namespace GestLog.Views.Tools.GestionEquipos
     /// </summary>
     public partial class PerifericoDialogViewModel : ObservableObject
     {
+        // Helper para obtener logger desde el contenedor DI del App
+        private IGestLogLogger? GetLogger() => ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IGestLogLogger>();
+
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         private readonly DispositivoAutocompletadoService _dispositivoService;
         private readonly MarcaAutocompletadoService _marcaService;
@@ -306,8 +312,8 @@ namespace GestLog.Views.Tools.GestionEquipos
                 var personaSeleccionada = PersonaConEquipoSeleccionada;
                 
                 // Mantener UsuarioAsignado en el DTO como el nombre (para persistencia), pero mostrar en el TextBox el nombre + equipo
-                PerifericoActual.UsuarioAsignado = personaSeleccionada.NombreCompleto;
-                PerifericoActual.CodigoEquipoAsignado = personaSeleccionada.CodigoEquipo;
+                PerifericoActual.UsuarioAsignado = personaSeleccionada?.NombreCompleto ?? string.Empty;
+                PerifericoActual.CodigoEquipoAsignado = personaSeleccionada?.CodigoEquipo ?? string.Empty;
                 
                 // Mostrar nombre completo + información del equipo en el TextBox (DisplayText)
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
@@ -315,7 +321,7 @@ namespace GestLog.Views.Tools.GestionEquipos
                     try
                     {
                         _suppressFiltroUsuarioChanged = true;
-                        FiltroUsuarioAsignado = personaSeleccionada.DisplayText;
+                        FiltroUsuarioAsignado = personaSeleccionada?.DisplayText ?? string.Empty;
                         _suppressFiltroUsuarioChanged = false;
                     }
                     catch (Exception)
@@ -359,7 +365,7 @@ namespace GestLog.Views.Tools.GestionEquipos
                     PerifericoActual.UsuarioAsignado = "";
                     PerifericoActual.CodigoEquipoAsignado = string.Empty;
                 }
-                else if (!PersonaConEquipoSeleccionada.NombreCompleto.Equals(texto, StringComparison.OrdinalIgnoreCase))
+                else if (!string.Equals(PersonaConEquipoSeleccionada?.NombreCompleto, texto, StringComparison.OrdinalIgnoreCase))
                 {
                     PersonaConEquipoSeleccionada = null;
                     PerifericoActual.UsuarioAsignado = texto;
@@ -379,7 +385,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             
             // Intentar emparejar por NombreCompleto o por DisplayText (nombre + equipo)
             var encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
-                NormalizeString(p.NombreCompleto) == objetivoNorm || NormalizeString(p.DisplayText) == objetivoNorm);
+                NormalizeString(p.NombreCompleto ?? string.Empty) == objetivoNorm || NormalizeString(p.DisplayText ?? string.Empty) == objetivoNorm);
 
             if (encontrada != null)
             {
@@ -406,6 +412,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                 Observaciones = periferico.Observaciones
             };
 
+            // Log Information: iniciar configuración para edición
+            try
+            {
+                var logger = GetLogger();
+                logger?.LogInformation("[PerifericoDialog] ConfigurarParaEdicion: Codigo={Codigo}, UsuarioAsignado={Usuario}, CodigoEquipoAsignado={CodigoEquipo}",
+                    new object[] { periferico.Codigo ?? string.Empty, periferico.UsuarioAsignado ?? string.Empty, periferico.CodigoEquipoAsignado ?? string.Empty });
+            }
+            catch { /* no bloquear UI por logging */ }
+
             _suppressFiltroDispositivoChanged = true;
             _suppressFiltroMarcaChanged = true;
             
@@ -419,6 +434,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             TextoBotonPrincipal = "Actualizar";
             IsEditing = true;
             
+            // Iniciar búsqueda asíncrona para sincronizar persona/equipo (no bloquear UI)
             _ = Task.Run(async () => await BuscarPersonaConEquipoExistente(periferico.UsuarioAsignado));
         }
 
@@ -492,34 +508,66 @@ namespace GestLog.Views.Tools.GestionEquipos
 
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                var objetivo = NormalizeString(usuarioAsignado);
-                var codigoEquipoAsignado = PerifericoActual.CodigoEquipoAsignado;
-                
+                try
+                {
+                    var logger = GetLogger();
+                    logger?.LogInformation("[PerifericoDialog] BuscarPersonaConEquipoExistente iniciado. UsuarioAsignadoOrigen={Usuario}",
+                        new object[] { usuarioAsignado ?? string.Empty });
+                }
+                catch { }
+
+                var objetivo = NormalizeString(usuarioAsignado ?? string.Empty);
+                var codigoEquipoAsignado = PerifericoActual.CodigoEquipoAsignado ?? string.Empty;
+
                 PersonaConEquipoDto? encontrada = null;
-                
+
                 if (!string.IsNullOrWhiteSpace(codigoEquipoAsignado))
                 {
-                    encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p => 
-                        NormalizeString(p.NombreCompleto) == objetivo && 
-                        p.CodigoEquipo.Equals(codigoEquipoAsignado, StringComparison.OrdinalIgnoreCase));
+                    // Intentar emparejar por nombre (normalizado) + código, o por DisplayText + código
+                    encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
+                        (NormalizeString(p.NombreCompleto ?? string.Empty) == objetivo && (p.CodigoEquipo ?? string.Empty).Equals(codigoEquipoAsignado, StringComparison.OrdinalIgnoreCase))
+                        || (NormalizeString(p.DisplayText ?? string.Empty) == objetivo && (p.CodigoEquipo ?? string.Empty).Equals(codigoEquipoAsignado, StringComparison.OrdinalIgnoreCase))
+                    );
                 }
-                
+
                 if (encontrada == null)
                 {
-                    encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p => 
-                        NormalizeString(p.NombreCompleto) == objetivo);
+                    // Intentar varias estrategias de coincidencia cuando no se conoce el código: nombre exacto, displayText exacto,
+                    // coincidencia por texto normalizado (contiene nombre+código+nombreEquipo) o por contains en nombre completo
+                    encontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
+                        NormalizeString(p.NombreCompleto ?? string.Empty) == objetivo
+                        || NormalizeString(p.DisplayText ?? string.Empty) == objetivo
+                        || (!string.IsNullOrWhiteSpace(p.TextoNormalizado) && (p.TextoNormalizado ?? string.Empty).Contains(objetivo))
+                        || NormalizeString(p.NombreCompleto ?? string.Empty).Contains(objetivo)
+                    );
                 }
 
                 if (encontrada != null)
                 {
                     PersonaConEquipoSeleccionada = encontrada;
                     // Mostrar nombre + equipo en el filtro
-                    FiltroUsuarioAsignado = encontrada.DisplayText;
-                    PerifericoActual.CodigoEquipoAsignado = encontrada.CodigoEquipo;
+                    FiltroUsuarioAsignado = encontrada.DisplayText ?? string.Empty;
+                    PerifericoActual.CodigoEquipoAsignado = encontrada.CodigoEquipo ?? string.Empty;
+
+                    try
+                    {
+                        var logger = GetLogger();
+                        logger?.LogInformation("[PerifericoDialog] Persona encontrada en búsqueda. Persona={Persona}, CodigoEquipo={CodigoEquipo}",
+                            new object[] { encontrada.DisplayText ?? string.Empty, encontrada.CodigoEquipo ?? string.Empty });
+                    }
+                    catch { }
                 }
                 else
                 {
-                    FiltroUsuarioAsignado = usuarioAsignado.Trim();
+                    try
+                    {
+                        var logger = GetLogger();
+                        logger?.LogInformation("[PerifericoDialog] No se encontró persona con equipo para UsuarioAsignado={Usuario}",
+                            new object[] { usuarioAsignado ?? string.Empty });
+                    }
+                    catch { }
+
+                    FiltroUsuarioAsignado = (usuarioAsignado ?? string.Empty).Trim();
                 }
             });
         }
@@ -548,11 +596,11 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
         }
 
-        private static string NormalizeString(string input)
+        private static string NormalizeString(string? input)
         {
             if (string.IsNullOrWhiteSpace(input)) return string.Empty;
             
-            var normalized = input.Normalize(NormalizationForm.FormD);
+            var normalized = input!.Normalize(NormalizationForm.FormD);
             var chars = normalized.Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark).ToArray();
             return new string(chars).Normalize(NormalizationForm.FormC).Trim().ToLowerInvariant();
         }
@@ -560,10 +608,19 @@ namespace GestLog.Views.Tools.GestionEquipos
         [RelayCommand]
         private void Guardar()
         {
+            // Log: antes de procesar, capturar estado actual del DTO para diagnóstico
+            try
+            {
+                var logger = GetLogger();
+                logger?.LogInformation("[PerifericoDialog] Guardar invoked. Periferico.Codigo={Codigo}, UsuarioAsignadoInput={UsuarioInput}, CodigoEquipoAsignadoBeforeAssign={CodigoEquipoBefore}, PersonaSeleccionada={Persona}",
+                    new object[] { PerifericoActual?.Codigo ?? string.Empty, FiltroUsuarioAsignado ?? string.Empty, PerifericoActual?.CodigoEquipoAsignado ?? string.Empty, PersonaConEquipoSeleccionada?.DisplayText ?? string.Empty });
+            }
+            catch { }
+
             if (PersonaConEquipoSeleccionada != null)
             {
-                PerifericoActual.UsuarioAsignado = PersonaConEquipoSeleccionada.NombreCompleto;
-                PerifericoActual.CodigoEquipoAsignado = PersonaConEquipoSeleccionada.CodigoEquipo;
+                PerifericoActual.UsuarioAsignado = PersonaConEquipoSeleccionada.NombreCompleto ?? string.Empty;
+                PerifericoActual.CodigoEquipoAsignado = PersonaConEquipoSeleccionada.CodigoEquipo ?? string.Empty;
             }
             else if (!string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
             {
@@ -589,20 +646,29 @@ namespace GestLog.Views.Tools.GestionEquipos
 
                 if (personaEncontrada != null)
                 {
-                    PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto;
+                    PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto ?? string.Empty;
                     PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo ?? string.Empty;
                 }
                 else
                 {
-                    PerifericoActual.UsuarioAsignado = textoFiltro;
+                    PerifericoActual.UsuarioAsignado = textoFiltro ?? string.Empty;
                     PerifericoActual.CodigoEquipoAsignado = string.Empty;
                 }
             }
             else
             {
-                PerifericoActual.UsuarioAsignado = null;
-                PerifericoActual.CodigoEquipoAsignado = null;
+                PerifericoActual.UsuarioAsignado = string.Empty;
+                PerifericoActual.CodigoEquipoAsignado = string.Empty;
             }
+
+            // Log: estado final del DTO justo antes de validar/aceptar
+            try
+            {
+                var logger = GetLogger();
+                logger?.LogInformation("[PerifericoDialog] Guardar - estado final Periferico: Codigo={Codigo}, UsuarioAsignado={Usuario}, CodigoEquipoAsignado={CodigoEquipo}",
+                    new object[] { PerifericoActual?.Codigo ?? string.Empty, PerifericoActual?.UsuarioAsignado ?? string.Empty, PerifericoActual?.CodigoEquipoAsignado ?? string.Empty });
+            }
+            catch { }
 
             // --- NUEVO: Resolver Dispositivo y Marca robustamente (soporta SelectedItem en ComboBox o texto libre)
             try
@@ -802,6 +868,9 @@ namespace GestLog.Views.Tools.GestionEquipos
             Close();
         }
 
+        // BtnGuardar_Click eliminado: uso exclusivo de GuardarCommand desde XAML
+
+        
         protected override void OnClosing(CancelEventArgs e)
         {
             if (ViewModel.DialogResult)

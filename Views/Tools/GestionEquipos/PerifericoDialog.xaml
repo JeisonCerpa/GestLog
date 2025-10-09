@@ -352,10 +352,12 @@
                         Style="{StaticResource SecondaryButtonStyle}"
                         Click="BtnCancelar_Click"/>
                 
-                <Button Content="{Binding TextoBotonPrincipal}" 
-                        Style="{StaticResource PrimaryButtonStyle}"
+                <Button x:Name="BtnGuardar"
                         Command="{Binding GuardarCommand}"
-                        Visibility="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        Content="{Binding TextoBotonPrincipal}"
+                        IsDefault="True"
+                        HorizontalAlignment="Right"
+                        Margin="8" />
             </StackPanel>
         </Border>
     </Grid>
