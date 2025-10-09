@@ -567,18 +567,35 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
             else if (!string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
             {
-                var personaEncontrada = PersonasConEquipoDisponibles?.FirstOrDefault(p => 
-                    p.NombreCompleto.Equals(FiltroUsuarioAsignado.Trim(), StringComparison.OrdinalIgnoreCase));
+                var textoFiltro = FiltroUsuarioAsignado.Trim();
+                var filtroNormalizado = NormalizeString(textoFiltro);
+
+                PersonaConEquipoDto? personaEncontrada = null;
+
+                if (PersonasConEquipoDisponibles != null)
+                {
+                    personaEncontrada = PersonasConEquipoDisponibles.FirstOrDefault(p =>
+                        // Coincidencia exacta por nombre completo
+                        p.NombreCompleto.Equals(textoFiltro, StringComparison.OrdinalIgnoreCase)
+                        // Coincidencia exacta por DisplayText (p. ej. "Nombre - Equipo")
+                        || p.DisplayText.Equals(textoFiltro, StringComparison.OrdinalIgnoreCase)
+                        // Coincidencia por normalización (elimina tildes/acentos, minusculas)
+                        || NormalizeString(p.NombreCompleto) == filtroNormalizado
+                        || NormalizeString(p.DisplayText) == filtroNormalizado
+                        // Coincidencia usando el texto normalizado precalculado (contiene nombre+código+nombreEquipo)
+                        || (!string.IsNullOrWhiteSpace(p.TextoNormalizado) && p.TextoNormalizado.Contains(filtroNormalizado))
+                    );
+                }
 
                 if (personaEncontrada != null)
                 {
                     PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto;
-                    PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo;
+                    PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo ?? string.Empty;
                 }
                 else
                 {
-                    PerifericoActual.UsuarioAsignado = FiltroUsuarioAsignado.Trim();
-                    PerifericoActual.CodigoEquipoAsignado = null;
+                    PerifericoActual.UsuarioAsignado = textoFiltro;
+                    PerifericoActual.CodigoEquipoAsignado = string.Empty;
                 }
             }
             else
