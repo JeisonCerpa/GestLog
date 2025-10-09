@@ -289,10 +289,10 @@
 
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="*" MinWidth="220" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="SizeToCells" MinWidth="160" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="EstadoOrden">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -302,15 +302,15 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="" Width="100" IsReadOnly="True">
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="120" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="Detalles" 
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             Command="{Binding DataContext.VerDetallesPerifericoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                             CommandParameter="{Binding}" 
-                                            Width="88" 
-                                            Height="32"
+                                            MinWidth="88" Width="Auto" Height="32" HorizontalAlignment="Center" Margin="4,0"
                                             Focusable="False"
                                             IsHitTestVisible="True"
                                             ClickMode="Release"/>
