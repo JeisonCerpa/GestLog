@@ -16,6 +16,8 @@ using System.IO;
 using Microsoft.Win32;
 using System.Windows;
 using ClosedXML.Excel;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -61,7 +63,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
     public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel, IDisposable
     {
         private readonly IPlanCronogramaService _planService;
-        private readonly IEquipoInformaticoService _equipoService;        public HistorialEjecucionesViewModel(
+        private readonly IEquipoInformaticoService _equipoService;        
+        public HistorialEjecucionesViewModel(
             IPlanCronogramaService planService, 
             IEquipoInformaticoService equipoService,
             IDatabaseConnectionService databaseService,
@@ -71,7 +74,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             _planService = planService;
             _equipoService = equipoService;
             Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
-            SelectedYear = DateTime.Now.Year;            // Suscribirse a mensajes de actualización para refresh automático
+            SelectedYear = DateTime.Now.Year;            
+            // Suscribirse a mensajes de actualización para refresh automático
             WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
             {
                 try
@@ -101,14 +105,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         }
 
         [ObservableProperty] private ObservableCollection<EjecucionHistorialItem> items = new();
+        // Vista filtrada para la UI
+        private ICollectionView? _filteredView;
+        public ICollectionView FilteredItems => _filteredView ??= CollectionViewSource.GetDefaultView(Items);
+
         [ObservableProperty] private ObservableCollection<int> years;
         [ObservableProperty] private int selectedYear;
         [ObservableProperty] private string? filtroCodigo;
         [ObservableProperty] private string? filtroDescripcion;
+        [ObservableProperty] private string? filtroNombre;
+        [ObservableProperty] private string? filtroUsuario;
+        [ObservableProperty] private string? filtroSemana;
         [ObservableProperty] private bool isBusy;
         [ObservableProperty] private string statusMessage = string.Empty;
-        [ObservableProperty] private int maxRows = 500;        [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
-        [ObservableProperty] private bool mostrarDetalle;        // Estadísticas para la vista
+        [ObservableProperty] private int maxRows = 500;        
+        [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
+        [ObservableProperty] private bool mostrarDetalle;        
+        // Estadísticas para la vista
         [ObservableProperty] private int totalEjecuciones;
         [ObservableProperty] private int ejecutadasCount;
         [ObservableProperty] private int pendientesCount;
@@ -119,6 +132,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// Propiedad calculada: suma de pendientes + atrasados
         /// </summary>
         public int NoEjecutadosCount => PendientesCount + AtrasadasCount;
+
+        // Refresh automático de la vista filtrada cuando cambian filtros
+        partial void OnFiltroCodigoChanged(string? value) => RefreshFilter();
+        partial void OnFiltroDescripcionChanged(string? value) => RefreshFilter();
+        partial void OnFiltroNombreChanged(string? value) => RefreshFilter();
+        partial void OnFiltroUsuarioChanged(string? value) => RefreshFilter();
+        partial void OnFiltroSemanaChanged(string? value) => RefreshFilter();
+        partial void OnSelectedYearChanged(int value) => RefreshFilter();
 
         // Propiedades compatibles con PlanDetalleModalWindow (para reusar la ventana de detalle)
         [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle;
@@ -190,7 +211,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 // Mostrar el panel lateral como fallback
                 MostrarDetalle = true;
             }
-        }        [RelayCommand]
+        }        
+        [RelayCommand]
         private async Task CargarAsync()
         {
             await LoadAsync();
@@ -223,6 +245,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 IsBusy = true;
                 StatusMessage = "Cargando...";
                 Items.Clear();
+                // asegurarse de que la vista filtrada está inicializada antes de añadir
+                SetupCollectionView();
                 var ejecuciones = await _planService.GetEjecucionesByAnioAsync(SelectedYear);
                 var query = ejecuciones.AsQueryable();
                 if (!string.IsNullOrWhiteSpace(FiltroCodigo))
@@ -324,9 +348,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             }
                         }
                         catch { /* silenciar errores individuales */ }
-                    }                }
+                    }                
+                }
                 StatusMessage = $"{Items.Count} ejecuciones";
                 RecalcularEstadisticas();
+                // después de cargar recalcar filtro en la vista
+                RefreshFilter();
             }
             catch (Exception ex)
             {
@@ -337,7 +364,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 IsBusy = false;
             }
-        }        /// <summary>
+        }        
+        /// <summary>
         /// Recalcula las estadísticas basadas en los items cargados
         /// </summary>
         private void RecalcularEstadisticas()
@@ -352,11 +380,86 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             OnPropertyChanged(nameof(NoEjecutadosCount));
         }
 
+        private void SetupCollectionView()
+        {
+            if (_filteredView == null)
+            {
+                _filteredView = CollectionViewSource.GetDefaultView(Items);
+                _filteredView.Filter = new Predicate<object?>(FilterPredicate);
+            }
+            else
+            {
+                // si ya existe, actualizar para que use la colección actual
+                _filteredView = CollectionViewSource.GetDefaultView(Items);
+                _filteredView.Filter = new Predicate<object?>(FilterPredicate);
+            }
+            OnPropertyChanged(nameof(FilteredItems));
+        }
+
+        private bool FilterPredicate(object? obj)
+        {
+            if (obj is not EjecucionHistorialItem it) return false;
+
+            // Código
+            if (!string.IsNullOrWhiteSpace(FiltroCodigo))
+            {
+                if (string.IsNullOrWhiteSpace(it.CodigoEquipo) || !it.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // Nombre equipo
+            if (!string.IsNullOrWhiteSpace(FiltroNombre))
+            {
+                if (string.IsNullOrWhiteSpace(it.NombreEquipo) || !it.NombreEquipo.Contains(FiltroNombre, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // Usuario / Asignación
+            if (!string.IsNullOrWhiteSpace(FiltroUsuario))
+            {
+                if (string.IsNullOrWhiteSpace(it.UsuarioAsignadoEquipo) || !it.UsuarioAsignadoEquipo.Contains(FiltroUsuario, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // Semana
+            if (!string.IsNullOrWhiteSpace(FiltroSemana))
+            {
+                if (int.TryParse(FiltroSemana, out var weekFilter))
+                {
+                    if (it.SemanaISO != weekFilter) return false;
+                }
+                else
+                {
+                    // si no es número, comparar como texto
+                    if (!it.SemanaISO.ToString().Contains(FiltroSemana, StringComparison.OrdinalIgnoreCase)) return false;
+                }
+            }
+
+            // Año
+            if (SelectedYear != 0)
+            {
+                if (it.AnioISO != SelectedYear) return false;
+            }
+
+            return true;
+        }
+
+        private void RefreshFilter()
+        {
+            try
+            {
+                _filteredView ??= CollectionViewSource.GetDefaultView(Items);
+                _filteredView.Refresh();
+            }
+            catch { }
+        }
+
         // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
         protected override async Task RefreshDataAsync()
         {
             await LoadAsync();
-        }        protected override void OnConnectionLost()
+        }        
+        protected override void OnConnectionLost()
         {
             StatusMessage = "Sin conexión - Datos no disponibles";
         }
@@ -381,7 +484,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                if (Items == null || Items.Count == 0)
+                // Tomar la vista actual filtrada y materializarla en una lista segura para el hilo de trabajo
+                var itemsToExport = FilteredItems?.Cast<EjecucionHistorialItem>().ToList() ?? new List<EjecucionHistorialItem>();
+
+                if (itemsToExport == null || itemsToExport.Count == 0)
                 {
                     StatusMessage = "Nada que exportar";
                     return;
@@ -416,7 +522,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     int totalItemsAll = 0;
                     int totalOkAll = 0;
 
-                    foreach (var it in Items)
+                    foreach (var it in itemsToExport)
                     {
                         int totalItems = it.DetalleItems?.Count ?? 0;
                         int okCount = it.DetalleItems?.Count(d => d.Completado) ?? 0;
@@ -470,7 +576,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         wsChk.Cell(1, i + 1).Value = chkHeaders[i];
 
                     int chkRow = 2;
-                    foreach (var ejec in Items)
+                    foreach (var ejec in itemsToExport)
                     {
                         if (ejec.DetalleItems == null || ejec.DetalleItems.Count == 0)
                             continue;
@@ -525,7 +631,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     workbook.SaveAs(dlg.FileName);
                 });
 
-                StatusMessage = $"Exportado {Items.Count} ejecuciones a {dlg.FileName}";
+                StatusMessage = $"Exportado {itemsToExport.Count} ejecuciones a {dlg.FileName}";
             }
             catch (Exception ex)
             {

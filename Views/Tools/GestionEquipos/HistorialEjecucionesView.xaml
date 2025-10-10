@@ -456,9 +456,34 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                        <TextBox Width="300" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"/>
-                        <!-- Botón "Exportar filtrados" eliminado según solicitud -->
+                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="Medium"/>
+
+                        <!-- Filtros con etiqueta visible encima para mejorar UX -->
+                        <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                            <TextBlock Text="Código" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Width="160" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por código" Style="{StaticResource CorporateTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                            <TextBlock Text="Nombre de equipo" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Width="220" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroNombre, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por nombre de equipo" Style="{StaticResource CorporateTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                            <TextBlock Text="Usuario / Asignación" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Width="200" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroUsuario, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por usuario/asignación" Style="{StaticResource CorporateTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                            <TextBlock Text="Semana (número)" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Width="100" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroSemana, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por semana (número)" Style="{StaticResource CorporateTextBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                            <TextBlock Text="Año" Style="{StaticResource LabelTextStyle}"/>
+                            <ComboBox Width="120" Height="32" ItemsSource="{Binding Years}" SelectedItem="{Binding SelectedYear}" Margin="0,0,0,0" Style="{StaticResource CorporateComboBox}" ToolTip="Seleccionar año"/>
+                        </StackPanel>
+                     <!-- Botón "Exportar filtrados" eliminado según solicitud -->
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -518,7 +543,7 @@
                         <ColumnDefinition Width="*" MinWidth="600" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>                    <!-- DataGrid principal (columnas específicas del Historial) -->
-                    <DataGrid Grid.Column="0" Grid.Row="1" ItemsSource="{Binding Items}" 
+                    <DataGrid Grid.Column="0" Grid.Row="1" ItemsSource="{Binding FilteredItems}" 
                               AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
                               SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
