@@ -5,30 +5,41 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
-        xmlns:local="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
-        Title="Registrar Ejecución de Plan" Height="640" Width="920" WindowStartupLocation="CenterOwner" Background="#F6F7F9" ResizeMode="CanResize">
+        Title="Registrar Ejecución de Plan"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="CanResize"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
 
     <Window.Resources>
-        <!-- Paleta y estilos coherentes con DetallesEquipoInformaticoView -->
+        <!-- Paleta y estilos basados en PlanDetalleModal -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#0F7530"/>
-        <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="PageBackground" Color="#F6F7F9"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="LightGrayBrush" Color="#F6F7F9"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E6E9EC"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#2B8E3F"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="White"/>
         </Style>
 
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="12"/>
-            <Setter Property="BorderBrush" Value="#E6E9EC"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="0"/>
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
@@ -40,31 +51,6 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="MinWidth" Value="120"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#247C35" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1" />
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
-                                <Setter Property="Cursor" Value="Arrow" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
         <Style x:Key="GhostButton" TargetType="Button">
@@ -75,15 +61,30 @@
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="Height" Value="36" />
             <Setter Property="MinWidth" Value="120" />
+        </Style>
+
+        <!-- Botón de cierre con alto contraste para el header -->
+        <Style x:Key="CloseButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" UseLayoutRounding="True" SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FAFBFC"/>
+                                <Setter Property="Background" Value="#29FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#12FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -91,239 +92,165 @@
             </Setter>
         </Style>
 
-        <!-- Plantilla de item del checklist, más aire y separación -->
-        <DataTemplate x:Key="ChecklistItemTemplate">
-            <!-- Altura mínima uniforme para que los TextBox de observación se alineen entre filas -->
-            <Border Background="Transparent" Padding="8" Margin="0,4,0,4" MinHeight="44">
-                <Grid VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="36"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="320"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Centrar verticalmente para que el TextBox se alinee al centro del bloque de descripción -->
-                    <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
-
-                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0">
-                        <!-- Mostrar placeholder si falta descripción para que el item no parezca 'invisible' -->
-                        <TextBlock Text="{Binding Descripcion, TargetNullValue=(sin descripción), FallbackValue=(sin descripción)}" TextWrapping="Wrap" VerticalAlignment="Top" TextTrimming="CharacterEllipsis"/>
-                        <!-- Debug: mostrar Id en texto pequeño para localizar items invisibles -->
-                        <TextBlock Text="{Binding Id, StringFormat=Id: {0}}" Foreground="#888" FontSize="11" Margin="0,4,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- Observación centrada verticalmente para mantener alineación uniforme -->
-                    <TextBox Text="{Binding Observacion, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" Margin="8,0" VerticalAlignment="Center" MinHeight="26" VerticalContentAlignment="Center" MinWidth="240" ToolTip="Observación"/>
-                </Grid>
-            </Border>
-        </DataTemplate>
-
-        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <!-- Estilo específico para el botón Guardar: más prominente y con sombra -->
+        <Style x:Key="GuardarButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="MinWidth" Value="140" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.22" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#247C35" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
     </Window.Resources>
 
-    <Grid Margin="18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <!-- Header -->
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+    <!-- Overlay + modal interior similar a PlanDetalleModal -->
+    <Grid Background="Transparent" UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <Border MaxWidth="880" MaxHeight="760" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Registro de ejecución" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-                    <TextBlock Text="Registre la ejecución semanal del plan y deje observaciones si aplica." Foreground="#666" Margin="0,6,0,0"/>
-                </StackPanel>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <TextBlock Text="Semana:" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding SemanaISO}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,16,0"/>
-
-                    <TextBlock Text="Equipo:" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock Text="{Binding CodigoEquipo}" FontWeight="Bold" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Contenido principal: dos columnas -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Lista checklist (columna principal) -->
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Header del checklist -->
-                    <Grid Grid.Row="0">
+                <!-- Header con gradiente y botón cerrar -->
+                <Border Grid.Row="0" CornerRadius="8,8,0,0" Padding="18" Background="{StaticResource PrimaryBrush}">
+                    <!-- Usar Grid para posicionar título a la izquierda y X en la esquina superior derecha -->
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Checklist" Style="{StaticResource LabelStyle}" FontSize="14" Grid.Column="0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding FechaObjetivo, StringFormat='Fecha objetivo: {0:dd/MM/yyyy}'}" Foreground="#666" VerticalAlignment="Center" Grid.Column="1" Margin="12,0,0,0"/>
+                        <TextBlock Grid.Column="0" Text="Registro de ejecución" Style="{StaticResource HeaderTextStyle}" FontSize="18" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" x:Name="CloseButton" Content="&#xE711;" Click="Cerrar_Click" Style="{StaticResource CloseButton}" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6, -6,0"/>
                     </Grid>
+                </Border>
 
-                    <Separator Grid.Row="1" Margin="8,8,0,8"/>
+                <!-- Contenido principal: dos columnas (checklist + tarjeta lateral) -->
+                <Grid Grid.Row="1" Margin="20" Background="{StaticResource LightGrayBrush}">
+                    <Grid Margin="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- ListView con scroll; la tercera fila (*) permite que ocupe el espacio disponible y muestre scroll -->
-                    <ListView Grid.Row="2" x:Name="ChecklistListView" ItemsSource="{Binding Checklist}" Margin="0" HorizontalContentAlignment="Stretch" VerticalAlignment="Stretch"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                        <ListView.View>
-                            <GridView>
-                                <!-- Columna principal: Id + Descripción. Width fijo para dejar más espacio a Observación -->
-                                <GridViewColumn Header="Ítem" Width="340">
-                                    <GridViewColumn.CellTemplate>
+                        <!-- Checklist (izquierda) -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,12,0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock Text="Checklist" FontWeight="SemiBold" Foreground="#2B8E3F" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="" Width="12"/>
+                                    <TextBlock Text="{Binding FechaObjetivo, StringFormat='Fecha objetivo: {0:dd/MM/yyyy}'}" Foreground="#666" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+
+                                <Separator/>
+
+                                <ListView ItemsSource="{Binding Checklist}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Auto" MinHeight="240">
+                                    <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" MinHeight="30" VerticalAlignment="Center">
-                                                <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
-                                                <TextBlock Text="{Binding Descripcion}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,0,4,0" />
-                                                <!-- pequeño debug id si existía en la plantilla original -->
-                                                <TextBlock Text="{Binding Id, StringFormat='Id: {0}'}" Foreground="Transparent" Visibility="Collapsed" />
-                                            </StackPanel>
+                                            <Border Padding="8" Margin="0,4,0,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="36"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox IsChecked="{Binding Completado, Mode=TwoWay}" VerticalAlignment="Center" Margin="4"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Descripcion, TargetNullValue=(sin descripción)}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
                                         </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
+                                    </ListView.ItemTemplate>
+                                </ListView>
 
-                                <!-- Columna Observación: más ancha y TextBox más largo, menos alto -->
-                                <GridViewColumn Header="Observación" Width="460">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Text="{Binding Observacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                     AcceptsReturn="True"
-                                                     TextWrapping="Wrap"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Stretch"
-                                                     MinHeight="26"
-                                                     MinWidth="300"
-                                                     Padding="4"
-                                                     />
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
+                                <!-- Contador y progreso breve al pie -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                    <TextBlock FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="Items completados: {0}/{1}">
+                                                <Binding Path="CompletedItems" />
+                                                <Binding Path="TotalItems" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
 
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
+                            </StackPanel>
+                        </Border>
 
+                        <!-- Tarjeta lateral con información y Observaciones -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Información" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,0,0,8" />
+
+                                <TextBlock Text="Semana:" FontWeight="Medium" Foreground="#706F6F" />
+                                <TextBlock Text="{Binding SemanaISO}" FontWeight="Bold" Margin="0,0,0,8" />
+
+                                <TextBlock Text="Equipo:" FontWeight="Medium" Foreground="#706F6F" />
+                                <TextBlock Text="{Binding CodigoEquipo}" FontWeight="Bold" Margin="0,0,0,8" />
+
+                                <TextBlock Text="Responsable:" FontWeight="Medium" Foreground="#706F6F" />
+                                <TextBox Text="{Binding ResponsablePlan, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                                <Separator/>
+
+                                <TextBlock Text="Resumen en vivo" FontWeight="SemiBold" Margin="0,8,0,4" />
+                                <ProgressBar Height="10" Minimum="0" Maximum="100" Value="{Binding PercentComplete}" Margin="0,6,0,8" />
+                                <TextBlock Text="{Binding PercentComplete, StringFormat={}{0}%}" Foreground="#666" FontSize="12" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding ResumenEnVivo}" TextWrapping="Wrap" Foreground="#444" Margin="0,6,0,8"/>
+
+                                <TextBlock Text="Observaciones" FontWeight="SemiBold" Margin="0,8,0,6"/>
+                                <TextBox Text="{Binding ObservacionCentral, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Height="160"
+                                         MaxWidth="360"
+                                         VerticalScrollBarVisibility="Auto"
+                                         HorizontalAlignment="Stretch"
+                                         Margin="0,0,0,4"/>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                    <Button Content="Guardar" Command="{Binding GuardarCommand}" Style="{StaticResource GuardarButtonStyle}" IsDefault="True" Margin="0,0,0,0"/>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+
+                    </Grid>
                 </Grid>
-            </Border>
 
-            <!-- Tarjeta lateral con meta datos y resumen -->
-            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="Información" Style="{StaticResource LabelStyle}"/>
-                    <Grid Margin="0,8,0,12">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                <!-- Footer (opcional) -->
+                <Border Grid.Row="2" Padding="10" Background="Transparent">
+                    <TextBlock Text="" />
+                </Border>
 
-                        <TextBlock Text="Plan:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" IsReadOnly="True" BorderThickness="0" Background="Transparent">
-                            <TextBox.Text>
-                                <MultiBinding StringFormat="{}{0} - {1}">
-                                    <Binding Path="CodigoEquipo" TargetNullValue="No especificado" FallbackValue="No especificado"/>
-                                    <Binding Path="ResponsablePlan" TargetNullValue="No especificado" FallbackValue="No especificado"/>
-                                </MultiBinding>
-                            </TextBox.Text>
-                        </TextBox>
-
-                        <TextBlock Text="Responsable:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                        <TextBox Text="{Binding ResponsablePlan, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0"/>
-
-                        <TextBlock Text="Usuario actual:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                        <TextBox Text="{Binding ResponsablePlan}" Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" IsReadOnly="True" BorderThickness="0" Background="Transparent"/>
-                    </Grid>
-
-                    <Separator/>
-
-                    <!-- Contador dinámico de items completados -->
-                    <TextBlock Margin="0,8,0,4" VerticalAlignment="Center" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="Items completados: {0}/{1}">
-                                <Binding Path="CompletedItems"/>
-                                <Binding Path="TotalItems"/>
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-
-                    <!-- Resumen en vivo: porcentaje y observaciones -->
-                    <ProgressBar Height="10" Minimum="0" Maximum="100" Value="{Binding PercentComplete}" Margin="0,6,0,8" />
-                    <TextBlock Text="{Binding PercentComplete, StringFormat={}{0}%}" Foreground="#666" FontSize="12" HorizontalAlignment="Right" Margin="0,0,0,6" />
-                    <TextBlock Text="{Binding ResumenEnVivo}" TextWrapping="Wrap" Foreground="#444" Margin="0,4,0,8"/>
-
-                    <TextBlock Text="Resumen de ejecución" Style="{StaticResource LabelStyle}" Margin="0,8,0,6"/>
-                    <TextBlock TextWrapping="Wrap" Foreground="#444">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding StatusMessage}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding StatusMessage}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding StatusMessage}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-
-                    <!-- Acciones centralizadas en el pie de la ventana para evitar duplicados -->
-                    <!-- Botones Guardar/Cerrar provistos en el footer global -->
-
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Footer fijo con mensaje y acciones rápidas -->
-        <Border Grid.Row="2" Background="Transparent" Margin="0,12,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#D32F2F" FontWeight="Bold">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding StatusMessage}" Value="">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusMessage}" Value="{x:Null}">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Guardar" Command="{Binding GuardarCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0"/>
-                    <Button Content="Cerrar" IsCancel="True" Click="Cerrar_Click" Style="{StaticResource GhostButton}"/>
-                </StackPanel>
             </Grid>
         </Border>
-
     </Grid>
 </Window>
