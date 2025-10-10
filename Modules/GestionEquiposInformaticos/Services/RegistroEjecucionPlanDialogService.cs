@@ -27,7 +27,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
                 vm.Load(plan, anioISO, semanaISO, usuarioActual);
                 var dlg = new GestLog.Views.Tools.GestionEquipos.RegistroEjecucionPlanDialog(vm);
                 var owner = System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w=>w.IsActive) ?? System.Windows.Application.Current.MainWindow;
-                if (owner != null) dlg.Owner = owner;
+                if (owner != null)
+                {
+                    dlg.Owner = owner;
+                    dlg.ConfigurarParaVentanaPadre(owner);
+                }
+
                 var ok = dlg.ShowDialog();
                 return ok == true && dlg.Guardado;
             }

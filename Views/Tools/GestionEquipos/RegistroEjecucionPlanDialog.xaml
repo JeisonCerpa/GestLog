@@ -11,7 +11,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterOwner"
-        SizeToContent="WidthAndHeight"
+        SizeToContent="Manual"
         ResizeMode="CanResize"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
@@ -131,9 +131,10 @@
     </Window.Resources>
 
     <!-- Overlay + modal interior similar a PlanDetalleModal -->
-    <Grid Background="Transparent" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True" Background="#80000000">
+        <!-- Animación de entrada removida (sin fade) -->
         <Border MaxWidth="880" MaxHeight="760" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}">
-            <Grid>
+            <Grid MouseLeftButtonDown="Panel_MouseLeftButtonDown">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>

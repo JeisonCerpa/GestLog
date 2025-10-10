@@ -248,17 +248,9 @@
     <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
           UseLayoutRounding="True"
           SnapsToDevicePixels="True"
-          Background="#B0000000">          <!-- Animación de entrada simplificada -->
-        <Grid.Triggers>
-            <EventTrigger RoutedEvent="Grid.Loaded">
-                <BeginStoryboard>
-                    <Storyboard>
-                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                                         From="0" To="1" Duration="0:0:0.2"/>
-                    </Storyboard>
-                </BeginStoryboard>
-            </EventTrigger>
-        </Grid.Triggers><!-- Panel principal con renderizado optimizado -->
+          Background="#80000000">          <!-- Animación de entrada simplificada -->
+        <!-- Animación de entrada del overlay removida (sin fade) -->
+        <!-- Panel principal con renderizado optimizado -->
         <Border Width="680" MaxHeight="720" 
                 Background="{StaticResource SurfaceBrush}" 
                 CornerRadius="8" 
@@ -272,16 +264,7 @@
                 UseLayoutRounding="True"
                 SnapsToDevicePixels="True">
               <!-- Animaciones simples optimizadas -->
-            <Border.Triggers>
-                <EventTrigger RoutedEvent="Border.Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                                             From="0" To="1" Duration="0:0:0.2"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-            </Border.Triggers>
+            <!-- Animación de entrada del panel removida (sin fade) -->
               <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
