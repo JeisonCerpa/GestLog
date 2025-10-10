@@ -11,9 +11,9 @@
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType"
              TextOptions.TextHintingMode="Fixed"
-             RenderOptions.EdgeMode="Aliased">
-    <UserControl.Resources>
+             RenderOptions.EdgeMode="Aliased">    <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <!-- Storyboards para animaciones fluidas del panel de detalle -->
         <Storyboard x:Key="ShowDetailPanelStoryboard">
             <DoubleAnimation Storyboard.TargetName="DetailPanel"
@@ -91,7 +91,7 @@
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontSize" Value="24"/><!-- Ajustado para coincidir con EquiposInformaticosView -->
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="UseLayoutRounding" Value="True"/>
@@ -237,8 +237,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
-        <Style x:Key="SecondaryButton" TargetType="Button">
+          <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -278,6 +277,46 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        
+        <!-- Estilo para botones circulares flotantes -->
+        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderBrush" Value="#E5E5E5"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>        </Style>
+        
+        <!-- SecondaryButtonStyle (gris) para botones de acción como 'Detalles' -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
+        </Style>
+        
+        <!-- Estilo para TextBlocks dentro del DataGrid -->
+        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+        
         <!-- TextBox corporativo -->
         <Style x:Key="CorporateTextBox" TargetType="TextBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -330,294 +369,190 @@
         </Style>
     </UserControl.Resources>    
     <!-- Fondo principal optimizado -->
-    <Grid Background="{StaticResource LightGrayBrush}" 
-          UseLayoutRounding="True" 
-          SnapsToDevicePixels="True">
+    <Grid Background="{StaticResource LightGrayBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><!-- Header -->
-            <RowDefinition Height="Auto"/><!-- Filtros -->
-            <RowDefinition Height="*"/><!-- Contenido principal -->
-            <RowDefinition Height="Auto"/><!-- Footer -->
+            <RowDefinition Height="Auto"/><!-- Estadísticas (igual a EquiposInformaticosView) -->
+            <RowDefinition Height="*"/><!-- Contenido: filtros + listado + botones -->
         </Grid.RowDefinitions>
 
-        <!-- Header corporativo con gradiente verde -->
-        <Border Grid.Row="0" 
-                Padding="24,16"
-                Effect="{StaticResource HeaderShadow}">
+        <!-- Header corporativo con gradiente verde (idéntico) -->
+        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0" Effect="{StaticResource HeaderShadow}">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#118938" Offset="0"/><!-- Verde principal -->
-                    <GradientStop Color="#2B8E3F" Offset="1"/><!-- Verde secundario -->
+                    <GradientStop Color="#118938" Offset="0"/>
+                    <GradientStop Color="#2B8E3F" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
             <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <!-- Icono corporativo -->
-                    <Border Background="White" 
-                            CornerRadius="8" 
-                            Padding="12" 
-                            Margin="0,0,16,0"
-                            Width="44" 
-                            Height="44"
-                            Effect="{StaticResource CardShadow}"
-                            UseLayoutRounding="True"
-                            SnapsToDevicePixels="True">
-                        <TextBlock Text="&#xE81C;" 
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="20"
-                                   Foreground="{StaticResource PrimaryBrush}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   UseLayoutRounding="True"
-                                   SnapsToDevicePixels="True"
-                                   TextOptions.TextFormattingMode="Display"
-                                   TextOptions.TextRenderingMode="ClearType"/>
+                    <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,16,0" Width="56" Height="56" Effect="{StaticResource CardShadow}">
+                        <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Historial de Ejecuciones" Style="{StaticResource HeaderTextStyle}"/>
-                        <TextBlock Text="Registro completo de mantenimientos ejecutados" 
-                                   Style="{StaticResource SubHeaderTextStyle}" 
-                                   Margin="0,2,0,0"/>
+                        <TextBlock Text="Registro completo de mantenimientos ejecutados" Style="{StaticResource SubHeaderTextStyle}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
-                
-                <!-- Información de estado -->
-                <StackPanel DockPanel.Dock="Right" 
-                           VerticalAlignment="Center" 
-                           HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding StatusMessage}" 
-                               Style="{StaticResource SubHeaderTextStyle}"
-                               HorizontalAlignment="Right"
-                               FontWeight="Medium"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-        <!-- Panel de filtros modernizado y compacto -->
-        <Border Grid.Row="1" 
-                Background="{StaticResource SurfaceBrush}" 
-                Padding="20,14" 
-                Margin="20,12,20,0"
-                CornerRadius="6" 
-                BorderBrush="{StaticResource BorderLightBrush}" 
-                BorderThickness="1"
-                Effect="{StaticResource CardShadow}"
-                UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
-            <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <!-- Filtros principales -->
-                <StackPanel Orientation="Horizontal" 
-                           VerticalAlignment="Center"
-                           DockPanel.Dock="Left">
-                    
-                    <!-- Filtro de Año -->
-                    <StackPanel Margin="0,0,16,0">
-                        <TextBlock Text="Año" Style="{StaticResource LabelTextStyle}"/>
-                        <ComboBox Width="80" 
-                                 ItemsSource="{Binding Years}" 
-                                 SelectedItem="{Binding SelectedYear}"
-                                 Style="{StaticResource CorporateComboBox}"/>
-                    </StackPanel>
-                    
-                    <!-- Filtro de Código equipo -->
-                    <StackPanel Margin="0,0,0,0">
-                        <TextBlock Text="Código equipo" Style="{StaticResource LabelTextStyle}"/>
-                        <TextBox Width="120" 
-                                Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}"
-                                Style="{StaticResource CorporateTextBox}"
-                                ToolTip="Filtrar por código de equipo"/>
-                    </StackPanel>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-        <!-- Contenido principal: listado + detalle optimizado para animaciones fluidas -->
-        <Grid Grid.Row="2" Margin="20,12,20,0"
-              UseLayoutRounding="True" 
-              SnapsToDevicePixels="True"
-              RenderOptions.EdgeMode="Aliased"
-              TextOptions.TextFormattingMode="Display">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="600" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
 
-            <!-- DataGrid principal con diseño corporativo optimizado -->
-            <Border Grid.Column="0"
-                    Background="{StaticResource SurfaceBrush}" 
-                    CornerRadius="8" 
-                    BorderBrush="{StaticResource BorderLightBrush}" 
-                    BorderThickness="1" 
-                    Margin="0,0,10,0"
-                    Effect="{StaticResource CardShadow}"
-                    UseLayoutRounding="True"
-                    SnapsToDevicePixels="True">
-                <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- Header de la tabla -->
-                    <Border Grid.Row="0" 
-                            Background="#F8FAFC"
-                            CornerRadius="8,8,0,0"
-                            Padding="20,12">
-                        <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                <Border Background="{StaticResource PrimaryBrush}" 
-                                        CornerRadius="4" 
-                                        Padding="8,6" 
-                                        Margin="0,0,12,0"
-                                        UseLayoutRounding="True"
-                                        SnapsToDevicePixels="True">
-                                    <TextBlock Text="&#xE8FD;" 
-                                               FontFamily="Segoe MDL2 Assets" 
-                                               FontSize="12" 
-                                               Foreground="White"
-                                               VerticalAlignment="Center"
-                                               UseLayoutRounding="True"
-                                               SnapsToDevicePixels="True"
-                                               TextOptions.TextFormattingMode="Display"
-                                               TextOptions.TextRenderingMode="ClearType"/>
-                                </Border>
-                                <TextBlock Text="Lista de Ejecuciones" 
-                                           Style="{StaticResource SectionTitleStyle}"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </DockPanel>
-                    </Border>
-                    
-                    <!-- DataGrid optimizado -->
-                    <DataGrid Grid.Row="1"
-                              ItemsSource="{Binding Items}" 
-                              Style="{StaticResource CorporateDataGrid}"
-                              AutoGenerateColumns="False" 
-                              CanUserAddRows="False" 
-                              CanUserDeleteRows="False" 
-                              IsReadOnly="True"
-                              SelectedItem="{Binding SelectedEjecucion}"
-                              EnableRowVirtualization="True" 
-                              EnableColumnVirtualization="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Equipo" 
-                                              Binding="{Binding CodigoEquipo}" 
-                                              Width="90"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-                                        <Setter Property="Padding" Value="12,8"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right" FontWeight="Medium"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Estadísticas: mismo layout que EquiposInformaticosView (adaptadas a Historial) -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding TotalEjecuciones}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Total" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding EjecutadasCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Ejecutados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding NoEjecutadosCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="No Ejecutados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding AtrasadasCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource ErrorBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Atrasados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding EnProcesoCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="En Proceso" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>                <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button Content="&#xE72C;" Command="{Binding CargarItemsCommand}" ToolTip="Actualizar historial" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                    <Button Content="⭱" Command="{Binding ExportarItemsCommand}" ToolTip="Exportar historial" Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal: filtros + DataGrid + detalle (estructura igual a Equipos) -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Filtros: left = filtro + exportar filtrados, right = toggle Dados de baja -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
+                        <TextBox Width="300" Padding="8" VerticalAlignment="Center" Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"/>
+                        <!-- Botón "Exportar filtrados" eliminado según solicitud -->
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32" IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}" ToolTip="Mostrar items dados de baja" VerticalAlignment="Center">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                    <Setter Property="BorderBrush" Value="#DDD"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Grid>
+                                                    <Border x:Name="SwitchBorder" Background="#F0F0F0" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16" Height="32" Width="110">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect Color="#A85B00" BlurRadius="8" ShadowDepth="1" Opacity="0.18"/>
+                                                        </Border.Effect>
+                                                    </Border>
+                                                    <Ellipse x:Name="SwitchKnob" Width="24" Height="24" Margin="4,4,0,4" Fill="#C8C8C8" HorizontalAlignment="Left"/>
+                                                    <TextBlock x:Name="SwitchText" Text="Dados de baja" Foreground="#504F4E" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,18,0"/>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#888"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="82,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#888" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="False">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#F0F0F0"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="4,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#706F6F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="600" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>                    <!-- DataGrid principal (columnas específicas del Historial) -->
+                    <DataGrid Grid.Column="0" Grid.Row="1" ItemsSource="{Binding Items}" 
+                              AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                              SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
+                              FontSize="13" RowHeight="40" ColumnWidth="*"
+                              EnableRowVirtualization="True" EnableColumnVirtualization="False"
+                              VirtualizingPanel.VirtualizationMode="Standard"
+                              ScrollViewer.CanContentScroll="True"
+                              SelectedItem="{Binding SelectedEjecucion}">
+                        
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Focusable" Value="False"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        
+                        <DataGrid.Columns>                            <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Año" Binding="{Binding AnioISO}" Width="SizeToCells" MinWidth="80" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Semana" Binding="{Binding SemanaISO}" Width="SizeToCells" MinWidth="90" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Fecha Objetivo" Binding="{Binding FechaObjetivo, StringFormat=dd/MM/yyyy}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                            <DataGridTextColumn Header="Fecha Ejecución" Binding="{Binding FechaEjecucion, StringFormat=dd/MM/yyyy HH:mm}" Width="SizeToCells" MinWidth="160" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                             
-                            <DataGridTextColumn Header="Nombre" 
-                                              Binding="{Binding NombreEquipo}" 
-                                              Width="150"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Padding" Value="12,8"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <DataGridTextColumn Header="Año" 
-                                              Binding="{Binding AnioISO}" 
-                                              Width="60"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <DataGridTextColumn Header="Semana" 
-                                              Binding="{Binding SemanaISO}" 
-                                              Width="70"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <DataGridTextColumn Header="Objetivo" 
-                                              Binding="{Binding FechaObjetivo, StringFormat=dd/MM/yyyy}" 
-                                              Width="90"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <DataGridTextColumn Header="Ejecución" 
-                                              Binding="{Binding FechaEjecucion, StringFormat=dd/MM/yyyy HH:mm}" 
-                                              Width="130"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <!-- Columna de Estado con badges coloridos -->
-                            <DataGridTemplateColumn Header="Estado" 
-                                                  Width="100"
-                                                  HeaderStyle="{StaticResource DataGridHeader}">
+                            <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border HorizontalAlignment="Center" 
-                                               VerticalAlignment="Center"
-                                               CornerRadius="4"
-                                               Padding="8,4"
-                                               UseLayoutRounding="True"
-                                               SnapsToDevicePixels="True">
+                                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="4" Padding="8,4">
                                             <Border.Style>
                                                 <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Ejecutado">
-                                                            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                            <Setter Property="Background" Value="#27AE60"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Atrasado">
                                                             <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
@@ -631,504 +566,162 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
-                                            <TextBlock Text="{Binding EstadoDescripcion}" 
-                                                      Foreground="White"
-                                                      FontWeight="SemiBold"
-                                                      FontSize="10"
-                                                      HorizontalAlignment="Center"
-                                                      UseLayoutRounding="True"
-                                                      SnapsToDevicePixels="True"
-                                                      TextOptions.TextFormattingMode="Display"
-                                                      TextOptions.TextRenderingMode="ClearType"/>
+                                            <TextBlock Text="{Binding EstadoDescripcion}" Foreground="White" FontWeight="SemiBold" FontSize="10" HorizontalAlignment="Center"/>
                                         </Border>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             
-                            <DataGridTextColumn Header="Responsable" 
-                                              Binding="{Binding UsuarioEjecuta}" 
-                                              Width="120"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Padding" Value="12,8"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Usuario/Asignación" Binding="{Binding UsuarioAsignadoEquipo}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                             
-                            <DataGridTextColumn Header="Asignado a" 
-                                              Binding="{Binding UsuarioAsignadoEquipo}" 
-                                              Width="120"
-                                              HeaderStyle="{StaticResource DataGridHeader}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Padding" Value="12,8"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                        <Setter Property="UseLayoutRounding" Value="True"/>
-                                        <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            
-                            <!-- Columna de Resumen con botón de detalle -->
-                            <DataGridTemplateColumn Header="Resumen" Width="200"
-                                                  HeaderStyle="{StaticResource DataGridHeader}">
+                            <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="120" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <DockPanel Margin="12,8" 
-                                                  UseLayoutRounding="True" 
-                                                  SnapsToDevicePixels="True">
-                                            <Button DockPanel.Dock="Right"
-                                                   Content="👁️ Ver" 
-                                                   Margin="8,0,0,0" 
-                                                   Style="{StaticResource SecondaryButton}"
-                                                   Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                   CommandParameter="{Binding}"
-                                                   ToolTip="Ver detalle completo"/>
-                                            <TextBlock Text="{Binding Resumen}" 
-                                                      ToolTip="{Binding ToolTipResumen}" 
-                                                      VerticalAlignment="Center"
-                                                      TextTrimming="CharacterEllipsis"
-                                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                                      UseLayoutRounding="True"
-                                                      SnapsToDevicePixels="True"
-                                                      TextOptions.TextFormattingMode="Display"
-                                                      TextOptions.TextRenderingMode="ClearType"/>
-                                        </DockPanel>
+                                        <Button Content="Detalles" 
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                MinWidth="88" Width="Auto" Height="32" HorizontalAlignment="Center" Margin="4,0"
+                                                Focusable="False"
+                                                IsHitTestVisible="True"
+                                                ClickMode="Release"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                </Grid>
-            </Border>
-            <!-- Panel de detalle modernizado con animaciones fluidas -->
-            <Border x:Name="DetailPanel"
-                    Grid.Column="1" 
-                    Background="{StaticResource SurfaceBrush}" 
-                    BorderBrush="{StaticResource BorderLightBrush}" 
-                    BorderThickness="1" 
-                    CornerRadius="8" 
-                    Padding="0" 
-                    Width="400"
-                    Effect="{StaticResource CardShadow}"
-                    UseLayoutRounding="True"
-                    SnapsToDevicePixels="True"
-                    Opacity="0"
-                    Visibility="Collapsed"
-                    CacheMode="BitmapCache">
-                <!-- Optimización: TranslateTransform para animaciones fluidas -->
-                <Border.RenderTransform>
-                    <TranslateTransform X="400"/>
-                </Border.RenderTransform>
-                <!-- Triggers para animaciones automáticas -->
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding MostrarDetalle}" Value="True">
-                                <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
-                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                            </ObjectAnimationUsingKeyFrames>
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                           From="400" To="0" Duration="0:0:0.35">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                           From="0" To="1" Duration="0:0:0.25"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.EnterActions>
-                                <DataTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                                           From="0" To="400" Duration="0:0:0.25">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseIn"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                           From="1" To="0" Duration="0:0:0.2"/>
-                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
-                                                <DiscreteObjectKeyFrame KeyTime="0:0:0.25" Value="{x:Static Visibility.Collapsed}"/>
-                                            </ObjectAnimationUsingKeyFrames>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.ExitActions>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- Header del panel de detalle -->
-                    <Border Grid.Row="0" 
-                            Background="#F8FAFC"
-                            CornerRadius="8,8,0,0"
-                            Padding="20,16">
-                        <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                <Border Background="{StaticResource AccentBrush}" 
-                                        CornerRadius="4" 
-                                        Padding="8,6" 
-                                        Margin="0,0,12,0"
-                                        UseLayoutRounding="True"
-                                        SnapsToDevicePixels="True">
-                                    <TextBlock Text="&#xE8BC;" 
-                                               FontFamily="Segoe MDL2 Assets" 
-                                               FontSize="12" 
-                                               Foreground="White"
-                                               VerticalAlignment="Center"
-                                               UseLayoutRounding="True"
-                                               SnapsToDevicePixels="True"
-                                               TextOptions.TextFormattingMode="Display"
-                                               TextOptions.TextRenderingMode="ClearType"/>
-                                </Border>
-                                <TextBlock Text="Detalle de Ejecución" 
-                                           Style="{StaticResource SectionTitleStyle}"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                            
-                            <Button DockPanel.Dock="Right" 
-                                   Content="✕" 
-                                   Command="{Binding CerrarDetalleCommand}" 
-                                   Style="{StaticResource SecondaryButton}"
-                                   Width="32"
-                                   Height="32"
-                                   Padding="0"
-                                   ToolTip="Cerrar panel de detalle"/>
-                        </DockPanel>
-                    </Border>
-                    <!-- Contenido del detalle optimizado para animaciones fluidas -->
-                    <ScrollViewer Grid.Row="1" 
-                                  VerticalScrollBarVisibility="Auto"
-                                  Padding="20"
-                                  UseLayoutRounding="True"
-                                  SnapsToDevicePixels="True"
-                                  ScrollViewer.CanContentScroll="True"
-                                  VirtualizingPanel.IsVirtualizing="True"
-                                  VirtualizingPanel.VirtualizationMode="Recycling">
-                        <StackPanel UseLayoutRounding="True" 
-                                   SnapsToDevicePixels="True"
-                                   CacheMode="BitmapCache">
-                            
-                            <!-- Información principal -->
-                            <Border Background="{StaticResource SurfaceBrush}" 
-                                    CornerRadius="6" 
-                                    Padding="16" 
-                                    Margin="0,0,0,16"
-                                    BorderThickness="1"
-                                    BorderBrush="{StaticResource BorderLightBrush}">
-                                <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Row="0" Grid.Column="0" 
-                                              Text="Equipo:" 
-                                              Style="{StaticResource LabelTextStyle}" 
-                                              Margin="0,0,12,8"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" 
-                                              Text="{Binding SelectedEjecucion.NombreEquipo}" 
-                                              Style="{StaticResource ValueTextStyle}"
-                                              FontWeight="SemiBold"
-                                              Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="1" Grid.Column="0" 
-                                              Text="Responsable:" 
-                                              Style="{StaticResource LabelTextStyle}" 
-                                              Margin="0,0,12,8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" 
-                                              Text="{Binding SelectedEjecucion.UsuarioEjecuta}" 
-                                              Style="{StaticResource ValueTextStyle}"
-                                              Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="2" Grid.Column="0" 
-                                              Text="Asignado a:" 
-                                              Style="{StaticResource LabelTextStyle}" 
-                                              Margin="0,0,12,8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" 
-                                              Text="{Binding SelectedEjecucion.UsuarioAsignadoEquipo}" 
-                                              Style="{StaticResource ValueTextStyle}"
-                                              Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="3" Grid.Column="0" 
-                                              Text="Estado:" 
-                                              Style="{StaticResource LabelTextStyle}" 
-                                              Margin="0,0,12,8"/>
-                                    <Border Grid.Row="3" Grid.Column="1" 
-                                           HorizontalAlignment="Left"
-                                           CornerRadius="4"
-                                           Padding="8,4"
-                                           Margin="0,0,0,8"
-                                           UseLayoutRounding="True"
-                                           SnapsToDevicePixels="True">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedEjecucion.EstadoDescripcion}" Value="Ejecutado">
-                                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SelectedEjecucion.EstadoDescripcion}" Value="Atrasado">
-                                                        <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SelectedEjecucion.EstadoDescripcion}" Value="Pendiente">
-                                                        <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SelectedEjecucion.EstadoDescripcion}" Value="En Proceso">
-                                                        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <TextBlock Text="{Binding SelectedEjecucion.EstadoDescripcion}" 
-                                                  Foreground="White"
-                                                  FontWeight="SemiBold"
-                                                  FontSize="11"
-                                                  UseLayoutRounding="True"
-                                                  SnapsToDevicePixels="True"
-                                                  TextOptions.TextFormattingMode="Display"
-                                                  TextOptions.TextRenderingMode="ClearType"/>
-                                    </Border>
-                                    
-                                    <TextBlock Grid.Row="4" Grid.Column="0" 
-                                              Text="Resumen:" 
-                                              Style="{StaticResource LabelTextStyle}" 
-                                              Margin="0,0,12,0"
-                                              VerticalAlignment="Top"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="1" 
-                                              Text="{Binding SelectedEjecucion.Resumen}" 
-                                              Style="{StaticResource ValueTextStyle}"
-                                              TextWrapping="Wrap"
-                                              Margin="0,0,0,0"/>
-                                </Grid>
-                            </Border>
-                            
-                            <!-- Checklist detallado -->
-                            <Border Background="{StaticResource SurfaceBrush}" 
-                                    CornerRadius="6" 
-                                    Padding="16,12,16,16"
-                                    BorderThickness="1"
-                                    BorderBrush="{StaticResource BorderLightBrush}">
-                                <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                                    <DockPanel Margin="0,0,0,12">
-                                        <Border DockPanel.Dock="Left" 
-                                                Background="{StaticResource PrimaryBrush}" 
-                                                CornerRadius="4" 
-                                                Padding="6,4" 
-                                                Margin="0,0,10,0"
-                                                UseLayoutRounding="True"
-                                                SnapsToDevicePixels="True">
-                                            <TextBlock Text="&#xE8FD;" 
-                                                       FontFamily="Segoe MDL2 Assets" 
-                                                       FontSize="10" 
-                                                       Foreground="White"
-                                                       VerticalAlignment="Center"
-                                                       UseLayoutRounding="True"
-                                                       SnapsToDevicePixels="True"
-                                                       TextOptions.TextFormattingMode="Display"
-                                                       TextOptions.TextRenderingMode="ClearType"/>
+
+                    <!-- Panel de detalle (idéntico al existente en Historial) -->
+                    <Border x:Name="DetailPanel" Grid.Column="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1" CornerRadius="8" Padding="0" Width="400" Effect="{StaticResource CardShadow}" Opacity="0" Visibility="Collapsed" CacheMode="BitmapCache">
+                        <Border.RenderTransform>
+                            <TranslateTransform X="400"/>
+                        </Border.RenderTransform>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MostrarDetalle}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                                    </ObjectAnimationUsingKeyFrames>
+                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="400" To="0" Duration="0:0:0.35">
+                                                        <DoubleAnimation.EasingFunction>
+                                                            <CubicEase EasingMode="EaseOut"/>
+                                                        </DoubleAnimation.EasingFunction>
+                                                    </DoubleAnimation>
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.25"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="0" To="400" Duration="0:0:0.25"/>
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.2"/>
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0.25" Value="{x:Static Visibility.Collapsed}"/>
+                                                    </ObjectAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#F8FAFC" CornerRadius="8,8,0,0" Padding="20,16">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                        <Border Background="{StaticResource AccentBrush}" CornerRadius="4" Padding="8,6" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xE8BC;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="White" VerticalAlignment="Center"/>
                                         </Border>
-                                        <TextBlock Text="Checklist Detallado" 
-                                                   Style="{StaticResource SectionTitleStyle}"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="12"/>
-                                    </DockPanel>
-                                    <!-- DataGrid del checklist optimizado para animaciones -->
-                                    <Border CornerRadius="4" 
-                                            BorderThickness="1" 
-                                            BorderBrush="{StaticResource BorderBrush}"
-                                            UseLayoutRounding="True"
-                                            SnapsToDevicePixels="True"
-                                            CacheMode="BitmapCache">
-                                        <DataGrid ItemsSource="{Binding SelectedEjecucion.DetalleItems}" 
-                                                  Style="{StaticResource CorporateDataGrid}"
-                                                  AutoGenerateColumns="False" 
-                                                  CanUserAddRows="False" 
-                                                  CanUserDeleteRows="False" 
-                                                  IsReadOnly="True" 
-                                                  EnableRowVirtualization="True"
-                                                  EnableColumnVirtualization="True"
-                                                  VirtualizingPanel.IsVirtualizing="True"
-                                                  VirtualizingPanel.VirtualizationMode="Recycling"
-                                                  ScrollViewer.CanContentScroll="True"
-                                                  MaxHeight="300"
-                                                  MinHeight="120">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="#" 
-                                                                    Binding="{Binding Id}" 
-                                                                    Width="40"
-                                                                    HeaderStyle="{StaticResource DataGridHeader}">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-                                                            <Setter Property="FontSize" Value="10"/>
-                                                            <Setter Property="Padding" Value="6"/>
-                                                            <Setter Property="UseLayoutRounding" Value="True"/>
-                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                
-                                                <DataGridTextColumn Header="Ítem" 
-                                                                    Binding="{Binding Descripcion}" 
-                                                                    Width="*"
-                                                                    HeaderStyle="{StaticResource DataGridHeader}">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Padding" Value="8,6"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                            <Setter Property="TextWrapping" Value="Wrap"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                                            <Setter Property="FontSize" Value="11"/>
-                                                            <Setter Property="UseLayoutRounding" Value="True"/>
-                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                
-                                                <!-- Columna de Estado con iconos -->
-                                                <DataGridTemplateColumn Header="Estado" 
-                                                                      Width="80"
-                                                                      HeaderStyle="{StaticResource DataGridHeader}">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <Border HorizontalAlignment="Center" 
-                                                                   VerticalAlignment="Center"
-                                                                   CornerRadius="3"
-                                                                   Padding="6,3"
-                                                                   UseLayoutRounding="True"
-                                                                   SnapsToDevicePixels="True">
-                                                                <Border.Style>
-                                                                    <Style TargetType="Border">
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding EstadoTexto}" Value="OK">
-                                                                                <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding EstadoTexto}" Value="Observado">
-                                                                                <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding EstadoTexto}" Value="Pendiente">
-                                                                                <Setter Property="Background" Value="{StaticResource TextMutedBrush}"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Border.Style>
-                                                                <TextBlock Text="{Binding EstadoTexto}" 
-                                                                          Foreground="White"
-                                                                          FontWeight="SemiBold"
-                                                                          FontSize="9"
-                                                                          HorizontalAlignment="Center"
-                                                                          UseLayoutRounding="True"
-                                                                          SnapsToDevicePixels="True"
-                                                                          TextOptions.TextFormattingMode="Display"
-                                                                          TextOptions.TextRenderingMode="ClearType"/>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                                
-                                                <DataGridTextColumn Header="Observaciones" 
-                                                                    Binding="{Binding Observacion}" 
-                                                                    Width="120"
-                                                                    HeaderStyle="{StaticResource DataGridHeader}">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Padding" Value="8,6"/>
-                                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                                            <Setter Property="TextWrapping" Value="Wrap"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-                                                            <Setter Property="FontStyle" Value="Italic"/>
-                                                            <Setter Property="FontSize" Value="10"/>
-                                                            <Setter Property="UseLayoutRounding" Value="True"/>
-                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
+                                        <TextBlock Text="Detalle de Ejecución" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <Button DockPanel.Dock="Right" Content="✕" Command="{Binding CerrarDetalleCommand}" Style="{StaticResource SecondaryButton}" Width="32" Height="32" Padding="0" ToolTip="Cerrar panel de detalle"/>
+                                </DockPanel>
+                            </Border>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20" ScrollViewer.CanContentScroll="True">
+                                <StackPanel>
+                                    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="16" Margin="0,0,0,16" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Equipo:" Style="{StaticResource LabelTextStyle}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEjecucion.CodigoEquipo}" Style="{StaticResource ValueTextStyle}"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Nombre:" Style="{StaticResource LabelTextStyle}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEjecucion.NombreEquipo}" Style="{StaticResource ValueTextStyle}"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Año / Semana:" Style="{StaticResource LabelTextStyle}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ValueTextStyle}">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0} / {1}">
+                                                        <Binding Path="SelectedEjecucion.AnioISO"/>
+                                                        <Binding Path="SelectedEjecucion.SemanaISO"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+
+                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Objetivo:" Style="{StaticResource LabelTextStyle}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedEjecucion.FechaObjetivo, StringFormat=dd/MM/yyyy}" Style="{StaticResource ValueTextStyle}"/>
+
+                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Ejecución:" Style="{StaticResource LabelTextStyle}" Margin="0,0,12,0"/>
+                                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                                                <TextBlock Text="{Binding SelectedEjecucion.FechaEjecucion, StringFormat=dd/MM/yyyy HH:mm}" Style="{StaticResource ValueTextStyle}"/>
+                                                <Border CornerRadius="4" Padding="6,2" Margin="12,0,0,0" Background="{StaticResource PrimaryBrush}">
+                                                    <TextBlock Text="{Binding SelectedEjecucion.EstadoDescripcion}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="16" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                                        <StackPanel>
+                                            <TextBlock Text="Checklist" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,8"/>
+                                            <ItemsControl ItemsSource="{Binding SelectedEjecucion.Checklist}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                                                            <CheckBox IsChecked="{Binding Completado}" IsEnabled="False" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Descripcion}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource ValueTextStyle}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
-        </Grid>
-        <!-- Footer modernizado -->
-        <Border Grid.Row="3" 
-                Background="{StaticResource SurfaceBrush}"
-                Padding="20,10"
-                Margin="20,12,20,16"
-                CornerRadius="6"
-                BorderBrush="{StaticResource BorderLightBrush}"
-                BorderThickness="1"
-                UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
-            <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="{StaticResource TextMutedBrush}" 
-                            CornerRadius="3" 
-                            Padding="6,3" 
-                            Margin="0,0,8,0"
-                            UseLayoutRounding="True"
-                            SnapsToDevicePixels="True">
-                        <TextBlock Text="ℹ️" 
-                                   FontSize="10" 
-                                   Foreground="White"
-                                   UseLayoutRounding="True"
-                                   SnapsToDevicePixels="True"
-                                   TextOptions.TextFormattingMode="Display"
-                                   TextOptions.TextRenderingMode="ClearType"/>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
-                    <TextBlock Foreground="{StaticResource TextSecondaryBrush}" 
-                               FontSize="11"
-                               VerticalAlignment="Center"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType">
-                        <Run Text="Mostrando máximo"/>
-                        <Run Text="{Binding MaxRows}" FontWeight="SemiBold"/>
-                        <Run Text="registros por consulta"/>
-                    </TextBlock>
+
+                </Grid>
+
+                <!-- Espacio para botones de acción (footer interno) -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <!-- reservado para acciones adicionales -->
                 </StackPanel>
-            </DockPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

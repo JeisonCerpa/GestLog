@@ -102,9 +102,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         [ObservableProperty] private string? filtroDescripcion;
         [ObservableProperty] private bool isBusy;
         [ObservableProperty] private string statusMessage = string.Empty;
-        [ObservableProperty] private int maxRows = 500;
-        [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
-        [ObservableProperty] private bool mostrarDetalle;
+        [ObservableProperty] private int maxRows = 500;        [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
+        [ObservableProperty] private bool mostrarDetalle;        // Estadísticas para la vista
+        [ObservableProperty] private int totalEjecuciones;
+        [ObservableProperty] private int ejecutadasCount;
+        [ObservableProperty] private int pendientesCount;
+        [ObservableProperty] private int atrasadasCount;
+        [ObservableProperty] private int enProcesoCount;
+        
+        /// <summary>
+        /// Propiedad calculada: suma de pendientes + atrasados
+        /// </summary>
+        public int NoEjecutadosCount => PendientesCount + AtrasadasCount;
 
         // Propiedades compatibles con PlanDetalleModalWindow (para reusar la ventana de detalle)
         [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle;
@@ -176,10 +185,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 // Mostrar el panel lateral como fallback
                 MostrarDetalle = true;
             }
+        }        [RelayCommand]
+        private async Task CargarAsync()
+        {
+            await LoadAsync();
         }
 
         [RelayCommand]
-        private async Task CargarAsync()
+        private async Task CargarItemsAsync()
         {
             await LoadAsync();
         }
@@ -306,9 +319,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             }
                         }
                         catch { /* silenciar errores individuales */ }
-                    }
-                }
+                    }                }
                 StatusMessage = $"{Items.Count} ejecuciones";
+                RecalcularEstadisticas();
             }
             catch (Exception ex)
             {
@@ -319,7 +332,22 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             {
                 IsBusy = false;
             }
-        }        // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+        }        /// <summary>
+        /// Recalcula las estadísticas basadas en los items cargados
+        /// </summary>
+        private void RecalcularEstadisticas()
+        {
+            TotalEjecuciones = Items.Count;
+            EjecutadasCount = Items.Count(x => x.Estado == 2); // Estado = 2 (Ejecutado)
+            PendientesCount = Items.Count(x => x.Estado == 0 && !x.EsAtrasado); // Estado = 0 (Pendiente) y no atrasado
+            AtrasadasCount = Items.Count(x => x.EsAtrasado); // Atrasados
+            EnProcesoCount = Items.Count(x => x.Estado == 1); // Estado = 1 (En Proceso)
+            
+            // Notificar cambio en propiedad calculada
+            OnPropertyChanged(nameof(NoEjecutadosCount));
+        }
+
+        // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
         protected override async Task RefreshDataAsync()
         {
             await LoadAsync();
