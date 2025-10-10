@@ -1720,18 +1720,21 @@ Get-NetIPConfiguration | Where-Object {
                 // ✅ MIGRADO: Usar DbContextFactory en lugar de conexión manual
                 await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
                 
-                // Construir la consulta teniendo en cuenta si estamos creando (Codigo vacío)
+                // Construir la consulta: mostrar sólo periféricos almacenados y funcionando cuando no están asignados.
                 var perifericosQuery = dbContext.PerifericosEquiposInformaticos.AsQueryable();
+
                 if (string.IsNullOrWhiteSpace(Codigo))
                 {
-                    // Modo "Nuevo": solo periféricos no asignados
-                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == null);
+                    // Modo "Nuevo": solo periféricos no asignados y en estado AlmacenadoFuncionando
+                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == null && p.Estado == EstadoPeriferico.AlmacenadoFuncionando);
                 }
                 else
                 {
-                    // Modo Edición/Existente: periféricos no asignados o asignados a este equipo
-                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == null || p.CodigoEquipoAsignado == Codigo);
+                    // Modo Edición/Existente: incluir los periféricos asignados a este equipo (cualquier estado)
+                    // y además los periféricos no asignados pero que estén AlmacenadoFuncionando
+                    perifericosQuery = perifericosQuery.Where(p => p.CodigoEquipoAsignado == Codigo || (p.CodigoEquipoAsignado == null && p.Estado == EstadoPeriferico.AlmacenadoFuncionando));
                 }
+
                 perifericosQuery = perifericosQuery.OrderBy(p => p.Codigo);
 
                 var perifericos = await perifericosQuery.ToListAsync();
