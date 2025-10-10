@@ -213,6 +213,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="White"/>
+            <!-- No depende de glyphs: usamos vector en el Content; mantener FontFamily si se usa texto en otros dialogs -->
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Width" Value="36"/>
@@ -233,8 +234,9 @@
                                             SnapsToDevicePixels="True"/>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <!-- Hover más suave y consistente (blanco semitransparente) -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FFFFFF25"/>
+                                <Setter Property="Background" Value="#29FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Background" Value="#FFFFFF15"/>
@@ -284,23 +286,15 @@
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">                            <!-- Icono con tema GestLog optimizado -->
                             <Border Background="White" 
                                     CornerRadius="6" 
-                                    Padding="10" 
+                                    Padding="6" 
                                     Margin="0,0,16,0"
                                     Width="36" 
                                     Height="36"
                                     Effect="{StaticResource SectionShadow}"
                                     UseLayoutRounding="True"
                                     SnapsToDevicePixels="True">
-                                <TextBlock Text="&#xE8A5;" 
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16"
-                                           Foreground="{StaticResource PrimaryBrush}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           UseLayoutRounding="True"
-                                           SnapsToDevicePixels="True"
-                                           TextOptions.TextFormattingMode="Display"
-                                           TextOptions.TextRenderingMode="ClearType"/>
+                                <!-- Usar glyph Unicode común (⚙ U+2699) para evitar dependencias de fuentes propietarias -->
+                                <TextBlock Text="⚙" FontSize="16" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="Detalle del Plan de Mantenimiento" Style="{StaticResource HeaderTextStyle}"/>
@@ -310,13 +304,19 @@
                             </StackPanel>
                         </StackPanel>
                         
-                        <Button x:Name="CloseButton" 
-                                Content="&#xE711;" 
-                                DockPanel.Dock="Right" 
+                        <Button x:Name="CloseButton"
+                                DockPanel.Dock="Right"
                                 Style="{StaticResource CloseButton}"
                                 Click="CloseButton_Click"
-                                ToolTip="Cerrar (Esc)" 
-                                VerticalAlignment="Center"/>
+                                ToolTip="Cerrar (Esc)"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,-6,-6,0">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
                     </DockPanel>
                 </Border>                <!-- Contenido principal con fondo mejorado y renderizado optimizado con cache -->                <ScrollViewer Grid.Row="1" 
                               VerticalScrollBarVisibility="Auto" 
