@@ -11,6 +11,11 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
+using System.IO;
+using Microsoft.Win32;
+using System.Windows;
+using ClosedXML.Excel;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {
@@ -366,6 +371,178 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
             
             base.Dispose();
+        }
+
+        /// <summary>
+        /// Exporta los items actuales a un archivo Excel (.xlsx) seleccionado por el usuario.
+        /// </summary>
+        [RelayCommand]
+        private async Task ExportarItemsAsync()
+        {
+            try
+            {
+                if (Items == null || Items.Count == 0)
+                {
+                    StatusMessage = "Nada que exportar";
+                    return;
+                }
+
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "Excel Workbook (*.xlsx)|*.xlsx|All files (*.*)|*.*",
+                    FileName = $"HistorialEjecuciones_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
+                    DefaultExt = ".xlsx",
+                    OverwritePrompt = true
+                };
+
+                var shown = dlg.ShowDialog();
+                if (shown != true)
+                {
+                    StatusMessage = "Exportación cancelada";
+                    return;
+                }
+
+                await Task.Run(() =>
+                {
+                    using var workbook = new XLWorkbook();
+
+                    // Hoja principal con resumen por ejecución (ahora con métricas claras)
+                    var ws = workbook.Worksheets.Add("Historial");
+                    var headers = new[] { "Código", "Nombre", "Año", "Semana", "Fecha Objetivo", "Fecha Ejecución", "Estado", "Usuario Asignado", "Total Ítems", "Ítems OK", "% Completado", "Resumen" };
+                    for (int i = 0; i < headers.Length; i++)
+                        ws.Cell(1, i + 1).Value = headers[i];
+
+                    int row = 2;
+                    int totalItemsAll = 0;
+                    int totalOkAll = 0;
+
+                    foreach (var it in Items)
+                    {
+                        int totalItems = it.DetalleItems?.Count ?? 0;
+                        int okCount = it.DetalleItems?.Count(d => d.Completado) ?? 0;
+                        double pct = totalItems > 0 ? (double)okCount / totalItems : 0.0;
+
+                        ws.Cell(row, 1).Value = it.CodigoEquipo;
+                        ws.Cell(row, 2).Value = it.NombreEquipo;
+                        ws.Cell(row, 3).Value = it.AnioISO;
+                        ws.Cell(row, 4).Value = it.SemanaISO;
+
+                        ws.Cell(row, 5).Value = it.FechaObjetivo;
+                        ws.Cell(row, 5).Style.DateFormat.Format = "dd/MM/yyyy";
+
+                        if (it.FechaEjecucion.HasValue)
+                        {
+                            ws.Cell(row, 6).Value = it.FechaEjecucion.Value;
+                            ws.Cell(row, 6).Style.DateFormat.Format = "dd/MM/yyyy HH:mm";
+                        }
+                        else
+                        {
+                            ws.Cell(row, 6).Value = string.Empty;
+                        }
+
+                        ws.Cell(row, 7).Value = it.EstadoDescripcion;
+                        ws.Cell(row, 8).Value = it.UsuarioAsignadoEquipo;
+
+                        ws.Cell(row, 9).Value = totalItems;
+                        ws.Cell(row, 10).Value = okCount;
+                        ws.Cell(row, 11).Value = pct; // valor entre 0 y 1
+                        ws.Cell(row, 11).Style.NumberFormat.Format = "0.00%";
+
+                        ws.Cell(row, 12).Value = it.Resumen;
+
+                        totalItemsAll += totalItems;
+                        totalOkAll += okCount;
+                        row++;
+                    }
+
+                    // Formato encabezado y usabilidad
+                    var headerRange = ws.Range(1, 1, 1, headers.Length);
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
+                    ws.SheetView.FreezeRows(1);
+                    ws.Range(1, 1, row - 1, headers.Length).SetAutoFilter();
+                    ws.Columns().AdjustToContents();
+
+                    // Hoja detalle: checklist por ejecución (con estado legible)
+                    var wsChk = workbook.Worksheets.Add("Checklist");
+                    var chkHeaders = new[] { "EjecucionId", "PlanId", "CódigoEquipo", "NombreEquipo", "ItemId", "Descripción", "Completado", "Estado Item", "Observación" };
+                    for (int i = 0; i < chkHeaders.Length; i++)
+                        wsChk.Cell(1, i + 1).Value = chkHeaders[i];
+
+                    int chkRow = 2;
+                    foreach (var ejec in Items)
+                    {
+                        if (ejec.DetalleItems == null || ejec.DetalleItems.Count == 0)
+                            continue;
+
+                        foreach (var det in ejec.DetalleItems)
+                        {
+                            wsChk.Cell(chkRow, 1).Value = ejec.EjecucionId.ToString();
+                            wsChk.Cell(chkRow, 2).Value = ejec.PlanId.ToString();
+                            wsChk.Cell(chkRow, 3).Value = ejec.CodigoEquipo;
+                            wsChk.Cell(chkRow, 4).Value = ejec.NombreEquipo;
+                            wsChk.Cell(chkRow, 5).Value = det.Id?.ToString() ?? string.Empty;
+                            wsChk.Cell(chkRow, 6).Value = det.Descripcion;
+                            wsChk.Cell(chkRow, 7).Value = det.Completado ? "Sí" : "No";
+
+                            // Estado legible: OK / Observado / Pendiente
+                            string estadoItem = det.Completado ? "OK" : (!string.IsNullOrWhiteSpace(det.Observacion) ? "Observado" : "Pendiente");
+                            wsChk.Cell(chkRow, 8).Value = estadoItem;
+                            wsChk.Cell(chkRow, 9).Value = det.Observacion ?? string.Empty;
+                            chkRow++;
+                        }
+                    }
+
+                    var chkHeaderRange = wsChk.Range(1, 1, 1, chkHeaders.Length);
+                    chkHeaderRange.Style.Font.Bold = true;
+                    chkHeaderRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
+                    wsChk.SheetView.FreezeRows(1);
+                    wsChk.Range(1, 1, chkRow - 1, chkHeaders.Length).SetAutoFilter();
+                    wsChk.Columns().AdjustToContents();
+
+                    // Hoja resumen explicativa para usuarios no técnicos
+                    var wsSummary = workbook.Worksheets.Add("Resumen");
+                    wsSummary.Cell(1, 1).Value = "Resumen de exportación";
+                    wsSummary.Cell(1, 1).Style.Font.Bold = true;
+                    wsSummary.Cell(3, 1).Value = "Fecha de generación:";
+                    wsSummary.Cell(3, 2).Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+
+                    wsSummary.Cell(4, 1).Value = "Hojas incluidas:";
+                    wsSummary.Cell(4, 2).Value = "Historial (resumen por ejecución)";
+                    wsSummary.Cell(5, 2).Value = "Checklist (cada ítem de checklist por fila)";
+
+                    wsSummary.Cell(7, 1).Value = "Qué significa cada columna (breve):";
+                    wsSummary.Cell(8, 1).Value = "Código:"; wsSummary.Cell(8, 2).Value = "Código identificador del equipo.";
+                    wsSummary.Cell(9, 1).Value = "Nombre:"; wsSummary.Cell(9, 2).Value = "Nombre legible del equipo.";
+                    wsSummary.Cell(10, 1).Value = "Total Ítems:"; wsSummary.Cell(10, 2).Value = "Número total de ítems en el checklist para esa ejecución.";
+                    wsSummary.Cell(11, 1).Value = "Ítems OK:"; wsSummary.Cell(11, 2).Value = "Número de ítems marcados como completados.";
+                    wsSummary.Cell(12, 1).Value = "% Completado:"; wsSummary.Cell(12, 2).Value = "Porcentaje de ítems completados (formato porcentaje).";
+                    wsSummary.Cell(14, 1).Value = "Checklist - Estado Item:"; wsSummary.Cell(14, 2).Value = "OK = completado, Observado = tiene observación, Pendiente = no completado y sin observación.";
+
+                    wsSummary.Columns().AdjustToContents();
+
+                    // Guardar workbook
+                    workbook.SaveAs(dlg.FileName);
+                });
+
+                StatusMessage = $"Exportado {Items.Count} ejecuciones a {dlg.FileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error exportando historial a Excel (mejorado)");
+                StatusMessage = "Error al exportar";
+            }
+        }
+
+        // Método auxiliar para escapado CSV (conservado para compatibilidad, no usado en exportación Excel)
+        private static string EscapeCsv(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            var escaped = value.Replace("\"", "\"\"");
+            // Encerrar en comillas si contiene comas, comillas o saltos de línea
+            if (escaped.Contains(',') || escaped.Contains('"') || escaped.Contains('\n') || escaped.Contains('\r'))
+                return "\"" + escaped + "\"";
+            return escaped;
         }
     }
 }
