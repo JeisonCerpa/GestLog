@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Models; // añadido para CronogramaMantenimientoDto
 using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
@@ -104,6 +105,78 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         [ObservableProperty] private int maxRows = 500;
         [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
         [ObservableProperty] private bool mostrarDetalle;
+
+        // Propiedades compatibles con PlanDetalleModalWindow (para reusar la ventana de detalle)
+        [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle;
+        [ObservableProperty] private ObservableCollection<PlanDetalleChecklistItem> detalleChecklist = new();
+        [ObservableProperty] private string? detalleEstadoTexto;
+        [ObservableProperty] private DateTime? detalleFechaObjetivo;
+        [ObservableProperty] private DateTime? detalleFechaEjecucion;
+        [ObservableProperty] private string? detalleResumen;
+
+        // Clase auxiliar local para checklist (misma forma que la usada en CronogramaDiarioViewModel)
+        public class PlanDetalleChecklistItem : ObservableObject
+        {
+            public int? Id { get; set; }
+            public string Descripcion { get; set; } = string.Empty;
+            public bool Completado { get; set; }
+            public string? Observacion { get; set; }
+            public string Estado => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
+        }
+
+        [RelayCommand]
+        private void VerDetallePlan(EjecucionHistorialItem? item)
+        {
+            if (item == null) return;
+
+            // Construir un DTO mínimo para mostrar en la ventana de detalle
+            SelectedPlanDetalle = new CronogramaMantenimientoDto
+            {
+                Codigo = item.CodigoEquipo,
+                Nombre = string.IsNullOrWhiteSpace(item.NombreEquipo) ? item.CodigoEquipo : item.NombreEquipo,
+                Sede = item.UsuarioAsignadoEquipo,
+                Marca = "Historial",
+                Anio = item.AnioISO,
+                EsPlanSemanal = false
+            };
+
+            DetalleChecklist.Clear();
+            if (item.DetalleItems != null)
+            {
+                foreach (var d in item.DetalleItems)
+                {
+                    DetalleChecklist.Add(new PlanDetalleChecklistItem { Id = d.Id, Descripcion = d.Descripcion, Completado = d.Completado, Observacion = d.Observacion });
+                }
+            }
+
+            DetalleFechaObjetivo = item.FechaObjetivo;
+            DetalleFechaEjecucion = item.FechaEjecucion;
+            DetalleEstadoTexto = item.EstadoDescripcion;
+            DetalleResumen = item.Resumen ?? string.Empty;
+
+            try
+            {
+                var modalWindow = new GestLog.Views.Tools.GestionEquipos.PlanDetalleModalWindow
+                {
+                    DataContext = this
+                };
+
+                var parentWindow = System.Windows.Application.Current.Windows
+                    .OfType<System.Windows.Window>()
+                    .FirstOrDefault(w => w.IsActive) ?? System.Windows.Application.Current.MainWindow;
+
+                if (parentWindow != null)
+                    modalWindow.ConfigurarParaVentanaPadre(parentWindow);
+
+                modalWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error al abrir ventana de detalle");
+                // Mostrar el panel lateral como fallback
+                MostrarDetalle = true;
+            }
+        }
 
         [RelayCommand]
         private async Task CargarAsync()

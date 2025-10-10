@@ -11,9 +11,10 @@
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType"
              TextOptions.TextHintingMode="Fixed"
-             RenderOptions.EdgeMode="Aliased">    <UserControl.Resources>
+             RenderOptions.EdgeMode="Aliased">
+    <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-          <!-- Storyboards para animaciones fluidas del panel de detalle -->
+        <!-- Storyboards para animaciones fluidas del panel de detalle -->
         <Storyboard x:Key="ShowDetailPanelStoryboard">
             <DoubleAnimation Storyboard.TargetName="DetailPanel"
                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
@@ -110,7 +111,7 @@
             <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
             <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
-          <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+        <Style x:Key="LabelTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="FontSize" Value="10"/>
@@ -143,7 +144,7 @@
             <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
             <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
-          <!-- DataGrid corporativo optimizado -->
+        <!-- DataGrid corporativo optimizado -->
         <Style x:Key="CorporateDataGrid" TargetType="DataGrid">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
@@ -277,7 +278,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-          <!-- TextBox corporativo -->
+        <!-- TextBox corporativo -->
         <Style x:Key="CorporateTextBox" TargetType="TextBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="11"/>
@@ -314,7 +315,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-          <!-- ComboBox corporativo -->
+        <!-- ComboBox corporativo -->
         <Style x:Key="CorporateComboBox" TargetType="ComboBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="11"/>
@@ -390,7 +391,8 @@
                                FontWeight="Medium"/>
                 </StackPanel>
             </DockPanel>
-        </Border>        <!-- Panel de filtros modernizado y compacto -->
+        </Border>
+        <!-- Panel de filtros modernizado y compacto -->
         <Border Grid.Row="1" 
                 Background="{StaticResource SurfaceBrush}" 
                 Padding="20,14" 
@@ -426,7 +428,8 @@
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
-        </Border>        <!-- Contenido principal: listado + detalle optimizado para animaciones fluidas -->
+        </Border>
+        <!-- Contenido principal: listado + detalle optimizado para animaciones fluidas -->
         <Grid Grid.Row="2" Margin="20,12,20,0"
               UseLayoutRounding="True" 
               SnapsToDevicePixels="True"
@@ -688,7 +691,7 @@
                                                    Content="👁️ Ver" 
                                                    Margin="8,0,0,0" 
                                                    Style="{StaticResource SecondaryButton}"
-                                                   Command="{Binding DataContext.VerDetalleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                   Command="{Binding DataContext.VerDetallePlanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                    CommandParameter="{Binding}"
                                                    ToolTip="Ver detalle completo"/>
                                             <TextBlock Text="{Binding Resumen}" 
@@ -707,7 +710,8 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-            </Border>            <!-- Panel de detalle modernizado con animaciones fluidas -->
+            </Border>
+            <!-- Panel de detalle modernizado con animaciones fluidas -->
             <Border x:Name="DetailPanel"
                     Grid.Column="1" 
                     Background="{StaticResource SurfaceBrush}" 
@@ -813,7 +817,7 @@
                                    ToolTip="Cerrar panel de detalle"/>
                         </DockPanel>
                     </Border>
-                      <!-- Contenido del detalle optimizado para animaciones fluidas -->
+                    <!-- Contenido del detalle optimizado para animaciones fluidas -->
                     <ScrollViewer Grid.Row="1" 
                                   VerticalScrollBarVisibility="Auto"
                                   Padding="20"
@@ -956,7 +960,7 @@
                                                    VerticalAlignment="Center"
                                                    FontSize="12"/>
                                     </DockPanel>
-                                      <!-- DataGrid del checklist optimizado para animaciones -->
+                                    <!-- DataGrid del checklist optimizado para animaciones -->
                                     <Border CornerRadius="4" 
                                             BorderThickness="1" 
                                             BorderBrush="{StaticResource BorderBrush}"
@@ -1085,7 +1089,8 @@
                     </ScrollViewer>
                 </Grid>
             </Border>
-        </Grid>        <!-- Footer modernizado -->
+        </Grid>
+        <!-- Footer modernizado -->
         <Border Grid.Row="3" 
                 Background="{StaticResource SurfaceBrush}"
                 Padding="20,10"
