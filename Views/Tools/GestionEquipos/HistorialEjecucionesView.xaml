@@ -11,7 +11,8 @@
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType"
              TextOptions.TextHintingMode="Fixed"
-             RenderOptions.EdgeMode="Aliased">    <UserControl.Resources>
+             RenderOptions.EdgeMode="Aliased">
+    <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <!-- Storyboards para animaciones fluidas del panel de detalle -->
@@ -44,30 +45,7 @@
         <!-- Timeline para optimización de hardware -->
         <Timeline x:Key="OptimizationTimeline" Duration="0:0:0" RepeatBehavior="1x"/>
         
-        <!-- Efectos optimizados para renderizado nítido -->
-        <DropShadowEffect x:Key="HeaderShadow" 
-                          Color="#0F7530" 
-                          Direction="270" 
-                          ShadowDepth="1" 
-                          Opacity="0.08" 
-                          BlurRadius="3"
-                          RenderingBias="Quality"/>
-                          
-        <DropShadowEffect x:Key="CardShadow" 
-                          Color="#9D9D9C" 
-                          Direction="270" 
-                          ShadowDepth="2" 
-                          Opacity="0.06" 
-                          BlurRadius="6"
-                          RenderingBias="Quality"/>
-                          
-        <DropShadowEffect x:Key="ButtonShadow" 
-                          Color="#00000015" 
-                          Direction="270" 
-                          ShadowDepth="1" 
-                          Opacity="0.15" 
-                          BlurRadius="2"
-                          RenderingBias="Quality"/>
+        <!-- Sin efectos de sombra para mantener paridad con Equipos/Perifericos -->
         
         <!-- Paleta corporativa de GestLog -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/><!-- Verde principal GestLog -->
@@ -91,25 +69,17 @@
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="24"/><!-- Ajustado para coincidir con EquiposInformaticosView -->
+            <Setter Property="FontSize" Value="24"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Opacity" Value="0.85"/>
+            <Setter Property="Opacity" Value="0.9"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         <Style x:Key="LabelTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -117,20 +87,12 @@
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
             <Setter Property="Margin" Value="0,0,0,3"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="ValueTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
@@ -139,11 +101,24 @@
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
+        
+        <!-- Styles para estadísticas (igual a EquiposInformaticosView / PerifericosView) -->
+        <Style x:Key="StatsTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style x:Key="StatsLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        
         <!-- DataGrid corporativo optimizado -->
         <Style x:Key="CorporateDataGrid" TargetType="DataGrid">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
@@ -205,13 +180,13 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="UseLayoutRounding" Value="True"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="Effect" Value="{StaticResource ButtonShadow}"/>
+            <!-- Sin efecto para mantener paridad con otras vistas -->
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -302,7 +277,8 @@
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
-            </Setter>        </Style>
+            </Setter>
+        </Style>
         
         <!-- SecondaryButtonStyle (gris) para botones de acción como 'Detalles' -->
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
@@ -377,7 +353,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header corporativo con gradiente verde (idéntico) -->
-        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0" Effect="{StaticResource HeaderShadow}">
+        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                     <GradientStop Color="#118938" Offset="0"/>
@@ -386,8 +362,8 @@
             </Border.Background>
             <DockPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,16,0" Width="56" Height="56" Effect="{StaticResource CardShadow}">
-                        <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
+                        <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="26" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Historial de Ejecuciones" Style="{StaticResource HeaderTextStyle}"/>
@@ -396,7 +372,7 @@
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right" FontWeight="Medium"/>
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -411,28 +387,31 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding TotalEjecuciones}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Total" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding TotalEjecuciones}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Total" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding EjecutadasCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Ejecutados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding NoEjecutadosCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="No Ejecutados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding EjecutadasCount}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="Ejecutados" Style="{StaticResource StatsLabelStyle}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding NoEjecutadosCount}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource WarningBrush}"/>
+                    <TextBlock Text="No Ejecutados" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding AtrasadasCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource ErrorBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Atrasados" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding AtrasadasCount}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource ErrorBrush}"/>
+                    <TextBlock Text="Atrasados" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="4" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding EnProcesoCount}" Style="{StaticResource SectionTitleStyle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="En Proceso" Style="{StaticResource SubHeaderTextStyle}" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>                <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <TextBlock Text="{Binding EnProcesoCount}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="En Proceso" Style="{StaticResource StatsLabelStyle}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal">
                     <Button Content="&#xE72C;" Command="{Binding CargarItemsCommand}" ToolTip="Actualizar historial" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
                     <Button Content="⭱" Command="{Binding ExportarItemsCommand}" ToolTip="Exportar historial" Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"/>
                 </StackPanel>
@@ -540,10 +519,11 @@
 
                 <Grid Grid.Row="1" Margin="0" UseLayoutRounding="True" SnapsToDevicePixels="True">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" MinWidth="600" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>                    <!-- DataGrid principal (columnas específicas del Historial) -->
-                    <DataGrid Grid.Column="0" Grid.Row="1" ItemsSource="{Binding FilteredItems}" 
+                    </Grid.ColumnDefinitions>
+                    <!-- DataGrid principal (columnas específicas del Historial) -->
+                    <DataGrid Grid.Column="0" Grid.Row="1" ItemsSource="{Binding FilteredItems}" Style="{StaticResource CorporateDataGrid}"
                               AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
                               SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
@@ -561,7 +541,8 @@
                             </Style>
                         </DataGrid.CellStyle>
                         
-                        <DataGrid.Columns>                            <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                             <DataGridTextColumn Header="Nombre de Equipo" Binding="{Binding NombreEquipo}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                             <DataGridTextColumn Header="Año" Binding="{Binding AnioISO}" Width="SizeToCells" MinWidth="80" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                             <DataGridTextColumn Header="Semana" Binding="{Binding SemanaISO}" Width="SizeToCells" MinWidth="90" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
@@ -617,7 +598,7 @@
                     </DataGrid>
 
                     <!-- Panel de detalle (idéntico al existente en Historial) -->
-                    <Border x:Name="DetailPanel" Grid.Column="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1" CornerRadius="8" Padding="0" Width="400" Effect="{StaticResource CardShadow}" Opacity="0" Visibility="Collapsed" CacheMode="BitmapCache">
+                    <Border x:Name="DetailPanel" Grid.Column="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderLightBrush}" BorderThickness="1" CornerRadius="8" Padding="0" Width="400" Opacity="0" Visibility="Collapsed" CacheMode="BitmapCache">
                         <Border.RenderTransform>
                             <TranslateTransform X="400"/>
                         </Border.RenderTransform>
