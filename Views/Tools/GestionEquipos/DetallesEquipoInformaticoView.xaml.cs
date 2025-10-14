@@ -21,12 +21,34 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             InitializeComponent();
 
+            // Asegurar que esta ventana se abra como modal sobre la ventana principal y no aparezca en la barra de tareas
+            try
+            {
+                // Asignar el Owner para centrar respecto al padre y bloquear la interacción
+                this.Owner = System.Windows.Application.Current?.MainWindow;
+                this.ShowInTaskbar = false;
+                this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+            catch
+            {
+                // No crítico si no existe Application.Current o MainWindow en algunos escenarios de test
+            }
+
+            // Registrar Loaded para ajustar el tamaño/posición del overlay para que cubra totalmente el Owner
+            this.Loaded += DetallesEquipoInformaticoView_Loaded;
+
             // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
             _db = db;
             
             // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
-            var app = (App)System.Windows.Application.Current;
-            var serviceProvider = app.ServiceProvider;
+            // Resolver el Application actual de forma segura
+            var app = System.Windows.Application.Current as App;
+            var serviceProvider = app?.ServiceProvider;
+            if (serviceProvider == null)
+            {
+                // Intentar fallback simple: no inicializar dependencias si no hay ServiceProvider
+                return;
+            }
             var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
             var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
@@ -35,9 +57,61 @@ namespace GestLog.Views.Tools.GestionEquipos
             DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
         }
 
+        // Nuevo manejador para ajustar el overlay al Owner y seguirlo si se mueve/redimensiona
+        private void DetallesEquipoInformaticoView_Loaded(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (this.Owner != null)
+                {
+                    // Ajustar la ventana al tamaño y posición del Owner para que el overlay cubra toda el área del padre
+                    this.Left = this.Owner.Left;
+                    this.Top = this.Owner.Top;
+                    this.Width = this.Owner.ActualWidth;
+                    this.Height = this.Owner.ActualHeight;
+
+                    // Si el Owner se mueve/redimensiona, mantener el overlay sincronizado
+                    this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                    this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+                }
+            }
+            catch
+            {
+                // No crítico
+            }
+        }
+
+        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        {
+            if (this.Owner == null) return;
+            // Dispatcher por si el evento viene de otro hilo de UI
+            this.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    this.Left = this.Owner.Left;
+                    this.Top = this.Owner.Top;
+                    this.Width = this.Owner.ActualWidth;
+                    this.Height = this.Owner.ActualHeight;
+                }
+                catch { }
+            });
+        }
+
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // Evitar que el click dentro del panel propague y cierre el overlay
+            e.Handled = true;
         }
 
         private async void BtnEditar_Click(object sender, RoutedEventArgs e)
@@ -165,8 +239,14 @@ namespace GestLog.Views.Tools.GestionEquipos
                                 Conexiones = vmFallback.ListaConexiones?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>()
                             };                            // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
                             // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
-                            var app = (App)System.Windows.Application.Current;
-                            var serviceProvider = app.ServiceProvider;
+                            // Resolver el Application actual de forma segura
+                            var app = System.Windows.Application.Current as App;
+                            var serviceProvider = app?.ServiceProvider;
+                            if (serviceProvider == null)
+                            {
+                                // Intentar fallback simple: no inicializar dependencias si no hay ServiceProvider
+                                return;
+                            }
                             var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
                             var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();

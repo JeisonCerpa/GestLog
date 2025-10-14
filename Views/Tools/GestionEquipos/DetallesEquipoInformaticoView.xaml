@@ -5,413 +5,379 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
-        Title="Detalles Equipo" Height="720" Width="1000" WindowStartupLocation="CenterOwner" Background="#FAFAFA">    <Window.Resources>
-        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <conv:BooleanToEmojiConverter x:Key="BooleanToEmojiConverter"/>
-        <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
-        <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
-        
-        <!-- Recursos de colores necesarios -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#0F7530"/>
-        <SolidColorBrush x:Key="SuccessBrush" Color="#27AE60"/>
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
-        <SolidColorBrush x:Key="BorderLightBrush" Color="#EDF2F7"/>
-        
-        <!-- Efectos necesarios -->
-        <DropShadowEffect x:Key="DropShadowEffect" 
-                          Color="#1A000000" 
-                          Direction="315" 
-                          ShadowDepth="4" 
-                          Opacity="0.2" 
-                          BlurRadius="8"/>
-                          
-        <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#504F4E"/>
-        </Style>
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#2B8E3F"/>
-        </Style>
+        Title="Detalles Equipo" Height="720" Width="1000" WindowStartupLocation="Manual"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" TextOptions.TextHintingMode="Fixed">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
-        <!-- Style para TextBox en modo solo lectura: se ve como texto pero permite selección -->
-        <Style TargetType="TextBox">
-            <Setter Property="Foreground" Value="#222222"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="IsReadOnlyCaretVisible" Value="True"/>
-            <Setter Property="Cursor" Value="IBeam"/>
-            <Setter Property="Focusable" Value="True"/>
-            <Setter Property="SelectionBrush" Value="#BEE6FD"/>
-            <Setter Property="SelectionOpacity" Value="0.9"/>
-            <Setter Property="CaretBrush" Value="#222222"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="Auto"/>
-        </Style>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:BooleanToEmojiConverter x:Key="BooleanToEmojiConverter"/>
+            <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
 
-        <!-- Estilos de botón reutilizables -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#2B8E3F" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
-                            <Grid>
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#247C35" />
-                                <Setter TargetName="Bd" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#1A000000" BlurRadius="6" ShadowDepth="2" Opacity="0.2"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1" />
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
-                                <Setter Property="Cursor" Value="Arrow" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <!-- Mantener conversores/estilos locales necesarios y adaptar LabelStyle a estándar -->
+            <!-- LabelStyle existente en las plantillas: lo basamos en LabelTextStyle del diccionario estándar -->
+            <Style x:Key="LabelStyle" TargetType="TextBlock" BasedOn="{StaticResource LabelTextStyle}" />
 
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#C0392B" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
-                            <Grid>
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#A93226" />
-                                <Setter TargetName="Bd" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#1A000000" BlurRadius="6" ShadowDepth="2" Opacity="0.2"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1" />
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
-                                <Setter Property="Cursor" Value="Arrow" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <!-- Estilo de badge específico para esta vista que mapea EstadoDescripcion a colores -->
+            <Style x:Key="DetalleStatusBadge" TargetType="Border" BasedOn="{StaticResource StatusBadge}">
+                <Setter Property="Padding" Value="6,4" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Ejecutado">
+                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Atrasado">
+                        <Setter Property="Background" Value="{StaticResource ErrorBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Pendiente">
+                        <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="En Progreso">
+                        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                    </DataTrigger>
+                    <!-- Mejor soporte visual para equipos activos -->
+                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Activo">
+                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
 
-        <!-- Plantilla detallada para un slot RAM (valores como TextBox seleccionables) -->
-        <DataTemplate x:Key="RamItemTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Slot: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding NumeroSlot, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding TipoMemoria, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
-                        <TextBlock Text="Frecuencia: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Frecuencia, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
-                        <TextBlock Text="Ocupado: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Ocupado, Converter={StaticResource BooleanToEmojiConverter}, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
-                    <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" IsReadOnly="True" AcceptsReturn="True"/>
-                </StackPanel>
-            </Border>
-        </DataTemplate>        <!-- Plantilla detallada para un disco (valores como TextBox seleccionables) -->
-        <DataTemplate x:Key="DiscoItemTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="#" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding NumeroDisco, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
-                        <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Tipo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
-                        <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </DataTemplate>        <!-- Plantilla simple para una conexión de red (consistente con RAM/Discos) -->
-        <DataTemplate x:Key="ConexionItemTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Adaptador: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Adaptador, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="Activo" IsReadOnly="True" Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="IP: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding DireccionIPv4, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
-                        <TextBlock Text="MAC: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding DireccionMAC, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Máscara: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding MascaraSubred, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
-                        <TextBlock Text="Gateway: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding PuertoEnlace, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </DataTemplate>
+            <!-- Style para TextBox en modo solo lectura: apariencia igual a ValueTextStyle pero permite selección -->
+            <Style TargetType="TextBox">
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="IsReadOnlyCaretVisible" Value="True"/>
+                <Setter Property="Cursor" Value="IBeam"/>
+                <Setter Property="Focusable" Value="True"/>
+                <Setter Property="SelectionBrush" Value="#BEE6FD"/>
+                <Setter Property="SelectionOpacity" Value="0.9"/>
+                <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                <Setter Property="TextOptions.TextHintingMode" Value="Fixed"/>
+            </Style>
 
-        <!-- Plantilla para un periférico asignado -->
-        <DataTemplate x:Key="PerifericoItemTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Código: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Dispositivo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Dispositivo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+            <!-- NOTE: PrimaryButtonStyle / DangerButtonStyle / brushes / shadows se obtienen del ModalWindowsStandard.xaml -->
+
+            <!-- Plantilla detallada para un slot RAM (valores como TextBox seleccionables) -->
+            <DataTemplate x:Key="RamItemTemplate">
+                <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Slot: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding NumeroSlot, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding TipoMemoria, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                            <TextBlock Text="Frecuencia: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Frecuencia, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                            <TextBlock Text="Ocupado: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Ocupado, Converter={StaticResource BooleanToEmojiConverter}, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}" Margin="0,6,0,0"/>
+                        <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" IsReadOnly="True" AcceptsReturn="True"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                </Border>
+            </DataTemplate>
+
+            <!-- Plantilla detallada para un disco (valores como TextBox seleccionables) -->
+            <DataTemplate x:Key="DiscoItemTemplate">
+                <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="#" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding NumeroDisco, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
+                            <TextBlock Text="Tipo: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Tipo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,12,0"/>
+                            <TextBlock Text="Capacidad (GB): " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding CapacidadGB, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="Serial: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SerialNumber, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
-                        <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding EstadoDescripcion, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                </Border>
+            </DataTemplate>
+
+            <!-- Plantilla simple para una conexión de red (consistente con RAM/Discos) -->
+            <DataTemplate x:Key="ConexionItemTemplate">
+                <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Adaptador: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Adaptador, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="Activo" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="IP: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding DireccionIPv4, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                            <TextBlock Text="MAC: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding DireccionMAC, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="Máscara: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding MascaraSubred, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,16,0"/>
+                            <TextBlock Text="Gateway: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding PuertoEnlace, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="8,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding Observaciones, Converter={StaticResource StringToVisibilityConverter}}">
-                        <TextBlock Text="Observaciones: " Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Observaciones, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0" TextWrapping="Wrap"/>
+                </Border>
+            </DataTemplate>
+
+            <!-- Plantilla para un periférico asignado -->
+            <DataTemplate x:Key="PerifericoItemTemplate">
+                <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Código: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Dispositivo: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Dispositivo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="Marca: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Modelo: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Text="Serial: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding SerialNumber, Mode=OneWay}" IsReadOnly="True" Margin="8,0,16,0"/>
+                            <TextBlock Text="Estado: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding EstadoDescripcion, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding Observaciones, Converter={StaticResource StringToVisibilityConverter}}">
+                            <TextBlock Text="Observaciones: " Style="{StaticResource LabelStyle}"/>
+                            <TextBox Text="{Binding Observaciones, Mode=OneWay}" IsReadOnly="True" Margin="8,0,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
-        </DataTemplate>
+                </Border>
+            </DataTemplate>
+        </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True" Background="#80000000">
+        <!-- Panel centrado siguiendo el diseño de PlanDetalleModalWindow -->
+        <Border Width="680" MaxHeight="720"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BorderThickness="1"
+                BorderBrush="{StaticResource BorderBrush}"
+                Effect="{StaticResource WindowShadow}">
+            <!-- Evitar que clicks dentro del panel cierren la ventana -->
+            <Border.MouseLeftButtonDown>Panel_MouseLeftButtonDown</Border.MouseLeftButtonDown>
 
-        <Border Background="#FFFFFF" CornerRadius="8" Padding="16" BorderBrush="#DDD" BorderThickness="1" Grid.Row="0">
-            <Grid VerticalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <!-- Izquierda: título y código -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
-                    <TextBlock Text="Detalles del equipo" FontSize="18" FontWeight="Bold" Foreground="#118938" VerticalAlignment="Center"/>
-                    <TextBlock Text="  -  " FontSize="18" VerticalAlignment="Center"/>
-                    <TextBlock Text="Código: " Style="{StaticResource LabelStyle}" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding Codigo, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Center" Cursor="IBeam"/>
-                </StackPanel>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <!-- Derecha: botón Editar alineado a la derecha en la misma fila -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Button Content="Editar" Width="90" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Click="BtnEditar_Click" />
-                </StackPanel>
+                <!-- Header con gradiente y botón de cierre -->
+                <Border Grid.Row="0" CornerRadius="8,8,0,0" Padding="24,18" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#118938" Offset="0"/>
+                            <GradientStop Color="#2B8E3F" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="⚙" FontSize="16" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Detalle del Equipo Informático" Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Información detallada del equipo" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Botones de acción: Editar + Cerrar (Dar de baja se gestiona desde el editor) -->
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0">
+                            <Button x:Name="BtnEditar" Style="{StaticResource HeaderActionButtonStyle}" Click="BtnEditar_Click" ToolTip="Editar" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Editar" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Grid Width="14" Height="14">
+                                    <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Contenido principal -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20" Background="{StaticResource LightGrayBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                    <StackPanel>
+                        <!-- Sección resumen principal (igual que PlanDetalleModalWindow) -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="24" Margin="0,0,0,20" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/> <!-- Código -->
+                                    <RowDefinition Height="Auto"/> <!-- Equipo -->
+                                    <RowDefinition Height="Auto"/> <!-- Asignado a / Usuario -->
+                                    <RowDefinition Height="Auto"/> <!-- Marca -->
+                                    <RowDefinition Height="Auto"/> <!-- Modelo -->
+                                    <RowDefinition Height="Auto"/> <!-- Procesador -->
+                                    <RowDefinition Height="Auto"/> <!-- SO -->
+                                    <RowDefinition Height="Auto"/> <!-- Serial -->
+                                    <RowDefinition Height="Auto"/> <!-- AnyDesk -->
+                                    <RowDefinition Height="Auto"/> <!-- Costo -->
+                                    <RowDefinition Height="Auto"/> <!-- Estado -->
+                                    <RowDefinition Height="Auto"/> <!-- FechaCompra -->
+                                    <RowDefinition Height="Auto"/> <!-- FechaBaja -->
+                                    <RowDefinition Height="Auto"/> <!-- Resumen -->
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Código:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Codigo}" Style="{StaticResource ValueTextStyle}" FontWeight="SemiBold" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Equipo:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NombreEquipo}" Style="{StaticResource ValueTextStyle}" FontWeight="Medium" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Asignado a:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding UsuarioAsignado}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Marca:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Marca}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Modelo:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Modelo}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Procesador:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Procesador}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="SO:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SO}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Serial:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SerialNumber}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="AnyDesk:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding CodigoAnydesk}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="9" Grid.Column="0" Text="Costo:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Costo, StringFormat={}{0:C}}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="10" Grid.Column="0" Text="Estado:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <Border Grid.Row="10" Grid.Column="1" Style="{StaticResource DetalleStatusBadge}" Margin="8,6,0,6" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Estado}" Style="{StaticResource StatusText}"/>
+                                </Border>
+
+                                <TextBlock Grid.Row="11" Grid.Column="0" Text="F. Compra:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="11" Grid.Column="1" Text="{Binding FechaCompra, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="12" Grid.Column="0" Text="F. Baja:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="12" Grid.Column="1" Text="{Binding FechaBaja, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="13" Grid.Column="0" Text="Resumen:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Row="13" Grid.Column="1" Text="{Binding Observaciones}" Style="{StaticResource ValueTextStyle}" TextWrapping="Wrap" Margin="8,6,0,6" MaxHeight="220"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Secciones expansibles (RAM/Discos/Conexiones/Periféricos) reutilizan plantillas ya definidas -->
+                        <StackPanel>
+                            <Expander Header="{Binding RamHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="Cantidad de slots: " Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Text="{Binding SlotsRam.Count, Mode=OneWay}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
+                                    <ItemsControl ItemsSource="{Binding SlotsRam}" ItemTemplate="{StaticResource RamItemTemplate}"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+
+                            <Expander Header="{Binding DiscoHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6" Margin="0,8,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Cantidad de discos: " Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Text="{Binding Discos.Count, Mode=OneWay}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
+                                    <ItemsControl ItemsSource="{Binding Discos}" ItemTemplate="{StaticResource DiscoItemTemplate}"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+
+                            <Expander Header="{Binding ConexionesHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6" Margin="0,8,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Cantidad de conexiones: " Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Text="{Binding Conexiones.Count, Mode=OneWay}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
+                                    <ItemsControl ItemsSource="{Binding Conexiones}" ItemTemplate="{StaticResource ConexionItemTemplate}"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+
+                            <Expander Header="{Binding PerifericosHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6" Margin="0,8,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Cantidad de periféricos: " Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Text="{Binding Perifericos.Count, Mode=OneWay}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
+                                    <ItemsControl ItemsSource="{Binding Perifericos}" ItemTemplate="{StaticResource PerifericoItemTemplate}"
+                                                  VirtualizingPanel.IsVirtualizing="True"
+                                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
-
-        <!-- Metadatos y resumen en fila separada -->
-        <Border Background="#FFFFFF" CornerRadius="8" Padding="12" BorderBrush="#DDD" BorderThickness="1" Grid.Row="1" Margin="0,12,0,0">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                <StackPanel Orientation="Vertical" Margin="0,0,24,0">
-                    <TextBlock Text="Fecha creación" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding FechaCreacion, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True"/>
-                </StackPanel>
-                <StackPanel Orientation="Vertical" Margin="0,0,24,0">
-                    <TextBlock Text="Fecha modificación" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding FechaModificacion, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True"/>
-                </StackPanel>
-                <StackPanel Orientation="Vertical" Margin="0,0,24,0">
-                    <TextBlock Text="Estado" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding Estado, Mode=OneWay}" IsReadOnly="True"/>
-                </StackPanel>
-                <StackPanel Orientation="Vertical" Margin="0,0,24,0">
-                    <TextBlock Text="Sede" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding Sede, Mode=OneWay}" IsReadOnly="True"/>
-                </StackPanel>
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Usuario asignado" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding UsuarioAsignado, Mode=OneWay}" IsReadOnly="True"/>
-                </StackPanel>
-            </StackPanel>
-        </Border>
-
-        <Border Background="#FFFFFF" CornerRadius="8" Padding="16" BorderBrush="#DDD" BorderThickness="1" Grid.Row="2" Margin="0,12,0,12">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                            <TextBlock Text="Nombre del equipo" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding NombreEquipo, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Marca" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Marca, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Modelo" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Modelo, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Sistema operativo" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding SO, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Serial" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding SerialNumber, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Procesador" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Procesador, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Conexión remota" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding CodigoAnydesk, Mode=OneWay}" IsReadOnly="True" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                            <TextBlock Text="Costo" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding Costo, StringFormat=C, Mode=OneWay}" IsReadOnly="True" />
-
-                            <TextBlock Text="Fecha de compra" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding FechaCompra, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True" />
-
-                            <TextBlock Text="Fecha baja" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding FechaBaja, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True" />
-
-                            <TextBlock Text="Observaciones" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Observaciones, Mode=OneWay}" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />
-
-                            <Separator Margin="0,8"/>
-
-                            <TextBlock Text="Fechas internas" Style="{StaticResource LabelStyle}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding FechaCreacionFormatted, Mode=OneWay}" IsReadOnly="True" />
-                            <TextBox Text="{Binding FechaModificacionFormatted, Mode=OneWay}" IsReadOnly="True" />
-                        </StackPanel>
-                    </Grid>
-
-                    <Separator Margin="0,8"/>
-
-                    <!-- RAM -->
-                    <Expander Header="{Binding RamHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
-                        <StackPanel>
-                            <TextBlock Text="Cantidad de slots: " Style="{StaticResource LabelStyle}" />
-                            <TextBox Text="{Binding SlotsRam.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
-
-                            <ItemsControl ItemsSource="{Binding SlotsRam}" ItemTemplate="{StaticResource RamItemTemplate}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Expander>
-
-                    <Separator Margin="0,8"/>                    <!-- Discos -->
-                    <Expander Header="{Binding DiscoHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
-                        <StackPanel>
-                            <TextBlock Text="Cantidad de discos: " Style="{StaticResource LabelStyle}" />
-                            <TextBox Text="{Binding Discos.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
-
-                            <ItemsControl ItemsSource="{Binding Discos}" ItemTemplate="{StaticResource DiscoItemTemplate}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Expander>
-
-                    <Separator Margin="0,8"/>                    <!-- Conexiones de Red -->
-                    <Expander Header="{Binding ConexionesHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
-                        <StackPanel>
-                            <TextBlock Text="Cantidad de conexiones: " Style="{StaticResource LabelStyle}" />
-                            <TextBox Text="{Binding Conexiones.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
-
-                            <ItemsControl ItemsSource="{Binding Conexiones}" ItemTemplate="{StaticResource ConexionItemTemplate}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </StackPanel>                    </Expander>
-
-                    <Separator Margin="0,8"/>
-
-                    <!-- Periféricos Asignados -->
-                    <Expander Header="{Binding PerifericosHeader}" IsExpanded="True" Background="#F7FFF7" Padding="6">
-                        <StackPanel>
-                            <TextBlock Text="Cantidad de periféricos: " Style="{StaticResource LabelStyle}" />
-                            <TextBox Text="{Binding Perifericos.Count, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
-
-                            <ItemsControl ItemsSource="{Binding Perifericos}" ItemTemplate="{StaticResource PerifericoItemTemplate}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Expander>
-
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-            <Button Content="Cerrar" Width="100" Height="34" Margin="0,0,8,0" Click="BtnCerrar_Click" Style="{StaticResource DangerButtonStyle}" />
-        </StackPanel>
     </Grid>
 </Window>

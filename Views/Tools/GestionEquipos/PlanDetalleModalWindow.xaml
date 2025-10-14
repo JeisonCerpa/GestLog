@@ -7,7 +7,6 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="Manual"
-        Topmost="True"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display"
