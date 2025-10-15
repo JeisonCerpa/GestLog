@@ -23,8 +23,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         public CronogramaService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            _logger = logger;
-            _dbContextFactory = dbContextFactory;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         }
 
         public async Task<IEnumerable<CronogramaMantenimientoDto>> GetAllAsync()
@@ -442,10 +442,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 if (exists) continue;
                 // Buscar cronograma del año actual
                 var cronogramaActual = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == now.Year);
-                int semanaInicio = 1;                if (cronogramaActual != null)
+                int semanaInicio = 1;
+                if (cronogramaActual != null)
                 {
                     // Buscar última semana con mantenimiento programado
-                    int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
+                    int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);
+                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
                     {
                         int salto = equipo.FrecuenciaMtto switch
                         {
@@ -458,31 +460,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Models.Enums.FrecuenciaMantenimiento.Anual => 52,
                             _ => 1
                         };
-                        
-                        // lastWeek es el índice (base 0), convertir a número de semana (base 1)
-                        int ultimaSemana = lastWeek + 1;
-                        int proximaSemana = ultimaSemana + salto;
-                        
-                        // Calcular la semana correspondiente del siguiente año
-                        if (proximaSemana > 52)
-                        {
-                            semanaInicio = proximaSemana - 52;
-                        }
-                        else
-                        {
-                            // Si aún no excede 52, significa que necesitamos calcular el siguiente ciclo
-                            // Para el próximo año, agregamos un salto más
-                            semanaInicio = proximaSemana + salto;                            if (semanaInicio > 52)
-                            {
-                                semanaInicio = semanaInicio - 52;
-                            }
-                        }
-                    }                    else
+
+                        // Calcular la siguiente semana respetando el ciclo (módulo 52)
+                        int ultimaSemana = lastWeek + 1; // base 1
+                        int proximaSemana = ((ultimaSemana - 1 + salto) % 52) + 1;
+                        semanaInicio = proximaSemana;
+                    }
+                    else
                     {
                         semanaInicio = 1;
                     }
-                }                var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
-                
+                }
+                var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+
                 var nuevo = new Models.Entities.CronogramaMantenimiento
                 {
                     // SemanaInicioMtto eliminado de la generación de cronogramas para el próximo año
@@ -496,10 +486,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 };
                 dbContext.Cronogramas.Add(nuevo);
             }
-            await dbContext.SaveChangesAsync();        }
+            await dbContext.SaveChangesAsync();
+        }
 
         /// <summary>
-                /// <summary>
         /// Genera los seguimientos faltantes para todos los cronogramas existentes.
         /// </summary>
         public async Task GenerarSeguimientosFaltantesAsync()
@@ -507,7 +497,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             using var dbContext = _dbContextFactory.CreateDbContext();
             var cronogramas = dbContext.Cronogramas.ToList();
             int totalAgregados = 0;
-            
+
             foreach (var cronograma in cronogramas)
             {
                 for (int i = 0; i < cronograma.Semanas.Length; i++)
@@ -536,7 +526,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                 }
             }
-            
+
             await dbContext.SaveChangesAsync();
             _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
             // Notificar actualización de seguimientos
@@ -577,46 +567,45 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     };
                     if (anio == anioRegistro)
                     {
-                        semanaInicio = semanaRegistro + salto;
-                        // Si la semana de inicio supera 52, que empiece en el siguiente ciclo
-                        while (semanaInicio > 52) semanaInicio -= 52;
-                        // Si la semana de inicio es menor a 1, ajusta a 1
-                        if (semanaInicio < 1) semanaInicio = 1;
-                        // Si la semana de inicio está muy cerca del final y no cabe el ciclo, que empiece en la primera semana del siguiente año
-                        if (semanaInicio > 52 - salto + 1) semanaInicio = 1;
-                    }                    else
-                    {                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
-                        
+                        // Calcular semana de inicio a partir de la semana de registro y la frecuencia usando módulo 52
+                        semanaInicio = ((semanaRegistro - 1 + salto) % 52) + 1;
+                    }
+                    else
+                    {
+                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
+
                         if (cronogramaAnterior != null)
                         {
-                            int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);                            if (lastWeek >= 0)
-                            {                                // lastWeek es el índice (base 0), convertir a número de semana (base 1)
+                            int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
+                            if (lastWeek >= 0)
+                            {
+                                int saltoAnterior = equipo.FrecuenciaMtto switch
+                                {
+                                    Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                    Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                    Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                    Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                    Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                    Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                    Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                                    _ => 1
+                                };
+                                // Calcular la semana de inicio para el año actual a partir del último mantenimiento del año anterior
                                 int ultimaSemana = lastWeek + 1;
-                                int proximaSemana = ultimaSemana + salto;
-                                  // Calcular la semana correspondiente del siguiente año
-                                if (proximaSemana > 52)
-                                {
-                                    semanaInicio = proximaSemana - 52;
-                                }
-                                else
-                                {
-                                    // Si aún no excede 52, significa que necesitamos calcular el siguiente ciclo
-                                    // Para el próximo año, agregamos un salto más
-                                    semanaInicio = proximaSemana + salto;                                    if (semanaInicio > 52)
-                                    {
-                                        semanaInicio = semanaInicio - 52;
-                                    }
-                                }
-                            }                            else
+                                semanaInicio = ((ultimaSemana - 1 + saltoAnterior) % 52) + 1;
+                            }
+                            else
                             {
                                 semanaInicio = 1;
                             }
-                        }                        else
+                        }
+                        else
                         {
                             semanaInicio = 1;
                         }
-                    }                    var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
-                      var nuevo = new CronogramaMantenimiento
+                    }
+                    var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                    var nuevo = new CronogramaMantenimiento
                     {
                         Codigo = equipo.Codigo!,
                         Nombre = equipo.Nombre!,
@@ -627,7 +616,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Anio = anio
                     };
                     dbContext.Cronogramas.Add(nuevo);
-                    
+
                     // Guardar inmediatamente para que esté disponible en la siguiente iteración
                     await dbContext.SaveChangesAsync();
                 }
@@ -640,7 +629,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
             return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-        }        // Utilidad para obtener el primer día de la semana ISO 8601
+        }
+        // Utilidad para obtener el primer día de la semana ISO 8601
         private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
         {
             var jan1 = new DateTime(year, 1, 1);
@@ -673,17 +663,18 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Anio = s.Anio,
                 Estado = s.Estado
             };
-        }        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
+        }
+        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
-            
+
             var cronogramasDelAnio = await dbContext.Cronogramas
                 .Where(c => c.Anio == anio)
                 .ToListAsync();
-            
+
             var cronogramasConMantenimiento = cronogramasDelAnio
-                .Where(c => c.Semanas != null && 
-                           c.Semanas.Length >= semana && 
+                .Where(c => c.Semanas != null &&
+                           c.Semanas.Length >= semana &&
                            c.Semanas[semana - 1])
                 .ToList();
             var estados = new List<MantenimientoSemanaEstadoDto>();
@@ -826,6 +817,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     estados.Add(estado);
                     continue;
                 }
+
+                // Años futuros: marcar como pendiente (no registrable todavía) para que se muestren en la UI
+                if (anio > anioActual)
+                {
+                    estado.Realizado = false;
+                    estado.Atrasado = false;
+                    estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
+                    estados.Add(estado);
+                    continue;
+                }
             }
             // Al final del método, después de procesar los programados:
             // Agregar estados para seguimientos manuales (no programados) de esa semana/año que no esté ya en la lista
@@ -846,9 +847,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Realizado = seguimiento.FechaRealizacion.HasValue,
                         Estado = seguimiento.Estado
                     };
-                    estados.Add(estado);                }
+                    estados.Add(estado);
+                }
             }
-            
+
             return estados;
         }
     }
