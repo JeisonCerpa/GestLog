@@ -266,8 +266,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }
                     // Determinar número de semanas en el año objetivo (si se provee en el archivo, buscar columna 'Anio' o usar año actual)
                     int fileYear = DateTime.Now.Year;
-                    // Buscar una columna llamada 'Anio' (opcional) en la primera fila
-                    for (int col = 1; col <= worksheet.LastColumnUsed().ColumnNumber(); col++)
+                    // Determinar de forma segura la última columna con contenido en la fila de encabezados
+                    int lastColumn = worksheet.Row(1).LastCellUsed()?.Address.ColumnNumber
+                                     ?? worksheet.LastColumnUsed()?.ColumnNumber()
+                                     ?? (headers.Length + System.Globalization.ISOWeek.GetWeeksInYear(DateTime.Now.Year));
+                    for (int col = 1; col <= lastColumn; col++)
                     {
                         var h = worksheet.Cell(1, col).GetString();
                         if (string.Equals(h, "Anio", StringComparison.OrdinalIgnoreCase))
