@@ -21,6 +21,7 @@ Anatomía de la ventana
    - Background="Transparent"
    - WindowStartupLocation="CenterOwner"
    - SizeToContent: recomendamos usar Manual cuando se necesita que el overlay cubra la ventana owner y se usará un método como `ConfigurarParaVentanaPadre` que fije Left/Top/Width/Height. En casos simples (diálogos pequeños sin overlay que cubra la aplicación) puede usarse Width/Height o SizeToContent.
+   - Topmost: No establecer Topmost="True" en modales estándar. Dejar la propiedad sin especificar (o explícitamente Topmost="False") es la recomendación. Usar Owner + ShowDialog() y, cuando sea necesario, `ConfigurarParaVentanaPadre(owner)` garantiza que el diálogo quede encima de la ventana padre sin forzarlo por encima de otras aplicaciones. Solo usar Topmost para alertas críticas que deben permanecer sobre todas las ventanas del sistema.
 
 2. Overlay (Grid raíz):
    - Debe cubrir todo el área del Window (el Window debe haberse dimensionado para cubrir la ventana padre cuando se espera bloquearla).
@@ -109,10 +110,119 @@ Checklist para añadir una nueva ventana modal
 - [ ] Fijar Height y VerticalScrollBarVisibility en cajas de texto multilinea para evitar crecimiento del Window.
 - [ ] Añadir GuardarCommand en ViewModel y exponer evento de éxito para que el dialog retorne DialogResult true.
 
-Notas finales
--------------
-- Se recomienda centralizar colores y estilos en un ResourceDictionary compartido para evitar inconsistencias (por ejemplo `Resources/ModalStyles.xaml`).
-- Si se necesita animación, documentarla y aplicar la misma duración y easing en todas las modales.
+Secciones añadidas y notas prácticas
+====================================
+
+Recursos expuestos por ModalWindowsStandard.xaml
+------------------------------------------------
+El ResourceDictionary creado (`ModalWindowsStandard.xaml`) incluye (claves relevantes):
+
+- Brushes
+  - `PrimaryBrush` (verde corporativo #118938)
+  - `PrimaryLightBrush` (verde secundario)
+  - `AccentBrush`, `AccentLightBrush`
+  - `SurfaceBrush` (blanco de tarjeta)
+  - `LightGrayBrush`, `BorderBrush`, `BorderLightBrush`
+  - `TextPrimaryBrush`, `TextMutedBrush`
+  - `ErrorBrush`, `WarningBrush`
+
+- Effects
+  - `WindowShadow`, `SectionShadow`, `HeaderShadow` (DropShadowEffect optimizados)
+
+- Text Styles
+  - `HeaderTextStyle`, `SubHeaderTextStyle`, `SectionTitleStyle`, `LabelTextStyle`, `ValueTextStyle`, `StatusText`
+
+- Controls / Styles
+  - `CorporateDataGrid`, `DataGridHeader`
+  - `CloseButton` (botón X de header)
+  - `PrimaryButtonStyle`, `DangerButtonStyle` (botones estándar)
+  - `HeaderActionButtonStyle` (botones de header: fondo blanco, texto verde, Padding aumentado y MinWidth)
+  - `StatusBadge` (badge con DataTriggers en vistas que lo usen)
+
+Uso recomendado de `HeaderActionButtonStyle`
+-------------------------------------------
+- Diseñado para botones en el header sobre fondos primarios (gradiente verde).
+- Proporciona mayor contraste (fondo blanco, texto/ícono en `PrimaryBrush`) y espacio interior (Padding aumentado y `MinWidth`) para evitar texto pegado a bordes.
+- Ejemplo de uso en XAML:
+
+```xaml
+<Button Style="{StaticResource HeaderActionButtonStyle}" Click="BtnEditar_Click"> 
+    <StackPanel Orientation="Horizontal">
+        <TextBlock Text="" FontFamily="Segoe MDL2 Assets"/>
+        <TextBlock Text="Editar"/>
+    </StackPanel>
+</Button>
+```
+
+Visibilidad condicional / permisos
+----------------------------------
+- Para ocultar/mostrar acciones según permisos, enlazar `Visibility` a una propiedad booleana del ViewModel usando `BooleanToVisibilityConverter` o a una propiedad `CanEditarEquipo`.
+- Ejemplo: `Visibility="{Binding CanEditarEquipo, Converter={StaticResource BooleanToVisibilityConverter}}"`.
+
+Ejemplo práctico: asignar Owner y cubrir overlay correctamente
+-------------------------------------------------------------
+- Recomendación: antes de `ShowDialog()` llamar a una función helper en el diálogo que configure tamaño/posición para cubrir el Owner (especialmente para multi-monitor / DPI):
+
+```csharp
+public void ConfigurarParaVentanaPadre(Window owner)
+{
+    if (owner == null) return;
+    this.Owner = owner;
+    this.ShowInTaskbar = false;
+    this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+    // Ajustar bounds para overlay exacto
+    var interop = new System.Windows.Interop.WindowInteropHelper(owner);
+    var screen = System.Windows.Forms.Screen.FromHandle(interop.Handle);
+    var bounds = screen.Bounds; // System.Drawing.Rectangle
+
+    // Asignar a la ventana del dialogo para que su Grid overlay cubra toda la pantalla del owner
+    this.Left = bounds.Left;
+    this.Top = bounds.Top;
+    this.Width = bounds.Width;
+    this.Height = bounds.Height;
+}
+```
+
+- Alternativa: si el owner está maximizado, es suficiente con centrar y asegurar `WindowStartupLocation=CenterOwner` y `Owner=...`. Probar ambos comportamientos.
+
+Sugerencias para rendimiento y virtualización
+--------------------------------------------
+- Si las secciones del modal contienen listas grandes (RAM, Discos, Periféricos, Conexiones), usar virtualización (`VirtualizingStackPanel`, `VirtualizingPanel.IsVirtualizing=True`, `VirtualizationMode=Recycling`) o cambiar a `ListBox`/`DataGrid` con virtualización activada. Esto evita el bloqueo visual al abrir el modal.
+- Si se usan ItemsControl con DataTemplates complejos, probar con 100+ ítems para validar performance.
+
+Política de sombras y contraste
+------------------------------
+- Mantener sombras muy suaves (opacidad < 0.15) para no afectar legibilidad.
+- Botón de cierre `CloseButton` debe tener Foreground blanco cuando el header es color primario; si se cambia el header a fondos claros, usar `CloseButton` con `Foreground={StaticResource TextPrimaryBrush}` (o crear variación si se necesita).
+
+Comportamiento de edición y acciones destructivas
+------------------------------------------------
+- No colocar acciones destructivas (Dar de baja) en el header por motivos de UX. Deben estar en el flujo de edición o dentro de un menú contextual.
+- En la vista Detalles implementada se ha movido el botón "Dar de baja" al flujo de edición: el editor (`AgregarEquipoInformaticoView`) debe exponer esa acción con confirmación y razonamiento (modal de confirmación `MessageBox` o dialog propio).
+
+Pruebas y validación (QA)
+-------------------------
+- Probar las modales en 3 configuraciones: 100% DPI, 125% y 150% en monitores primarios y secundarios.
+- Probar con Owner normal y Owner maximizado.
+- Probar apertura de modal con listas pequeñas y listas grandes (>=100 ítems) para validar virtualización.
+- Validar que overlay bloquea interacción en la ventana detrás (intentar click en controles del Owner).
+- Validar accesibilidad: navegar por teclado, Tab order, Escape cierra la ventana, Enter activa botón por defecto si aplica.
+
+Checklist ampliado (para incluir antes de crear nueva modal)
+-----------------------------------------------------------
+- [ ] Usar `ModalWindowsStandard.xaml` y referenciar sus claves en `Window.Resources`.
+- [ ] Incluir `Overlay_MouseLeftButtonDown` y `Panel_MouseLeftButtonDown` handlers.
+- [ ] Registrar `KeyDown` o `PreviewKeyDown` para Escape.
+- [ ] Configurar Owner y, si es necesario, llamar `ConfigurarParaVentanaPadre(owner)`.
+- [ ] Usar `HeaderActionButtonStyle` para botones del header que requieran contraste o `PrimaryButtonStyle` en el cuerpo/footer.
+- [ ] Evitar animaciones por defecto; si se añaden, documentarlas en el md.
+- [ ] Documentar cualquier nueva clave de recurso que se agregue al ResourceDictionary.
+
+Notas finales y mantenimiento
+----------------------------
+- Cada vez que se modifique `ModalWindowsStandard.xaml` debe actualizarse este documento con las nuevas claves (añadir en la sección "Recursos expuestos").
+- Mantener este documento bajo revisión por UI/UX y QA para asegurar coherencia visual y accesibilidad.
 
 Historial de cambios (versión inicial)
 --------------------------------------

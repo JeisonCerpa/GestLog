@@ -429,28 +429,58 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 // Guardar código original por si el usuario cambia el código durante la edición
                 var codigoOriginal = p.Codigo ?? "N/A";
 
-                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Abriendo diálogo para periférico {codigoOriginal}");
+                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Abriendo detalle para periférico {codigoOriginal}");
 
-                // Abrir diálogo de periférico en modo solo lectura
-                var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(p, _dbContextFactory);
-                dialog.ViewModel.IsReadOnlyMode = true;
-                var resultado = dialog.ShowDialog();
+                // Abrir vista de detalle como modal centrado sobre el owner y con overlay
+                var detalleView = new Views.Tools.GestionEquipos.PerifericoDetalleView(p, _dbContextFactory, canEdit: CanEditarEliminarPeriferico);
 
-                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Diálogo cerrado con resultado={resultado}");
-
-                // Si el usuario editó y guardó (DialogResult = true), persistir cambios en BD
-                if (resultado == true)
+                var ownerWindow = System.Windows.Application.Current?.MainWindow;
+                // Asegurar overlay correcto en multi-monitor/DPI
+                try
                 {
-                    _logger.LogInformation("[PerifericosViewModel] VerDetallesPerifericoAsync: Usuario guardó cambios, llamando a GuardarPerifericoAsync");
-                    var dtoActualizado = dialog.ViewModel.PerifericoActual;
-                    await GuardarPerifericoAsync(dtoActualizado, esNuevo: false, originalCodigo: codigoOriginal);
-                    await CargarPerifericosAsync();
-                    StatusMessage = "Periférico actualizado correctamente";
+                    detalleView.ConfigurarParaVentanaPadre(ownerWindow);
+                }
+                catch (System.Exception exCfg)
+                {
+                    _logger.LogWarning(exCfg, "[PerifericosViewModel] No se pudo configurar bounds del detalle (fallando con ConfigurarParaVentanaPadre) - continuando con CenterOwner");
+                }
+
+                // Mostrar modal
+                var resultado = detalleView.ShowDialog();
+
+                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Vista de detalle cerrada. RequestEdit={detalleView.RequestEdit}");
+
+                // Si el usuario solicitó editar desde la vista de detalle, abrir el editor (PerifericoDialog)
+                if (detalleView.RequestEdit)
+                {
+                    _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Usuario solicitó editar periférico {codigoOriginal}. Abriendo editor...");
+
+                    var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(p, _dbContextFactory);
+
+                    // Configurar bounds del editor también para que el overlay sea consistente
+                    try
+                    {
+                        if (ownerWindow != null) dialog.ConfigurarParaVentanaPadre(ownerWindow);
+                    }
+                    catch { /* no bloquear por fallo en el helper */ }
+
+                    if (dialog.ShowDialog() == true)
+                    {
+                        _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Editor devolvió TRUE para {codigoOriginal}. Guardando cambios...");
+                        var perifericoEditado = dialog.ViewModel.PerifericoActual;
+                        await GuardarPerifericoAsync(perifericoEditado, esNuevo: false, originalCodigo: codigoOriginal);
+                        await CargarPerifericosAsync();
+                        StatusMessage = "Periférico actualizado correctamente";
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Editor cerrado sin guardar para {codigoOriginal}.");
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                _logger.LogError(ex, $"[PerifericosViewModel] Error al abrir detalles del periférico {p?.Codigo ?? "N/A"}");
+                _logger.LogError(ex, $"[PerifericosViewModel] Error al abrir detalle del periférico {p?.Codigo ?? "N/A"}");
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     StatusMessage = "Error al abrir detalles del periférico";

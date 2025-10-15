@@ -857,6 +857,36 @@ namespace GestLog.Views.Tools.GestionEquipos
             };
         }
 
+        // Helper para ajustar bounds y Owner para cubrir la pantalla del owner (multi-monitor / DPI)
+        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
+        {
+            if (parentWindow != null)
+            {
+                Owner = parentWindow;
+
+                if (parentWindow.WindowState == WindowState.Maximized)
+                {
+                    WindowState = WindowState.Maximized;
+                }
+                else
+                {
+                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
+                    var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                    var bounds = screen.Bounds;
+
+                    Left = bounds.Left;
+                    Top = bounds.Top;
+                    Width = bounds.Width;
+                    Height = bounds.Height;
+                    WindowState = WindowState.Normal;
+                }
+            }
+            else
+            {
+                WindowState = WindowState.Maximized;
+            }
+        }
+
         public PerifericoDialog(PerifericoEquipoInformaticoDto perifericoParaEditar, IDbContextFactory<GestLogDbContext> dbContextFactory) : this(dbContextFactory)
         {
             ViewModel.ConfigurarParaEdicion(perifericoParaEditar);
