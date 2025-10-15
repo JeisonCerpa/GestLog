@@ -15,9 +15,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public int? SemanaInicioMtto { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
         [Required(ErrorMessage = "Las semanas del cronograma son obligatorias.")]
-        [MinLength(52, ErrorMessage = "El cronograma debe tener 52 semanas definidas.")]
-        // S1...S52: Representación semanal del cronograma
-        public bool[] Semanas { get; set; } = new bool[52];
+        // S1...SN: Representación semanal del cronograma. El número de semanas (N) puede ser 52 o 53 según el año ISO.
+        public bool[] Semanas { get; set; } = Array.Empty<bool>();
 
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;

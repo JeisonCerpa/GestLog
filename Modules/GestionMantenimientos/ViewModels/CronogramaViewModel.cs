@@ -295,6 +295,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
         
         var añoActual = AnioSeleccionado;
+        var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(añoActual);
         var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
             .Where(s => s.Anio == añoActual)
             .ToList();
@@ -302,7 +303,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         var semaphore = new System.Threading.SemaphoreSlim(5); // Limitar a 5 tareas concurrentes
         var semanasTemp = new List<SemanaViewModel>(); // Lista temporal para construir fuera del UI thread
         
-        for (int i = 1; i <= 52; i++)
+        for (int i = 1; i <= weeksInYear; i++)
         {
             var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
             var fechaFin = fechaInicio.AddDays(6);
@@ -328,7 +329,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                         Codigo = s.Codigo,
                         Nombre = s.Nombre,
                         Anio = s.Anio,
-                        Semanas = new bool[52],
+                        Semanas = new bool[weeksInYear],
                         FrecuenciaMtto = s.Frecuencia,
                         IsCodigoReadOnly = true,
                         IsCodigoEnabled = false
@@ -396,20 +397,36 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
 
             // Obtener todos los equipos y semanas del año seleccionado
             var cronogramas = CronogramasFiltrados.ToList();
-            var semanas = Enumerable.Range(1, 52).ToList();
+            var weeksInYearExport = System.Globalization.ISOWeek.GetWeeksInYear(AnioSeleccionado);
+            var semanas = Enumerable.Range(1, weeksInYearExport).ToList();
             // Diccionario: [equipo][semana] = estado
             var estadosPorEquipo = new Dictionary<string, Dictionary<int, MantenimientoSemanaEstadoDto>>();
-            foreach (var c in cronogramas)
+            // Obtener estados por semana primero (una llamada por semana)
+            var estadosPorSemana = new Dictionary<int, List<MantenimientoSemanaEstadoDto>>();
+            for (int s = 1; s <= weeksInYearExport; s++)
             {
-                estadosPorEquipo[c.Codigo!] = new Dictionary<int, MantenimientoSemanaEstadoDto>();
-                for (int s = 1; s <= 52; s++)
+                try
                 {
-                    var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(s, AnioSeleccionado);
+                    var listaEstados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(s, AnioSeleccionado);
+                    estadosPorSemana[s] = listaEstados.ToList();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error obteniendo estados para semana {Semana}", s);
+                    estadosPorSemana[s] = new List<MantenimientoSemanaEstadoDto>();
+                }
+            }
+             foreach (var c in cronogramas)
+             {
+                 estadosPorEquipo[c.Codigo!] = new Dictionary<int, MantenimientoSemanaEstadoDto>();
+                for (int s = 1; s <= weeksInYearExport; s++)
+                {
+                    var estados = estadosPorSemana.ContainsKey(s) ? estadosPorSemana[s] : new List<MantenimientoSemanaEstadoDto>();
                     var estado = estados.FirstOrDefault(e => e.CodigoEquipo == c.Codigo);
                     if (estado != null)
                         estadosPorEquipo[c.Codigo!][s] = estado;
                 }
-            }
+             }
 
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add($"Cronograma {AnioSeleccionado}");
@@ -418,7 +435,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             ws.Cell(1, 2).Value = "Nombre";
             ws.Cell(1, 3).Value = "Marca";
             ws.Cell(1, 4).Value = "Sede";
-            for (int s = 1; s <= 52; s++)
+            for (int s = 1; s <= weeksInYearExport; s++)
             {
                 ws.Cell(1, 4 + s).Value = $"S{s}";
                 ws.Cell(1, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -431,7 +448,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 ws.Cell(row, 2).Value = c.Nombre;
                 ws.Cell(row, 3).Value = c.Marca;
                 ws.Cell(row, 4).Value = c.Sede;
-                for (int s = 1; s <= 52; s++)
+                for (int s = 1; s <= weeksInYearExport; s++)
                 {
                     if (estadosPorEquipo.TryGetValue(c.Codigo!, out var estadosSemana) && estadosSemana.TryGetValue(s, out var estado))
                     {

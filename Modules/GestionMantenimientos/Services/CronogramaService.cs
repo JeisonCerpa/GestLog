@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
+using System.Globalization;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -85,8 +86,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("La sede es obligatoria.");
             if (cronograma.FrecuenciaMtto != null && (int)cronograma.FrecuenciaMtto <= 0)
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
-            if (cronograma.Semanas == null || cronograma.Semanas.Length != 52)
-                throw new GestionMantenimientosDomainException("El cronograma debe tener 52 semanas definidas.");
+            // Validar que la longitud de 'Semanas' coincida con el número de semanas del año correspondiente (ISO)
+            int targetYear = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year;
+            int weeksInYear = ISOWeek.GetWeeksInYear(targetYear);
+            if (cronograma.Semanas == null || cronograma.Semanas.Length != weeksInYear)
+                throw new GestionMantenimientosDomainException($"El cronograma debe tener {weeksInYear} semanas definidas para el año {targetYear}.");
             // Validar duplicados solo en alta
         }
 
@@ -260,8 +264,23 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         if (!string.Equals(cellValue, headers[i], StringComparison.OrdinalIgnoreCase))
                             throw new GestionMantenimientosDomainException($"Columna esperada '{headers[i]}' no encontrada en la posición {i + 1}.");
                     }
-                    // Validar encabezados de semanas
-                    for (int s = 1; s <= 52; s++)
+                    // Determinar número de semanas en el año objetivo (si se provee en el archivo, buscar columna 'Anio' o usar año actual)
+                    int fileYear = DateTime.Now.Year;
+                    // Buscar una columna llamada 'Anio' (opcional) en la primera fila
+                    for (int col = 1; col <= worksheet.LastColumnUsed().ColumnNumber(); col++)
+                    {
+                        var h = worksheet.Cell(1, col).GetString();
+                        if (string.Equals(h, "Anio", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Tomamos el año de la primera fila de datos (si existe)
+                            var val = worksheet.Cell(2, col).GetValue<int?>();
+                            if (val.HasValue) fileYear = val.Value;
+                            break;
+                        }
+                    }
+                    int weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(fileYear);
+                    // Validar encabezados de semanas dinámicamente
+                    for (int s = 1; s <= weeksInYear; s++)
                     {
                         var cellValue = worksheet.Cell(1, headers.Length + s).GetString();
                         if (!string.Equals(cellValue, $"S{s}", StringComparison.OrdinalIgnoreCase))
@@ -281,11 +300,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Marca = worksheet.Cell(row, 3).GetString(),
                                 Sede = worksheet.Cell(row, 4).GetString(),
                                 FrecuenciaMtto = freqInt.HasValue ? (FrecuenciaMantenimiento?)freqInt.Value : null,
-                                Semanas = new bool[52]
+                                Semanas = new bool[weeksInYear],
+                                Anio = fileYear
                             };
-                            for (int s = 0; s < 52; s++)
+                            for (int s = 0; s < weeksInYear; s++)
                             {
-                                var val = worksheet.Cell(row, 7 + s).GetString();
+                                var val = worksheet.Cell(row, headers.Length + 1 + s).GetString();
                                 dto.Semanas[s] = !string.IsNullOrWhiteSpace(val);
                             }
                             ValidarCronograma(dto);
@@ -343,8 +363,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(1, i + 1).Value = headers[i];
                     worksheet.Cell(1, i + 1).Style.Font.Bold = true;
                 }
-                // S1...S52
-                for (int s = 1; s <= 52; s++)
+                // Determinar semanas del año (por defecto año actual aunque la lista puede contener años distintos)
+                int exportYear = DateTime.Now.Year;
+                if (cronogramas.Any()) exportYear = cronogramas.First().Anio > 0 ? cronogramas.First().Anio : exportYear;
+                int weeksInYearExport = ISOWeek.GetWeeksInYear(exportYear);
+                // S1...S{N}
+                for (int s = 1; s <= weeksInYearExport; s++)
                 {
                     worksheet.Cell(1, headers.Length + s).Value = $"S{s}";
                     worksheet.Cell(1, headers.Length + s).Style.Font.Bold = true;
@@ -360,9 +384,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     worksheet.Cell(row, 4).Value = c.Sede;
                     // SemanaInicioMtto eliminado de la exportación
                     worksheet.Cell(row, 6).Value = c.FrecuenciaMtto.HasValue ? (int)c.FrecuenciaMtto.Value : (int?)null;
-                    for (int s = 0; s < 52; s++)
+                    for (int s = 0; s < weeksInYearExport; s++)
                     {
-                        worksheet.Cell(row, 6 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✔" : "";
+                        worksheet.Cell(row, headers.Length + 1 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✔" : "";
                     }
                     row++;
                 }
@@ -398,12 +422,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             }).ToList();
         }
 
-        // Genera el array de semanas según la frecuencia y la semana de inicio
-        public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia)
+        // Genera el array de semanas según la frecuencia y el año (soporta 52 o 53 semanas según ISO)
+        public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia, int year)
         {
-            var semanas = new bool[52];
-            if (semanaInicio < 1 || semanaInicio > 52 || frecuencia == null)
-                return semanas;
+            int weeksInYear = ISOWeek.GetWeeksInYear(year);
+            var semanas = new bool[weeksInYear];
+            if (frecuencia == null) return semanas;
+            if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;
             int salto = frecuencia switch
             {
                 FrecuenciaMantenimiento.Semanal => 1,
@@ -412,16 +437,22 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 FrecuenciaMantenimiento.Bimestral => 8,
                 FrecuenciaMantenimiento.Trimestral => 13,
                 FrecuenciaMantenimiento.Semestral => 26,
-                FrecuenciaMantenimiento.Anual => 52,
+                FrecuenciaMantenimiento.Anual => weeksInYear,
                 _ => 1
             };
             int i = semanaInicio - 1;
-            while (i < 52)
+            while (i < weeksInYear)
             {
                 semanas[i] = true;
                 i += salto;
             }
             return semanas;
+        }
+
+        // Sobrecarga para compatibilidad (usa el año actual)
+        public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia)
+        {
+            return GenerarSemanas(semanaInicio, frecuencia, DateTime.Now.Year);
         }
 
         /// <summary>
@@ -457,13 +488,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
                             Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
                             Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                            Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                            Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(now.Year),
                             _ => 1
                         };
 
-                        // Calcular la siguiente semana respetando el ciclo (módulo 52)
+                        // Calcular la siguiente semana respetando el ciclo (módulo weeksInYear)
+                        int yearsWeeks = ISOWeek.GetWeeksInYear(nextYear);
                         int ultimaSemana = lastWeek + 1; // base 1
-                        int proximaSemana = ((ultimaSemana - 1 + salto) % 52) + 1;
+                        int proximaSemana = ((ultimaSemana - 1 + salto) % yearsWeeks) + 1;
                         semanaInicio = proximaSemana;
                     }
                     else
@@ -471,7 +503,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         semanaInicio = 1;
                     }
                 }
-                var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto, nextYear);
 
                 var nuevo = new Models.Entities.CronogramaMantenimiento
                 {
@@ -562,13 +594,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
                         Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
                         Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                        Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                        Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(anio),
                         _ => 1
                     };
                     if (anio == anioRegistro)
                     {
-                        // Calcular semana de inicio a partir de la semana de registro y la frecuencia usando módulo 52
-                        semanaInicio = ((semanaRegistro - 1 + salto) % 52) + 1;
+                        // Calcular semana de inicio a partir de la semana de registro y la frecuencia usando módulo weeksInYear
+                        int yearsWeeks = ISOWeek.GetWeeksInYear(anio);
+                        semanaInicio = ((semanaRegistro - 1 + salto) % yearsWeeks) + 1;
                     }
                     else
                     {
@@ -587,12 +620,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                     Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
                                     Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
                                     Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                                    Models.Enums.FrecuenciaMantenimiento.Anual => 52,
+                                    Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(anio),
                                     _ => 1
                                 };
                                 // Calcular la semana de inicio para el año actual a partir del último mantenimiento del año anterior
                                 int ultimaSemana = lastWeek + 1;
-                                semanaInicio = ((ultimaSemana - 1 + saltoAnterior) % 52) + 1;
+                                int yearsWeeks = ISOWeek.GetWeeksInYear(anio);
+                                semanaInicio = ((ultimaSemana - 1 + saltoAnterior) % yearsWeeks) + 1;
                             }
                             else
                             {
@@ -604,7 +638,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             semanaInicio = 1;
                         }
                     }
-                    var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto);
+                    var semanas = GenerarSemanas(semanaInicio, equipo.FrecuenciaMtto, anio);
                     var nuevo = new CronogramaMantenimiento
                     {
                         Codigo = equipo.Codigo!,

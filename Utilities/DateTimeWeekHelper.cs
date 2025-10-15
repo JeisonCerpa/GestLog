@@ -33,14 +33,8 @@ namespace GestLog.Utilities
         /// </summary>
         public static (int anio, int semana) GetIsoYearWeek(DateTime date)
         {
-            var cal = CultureInfo.InvariantCulture.Calendar;
-            int semana = cal.GetWeekOfYear(date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-            int anio = date.Year;
-            // Ajuste de cruces de año ISO
-            if (date.Month == 1 && semana >= 52)
-                anio -= 1;
-            else if (date.Month == 12 && semana == 1)
-                anio += 1;
+            int semana = ISOWeek.GetWeekOfYear(date);
+            int anio = ISOWeek.GetYear(date);
             return (anio, semana);
         }
 

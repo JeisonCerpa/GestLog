@@ -12,8 +12,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public string? Marca { get; set; }
         public string? Sede { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
-        // 52 semanas: S1...S52
-        public bool[] Semanas { get; set; } = new bool[52];
+        // Semanas: S1...SN (N = 52 o 53 según el año ISO). La longitud se determina por ISOWeek.GetWeeksInYear(anio).
+        public bool[] Semanas { get; set; } = Array.Empty<bool>();
         public int Anio { get; set; } // Año del cronograma
     }
 }

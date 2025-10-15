@@ -42,13 +42,13 @@ namespace GestLog.Modules.DatabaseConnection
             base.OnModelCreating(modelBuilder);
             // Configuración adicional de entidades aquí
             var boolArrayToStringConverter = new ValueConverter<bool[], string>(
-                v => string.Join(";", v.Select(b => b ? "1" : "0")),
-                v => v.Length == 0 ? new bool[52] : v.Split(new[] {';'}, 52, System.StringSplitOptions.None).Select(s => s == "1").ToArray()
+                v => v == null || v.Length == 0 ? string.Empty : string.Join(";", v.Select(b => b ? "1" : "0")),
+                v => string.IsNullOrEmpty(v) ? Array.Empty<bool>() : v.Split(new[] {';'}, StringSplitOptions.None).Select(s => s == "1").ToArray()
             );
             var boolArrayComparer = new ValueComparer<bool[]>(
                 (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
                 a => a == null ? 0 : a.Aggregate(0, (hash, b) => hash * 31 + (b ? 1 : 0)),
-                a => a == null ? new bool[52] : a.ToArray()
+                a => a == null ? Array.Empty<bool>() : a.ToArray()
             );
             modelBuilder.Entity<CronogramaMantenimiento>()
                 .Property(c => c.Semanas)
