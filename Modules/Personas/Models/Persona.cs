@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using GestLog.Modules.Usuarios.Models;
+using GestLog.Modules.GestionMantenimientos.Models.Enums; // Para la enum Sede
 
 namespace GestLog.Modules.Personas.Models
 {
@@ -11,6 +12,10 @@ namespace GestLog.Modules.Personas.Models
         public Guid IdPersona { get; set; }
         public required string Nombres { get; set; }
         public required string Apellidos { get; set; }
+        /// <summary>
+        /// Sede asociada a la persona (opcional). Se persiste como entero en la BD y permite filtros por sede.
+        /// </summary>
+        public Sede? Sede { get; set; }
         public Guid TipoDocumentoId { get; set; }
         public GestLog.Modules.Usuarios.Models.TipoDocumento? TipoDocumento { get; set; }
         public required string NumeroDocumento { get; set; }
