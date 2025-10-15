@@ -28,6 +28,7 @@ namespace Modules.Personas.Services
         {
             try
             {
+                _logger.LogInformation($"[PersonaService] RegistrarPersonaAsync - Sede entrante: {persona.Sede}");
                 if (await _personaRepository.ExisteDocumentoAsync(persona.TipoDocumentoId, persona.NumeroDocumento))
                 {
                     _logger.LogWarning($"Duplicate document: {persona.TipoDocumentoId}-{persona.NumeroDocumento}");
@@ -42,6 +43,7 @@ namespace Modules.Personas.Services
                 persona.Nombres = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Nombres.ToLower());
                 persona.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Apellidos.ToLower());
                 var result = await _personaRepository.AgregarAsync(persona);
+                _logger.LogInformation($"[PersonaService] RegistrarPersonaAsync - Sede guardada: {result.Sede}");
                 _logger.LogInformation($"Person registered: {persona.NumeroDocumento}");
                 await _auditoriaService.RegistrarEventoAsync(new Auditoria {
                     IdAuditoria = Guid.NewGuid(),

@@ -1,8 +1,10 @@
 <Window x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:GestLog.Converters"
         Title="Registrar Persona" Height="600" Width="700" MinWidth="600" MinHeight="540" WindowStartupLocation="CenterOwner" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
     <Window.Resources>
+        <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
         <DropShadowEffect x:Key="FormShadow" Color="#504F4E" BlurRadius="12" ShadowDepth="2" Opacity="0.18"/>
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#118938"/>
@@ -81,7 +83,8 @@
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">
                             <TextBlock Text="Teléfono" FontWeight="SemiBold"/>
                             <TextBox Text="{Binding Persona.Telefono, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" MinWidth="220" Height="32"/>
-                        </StackPanel>                        <!-- Cargo -->
+                        </StackPanel>                        
+                        <!-- Cargo -->
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,16,0">
                             <TextBlock Text="Cargo" FontWeight="SemiBold"/>
                             <ComboBox MinWidth="220" Height="32" IsEditable="True"
@@ -90,6 +93,19 @@
                                       DisplayMemberPath="Nombre"
                                       Background="#FFFFFF" ToolTip="Buscar y seleccionar cargo"
                                       SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                        </StackPanel>
+                        <!-- Sede -->
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,0">
+                            <TextBlock Text="Sede" FontWeight="SemiBold"/>
+                            <ComboBox MinWidth="220" Height="32"
+                                      ItemsSource="{Binding Sedes}"
+                                      SelectedItem="{Binding Persona.Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,28,0,0" HorizontalAlignment="Left">

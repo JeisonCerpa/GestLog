@@ -15,6 +15,7 @@ using GestLog.ViewModels.Base;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using System.Globalization;
+using GestLog.Modules.Personas.Models.Enums;
 
 namespace GestLog.Modules.Usuarios.ViewModels
 {    
@@ -42,6 +43,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         public ObservableCollection<TipoDocumento> TiposDocumento { get; }
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
+
+        // Colección de sedes para los ComboBoxes
+        public ObservableCollection<object> Sedes { get; } = new();
 
         private string _documentoError = string.Empty;
         private string _correoError = string.Empty;
@@ -105,6 +109,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
             _ = CargarTiposDocumentoAsync();
             _ = CargarCargosAsync();
+            CargarSedes();
             
             PropertyChanged += (s, e) =>
             {
@@ -147,6 +152,16 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Cargos.Clear();
                 foreach (var cargo in cargos)
                     Cargos.Add(cargo);
+            });
+        }
+
+        private void CargarSedes()
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                Sedes.Clear();
+                foreach (var val in Enum.GetValues(typeof(Sede)))
+                    Sedes.Add(val);
             });
         }
 

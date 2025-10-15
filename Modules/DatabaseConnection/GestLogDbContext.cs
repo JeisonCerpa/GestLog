@@ -122,6 +122,8 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.Property(e => e.Activo).IsRequired();
                 entity.Property(e => e.FechaCreacion).IsRequired();
                 entity.Property(e => e.FechaModificacion).IsRequired();
+                // Mapear Sede (enum nullable) como entero en la BD
+                entity.Property(e => e.Sede).HasConversion<int?>();
                 entity.HasOne(e => e.Cargo)
                     .WithMany()
                     .HasForeignKey(e => e.CargoId)

@@ -17,9 +17,11 @@ using System.Timers;
 using System.Windows.Controls;
 using Modules.Usuarios.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using GestLog.Modules.Personas.Models.Enums;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{    public partial class PersonaManagementViewModel : DatabaseAwareViewModel
+{    
+    public partial class PersonaManagementViewModel : DatabaseAwareViewModel
     {
         private readonly IPersonaService _personaService;
         private readonly ICargoService _cargoService;
@@ -49,10 +51,43 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private string filtroEstado = "Todos";
 
+        // Tipo auxiliar para representar opción de sede con valor y texto
+        public record SedeOption(GestLog.Modules.Personas.Models.Enums.Sede? Value, string Display);
+
+        // Nueva propiedad: listado de sedes (tipado con SedeOption); incluye opción null = Todas
+        private ObservableCollection<SedeOption> _sedes = new();
+        public ObservableCollection<SedeOption> Sedes
+        {
+            get => _sedes;
+            set { _sedes = value; OnPropertyChanged(); }
+        }
+
+        private GestLog.Modules.Personas.Models.Enums.Sede? filtroSede = null; // null = Todas
+        public GestLog.Modules.Personas.Models.Enums.Sede? FiltroSede
+        {
+            get => filtroSede;
+            set { filtroSede = value; OnPropertyChanged(); PersonasView?.Refresh(); }
+        }
+
+        private SedeOption? _selectedSedeOption;
+        public SedeOption? SelectedSedeOption
+        {
+            get => _selectedSedeOption;
+            set
+            {
+                _selectedSedeOption = value;
+                // Sincronizar FiltroSede con el valor de la opción seleccionada
+                FiltroSede = _selectedSedeOption?.Value;
+                OnPropertyChanged();
+            }
+        }
+
         private System.Timers.Timer? _debounceTimer;
 
         [ObservableProperty]
-        private System.Windows.Controls.UserControl? vistaActual;        [ObservableProperty]
+        private System.Windows.Controls.UserControl? vistaActual;        
+
+        [ObservableProperty]
         private string mensajeValidacion = string.Empty;
 
         // Propiedades de permisos
@@ -71,7 +106,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private bool canActivatePersona = false;
 
-        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";        public PersonaManagementViewModel(
+        public string TextoActivarDesactivar => PersonaSeleccionada?.Activo == true ? "Desactivar" : "Activar";        
+
+        public PersonaManagementViewModel(
             IPersonaService personaService, 
             ICargoService cargoService, 
             ICargoRepository cargoRepository, 
@@ -102,7 +139,10 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             await CargarCargos();
             await CargarPersonas();
-        }        [RelayCommand(CanExecute = nameof(CanCreatePersona))]
+            CargarSedes();
+        }        
+
+        [RelayCommand(CanExecute = nameof(CanCreatePersona))]
         private async Task RegistrarPersona()
         {
             var primerCargo = Cargos.FirstOrDefault();
@@ -116,7 +156,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Telefono = string.Empty,
                 Cargo = primerCargo,
                 CargoId = primerCargo?.IdCargo ?? Guid.Empty,
-                Activo = true
+                Activo = true,
+                Sede = null // Asegurar inicialización explícita
             };
             var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
             var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
@@ -125,7 +166,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 await CargarPersonas();
                 PersonasView?.Refresh();
             }
-        }        [RelayCommand(CanExecute = nameof(CanEditPersona))]
+        }        
+
+        [RelayCommand(CanExecute = nameof(CanEditPersona))]
         private async Task GuardarPersona()
         {
             if (PersonaSeleccionada == null) return;
@@ -133,7 +176,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 PersonaSeleccionada.CargoId = PersonaSeleccionada.Cargo?.IdCargo ?? Guid.Empty;
                 // Eliminar referencia a Estado, solo usar Activo
-                var personaGuardada = await _personaService.RegistrarPersonaAsync(PersonaSeleccionada);
+                var personaGuardada = await _personaService.EditarPersonaAsync(PersonaSeleccionada);
                 await CargarPersonas();
                 PersonaSeleccionada = personaGuardada;
                 // TODO: Mostrar mensaje de éxito al usuario
@@ -163,6 +206,26 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             var lista = await _cargoService.ObtenerTodosAsync();
             Cargos = new ObservableCollection<Cargo>(lista);
+        }
+
+        private void CargarSedes()
+        {
+            var list = new ObservableCollection<SedeOption>();
+            // Opción 'Todas' con valor null
+            list.Add(new SedeOption(null, "Todas"));
+            foreach (var value in Enum.GetValues(typeof(GestLog.Modules.Personas.Models.Enums.Sede)))
+            {
+                var sedeVal = (GestLog.Modules.Personas.Models.Enums.Sede)value;
+                // Obtener descripción desde atributo Description si existe
+                var name = Enum.GetName(typeof(GestLog.Modules.Personas.Models.Enums.Sede), sedeVal) ?? sedeVal.ToString();
+                var field = typeof(GestLog.Modules.Personas.Models.Enums.Sede).GetField(name);
+                var descAttr = field?.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault() as System.ComponentModel.DescriptionAttribute;
+                var display = descAttr != null ? descAttr.Description : name;
+                list.Add(new SedeOption(sedeVal, display));
+            }
+            Sedes = list;
+            // Seleccionar por defecto la opción 'Todas'
+            SelectedSedeOption = Sedes.FirstOrDefault();
         }
 
         partial void OnFiltroTextoChanged(string value)
@@ -239,6 +302,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 if (FiltroEstado == "Activo" && !p.Activo) return false;
                 if (FiltroEstado == "Inactivo" && p.Activo) return false;
             }
+            // Filtro por sede (null = Todas)
+            if (FiltroSede != null)
+            {
+                if (p.Sede == null) return false;
+                if (p.Sede != FiltroSede) return false;
+            }
             return true;
         }
 
@@ -266,7 +335,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Telefono = persona.Telefono,
                 Cargo = persona.Cargo,
                 CargoId = persona.CargoId,
-                Activo = persona.Activo
+                Activo = persona.Activo,
+                Sede = persona.Sede // Copiar sede para edición
             };
             var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
             var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
@@ -289,7 +359,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private void CancelarEdicion()
         {
             MostrarDetalle();
-        }        [RelayCommand(CanExecute = nameof(CanActivatePersona))]
+        }        
+
+        [RelayCommand(CanExecute = nameof(CanActivatePersona))]
         private async Task ActivarDesactivarPersona(Persona persona)
         {
             persona.Activo = !persona.Activo;
@@ -305,7 +377,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 MensajeValidacion = "Debe seleccionar una persona.";
                 return;
-            }            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+            }            
+            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var usuarioVm = serviceProvider.GetService<UsuarioManagementViewModel>();
             if (usuarioVm != null)
             {
@@ -332,14 +405,18 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        private void RecalcularPermisos()
+        }        
+
+        private void RecalcularPermisos()
         {
             CanCreatePersona = _currentUser.HasPermission("Personas.Crear");
             CanEditPersona = _currentUser.HasPermission("Personas.Editar");
             CanDeletePersona = _currentUser.HasPermission("Personas.Editar"); // Usar Editar para eliminar/desactivar
             CanViewPersona = _currentUser.HasPermission("Personas.Ver");
             CanActivatePersona = _currentUser.HasPermission("Personas.ActivarDesactivar");
-        }        /// <summary>
+        }        
+
+        /// <summary>
         /// Implementación del método abstracto para auto-refresh automático
         /// </summary>
         protected override async Task RefreshDataAsync()

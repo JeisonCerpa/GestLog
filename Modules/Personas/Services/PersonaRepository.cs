@@ -26,18 +26,43 @@ namespace Modules.Personas.Services
             // Evitar que EF intente insertar el Cargo asociado si ya existe
             persona.Cargo = null;
             persona.TipoDocumento = null;
-            dbContext.Personas.Add(persona);
+            // NO limpiar Sede: debe persistirse si viene establecida
+            _ = dbContext.Personas.Add(persona);
             await dbContext.SaveChangesAsync();
-            return persona;
+            // Log debug: verificar valor guardado
+            // Nota: no tenemos logger aquí, así que leeremos el valor antes de devolver
+            var ingresada = await dbContext.Personas.FindAsync(persona.IdPersona);
+            return ingresada ?? persona;
         }
 
         public async Task<Persona> ActualizarAsync(Persona persona)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
             persona.FechaModificacion = DateTime.UtcNow;
-            dbContext.Personas.Update(persona);
+            // Asegurarse de no romper referencias: attach/entry
+            var existente = await dbContext.Personas.FindAsync(persona.IdPersona);
+            if (existente == null)
+            {
+                // Si no existe, insertar directamente
+                dbContext.Personas.Add(persona);
+            }
+            else
+            {
+                // Actualizar campos simples para evitar issues con navegación
+                existente.Nombres = persona.Nombres;
+                existente.Apellidos = persona.Apellidos;
+                existente.NumeroDocumento = persona.NumeroDocumento;
+                existente.Correo = persona.Correo;
+                existente.Telefono = persona.Telefono;
+                existente.CargoId = persona.CargoId;
+                existente.TipoDocumentoId = persona.TipoDocumentoId;
+                existente.Activo = persona.Activo;
+                existente.FechaModificacion = persona.FechaModificacion;
+                existente.Sede = persona.Sede; // Preservar/actualizar Sede
+                dbContext.Personas.Update(existente);
+            }
             await dbContext.SaveChangesAsync();
-            return persona;
+            return await dbContext.Personas.FindAsync(persona.IdPersona) ?? persona;
         }
 
         public async Task DesactivarAsync(Guid idPersona)

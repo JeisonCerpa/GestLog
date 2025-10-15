@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using GestLog.Modules.Usuarios.Models;
-using GestLog.Modules.GestionMantenimientos.Models.Enums; // Para la enum Sede
+using GestLog.Modules.Personas.Models.Enums; // Para la enum Sede
 
 namespace GestLog.Modules.Personas.Models
 {

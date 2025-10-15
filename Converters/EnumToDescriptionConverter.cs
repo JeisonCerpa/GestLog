@@ -10,7 +10,13 @@ namespace GestLog.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null) return string.Empty;
+            if (value == null)
+            {
+                // Si se proporciona un parámetro, usarlo como etiqueta para valores nulos (ej. "Todas").
+                if (parameter is string sParam && !string.IsNullOrEmpty(sParam))
+                    return sParam;
+                return string.Empty;
+            }
             var type = value.GetType();
             if (!type.IsEnum) return value?.ToString() ?? string.Empty;
             var name = Enum.GetName(type, value);

@@ -13,9 +13,11 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using GestLog.ViewModels.Base;
 using System.Runtime.CompilerServices;
+using GestLog.Modules.Personas.Models.Enums;
 
 namespace GestLog.Modules.Usuarios.ViewModels
-{    public partial class PersonaEdicionViewModel : ValidatableViewModel
+{    
+    public partial class PersonaEdicionViewModel : ValidatableViewModel
     {
         private readonly ICurrentUserService _currentUserService;
         private CurrentUserInfo _currentUser;
@@ -30,13 +32,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
         public ObservableCollection<Cargo> Cargos { get; }
         public ObservableCollection<string> Estados { get; }
         public ObservableCollection<TipoDocumento> TiposDocumento { get; }
+        public ObservableCollection<object> Sedes { get; } = new();
         private readonly IPersonaService _personaService;
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
         private readonly ICargoRepository _cargoRepository;
 
         private string _documentoError = string.Empty;
         private string _correoError = string.Empty;
-        private bool _validandoDocumento;        private bool _validandoCorreo;
+        private bool _validandoDocumento;        
+        private bool _validandoCorreo;
         private string _documentoOriginal = string.Empty;
         private string _correoOriginal = string.Empty;
 
@@ -67,14 +71,16 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             get => _validandoCorreo;
             set { _validandoCorreo = value; OnPropertyChanged(); }
-        }        public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo && CanEditPersona;
+        }        
+        public bool PuedeGuardar => string.IsNullOrEmpty(DocumentoError) && string.IsNullOrEmpty(CorreoError) && !ValidandoDocumento && !ValidandoCorreo && CanEditPersona;
 
         private bool CanGuardar() => PuedeGuardar;
 
         // Comando para guardar
         public CommunityToolkit.Mvvm.Input.AsyncRelayCommand SaveCommand { get; }
 
-        public PersonaEdicionViewModel(Persona persona, ObservableCollection<string> estados, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository, ICurrentUserService currentUserService)        {
+        public PersonaEdicionViewModel(Persona persona, ObservableCollection<string> estados, IPersonaService personaService, ITipoDocumentoRepository tipoDocumentoRepository, ICargoRepository cargoRepository, ICurrentUserService currentUserService)        
+        {
             Persona = persona;
             Estados = estados;
             _personaService = personaService;
@@ -84,7 +90,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             
             TiposDocumento = new ObservableCollection<TipoDocumento>();
-            Cargos = new ObservableCollection<Cargo>();            // Inicializar comandos
+            Cargos = new ObservableCollection<Cargo>();            
+            // Inicializar comandos
             SaveCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(GuardarAsync);
 
             // Configurar permisos reactivos
@@ -93,6 +100,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
             _ = CargarTiposDocumentoAsync();
             _ = CargarCargosAsync();
+            CargarSedes();
             _documentoOriginal = persona.NumeroDocumento;
             _correoOriginal = persona.Correo;
             PropertyChanged += (s, e) =>
@@ -145,6 +153,16 @@ namespace GestLog.Modules.Usuarios.ViewModels
                         OnPropertyChanged(nameof(Persona.Cargo));
                     }
                 }
+            });
+        }
+
+        private void CargarSedes()
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                Sedes.Clear();
+                foreach (var val in Enum.GetValues(typeof(Sede)))
+                    Sedes.Add(val);
             });
         }
 
@@ -231,7 +249,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     _ = ValidarDocumentoAsync();
                 if (propertyName == nameof(Persona.Correo))
                     _ = ValidarCorreoAsync();
-            }            return changed;
+            }            
+            return changed;
         }
 
         // === MÉTODOS DE GESTIÓN DE PERMISOS ===
@@ -239,7 +258,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
-        }        private void RecalcularPermisos()
+        }        
+        private void RecalcularPermisos()
         {
             CanEditPersona = _currentUser.HasPermission("Personas.Editar");
         }

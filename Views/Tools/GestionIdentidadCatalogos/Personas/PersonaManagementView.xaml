@@ -52,6 +52,7 @@
         <DropShadowEffect x:Key="PersonaDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
         <local:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Activo" FalseText="Inactivo"/>
         <local:BooleanToColorConverter x:Key="BooleanToColorConverter" TrueColor="#C8E6C9" FalseColor="#FFCDD2"/>
+        <local:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
     </UserControl.Resources>
     <Grid Background="#F5F5F5" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
@@ -68,6 +69,17 @@
                 <TextBlock Text="Gestión de Personas" FontSize="28" FontWeight="Bold" Foreground="#388E3C" VerticalAlignment="Center"/>
                 <TextBox Width="260" Height="32" Margin="24,0,0,0" VerticalAlignment="Center"
                          Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
+                <ComboBox Width="180" Height="32" Margin="12,0,0,0" VerticalAlignment="Center"
+                          ItemsSource="{Binding Sedes}"
+                          SelectedItem="{Binding SelectedSedeOption, Mode=TwoWay}"
+                          SelectedValue="{Binding FiltroSede, Mode=TwoWay}"
+                          SelectedValuePath="Value">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Display}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </StackPanel>
             <Button Grid.Column="1" Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,8,0"
                     Command="{Binding RegistrarPersonaCommand}"
@@ -125,6 +137,7 @@
                     <DataGridTextColumn Header="Documento" Binding="{Binding NumeroDocumento}" Width="1.5*"/>
                     <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="2*"/>
                     <DataGridTextColumn Header="Cargo" Binding="{Binding Cargo.Nombre}" Width="1.5*"/>
+                    <DataGridTextColumn Header="Sede" Width="1*" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" />
                     <DataGridTemplateColumn Header="Estado" Width="1*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
