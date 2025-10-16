@@ -2,6 +2,7 @@ using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
+using GestLog.Modules.GestionMantenimientos.Services;
 
 namespace GestLog.Views.Tools.GestionMantenimientos
 {
@@ -101,11 +102,205 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public DateTime? FechaBaja { get => Equipo.FechaBaja; set => Equipo.FechaBaja = value; }
             public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }
             public bool IsCodigoEnabled { get => Equipo.IsCodigoEnabled; set => Equipo.IsCodigoEnabled = value; }
-            public string? Clasificacion { get => Equipo.Clasificacion; set => Equipo.Clasificacion = value; }
-            public string? CompradoA { get => Equipo.CompradoA; set => Equipo.CompradoA = value; }
+
+            // Clasificación / CompradoA proxies: al modificar el texto también actualizamos el filtro para activar autocompletado
+            public string? Clasificacion
+            {
+                get => Equipo.Clasificacion;
+                set
+                {
+                    Equipo.Clasificacion = value;
+                    // actualizar filtro (dispara debounce)
+                    FiltroClasificacion = value ?? string.Empty;
+                }
+            }
+            public string? CompradoA
+            {
+                get => Equipo.CompradoA;
+                set
+                {
+                    Equipo.CompradoA = value;
+                    FiltroCompradoA = value ?? string.Empty;
+                }
+            }
+
+            public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+            public System.Collections.ObjectModel.ObservableCollection<string> CompradoADisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+
+            // Debounce / cancelación y supresión de cambios
+            private bool _suppressFiltroClasificacionChanged = false;
+            private bool _suppressFiltroCompradoAChanged = false;
+            private System.Threading.CancellationTokenSource? _clasificacionFilterCts;
+            private System.Threading.CancellationTokenSource? _compradoAFilterCts;
+
+            private string filtroClasificacion = string.Empty;
+            public string FiltroClasificacion
+            {
+                get => filtroClasificacion;
+                set
+                {
+                    if (_suppressFiltroClasificacionChanged)
+                    {
+                        filtroClasificacion = value ?? string.Empty;
+                        return;
+                    }
+
+                    filtroClasificacion = value ?? string.Empty;
+
+                    // Cancelar búsqueda anterior y crear nueva CTS para debounce
+                    _clasificacionFilterCts?.Cancel();
+                    _clasificacionFilterCts?.Dispose();
+                    _clasificacionFilterCts = new System.Threading.CancellationTokenSource();
+                    var token = _clasificacionFilterCts.Token;
+
+                    _ = DebounceFiltrarClasificacionesAsync(token);
+                }
+            }
+
+            private string filtroCompradoA = string.Empty;
+            public string FiltroCompradoA
+            {
+                get => filtroCompradoA;
+                set
+                {
+                    if (_suppressFiltroCompradoAChanged)
+                    {
+                        filtroCompradoA = value ?? string.Empty;
+                        return;
+                    }
+
+                    filtroCompradoA = value ?? string.Empty;
+
+                    _compradoAFilterCts?.Cancel();
+                    _compradoAFilterCts?.Dispose();
+                    _compradoAFilterCts = new System.Threading.CancellationTokenSource();
+                    var token = _compradoAFilterCts.Token;
+
+                    _ = DebounceFiltrarCompradoAAsync(token);
+                }
+            }
+
             public EquipoDialogViewModel(EquipoDto equipo)
             {
                 Equipo = equipo;
+                // Inicializar colecciones para autocompletado
+                ClasificacionesDisponibles = new System.Collections.ObjectModel.ObservableCollection<string>();
+                CompradoADisponibles = new System.Collections.ObjectModel.ObservableCollection<string>();
+                // Si existen valores iniciales en el DTO, asegurarlos en las listas
+                if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesDisponibles.Contains(Equipo.Clasificacion))
+                    ClasificacionesDisponibles.Add(Equipo.Clasificacion);
+                if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoADisponibles.Contains(Equipo.CompradoA))
+                    CompradoADisponibles.Add(Equipo.CompradoA);
+
+                // Cargar los más usados desde servicios registrados (si están disponibles)
+                try
+                {
+                    var clasService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;
+                    var compService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(CompradoAAutocompletadoService)) as CompradoAAutocompletadoService;
+                    if (clasService != null)
+                    {
+                        var items = Task.Run(() => clasService.ObtenerMasUtilizadasAsync(50)).GetAwaiter().GetResult();
+                        foreach (var it in items)
+                            if (!ClasificacionesDisponibles.Contains(it)) ClasificacionesDisponibles.Add(it);
+                    }
+                    if (compService != null)
+                    {
+                        var items2 = Task.Run(() => compService.ObtenerMasUtilizadasAsync(50)).GetAwaiter().GetResult();
+                        foreach (var it in items2)
+                            if (!CompradoADisponibles.Contains(it)) CompradoADisponibles.Add(it);
+                    }
+                }
+                catch
+                {
+                    // ignorar fallos de carga de autocompletado
+                }
+            }
+
+            private async Task DebounceFiltrarClasificacionesAsync(System.Threading.CancellationToken token)
+            {
+                try
+                {
+                    await Task.Delay(250, token);
+                    if (token.IsCancellationRequested) return;
+                    await FiltrarClasificacionesAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // ignore
+                }
+                catch { }
+            }
+
+            private async Task DebounceFiltrarCompradoAAsync(System.Threading.CancellationToken token)
+            {
+                try
+                {
+                    await Task.Delay(250, token);
+                    if (token.IsCancellationRequested) return;
+                    await FiltrarCompradoAAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // ignore
+                }
+                catch { }
+            }
+
+            private async Task FiltrarClasificacionesAsync(System.Threading.CancellationToken cancellationToken)
+            {
+                try
+                {
+                    var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;
+                    if (svc == null) return;
+                    var filtroActual = FiltroClasificacion ?? string.Empty;
+                    var items = await svc.BuscarAsync(filtroActual);
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ClasificacionesDisponibles.Clear();
+                        foreach (var it in items) ClasificacionesDisponibles.Add(it);
+
+                        // Restaurar el texto sin disparar el handler
+                        try
+                        {
+                            var textoPreservado = filtroActual ?? string.Empty;
+                            _suppressFiltroClasificacionChanged = true;
+                            FiltroClasificacion = textoPreservado;
+                            _suppressFiltroClasificacionChanged = false;
+                        }
+                        catch { }
+                    });
+                }
+                catch { }
+            }
+
+            private async Task FiltrarCompradoAAsync(System.Threading.CancellationToken cancellationToken)
+            {
+                try
+                {
+                    var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(CompradoAAutocompletadoService)) as CompradoAAutocompletadoService;
+                    if (svc == null) return;
+                    var filtroActual = FiltroCompradoA ?? string.Empty;
+                    var items = await svc.BuscarAsync(filtroActual);
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CompradoADisponibles.Clear();
+                        foreach (var it in items) CompradoADisponibles.Add(it);
+
+                        try
+                        {
+                            var textoPreservado = filtroActual ?? string.Empty;
+                            _suppressFiltroCompradoAChanged = true;
+                            FiltroCompradoA = textoPreservado;
+                            _suppressFiltroCompradoAChanged = false;
+                        }
+                        catch { }
+                    });
+                }
+                catch { }
             }
         }
     }

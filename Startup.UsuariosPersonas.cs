@@ -70,7 +70,11 @@ namespace GestLog
             
             // Servicios de autocompletado para periféricos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.DispositivoAutocompletadoService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();// Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();
+            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA)
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.ClasificacionAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.CompradoAAutocompletadoService>();
+            // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
             
             // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
