@@ -101,6 +101,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public DateTime? FechaBaja { get => Equipo.FechaBaja; set => Equipo.FechaBaja = value; }
             public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }
             public bool IsCodigoEnabled { get => Equipo.IsCodigoEnabled; set => Equipo.IsCodigoEnabled = value; }
+            public string? Clasificacion { get => Equipo.Clasificacion; set => Equipo.Clasificacion = value; }
+            public string? CompradoA { get => Equipo.CompradoA; set => Equipo.CompradoA = value; }
             public EquipoDialogViewModel(EquipoDto equipo)
             {
                 Equipo = equipo;

@@ -19,6 +19,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
         public decimal? Precio { get; set; }
         public string? Observaciones { get; set; }
+        // Nuevos campos: Clasificación y Comprado a
+        public string? Clasificacion { get; set; }
+        public string? CompradoA { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
         public DateTime? FechaBaja { get; set; }
         // SemanaInicioMtto eliminado: se calcula a partir de FechaRegistro

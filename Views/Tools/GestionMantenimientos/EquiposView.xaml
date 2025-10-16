@@ -123,6 +123,9 @@
                     <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" MinWidth="80" Width="Auto"/>
+                    <!-- Nuevas columnas: Clasificación y Comprado a -->
+                    <DataGridTextColumn Header="Clasificación" Binding="{Binding Clasificacion}" MinWidth="100" Width="Auto"/>
+                    <DataGridTextColumn Header="Comprado a" Binding="{Binding CompradoA}" MinWidth="120" Width="Auto"/>
                     <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Sede" Binding="{Binding Sede}" MinWidth="80" Width="Auto"/>
                     <DataGridTextColumn Header="Frecuencia Mtto" Binding="{Binding FrecuenciaMtto}" MinWidth="80" Width="Auto"/>

@@ -332,6 +332,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                     ws.Cell(1, 7).Value = "Precio";
                     ws.Cell(1, 8).Value = "Fecha Registro";
                     ws.Cell(1, 9).Value = "Fecha Compra";
+                    ws.Cell(1, 10).Value = "Clasificacion";
+                    ws.Cell(1, 11).Value = "Comprado a";
                     int row = 2;
                     foreach (var eq in Equipos)
                     {
@@ -344,6 +346,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                         ws.Cell(row, 7).Value = eq.Precio ?? 0;
                         ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
                         ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 10).Value = eq.Clasificacion ?? "";
+                        ws.Cell(row, 11).Value = eq.CompradoA ?? "";
                         row++;
                     }
                     ws.Columns().AdjustToContents();
@@ -402,7 +406,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                         FrecuenciaMtto = ParseEnumFlexible<FrecuenciaMantenimiento>(row.Cell(6).GetString()),
                         Precio = row.Cell(7).GetValue<decimal>(),
                         FechaRegistro = DateTime.TryParse(row.Cell(8).GetString(), out var fecha) ? fecha : null,
-                        FechaCompra = DateTime.TryParse(row.Cell(9).GetString(), out var fechaCompra) ? fechaCompra : null
+                        FechaCompra = DateTime.TryParse(row.Cell(9).GetString(), out var fechaCompra) ? fechaCompra : null,
+                        Clasificacion = row.Cell(10).GetString(),
+                        CompradoA = row.Cell(11).GetString()
                     };
                     equiposImportados.Add(eq);
                 }
@@ -523,6 +529,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                     ws.Cell(1, 7).Value = "Precio";
                     ws.Cell(1, 8).Value = "Fecha Registro";
                     ws.Cell(1, 9).Value = "Fecha Compra";
+                    ws.Cell(1, 10).Value = "Clasificacion";
+                    ws.Cell(1, 11).Value = "Comprado a";
                     int row = 2;
                     foreach (var eq in filtrados)
                     {
@@ -535,6 +543,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                         ws.Cell(row, 7).Value = eq.Precio ?? 0;
                         ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
                         ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 10).Value = eq.Clasificacion ?? "";
+                        ws.Cell(row, 11).Value = eq.CompradoA ?? "";
                         row++;
                     }
                     ws.Columns().AdjustToContents();

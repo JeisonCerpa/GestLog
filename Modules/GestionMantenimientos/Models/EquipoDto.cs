@@ -24,6 +24,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public decimal? Precio { get; set; }
         public string? Observaciones { get; set; }
         public DateTime? FechaBaja { get; set; }
+        // Nuevas propiedades
+        public string? Clasificacion { get; set; }
+        public string? CompradoA { get; set; }
         // SemanaInicioMtto eliminado: se calcula a partir de FechaRegistro
 
         // Propiedades auxiliares para la UI (no persistentes)
@@ -69,6 +72,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             Sede = other.Sede;
             Precio = other.Precio;
             Observaciones = other.Observaciones;
+            Clasificacion = other.Clasificacion;
+            CompradoA = other.CompradoA;
             FechaRegistro = other.FechaRegistro;
             FrecuenciaMtto = other.FrecuenciaMtto;
             FechaBaja = other.FechaBaja;

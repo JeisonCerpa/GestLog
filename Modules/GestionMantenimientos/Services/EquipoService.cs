@@ -40,6 +40,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Sede = e.Sede,
                 Precio = e.Precio,
                 Observaciones = e.Observaciones,
+                Clasificacion = e.Clasificacion,
+                CompradoA = e.CompradoA,
                 FechaRegistro = e.FechaRegistro,
                 FrecuenciaMtto = e.FrecuenciaMtto,
                 FechaBaja = e.FechaBaja,
@@ -62,6 +64,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Sede = equipo.Sede,
                 Precio = equipo.Precio,
                 Observaciones = equipo.Observaciones,
+                Clasificacion = equipo.Clasificacion,
+                CompradoA = equipo.CompradoA,
                 FechaRegistro = equipo.FechaRegistro,
                 FrecuenciaMtto = equipo.FrecuenciaMtto,
                 FechaBaja = equipo.FechaBaja,
@@ -89,6 +93,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo,
                     Sede = equipo.Sede,
                     FechaRegistro = fechaRegistro,
+                    Clasificacion = equipo.Clasificacion,
+                    CompradoA = equipo.CompradoA,
                     Precio = equipo.Precio,
                     Observaciones = equipo.Observaciones,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
@@ -162,6 +168,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.Sede = equipo.Sede;
                 entity.Precio = equipo.Precio;
                 entity.Observaciones = equipo.Observaciones;
+                entity.Clasificacion = equipo.Clasificacion;
+                entity.CompradoA = equipo.CompradoA;
                 entity.FechaRegistro = equipo.FechaRegistro ?? entity.FechaRegistro;
                 entity.FrecuenciaMtto = equipo.FrecuenciaMtto;
                 entity.FechaBaja = equipo.FechaBaja;
