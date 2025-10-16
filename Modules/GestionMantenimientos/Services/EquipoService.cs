@@ -88,7 +88,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var entity = new Equipo
                 {
                     Codigo = equipo.Codigo!,
-                    Nombre = equipo.Nombre!,
+                    Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? "-" : equipo.Nombre!,
                     Marca = equipo.Marca,
                     Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo,
                     Sede = equipo.Sede,
@@ -162,7 +162,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     throw new GestionMantenimientosDomainException("No se encontró el equipo a actualizar.");
                 // No permitir cambiar el código
                 // entity.Codigo = equipo.Codigo; // NO modificar
-                entity.Nombre = equipo.Nombre!;
+                entity.Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? "-" : equipo.Nombre!;
                 entity.Marca = equipo.Marca;
                 entity.Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo;
                 entity.Sede = equipo.Sede;
@@ -227,6 +227,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("El precio no puede ser negativo.");
             if (equipo.FrecuenciaMtto != null && equipo.FrecuenciaMtto <= 0)
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
+
+            // Fecha de compra no puede ser futura
+            if (equipo.FechaCompra != null && equipo.FechaCompra.Value.Date > DateTime.Today)
+                throw new GestionMantenimientosDomainException("La fecha de compra no puede ser futura.");
+
             // TODO: Validar duplicados y otras reglas de negocio si aplica
         }
 

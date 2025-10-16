@@ -40,6 +40,29 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             };
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Establecer fecha máxima permitida en DatePicker para evitar fechas futuras
+            try
+            {
+                FechaCompraPicker.DisplayDateEnd = DateTime.Today;
+            }
+            catch { }
+        }
+
+        private void OnFechaCompra_SelectedDateChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (FechaCompraPicker.SelectedDate.HasValue && FechaCompraPicker.SelectedDate.Value.Date > DateTime.Today)
+                {
+                    System.Windows.MessageBox.Show("La fecha de compra no puede ser futura.", "Fecha inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    FechaCompraPicker.SelectedDate = null;
+                }
+            }
+            catch { }
+        }
+
         private async void OnGuardar_Click(object sender, RoutedEventArgs e)
         {
             // Forzar actualización del binding del DatePicker para asegurar que la propiedad FechaCompra del DTO esté actualizada

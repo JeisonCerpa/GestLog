@@ -84,12 +84,20 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         {
             get
             {
-                // Eliminada validación obligatoria de FechaCompra; validar solo constraints simples
+                // Validación de precio no negativo
                 if (columnName == nameof(Precio))
                 {
                     if (Precio != null && Precio < 0)
                         return "El precio no puede ser negativo.";
                 }
+
+                // Fecha de compra no puede ser en el futuro
+                if (columnName == nameof(FechaCompra))
+                {
+                    if (FechaCompra != null && FechaCompra.Value.Date > DateTime.Today)
+                        return "La fecha de compra no puede ser futura.";
+                }
+
                 return string.Empty;
             }
         }
