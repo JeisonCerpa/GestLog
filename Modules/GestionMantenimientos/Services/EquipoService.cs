@@ -171,6 +171,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 entity.Clasificacion = equipo.Clasificacion;
                 entity.CompradoA = equipo.CompradoA;
                 entity.FechaRegistro = equipo.FechaRegistro ?? entity.FechaRegistro;
+                entity.FechaCompra = equipo.FechaCompra; // Persistir Fecha de Compra al actualizar
                 entity.FrecuenciaMtto = equipo.FrecuenciaMtto;
                 entity.FechaBaja = equipo.FechaBaja;
                 // SemanaInicioMtto eliminado

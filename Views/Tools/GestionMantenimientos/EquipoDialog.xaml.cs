@@ -42,6 +42,14 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
         private async void OnGuardar_Click(object sender, RoutedEventArgs e)
         {
+            // Forzar actualización del binding del DatePicker para asegurar que la propiedad FechaCompra del DTO esté actualizada
+            try
+            {
+                var expression = FechaCompraPicker.GetBindingExpression(System.Windows.Controls.DatePicker.SelectedDateProperty);
+                expression?.UpdateSource();
+            }
+            catch { }
+
             var errores = new List<string>();
             // Validaciones obligatorias
             if (string.IsNullOrWhiteSpace(Equipo.Codigo))
@@ -98,6 +106,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public FrecuenciaMantenimiento? FrecuenciaMtto { get => Equipo.FrecuenciaMtto; set => Equipo.FrecuenciaMtto = value; }
             public decimal? Precio { get => Equipo.Precio; set => Equipo.Precio = value; }
             public string? Observaciones { get => Equipo.Observaciones; set => Equipo.Observaciones = value; }
+            // Proxy para Fecha de Compra (necesario para que el DatePicker vinculado actualice el DTO)
+            public DateTime? FechaCompra { get => Equipo.FechaCompra; set => Equipo.FechaCompra = value; }
             public DateTime? FechaRegistro { get => Equipo.FechaRegistro; set => Equipo.FechaRegistro = value; }
             public DateTime? FechaBaja { get => Equipo.FechaBaja; set => Equipo.FechaBaja = value; }
             public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }

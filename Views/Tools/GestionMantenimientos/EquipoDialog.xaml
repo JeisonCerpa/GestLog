@@ -63,7 +63,7 @@
                               SelectedItem="{Binding Sede, UpdateSourceTrigger=PropertyChanged}"
                               Grid.Row="4" Grid.Column="1" Margin="0,4"/>
                     <TextBlock Text="Fecha de Compra:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" Grid.Row="5" Grid.Column="1" Margin="0,4"/>
+                    <DatePicker x:Name="FechaCompraPicker" SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" Grid.Row="5" Grid.Column="1" Margin="0,4"/>
                     <TextBlock Text="Precio:" Grid.Row="6" Grid.Column="0" VerticalAlignment="Center"/>
                     <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}" Grid.Row="6" Grid.Column="1" Margin="0,4"/>
                     <TextBlock Text="Observaciones:" Grid.Row="7" Grid.Column="0" VerticalAlignment="Center"/>
