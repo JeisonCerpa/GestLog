@@ -498,16 +498,57 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
     partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
     {
-        if (value != null)
+        // Ejecutar la actualización de la vista en el Dispatcher para evitar InvalidOperationException
+        var app = System.Windows.Application.Current;
+        if (app == null)
         {
-            foreach (var s in value)
-                s.RefrescarCacheFiltro();
+            // Fallback si no hay aplicación (ej. pruebas unitarias)
+            if (value != null)
+            {
+                foreach (var s in value)
+                    s.RefrescarCacheFiltro();
+            }
+
+            SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
+            if (SeguimientosView != null)
+                SeguimientosView.Filter = FiltrarSeguimiento;
+            try { SeguimientosView?.Refresh(); } catch (System.InvalidOperationException) { /* ignorar si está en DeferRefresh */ }
+            return;
         }
 
-        SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
-        if (SeguimientosView != null)
-            SeguimientosView.Filter = FiltrarSeguimiento;
-        SeguimientosView?.Refresh();
+        app.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            try
+            {
+                if (value != null)
+                {
+                    foreach (var s in value)
+                        s.RefrescarCacheFiltro();
+                }
+
+                SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
+                if (SeguimientosView != null)
+                    SeguimientosView.Filter = FiltrarSeguimiento;
+
+                // Intentar refrescar; si falla porque Refresh está aplazado, reintentar con prioridad más baja
+                try
+                {
+                    SeguimientosView?.Refresh();
+                }
+                catch (System.InvalidOperationException)
+                {
+                    // Reagendar un reintento cuando la UI esté ociosa
+                    app.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        try { SeguimientosView?.Refresh(); } catch { /* swallow */ }
+                    }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger?.LogError(ex, "Error en OnSeguimientosChanged al actualizar la vista de seguimientos");
+            }
+        }), System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private bool FiltrarSeguimiento(object obj)

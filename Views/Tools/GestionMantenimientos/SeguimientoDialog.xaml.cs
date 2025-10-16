@@ -32,7 +32,12 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             if (args.Item is TipoMantenimiento tipo)
             {
                 if (ModoRestringido)
-                    args.Accepted = tipo == TipoMantenimiento.Preventivo;
+                {
+                    // En modo restringido normalmente solo permitimos Preventivo.
+                    // Sin embargo, si el DTO ya tiene un TipoMtno preseleccionado (por ejemplo Correctivo desde el flujo de Equipos), permitir también ese valor para que el combo muestre la selección.
+                    var preseleccionado = Seguimiento?.TipoMtno;
+                    args.Accepted = tipo == TipoMantenimiento.Preventivo || (preseleccionado != null && tipo == preseleccionado);
+                }
                 else
                     args.Accepted = tipo == TipoMantenimiento.Preventivo || tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
             }

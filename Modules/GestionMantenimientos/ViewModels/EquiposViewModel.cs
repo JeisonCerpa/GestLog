@@ -539,8 +539,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 FechaRegistro = now,
                 TipoMtno = TipoMantenimiento.Correctivo // Preseleccionado
                 // Los campos TipoMtno y Frecuencia se llenan en el diálogo y al guardar
-            };            // Abrir el diálogo con opciones correctivo/predictivo (modo NO restringido)
-            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, false);
+            };
+            // Asignar la frecuencia por defecto para el flujo de Equipos (Correctivo) y abrir el diálogo en modo restringido
+            seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
+            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, true);
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
             var result = dialog.ShowDialog();
