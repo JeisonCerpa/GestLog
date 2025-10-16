@@ -10,15 +10,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models
     {
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }
-        [Required(ErrorMessage = "El nombre del equipo es obligatorio.")]
         public string? Nombre { get; set; }
         public string? Marca { get; set; }
         public EstadoEquipo? Estado { get; set; }
         public Sede? Sede { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
-        [Required(ErrorMessage = "La fecha de registro es obligatoria.")]
         public DateTime? FechaRegistro { get; set; } // Usar como fecha de alta y referencia
-        [Required(ErrorMessage = "La fecha de compra es obligatoria.")]
         public DateTime? FechaCompra { get; set; }
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
         public decimal? Precio { get; set; }
@@ -87,12 +84,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         {
             get
             {
-                if (columnName == nameof(FechaCompra))
+                // Eliminada validación obligatoria de FechaCompra; validar solo constraints simples
+                if (columnName == nameof(Precio))
                 {
-                    if (FechaCompra == null)
-                        return "Debe ingresar la fecha de compra";
+                    if (Precio != null && Precio < 0)
+                        return "El precio no puede ser negativo.";
                 }
-                // ...otras validaciones si las necesitas...
                 return string.Empty;
             }
         }

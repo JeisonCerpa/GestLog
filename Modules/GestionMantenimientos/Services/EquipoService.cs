@@ -222,12 +222,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 throw new GestionMantenimientosDomainException("El equipo no puede ser nulo.");
             if (string.IsNullOrWhiteSpace(equipo.Codigo))
                 throw new GestionMantenimientosDomainException("El código es obligatorio.");
-            if (string.IsNullOrWhiteSpace(equipo.Nombre))
-                throw new GestionMantenimientosDomainException("El nombre es obligatorio.");
-            if (string.IsNullOrWhiteSpace(equipo.Marca))
-                throw new GestionMantenimientosDomainException("La marca es obligatoria.");
-            if (equipo.Sede == null)
-                throw new GestionMantenimientosDomainException("La sede es obligatoria.");
+            // Nombre, Marca y Sede ya no son obligatorios por requerimiento
             if (equipo.Precio != null && equipo.Precio < 0)
                 throw new GestionMantenimientosDomainException("El precio no puede ser negativo.");
             if (equipo.FrecuenciaMtto != null && equipo.FrecuenciaMtto <= 0)

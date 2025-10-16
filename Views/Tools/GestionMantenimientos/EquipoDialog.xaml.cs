@@ -51,23 +51,16 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             catch { }
 
             var errores = new List<string>();
-            // Validaciones obligatorias
+            // Validaciones: solo Código es obligatorio; otras validaciones mínimas se mantienen
             if (string.IsNullOrWhiteSpace(Equipo.Codigo))
                 errores.Add("El código del equipo es obligatorio.");
-            if (string.IsNullOrWhiteSpace(Equipo.Nombre))
-                errores.Add("El nombre del equipo es obligatorio.");
-            if (string.IsNullOrWhiteSpace(Equipo.Marca))
-                errores.Add("La marca es obligatoria.");
-            if (Equipo.Sede == null)
-                errores.Add("La sede es obligatoria.");
+
             if (Equipo.Precio != null && Equipo.Precio < 0)
                 errores.Add("El precio no puede ser negativo.");
-            if (Equipo.FrecuenciaMtto == null)
-                errores.Add("La frecuencia de mantenimiento es obligatoria.");
-            if (Equipo.Estado == null)
-                errores.Add("El estado es obligatorio.");
+
             if (Equipo.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.DadoDeBaja && !Equipo.FechaBaja.HasValue)
                 errores.Add("Debe indicar la fecha de baja si el equipo está dado de baja.");
+
             // Validación de unicidad de código solo en alta
             if (!IsEditMode && !string.IsNullOrWhiteSpace(Equipo.Codigo))
             {
@@ -76,6 +69,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 if (existente != null)
                     errores.Add($"Ya existe un equipo con el código '{Equipo.Codigo}'.");
             }
+
             if (errores.Count > 0)
             {
                 System.Windows.MessageBox.Show(string.Join("\n", errores), "Errores de validación", MessageBoxButton.OK, MessageBoxImage.Warning);
