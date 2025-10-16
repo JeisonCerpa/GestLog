@@ -21,6 +21,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             {
                 // Modo edición: clonar para no modificar el original hasta guardar
                 Equipo = new EquipoDto(equipo);
+                // Asegurar que si no tiene estado se preseleccione Activo
+                if (Equipo.Estado == null)
+                    Equipo.Estado = GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Activo;
                 Equipo.IsCodigoReadOnly = true;
                 Equipo.IsCodigoEnabled = false;
                 IsEditMode = true;
@@ -30,11 +33,13 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 Equipo = new EquipoDto();
                 Equipo.IsCodigoReadOnly = false;
                 Equipo.IsCodigoEnabled = true;
+                // Preseleccionar Activo por defecto
+                Equipo.Estado = GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Activo;
                 IsEditMode = false;
             }
             DataContext = new EquipoDialogViewModel(Equipo)
             {
-                EstadosEquipo = System.Enum.GetValues(typeof(EstadoEquipo)) as EstadoEquipo[] ?? new EstadoEquipo[0],
+                EstadosEquipo = new[] { GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Activo, GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Inactivo },
                 Sedes = System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0],
                 FrecuenciasMantenimiento = System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0]
             };
