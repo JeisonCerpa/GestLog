@@ -218,12 +218,6 @@
                             IsEnabled="{Binding CanExportarDatos}"
                             Opacity="{Binding CanExportarDatos, Converter={StaticResource BooleanToOpacityConverter}}"/>
 
-                    <!-- Botón Importar (habilitado según permisos) -->
-                    <Button Content="⭳" Command="{Binding ImportarEquiposCommand}" ToolTip="Importar equipos"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
-                            IsEnabled="{Binding CanCrearEquipo}"
-                            Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
-
                     <!-- Botón Agregar (habilitado según permisos) -->
                     <Button Content="&#xE710;" Command="{Binding AgregarEquipoCommand}" ToolTip="Agregar nuevo equipo"
                             Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"

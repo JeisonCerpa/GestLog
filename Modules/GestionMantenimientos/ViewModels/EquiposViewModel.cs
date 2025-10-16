@@ -65,12 +65,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private bool canDarDeBajaEquipo;
     [ObservableProperty]
     private bool canRegistrarMantenimientoPermiso;
-    private bool canImportEquipo;
-
     // Propiedades alias para compatibilidad con la vista XAML
     public bool CanAddEquipo => CanRegistrarEquipo;
     public bool CanDeleteEquipo => CanDarDeBajaEquipo;
-    public bool CanImportEquipo => canImportEquipo;
     public bool CanExportEquipo => true; // Exportar no requiere permisos especiales
 
     public EquiposViewModel(
@@ -379,57 +376,6 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         return null;
     }
 
-    [RelayCommand]
-    public async Task ImportarEquiposAsync()
-    {
-        try
-        {
-            var dialog = new VistaOpenFileDialog
-            {
-                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
-                DefaultExt = ".xlsx",
-                Title = "Importar equipos desde Excel"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                using var workbook = new XLWorkbook(dialog.FileName);
-                var ws = workbook.Worksheet(1);
-                var equiposImportados = new List<EquipoDto>();
-                foreach (var row in ws.RowsUsed().Skip(1)) // Saltar encabezado
-                {
-                    var eq = new EquipoDto
-                    {
-                        Codigo = row.Cell(1).GetString(),
-                        Nombre = row.Cell(2).GetString(),                        Marca = row.Cell(3).GetString(),
-                        Estado = ParseEnumFlexible<EstadoEquipo>(row.Cell(4).GetString()),
-                        Sede = ParseEnumFlexible<Sede>(row.Cell(5).GetString()),
-                        FrecuenciaMtto = ParseEnumFlexible<FrecuenciaMantenimiento>(row.Cell(6).GetString()),
-                        Precio = row.Cell(7).GetValue<decimal>(),
-                        FechaRegistro = DateTime.TryParse(row.Cell(8).GetString(), out var fecha) ? fecha : null,
-                        FechaCompra = DateTime.TryParse(row.Cell(9).GetString(), out var fechaCompra) ? fechaCompra : null,
-                        Clasificacion = row.Cell(10).GetString(),
-                        CompradoA = row.Cell(11).GetString()
-                    };
-                    equiposImportados.Add(eq);
-                }
-                foreach (var eq in equiposImportados)
-                {
-                    var existente = Equipos.FirstOrDefault(e => e.Codigo == eq.Codigo);
-                    if (existente != null)
-                        await _equipoService.UpdateAsync(eq);
-                    else
-                        await _equipoService.AddAsync(eq);                }
-                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras importar
-                StatusMessage = $"Importación completada: {equiposImportados.Count} equipos importados.";
-            }
-        }
-        catch (System.Exception ex)
-        {
-            _logger.LogError(ex, "Error al importar equipos");
-            StatusMessage = "Error al importar equipos.";
-        }
-    }
-
     // Listas para ComboBox
     public IEnumerable<EstadoEquipo> EstadosEquipo => System.Enum.GetValues(typeof(EstadoEquipo)) as EstadoEquipo[] ?? new EstadoEquipo[0];
     public IEnumerable<TipoMantenimiento> TiposMantenimiento => System.Enum.GetValues(typeof(TipoMantenimiento)) as TipoMantenimiento[] ?? new TipoMantenimiento[0];
@@ -628,12 +574,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.NuevoEquipo");
         CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo"); // Si existe este permiso en la BD
         CanDarDeBajaEquipo = _currentUser.HasPermission("GestionMantenimientos.DarDeBajaEquipo");
-        canImportEquipo = _currentUser.HasPermission("GestionMantenimientos.ImportarEquipo");
         CanRegistrarMantenimientoPermiso = _currentUser.HasPermission("GestionMantenimientos.RegistrarMantenimiento");
         // Notificar cambios en las propiedades alias
         OnPropertyChanged(nameof(CanAddEquipo));
         OnPropertyChanged(nameof(CanDeleteEquipo));
-        OnPropertyChanged(nameof(CanImportEquipo));        OnPropertyChanged(nameof(CanExportEquipo));    }
+        OnPropertyChanged(nameof(CanExportEquipo));    }
 
     // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
     protected override async Task RefreshDataAsync()
