@@ -7,11 +7,13 @@ using GestLog.Modules.DatabaseConnection; // agregado para poder recibir GestLog
 using Microsoft.Extensions.DependencyInjection; // ✅ MIGRADO: Para resolver dependencias
 
 namespace GestLog.Views.Tools.GestionEquipos
-{
-    public partial class DetallesEquipoInformaticoView : Window
+{    public partial class DetallesEquipoInformaticoView : Window
     {
         // Guardar referencia al DbContext pasado por el llamador para reutilizarlo en refrescos
         private readonly GestLogDbContext? _db;
+        
+        // Referencia a la pantalla actual para detectar cambios de monitor en multi-monitor
+        private System.Windows.Forms.Screen? _lastScreenOwner;
 
         // Constructor antiguo preservado y redirigido a la nueva sobrecarga
         public DetallesEquipoInformaticoView(EquipoInformaticoEntity equipo) : this(equipo, null)
@@ -40,61 +42,131 @@ namespace GestLog.Views.Tools.GestionEquipos
             // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
             _db = db;
             
-            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
-            // Resolver el Application actual de forma segura
-            var app = System.Windows.Application.Current as App;
-            var serviceProvider = app?.ServiceProvider;
-            if (serviceProvider == null)
-            {
-                // Intentar fallback simple: no inicializar dependencias si no hay ServiceProvider
-                return;
-            }
-            var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
-            var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-            var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
-            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
-            
-            DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
-        }
-
-        // Nuevo manejador para ajustar el overlay al Owner y seguirlo si se mueve/redimensiona
-        private void DetallesEquipoInformaticoView_Loaded(object? sender, RoutedEventArgs e)
-        {
+            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel de forma segura
             try
             {
-                if (this.Owner != null)
+                var app = System.Windows.Application.Current as App;
+                var serviceProvider = app?.ServiceProvider;
+                
+                if (serviceProvider == null)
                 {
-                    // Ajustar la ventana al tamaño y posición del Owner para que el overlay cubra toda el área del padre
-                    this.Left = this.Owner.Left;
-                    this.Top = this.Owner.Top;
-                    this.Width = this.Owner.ActualWidth;
-                    this.Height = this.Owner.ActualHeight;
+                    System.Windows.MessageBox.Show("Error: No se pudo acceder a las dependencias de la aplicación.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
 
-                    // Si el Owner se mueve/redimensiona, mantener el overlay sincronizado
-                    this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
-                    this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+                var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
+                var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
+                
+                DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al cargar el ViewModel: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }        /// <summary>
+        /// Configura el overlay de la ventana modal para cubrir exactamente la pantalla del Owner,
+        /// utilizando Screen.FromHandle() para obtener los bounds correctos en configuraciones multi-monitor y con DPI.
+        /// Método basado en estándar ModalWindowsStandard.md
+        /// </summary>
+        public void ConfigurarParaVentanaPadre(Window owner)
+        {
+            if (owner == null) return;
+            
+            this.Owner = owner;
+            this.ShowInTaskbar = false;
+
+            try
+            {
+                // Si la ventana padre está maximizada, maximizar esta también
+                if (owner.WindowState == WindowState.Maximized)
+                {
+                    this.WindowState = WindowState.Maximized;
+                }
+                else
+                {
+                    // Para ventanas no maximizadas, obtener los bounds de la pantalla
+                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(owner);
+                    var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                    
+                    // Guardar referencia a la pantalla actual
+                    _lastScreenOwner = screen;
+                    
+                    // Usar los bounds completos de la pantalla
+                    var bounds = screen.Bounds;
+                    
+                    // Configurar para cubrir toda la pantalla
+                    this.Left = bounds.Left;
+                    this.Top = bounds.Top;
+                    this.Width = bounds.Width;
+                    this.Height = bounds.Height;
+                    this.WindowState = WindowState.Normal;
                 }
             }
             catch
             {
-                // No crítico
+                // Fallback: si falla Screen.FromHandle, usar los valores del Owner
+                this.Left = this.Owner.Left;
+                this.Top = this.Owner.Top;
+                this.Width = this.Owner.ActualWidth;
+                this.Height = this.Owner.ActualHeight;
             }
-        }
-
-        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        }        // Nuevo manejador para registrar los event handlers cuando se carga la ventana
+        private void DetallesEquipoInformaticoView_Loaded(object? sender, RoutedEventArgs e)
+        {
+            if (this.Owner != null)
+            {
+                // Si el Owner se mueve/redimensiona, mantener el overlay sincronizado
+                this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+            }
+        }private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
         {
             if (this.Owner == null) return;
-            // Dispatcher por si el evento viene de otro hilo de UI
+
             this.Dispatcher.Invoke(() =>
             {
                 try
                 {
-                    this.Left = this.Owner.Left;
-                    this.Top = this.Owner.Top;
-                    this.Width = this.Owner.ActualWidth;
-                    this.Height = this.Owner.ActualHeight;
+                    // Si la ventana padre está maximizada, maximizar esta también
+                    if (this.Owner.WindowState == WindowState.Maximized)
+                    {
+                        this.WindowState = WindowState.Maximized;
+                    }
+                    else
+                    {
+                        // Detectar si el Owner cambió de pantalla
+                        var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
+                        var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+
+                        // Si cambió de pantalla, recalcular bounds
+                        if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+                        {
+                            // Owner cambió de pantalla, recalcular
+                            ConfigurarParaVentanaPadre(this.Owner);
+                        }
+                        else
+                        {
+                            // Mismo monitor, pero podría haber cambiado tamaño o posición
+                            // Actualizar Left y Top manteniendo Width/Height que cubre la pantalla
+                            var bounds = currentScreen.Bounds;
+                            this.Left = bounds.Left;
+                            this.Top = bounds.Top;
+                            this.Width = bounds.Width;
+                            this.Height = bounds.Height;
+                        }
+                    }
                 }
-                catch { }
+                catch
+                {
+                    // Fallback: rellamar ConfigurarParaVentanaPadre
+                    try
+                    {
+                        ConfigurarParaVentanaPadre(this.Owner);
+                    }
+                    catch { }
+                }
             });
         }
 
@@ -112,152 +184,127 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             // Evitar que el click dentro del panel propague y cierre el overlay
             e.Handled = true;
-        }
-
-        private async void BtnEditar_Click(object sender, RoutedEventArgs e)
+        }        private async void BtnEditar_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Abrir la ventana de AgregarEquipoInformaticoView y precargar datos para edición
-                var editarWindow = new AgregarEquipoInformaticoView();
-                if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vm)
+                if (!(this.DataContext is DetallesEquipoInformaticoViewModel detallesVm))
                 {
-                    string? usuarioAsignadoOriginal = null;
-                    // Mapear los campos principales desde el ViewModel de Detalles (usar una única variable `det`)
-                    if (this.DataContext is GestLog.ViewModels.Tools.GestionEquipos.DetallesEquipoInformaticoViewModel det)
-                    {
-                        vm.Codigo = det.Codigo;
-                        vm.NombreEquipo = det.NombreEquipo ?? string.Empty;
-                        vm.Marca = det.Marca ?? string.Empty;
-                        vm.Modelo = det.Modelo ?? string.Empty;
-                        vm.Procesador = det.Procesador ?? string.Empty;
-                        vm.So = det.SO ?? string.Empty;
-                        vm.SerialNumber = det.SerialNumber ?? string.Empty;
-                        vm.CodigoAnydesk = det.CodigoAnydesk ?? string.Empty;
-                        vm.Observaciones = det.Observaciones ?? string.Empty;
-                        vm.Costo = det.Costo;
-                        vm.FechaCompra = det.FechaCompra;
-
-                        // Marcar modo edición y guardar código original para identificación en BD
-                        vm.IsEditing = true;
-                        vm.OriginalCodigo = det.Codigo;                        // Cargar listas de RAM y discos
-                        vm.ListaRam = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(det.SlotsRam);
-                        vm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(det.Discos);
-                        vm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(det.Conexiones);
-
-                        // Transferir Estado y Sede al VM de edición antes de InicializarAsync para preservar la selección en el ComboBox Estado
-                        try
-                        {
-                            vm.Estado = string.IsNullOrWhiteSpace(det.Estado) ? string.Empty : det.Estado;
-                        }
-                        catch { /* no crítico */ }
-
-                        try
-                        {
-                            vm.Sede = string.IsNullOrWhiteSpace(det.Sede) ? vm.Sede : det.Sede;
-                        }
-                        catch { /* no crítico */ }
-
-                        // Guardar el nombre del usuario asignado para usarlo una vez inicializado el VM de edición
-                        usuarioAsignadoOriginal = det.UsuarioAsignado;
-                    }
-
-                    // Inicializar VM (carga de personas u otros recursos) antes de mostrar la ventana
-                    try { await vm.InicializarAsync(); } catch { /* no crítico si falla aquí */ }
-
-                    // Seleccionar la persona asignada usando el nombre capturado (si aplica)
-                    try
-                    {
-                        if (!string.IsNullOrWhiteSpace(usuarioAsignadoOriginal))
-                        {
-                            // Si no hay lista de personas cargada, dejar el texto en el filtro para que el usuario lo vea
-                            if (vm.PersonasDisponibles == null || !vm.PersonasDisponibles.Any())
-                            {
-                                vm.FiltroPersonaAsignada = usuarioAsignadoOriginal.Trim();
-                            }
-                            else
-                            {
-                                // Normalizar función para comparar sin acentos ni mayúsculas
-                                static string NormalizeString(string s)
-                                {
-                                    if (string.IsNullOrWhiteSpace(s))
-                                        return string.Empty;
-                                    var normalized = s.Normalize(System.Text.NormalizationForm.FormD);
-                                    var chars = normalized.Where(ch => CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark).ToArray();
-                                    return new string(chars).Normalize(System.Text.NormalizationForm.FormC).Trim().ToLowerInvariant();
-                                }
-
-                                var objetivo = NormalizeString(usuarioAsignadoOriginal);
-
-                                // Intentos de emparejamiento: exacto normalizado, contains, y como último recurso dejar el filtro con el texto
-                                var persona = vm.PersonasDisponibles.FirstOrDefault(p => NormalizeString(p.NombreCompleto) == objetivo);
-                                if (persona == null)
-                                    persona = vm.PersonasDisponibles.FirstOrDefault(p => NormalizeString(p.NombreCompleto).Contains(objetivo) || objetivo.Contains(NormalizeString(p.NombreCompleto)));
-
-                                if (persona != null)
-                                    vm.PersonaAsignada = persona;
-                                else
-                                    vm.FiltroPersonaAsignada = usuarioAsignadoOriginal.Trim();
-                            }
-                        }
-                    }
-                    catch { /* No crítico */ }
+                    System.Windows.MessageBox.Show("No se pudo obtener la información del equipo.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
 
+                // Abrir la ventana de edición
+                var editarWindow = new AgregarEquipoInformaticoView();
+                
+                // Precargar datos en el ViewModel de edición
+                if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel editVm)
+                {
+                    // Copiar datos principales
+                    editVm.Codigo = detallesVm.Codigo;
+                    editVm.NombreEquipo = detallesVm.NombreEquipo ?? string.Empty;
+                    editVm.Marca = detallesVm.Marca ?? string.Empty;
+                    editVm.Modelo = detallesVm.Modelo ?? string.Empty;
+                    editVm.Procesador = detallesVm.Procesador ?? string.Empty;
+                    editVm.So = detallesVm.SO ?? string.Empty;
+                    editVm.SerialNumber = detallesVm.SerialNumber ?? string.Empty;
+                    editVm.CodigoAnydesk = detallesVm.CodigoAnydesk ?? string.Empty;
+                    editVm.Observaciones = detallesVm.Observaciones ?? string.Empty;                    editVm.Costo = detallesVm.Costo;
+                    editVm.FechaCompra = detallesVm.FechaCompra;
+                    editVm.Estado = detallesVm.Estado ?? string.Empty;
+                    editVm.Sede = detallesVm.Sede ?? string.Empty;
+                    
+                    // Copiar listas
+                    editVm.ListaRam = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(
+                        detallesVm.SlotsRam?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>());
+                    editVm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(
+                        detallesVm.Discos?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>());
+                    editVm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(
+                        detallesVm.Conexiones?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>());
+
+                    // Marcar modo edición
+                    editVm.IsEditing = true;
+                    editVm.OriginalCodigo = detallesVm.Codigo;
+
+                    // Guardar usuario asignado original
+                    string usuarioAsignado = detallesVm.UsuarioAsignado ?? string.Empty;
+
+                    // Inicializar ViewModel (carga de personas)
+                    try 
+                    { 
+                        await editVm.InicializarAsync(); 
+                    } 
+                    catch (Exception ex)
+                    { 
+                        System.Windows.MessageBox.Show($"Error al inicializar: {ex.Message}", "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+
+                    // Intentar seleccionar la persona asignada
+                    if (!string.IsNullOrWhiteSpace(usuarioAsignado) && editVm.PersonasDisponibles != null)
+                    {
+                        var persona = editVm.PersonasDisponibles.FirstOrDefault(p => 
+                            p.NombreCompleto.Equals(usuarioAsignado, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (persona != null)
+                        {
+                            editVm.PersonaAsignada = persona;
+                        }
+                    }
+                }
+
+                // Mostrar ventana de edición
                 var result = editarWindow.ShowDialog();
-                // Si se guardó (DialogResult == true), reconstruir la vista de detalles desde el VM de edición (no usamos reflexión para obtener DbContext)
-                if (result == true)
+
+                // Si se guardó, recargar datos
+                if (result == true && editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel editVm2)
                 {
                     try
                     {
-                        // Determinar código del equipo (puede haber cambiado durante la edición)
-                        string? codigoParaCargar = null;
-                        if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vm2)
-                            codigoParaCargar = vm2.Codigo;
+                        // Reconstruir entidad con los datos editados
+                        var equipoEditado = new EquipoInformaticoEntity
+                        {
+                            Codigo = editVm2.Codigo,
+                            NombreEquipo = editVm2.NombreEquipo,
+                            Marca = editVm2.Marca,
+                            Modelo = editVm2.Modelo,
+                            Procesador = editVm2.Procesador,
+                            SO = editVm2.So,
+                            SerialNumber = editVm2.SerialNumber,
+                            CodigoAnydesk = editVm2.CodigoAnydesk,
+                            Observaciones = editVm2.Observaciones,
+                            Costo = editVm2.Costo,
+                            FechaCompra = editVm2.FechaCompra,
+                            Estado = editVm2.Estado,
+                            Sede = editVm2.Sede,
+                            UsuarioAsignado = editVm2.PersonaAsignada?.NombreCompleto ?? string.Empty,
+                            SlotsRam = editVm2.ListaRam?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(),
+                            Discos = editVm2.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(),
+                            Conexiones = editVm2.ListaConexiones?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>()
+                        };
 
-                        // Fallback: reconstruir entidad desde el VM de edición (si existe vm2)
-                        if (editarWindow.DataContext is GestLog.ViewModels.Tools.GestionEquipos.AgregarEquipoInformaticoViewModel vmFallback)
-                        {                            var equipoReconstruido = new EquipoInformaticoEntity
-                            {
-                                Codigo = vmFallback.Codigo,
-                                UsuarioAsignado = vmFallback.PersonaAsignada?.NombreCompleto ?? string.Empty,
-                                NombreEquipo = vmFallback.NombreEquipo,
-                                Sede = vmFallback.Sede,
-                                Marca = vmFallback.Marca,
-                                Modelo = vmFallback.Modelo,
-                                Procesador = vmFallback.Procesador,
-                                SO = vmFallback.So,
-                                SerialNumber = vmFallback.SerialNumber,
-                                Observaciones = vmFallback.Observaciones,
-                                FechaCreacion = DateTime.Now,
-                                FechaCompra = vmFallback.FechaCompra,
-                                Costo = vmFallback.Costo,
-                                CodigoAnydesk = vmFallback.CodigoAnydesk,
-                                Estado = vmFallback.Estado,
-                                SlotsRam = vmFallback.ListaRam?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(),
-                                Discos = vmFallback.ListaDiscos?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(),
-                                Conexiones = vmFallback.ListaConexiones?.ToList() ?? new System.Collections.Generic.List<Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>()
-                            };                            // Asignar nuevo DataContext usando el equipo reconstruido (reutilizando el DbContext si existe)
-                            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel
-                            // Resolver el Application actual de forma segura
+                        // Crear nuevo ViewModel con datos actualizados
+                        try
+                        {
                             var app = System.Windows.Application.Current as App;
                             var serviceProvider = app?.ServiceProvider;
-                            if (serviceProvider == null)
+                            if (serviceProvider != null)
                             {
-                                // Intentar fallback simple: no inicializar dependencias si no hay ServiceProvider
-                                return;
+                                var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
+                                var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                                var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
+                                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
+                                
+                                this.DataContext = new DetallesEquipoInformaticoViewModel(equipoEditado, dbContextFactory, databaseService, logger, seguimientoService);
                             }
-                            var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
-                            var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-                            var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
-                            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
-                            
-                            this.DataContext = new DetallesEquipoInformaticoViewModel(equipoReconstruido, dbContextFactory, databaseService, logger, seguimientoService);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Windows.MessageBox.Show($"Error al recargar detalles: {ex.Message}", "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // No crítico: si falla el refresco, mantenemos la vista actual
+                        System.Windows.MessageBox.Show($"Error al procesar cambios: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }

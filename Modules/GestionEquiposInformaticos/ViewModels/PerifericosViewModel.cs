@@ -429,20 +429,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 // Guardar código original por si el usuario cambia el código durante la edición
                 var codigoOriginal = p.Codigo ?? "N/A";
 
-                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Abriendo detalle para periférico {codigoOriginal}");
-
-                // Abrir vista de detalle como modal centrado sobre el owner y con overlay
+                _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Abriendo detalle para periférico {codigoOriginal}");                // Abrir vista de detalle como modal centrado sobre el owner y con overlay
                 var detalleView = new Views.Tools.GestionEquipos.PerifericoDetalleView(p, _dbContextFactory, canEdit: CanEditarEliminarPeriferico);
 
                 var ownerWindow = System.Windows.Application.Current?.MainWindow;
-                // Asegurar overlay correcto en multi-monitor/DPI
-                try
+                if (ownerWindow != null)
                 {
+                    detalleView.Owner = ownerWindow;
                     detalleView.ConfigurarParaVentanaPadre(ownerWindow);
-                }
-                catch (System.Exception exCfg)
-                {
-                    _logger.LogWarning(exCfg, "[PerifericosViewModel] No se pudo configurar bounds del detalle (fallando con ConfigurarParaVentanaPadre) - continuando con CenterOwner");
                 }
 
                 // Mostrar modal

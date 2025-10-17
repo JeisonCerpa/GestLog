@@ -4,6 +4,7 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
@@ -12,13 +13,14 @@ using ClosedXML.Excel;
 using Ookii.Dialogs.Wpf;
 using System.IO;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Data;
 using System.Linq;
 using System.Threading;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.ViewModels.Base;
+using GestLog.Services.Interfaces;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -30,10 +32,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
     private readonly ICurrentUserService _currentUserService;
-    private CurrentUserInfo _currentUser;
-
-    [ObservableProperty]
+    private CurrentUserInfo _currentUser;    [ObservableProperty]
     private ObservableCollection<EquipoDto> equipos = new();
+
+    // Colección completa sin filtrar - usada para calcular estadísticas correctas
+    private ObservableCollection<EquipoDto> _allEquipos = new();
 
     [ObservableProperty]
     private EquipoDto? selectedEquipo;
@@ -48,8 +51,55 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private bool mostrarDadosDeBaja = false;
 
     [ObservableProperty]
-    private string filtroEquipo = "";    [ObservableProperty]
+    private string filtroEquipo = "";    
+
+    [ObservableProperty]
     private ICollectionView? equiposView;
+
+    // Contadores de estadísticas para la vista (compatibles con la plantilla)
+    [ObservableProperty]
+    private int equiposActivos;
+
+    [ObservableProperty]
+    private int equiposEnMantenimiento;
+
+    [ObservableProperty]
+    private int equiposEnReparacion;
+
+    [ObservableProperty]
+    private int equiposInactivos;
+
+    [ObservableProperty]
+    private int equiposDadosBaja;
+
+    // Helper: normalizar estado y comparar
+    private static string NormalizeEstado(object? estado)
+    {
+        // Acepta strings y enums (o cualquier objeto), usando ToString() para normalizar
+        var str = estado?.ToString() ?? string.Empty;
+        return str.Trim().ToLowerInvariant().Replace(" ", "");
+    }
+
+    private static bool EsEstado(object? estado, string target)
+    {
+        var s = NormalizeEstado(estado);
+        return s.Contains(target.Trim().ToLowerInvariant().Replace(" ", ""));
+    }
+
+    private static bool EsDadoDeBaja(object? estado)
+    {
+        var s = NormalizeEstado(estado);
+        return s == "dadodebaja" || s.Contains("dadodebaja") || s.Contains("baja");
+    }    private void RecalcularEstadisticas()
+    {
+        // Usar _allEquipos (colección completa sin filtros) para obtener estadísticas totales reales
+        var list = _allEquipos ?? new ObservableCollection<EquipoDto>();
+        EquiposActivos = list.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));
+        EquiposEnMantenimiento = list.Count(e => EsEstado(e.Estado, "enmantenimiento"));
+        EquiposEnReparacion = list.Count(e => EsEstado(e.Estado, "enreparacion") || EsEstado(e.Estado, "en reparacion"));
+        EquiposInactivos = list.Count(e => EsEstado(e.Estado, "inactivo"));
+        EquiposDadosBaja = list.Count(e => EsDadoDeBaja(e.Estado));
+    }
 
     // Optimización: Control de carga para evitar recargas innecesarias
     private CancellationTokenSource? _loadCancellationToken;
@@ -178,19 +228,26 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         StatusMessage = "Cargando equipos...";
         
         try
-        {
-            var lista = await _equipoService.GetAllAsync();
+        {        var lista = await _equipoService.GetAllAsync();
             
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Filtrar según MostrarDadosDeBaja
+            // Mantener copia completa para calcular estadísticas correctas
+            _allEquipos = new ObservableCollection<EquipoDto>(lista);
+
+            // Filtrar según MostrarDadosDeBaja para la vista
             var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
             Equipos = new ObservableCollection<EquipoDto>(filtrados);
+            // Suscribirse a cambios para recalcular estadísticas cuando la colección cambie
+            Equipos.CollectionChanged += Equipos_CollectionChanged;
             EquiposView = CollectionViewSource.GetDefaultView(Equipos);
             if (EquiposView != null)
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
-            
+
+            // Actualizar contadores (ahora usa _allEquipos para totales correctos)
+            RecalcularEstadisticas();
+
             StatusMessage = $"{Equipos.Count} equipos {(MostrarDadosDeBaja ? "(incluye dados de baja)" : "activos")} cargados.";
             _lastLoadTime = DateTime.Now;
         }
@@ -207,6 +264,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         {
             IsLoading = false;
         }
+    }
+
+    private void Equipos_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        RecalcularEstadisticas();
     }
 
     [RelayCommand]
@@ -397,8 +459,29 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     public IEnumerable<Sede> Sedes => System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0];
     public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0];    partial void OnMostrarDadosDeBajaChanged(bool value)
     {
-        // Recargar la lista de equipos al cambiar el filtro
-        _ = LoadEquiposAsync(forceReload: true); // Forzar recarga al cambiar filtro
+        // Aplicar filtro a la colección existente sin recargar del servicio
+        if (_allEquipos == null || _allEquipos.Count == 0)
+        {
+            // Si aún no hay datos, recargar
+            _ = LoadEquiposAsync(forceReload: true);
+            return;
+        }
+
+        // Filtrar según MostrarDadosDeBaja y crear nueva ObservableCollection
+        var filtrados = value 
+            ? _allEquipos.ToList() 
+            : _allEquipos.Where(e => e.FechaBaja == null).ToList();
+        Equipos = new ObservableCollection<EquipoDto>(filtrados);
+        
+        // Actualizar vista y estadísticas
+        EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+        if (EquiposView != null)
+        {
+            EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+            EquiposView.Refresh();
+        }
+
+        StatusMessage = $"{Equipos.Count} equipos {(value ? "(incluye dados de baja)" : "activos")} mostrados.";
     }
 
     private CancellationTokenSource? _debounceToken;
@@ -522,6 +605,41 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             {
                 IsLoading = false;
             }
+        }
+    }    [RelayCommand]
+    public void VerDetallesEquipo(EquipoDto? equipo)
+    {
+        if (equipo == null)
+        {
+            StatusMessage = "Debe seleccionar un equipo para ver detalles.";
+            return;
+        }
+
+        try
+        {
+            SelectedEquipo = equipo;
+            var detalleWindow = new GestLog.Views.Tools.GestionMantenimientos.EquipoDetalleModalWindow
+            {
+                DataContext = this
+            };
+
+            var ownerWindow = System.Windows.Application.Current?.MainWindow;
+            // Asegurar overlay correcto en multi-monitor/DPI
+            try
+            {
+                detalleWindow.ConfigurarParaVentanaPadre(ownerWindow);
+            }
+            catch (System.Exception exCfg)
+            {
+                _logger.LogWarning(exCfg, "[EquiposViewModel] No se pudo configurar bounds del detalle - continuando con CenterOwner");
+            }
+
+            detalleWindow.ShowDialog();
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Error al abrir detalles del equipo");
+            StatusMessage = "Error al abrir detalles del equipo.";
         }
     }
 

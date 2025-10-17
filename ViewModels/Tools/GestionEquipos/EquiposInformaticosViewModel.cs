@@ -301,12 +301,14 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 {
                     System.Windows.MessageBox.Show("No se encontró el equipo en la base de datos.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
-                }
-
-                // Crear ventana de detalles (necesitaría adaptar para usar factory en lugar de DbContext directo)
+                }                // Crear ventana de detalles (necesitaría adaptar para usar factory en lugar de DbContext directo)
                 var ventana = new GestLog.Views.Tools.GestionEquipos.DetallesEquipoInformaticoView(detalle, null);
                 var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
-                if (owner != null) ventana.Owner = owner;
+                if (owner != null)
+                {
+                    ventana.Owner = owner;
+                    ventana.ConfigurarParaVentanaPadre(owner);
+                }
                 
                 // Mostrar ventana de detalles y esperar a que se cierre
                 var result = ventana.ShowDialog();

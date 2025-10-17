@@ -1,32 +1,62 @@
 ﻿using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Forms;
-using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
+using System.Windows.Forms; // Para Screen.FromHandle() en ConfigurarParaVentanaPadre
+using GestLog.Modules.GestionMantenimientos.ViewModels;
 
-namespace GestLog.Views.Tools.GestionEquipos
+namespace GestLog.Views.Tools.GestionMantenimientos
 {
     /// <summary>
-    /// Ventana modal para mostrar el detalle de un plan de cronograma
+    /// Ventana modal para mostrar el detalle de un equipo de mantenimiento
     /// </summary>
-    public partial class PlanDetalleModalWindow : Window
+    public partial class EquipoDetalleModalWindow : Window
     {
         private Screen? _lastScreenOwner;
 
-        public PlanDetalleModalWindow()
+        public EquipoDetalleModalWindow()
         {
             InitializeComponent();
-            
-            // Manejar tecla Escape
-            KeyDown += PlanDetalleModalWindow_KeyDown;
+
+            this.ShowInTaskbar = false;
+            this.KeyDown += EquipoDetalleModalWindow_KeyDown;
         }
 
+        private void EquipoDetalleModalWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                this.DialogResult = false;
+                this.Close();
+            }
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        /// <summary>
+        /// Helper para configurar la ventana padre con overlay que cubra toda la pantalla.
+        /// Soporta multi-monitor: detecta en qué pantalla está el Owner y cubre esa pantalla completa.
+        /// </summary>
         public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
         {
             if (parentWindow == null) return;
             
             this.Owner = parentWindow;
-            
+            this.ShowInTaskbar = false;
+
             try
             {
                 // Si la ventana padre está maximizada, maximizar esta también
@@ -61,32 +91,7 @@ namespace GestLog.Views.Tools.GestionEquipos
             }
         }
 
-        private void PlanDetalleModalWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.Escape)
-            {
-                Close();
-            }
-        }
-
-        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            // Cerrar al hacer clic en el fondo
-            Close();
-        }
-
-        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            // Evitar que el clic en el panel cierre la ventana
-            e.Handled = true;
-        }
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             if (this.Owner != null)
             {
@@ -123,7 +128,8 @@ namespace GestLog.Views.Tools.GestionEquipos
                         }
                         else
                         {
-                            // Mismo monitor, actualizar posición
+                            // Mismo monitor, pero podría haber cambiado tamaño o posición
+                            // Actualizar Left y Top manteniendo Width/Height que cubre la pantalla
                             var bounds = currentScreen.Bounds;
                             this.Left = bounds.Left;
                             this.Top = bounds.Top;
@@ -134,6 +140,7 @@ namespace GestLog.Views.Tools.GestionEquipos
                 }
                 catch
                 {
+                    // Fallback: rellamar ConfigurarParaVentanaPadre
                     try
                     {
                         ConfigurarParaVentanaPadre(this.Owner);
