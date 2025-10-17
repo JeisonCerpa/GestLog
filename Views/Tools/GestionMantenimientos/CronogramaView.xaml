@@ -120,7 +120,12 @@
                                                 <ItemsControl ItemsSource="{Binding Mantenimientos}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <TextBlock Text="• {Binding Codigo} - {Binding Nombre}"/>
+                                                            <TextBlock>
+                                                                <Run Text="• "/>
+                                                                <Run Text="{Binding Codigo}"/>
+                                                                <Run Text=" - "/>
+                                                                <Run Text="{Binding Nombre}"/>
+                                                            </TextBlock>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
