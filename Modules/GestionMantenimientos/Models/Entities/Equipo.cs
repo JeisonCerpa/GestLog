@@ -10,7 +10,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string Codigo { get; set; } = null!;
         [Required(ErrorMessage = "El nombre del equipo es obligatorio.")]
-        public string Nombre { get; set; } = null!;
+        public string? Nombre { get; set; }
         public string? Marca { get; set; }
         public EstadoEquipo Estado { get; set; }
         public Sede? Sede { get; set; }

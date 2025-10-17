@@ -270,26 +270,41 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             StatusMessage = "Debe seleccionar un equipo válido para dar de baja.";
             return;
         }
-        // Confirmación antes de dar de baja
-        var result = System.Windows.MessageBox.Show(
-            $"¿Está seguro que desea dar de baja el equipo '{SelectedEquipo.Nombre}' (código: {SelectedEquipo.Codigo})?\nEsta acción es irreversible y eliminará cronogramas y seguimientos pendientes asociados.",
+
+        // Confirmación previa
+        var confirm = System.Windows.MessageBox.Show(
+            $"¿Está seguro que desea dar de baja el equipo '{SelectedEquipo.Codigo}'?",
             "Confirmar baja de equipo",
             System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning
-        );
-        if (result != System.Windows.MessageBoxResult.Yes)
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes)
         {
             StatusMessage = "Operación cancelada por el usuario.";
             return;
         }
+
+        // Pedir observación obligatoria
+        var obsDialog = new GestLog.Views.Shared.ObservacionDialog(SelectedEquipo.Observaciones);
+        var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+        if (owner != null) obsDialog.Owner = owner;
+        var dialogResult = obsDialog.ShowDialog();
+        if (dialogResult != true)
+        {
+            StatusMessage = "Operación cancelada por el usuario.";
+            return;
+        }
+
         try
         {
+            SelectedEquipo.Observaciones = obsDialog.Observacion;
             SelectedEquipo.FechaBaja = DateTime.Now;
             SelectedEquipo.Estado = EstadoEquipo.DadoDeBaja; // Actualiza el estado explícitamente
             await _equipoService.UpdateAsync(SelectedEquipo);
+
             // Eliminar cronogramas y seguimientos pendientes
             await _cronogramaService.DeleteByEquipoCodigoAsync(SelectedEquipo.Codigo!);
-            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());            await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
+            await _seguimientoService.DeletePendientesByEquipoCodigoAsync(SelectedEquipo.Codigo!);
+
             await LoadEquiposAsync(forceReload: true); // Forzar recarga tras dar de baja
             StatusMessage = "Equipo dado de baja exitosamente. Se eliminaron cronogramas y seguimientos pendientes.";
             WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());

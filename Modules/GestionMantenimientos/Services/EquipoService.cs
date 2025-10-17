@@ -85,10 +85,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 // Forzar la fecha de registro a la fecha actual
                 var fechaRegistro = DateTime.Now;
                 int semanaInicio = CalcularSemanaISO8601(fechaRegistro);
+                // Si Nombre se deja vacio, permitir null (nombre ahora nullable en entidad)
+                if (string.IsNullOrWhiteSpace(equipo.Nombre))
+                    equipo.Nombre = null;
                 var entity = new Equipo
                 {
                     Codigo = equipo.Codigo!,
-                    Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? "-" : equipo.Nombre!,
+                    Nombre = equipo.Nombre,
                     Marca = equipo.Marca,
                     Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo,
                     Sede = equipo.Sede,
@@ -162,7 +165,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     throw new GestionMantenimientosDomainException("No se encontró el equipo a actualizar.");
                 // No permitir cambiar el código
                 // entity.Codigo = equipo.Codigo; // NO modificar
-                entity.Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? "-" : equipo.Nombre!;
+                // Evitar forzar Nombre a "-"; permitir null
+                entity.Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? null : equipo.Nombre;
                 entity.Marca = equipo.Marca;
                 entity.Estado = equipo.Estado ?? Models.Enums.EstadoEquipo.Activo;
                 entity.Sede = equipo.Sede;
