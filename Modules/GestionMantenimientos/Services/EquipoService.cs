@@ -118,15 +118,36 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     int anioLimite = anioActual;
                     if (mesActual >= 10) // Octubre o más, también crear el del siguiente año
                         anioLimite = anioActual + 1;
-                    using var dbContext2 = _dbContextFactory.CreateDbContext();
-                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                    using var dbContext2 = _dbContextFactory.CreateDbContext();                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
                     {
                         // No duplicar cronogramas si ya existen
                         bool existe = await dbContext2.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
                         if (existe) continue;
-                        // Calcular semana de inicio para el primer año, para los siguientes usar semana 1
-                        int semanaIni = (anio == anioRegistro) ? semanaInicio : 1;
-                        var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto);
+                        // Calcular semana de inicio para el primer año
+                        int semanaIni = 1;
+                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
+                        {
+                            // La semana de inicio debe ser: semana_registro + salto
+                            int salto = equipo.FrecuenciaMtto switch
+                            {
+                                Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
+                                _ => 1
+                            };
+                            int proximaSemana = semanaInicio + salto;
+                            int yearsWeeks = System.Globalization.ISOWeek.GetWeeksInYear(anio);
+                            if (proximaSemana > yearsWeeks)
+                            {
+                                proximaSemana = ((proximaSemana - 1) % yearsWeeks) + 1;
+                            }
+                            semanaIni = proximaSemana;                            _logger.LogInformation($"[EquipoService] Cronograma creado - Equipo={equipo.Codigo}, FechaRegistro={fechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaInicio}, Salto={salto}, SemanaInicio={semanaIni}, TotalSemanas={yearsWeeks}, Año={anio}");
+                        }
+                        var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto, anio);
                         var cronograma = new CronogramaMantenimiento
                         {
                             Codigo = equipo.Codigo!,
