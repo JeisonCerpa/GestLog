@@ -85,8 +85,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     if (!_isInitialized) return;
                 }
                 await LoadCronogramasAsync();
-            });
-            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
+            });            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
             {
                 // Solo recargar si ya está inicializado
                 lock (_initializationLock)
@@ -97,11 +96,46 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 try
                 {
                     await LoadCronogramasAsync();
-                    AgruparPorSemana();
+                    await AgruparPorSemanaAsync();
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "[CronogramaViewModel] Error en mensaje SeguimientosActualizados");
+                }
+            });
+              // Suscribirse a mensaje cuando se agrega/actualiza un equipo
+            WeakReferenceMessenger.Default.Register<EquiposActualizadosMessage>(this, async (r, m) =>
+            {
+                // Solo recargar si ya está inicializado
+                lock (_initializationLock)
+                {
+                    if (!_isInitialized) return;
+                }
+                
+                try
+                {
+                    _logger.LogInformation("[CronogramaViewModel] 📋 Equipos actualizados - regenerando cronogramas y seguimientos");
+                    
+                    // PASO 1: Asegurar que los cronogramas estén actualizados para todos los equipos activos
+                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 1: Actualizando cronogramas...");
+                    await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
+                    
+                    // PASO 2: Generar los seguimientos para las semanas programadas
+                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 2: Generando seguimientos...");
+                    await _cronogramaService.GenerarSeguimientosFaltantesAsync();
+                    
+                    // PASO 3: Recargar la vista con los nuevos datos
+                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 3: Recargando vista...");
+                    await LoadCronogramasAsync();
+                      // PASO 4: Agrupar por semana
+                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 4: Agrupando por semanas...");
+                    await AgruparPorSemanaAsync();
+                    
+                    _logger.LogInformation("[CronogramaViewModel] ✅ Actualización completada exitosamente");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[CronogramaViewModel] ❌ Error en mensaje EquiposActualizados");
                 }
             });
             
@@ -154,8 +188,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     }    private void FiltrarPorAnio()
     {
         if (Cronogramas == null) return;
-        
-        var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
+          var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
         CronogramasFiltrados = new ObservableCollection<CronogramaMantenimientoDto>(filtrados);
         
         // Solo ejecutar AgruparPorSemana si ya está inicializado Y no es la carga inicial
@@ -163,7 +196,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             if (_isInitialized)
             {
-                AgruparPorSemana();
+                // No esperar aquí, se ejecutará en background
+                _ = AgruparPorSemanaAsync();
             }
         }
     }[RelayCommand]
@@ -173,9 +207,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         lock (_initializationLock)
         {
             if (IsLoading) return;
-        }
-
-        IsLoading = true;
+        }        IsLoading = true;
         StatusMessage = "Cargando cronogramas...";
         try
         {
@@ -189,15 +221,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
                 FiltrarPorAnio();
                 StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
-                  // Marcar como inicializado después de la primera carga exitosa
+                // Marcar como inicializado después de la primera carga exitosa
                 lock (_initializationLock)
                 {
                     _isInitialized = true;
                 }
-                
-                // Ejecutar AgruparPorSemana automáticamente después de la carga inicial
-                AgruparPorSemana();
             });
+            
+            // Ejecutar AgruparPorSemana automáticamente después de la carga inicial (fuera del Dispatcher)
+            await AgruparPorSemanaAsync();
         }
         catch (System.Exception ex)
         {
@@ -278,18 +310,17 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         if (firstWeek <= 1)
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
-        return result.AddDays(-3);
-    }    // Agrupa los cronogramas por semana del año (ISO 8601)
-    public async void AgruparPorSemana()
+        return result.AddDays(-3);    }    // Agrupa los cronogramas por semana del año (ISO 8601)
+    public async Task AgruparPorSemanaAsync()
     {
         // Verificar que tengamos datos para procesar
         if (CronogramasFiltrados == null || !CronogramasFiltrados.Any())
         {
-            _logger.LogInformation("[CronogramaViewModel] No hay cronogramas filtrados para agrupar");
+            _logger.LogInformation("[CronogramaViewModel] ⚠️ No hay cronogramas filtrados para agrupar");
             return;
         }
 
-        _logger.LogInformation("[CronogramaViewModel] Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
+        _logger.LogInformation("[CronogramaViewModel] 🔄 Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
         
         // Limpiar en el hilo de UI
         System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
@@ -367,10 +398,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             
             _logger.LogInformation("[CronogramaViewModel] Agrupación completada: {Count} semanas agregadas", semanasTemp.Count);
         });
-    }
-
-    // TODO: Agregar comandos para importar/exportar y backup de cronogramas    [RelayCommand]
-    public void AgruparSemanalmente()
+    }    // TODO: Agregar comandos para importar/exportar y backup de cronogramas    [RelayCommand]
+    public async Task AgruparSemanalmente()
     {
         // Solo ejecutar si ya está inicializado para evitar cargas múltiples
         lock (_initializationLock)
@@ -378,7 +407,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             if (!_isInitialized) return;
         }
         
-        AgruparPorSemana();
+        await AgruparPorSemanaAsync();
     }[RelayCommand(CanExecute = nameof(CanExportCronograma))]
     public async Task ExportarCronogramasAsync()
     {
@@ -505,9 +534,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // Ámbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#BDBDBD"), // Gris
             _ => XLColor.White        };
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Implementación del método abstracto para auto-refresh automático
     /// </summary>
     protected override async Task RefreshDataAsync()
@@ -516,7 +543,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             _logger.LogInformation("[CronogramaViewModel] Refrescando datos automáticamente");
             await LoadCronogramasAsync();
-            AgruparPorSemana();
+            await AgruparPorSemanaAsync();
             _logger.LogInformation("[CronogramaViewModel] Datos refrescados exitosamente");
         }
         catch (Exception ex)
