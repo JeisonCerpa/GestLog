@@ -173,8 +173,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
-        <Style x:Key="CloseButton" TargetType="Button">
+          <Style x:Key="CloseButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="White"/>
@@ -201,7 +200,42 @@
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
-            </Setter>        </Style>    </Window.Resources>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="DangerActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="36,12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E74C3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#A93226"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>    </Window.Resources>
       <!-- Overlay con renderizado optimizado -->
     <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
           UseLayoutRounding="True"
@@ -234,8 +268,7 @@
                             <GradientStop Color="#118938" Offset="0"/>
                             <GradientStop Color="#2B8E3F" Offset="1"/>
                         </LinearGradientBrush>
-                    </Border.Background>
-                    <DockPanel>
+                    </Border.Background>                    <DockPanel LastChildFill="False">
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                             <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
                                 <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
@@ -245,8 +278,7 @@
                                 <TextBlock Text="Información completa del equipo y sus detalles" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
                             </StackPanel>
                         </StackPanel>
-                        
-                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource CloseButton}" Click="CloseButton_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0">
+                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource CloseButton}" Click="CloseButton_Click" ToolTip="Cerrar (Esc)" Margin="0,-6,-6,0">
                             <Grid Width="14" Height="14">
                                 <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                 <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
@@ -319,11 +351,35 @@
                                 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Fecha Compra:" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEquipo.FechaCompra, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}"/>
-                                
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha Baja:" Style="{StaticResource LabelTextStyle}"/>
+                                  <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha Baja:" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEquipo.FechaBaja, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}"/>
                             </Grid>
-                        </Border>                    </StackPanel>
+                        </Border>                        <!-- Panel de acciones -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="24" Margin="0,20,0,0" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button x:Name="DeleteActionButton" Content="🗑 Dar de Baja" Click="DeleteButton_Click" Style="{StaticResource DangerActionButtonStyle}" Margin="0,0,12,0"/>
+                                <Button x:Name="EditActionButton" Content="✎ Editar" Click="EditButton_Click" Padding="36,12" MinHeight="40" FontSize="13" FontWeight="SemiBold" Background="{StaticResource PrimaryBrush}" Foreground="White" Cursor="Hand" BorderThickness="0" FontFamily="Segoe UI" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </Border></StackPanel>
                 </ScrollViewer>
             </Grid>
         </Border>

@@ -46,6 +46,88 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             this.Close();
         }
 
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Obtener el equipo seleccionado desde el DataContext del modal
+            var equipoSeleccionado = (this.DataContext as dynamic)?.SelectedEquipo;
+            if (equipoSeleccionado == null)
+                return;
+
+            try
+            {
+                // Crear el diálogo de edición con el equipo actual
+                var editDialog = new EquipoDialog(equipoSeleccionado)
+                {
+                    Owner = this.Owner ?? this
+                };
+
+                var result = editDialog.ShowDialog();
+                
+                if (result == true)
+                {
+                    // El diálogo actualizó el equipo, cerrar el detalle para refrescar datos
+                    this.DialogResult = true;
+                    this.Close();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al abrir el editor: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            var equipoSeleccionado = (this.DataContext as dynamic)?.SelectedEquipo;
+            if (equipoSeleccionado == null)
+                return;
+
+            try
+            {
+                // Obtener el ViewModel del DataContext
+                dynamic? viewModel = this.DataContext;
+                if (viewModel == null)
+                    return;
+
+                // Llamar directamente al método DeleteEquipoAsync del ViewModel
+                // El decorador [RelayCommand] debería haber generado el comando, pero
+                // si no está disponible, podemos llamar el método directamente
+                try
+                {
+#pragma warning disable CS8602
+                    var deleteCommand = viewModel.DeleteEquipoAsyncCommand;
+                    if (deleteCommand != null && deleteCommand.CanExecute(null))
+                    {
+                        await deleteCommand.ExecuteAsync(null);
+                        // Cerrar modal después de ejecutar el comando
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+#pragma warning restore CS8602
+                }
+                catch
+                {
+                    // Si el comando no existe, intentar llamar el método directamente
+                    var deleteMethod = viewModel?.GetType()?.GetMethod("DeleteEquipoAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    if (deleteMethod != null)
+                    {
+                        var result = deleteMethod.Invoke(viewModel, null);
+                        if (result is System.Threading.Tasks.Task task)
+                        {
+                            await task;
+                            // Cerrar modal después de ejecutar el comando
+                            this.DialogResult = true;
+                            this.Close();
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al dar de baja el equipo: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
         /// <summary>
         /// Helper para configurar la ventana padre con overlay que cubra toda la pantalla.
         /// Soporta multi-monitor: detecta en qué pantalla está el Owner y cubre esa pantalla completa.

@@ -112,8 +112,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private bool canEditarEquipo;
     [ObservableProperty]
-    private bool canDarDeBajaEquipo;
-    [ObservableProperty]
+    private bool canDarDeBajaEquipo;    [ObservableProperty]
     private bool canRegistrarMantenimientoPermiso;
     // Propiedades alias para compatibilidad con la vista XAML
     public bool CanAddEquipo => CanRegistrarEquipo;
