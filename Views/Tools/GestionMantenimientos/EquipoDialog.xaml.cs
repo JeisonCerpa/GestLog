@@ -66,9 +66,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 }
             }
             catch { }
-        }
-
-        private async void OnGuardar_Click(object sender, RoutedEventArgs e)
+        }        private async void OnGuardar_Click(object sender, RoutedEventArgs e)
         {
             // Forzar actualización del binding del DatePicker para asegurar que la propiedad FechaCompra del DTO esté actualizada
             try
@@ -77,6 +75,18 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 expression?.UpdateSource();
             }
             catch { }
+
+            // ✅ CRÍTICO: Sincronizar los valores de los ComboBox editables con el DTO
+            // Los ComboBox editables están vinculados solo a FiltroMarca, FiltroClasificacion, FiltroCompradoA
+            // Pero necesitamos actualizar Marca, Clasificacion, CompradoA con los valores del filtro
+            var viewModel = DataContext as EquipoDialogViewModel;
+            if (viewModel != null)
+            {
+                // Actualizar el EquipoDto con los valores actuales de los filtros
+                Equipo.Marca = viewModel.FiltroMarca ?? string.Empty;
+                Equipo.Clasificacion = viewModel.FiltroClasificacion ?? string.Empty;
+                Equipo.CompradoA = viewModel.FiltroCompradoA ?? string.Empty;
+            }
 
             var errores = new List<string>();
             // Validaciones: solo Código es obligatorio; otras validaciones mínimas se mantienen
@@ -276,7 +286,26 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasDisponibles.Contains(Equipo.Marca))
                     MarcasDisponibles.Add(Equipo.Marca);
                 if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasFiltradas.Contains(Equipo.Marca))
-                    MarcasFiltradas.Add(Equipo.Marca);                // Cargar los más usados desde servicios registrados (si están disponibles)
+                    MarcasFiltradas.Add(Equipo.Marca);
+
+                // ✅ INICIALIZAR LOS FILTROS CON LOS VALORES ACTUALES
+                // Esto prellenará los ComboBox editables cuando se edita un equipo
+                _suppressFiltroMarcaChanged = true;
+                filtroMarca = Equipo.Marca ?? string.Empty;
+                RaisePropertyChanged(nameof(FiltroMarca));
+                _suppressFiltroMarcaChanged = false;
+
+                _suppressFiltroClasificacionChanged = true;
+                filtroClasificacion = Equipo.Clasificacion ?? string.Empty;
+                RaisePropertyChanged(nameof(FiltroClasificacion));
+                _suppressFiltroClasificacionChanged = false;
+
+                _suppressFiltroCompradoAChanged = true;
+                filtroCompradoA = Equipo.CompradoA ?? string.Empty;
+                RaisePropertyChanged(nameof(FiltroCompradoA));
+                _suppressFiltroCompradoAChanged = false;
+                
+                // Cargar los más usados desde servicios registrados (si están disponibles)
                 try
                 {
                     var clasService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;

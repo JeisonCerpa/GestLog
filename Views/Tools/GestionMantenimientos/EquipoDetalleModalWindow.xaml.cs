@@ -48,31 +48,36 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
-            // Obtener el equipo seleccionado desde el DataContext del modal
-            var equipoSeleccionado = (this.DataContext as dynamic)?.SelectedEquipo;
-            if (equipoSeleccionado == null)
-                return;
-
             try
             {
-                // Crear el diálogo de edición con el equipo actual
-                var editDialog = new EquipoDialog(equipoSeleccionado)
-                {
-                    Owner = this.Owner ?? this
-                };
+                // Obtener el ViewModel del DataContext del modal
+                dynamic? viewModel = this.DataContext;
+                if (viewModel == null)
+                    return;
 
-                var result = editDialog.ShowDialog();
-                
-                if (result == true)
+                // ✅ Llamar directamente al método EditEquipoAsync del ViewModel
+                // usando reflexión como fallback si el comando no existe
+                var editMethod = viewModel?.GetType()?.GetMethod("EditEquipoAsync", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (editMethod != null)
                 {
-                    // El diálogo actualizó el equipo, cerrar el detalle para refrescar datos
-                    this.DialogResult = true;
-                    this.Close();
+                    var task = editMethod.Invoke(viewModel, null) as System.Threading.Tasks.Task;
+                    if (task != null)
+                    {
+                        // NO esperar de forma sincrónica (esto bloquearía la UI)
+                        // Solo cerrar el modal y dejar que el ViewModel maneje la recarga
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("No se pudo encontrar el método EditEquipoAsync", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
             catch (System.Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error al abrir el editor: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Error al editar equipo: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
