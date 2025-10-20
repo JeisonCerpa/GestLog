@@ -72,18 +72,16 @@
                     <TextBlock Text="Frecuencia Mtto:" Grid.Row="8" Grid.Column="0" VerticalAlignment="Center"/>
                     <ComboBox ItemsSource="{Binding FrecuenciasMantenimiento}"
                               SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="8" Grid.Column="1" Margin="0,4"/>
-                    <!-- Nueva fila: Clasificación -->
-                    <TextBlock Text="Clasificación:" Grid.Row="9" Grid.Column="0" VerticalAlignment="Center"/>
-                    <ComboBox IsEditable="True" IsTextSearchEnabled="False"
-                              ItemsSource="{Binding ClasificacionesDisponibles}"
-                              Text="{Binding Clasificacion, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                              Grid.Row="9" Grid.Column="1" Margin="0,4" Style="{StaticResource InputStyle}"/>
-                    <!-- Nueva fila: Comprado a -->
-                    <TextBlock Text="Comprado a:" Grid.Row="10" Grid.Column="0" VerticalAlignment="Center"/>
-                    <ComboBox IsEditable="True" IsTextSearchEnabled="False"
-                              ItemsSource="{Binding CompradoADisponibles}"
-                              Text="{Binding CompradoA, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                              Grid.Row="8" Grid.Column="1" Margin="0,4"/>                    <!-- Nueva fila: Clasificación -->
+                    <TextBlock Text="Clasificación:" Grid.Row="9" Grid.Column="0" VerticalAlignment="Center"/>                    <ComboBox x:Name="CmbClasificacion"
+                              IsEditable="True" IsTextSearchEnabled="False"
+                              ItemsSource="{Binding ClasificacionesFiltradas}"
+                              Text="{Binding FiltroClasificacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Grid.Row="9" Grid.Column="1" Margin="0,4" Style="{StaticResource InputStyle}"/><!-- Nueva fila: Comprado a -->
+                    <TextBlock Text="Comprado a:" Grid.Row="10" Grid.Column="0" VerticalAlignment="Center"/>                    <ComboBox x:Name="CmbCompradoA"
+                              IsEditable="True" IsTextSearchEnabled="False"
+                              ItemsSource="{Binding CompradoAFiltrados}"
+                              Text="{Binding FiltroCompradoA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               Grid.Row="10" Grid.Column="1" Margin="0,4" Style="{StaticResource InputStyle}"/>
                 </Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
