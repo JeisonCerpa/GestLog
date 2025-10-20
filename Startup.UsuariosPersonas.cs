@@ -67,13 +67,13 @@ namespace GestLog
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();
             // Servicio del módulo GestionEquiposInformaticos para desactivar planes y eliminar seguimientos futuros al dar de baja un equipo
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.GestionEquiposInformaticosSeguimientoCronogramaService>();
-            
-            // Servicios de autocompletado para periféricos
+              // Servicios de autocompletado para periféricos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.DispositivoAutocompletadoService>();
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();
-            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA)
+            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.ClasificacionAutocompletadoService>();
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.CompradoAAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.MarcaAutocompletadoService>();
             // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
             

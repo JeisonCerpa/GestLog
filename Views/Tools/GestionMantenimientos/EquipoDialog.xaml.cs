@@ -127,7 +127,16 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             // Proxy directo a las propiedades del EquipoDto para binding simple
             public string? Codigo { get => Equipo.Codigo; set => Equipo.Codigo = value; }
             public string? Nombre { get => Equipo.Nombre; set => Equipo.Nombre = value; }
-            public string? Marca { get => Equipo.Marca; set => Equipo.Marca = value; }
+            public string? Marca 
+            { 
+                get => Equipo.Marca; 
+                set
+                {
+                    Equipo.Marca = value;
+                    // actualizar filtro (dispara debounce)
+                    FiltroMarca = value ?? string.Empty;
+                }
+            }
             public EstadoEquipo? Estado { get => Equipo.Estado; set => Equipo.Estado = value; }
             public Sede? Sede { get => Equipo.Sede; set => Equipo.Sede = value; }
             public FrecuenciaMantenimiento? FrecuenciaMtto { get => Equipo.FrecuenciaMtto; set => Equipo.FrecuenciaMtto = value; }
@@ -163,12 +172,16 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> CompradoADisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> CompradoAFiltrados { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+            public System.Collections.ObjectModel.ObservableCollection<string> MarcasDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+            public System.Collections.ObjectModel.ObservableCollection<string> MarcasFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
 
             // Debounce / cancelación y supresión de cambios
             private bool _suppressFiltroClasificacionChanged = false;
             private bool _suppressFiltroCompradoAChanged = false;
+            private bool _suppressFiltroMarcaChanged = false;
             private System.Threading.CancellationTokenSource? _clasificacionFilterCts;
-            private System.Threading.CancellationTokenSource? _compradoAFilterCts;            private string filtroClasificacion = string.Empty;
+            private System.Threading.CancellationTokenSource? _compradoAFilterCts;
+            private System.Threading.CancellationTokenSource? _marcaFilterCts;private string filtroClasificacion = string.Empty;
             public string FiltroClasificacion
             {
                 get => filtroClasificacion;
@@ -215,6 +228,31 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
                     _ = DebounceFiltrarCompradoAAsync(token);
                 }
+            }
+
+            private string filtroMarca = string.Empty;
+            public string FiltroMarca
+            {
+                get => filtroMarca;
+                set
+                {
+                    if (_suppressFiltroMarcaChanged)
+                    {
+                        filtroMarca = value ?? string.Empty;
+                        RaisePropertyChanged(nameof(FiltroMarca)); // ← CRÍTICO: Forzar PropertyChanged incluso cuando está suprimido
+                        return;
+                    }
+
+                    filtroMarca = value ?? string.Empty;
+                    RaisePropertyChanged(nameof(FiltroMarca));
+
+                    _marcaFilterCts?.Cancel();
+                    _marcaFilterCts?.Dispose();
+                    _marcaFilterCts = new System.Threading.CancellationTokenSource();
+                    var token = _marcaFilterCts.Token;
+
+                    _ = DebounceFiltrarMarcasAsync(token);
+                }
             }            public EquipoDialogViewModel(EquipoDto equipo)
             {
                 Equipo = equipo;
@@ -223,6 +261,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 ClasificacionesFiltradas = new System.Collections.ObjectModel.ObservableCollection<string>();
                 CompradoADisponibles = new System.Collections.ObjectModel.ObservableCollection<string>();
                 CompradoAFiltrados = new System.Collections.ObjectModel.ObservableCollection<string>();
+                MarcasDisponibles = new System.Collections.ObjectModel.ObservableCollection<string>();
+                MarcasFiltradas = new System.Collections.ObjectModel.ObservableCollection<string>();
                 
                 // Si existen valores iniciales en el DTO, asegurarlos en las listas
                 if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesDisponibles.Contains(Equipo.Clasificacion))
@@ -233,12 +273,15 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     CompradoADisponibles.Add(Equipo.CompradoA);
                 if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoAFiltrados.Contains(Equipo.CompradoA))
                     CompradoAFiltrados.Add(Equipo.CompradoA);
-
-                // Cargar los más usados desde servicios registrados (si están disponibles)
+                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasDisponibles.Contains(Equipo.Marca))
+                    MarcasDisponibles.Add(Equipo.Marca);
+                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasFiltradas.Contains(Equipo.Marca))
+                    MarcasFiltradas.Add(Equipo.Marca);                // Cargar los más usados desde servicios registrados (si están disponibles)
                 try
                 {
                     var clasService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;
                     var compService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(CompradoAAutocompletadoService)) as CompradoAAutocompletadoService;
+                    var marcaService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(MarcaAutocompletadoService)) as MarcaAutocompletadoService;
                     if (clasService != null)
                     {
                         var items = Task.Run(() => clasService.ObtenerMasUtilizadasAsync(50)).GetAwaiter().GetResult();
@@ -255,6 +298,15 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                         {
                             if (!CompradoADisponibles.Contains(it)) CompradoADisponibles.Add(it);
                             if (!CompradoAFiltrados.Contains(it)) CompradoAFiltrados.Add(it);
+                        }
+                    }
+                    if (marcaService != null)
+                    {
+                        var items3 = Task.Run(() => marcaService.ObtenerMasUtilizadasAsync(50)).GetAwaiter().GetResult();
+                        foreach (var it in items3)
+                        {
+                            if (!MarcasDisponibles.Contains(it)) MarcasDisponibles.Add(it);
+                            if (!MarcasFiltradas.Contains(it)) MarcasFiltradas.Add(it);
                         }
                     }
                 }
@@ -277,9 +329,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     // ignore
                 }
                 catch { }
-            }
-
-            private async Task DebounceFiltrarCompradoAAsync(System.Threading.CancellationToken token)
+            }            private async Task DebounceFiltrarCompradoAAsync(System.Threading.CancellationToken token)
             {
                 try
                 {
@@ -292,7 +342,22 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     // ignore
                 }
                 catch { }
-            }            private async Task FiltrarClasificacionesAsync(System.Threading.CancellationToken cancellationToken)
+            }
+
+            private async Task DebounceFiltrarMarcasAsync(System.Threading.CancellationToken token)
+            {
+                try
+                {
+                    await Task.Delay(250, token);
+                    if (token.IsCancellationRequested) return;
+                    await FiltrarMarcasAsync(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // ignore
+                }
+                catch { }
+            }private async Task FiltrarClasificacionesAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {
@@ -360,6 +425,45 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     });
                 }
                 catch { }
+            }            private Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
+            {
+                try
+                {
+                    var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(MarcaAutocompletadoService)) as MarcaAutocompletadoService;
+                    if (svc == null) return Task.CompletedTask;
+                    var filtroActual = FiltroMarca ?? string.Empty;
+                    
+                    // Ejecutar búsqueda de forma sincrónica para este método Task
+                    var items = Task.Run(() => svc.BuscarAsync(filtroActual)).GetAwaiter().GetResult();
+                    
+                    if (cancellationToken.IsCancellationRequested) return Task.CompletedTask;
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            // PASO 1: Guardar el texto ANTES de cambiar ItemsSource
+                            var textoPreservado = filtroMarca;
+
+                            // PASO 2: Limpiar la colección filtrada
+                            MarcasFiltradas.Clear();
+
+                            // PASO 3: Añadir nuevos items
+                            foreach (var it in items)
+                                MarcasFiltradas.Add(it);
+
+                            // PASO 4: Forzar que el binding se actualice con el texto original
+                            _suppressFiltroMarcaChanged = true;
+                            filtroMarca = textoPreservado;
+                            RaisePropertyChanged(nameof(FiltroMarca));
+                            _suppressFiltroMarcaChanged = false;
+                        }
+                        catch { }
+                    });
+                    return Task.CompletedTask;
+                }
+                catch { }
+                return Task.CompletedTask;
             }
         }
     }
