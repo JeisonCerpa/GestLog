@@ -473,8 +473,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             {
                 // Si ya existe cronograma para el siguiente año, omitir
                 bool exists = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == nextYear);
-                if (exists) continue;
-                // Buscar cronograma del año actual
+                if (exists) continue;                // Buscar cronograma del año actual
                 var cronogramaActual = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == now.Year);
                 int semanaInicio = 1;
                 if (cronogramaActual != null)
@@ -493,12 +492,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
                             Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(now.Year),
                             _ => 1
-                        };
-
-                        // Calcular la siguiente semana respetando el ciclo (módulo weeksInYear)
-                        int yearsWeeks = ISOWeek.GetWeeksInYear(nextYear);
+                        };                        // Calcular la siguiente semana: última semana del año anterior + salto
                         int ultimaSemana = lastWeek + 1; // base 1
-                        int proximaSemana = ((ultimaSemana - 1 + salto) % yearsWeeks) + 1;
+                        int proximaSemana = ultimaSemana + salto;
+                        int weeksInPreviousYear = ISOWeek.GetWeeksInYear(now.Year);
+                        
+                        // Si se pasa del año anterior, ajustar al año siguiente
+                        if (proximaSemana > weeksInPreviousYear)
+                        {
+                            proximaSemana = proximaSemana - weeksInPreviousYear;
+                        }
+                        
                         semanaInicio = proximaSemana;
                     }
                     else
@@ -587,7 +591,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 _logger.LogInformation($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
                 int anioRegistro = equipo.FechaRegistro!.Value.Year;
                 int semanaRegistro = CalcularSemanaISO8601(equipo.FechaRegistro.Value);
-                _logger.LogInformation($"[CRONOGRAMA] FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
                 
                 for (int anio = anioRegistro; anio <= anioLimite; anio++)
                 {
@@ -627,14 +630,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         }
                         
                         semanaInicio = proximaSemana;
-                        
-                        _logger.LogInformation($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Salto={salto}, SemanaInicio={semanaInicio}, TotalSemanas={yearsWeeks}, Año={anio}");
                     }
                     else
                     {
-                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
-
-                        if (cronogramaAnterior != null)
+                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));                        if (cronogramaAnterior != null)
                         {
                             int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
                             if (lastWeek >= 0)
@@ -652,16 +651,27 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 };
                                 // Calcular la semana de inicio para el año actual a partir del último mantenimiento del año anterior
                                 int ultimaSemana = lastWeek + 1;
-                                int yearsWeeks = ISOWeek.GetWeeksInYear(anio);
-                                semanaInicio = ((ultimaSemana - 1 + saltoAnterior) % yearsWeeks) + 1;
+                                int proximaSemana = ultimaSemana + saltoAnterior;
+                                int weeksInPreviousYear = ISOWeek.GetWeeksInYear(anio - 1);
+                                int weeksInCurrentYear = ISOWeek.GetWeeksInYear(anio);
+                                
+                                // Si se pasa del año anterior, ajustar al año actual
+                                if (proximaSemana > weeksInPreviousYear)
+                                {
+                                    proximaSemana = proximaSemana - weeksInPreviousYear;
+                                }
+                                
+                                semanaInicio = proximaSemana;
                             }
                             else
                             {
+                                _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene mantenimientos en {anio - 1}, iniciando en semana 1");
                                 semanaInicio = 1;
                             }
                         }
                         else
                         {
+                            _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene cronograma en {anio - 1}, iniciando en semana 1");
                             semanaInicio = 1;
                         }
                     }
