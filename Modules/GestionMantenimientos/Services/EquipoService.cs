@@ -151,7 +151,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             }
                             
                             semanaIni = proximaSemana;
-                            // Log reducido: no registrar información detallada por cada cronograma
+                            _logger.LogInformation($"[EquipoService] Cronograma {anio} creado - Equipo={equipo.Codigo}, SemanaInicio={semanaIni}");
                         }                        else if (anio > anioRegistro && equipo.FrecuenciaMtto != null)
                         {
                             // AÑOS POSTERIORES: Calcular a partir del último mantenimiento del año anterior
@@ -185,7 +185,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                     }
                                     
                                     semanaIni = proximaSemana;
-                                    // Log reducido: no registrar información detallada por cada cronograma
+                                    _logger.LogInformation($"[EquipoService] Cronograma {anio} creado - Equipo={equipo.Codigo}, SemanaInicio={semanaIni}");
                                 }
                             }
                         }                        

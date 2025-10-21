@@ -591,6 +591,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 _logger.LogInformation($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
                 int anioRegistro = equipo.FechaRegistro!.Value.Year;
                 int semanaRegistro = CalcularSemanaISO8601(equipo.FechaRegistro.Value);
+                _logger.LogInformation($"[CRONOGRAMA] FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
                 
                 for (int anio = anioRegistro; anio <= anioLimite; anio++)
                 {
@@ -630,6 +631,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         }
                         
                         semanaInicio = proximaSemana;
+                        
+                        _logger.LogInformation($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Salto={salto}, SemanaInicio={semanaInicio}, TotalSemanas={yearsWeeks}, Año={anio}");
                     }
                     else
                     {
@@ -662,6 +665,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 }
                                 
                                 semanaInicio = proximaSemana;
+                                
+                                _logger.LogInformation($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo}, UltimaSemanaAñoAnterior={ultimaSemana}, Salto={saltoAnterior}, WeeksInPreviousYear={weeksInPreviousYear}, WeeksInCurrentYear={weeksInCurrentYear}, SemanaInicio={semanaInicio}, Año={anio}");
                             }
                             else
                             {
