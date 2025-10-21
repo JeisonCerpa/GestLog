@@ -107,27 +107,30 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 };
                 dbContext.Equipos.Add(entity);
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
-
-                // Generar cronogramas desde el año de registro hasta el año actual
+                _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");                // Generar cronogramas desde el año de registro hasta el siguiente año (solo si es octubre o después)
                 if (equipo.FrecuenciaMtto != null)
                 {
                     var anioRegistro = fechaRegistro.Year;
                     var anioActual = DateTime.Now.Year;
                     var mesActual = DateTime.Now.Month;
-                    int anioLimite = anioActual;
-                    if (mesActual >= 10) // Octubre o más, también crear el del siguiente año
-                        anioLimite = anioActual + 1;
-                    using var dbContext2 = _dbContextFactory.CreateDbContext();                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                    
+                    // Solo generar el año siguiente si estamos en octubre o después
+                    var anioLimite = anioActual;
+                    if (mesActual >= 10)
                     {
+                        anioLimite = anioActual + 1;
+                    }
+                      for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                    {
+                        using var dbContext2 = _dbContextFactory.CreateDbContext();
+                        
                         // No duplicar cronogramas si ya existen
                         bool existe = await dbContext2.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
                         if (existe) continue;
-                        // Calcular semana de inicio para el primer año
-                        int semanaIni = 1;
-                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
+                        
+                        int semanaIni = 1;                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
                         {
-                            // La semana de inicio debe ser: semana_registro + salto
+                            // PRIMER AÑO: Calcular a partir de la semana de registro
                             int salto = equipo.FrecuenciaMtto switch
                             {
                                 Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
@@ -141,12 +144,51 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             };
                             int proximaSemana = semanaInicio + salto;
                             int yearsWeeks = System.Globalization.ISOWeek.GetWeeksInYear(anio);
+                            
                             if (proximaSemana > yearsWeeks)
                             {
                                 proximaSemana = ((proximaSemana - 1) % yearsWeeks) + 1;
                             }
-                            semanaIni = proximaSemana;                            _logger.LogInformation($"[EquipoService] Cronograma creado - Equipo={equipo.Codigo}, FechaRegistro={fechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaInicio}, Salto={salto}, SemanaInicio={semanaIni}, TotalSemanas={yearsWeeks}, Año={anio}");
-                        }
+                            
+                            semanaIni = proximaSemana;
+                            _logger.LogInformation($"[EquipoService] Cronograma {anio} creado - Equipo={equipo.Codigo}, SemanaInicio={semanaIni}");
+                        }                        else if (anio > anioRegistro && equipo.FrecuenciaMtto != null)
+                        {
+                            // AÑOS POSTERIORES: Calcular a partir del último mantenimiento del año anterior
+                            var cronogramaAnterior = await dbContext2.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
+                            if (cronogramaAnterior != null)
+                            {
+                                int lastWeek = System.Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
+                                
+                                if (lastWeek >= 0)
+                                {
+                                    int salto = equipo.FrecuenciaMtto switch
+                                    {
+                                        Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                        Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                        Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                        Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                        Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                        Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                        Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
+                                        _ => 1
+                                    };
+                                    
+                                    int ultimaSemana = lastWeek + 1; // Convertir a 1-based
+                                    int proximaSemana = ultimaSemana + salto;
+                                    int weeksInPreviousYear = System.Globalization.ISOWeek.GetWeeksInYear(anio - 1);
+                                    
+                                    // Si se pasa del año anterior, ajustar al año actual
+                                    if (proximaSemana > weeksInPreviousYear)
+                                    {
+                                        proximaSemana = proximaSemana - weeksInPreviousYear;
+                                    }
+                                    
+                                    semanaIni = proximaSemana;
+                                    _logger.LogInformation($"[EquipoService] Cronograma {anio} creado - Equipo={equipo.Codigo}, SemanaInicio={semanaIni}");
+                                }
+                            }
+                        }                        
                         var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto, anio);
                         var cronograma = new CronogramaMantenimiento
                         {
@@ -156,11 +198,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Sede = equipo.Sede?.ToString(),
                             FrecuenciaMtto = equipo.FrecuenciaMtto,
                             Semanas = semanas,
-                            Anio = anio
-                        };
-                        dbContext2.Cronogramas.Add(cronograma);
+                            Anio = anio                        };                        dbContext2.Cronogramas.Add(cronograma);
+                        
+                        // Guardar inmediatamente para que el siguiente año pueda leer este cronograma
+                        await dbContext2.SaveChangesAsync();
                     }
-                    await dbContext2.SaveChangesAsync();
                 }
             }
             catch (GestionMantenimientosDomainException ex)
@@ -396,13 +438,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
         {
             // TODO: Implementar lógica real de obtención de equipos
             return Task.FromResult(new List<EquipoDto>());
-        }
-
-        // Calcula la semana ISO 8601 para una fecha dada
+        }        // Calcula la semana ISO 8601 para una fecha dada
         private int CalcularSemanaISO8601(DateTime fecha)
         {
-            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-            return cal.GetWeekOfYear(fecha, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            return System.Globalization.ISOWeek.GetWeekOfYear(fecha);
         }
     }
 }
