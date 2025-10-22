@@ -33,7 +33,24 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private bool canDeleteSeguimiento;
     [ObservableProperty]
-    private bool canExportSeguimiento;
+    private bool canExportSeguimiento;    // Propiedades de estadísticas para el header
+    [ObservableProperty]
+    private int seguimientosTotal;
+
+    [ObservableProperty]
+    private int seguimientosPendientes;
+
+    [ObservableProperty]
+    private int seguimientosEjecutados;
+
+    [ObservableProperty]
+    private int seguimientosRetrasados;
+
+    [ObservableProperty]
+    private int seguimientosRealizadosFueraDeTiempo;
+
+    [ObservableProperty]
+    private int seguimientosNoRealizados;
 
     [ObservableProperty]
     private ObservableCollection<SeguimientoMantenimientoDto> seguimientos = new();
@@ -215,6 +232,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             }
 
             Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
+            RecalcularEstadisticas();
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
             _lastLoadTime = DateTime.Now;
         }
@@ -379,16 +397,30 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             _logger.LogError(ex, "Error al eliminar seguimiento");
             StatusMessage = "Error al eliminar seguimiento.";
         }
+    }    /// <summary>
+    /// Determina si hay filtros activos (búsqueda o fechas).
+    /// </summary>
+    private bool TieneFiltrosActivos()
+    {
+        return !string.IsNullOrWhiteSpace(FiltroSeguimiento) || 
+               FechaDesde.HasValue || 
+               FechaHasta.HasValue;
     }
 
     [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
-    public async Task ExportarSeguimientosAsync()
+    public async Task ExportarAsync()
     {
+        var tieneFiltradores = TieneFiltrosActivos();
+        var titulo = tieneFiltradores ? "Exportar seguimientos filtrados a Excel" : "Exportar todos los seguimientos a Excel";
+        var nombreArchivo = tieneFiltradores 
+            ? $"SeguimientosFiltrados_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+            : $"Seguimientos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "Archivos Excel (*.xlsx)|*.xlsx",
-            Title = "Exportar seguimientos a Excel",
-            FileName = $"Seguimientos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+            Title = titulo,
+            FileName = nombreArchivo
         };
 
         if (dialog.ShowDialog() == true)
@@ -397,7 +429,51 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             StatusMessage = "Exportando a Excel...";
             try
             {
-                await _seguimientoService.ExportarAExcelAsync(dialog.FileName);
+                // Si hay filtros, exportar datos filtrados; si no, exportar todos
+                var datosAExportar = tieneFiltradores 
+                    ? (SeguimientosView?.Cast<SeguimientoMantenimientoDto>().ToList() ?? new List<SeguimientoMantenimientoDto>())
+                    : Seguimientos.ToList();
+
+                await Task.Run(() =>
+                {
+                    using var workbook = new ClosedXML.Excel.XLWorkbook();
+                    var ws = workbook.Worksheets.Add("Seguimientos");
+
+                    ws.Cell(1, 1).Value = "Código";
+                    ws.Cell(1, 2).Value = "Nombre";
+                    ws.Cell(1, 3).Value = "Fecha Realizada";
+                    ws.Cell(1, 4).Value = "Tipo Mtto";
+                    ws.Cell(1, 5).Value = "Descripción";
+                    ws.Cell(1, 6).Value = "Responsable";
+                    ws.Cell(1, 7).Value = "Costo";
+                    ws.Cell(1, 8).Value = "Observaciones";
+                    ws.Cell(1, 9).Value = "Fecha Registro";
+                    ws.Cell(1, 10).Value = "Semana";
+                    ws.Cell(1, 11).Value = "Año";
+                    ws.Cell(1, 12).Value = "Estado";
+
+                    int row = 2;
+                    foreach (var s in datosAExportar)
+                    {
+                        ws.Cell(row, 1).Value = s.Codigo ?? "";
+                        ws.Cell(row, 2).Value = s.Nombre ?? "";
+                        ws.Cell(row, 3).Value = s.FechaRealizacion?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 4).Value = s.TipoMtno?.ToString() ?? "";
+                        ws.Cell(row, 5).Value = s.Descripcion ?? "";
+                        ws.Cell(row, 6).Value = s.Responsable ?? "";
+                        ws.Cell(row, 7).Value = s.Costo;
+                        ws.Cell(row, 8).Value = s.Observaciones ?? "";
+                        ws.Cell(row, 9).Value = s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(row, 10).Value = s.Semana;
+                        ws.Cell(row, 11).Value = s.Anio;
+                        ws.Cell(row, 12).Value = s.Estado.ToString();
+                        row++;
+                    }
+
+                    ws.Columns().AdjustToContents();
+                    workbook.SaveAs(dialog.FileName);
+                });
+
                 StatusMessage = $"Exportación completada: {dialog.FileName}";
             }
             catch (Exception ex)
@@ -410,75 +486,20 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 IsLoading = false;
             }
         }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
-    public async Task ExportarSeguimientosFiltradosAsync()
-    {
-        var dialog = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
-            Title = "Exportar seguimientos filtrados a Excel",
-            FileName = $"SeguimientosFiltrados_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
-        };
-
-        if (dialog.ShowDialog() == true)
-        {
-            IsLoading = true;
-            StatusMessage = "Exportando a Excel...";
-            try
-            {
-                var filtrados = SeguimientosView?.Cast<SeguimientoMantenimientoDto>().ToList() ?? new List<SeguimientoMantenimientoDto>();
-                await Task.Run(() =>
-                {
-                    using var workbook = new ClosedXML.Excel.XLWorkbook();
-                    var ws = workbook.Worksheets.Add("Seguimientos");
-
-                    ws.Cell(1, 1).Value = "Código";
-                    ws.Cell(1, 2).Value = "Nombre";
-                    ws.Cell(1, 3).Value = "Tipo Mtno";
-                    ws.Cell(1, 4).Value = "Responsable";
-                    ws.Cell(1, 5).Value = "Fecha Registro";
-                    ws.Cell(1, 6).Value = "Semana";
-                    ws.Cell(1, 7).Value = "Año";
-                    ws.Cell(1, 8).Value = "Estado";
-
-                    int row = 2;
-                    foreach (var s in filtrados)
-                    {
-                        ws.Cell(row, 1).Value = s.Codigo ?? "";
-                        ws.Cell(row, 2).Value = s.Nombre ?? "";
-                        ws.Cell(row, 3).Value = s.TipoMtno?.ToString() ?? "";
-                        ws.Cell(row, 4).Value = s.Responsable ?? "";
-                        ws.Cell(row, 5).Value = s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 6).Value = s.Semana;
-                        ws.Cell(row, 7).Value = s.Anio;
-                        ws.Cell(row, 8).Value = s.Estado.ToString();
-                        row++;
-                    }
-
-                    ws.Columns().AdjustToContents();
-                    workbook.SaveAs(dialog.FileName);
-                });
-
-                StatusMessage = $"Exportación completada: {dialog.FileName}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al exportar seguimientos filtrados");
-                StatusMessage = $"Error al exportar: {ex.Message}";
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     public void Filtrar()
     {
         SeguimientosView?.Refresh();
+    }
+
+    [RelayCommand]
+    public void LimpiarFiltros()
+    {
+        FiltroSeguimiento = "";
+        FechaDesde = null;
+        FechaHasta = null;
+        SeguimientosView?.Refresh();
+        StatusMessage = "Filtros limpiados.";
     }
 
     partial void OnFiltroSeguimientoChanged(string value)
@@ -606,6 +627,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     {
         // Convierte "RealizadoEnTiempo" en "Realizado en tiempo"
         return System.Text.RegularExpressions.Regex.Replace(texto, "([a-z])([A-Z])", "$1 $2");
+    }    private void RecalcularEstadisticas()
+    {
+        SeguimientosTotal = Seguimientos.Count;
+        SeguimientosPendientes = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
+        SeguimientosEjecutados = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
+        SeguimientosRetrasados = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
+        SeguimientosRealizadosFueraDeTiempo = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo);
+        SeguimientosNoRealizados = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
     }
 
     // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
