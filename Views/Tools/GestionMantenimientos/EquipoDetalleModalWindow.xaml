@@ -233,13 +233,11 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style></Window.Resources>      <!-- Overlay con renderizado optimizado -->
+        </Style></Window.Resources>    <!-- Overlay con renderizado optimizado -->
     <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
           UseLayoutRounding="True"
           SnapsToDevicePixels="True"
-          Background="#80000000"
-          Margin="20">
-          <!-- Panel principal con renderizado optimizado -->
+          Background="#80000000">          <!-- Panel principal con renderizado optimizado -->
         <Border Width="720" 
                 MaxHeight="900" 
                 Background="{StaticResource SurfaceBrush}" 
@@ -247,6 +245,7 @@
                 Padding="0" 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center"
+                Margin="20"
                 BorderThickness="1"
                 BorderBrush="{StaticResource BorderBrush}"
                 Effect="{StaticResource WindowShadow}"
