@@ -86,12 +86,14 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 Equipo.Marca = viewModel.FiltroMarca ?? string.Empty;
                 Equipo.Clasificacion = viewModel.FiltroClasificacion ?? string.Empty;
                 Equipo.CompradoA = viewModel.FiltroCompradoA ?? string.Empty;
-            }
-
-            var errores = new List<string>();
-            // Validaciones: solo Código es obligatorio; otras validaciones mínimas se mantienen
+            }            var errores = new List<string>();
+            // Validaciones: Código y Nombre son obligatorios
             if (string.IsNullOrWhiteSpace(Equipo.Codigo))
                 errores.Add("El código del equipo es obligatorio.");
+            
+            // ✅ NUEVA: Validar que el Nombre sea obligatorio
+            if (string.IsNullOrWhiteSpace(Equipo.Nombre))
+                errores.Add("El nombre del equipo es obligatorio.");
 
             if (Equipo.Precio != null && Equipo.Precio < 0)
                 errores.Add("El precio no puede ser negativo.");
@@ -133,10 +135,19 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public EquipoDto Equipo { get; set; }
             public IEnumerable<EstadoEquipo> EstadosEquipo { get; set; } = new EstadoEquipo[0];
             public IEnumerable<Sede> Sedes { get; set; } = new Sede[0];
-            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];
-            // Proxy directo a las propiedades del EquipoDto para binding simple
+            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];            // Proxy directo a las propiedades del EquipoDto para binding simple
             public string? Codigo { get => Equipo.Codigo; set => Equipo.Codigo = value; }
-            public string? Nombre { get => Equipo.Nombre; set => Equipo.Nombre = value; }
+            public string? Nombre 
+            { 
+                get => Equipo.Nombre; 
+                set 
+                { 
+                    Equipo.Nombre = value;
+                    RaisePropertyChanged(nameof(Nombre));
+                    RaisePropertyChanged(nameof(IsNombreVacio));
+                    RaisePropertyChanged(nameof(IsFormularioValido));
+                } 
+            }
             public string? Marca 
             { 
                 get => Equipo.Marca; 
@@ -178,7 +189,20 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     Equipo.CompradoA = value;
                     FiltroCompradoA = value ?? string.Empty;
                 }
-            }            public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+            }
+
+            // ✅ NUEVAS PROPIEDADES PARA VALIDACIÓN EN TIEMPO REAL
+            /// <summary>
+            /// Indica si el campo Nombre está vacío (para mostrar error visual)
+            /// </summary>
+            public bool IsNombreVacio => string.IsNullOrWhiteSpace(Nombre);
+
+            /// <summary>
+            /// Indica si el formulario es válido para guardar (Nombre no puede estar vacío)
+            /// </summary>
+            public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo);
+
+            public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> CompradoADisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> CompradoAFiltrados { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();

@@ -12,6 +12,7 @@
         <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
         <converters:CardButtonBorderColorConverter x:Key="CardButtonBorderColorConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <!-- ...otros recursos... -->
     </UserControl.Resources>
@@ -39,31 +40,77 @@
                           Padding="4,2"
                           BorderBrush="#1976D2"
                           BorderThickness="1"
-                          Background="#F5F8FF"/>
-            </StackPanel>            <Button Content="Exportar"
-                    Command="{Binding ExportarCronogramasCommand}"
-                    FontSize="14"
-                    Padding="16,4"
-                    Background="#118938"
-                    Foreground="White"
-                    BorderBrush="#118938"
-                    BorderThickness="1.5"
-                    FontWeight="SemiBold"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"
-                    Margin="0,0,0,0"
-                    Grid.Column="1"
-                    IsEnabled="{Binding CanExportCronograma}" 
-                    Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="8"/>
-                    </Style>
-                </Button.Resources>
-                <Button.Effect>
-                    <DropShadowEffect BlurRadius="4" ShadowDepth="2" Color="#118938" Opacity="0.18"/>
-                </Button.Effect>
-            </Button>
+                          Background="#F5F8FF"/>            </StackPanel>            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="1">
+                <!-- Botón Refrescar -->
+                <Button Content="🔄"
+                        Command="{Binding RefreshCommand}"
+                        FontSize="16"
+                        Padding="10,4"
+                        Margin="0,0,8,0"
+                        Background="#118938"
+                        Foreground="White"
+                        BorderBrush="#118938"
+                        BorderThickness="1.5"
+                        FontWeight="SemiBold"
+                        VerticalAlignment="Center"                        ToolTip="Refrescar cronograma"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" 
+                        Opacity="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                    <Button.Effect>
+                        <DropShadowEffect BlurRadius="4" ShadowDepth="2" Color="#118938" Opacity="0.18"/>
+                    </Button.Effect>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Grid>
+                                            <Border x:Name="BorderElement" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="MouseOver">
+                                                        <Storyboard>
+                                                            <ColorAnimation To="#0D6B2F" Duration="0" Storyboard.TargetName="BorderElement" Storyboard.TargetProperty="Background.Color"/>
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateManager.VisualStateGroups>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <!-- Botón Exportar -->
+                <Button Content="Exportar"
+                        Command="{Binding ExportarCronogramasCommand}"
+                        FontSize="14"
+                        Padding="16,4"
+                        Background="#118938"
+                        Foreground="White"
+                        BorderBrush="#118938"
+                        BorderThickness="1.5"
+                        FontWeight="SemiBold"
+                        VerticalAlignment="Center"
+                        IsEnabled="{Binding CanExportCronograma}" 
+                        Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                    <Button.Effect>
+                        <DropShadowEffect BlurRadius="4" ShadowDepth="2" Color="#118938" Opacity="0.18"/>
+                    </Button.Effect>
+                </Button>
+            </StackPanel>
         </Grid>
         <!-- Vista semanal tipo calendario -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

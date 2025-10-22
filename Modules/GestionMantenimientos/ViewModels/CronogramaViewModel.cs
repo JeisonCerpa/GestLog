@@ -44,11 +44,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     private bool isLoading;
 
     [ObservableProperty]
-    private string? statusMessage;
-
-    // Flag para controlar cargas múltiples
+    private string? statusMessage;    // Flag para controlar cargas múltiples
     private bool _isInitialized;
     private readonly object _initializationLock = new object();
+    
+    // Flag para evitar agrupación duplicada durante refresh
+    private bool _isRefreshing = false;
+
+    // Flag atómico para evitar reentradas en AgruparPorSemana
+    private int _isGroupingFlag = 0;
 
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
@@ -191,10 +195,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
           var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
         CronogramasFiltrados = new ObservableCollection<CronogramaMantenimientoDto>(filtrados);
         
-        // Solo ejecutar AgruparPorSemana si ya está inicializado Y no es la carga inicial
+        // Solo ejecutar AgruparPorSemana si ya está inicializado, NO está refrescando Y no es la carga inicial
         lock (_initializationLock)
         {
-            if (_isInitialized)
+            if (_isInitialized && !_isRefreshing)
             {
                 // No esperar aquí, se ejecutará en background
                 _ = AgruparPorSemanaAsync();
@@ -239,8 +243,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         finally
         {
             IsLoading = false;
-        }
-    }[RelayCommand(CanExecute = nameof(CanAddCronograma))]
+        }    }
+
+    [RelayCommand(CanExecute = nameof(CanAddCronograma))]
     public async Task AddCronogramaAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.CronogramaDialog();
@@ -313,92 +318,109 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         return result.AddDays(-3);    }    // Agrupa los cronogramas por semana del año (ISO 8601)
     public async Task AgruparPorSemanaAsync()
     {
-        // Verificar que tengamos datos para procesar
-        if (CronogramasFiltrados == null || !CronogramasFiltrados.Any())
+        // Evitar reentradas simultáneas
+        if (System.Threading.Interlocked.CompareExchange(ref _isGroupingFlag, 1, 0) == 1)
         {
-            _logger.LogInformation("[CronogramaViewModel] ⚠️ No hay cronogramas filtrados para agrupar");
+            _logger.LogDebug("[CronogramaViewModel] Agrupación ya en progreso, evitando reentrada");
             return;
         }
 
-        _logger.LogInformation("[CronogramaViewModel] 🔄 Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
-        
-        // Limpiar en el hilo de UI
-        System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
-        
-        var añoActual = AnioSeleccionado;
-        var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(añoActual);
-        var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
-            .Where(s => s.Anio == añoActual)
-            .ToList();
-        var tareas = new List<Task>();
-        var semaphore = new System.Threading.SemaphoreSlim(5); // Limitar a 5 tareas concurrentes
-        var semanasTemp = new List<SemanaViewModel>(); // Lista temporal para construir fuera del UI thread
-        
-        for (int i = 1; i <= weeksInYear; i++)
+        try
         {
-            var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
-            var fechaFin = fechaInicio.AddDays(6);
-            var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
-            if (CronogramasFiltrados != null)
+            // Verificar que tengamos datos para procesar
+            if (CronogramasFiltrados == null || !CronogramasFiltrados.Any())
             {
-                foreach (var c in CronogramasFiltrados)
+                _logger.LogDebug("[CronogramaViewModel] ⚠️ No hay cronogramas filtrados para agrupar");
+                return;
+            }
+
+            _logger.LogDebug("[CronogramaViewModel] 🔄 Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
+            
+            // Limpiar en el hilo de UI
+            System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
+            
+            var añoActual = AnioSeleccionado;
+            var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(añoActual);
+            var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
+                .Where(s => s.Anio == añoActual)
+                .ToList();        var tareas = new List<Task>();
+            var semaphore = new System.Threading.SemaphoreSlim(3); // 🔴 Reducido a 3 para evitar agotamiento del pool
+            var semanasTemp = new List<SemanaViewModel>(); // Lista temporal para construir fuera del UI thread
+            
+            for (int i = 1; i <= weeksInYear; i++)
+            {
+                var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
+                var fechaFin = fechaInicio.AddDays(6);
+                var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
+                if (CronogramasFiltrados != null)
                 {
-                    if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                    foreach (var c in CronogramasFiltrados)
                     {
-                        semanaVM.Mantenimientos.Add(c);
+                        if (c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                        {
+                            semanaVM.Mantenimientos.Add(c);
+                        }
+                    }
+                    var codigosProgramados = CronogramasFiltrados
+                        .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
+                        .Select(c => c.Codigo)
+                        .ToHashSet();
+                    var seguimientosSemana = seguimientos.Where(s => s.Semana == i && !codigosProgramados.Contains(s.Codigo)).ToList();
+                    foreach (var s in seguimientosSemana)
+                    {
+                        var noProgramado = new CronogramaMantenimientoDto
+                        {
+                            Codigo = s.Codigo,
+                            Nombre = s.Nombre,
+                            Anio = s.Anio,
+                            Semanas = new bool[weeksInYear],
+                            FrecuenciaMtto = s.Frecuencia,
+                            IsCodigoReadOnly = true,
+                            IsCodigoEnabled = false
+                        };
+                        semanaVM.Mantenimientos.Add(noProgramado);
                     }
                 }
-                var codigosProgramados = CronogramasFiltrados
-                    .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
-                    .Select(c => c.Codigo)
-                    .ToHashSet();
-                var seguimientosSemana = seguimientos.Where(s => s.Semana == i && !codigosProgramados.Contains(s.Codigo)).ToList();
-                foreach (var s in seguimientosSemana)
+                // Inicializar estados de mantenimientos para la semana (carga asíncrona, con manejo de errores y semáforo)
+                tareas.Add(Task.Run(async () =>
                 {
-                    var noProgramado = new CronogramaMantenimientoDto
+                    await semaphore.WaitAsync();
+                    try
                     {
-                        Codigo = s.Codigo,
-                        Nombre = s.Nombre,
-                        Anio = s.Anio,
-                        Semanas = new bool[weeksInYear],
-                        FrecuenciaMtto = s.Frecuencia,
-                        IsCodigoReadOnly = true,
-                        IsCodigoEnabled = false
-                    };
-                    semanaVM.Mantenimientos.Add(noProgramado);
-                }
+                        await semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService);
+                    }
+                    catch (InvalidOperationException ex) when (ex.Message.Contains("Timeout"))
+                    {
+                        _logger.LogWarning(ex, $"⚠️ Timeout al cargar estados de la semana {i} - Pool agotado");
+                        // No fallar todo, solo registrar el aviso
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError(ex, $"❌ Error al cargar estados de la semana {i}");
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }));
+                semanasTemp.Add(semanaVM);
             }
-            // Inicializar estados de mantenimientos para la semana (carga asíncrona, con manejo de errores y semáforo)
-            tareas.Add(Task.Run(async () =>
+            await Task.WhenAll(tareas);
+              // Agregar todas las semanas a la colección observable en el hilo de UI
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                await semaphore.WaitAsync();
-                try
-                {
-                    await semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService);
+                foreach (var semana in semanasTemp)            {
+                    Semanas.Add(semana);
                 }
-                catch (System.Exception ex)
-                {
-                    _logger.LogError(ex, $"Error al cargar estados de la semana {i}");
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }));
-            semanasTemp.Add(semanaVM);
+                
+                _logger.LogDebug("[CronogramaViewModel] Agrupación completada: {Count} semanas agregadas", semanasTemp.Count);
+            });
         }
-        await Task.WhenAll(tareas);
-          // Agregar todas las semanas a la colección observable en el hilo de UI
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        finally
         {
-            foreach (var semana in semanasTemp)
-            {
-                Semanas.Add(semana);
-            }
-            
-            _logger.LogInformation("[CronogramaViewModel] Agrupación completada: {Count} semanas agregadas", semanasTemp.Count);
-        });
-    }    // TODO: Agregar comandos para importar/exportar y backup de cronogramas    [RelayCommand]
+            System.Threading.Interlocked.Exchange(ref _isGroupingFlag, 0);
+        }
+    }    [RelayCommand]
     public async Task AgruparSemanalmente()
     {
         // Solo ejecutar si ya está inicializado para evitar cargas múltiples
@@ -408,7 +430,113 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
         
         await AgruparPorSemanaAsync();
-    }[RelayCommand(CanExecute = nameof(CanExportCronograma))]
+    }    [RelayCommand]
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        // Evitar múltiples refrescos simultáneos
+        if (IsLoading) return;
+
+        // 🔵 Ejecutar en background thread para NO bloquear la UI
+        await Task.Run(async () =>
+        {
+            try
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IsLoading = true;
+                    _isRefreshing = true;  // 🔴 Indicar que estamos refrescando
+                    StatusMessage = "🔄 Refrescando cronograma...";
+                });
+
+                _logger.LogInformation("[CronogramaViewModel] 🔄 Iniciando refresco completo del cronograma desde 0");
+
+                // PASO 1: Limpiar toda la UI
+                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 1: Limpiando datos previos...");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "Paso 1/5: Limpiando datos previos...";
+                    Cronogramas.Clear();
+                    CronogramasFiltrados.Clear();
+                    Semanas.Clear();
+                    AniosDisponibles.Clear();
+                });
+
+                // PASO 2: Actualizar cronogramas (asegurar que estén completos)
+                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 2: Actualizando cronogramas en BD...");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "Paso 2/5: Actualizando cronogramas en BD...";
+                });
+                await _cronogramaService.EnsureAllCronogramasUpToDateAsync().ConfigureAwait(false);
+
+                // PASO 3: Generar seguimientos faltantes
+                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 3: Generando seguimientos faltantes...");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "Paso 3/5: Generando seguimientos faltantes...";
+                });
+                await _cronogramaService.GenerarSeguimientosFaltantesAsync().ConfigureAwait(false);
+
+                // PASO 4: Cargar cronogramas desde BD
+                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 4: Cargando cronogramas desde BD...");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "Paso 4/5: Cargando cronogramas desde BD...";
+                });
+                var lista = await _cronogramaService.GetCronogramasAsync().ConfigureAwait(false);
+                var anios = lista.Select(c => c.Anio).Distinct().OrderByDescending(a => a).ToList();
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Cronogramas = new ObservableCollection<CronogramaMantenimientoDto>(lista);
+                    AniosDisponibles = new ObservableCollection<int>(anios);
+                    if (!AniosDisponibles.Contains(AnioSeleccionado))
+                        AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
+                    FiltrarPorAnio();
+                });
+
+                // PASO 5: Reagrupar por semanas
+                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 5: Agrupando por semanas...");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "Paso 5/5: Agrupando por semanas...";
+                });
+                await AgruparPorSemanaAsync().ConfigureAwait(false);
+
+                _logger.LogInformation("[CronogramaViewModel] ✅ Refresco completado exitosamente");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = $"✅ Cronograma refrescado: {Cronogramas.Count} cronogramas y {Semanas.Count} semanas.";
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = "⚠️ Refresco cancelado.";
+                });
+                _logger.LogInformation("[CronogramaViewModel] Refresco cancelado por el usuario");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[CronogramaViewModel] Error durante el refresco completo");
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    StatusMessage = $"❌ Error al refrescar: {ex.Message}";
+                });
+            }
+            finally
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IsLoading = false;
+                    _isRefreshing = false;  // 🟢 Finalizar refresco, permitir agrupación normal
+                });
+            }
+        }, cancellationToken);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExportCronograma))]
     public async Task ExportarCronogramasAsync()
     {
         try
