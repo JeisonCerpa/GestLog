@@ -211,10 +211,32 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             try
             {
                 var equipos = await _equipoInformaticoService.GetAllAsync();
+
+                // Obtener códigos de equipos que ya tienen un plan activo para excluirlos del listado
+                HashSet<string> codigosConPlanActivo = new(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    var todosLosPlanes = await _planCronogramaService.GetAllAsync();
+                    if (todosLosPlanes != null)
+                    {
+                        codigosConPlanActivo = todosLosPlanes
+                            .Where(p => p.Activo && !string.IsNullOrWhiteSpace(p.CodigoEquipo))
+                            .Select(p => p.CodigoEquipo!)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[CrearPlanCronograma] No se pudo obtener la lista de planes para filtrar equipos; se mostrarán todos los equipos activos");
+                    // En caso de error al obtener planes, dejamos codigosConPlanActivo vacío para no bloquear la UX
+                    codigosConPlanActivo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                }
                 
-                // Filtrar solo equipos cuyo Estado sea "Activo"
+                // Filtrar solo equipos cuyo Estado sea "Activo" y que NO tengan ya un plan activo
                 var equiposActivos = equipos
-                    .Where(e => string.Equals(e.Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                    .Where(e => string.Equals(e.Estado, "Activo", StringComparison.OrdinalIgnoreCase)
+                                && !codigosConPlanActivo.Contains(e.Codigo))
                     .OrderBy(e => e.Codigo)
                     .ToList();
 
@@ -396,6 +418,24 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         StatusMessage = $"El formato del checklist no es válido: {ex.Message}";
                         return;
                     }
+                }
+
+                // NUEVO: Comprobar si ya existe al menos un plan para este equipo y evitar duplicados
+                try
+                {
+                    var planesExistentes = await _planCronogramaService.GetByCodigoEquipoAsync(codigoParaUsar!);
+                    if (planesExistentes != null && planesExistentes.Any())
+                    {
+                        StatusMessage = "Ya existe un plan para este equipo. Edite el plan existente o desactívelo antes de crear uno nuevo.";
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[CrearPlanCronograma] Error al verificar planes existentes para {Codigo}", codigoParaUsar);
+                    // En caso de error al verificar, continuar con precaución o abortar según política. Aquí abortamos para evitar duplicados silenciosos.
+                    StatusMessage = "No fue posible verificar planes existentes. Intente nuevamente más tarde.";
+                    return;
                 }
 
                 // Crear el plan
