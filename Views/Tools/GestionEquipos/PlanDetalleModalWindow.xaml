@@ -481,6 +481,12 @@
                                                             <Setter Property="SnapsToDevicePixels" Value="True"/>
                                                             <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
                                                             <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                                            <Style.Triggers>
+                                                                <!-- Ocultar texto cuando el estado es 'Pendiente' -->
+                                                                <DataTrigger Binding="{Binding Estado}" Value="Pendiente">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
                                                         </Style>
                                                     </DataGridTextColumn.ElementStyle>
                                                 </DataGridTextColumn>
