@@ -291,11 +291,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     var hoy = DateTime.Now;
                     int semanaActual = System.Globalization.ISOWeek.GetWeekOfYear(hoy);
                     int anioActual = System.Globalization.ISOWeek.GetYear(hoy);
+
+                    // Prohibir semanas futuras
                     if (SelectedYear > anioActual || (SelectedYear == anioActual && SelectedWeek > semanaActual))
                     {
                         StatusMessage = "No se puede registrar una ejecución en semana futura";
                         return;
                     }
+
+                    // PROTECCIÓN ADICIONAL: Prohibir semanas pasadas
+                    if (SelectedYear < anioActual || (SelectedYear == anioActual && SelectedWeek < semanaActual))
+                    {
+                        StatusMessage = "No se puede registrar una ejecución en semanas pasadas";
+                        return;
+                    }
+
                     if (_registroEjecucionPlanDialogService == null)
                     {
                         StatusMessage = "Servicio de ejecución semanal no disponible";
@@ -333,6 +343,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 if (SelectedYear > anioActual || (SelectedYear == anioActual && SelectedWeek > semanaActual))
                 {
                     StatusMessage = "No se puede registrar en una semana futura";
+                    return;
+                }
+
+                // PROTECCIÓN ADICIONAL: Prohibir registro en semanas pasadas
+                if (SelectedYear < anioActual || (SelectedYear == anioActual && SelectedWeek < semanaActual))
+                {
+                    StatusMessage = "No se puede registrar en semanas pasadas";
                     return;
                 }
 
