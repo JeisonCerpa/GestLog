@@ -188,11 +188,15 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
         }
         catch (Exception ex)
-        {
-            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
+        {            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
             throw; // Re-lanzar para que se capture en el nivel superior
         }
     }    [RelayCommand]
+    public async Task LoadEquipos()
+    {
+        await LoadEquiposAsync(forceReload: true);
+    }
+
     public async Task LoadEquiposAsync(bool forceReload = true)
     {
         // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias

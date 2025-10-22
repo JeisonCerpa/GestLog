@@ -153,7 +153,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
     }
 
+    // Wrapper sin parámetros para que MVVM Toolkit genere el comando
     [RelayCommand]
+    public async Task LoadSeguimientos()
+    {
+        await LoadSeguimientosAsync(forceReload: true);
+    }
+
+    // Método original (sin [RelayCommand])
     public async Task LoadSeguimientosAsync(bool forceReload = true)
     {
         // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias

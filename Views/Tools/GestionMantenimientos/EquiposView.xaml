@@ -116,9 +116,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <!-- Estilo para botones circulares flotantes -->
+        </Style>        <!-- Estilo para botones circulares flotantes -->
         <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Width" Value="56"/>
             <Setter Property="Height" Value="56"/>
@@ -126,12 +124,25 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="BorderBrush" Value="#E5E5E5"/>
             <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" x:Name="BorderCircular">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderCircular" Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderCircular" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -186,8 +197,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-    </UserControl.Resources>    <Grid Background="#FAFAFA">
+        </Style>    </UserControl.Resources>      <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -250,14 +260,9 @@
                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding EquiposInactivos}" Style="{StaticResource StatsTextStyle}" Foreground="#9E9E9E"/>
                     <TextBlock Text="Inactivo" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                </StackPanel>                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding EquiposDadosBaja}" Style="{StaticResource StatsTextStyle}" Foreground="#C0392B"/>
-                    <TextBlock Text="Dados de Baja" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <TextBlock Text="Dados de Baja" Style="{StaticResource StatsLabelStyle}"/>                </StackPanel>                <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal" Panel.ZIndex="1000">
                     <Button Content="&#xE72C;" Command="{Binding LoadEquiposCommand}" ToolTip="Actualizar lista de equipos"
                             Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
 
@@ -373,7 +378,8 @@
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
-                    </DataGrid.CellStyle>                    <DataGrid.Columns>
+                    </DataGrid.CellStyle>                    
+                    <DataGrid.Columns>
                         <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
@@ -395,7 +401,8 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="100" IsReadOnly="True">
+                        </DataGridTemplateColumn>                        
+                        <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="100" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="Detalles" 
