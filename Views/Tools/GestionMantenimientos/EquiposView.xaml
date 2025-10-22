@@ -266,7 +266,8 @@
                     <Button Content="&#xE72C;" Command="{Binding LoadEquiposCommand}" ToolTip="Actualizar lista de equipos"
                             Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
 
-                    <Button Content="⭱" Command="{Binding ExportarEquiposCommand}" ToolTip="Exportar equipos"
+                    <!-- Botón de Exportar Inteligente: exporta filtrados si hay filtro, si no exporta todo -->
+                    <Button Content="⭱" Command="{Binding ExportarInteligenteCommand}" ToolTip="Exportar inteligente: si hay filtro exporta los filtrados, sino exporta todo"
                             Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
                             IsEnabled="{Binding CanExportEquipo}"
                             Opacity="{Binding CanExportEquipo, Converter={StaticResource BooleanToOpacityConverter}}"/>
@@ -299,9 +300,7 @@
                         <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
                         <TextBox Width="300" Padding="8" VerticalAlignment="Center"
                                  Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}" BorderBrush="#DDD"/>
-                        <Button Content="Exportar filtrados"
-                                Command="{Binding ExportarEquiposFiltradosCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"/>
+                        <!-- Botón 'Exportar filtrados' unificado: se elimina y se usa el botón circular principal (Exportar inteligente) -->
                     </StackPanel>
 
                     <!-- Toggle a la derecha -->

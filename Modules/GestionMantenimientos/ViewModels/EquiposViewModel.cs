@@ -747,4 +747,59 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         
         base.Dispose();
     }
+
+    [RelayCommand]
+    public async Task ExportarInteligenteAsync()
+    {
+        // Si hay filtro aplicado (texto no vacío) o la vista está filtrada, exportar filtrados
+        try
+        {
+            var hayFiltroActivo = !string.IsNullOrWhiteSpace(FiltroEquipo);
+            // Si hay filtro textual, preferir ExportarEquiposFiltradosAsync
+            if (hayFiltroActivo)
+            {
+                await ExportarEquiposFiltradosAsync();
+                return;
+            }
+
+            // Si no hay filtro textual, verificar si la vista tiene un filtro activo distinto de null
+            var viewHasFilter = EquiposView != null && EquiposView.Filter != null;
+            if (viewHasFilter)
+            {
+                // Si el filtro es activo pero no hay texto (por ejemplo MostrarDadosDeBaja cambia), exportar lo que muestra la vista
+                await ExportarEquiposFiltradosAsync();
+                return;
+            }
+
+            // Si no hay filtro, exportar todo (la colección completa _allEquipos si está disponible, sino Equipos)
+            // Temporalmente cambiar la propiedad Equipos para asegurarnos de exportar todo sin filtrar
+            var originalEquipos = Equipos;
+            try
+            {
+                if (_allEquipos != null && _allEquipos.Count > 0)
+                {
+                    Equipos = new ObservableCollection<EquipoDto>(_allEquipos);
+                    EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+                    if (EquiposView != null)
+                        EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+                }
+
+                await ExportarEquiposAsync();
+            }
+            finally
+            {
+                // Restaurar colección original y vista
+                Equipos = originalEquipos;
+                EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+                if (EquiposView != null)
+                    EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+                EquiposView?.Refresh();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Error en ExportarInteligente");
+            StatusMessage = "Error al exportar equipos.";
+        }
+    }
 }
