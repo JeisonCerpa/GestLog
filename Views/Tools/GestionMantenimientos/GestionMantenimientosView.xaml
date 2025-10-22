@@ -27,17 +27,13 @@
                                     <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center"
                                                      HorizontalAlignment="Center" ContentSource="Header"
                                                      Margin="{TemplateBinding Padding}"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
+                                </Border>                                <ControlTemplate.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="Border" Property="Background" Value="#F5F5F5"/>
                                         <Setter TargetName="Border" Property="BorderBrush" Value="#E5E5E5"/>
                                         <Setter TargetName="Border" Property="BorderThickness" Value="1,1,1,0"/>
                                         <Setter Property="Foreground" Value="#504F4E"/>
                                         <Setter Property="Panel.ZIndex" Value="1"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#E8F5E8"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>

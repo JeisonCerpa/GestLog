@@ -6,7 +6,8 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
+             d:DesignHeight="600" d:DesignWidth="900"
+             Background="#FAFAFA"><UserControl.Resources>
         <!-- ...otros recursos... -->
         <converters:CardButtonBackgroundColorConverter x:Key="CardButtonBackgroundColorConverter" />
         <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
@@ -16,7 +17,7 @@
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <!-- ...otros recursos... -->
     </UserControl.Resources>
-    <Grid Background="White" Margin="10">
+    <Grid Background="#FAFAFA" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -111,10 +112,9 @@
                     </Button.Effect>
                 </Button>
             </StackPanel>
-        </Grid>
-        <!-- Vista semanal tipo calendario -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid>
+        </Grid>        <!-- Vista semanal tipo calendario -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#FAFAFA">
+            <Grid Background="#FAFAFA">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -256,15 +256,44 @@
                                 </Rectangle>
                             </Grid>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="No hay mantenimientos programados para mostrar." Foreground="#C0392B" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding Semanas.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" Grid.Row="2"/>
+                    </ItemsControl.ItemTemplate>                </ItemsControl>
+        <TextBlock Text="No hay mantenimientos programados para mostrar." Foreground="#C0392B" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding Semanas.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" Grid.Row="2"/>
+                
+                <!-- Leyenda de colores compacta debajo -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0" VerticalAlignment="Top">
+                    <!-- Pendiente -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border Width="14" Height="14" CornerRadius="2" Background="#90CAF9" BorderBrush="#64B5F6" BorderThickness="1"/>
+                        <TextBlock Text="Pendiente" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- Ejecutado -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border Width="14" Height="14" CornerRadius="2" Background="#388E3C" BorderBrush="#2D6A2A" BorderThickness="1"/>
+                        <TextBlock Text="Ejecutado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- Retrasado -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border Width="14" Height="14" CornerRadius="2" Background="#FFB300" BorderBrush="#F59F00" BorderThickness="1"/>
+                        <TextBlock Text="Retrasado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- No Realizado -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border Width="14" Height="14" CornerRadius="2" Background="#C80000" BorderBrush="#A00000" BorderThickness="1"/>
+                        <TextBlock Text="No Realizado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- Sin Mantenimientos -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="14" Height="14" CornerRadius="2" Background="Transparent" BorderBrush="#BFBFBF" BorderThickness="1">
+                            <Rectangle Stroke="#BFBFBF" StrokeThickness="0.5" StrokeDashArray="1.5 1.5" RadiusX="1" RadiusY="1"/>
+                        </Border>
+                        <TextBlock Text="Sin Mtto" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </ScrollViewer>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <controls:SimpleProgressBar ProgressValue="{Binding IsLoading, Converter={StaticResource BooleanToProgressConverter}}"
-                                       StatusMessage="{Binding StatusMessage}" Title="Progreso" Height="24" Width="220"/>
-            <TextBlock Text="{Binding StatusMessage}" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#666"/>
-        </StackPanel>
     </Grid>
 </UserControl>
