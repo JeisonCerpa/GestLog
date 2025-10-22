@@ -57,6 +57,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
 
+    // Colección de placeholders para reservar el espacio visual mientras carga
+    [ObservableProperty]
+    private ObservableCollection<int> placeholderSemanas = new();
+
     [ObservableProperty]
     private int anioSeleccionado = DateTime.Now.Year;
 
@@ -213,8 +217,17 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             if (IsLoading) return;
         }        IsLoading = true;
         StatusMessage = "Cargando cronogramas...";
+
+        // Mostrar placeholders que ocupen el ancho completo según semanas del año seleccionado
         try
         {
+            var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(AnioSeleccionado);
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                PlaceholderSemanas.Clear();
+                foreach (var i in Enumerable.Range(1, weeksInYear)) PlaceholderSemanas.Add(i);
+            });
+
             var lista = await _cronogramaService.GetCronogramasAsync();
             var anios = lista.Select(c => c.Anio).Distinct().OrderByDescending(a => a).ToList();
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -242,6 +255,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
         finally
         {
+            // Limpiar placeholders al finalizar la carga
+            System.Windows.Application.Current.Dispatcher.Invoke(() => PlaceholderSemanas.Clear());
             IsLoading = false;
         }    }
 
@@ -446,6 +461,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     IsLoading = true;
                     _isRefreshing = true;  // 🔴 Indicar que estamos refrescando
                     StatusMessage = "🔄 Refrescando cronograma...";
+
+                    // Inicializar placeholders mientras se realiza el refresco
+                    try
+                    {
+                        var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(AnioSeleccionado);
+                        PlaceholderSemanas.Clear();
+                        foreach (var i in Enumerable.Range(1, weeksInYear)) PlaceholderSemanas.Add(i);
+                    }
+                    catch { /* swallo contenido si falla */ }
                 });
 
                 _logger.LogInformation("[CronogramaViewModel] 🔄 Iniciando refresco completo del cronograma desde 0");
@@ -531,6 +555,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 {
                     IsLoading = false;
                     _isRefreshing = false;  // 🟢 Finalizar refresco, permitir agrupación normal
+                    PlaceholderSemanas.Clear();
                 });
             }
         }, cancellationToken);

@@ -5,9 +5,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900"
-             Background="#FAFAFA"><UserControl.Resources>
+             Background="#FAFAFA">
+    <UserControl.Resources>
         <!-- ...otros recursos... -->
         <converters:CardButtonBackgroundColorConverter x:Key="CardButtonBackgroundColorConverter" />
         <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
@@ -121,142 +123,167 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <!-- Elimino el título para aprovechar el espacio -->
-                <ItemsControl ItemsSource="{Binding Semanas}" Grid.Row="0" Grid.RowSpan="2">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="13" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                            <Setter Property="VerticalAlignment" Value="Stretch"/>
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <!-- Border principal de la tarjeta -->
-                                <Border x:Name="SemanaCard" CornerRadius="8" Padding="2" Margin="2" BorderThickness="4"
-                                        BorderBrush="{Binding ColorSemana}"
-                                        Background="White"
-                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="BorderBrush" Value="{Binding ColorSemana}"/>
-                                            <Setter Property="BorderThickness" Value="4"/>
-                                            <Setter Property="Background" Value="White"/>
-                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                                            <Style.Triggers>
-                                                <!-- Semana vacía: sin borde -->
-                                                <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
-                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                                </DataTrigger>
-                                                <!-- Semana actual: solo fondo sutil, sin borde -->
-                                                <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
-                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                                    <Setter Property="Background" Value="#F8FFF8"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel ToolTipService.ShowDuration="15000" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <StackPanel.ToolTip>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding TituloSemana}" FontWeight="Bold" FontSize="13"/>
-                                                <ItemsControl ItemsSource="{Binding Mantenimientos}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock>
-                                                                <Run Text="• "/>
-                                                                <Run Text="{Binding Codigo}"/>
-                                                                <Run Text=" - "/>
-                                                                <Run Text="{Binding Nombre}"/>
-                                                            </TextBlock>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                                <TextBlock Text="Sin mantenimientos programados" Foreground="#C0392B" FontWeight="SemiBold" FontSize="11" Visibility="{Binding Mantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
-                                            </StackPanel>
-                                        </StackPanel.ToolTip>                                        <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"
-                                                   Foreground="#333"/>
-                                        <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"
-                                                   Foreground="#333"/>
-                                        <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}"
-                                                   FontWeight="SemiBold" FontSize="11"
-                                                   Foreground="#333"
-                                                   HorizontalAlignment="Center" TextWrapping="NoWrap"/>
-                                        <Button Content="Ver Detalles"
-                                                Command="{Binding VerSemanaCommand}"
-                                                CommandParameter="{Binding}"
-                                                Margin="0,4,0,0"
-                                                Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                FontSize="11"
-                                                Background="{Binding ColorSemana, Converter={StaticResource CardButtonBackgroundColorConverter}, FallbackValue=LightGray, TargetNullValue=LightGray}"
-                                                Foreground="Black"
-                                                BorderBrush="#CCCCCC"
-                                                BorderThickness="1.5"
-                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"
-                                                SnapsToDevicePixels="True">
-                                            <Button.Resources>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="CornerRadius" Value="6"/>
-                                                </Style>
-                                            </Button.Resources>
-                                        </Button>
-                                    </StackPanel>                                </Border>
+                <Grid Grid.Row="0" Grid.RowSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <ItemsControl ItemsSource="{Binding PlaceholderSemanas}" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="13" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#E0E0E0" CornerRadius="8" Margin="2" BorderThickness="0"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding Semanas}" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="13" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- Border principal de la tarjeta -->
+                                    <Border x:Name="SemanaCard" CornerRadius="8" Padding="2" Margin="2" BorderThickness="4"
+                                            BorderBrush="{Binding ColorSemana}"
+                                            Background="White"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">                                    <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="{Binding ColorSemana}"/>
+                                                <Setter Property="BorderThickness" Value="4"/>
+                                                <Setter Property="Background" Value="White"/>
+                                                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                                <Style.Triggers>
+                                                    <!-- Semana vacía: sin borde -->
+                                                    <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                        <Setter Property="BorderThickness" Value="0"/>
+                                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                                    </DataTrigger>
+                                                    <!-- Semana actual: solo fondo sutil, sin borde -->
+                                                    <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
+                                                        <Setter Property="BorderThickness" Value="0"/>
+                                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                                        <Setter Property="Background" Value="#F8FFF8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel ToolTipService.ShowDuration="15000" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <StackPanel.ToolTip>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding TituloSemana}" FontWeight="Bold" FontSize="13"/>
+                                                    <ItemsControl ItemsSource="{Binding Mantenimientos}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock>
+                                                                    <Run Text="• "/>
+                                                                    <Run Text="{Binding Codigo}"/>
+                                                                    <Run Text=" - "/>
+                                                                    <Run Text="{Binding Nombre}"/>
+                                                                </TextBlock>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <TextBlock Text="Sin mantenimientos programados" Foreground="#C0392B" FontWeight="SemiBold" FontSize="11" Visibility="{Binding Mantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
+                                                </StackPanel>
+                                            </StackPanel.ToolTip>                                        <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"
+                                                       Foreground="#333"/>
+                                            <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"
+                                                       Foreground="#333"/>
+                                            <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}"
+                                                       FontWeight="SemiBold" FontSize="11"
+                                                       Foreground="#333"
+                                                       HorizontalAlignment="Center" TextWrapping="NoWrap"/>
+                                            <Button Content="Ver Detalles"
+                                                    Command="{Binding VerSemanaCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Margin="0,4,0,0"
+                                                    Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    FontSize="11"
+                                                    Background="{Binding ColorSemana, Converter={StaticResource CardButtonBackgroundColorConverter}, FallbackValue=LightGray, TargetNullValue=LightGray}"
+                                                    Foreground="Black"
+                                                    BorderBrush="#CCCCCC"
+                                                    BorderThickness="1.5"
+                                                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                                    TextOptions.TextFormattingMode="Display"
+                                                    TextOptions.TextRenderingMode="ClearType"
+                                                    SnapsToDevicePixels="True">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="6"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
+                                        </StackPanel>                                </Border>
 
-                                <!-- Badge "ACTUAL" para semana actual con más margen -->
-                                <Border x:Name="CurrentWeekBadge"
-                                        Background="#118938"
-                                        CornerRadius="10"
-                                        Padding="8,3"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        Margin="0,6,6,0"
-                                        Panel.ZIndex="20"
-                                        Visibility="{Binding IsSemanaActual, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#118938" Opacity="0.3" BlurRadius="6" ShadowDepth="1"/>
-                                    </Border.Effect>
-                                    <TextBlock Text="ACTUAL" 
-                                               FontSize="9"
-                                               FontWeight="Bold"
-                                               Foreground="White"/>
-                                </Border>                                <!-- Rectangle punteado para semanas vacías -->
-                                <Rectangle x:Name="EmptyWeekIndicator"
-                                           Stroke="#BFBFBF" 
-                                           StrokeThickness="2" 
-                                           RadiusX="8" RadiusY="8" 
-                                           Fill="Transparent"
-                                           StrokeDashArray="4 2"
-                                           Margin="2"
-                                           HorizontalAlignment="Stretch" 
-                                           VerticalAlignment="Stretch"
-                                           Panel.ZIndex="10"
-                                           IsHitTestVisible="False">
-                                    <Rectangle.Style>
-                                        <Style TargetType="Rectangle">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <!-- Solo mostrar punteado si está vacía -->
-                                                <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <!-- Si es actual Y vacía, cambiar color del punteado a verde -->
-                                                <DataTrigger Binding="{Binding IsSemanaActualYVacia}" Value="True">
-                                                    <Setter Property="Stroke" Value="#118938"/>
-                                                    <Setter Property="StrokeThickness" Value="3"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Rectangle.Style>
-                                </Rectangle>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>                </ItemsControl>
+                                    <!-- Badge "ACTUAL" para semana actual con más margen -->
+                                    <Border x:Name="CurrentWeekBadge"
+                                            Background="#118938"
+                                            CornerRadius="10"
+                                            Padding="8,3"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,6,6,0"
+                                            Panel.ZIndex="20"
+                                            Visibility="{Binding IsSemanaActual, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#118938" Opacity="0.3" BlurRadius="6" ShadowDepth="1"/>
+                                        </Border.Effect>
+                                        <TextBlock Text="ACTUAL" 
+                                                   FontSize="9"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>                                <!-- Rectangle punteado para semanas vacías -->
+                                    <Rectangle x:Name="EmptyWeekIndicator"
+                                               Stroke="#BFBFBF" 
+                                               StrokeThickness="2" 
+                                               RadiusX="8" RadiusY="8" 
+                                               Fill="Transparent"
+                                               StrokeDashArray="4 2"
+                                               Margin="2"
+                                               HorizontalAlignment="Stretch" 
+                                               VerticalAlignment="Stretch"
+                                               Panel.ZIndex="10"
+                                               IsHitTestVisible="False">
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <!-- Solo mostrar punteado si está vacía -->
+                                                    <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <!-- Si es actual Y vacía, cambiar color del punteado a verde -->
+                                                    <DataTrigger Binding="{Binding IsSemanaActualYVacia}" Value="True">
+                                                        <Setter Property="Stroke" Value="#118938"/>
+                                                        <Setter Property="StrokeThickness" Value="3"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                    </Rectangle>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
         <TextBlock Text="No hay mantenimientos programados para mostrar." Foreground="#C0392B" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding Semanas.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" Grid.Row="2"/>
                 
                 <!-- Leyenda de colores compacta debajo -->
@@ -295,5 +322,28 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
+
+        <!-- Overlay en nivel superior para cubrir encabezado + semanas (dimmer suave) -->
+        <Grid x:Name="LoadingOverlay"
+              Grid.Row="0"
+              Grid.RowSpan="2"
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Background="#40000000"
+              Panel.ZIndex="999"
+              IsHitTestVisible="True"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+            <Border Width="420" Height="140" CornerRadius="10" Background="#FFFFFF" Opacity="0.98" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- Barra indeterminada más ancha para mejor visibilidad -->
+                    <ProgressBar IsIndeterminate="True" Width="200" Height="18" Margin="0,0,18,0" />
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Cargando..." FontSize="18" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBlock Text="Por favor espere" FontSize="12" Foreground="#666"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
