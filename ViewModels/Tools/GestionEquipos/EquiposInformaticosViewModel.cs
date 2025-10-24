@@ -21,6 +21,8 @@ using GestLog.Services.Core.Logging;    // ✅ NUEVO: IGestLogLogger
 using System;
 using System.Threading.Tasks;
 using System.Threading;
+using ClosedXML.Excel;                   // ✅ NUEVO: Para exportación a Excel
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;  // Desambiguar SaveFileDialog
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {
@@ -333,33 +335,319 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                 // Recargar la lista para mostrar el nuevo equipo
                 await CargarEquiposAsync();
             }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanExportarDatos))]
-        private void ExportarEquipos()
+        }        [RelayCommand(CanExecute = nameof(CanExportarDatos))]
+        private async Task ExportarEquipos()
         {
-            var dialog = new Microsoft.Win32.SaveFileDialog
+            // Detectar si hay filtros activos
+            var hayFiltros = !string.IsNullOrWhiteSpace(FiltroEquipo) || ShowDadoDeBaja;
+            
+            // Obtener equipos a exportar
+            var equiposAExportar = hayFiltros
+                ? ListaEquiposInformaticos.Where(e => FiltrarEquipo(e)).ToList()
+                : ListaEquiposInformaticos.ToList();
+
+            if (equiposAExportar.Count == 0)
+            {
+                System.Windows.MessageBox.Show("No hay equipos para exportar.", "Sin Resultados", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            var sufijo = hayFiltros ? "_Filtrados" : "";
+            var dialog = new SaveFileDialog
             {
                 Filter = "Archivos Excel (*.xlsx)|*.xlsx",
                 DefaultExt = ".xlsx",
-                Title = "Exportar equipos informáticos a Excel",
-                FileName = $"EquiposInformaticos_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                Title = hayFiltros ? "Exportar equipos filtrados a Excel" : "Exportar equipos informáticos a Excel",
+                FileName = $"EquiposInformaticos{sufijo}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
             };
             
             if (dialog.ShowDialog() == true)
             {
                 try
                 {
-                    // Implementación simplificada de exportación
-                    // TODO: Implementar exportación completa si se necesita
-                    System.Windows.MessageBox.Show($"Funcionalidad de exportación disponible.\nImplementar según necesidades específicas.", "Exportación", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    // Mostrar progreso
+                    System.Windows.MessageBox.Show("Cargando detalles de equipos...", "Exportando", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    
+                    // Cargar detalles de los equipos a exportar (RAM, Discos, Conexiones)
+                    var equiposConDetalles = await CargarDetallesEquipos(equiposAExportar);
+                    
+                    ExportarEquiposAExcel(dialog.FileName, equiposConDetalles);
+                    var mensaje = hayFiltros 
+                        ? $"Se exportaron {equiposAExportar.Count} equipos (filtrados) a:\n{dialog.FileName}"
+                        : $"Se exportaron {equiposAExportar.Count} equipos a:\n{dialog.FileName}";
+                    System.Windows.MessageBox.Show(mensaje, "Exportación Completada", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al exportar");
+                    _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al exportar equipos");
                     System.Windows.MessageBox.Show($"Error al exportar: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
+        }
+
+        /// <summary>
+        /// Carga los detalles (RAM, Discos, Conexiones) para los equipos especificados
+        /// </summary>
+        private async Task<List<EquipoInformaticoEntity>> CargarDetallesEquipos(List<EquipoInformaticoEntity> equipos)
+        {
+            try
+            {
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                dbContext.Database.SetCommandTimeout(15);
+
+                var codigos = equipos.Select(e => e.Codigo).ToList();
+
+                // Cargar equipos con todas sus relaciones
+                var equiposConDetalles = await dbContext.EquiposInformaticos
+                    .AsNoTracking()
+                    .Include(e => e.SlotsRam)
+                    .Include(e => e.Discos)
+                    .Include(e => e.Conexiones)
+                    .Where(e => codigos.Contains(e.Codigo))
+                    .ToListAsync();
+
+                return equiposConDetalles;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[EquiposInformaticosViewModel] Error al cargar detalles de equipos para exportación");
+                throw;
+            }
+        }/// <summary>
+        /// Exporta una lista de equipos a un archivo Excel con formato profesional
+        /// Incluye hojas separadas para: Equipos, RAM, Discos, Conexiones
+        /// </summary>
+        private void ExportarEquiposAExcel(string rutaArchivo, IEnumerable<EquipoInformaticoEntity> equipos)
+        {
+            using var workbook = new XLWorkbook();
+            var equiposList = equipos.ToList();
+
+            // Hoja 1: Información principal de equipos
+            ExportarHojaEquipos(workbook, equiposList);
+
+            // Hoja 2: Detalles de RAM
+            ExportarHojaRam(workbook, equiposList);
+
+            // Hoja 3: Detalles de Discos
+            ExportarHojaDiscos(workbook, equiposList);
+
+            // Hoja 4: Conexiones de Red
+            ExportarHojaConexiones(workbook, equiposList);
+
+            // Guardar
+            workbook.SaveAs(rutaArchivo);
+        }
+
+        /// <summary>
+        /// Exporta información principal de equipos
+        /// </summary>
+        private void ExportarHojaEquipos(XLWorkbook workbook, List<EquipoInformaticoEntity> equipos)
+        {
+            var worksheet = workbook.Worksheets.Add("Equipos");
+
+            var headers = new[]
+            {
+                "Código", "Nombre del Equipo", "Marca", "Modelo", "Usuario Asignado", "Sede", "Estado",
+                "Procesador", "SO", "Serial", "AnyDesk", "Costo", "Fecha Compra", "Fecha Baja",
+                "Observaciones", "Fecha Creación", "Fecha Modificación"
+            };
+
+            // Escribir headers
+            for (int col = 1; col <= headers.Length; col++)
+            {
+                var cell = worksheet.Cell(1, col);
+                cell.Value = headers[col - 1];
+                AplicarFormatoHeader(cell);
+            }
+
+            // Escribir datos
+            int row = 2;
+            foreach (var equipo in equipos)
+            {
+                worksheet.Cell(row, 1).Value = equipo.Codigo ?? "";
+                worksheet.Cell(row, 2).Value = equipo.NombreEquipo ?? "";
+                worksheet.Cell(row, 3).Value = equipo.Marca ?? "";
+                worksheet.Cell(row, 4).Value = equipo.Modelo ?? "";
+                worksheet.Cell(row, 5).Value = equipo.UsuarioAsignado ?? "";
+                worksheet.Cell(row, 6).Value = equipo.Sede ?? "";
+                worksheet.Cell(row, 7).Value = equipo.Estado ?? "";
+                worksheet.Cell(row, 8).Value = equipo.Procesador ?? "";
+                worksheet.Cell(row, 9).Value = equipo.SO ?? "";
+                worksheet.Cell(row, 10).Value = equipo.SerialNumber ?? "";
+                worksheet.Cell(row, 11).Value = equipo.CodigoAnydesk ?? "";
+                worksheet.Cell(row, 12).Value = equipo.Costo ?? (decimal?)null;
+                worksheet.Cell(row, 13).Value = equipo.FechaCompra;
+                worksheet.Cell(row, 14).Value = equipo.FechaBaja;
+
+                // Limpiar observaciones: eliminar saltos de línea
+                var observacionesLimpia = (equipo.Observaciones ?? "")
+                    .Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ").Trim();
+                worksheet.Cell(row, 15).Value = observacionesLimpia;
+
+                worksheet.Cell(row, 16).Value = equipo.FechaCreacion;
+                worksheet.Cell(row, 17).Value = equipo.FechaModificacion;
+
+                // Color condicional para estado
+                AplicarColorEstado(worksheet.Cell(row, 7), equipo.Estado);
+
+                // Formato de fechas y números
+                worksheet.Cell(row, 12).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Right);
+                worksheet.Cell(row, 13).Style.DateFormat.Format = "dd/MM/yyyy";
+                worksheet.Cell(row, 14).Style.DateFormat.Format = "dd/MM/yyyy";
+                worksheet.Cell(row, 16).Style.DateFormat.Format = "dd/MM/yyyy hh:mm";
+                worksheet.Cell(row, 17).Style.DateFormat.Format = "dd/MM/yyyy hh:mm";
+
+                row++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+            worksheet.Column(15).Width = 30;
+            worksheet.SheetView.FreezeRows(1);
+        }
+
+        /// <summary>
+        /// Exporta detalles de RAM
+        /// </summary>
+        private void ExportarHojaRam(XLWorkbook workbook, List<EquipoInformaticoEntity> equipos)
+        {
+            var worksheet = workbook.Worksheets.Add("RAM");
+
+            var headers = new[] { "Código Equipo", "Nombre Equipo", "Slot", "Capacidad (GB)", "Tipo Memoria", "Marca", "Frecuencia", "Ocupado", "Observaciones" };
+
+            for (int col = 1; col <= headers.Length; col++)
+            {
+                var cell = worksheet.Cell(1, col);
+                cell.Value = headers[col - 1];
+                AplicarFormatoHeader(cell);
+            }
+
+            int row = 2;
+            foreach (var equipo in equipos)
+            {
+                foreach (var slot in equipo.SlotsRam)
+                {
+                    worksheet.Cell(row, 1).Value = equipo.Codigo ?? "";
+                    worksheet.Cell(row, 2).Value = equipo.NombreEquipo ?? "";
+                    worksheet.Cell(row, 3).Value = slot.NumeroSlot;
+                    worksheet.Cell(row, 4).Value = slot.CapacidadGB;
+                    worksheet.Cell(row, 5).Value = slot.TipoMemoria ?? "";
+                    worksheet.Cell(row, 6).Value = slot.Marca ?? "";
+                    worksheet.Cell(row, 7).Value = slot.Frecuencia ?? "";
+                    worksheet.Cell(row, 8).Value = slot.Ocupado ? "Sí" : "No";
+                    worksheet.Cell(row, 9).Value = (slot.Observaciones ?? "").Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ").Trim();
+                    row++;
+                }
+            }
+
+            worksheet.Columns().AdjustToContents();
+            worksheet.SheetView.FreezeRows(1);
+        }        /// <summary>
+        /// Exporta detalles de Discos
+        /// </summary>
+        private void ExportarHojaDiscos(XLWorkbook workbook, List<EquipoInformaticoEntity> equipos)
+        {
+            var worksheet = workbook.Worksheets.Add("Discos");
+
+            var headers = new[] { "Código Equipo", "Nombre Equipo", "Número", "Tipo", "Capacidad (GB)", "Marca", "Modelo" };
+
+            for (int col = 1; col <= headers.Length; col++)
+            {
+                var cell = worksheet.Cell(1, col);
+                cell.Value = headers[col - 1];
+                AplicarFormatoHeader(cell);
+            }
+
+            int row = 2;
+            foreach (var equipo in equipos)
+            {
+                foreach (var disco in equipo.Discos)
+                {
+                    worksheet.Cell(row, 1).Value = equipo.Codigo ?? "";
+                    worksheet.Cell(row, 2).Value = equipo.NombreEquipo ?? "";
+                    worksheet.Cell(row, 3).Value = disco.NumeroDisco;
+                    worksheet.Cell(row, 4).Value = disco.Tipo ?? "";
+                    worksheet.Cell(row, 5).Value = disco.CapacidadGB;
+                    worksheet.Cell(row, 6).Value = disco.Marca ?? "";
+                    worksheet.Cell(row, 7).Value = disco.Modelo ?? "";
+                    row++;
+                }
+            }
+
+            worksheet.Columns().AdjustToContents();
+            worksheet.SheetView.FreezeRows(1);
+        }
+
+        /// <summary>
+        /// Exporta detalles de Conexiones de Red
+        /// </summary>
+        private void ExportarHojaConexiones(XLWorkbook workbook, List<EquipoInformaticoEntity> equipos)
+        {
+            var worksheet = workbook.Worksheets.Add("Conexiones");
+
+            var headers = new[] { "Código Equipo", "Nombre Equipo", "Adaptador", "IP IPv4", "MAC", "Máscara Subred", "Gateway" };
+
+            for (int col = 1; col <= headers.Length; col++)
+            {
+                var cell = worksheet.Cell(1, col);
+                cell.Value = headers[col - 1];
+                AplicarFormatoHeader(cell);
+            }
+
+            int row = 2;
+            foreach (var equipo in equipos)
+            {
+                foreach (var conexion in equipo.Conexiones)
+                {
+                    worksheet.Cell(row, 1).Value = equipo.Codigo ?? "";
+                    worksheet.Cell(row, 2).Value = equipo.NombreEquipo ?? "";
+                    worksheet.Cell(row, 3).Value = conexion.Adaptador ?? "";
+                    worksheet.Cell(row, 4).Value = conexion.DireccionIPv4 ?? "";
+                    worksheet.Cell(row, 5).Value = conexion.DireccionMAC ?? "";
+                    worksheet.Cell(row, 6).Value = conexion.MascaraSubred ?? "";
+                    worksheet.Cell(row, 7).Value = conexion.PuertoEnlace ?? "";
+                    row++;
+                }
+            }
+
+            worksheet.Columns().AdjustToContents();
+            worksheet.SheetView.FreezeRows(1);
+        }        /// <summary>
+        /// Aplica formato estándar a headers
+        /// </summary>
+        private void AplicarFormatoHeader(IXLCell cell)
+        {
+            cell.Style.Font.Bold = true;
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Fill.BackgroundColor = XLColor.FromArgb(17, 137, 56);
+            cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            cell.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+        }
+
+        /// <summary>
+        /// Aplica color de fondo a una celda según el estado del equipo
+        /// </summary>
+        private void AplicarColorEstado(IXLCell cell, string? estado)
+        {
+            if (string.IsNullOrWhiteSpace(estado)) return;
+
+            var estadoNormalizado = estado.Trim().ToLowerInvariant();
+
+            if (estadoNormalizado.Contains("inactivo"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(107, 114, 128); // Gris
+            else if (estadoNormalizado.Contains("dadodebaja"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(239, 68, 68); // Rojo
+            else if (estadoNormalizado.Contains("enmantenimiento"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(245, 158, 11); // Naranja
+            else if (estadoNormalizado.Contains("danado"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(220, 38, 38); // Rojo oscuro
+            else if (estadoNormalizado.Contains("enreparacion"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(251, 191, 36); // Amarillo
+            else
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(39, 174, 96); // Verde (Activo/Disponible)
+
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Font.Bold = true;
+            cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
         }
 
         [RelayCommand(CanExecute = nameof(CanCrearEquipo))]

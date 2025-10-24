@@ -22,28 +22,36 @@
 
             <!-- Mantener conversores/estilos locales necesarios y adaptar LabelStyle a estándar -->
             <!-- LabelStyle existente en las plantillas: lo basamos en LabelTextStyle del diccionario estándar -->
-            <Style x:Key="LabelStyle" TargetType="TextBlock" BasedOn="{StaticResource LabelTextStyle}" />
-
-            <!-- Estilo de badge específico para esta vista que mapea EstadoDescripcion a colores -->
-            <Style x:Key="DetalleStatusBadge" TargetType="Border" BasedOn="{StaticResource StatusBadge}">
-                <Setter Property="Padding" Value="6,4" />
+            <Style x:Key="LabelStyle" TargetType="TextBlock" BasedOn="{StaticResource LabelTextStyle}" />            <!-- Estilo de badge específico para esta vista que mapea Estado a colores -->
+            <Style x:Key="DetalleStatusBadge" TargetType="Border">
+                <Setter Property="Padding" Value="10,4" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Ejecutado">
-                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                    <!-- Inactivo: Gris -->
+                    <DataTrigger Binding="{Binding Estado}" Value="Inactivo">
+                        <Setter Property="Background" Value="#6B7280" />
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Atrasado">
-                        <Setter Property="Background" Value="{StaticResource ErrorBrush}" />
+                    <!-- Dado de baja: Rojo -->
+                    <DataTrigger Binding="{Binding Estado}" Value="Dado de baja">
+                        <Setter Property="Background" Value="#EF4444" />
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Pendiente">
-                        <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                    <!-- En Mantenimiento: Naranja -->
+                    <DataTrigger Binding="{Binding Estado}" Value="En Mantenimiento">
+                        <Setter Property="Background" Value="#F59E0B" />
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="En Progreso">
-                        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                    <!-- Dañado: Rojo oscuro -->
+                    <DataTrigger Binding="{Binding Estado}" Value="Dañado">
+                        <Setter Property="Background" Value="#DC2626" />
                     </DataTrigger>
-                    <!-- Mejor soporte visual para equipos activos -->
-                    <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Activo">
-                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                    <!-- En Reparación: Amarillo -->
+                    <DataTrigger Binding="{Binding Estado}" Value="En Reparación">
+                        <Setter Property="Background" Value="#FBBF24" />
                     </DataTrigger>
+                    <!-- Activo, Disponible y Default: Verde (PrimaryBrush) -->
                 </Style.Triggers>
             </Style>
 
@@ -287,11 +295,9 @@
                                 <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding CodigoAnydesk}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
 
                                 <TextBlock Grid.Row="9" Grid.Column="0" Text="Costo:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Costo, StringFormat={}{0:C}}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>
-
-                                <TextBlock Grid.Row="10" Grid.Column="0" Text="Estado:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
-                                <Border Grid.Row="10" Grid.Column="1" Style="{StaticResource DetalleStatusBadge}" Margin="8,6,0,6" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Estado}" Style="{StaticResource StatusText}"/>
+                                <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Costo, StringFormat={}{0:C}}" Style="{StaticResource ValueTextStyle}" Margin="8,6,0,6" VerticalAlignment="Center"/>                                <TextBlock Grid.Row="10" Grid.Column="0" Text="Estado:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>
+                                <Border Grid.Row="10" Grid.Column="1" Style="{StaticResource DetalleStatusBadge}" Margin="8,6,0,6">
+                                    <TextBlock Text="{Binding Estado}" Foreground="White" FontWeight="Medium" FontSize="11" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <TextBlock Grid.Row="11" Grid.Column="0" Text="F. Compra:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center"/>

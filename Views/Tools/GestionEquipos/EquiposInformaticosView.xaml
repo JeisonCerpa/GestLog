@@ -210,10 +210,8 @@
                 <StackPanel Grid.Column="5" HorizontalAlignment="Right" Orientation="Horizontal">
                     <!-- Botón Actualizar (vista Equipos) -->
                     <Button Content="&#xE72C;" Command="{Binding CargarEquiposCommand}" ToolTip="Actualizar lista de equipos"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-
-                    <!-- Botón Exportar (habilitado según permisos) -->
-                    <Button Content="⭱" Command="{Binding ExportarEquiposCommand}" ToolTip="Exportar equipos"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>                    <!-- Botón Exportar (habilitado según permisos) - INTELIGENTE: todos o filtrados -->
+                    <Button Content="⭱" Command="{Binding ExportarEquiposCommand}" ToolTip="Exportar equipos (todos o filtrados según búsqueda activa)"
                             Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
                             IsEnabled="{Binding CanExportarDatos}"
                             Opacity="{Binding CanExportarDatos, Converter={StaticResource BooleanToOpacityConverter}}"/>
@@ -241,15 +239,10 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    </Grid.ColumnDefinitions>                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                         <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
                         <TextBox Width="300" Padding="8" VerticalAlignment="Center"
                                  Text="{Binding FiltroEquipo, UpdateSourceTrigger=PropertyChanged}" BorderBrush="#DDD"/>
-                        <Button Content="Exportar filtrados"
-                                Command="{Binding ExportarEquiposFiltradosCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="8,0,0,0"/>
                     </StackPanel>
 
                     <!-- Toggle a la derecha -->
