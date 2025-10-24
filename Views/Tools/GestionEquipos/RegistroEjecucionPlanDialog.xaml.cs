@@ -5,9 +5,9 @@ using System.Windows.Input;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{
-    public partial class RegistroEjecucionPlanDialog : Window
+{    public partial class RegistroEjecucionPlanDialog : Window
     {
+        private System.Windows.Forms.Screen? _lastScreenOwner;
         public bool Guardado { get; private set; }
         public RegistroEjecucionPlanDialog(RegistroEjecucionPlanViewModel vm)
         {
@@ -23,33 +23,28 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             if (e.Key == Key.Escape)
                 Close();
-        }
-
-        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
+        }        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
         {
-            if (parentWindow != null)
-            {
-                Owner = parentWindow;
+            if (parentWindow == null) return;
+            
+            this.Owner = parentWindow;
+            this.ShowInTaskbar = false;
 
-                if (parentWindow.WindowState == WindowState.Maximized)
-                {
-                    WindowState = WindowState.Maximized;
-                }
-                else
-                {
-                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
-                    var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
-                    var bounds = screen.Bounds;
-                    Left = bounds.Left;
-                    Top = bounds.Top;
-                    Width = bounds.Width;
-                    Height = bounds.Height;
-                    WindowState = WindowState.Normal;
-                }
-            }
-            else
+            try
             {
-                WindowState = WindowState.Maximized;
+                // Guardar referencia a la pantalla actual del owner
+                var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
+                var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                _lastScreenOwner = screen;
+
+                // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
+                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+                this.WindowState = WindowState.Maximized;
+            }
+            catch
+            {
+                // Fallback: maximizar en pantalla principal
+                this.WindowState = WindowState.Maximized;
             }
         }
 

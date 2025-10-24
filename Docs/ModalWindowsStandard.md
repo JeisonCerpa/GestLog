@@ -58,9 +58,10 @@ Comportamientos y handlers recomendados
 - Evitar cierre cuando se clica dentro del panel: Panel.MouseLeftButtonDown -> e.Handled = true.
 - Tecla Escape: registrar KeyDown en el Window y cerrar si Key == Key.Escape.
 - Owner y cobertura: al mostrar desde un servicio, asignar Owner al Window activo y llamar a un helper `ConfigurarParaVentanaPadre(Window parent)` que:
-  - Si parent es null -> maximizar Window (WindowState.Maximized) para cubrir pantalla.
-  - Si parent.WindowState == Maximized -> poner el diálogo maximizado.
-  - En otro caso, usar WindowInteropHelper(parent).Handle para obtener la pantalla (System.Windows.Forms.Screen.FromHandle) y fijar Left/Top/Width/Height del diálogo al bounds de la pantalla del owner. Esto garantiza que el overlay cubra la ventana en todas las resoluciones.
+  - Siempre usar `WindowState = WindowState.Maximized` para cubrir toda la pantalla.
+  - Esta es la forma estándar y robusta de WPF para cubrir la pantalla sin problemas de DPI o pantallas múltiples.
+  - No calcular bounds manualmente ni usar TransformFromDevice, ya que introducen errores de alineamiento y desbordamientos en pantallas múltiples.
+  - El Owner aseguura que el diálogo quede siempre encima de la ventana padre y que se cierre cuando el padre se cierra.
 
 Tamaño y layout
 ----------------
@@ -161,30 +162,41 @@ Visibilidad condicional / permisos
 
 Ejemplo práctico: asignar Owner y cubrir overlay correctamente
 -------------------------------------------------------------
-- Recomendación: antes de `ShowDialog()` llamar a una función helper en el diálogo que configure tamaño/posición para cubrir el Owner (especialmente para multi-monitor / DPI):
+- Implementar en el code-behind un método `ConfigurarParaVentanaPadre(Window parent)` que:
 
 ```csharp
-public void ConfigurarParaVentanaPadre(Window owner)
+public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
 {
-    if (owner == null) return;
-    this.Owner = owner;
+    if (parentWindow == null) return;
+    
+    this.Owner = parentWindow;
     this.ShowInTaskbar = false;
-    this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-    // Ajustar bounds para overlay exacto
-    var interop = new System.Windows.Interop.WindowInteropHelper(owner);
-    var screen = System.Windows.Forms.Screen.FromHandle(interop.Handle);
-    var bounds = screen.Bounds; // System.Drawing.Rectangle
+    try
+    {
+        // Guardar referencia a la pantalla actual del owner
+        var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
+        var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+        _lastScreenOwner = screen;
 
-    // Asignar a la ventana del dialogo para que su Grid overlay cubra toda la pantalla del owner
-    this.Left = bounds.Left;
-    this.Top = bounds.Top;
-    this.Width = bounds.Width;
-    this.Height = bounds.Height;
+        // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
+        // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+        this.WindowState = WindowState.Maximized;
+    }
+    catch
+    {
+        // Fallback: maximizar en pantalla principal
+        this.WindowState = WindowState.Maximized;
+    }
 }
 ```
 
-- Alternativa: si el owner está maximizado, es suficiente con centrar y asegurar `WindowStartupLocation=CenterOwner` y `Owner=...`. Probar ambos comportamientos.
+- Llamar antes de `ShowDialog()`: `dialog.ConfigurarParaVentanaPadre(owner);`
+- **Importante**: No calcular Left/Top/Width/Height manualmente. Usar `WindowState.Maximized` es más simple, robusto y evita problemas con:
+  - Conversiones DPI incorrectas
+  - Desbordamientos a pantallas secundarias
+  - Problemas de posicionamiento en pantallas múltiples
+- Para detectar cambios de pantalla del owner, guardar referencia a `Screen` y comparar `DeviceName` en `LocationChanged` y `SizeChanged` events.
 
 Sugerencias para rendimiento y virtualización
 --------------------------------------------
@@ -195,6 +207,54 @@ Política de sombras y contraste
 ------------------------------
 - Mantener sombras muy suaves (opacidad < 0.15) para no afectar legibilidad.
 - Botón de cierre `CloseButton` debe tener Foreground blanco cuando el header es color primario; si se cambia el header a fondos claros, usar `CloseButton` con `Foreground={StaticResource TextPrimaryBrush}` (o crear variación si se necesita).
+
+Sincronización con cambios de pantalla (multi-monitor)
+-----------------------------------------------------
+- Implementar handlers en `Loaded()` para detectar cambios de Owner:
+
+```csharp
+private void PerifericoDetalleView_Loaded(object? sender, RoutedEventArgs e)
+{
+    if (this.Owner != null)
+    {
+        // Si el Owner se mueve/redimensiona, mantener sincronizado
+        this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+        this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+    }
+}
+
+private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+{
+    if (this.Owner == null) return;
+
+    this.Dispatcher.Invoke(() =>
+    {
+        try
+        {
+            // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
+            this.WindowState = WindowState.Maximized;
+            
+            // Detectar si el Owner cambió de pantalla
+            var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
+            var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+
+            // Si cambió de pantalla, actualizar la referencia (para logs/diagnostics)
+            if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+            {
+                _lastScreenOwner = currentScreen;
+            }
+        }
+        catch
+        {
+            // En caso de error, asegurar que la ventana está maximizada
+            this.WindowState = WindowState.Maximized;
+        }
+    });
+}
+```
+
+- Beneficio: el overlay se mantiene perfectamente sincronizado si el usuario mueve la ventana entre pantallas o cambia su tamaño.
+- No es necesario recalcular posiciones; `WindowState.Maximized` se ajusta automáticamente.
 
 Comportamiento de edición y acciones destructivas
 ------------------------------------------------
@@ -208,6 +268,7 @@ Pruebas y validación (QA)
 - Probar apertura de modal con listas pequeñas y listas grandes (>=100 ítems) para validar virtualización.
 - Validar que overlay bloquea interacción en la ventana detrás (intentar click en controles del Owner).
 - Validar accesibilidad: navegar por teclado, Tab order, Escape cierra la ventana, Enter activa botón por defecto si aplica.
+- **IMPORTANTE**: Probar movimiento de Owner entre pantallas (si es multi-monitor) para validar que el overlay se mantiene sincronizado.
 
 Checklist ampliado (para incluir antes de crear nueva modal)
 -----------------------------------------------------------
@@ -227,5 +288,6 @@ Notas finales y mantenimiento
 Historial de cambios (versión inicial)
 --------------------------------------
 - 2025-10-10: Estándar creado a partir de las modificaciones realizadas en `RegistroEjecucionPlanDialog` y `PlanDetalleModalWindow`. Se unificó el overlay a `#80000000`, se eliminó animación de fade y se estandarizó comportamiento de owner/overlay mediante `ConfigurarParaVentanaPadre`.
+- 2025-10-24: Actualización crítica - se reemplazó el cálculo manual de bounds con `WindowState.Maximized`. Esto resuelve problemas de DPI múltiple, pantallas múltiples y desbordamientos de overlay. Se removió toda conversión con `TransformFromDevice` que introducía errores de alineamiento.
 
 Fin del documento.

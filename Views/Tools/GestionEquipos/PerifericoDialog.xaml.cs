@@ -855,35 +855,15 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 await ViewModel.CargarPersonasConEquipoAsync();
             };
-        }
-
-        // Helper para ajustar bounds y Owner para cubrir la pantalla del owner (multi-monitor / DPI)
+        }        // Helper para asignar Owner sin forzar tamaño (PerifericoDialog es un dialog normal, no overlay modal)
         public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
         {
             if (parentWindow != null)
             {
                 Owner = parentWindow;
-
-                if (parentWindow.WindowState == WindowState.Maximized)
-                {
-                    WindowState = WindowState.Maximized;
-                }
-                else
-                {
-                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
-                    var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
-                    var bounds = screen.Bounds;
-
-                    Left = bounds.Left;
-                    Top = bounds.Top;
-                    Width = bounds.Width;
-                    Height = bounds.Height;
-                    WindowState = WindowState.Normal;
-                }
-            }
-            else
-            {
-                WindowState = WindowState.Maximized;
+                ShowInTaskbar = false;
+                // PerifericoDialog respeta sus propios tamaños (Height="700" Width="900")
+                // No forzar WindowState.Maximized ya que no es un overlay modal
             }
         }
 

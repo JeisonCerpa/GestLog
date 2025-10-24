@@ -26,33 +26,18 @@ namespace GestLog.Views.Tools.GestionEquipos
             if (parentWindow == null) return;
             
             this.Owner = parentWindow;
-            
+            this.ShowInTaskbar = false;
+
             try
             {
-                // Si la ventana padre está maximizada, maximizar esta también
-                if (parentWindow.WindowState == WindowState.Maximized)
-                {
-                    this.WindowState = WindowState.Maximized;
-                }
-                else
-                {
-                    // Para ventanas no maximizadas, obtener los bounds de la pantalla
-                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
-                    var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
-                    
-                    // Guardar referencia a la pantalla actual
-                    _lastScreenOwner = screen;
-                    
-                    // Usar los bounds completos de la pantalla
-                    var bounds = screen.Bounds;
-                    
-                    // Configurar para cubrir toda la pantalla
-                    this.Left = bounds.Left;
-                    this.Top = bounds.Top;
-                    this.Width = bounds.Width;
-                    this.Height = bounds.Height;
-                    this.WindowState = WindowState.Normal;
-                }
+                // Guardar referencia a la pantalla actual del owner
+                var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
+                var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                _lastScreenOwner = screen;
+
+                // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
+                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+                this.WindowState = WindowState.Maximized;
             }
             catch
             {
@@ -104,41 +89,23 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 try
                 {
-                    // Si la ventana padre está maximizada, maximizar esta también
-                    if (this.Owner.WindowState == WindowState.Maximized)
-                    {
-                        this.WindowState = WindowState.Maximized;
-                    }
-                    else
-                    {
-                        // Detectar si el Owner cambió de pantalla
-                        var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
-                        var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                    // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
+                    this.WindowState = WindowState.Maximized;
+                    
+                    // Detectar si el Owner cambió de pantalla
+                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
+                    var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
 
-                        // Si cambió de pantalla, recalcular bounds
-                        if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
-                        {
-                            // Owner cambió de pantalla, recalcular
-                            ConfigurarParaVentanaPadre(this.Owner);
-                        }
-                        else
-                        {
-                            // Mismo monitor, actualizar posición
-                            var bounds = currentScreen.Bounds;
-                            this.Left = bounds.Left;
-                            this.Top = bounds.Top;
-                            this.Width = bounds.Width;
-                            this.Height = bounds.Height;
-                        }
+                    // Si cambió de pantalla, actualizar la referencia
+                    if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+                    {
+                        _lastScreenOwner = currentScreen;
                     }
                 }
                 catch
                 {
-                    try
-                    {
-                        ConfigurarParaVentanaPadre(this.Owner);
-                    }
-                    catch { }
+                    // En caso de error, asegurar que la ventana está maximizada
+                    this.WindowState = WindowState.Maximized;
                 }
             });
         }

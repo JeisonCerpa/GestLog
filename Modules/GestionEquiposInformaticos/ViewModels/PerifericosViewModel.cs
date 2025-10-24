@@ -447,16 +447,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 // Si el usuario solicitó editar desde la vista de detalle, abrir el editor (PerifericoDialog)
                 if (detalleView.RequestEdit)
                 {
-                    _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Usuario solicitó editar periférico {codigoOriginal}. Abriendo editor...");
+                    _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Usuario solicitó editar periférico {codigoOriginal}. Abriendo editor...");                    var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(p, _dbContextFactory);
 
-                    var dialog = new Views.Tools.GestionEquipos.PerifericoDialog(p, _dbContextFactory);
-
-                    // Configurar bounds del editor también para que el overlay sea consistente
-                    try
+                    // Solo establecer el Owner para relación padre-hijo, sin forzar tamaño de pantalla completa
+                    // PerifericoDialog usa sus propios tamaños definidos en XAML (Height="700" Width="900")
+                    if (ownerWindow != null)
                     {
-                        if (ownerWindow != null) dialog.ConfigurarParaVentanaPadre(ownerWindow);
+                        dialog.Owner = ownerWindow;
                     }
-                    catch { /* no bloquear por fallo en el helper */ }
 
                     if (dialog.ShowDialog() == true)
                     {
