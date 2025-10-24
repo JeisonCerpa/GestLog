@@ -79,7 +79,8 @@ public partial class App : System.Windows.Application
             bool hayActualizacion = false;
             if (updateService != null)
             {
-                hayActualizacion = await updateService.CheckForUpdatesAsync();
+                var updateCheckResult = await updateService.CheckForUpdatesAsync();
+                hayActualizacion = updateCheckResult.HasUpdatesAvailable && !updateCheckResult.HasAccessError;
             }
             
             if (hayActualizacion)
@@ -714,10 +715,9 @@ public partial class App : System.Windows.Application
                 {
                     // Dar tiempo para que la aplicación cargue completamente
                     await Task.Delay(3000);
+                      var updateCheckResult = await updateService.CheckForUpdatesAsync();
                     
-                    var hasUpdate = await updateService.CheckForUpdatesAsync();
-                    
-                    if (hasUpdate)
+                    if (updateCheckResult.HasUpdatesAvailable && !updateCheckResult.HasAccessError)
                     {
                         _logger?.Logger.LogInformation("✅ Actualización disponible - mostrando diálogo al usuario");
                           

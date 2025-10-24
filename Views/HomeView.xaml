@@ -74,9 +74,9 @@
                             <TextBlock Text="ℹ️" FontFamily="Segoe UI" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
                             <TextBlock Text="Información" FontFamily="Segoe UI" FontSize="20" FontWeight="Bold" 
                                       HorizontalAlignment="Center" Foreground="#2C3E50" Margin="0,0,0,12"/>
-                            <TextBlock Text="Estado del sistema y estadísticas de módulos (v1.0.34)" 
+                            <TextBlock Text="Estado del sistema y estadísticas de módulos (v1.0.35)" 
                                       FontFamily="Segoe UI" FontSize="14" Foreground="#7F8C8D" TextWrapping="Wrap" 
-                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                            <Button Name="btnInfo" Content="Ver Información (v1.0.34)" 
+                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>                            <Button Name="btnInfo" Content="Ver Información (v1.0.35)" 
                                    Click="btnInfo_Click"
                                    Style="{StaticResource SecondaryButtonStyle}"/>
                         </StackPanel>

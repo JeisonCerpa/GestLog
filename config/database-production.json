@@ -1,7 +1,7 @@
 {
   "Database": {
-    "Server": "SIMICSGROUPWKS1\\SIMICSBD",
-    "Database": "BD_ Pruebas", 
+    "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
+    "Database": "GestLogDB", 
     "Username": "sa",
     "Password": "REMOVED_SECRET",
     "UseIntegratedSecurity": false,

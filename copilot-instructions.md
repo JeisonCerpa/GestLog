@@ -474,6 +474,85 @@ GestLog incluye un sistema robusto de actualización automática usando Velopack
 
 ---
 
+## 🔐 Detección de Problemas de Acceso al Servidor de Actualizaciones
+
+**⚠️ PROBLEMA COMÚN:** Equipos sin credenciales de acceso a la carpeta `\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater` no pueden actualizar.
+
+### **¿Cómo detectar si hay problema de permisos?**
+
+El servicio `VelopackUpdateService.CheckForUpdatesAsync()` ahora retorna un objeto `UpdateCheckResult` estructurado:
+
+```csharp
+public class UpdateCheckResult
+{
+    public bool HasUpdatesAvailable { get; set; }        // ¿Hay actualizaciones?
+    public bool HasAccessError { get; set; }             // ¿Hay error de permisos/red?
+    public string StatusMessage { get; set; }            // Mensaje descriptivo
+    public string? ErrorType { get; set; }               // Tipo: UnauthorizedAccess, IOAccess, Network, etc.
+    public Exception? InnerException { get; set; }       // Excepción completa para logs
+}
+```
+
+### **Uso correcto en ViewModels:**
+```csharp
+[RelayCommand]
+private async Task CheckUpdatesAsync()
+{
+    try
+    {
+        var result = await _velopackService.CheckForUpdatesAsync();
+        
+        if (result.HasAccessError)
+        {
+            // ❌ Error de permisos/acceso a red - INVESTIGAR DESPUÉS
+            _logger.LogWarning($"Acceso denegado al servidor: {result.ErrorType}");
+            ErrorMessage = result.StatusMessage;
+            // Mostrar UI con mensaje amigable al usuario
+            return;
+        }
+
+        if (result.HasUpdatesAvailable)
+        {
+            // ✅ Actualizaciones disponibles
+            await NotifyAndPromptForUpdateAsync();
+        }
+        else
+        {
+            // ℹ️ Ya tienes la versión más reciente
+            StatusMessage = "Ya tiene la versión más reciente";
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error inesperado al verificar actualizaciones");
+    }
+}
+```
+
+### **Errores específicos que se detectan:**
+| ErrorType | Causa | Solución |
+|-----------|-------|----------|
+| `UnauthorizedAccess` | Permisos insuficientes | Verificar credenciales de dominio, permisos de carpeta |
+| `IOAccess` | Ruta UNC inaccesible | Verificar conectividad a red, ruta correcta |
+| `Network` | Problema de red/conectividad | Verificar conexión a red, ping al servidor |
+| (otro) | Error desconocido | Revisar logs detallados, contactar admin |
+
+### **Logs detallados para diagnóstico:**
+Cuando hay un error de acceso, el logger registra:
+- 🔒 **Ruta del servidor** donde ocurrió el error
+- 👤 **Tipo de error** (UnauthorizedAccess, IOException, NetworkError)
+- 📝 **Mensaje detallado** de la excepción
+- 📚 **Stack trace completo** para debugging
+
+**Buscar en logs:** `ERROR-PERMISOS` o `ERROR-IO` para identificar rápidamente problemas de acceso.
+
+### **¿Por qué es importante esta distinción?**
+Antes: "No hay actualizaciones disponibles" ❌ (podría ser un problema de permisos oculto)
+
+Ahora: "❌ Acceso denegado al servidor. Verifique permisos de usuario." ✅ (información clara para resolver)
+
+---
+
 ## Colores y semántica de estados en Gestión de Equipos Informáticos
 
 - **Activo**: Verde (#2B8E3F)
