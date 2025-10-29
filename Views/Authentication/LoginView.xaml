@@ -3,9 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:GestLog.Views.Authentication"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="600">
     <UserControl.Resources>
+        <!-- Animación Shake para error -->
+        <Storyboard x:Key="ShakeAnimation">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(Canvas.Left)">
+                <LinearDoubleKeyFrame KeyTime="0:0:0.0" Value="0"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.05" Value="-8"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.1" Value="8"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.15" Value="-8"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.2" Value="8"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.25" Value="-4"/>
+                <LinearDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+
         <!-- Estilos locales para el login -->
         <Style x:Key="LoginTextBoxStyle" TargetType="TextBox">
             <Setter Property="Height" Value="40"/>
@@ -21,18 +35,47 @@
                     <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#118938"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="#118938" BlurRadius="12" ShadowDepth="0" Opacity="0.18"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
+                                </Border.Effect>
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
+                            <TextBlock x:Name="Watermark" Text="{TemplateBinding Tag}" Foreground="#A9A9A9" FontSize="15" Padding="12,10" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.7" Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#118938" Duration="0:0:0.3"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Setter Property="BorderBrush" Value="#118938"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <!-- Mostrar watermark cuando Text está vacío -->
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <!-- Ocultar watermark cuando Text es null -->
+                            <Trigger Property="Text" Value="{x:Null}">
+                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>        <!-- TextBox para validación (con indicador visual ✓/✗) -->
+        <Style x:Key="ValidatedTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource LoginTextBoxStyle}">
+            <Setter Property="Margin" Value="0,0,0,0"/>
         </Style>
+
         <Style x:Key="LoginPasswordBoxStyle" TargetType="PasswordBox">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="12,10"/>
@@ -47,10 +90,42 @@
                     <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
                 </Setter.Value>
             </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
+                                </Border.Effect>
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#118938" Duration="0:0:0.3"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Setter Property="BorderBrush" Value="#118938"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#118938"/>
-                    <Setter Property="BorderThickness" Value="2"/>
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Effect.BlurRadius" To="12" Duration="0:0:0.3"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
                     <Setter Property="Effect">
                         <Setter.Value>
                             <DropShadowEffect Color="#118938" BlurRadius="12" ShadowDepth="0" Opacity="0.18"/>
@@ -58,8 +133,7 @@
                     </Setter>
                 </Trigger>
             </Style.Triggers>
-        </Style>
-        <Style x:Key="LoginButtonStyle" TargetType="Button">
+        </Style>        <Style x:Key="LoginButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="45"/>
             <Setter Property="Background" Value="#118938"/>
             <Setter Property="Foreground" Value="White"/>
@@ -77,12 +151,57 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="22">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="22">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#0D6B2D" Duration="0:0:0.1"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Setter Property="Background" Value="#0D6B2D"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#2B8E3F" BlurRadius="14" ShadowDepth="3" Opacity="0.25"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <!-- IsPressed ahora tiene transición suave en lugar de cambio abrupto -->
+                <Trigger Property="IsPressed" Value="True">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#118938" Duration="0:0:0.05"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Setter Property="Background" Value="#118938"/>
+                </Trigger>
+                <!-- IsEnabled=False tiene prioridad y transición suave -->
+                <Trigger Property="IsEnabled" Value="False">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#CCCCCC" Duration="0:0:0.1"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Setter Property="Background" Value="#CCCCCC"/>
+                    <Setter Property="Foreground" Value="#666666"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#999999" BlurRadius="5" ShadowDepth="1" Opacity="0.1"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="35"/>
@@ -121,31 +240,39 @@
                 <TextBlock Text="GestLog" Style="{DynamicResource HeadingLargeStyle}" Foreground="#118938" HorizontalAlignment="Center" Margin="0,0,0,36"/>
                 <TextBlock Text="Sistema de Gestión Logística" Style="{DynamicResource HeadingMediumStyle}" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,36"/>
                 <!-- Formulario de login y mensajes -->
-                <StackPanel HorizontalAlignment="Center" Width="340" Margin="0,0,0,0">
-                    <!-- Mensaje de error -->
-                    <Border Background="#FFEBEE" BorderBrush="#F44336" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,14" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" Width="340" Margin="0,0,0,0">                    <!-- Mensaje de error con animación shake -->
+                    <Border x:Name="ErrorBorder" Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,14" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#FFC107" BlurRadius="4" ShadowDepth="0" Opacity="0.1"/>
+                        </Border.Effect>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="#C62828" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="#856404" TextWrapping="Wrap" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <!-- Campo Usuario -->
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>
-                        <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource LoginTextBoxStyle}" TabIndex="1">
-                            <TextBox.InputBindings>
-                                <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                            </TextBox.InputBindings>
-                        </TextBox>
+                        <Grid>
+                            <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Tag="Ingrese su usuario" Style="{StaticResource ValidatedTextBoxStyle}" TabIndex="1" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" TextChanged="UsernameTextBox_TextChanged">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                            <TextBlock x:Name="UsernameValidation" Text="✓" Foreground="Green" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                        </Grid>
                     </StackPanel>
                     <!-- Campo Contraseña -->
                     <StackPanel Margin="0,0,0,12">
-                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>
-                        <PasswordBox x:Name="PasswordBox" Style="{StaticResource LoginPasswordBoxStyle}" TabIndex="2" MinWidth="180" PasswordChanged="PasswordBox_PasswordChanged">
-                            <PasswordBox.InputBindings>
-                                <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                            </PasswordBox.InputBindings>
-                        </PasswordBox>
+                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>                        <Grid>
+                            <PasswordBox x:Name="PasswordBox" Style="{StaticResource LoginPasswordBoxStyle}" TabIndex="2" PasswordChanged="PasswordBox_PasswordChanged" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
+                                <PasswordBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                                </PasswordBox.InputBindings>
+                            </PasswordBox>
+                            <TextBlock x:Name="PasswordPlaceholder" Text="Ingrese su contraseña" Foreground="#A9A9A9" FontSize="15" Padding="12,10" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.7" Visibility="Visible"/>
+                            <TextBlock x:Name="CapsLockIndicator" Text="Caps Lock activado" Foreground="Red" FontSize="12" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                        </Grid>
                     </StackPanel>
                     <!-- Recordar sesión -->
                     <CheckBox IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="#706F6F" TabIndex="3" Margin="0,6,0,0"/>
@@ -153,7 +280,7 @@
                     <Button Content="Iniciar Sesión" Style="{StaticResource LoginButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" Height="40" FontSize="15" FontWeight="SemiBold" TabIndex="4" Margin="0,18,0,0"/>
                     <!-- Loading spinner -->
                     <Grid Width="28" Height="28" Margin="0,16,0,8" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="#118938" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="#118938" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
                             <Ellipse.RenderTransform>
                                 <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
                             </Ellipse.RenderTransform>
@@ -161,7 +288,7 @@
                                 <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                                     <BeginStoryboard>
                                         <Storyboard RepeatBehavior="Forever">
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:1"/>
+                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.8"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </EventTrigger>

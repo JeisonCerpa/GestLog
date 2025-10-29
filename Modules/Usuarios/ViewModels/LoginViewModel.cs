@@ -58,14 +58,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             try
             {
+                // ⚡ INMEDIATAMENTE mostrar loading para feedback visual instantáneo
+                IsLoading = true;
+                StatusMessage = "Verificando credenciales...";
+                
                 ClearError();
                 if (!ValidateInput())
                 {
                     _logger.LogWarning("Validación falló - no se procederá con el login");
                     return;
                 }
-                IsLoading = true;
-                StatusMessage = "Verificando credenciales...";
+                
                 _logger.LogInformation("Iniciando proceso de login para usuario: {Username}", Username);
                 var loginRequest = new LoginRequest
                 {
