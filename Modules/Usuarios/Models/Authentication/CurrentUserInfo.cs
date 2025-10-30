@@ -17,6 +17,11 @@ namespace GestLog.Modules.Usuarios.Models.Authentication
         public DateTime LastActivity { get; set; }
         public List<string> Roles { get; set; } = new();
         public List<string> Permissions { get; set; } = new();
+        
+        /// <summary>
+        /// Indica si es el primer login del usuario (requiere cambio obligatorio de contraseña)
+        /// </summary>
+        public bool IsFirstLogin { get; set; } = false;
 
         /// <summary>
         /// Verifica si el usuario tiene un rol específico

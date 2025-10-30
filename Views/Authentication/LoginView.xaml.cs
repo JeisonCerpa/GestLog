@@ -12,13 +12,16 @@ namespace GestLog.Views.Authentication
     {
         private LoginViewModel? _viewModel;
         public event EventHandler? LoginSuccessful;
-        
-        public LoginView()
+          public LoginView()
         {
             InitializeComponent();
             InitializeViewModel();
             if (_viewModel != null)
+            {
                 _viewModel.LoginSuccessful += OnLoginSuccessful;
+                _viewModel.ShowPasswordChangeModal += OnShowPasswordChangeModal;
+                _viewModel.ShowForgotPasswordModal += OnShowForgotPasswordModal;
+            }
 
             // Suscribirse a eventos para detección de Caps Lock
             Loaded += LoginView_Loaded;
@@ -130,9 +133,7 @@ namespace GestLog.Views.Authentication
         private void PasswordBox_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             DetectCapsLock();
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Anima el error con un efecto shake
         /// </summary>
         public void TriggerErrorAnimation()
@@ -146,6 +147,148 @@ namespace GestLog.Views.Authentication
                     // Crear una copia para poder reproducirla múltiples veces
                     shakeStoryboard.Begin(errorBorder);
                 }
+            }
+        }        /// <summary>
+        /// Maneja la solicitud de mostrar la modal de cambio de contraseña obligatorio
+        /// </summary>
+        private void OnShowPasswordChangeModal()
+        {
+            try
+            {
+                // Obtener el ChangePasswordViewModel del ServiceProvider
+                var serviceProvider = LoggingService.GetServiceProvider();
+                
+                if (serviceProvider == null)
+                {
+                    System.Windows.MessageBox.Show("Error: No se pudo obtener el ServiceProvider.", 
+                        "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                ChangePasswordViewModel? changePasswordVM = null;
+                try
+                {
+                    changePasswordVM = serviceProvider.GetService(typeof(ChangePasswordViewModel)) as ChangePasswordViewModel;
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Error al resolver ChangePasswordViewModel: {ex.Message}\n\n{ex.InnerException?.Message}", 
+                        "Error de Resolución", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                
+                if (changePasswordVM == null)
+                {
+                    System.Windows.MessageBox.Show("Error: ChangePasswordViewModel es nulo. Verifique que esté registrado en DI.", 
+                        "Error de Inyección de Dependencias", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Establecer IsFirstLoginChange en true
+                changePasswordVM.IsFirstLogin = true;                // Obtener la vista
+                var changePasswordView = new GestLog.Views.Usuarios.ChangePasswordModalView()
+                {
+                    DataContext = changePasswordVM
+                };
+
+                // Mostrar como Window modal
+                var window = new Window
+                {
+                    Content = changePasswordView,
+                    Owner = Window.GetWindow(this),
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    ResizeMode = ResizeMode.NoResize,
+                    ShowInTaskbar = false,
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
+                };
+
+                changePasswordVM.PasswordChangeSuccessful += () =>
+                {
+                    window.Close();
+                    // Después de cambiar contraseña, notificar login exitoso
+                    _viewModel?.LoginCommand.Execute(null);
+                };
+
+                changePasswordVM.PasswordChangeCanceled += () =>
+                {
+                    window.Close();
+                    // Si cancela cambio obligatorio, cerrar sesión
+                    _viewModel?.CerrarSesionCommand.Execute(null);
+                };
+
+                window.ShowDialog();
+            }            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al mostrar modal de cambio de contraseña: {ex.Message}", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }        /// <summary>
+        /// Maneja la solicitud de mostrar la modal de recuperación de contraseña
+        /// </summary>
+        private void OnShowForgotPasswordModal()
+        {
+            try
+            {
+                // Obtener el ForgotPasswordViewModel del ServiceProvider
+                var serviceProvider = LoggingService.GetServiceProvider();
+                
+                if (serviceProvider == null)
+                {
+                    System.Windows.MessageBox.Show("Error: No se pudo obtener el ServiceProvider.", 
+                        "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                ForgotPasswordViewModel? forgotPasswordVM = null;
+                try
+                {
+                    forgotPasswordVM = serviceProvider.GetService(typeof(ForgotPasswordViewModel)) as ForgotPasswordViewModel;
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Error al resolver ForgotPasswordViewModel: {ex.Message}\n\n{ex.InnerException?.Message}", 
+                        "Error de Resolución", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                
+                if (forgotPasswordVM == null)
+                {
+                    System.Windows.MessageBox.Show("Error: ForgotPasswordViewModel es nulo. Verifique que esté registrado en DI.", 
+                        "Error de Inyección de Dependencias", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }                // Obtener la vista
+                var forgotPasswordView = new GestLog.Views.Usuarios.ForgotPasswordModalView()
+                {
+                    DataContext = forgotPasswordVM
+                };
+
+                // Mostrar como Window modal
+                var window = new Window
+                {
+                    Content = forgotPasswordView,
+                    Owner = Window.GetWindow(this),
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    ResizeMode = ResizeMode.NoResize,
+                    ShowInTaskbar = false,
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
+                };
+
+                forgotPasswordVM.PasswordResetRequested += () =>
+                {
+                    window.Close();
+                };
+
+                forgotPasswordVM.OperationCanceled += () =>
+                {
+                    window.Close();
+                };
+
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al mostrar modal de recuperación de contraseña: {ex.Message}", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

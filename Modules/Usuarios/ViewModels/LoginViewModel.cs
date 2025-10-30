@@ -41,12 +41,23 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private string _errorMessage = string.Empty;
 
         [ObservableProperty]
-        private bool _hasError = false;
-
-        [ObservableProperty]
+        private bool _hasError = false;        [ObservableProperty]
         private string _statusMessage = "Ingrese sus credenciales para acceder";
 
+        [ObservableProperty]
+        private bool _isFirstLogin = false;
+
         public static readonly string UserLoggedInMessageToken = "UserLoggedInMessage";
+
+        /// <summary>
+        /// Evento que se dispara cuando se necesita mostrar modal de cambio de contraseña obligatorio
+        /// </summary>
+        public event Action? ShowPasswordChangeModal;
+
+        /// <summary>
+        /// Evento que se dispara cuando se solicita mostrar modal de recuperación de contraseña
+        /// </summary>
+        public event Action? ShowForgotPasswordModal;
 
         public LoginViewModel(IAuthenticationService authenticationService, IGestLogLogger logger, ICurrentUserService currentUserService)
         {
@@ -80,12 +91,26 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 if (result.Success)
                 {
                     _logger.LogInformation("Login exitoso para usuario: {Username}", Username);
-                    StatusMessage = "¡Bienvenido! Redirigiendo...";                    if (result.CurrentUserInfo != null)
+                    StatusMessage = "¡Bienvenido! Redirigiendo...";                    
+                    if (result.CurrentUserInfo != null)
                     {
                         _currentUserService.SetCurrentUser(result.CurrentUserInfo, RememberMe);
                         
-                        // Enviar mensaje de login exitoso con el usuario autenticado
-                        WeakReferenceMessenger.Default.Send(new UserLoggedInMessage(result.CurrentUserInfo));
+                        // ✅ Verificar si es primer login
+                        IsFirstLogin = result.CurrentUserInfo.IsFirstLogin;
+                        
+                        if (IsFirstLogin)
+                        {
+                            _logger.LogInformation("Primer login detectado para usuario: {Username}. Mostrando modal de cambio de contraseña obligatorio.", Username);
+                            // Mostrar modal de cambio de contraseña obligatorio
+                            ShowPasswordChangeModal?.Invoke();
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Acceso normal para usuario: {Username}", Username);
+                            // Enviar mensaje de login exitoso con el usuario autenticado
+                            WeakReferenceMessenger.Default.Send(new UserLoggedInMessage(result.CurrentUserInfo));
+                        }
                     }
                     LoginSuccessful?.Invoke();
                 }
@@ -139,14 +164,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }        [RelayCommand]
         private void ForgotPassword()
         {
-            // TODO: Implementar funcionalidad de recuperación de contraseña
-            System.Windows.MessageBox.Show(
-                "Contacte al administrador del sistema para restablecer su contraseña.",
-                "Recuperación de Contraseña",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Information);
-                
-            _logger.LogInformation("Solicitud de recuperación de contraseña para usuario: {Username}", Username);
+            _logger.LogInformation("Solicitud de recuperación de contraseña. Mostrando modal de recuperación.");
+            ShowForgotPasswordModal?.Invoke();
         }
 
         /// <summary>

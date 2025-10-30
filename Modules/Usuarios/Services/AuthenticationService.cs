@@ -70,10 +70,34 @@ namespace GestLog.Modules.Usuarios.Services
                     _logger.LogWarning("Usuario desactivado: {Username}", loginRequest.Username);
                     await LogLoginAttemptAsync(loginRequest.Username, false, "Usuario desactivado", cancellationToken);
                     return AuthResult.FailureResult("El usuario está desactivado", "USER_DEACTIVATED");
+                }                // Verificar contraseña: primero intentar con temporal (si existe y es válida)
+                var isValidPassword = false;
+                  // Verificar si existe contraseña temporal válida
+                if (!string.IsNullOrEmpty(usuario.TemporaryPasswordHash) &&
+                    !string.IsNullOrEmpty(usuario.TemporaryPasswordSalt) &&
+                    usuario.TemporaryPasswordExpiration.HasValue &&
+                    DateTime.UtcNow <= usuario.TemporaryPasswordExpiration.Value)
+                {
+                    // Verificar contra la contraseña temporal
+                    isValidPassword = PasswordHelper.VerifyPassword(
+                        loginRequest.Password,
+                        usuario.TemporaryPasswordHash,
+                        usuario.TemporaryPasswordSalt);
+                    
+                    if (isValidPassword)
+                    {
+                        _logger.LogInformation("Login con contraseña temporal para usuario: {Username}", loginRequest.Username);
+                        // Marcar que debe cambiar contraseña
+                        usuario.IsFirstLogin = true;
+                    }
                 }
-
-                // Verificar contraseña
-                var isValidPassword = PasswordHelper.VerifyPassword(loginRequest.Password, usuario.HashContrasena, usuario.Salt);
+                
+                // Si no es temporal válida, verificar contra contraseña permanente
+                if (!isValidPassword)
+                {
+                    isValidPassword = PasswordHelper.VerifyPassword(loginRequest.Password, usuario.HashContrasena, usuario.Salt);
+                }
+                
                 if (!isValidPassword)
                 {
                     _logger.LogWarning("Contraseña incorrecta para usuario: {Username}", loginRequest.Username);
@@ -252,9 +276,7 @@ namespace GestLog.Modules.Usuarios.Services
                     .ToListAsync(cancellationToken);
 
                 // Combinar todos los permisos
-                var allPermissions = directPermissions.Concat(rolePermissions).Distinct().ToList();
-
-                var fullName = persona != null ? $"{persona.Nombres} {persona.Apellidos}" : usuario.NombreUsuario;
+                var allPermissions = directPermissions.Concat(rolePermissions).Distinct().ToList();                var fullName = persona != null ? $"{persona.Nombres} {persona.Apellidos}" : usuario.NombreUsuario;
                 var email = persona?.Correo ?? "";
 
                 return new CurrentUserInfo
@@ -266,10 +288,10 @@ namespace GestLog.Modules.Usuarios.Services
                     LoginTime = DateTime.UtcNow,
                     LastActivity = DateTime.UtcNow,
                     Roles = roles,
-                    Permissions = allPermissions
+                    Permissions = allPermissions,
+                    IsFirstLogin = usuario.IsFirstLogin
                 };
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error construyendo información del usuario actual para {Username}", usuario.NombreUsuario);
                 
@@ -283,7 +305,8 @@ namespace GestLog.Modules.Usuarios.Services
                     LoginTime = DateTime.UtcNow,
                     LastActivity = DateTime.UtcNow,
                     Roles = new(),
-                    Permissions = new()
+                    Permissions = new(),
+                    IsFirstLogin = usuario.IsFirstLogin
                 };
             }
         }

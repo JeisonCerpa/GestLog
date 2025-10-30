@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    partial class GestLogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030134710_AddPasswordManagementColumnsToUsuario")]
+    partial class AddPasswordManagementColumnsToUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -830,15 +833,6 @@ namespace GestLog.Migrations
 
                     b.Property<string>("Salt")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("TemporaryPasswordExpiration")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("TemporaryPasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TemporaryPasswordSalt")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdUsuario");

@@ -106,6 +106,12 @@ public static class LoggingService
                 configuration.GetSection("DatabaseResilience").Bind(options);
             });
             
+            // 🔐 Configuración SMTP para Reseteo de Contraseña
+            services.Configure<Configuration.PasswordResetEmailOptions>(options =>
+            {
+                configuration.GetSection("EmailServices:PasswordReset").Bind(options);
+            });
+            
             // Servicio de conexión a base de datos
             services.AddSingleton<Interfaces.IDatabaseConnectionService, DatabaseConnectionService>();
               // Servicios del dominio
@@ -175,13 +181,11 @@ public static class LoggingService
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel(seguimientoService, currentUserService, databaseService, logger);
-            });
-
-            // Configuración de base de datos EF Core
+            });            // Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
 
             // --- REGISTRO DE SERVICIOS DE USUARIOS Y PERSONAS ---
-            GestLog.StartupUsuariosPersonas.ConfigureUsuariosPersonasServices(services);
+            GestLog.StartupUsuariosPersonas.ConfigureUsuariosPersonasServices(services, configuration);
 
             _serviceProvider = services.BuildServiceProvider();
             _isInitialized = true;

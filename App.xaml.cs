@@ -111,10 +111,59 @@ public partial class App : System.Windows.Application
             {
                 splash.ShowStatus("No hay actualizaciones");
                 await System.Threading.Tasks.Task.Delay(500);
+            }            // Inicializar conexión a base de datos con monitoreo automático
+            splash.ShowStatus("Inicializando servicio de base de datos...");
+
+            // Sincronizar variables de entorno automáticamente ANTES de conectar
+            splash.ShowStatus("Sincronizando variables de entorno...");
+            try
+            {
+                var envVarService = LoggingService.GetService<GestLog.Services.Core.IEnvironmentVariableService>();
+                if (envVarService != null)
+                {
+                    var syncResult = await envVarService.SyncEnvironmentVariablesAsync();
+                    _logger?.Logger.LogInformation("📊 Resultado de sincronización: {Created} creadas, {Updated} actualizadas, {Unchanged} sin cambios, {Failed} errores",
+                        syncResult.Created, syncResult.Updated, syncResult.Unchanged, syncResult.Failed);
+                    
+                    if (syncResult.Failed > 0)
+                    {
+                        _logger?.Logger.LogWarning("⚠️ Hubo errores al sincronizar variables de entorno");
+                    }
+                    
+                    splash.ShowStatus("Variables de entorno sincronizadas");
+                    await System.Threading.Tasks.Task.Delay(500);
+                }
+            }
+            catch (Exception exEnvVars)
+            {
+                _logger?.Logger.LogError(exEnvVars, "⚠️ Error al sincronizar variables de entorno (continuando)");
+                // No es crítico, continuar con los valores actuales
             }
 
-            // Inicializar conexión a base de datos con monitoreo automático
-            splash.ShowStatus("Inicializando servicio de base de datos...");
+            // Aplicar migraciones pendientes automáticamente ANTES de cualquier acceso a la BD
+            splash.ShowStatus("Aplicando migraciones de base de datos...");
+            try
+            {
+                var migrationService = LoggingService.GetService<GestLog.Services.Core.IMigrationService>();
+                if (migrationService != null)
+                {
+                    using var migrationCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    await migrationService.EnsureDatabaseUpdatedAsync();
+                    splash.ShowStatus("Migraciones aplicadas exitosamente");
+                    await System.Threading.Tasks.Task.Delay(500);
+                }
+                else
+                {
+                    _logger?.Logger.LogWarning("⚠️ Servicio de migraciones no disponible");
+                }
+            }
+            catch (Exception exMigrations)
+            {
+                _logger?.Logger.LogError(exMigrations, "❌ Error al aplicar migraciones de base de datos");
+                splash.ShowStatus($"Error en migraciones: {exMigrations.Message}");
+                await System.Threading.Tasks.Task.Delay(1500);
+                throw; // Re-lanzar para que la aplicación no continúe si hay error crítico
+            }
 
             // Crear un CTS con timeout para no bloquear indefinidamente el splash
             using (var dbInitCts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))

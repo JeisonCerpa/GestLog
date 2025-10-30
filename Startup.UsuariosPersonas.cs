@@ -21,12 +21,16 @@ using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
 
 namespace GestLog
-{
-    public static class StartupUsuariosPersonas
+{    public static class StartupUsuariosPersonas
     {        
-        public static void ConfigureUsuariosPersonasServices(IServiceCollection services)
+        public static void ConfigureUsuariosPersonasServices(IServiceCollection services, IConfiguration configuration)
         {
-            Console.WriteLine("🔧 Configurando servicios de Usuarios y Personas...");
+            Console.WriteLine("🔧 Configurando servicios de Usuarios y Personas...");        // 🔐 CONFIGURACIÓN SMTP PARA RESETEO DE CONTRASEÑA
+            var emailSection = configuration.GetSection(GestLog.Services.Configuration.PasswordResetEmailOptions.SectionName);
+            services.Configure<GestLog.Services.Configuration.PasswordResetEmailOptions>(options =>
+            {
+                emailSection.Bind(options);
+            });
             
             // Servicios y repositorios de Usuarios
             services.AddScoped<IUsuarioService, UsuarioService>();
@@ -35,6 +39,10 @@ namespace GestLog
             // 🔐 SERVICIOS DE AUTENTICACIÓN
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
+            
+            // 🔐 SERVICIOS DE GESTIÓN DE CONTRASEÑA
+            services.AddTransient<GestLog.Services.Interfaces.IPasswordResetEmailService, GestLog.Services.Core.PasswordResetEmailService>();
+            services.AddScoped<GestLog.Services.Interfaces.IPasswordManagementService, GestLog.Services.Core.PasswordManagementService>();
             
             services.AddScoped<ICargoService, CargoService>();
             services.AddScoped<ICargoRepository, CargoRepository>();
@@ -48,8 +56,7 @@ namespace GestLog
             services.AddScoped<IPermisoRepository, PermisoRepository>();
             services.AddScoped<IRolPermisoRepository, RolPermisoRepository>();            
             services.AddScoped<IAuditoriaService, AuditoriaService>();
-            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();            
-            // ViewModels de Usuarios
+            services.AddScoped<IAuditoriaRepository, AuditoriaRepository>();              // ViewModels de Usuarios
             
             services.AddSingleton<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
             
@@ -58,7 +65,21 @@ namespace GestLog
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesión
             services.AddSingleton<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddSingleton<CatalogosManagementViewModel>();
-            services.AddSingleton<GestionPermisosRolViewModel>();            // Servicios y ViewModels para Gestión de Mantenimientos
+            services.AddSingleton<GestionPermisosRolViewModel>();
+              // 🔐 ViewModels para gestión de contraseña
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.ChangePasswordViewModel>(sp =>
+            {
+                var passwordManagementService = sp.GetRequiredService<GestLog.Services.Interfaces.IPasswordManagementService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                return new GestLog.Modules.Usuarios.ViewModels.ChangePasswordViewModel(passwordManagementService, logger, currentUserService);
+            });
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel>(sp =>
+            {
+                var passwordManagementService = sp.GetRequiredService<GestLog.Services.Interfaces.IPasswordManagementService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                return new GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel(passwordManagementService, logger);
+            });// Servicios y ViewModels para Gestión de Mantenimientos
             services.AddScoped<IMantenimientoService, MaintenanceService>();
               // Servicios para Gestión de Equipos Informáticos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();

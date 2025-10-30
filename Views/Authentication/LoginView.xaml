@@ -273,11 +273,27 @@
                             <TextBlock x:Name="PasswordPlaceholder" Text="Ingrese su contraseña" Foreground="#A9A9A9" FontSize="15" Padding="12,10" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.7" Visibility="Visible"/>
                             <TextBlock x:Name="CapsLockIndicator" Text="Caps Lock activado" Foreground="Red" FontSize="12" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
                         </Grid>
-                    </StackPanel>
-                    <!-- Recordar sesión -->
-                    <CheckBox IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="#706F6F" TabIndex="3" Margin="0,6,0,0"/>
+                    </StackPanel>                    <!-- Recordar sesión y enlace de recuperación -->
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0" IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="#706F6F" TabIndex="3" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="¿Olvidó contraseña?" Command="{Binding ForgotPasswordCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" FontSize="11" Foreground="#118938" Cursor="Hand" Padding="0" TabIndex="4" VerticalAlignment="Center">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <TextBlock Text="{TemplateBinding Content}" Cursor="Hand" TextDecorations="Underline">
+                                        <TextBlock.Foreground>
+                                            <SolidColorBrush Color="#118938"/>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
                     <!-- Botón Login -->
-                    <Button Content="Iniciar Sesión" Style="{StaticResource LoginButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" Height="40" FontSize="15" FontWeight="SemiBold" TabIndex="4" Margin="0,18,0,0"/>
+                    <Button Content="Iniciar Sesión" Style="{StaticResource LoginButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" Height="40" FontSize="15" FontWeight="SemiBold" TabIndex="5" Margin="0,18,0,0"/>
                     <!-- Loading spinner -->
                     <Grid Width="28" Height="28" Margin="0,16,0,8" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="#118938" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">

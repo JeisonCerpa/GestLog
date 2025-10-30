@@ -3,13 +3,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Services;
+using GestLog.Services.Core;
 using System;
 
 namespace GestLog
-{
-    public static class Startup
+{    public static class Startup
     {        public static void ConfigureDatabase(IServiceCollection services, IConfiguration configuration)
         {
+            // Registrar servicio de sincronización de variables de entorno
+            services.AddSingleton<IEnvironmentVariableService, EnvironmentVariableService>();
+
             var dbSection = configuration.GetSection("Database");
             string connectionString = BuildConnectionString(dbSection);
             services.AddDbContextFactory<GestLogDbContext>(options =>
@@ -27,6 +30,9 @@ namespace GestLog
                 .EnableSensitiveDataLogging(false) // Para producción
                 .EnableDetailedErrors(false); // Para producción
             });
+
+            // Registrar servicio de migraciones para aplicar automáticamente en startup
+            services.AddScoped<IMigrationService, MigrationService>();
         }
 
         private static string BuildConnectionString(IConfiguration dbSection)

@@ -11,13 +11,24 @@ namespace GestLog.Modules.Usuarios.Models
         public Guid PersonaId { get; set; }
         public required string NombreUsuario { get; set; }
         public required string HashContrasena { get; set; }
-        public required string Salt { get; set; }
+        public required string Salt { get; set; }        
         public bool Activo { get; set; }
         public bool Desactivado { get; set; }
         public DateTime? FechaUltimoAcceso { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaModificacion { get; set; }
-          // Propiedades extendidas para mostrar información de la persona asociada
+        
+        // Propiedades para gestión de contraseña
+        public bool IsFirstLogin { get; set; } = true;
+        public DateTime? PasswordChangedAt { get; set; }
+        public DateTime? LastPasswordChangeAttempt { get; set; }
+        
+        // Propiedades para contraseña temporal (recuperación)
+        public string? TemporaryPasswordHash { get; set; }
+        public string? TemporaryPasswordSalt { get; set; }
+        public DateTime? TemporaryPasswordExpiration { get; set; }
+        
+        // Propiedades extendidas para mostrar información de la persona asociada
         [NotMapped]
         public string? Correo { get; set; }
         
