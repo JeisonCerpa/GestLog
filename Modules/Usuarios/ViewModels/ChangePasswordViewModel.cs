@@ -20,9 +20,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private readonly IGestLogLogger _logger;
         private readonly ICurrentUserService _currentUserService;
         private string? _userId;
-        private Views.Usuarios.ChangePasswordModalView? _view;
-
-        [ObservableProperty]
+        private Views.Usuarios.ChangePasswordModalView? _view;        [ObservableProperty]
         private string _errorMessage = string.Empty;
 
         [ObservableProperty]
@@ -30,6 +28,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         [ObservableProperty]
         private bool _showSuccess = false;
+
+        [ObservableProperty]
+        private string _successMessage = string.Empty;
 
         [ObservableProperty]
         private bool _isLoading = false;
@@ -88,17 +89,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 var confirmPassword = _view.GetConfirmPassword();
 
                 // Realizar el cambio de contraseña
-                var result = await PerformPasswordChangeAsync(currentPassword, newPassword, confirmPassword, cancellationToken);
-
-                if (result)
+                var result = await PerformPasswordChangeAsync(currentPassword, newPassword, confirmPassword, cancellationToken);                if (result)
                 {
                     _logger.LogInformation("Cambio de contraseña exitoso para usuario: {UserId}", _userId ?? "Desconocido");
+                    SuccessMessage = "Tu contraseña ha sido actualizada correctamente.\n\nAhora podrás acceder al sistema con tu nueva contraseña.";
                     ShowSuccess = true;
                     _view.ClearPasswords();
                     
-                    // Esperar un poco para que el usuario vea el mensaje de éxito
-                    await Task.Delay(1500, cancellationToken);
+                    // Esperar para que el usuario vea el mensaje de éxito
+                    await Task.Delay(3000, cancellationToken);
                     
+                    // Cerrar modal
                     PasswordChangeSuccessful?.Invoke();
                 }
             }

@@ -125,15 +125,41 @@ namespace GestLog.Views.Authentication
         private void PasswordBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             DetectCapsLock();
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Detecta Caps Lock cuando se libera una tecla
         /// </summary>
         private void PasswordBox_PreviewKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             DetectCapsLock();
-        }        /// <summary>
+        }
+
+        /// <summary>
+        /// Limpia el PasswordBox visualmente cuando el ViewModel limpia la contraseña
+        /// </summary>
+        private void ClearPasswordBox()
+        {
+            var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
+            if (passwordBox != null)
+            {
+                passwordBox.Clear();
+                
+                // Mostrar placeholder nuevamente
+                var placeholder = this.FindName("PasswordPlaceholder") as System.Windows.Controls.TextBlock;
+                if (placeholder != null)
+                {
+                    placeholder.Visibility = Visibility.Visible;
+                }
+                
+                // Ocultar indicador de Caps Lock
+                var capsLockIndicator = this.FindName("CapsLockIndicator") as System.Windows.Controls.TextBlock;
+                if (capsLockIndicator != null)
+                {
+                    capsLockIndicator.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
         /// Anima el error con un efecto shake
         /// </summary>
         public void TriggerErrorAnimation()
@@ -184,45 +210,51 @@ namespace GestLog.Views.Authentication
                     return;
                 }
 
-                // Establecer IsFirstLoginChange en true
-                changePasswordVM.IsFirstLogin = true;                // Obtener la vista
+                // Establecer IsFirstLogin en true
+                changePasswordVM.IsFirstLogin = true;
+
+                // Crear la vista modal (ChangePasswordModalView es un Window)
                 var changePasswordView = new GestLog.Views.Usuarios.ChangePasswordModalView()
                 {
                     DataContext = changePasswordVM
                 };
 
-                // Mostrar como Window modal
-                var window = new Window
-                {
-                    Content = changePasswordView,
-                    Owner = Window.GetWindow(this),
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    ResizeMode = ResizeMode.NoResize,
-                    ShowInTaskbar = false,
-                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
-                };
-
+                // Configurar la vista modal para que se muestre como diálogo
+                changePasswordView.ConfigurarParaVentanaPadre(Window.GetWindow(this));                // Suscribirse a eventos de éxito y cancelación
                 changePasswordVM.PasswordChangeSuccessful += () =>
                 {
-                    window.Close();
-                    // Después de cambiar contraseña, notificar login exitoso
-                    _viewModel?.LoginCommand.Execute(null);
+                    changePasswordView.DialogResult = true;
+                    changePasswordView.Close();
                 };
 
                 changePasswordVM.PasswordChangeCanceled += () =>
-                {
-                    window.Close();
-                    // Si cancela cambio obligatorio, cerrar sesión
-                    _viewModel?.CerrarSesionCommand.Execute(null);
+                {                changePasswordView.DialogResult = false;
+                    changePasswordView.Close();
                 };
 
-                window.ShowDialog();
-            }            catch (Exception ex)
+                // Mostrar la modal como diálogo
+                var result = changePasswordView.ShowDialog();                // DESPUÉS de que la modal cierre completamente, manejar el resultado
+                if (result == true)
+                {
+                    // Cambio exitoso - Mostrar mensaje y cerrar sesión
+                    System.Windows.MessageBox.Show("Contraseña actualizada exitosamente.\n\nPor favor, ingrese nuevamente con su nueva contraseña.",
+                        "Cambio Exitoso", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _viewModel?.ClearFieldsCommand.Execute(null);
+                    ClearPasswordBox();
+                }
+                else
+                {
+                    // Cambio cancelado o no completado - Cerrar sesión
+                    _viewModel?.ClearFieldsCommand.Execute(null);
+                    ClearPasswordBox();
+                }
+            }
+            catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Error al mostrar modal de cambio de contraseña: {ex.Message}", 
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }        /// <summary>
+        }/// <summary>
         /// Maneja la solicitud de mostrar la modal de recuperación de contraseña
         /// </summary>
         private void OnShowForgotPasswordModal()
@@ -256,34 +288,31 @@ namespace GestLog.Views.Authentication
                     System.Windows.MessageBox.Show("Error: ForgotPasswordViewModel es nulo. Verifique que esté registrado en DI.", 
                         "Error de Inyección de Dependencias", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }                // Obtener la vista
+                }
+
+                // Obtener la vista modal
                 var forgotPasswordView = new GestLog.Views.Usuarios.ForgotPasswordModalView()
                 {
                     DataContext = forgotPasswordVM
                 };
 
-                // Mostrar como Window modal
-                var window = new Window
-                {
-                    Content = forgotPasswordView,
-                    Owner = Window.GetWindow(this),
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    ResizeMode = ResizeMode.NoResize,
-                    ShowInTaskbar = false,
-                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White)
-                };
+                // Configurar para ventana padre
+                var parentWindow = Window.GetWindow(this);
+                forgotPasswordView.ConfigurarParaVentanaPadre(parentWindow);
 
+                // Suscribirse a eventos de cierre
                 forgotPasswordVM.PasswordResetRequested += () =>
                 {
-                    window.Close();
+                    forgotPasswordView.Close();
                 };
 
                 forgotPasswordVM.OperationCanceled += () =>
                 {
-                    window.Close();
-                };
+                    forgotPasswordView.Close();                };
 
-                window.ShowDialog();
+                // Mostrar como modal dialog
+                forgotPasswordView.ShowDialog();
+                ClearPasswordBox();
             }
             catch (Exception ex)
             {

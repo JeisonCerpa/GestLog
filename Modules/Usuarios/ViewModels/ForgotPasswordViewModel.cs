@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Services.Core.Logging;
@@ -16,6 +17,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
     {
         private readonly IPasswordManagementService _passwordManagementService;
         private readonly IGestLogLogger _logger;
+        private Window? _view;
 
         [ObservableProperty]
         private string _usernameOrEmail = string.Empty;
@@ -56,14 +58,21 @@ namespace GestLog.Modules.Usuarios.ViewModels
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        [RelayCommand]
+        /// <summary>
+        /// Establece la referencia a la vista para acceso a controles si es necesario
+        /// </summary>
+        public void SetView(Window? view)
+        {
+            _view = view;
+        }        [RelayCommand]
         public async Task SendResetEmailAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 IsLoading = true;
                 IsNotLoading = false;
-                ClearMessages();                // Validar entrada
+                ClearMessages();
+                
                 if (string.IsNullOrWhiteSpace(UsernameOrEmail))
                 {
                     SetError("Por favor ingrese su nombre de usuario o correo");
@@ -77,20 +86,28 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
                 if (response.Success)
                 {
+                    // Construir mensaje de éxito con la dirección de correo
                     SuccessMessage = response.Message;
                     if (!string.IsNullOrEmpty(response.AdditionalInfo))
                     {
-                        SuccessMessage += $"\n\nEmail enviado a: {response.AdditionalInfo}";
+                        SuccessMessage = $"Correo enviado a: {response.AdditionalInfo}\n\nRecibiras una contraseña temporal en los próximos minutos.";
                     }
+                    else
+                    {
+                        SuccessMessage = "Correo enviado exitosamente.\n\nRecibiras una contraseña temporal en los próximos minutos.";
+                    }
+                    
                     ShowSuccess = true;
 
                     _logger.LogInformation("Email de recuperación enviado exitosamente para: {UsernameOrEmail}", UsernameOrEmail);
 
-                    // Disparar evento de éxito
+                    // Esperar 5 segundos para que el usuario vea el mensaje de éxito
+                    await Task.Delay(5000, cancellationToken);
+                    
+                    // Después de mostrar el mensaje, cerrar la modal
                     PasswordResetRequested?.Invoke();
-
+                    
                     // Limpiar campo después de envío exitoso
-                    await Task.Delay(2000, cancellationToken); // Mostrar mensaje por 2 segundos
                     UsernameOrEmail = string.Empty;
                 }
                 else
@@ -101,7 +118,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             catch (OperationCanceledException)
             {
                 _logger.LogWarning("Solicitud de recuperación cancelada");
-            }            catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error durante solicitud de recuperación de contraseña para: {UsernameOrEmail}", UsernameOrEmail);
                 SetError("Error al procesar la solicitud. Por favor, intenta más tarde.");

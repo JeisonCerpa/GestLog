@@ -41,7 +41,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private string _errorMessage = string.Empty;
 
         [ObservableProperty]
-        private bool _hasError = false;        [ObservableProperty]
+        private bool _hasError = false;
+
+        [ObservableProperty]
         private string _statusMessage = "Ingrese sus credenciales para acceder";
 
         [ObservableProperty]
@@ -59,12 +61,19 @@ namespace GestLog.Modules.Usuarios.ViewModels
         /// </summary>
         public event Action? ShowForgotPasswordModal;
 
+        /// <summary>
+        /// Evento que se dispara cuando el login es exitoso
+        /// </summary>
+        public event Action? LoginSuccessful;
+
         public LoginViewModel(IAuthenticationService authenticationService, IGestLogLogger logger, ICurrentUserService currentUserService)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
-        }        [RelayCommand]
+        }
+
+        [RelayCommand]
         private async Task LoginAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -72,14 +81,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 // ⚡ INMEDIATAMENTE mostrar loading para feedback visual instantáneo
                 IsLoading = true;
                 StatusMessage = "Verificando credenciales...";
-                
+
                 ClearError();
                 if (!ValidateInput())
                 {
                     _logger.LogWarning("Validación falló - no se procederá con el login");
                     return;
                 }
-                
+
                 _logger.LogInformation("Iniciando proceso de login para usuario: {Username}", Username);
                 var loginRequest = new LoginRequest
                 {
@@ -91,14 +100,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 if (result.Success)
                 {
                     _logger.LogInformation("Login exitoso para usuario: {Username}", Username);
-                    StatusMessage = "¡Bienvenido! Redirigiendo...";                    
+                    StatusMessage = "¡Bienvenido! Redirigiendo...";
                     if (result.CurrentUserInfo != null)
                     {
                         _currentUserService.SetCurrentUser(result.CurrentUserInfo, RememberMe);
-                        
+
                         // ✅ Verificar si es primer login
                         IsFirstLogin = result.CurrentUserInfo.IsFirstLogin;
-                        
                         if (IsFirstLogin)
                         {
                             _logger.LogInformation("Primer login detectado para usuario: {Username}. Mostrando modal de cambio de contraseña obligatorio.", Username);
@@ -110,9 +118,10 @@ namespace GestLog.Modules.Usuarios.ViewModels
                             _logger.LogInformation("Acceso normal para usuario: {Username}", Username);
                             // Enviar mensaje de login exitoso con el usuario autenticado
                             WeakReferenceMessenger.Default.Send(new UserLoggedInMessage(result.CurrentUserInfo));
+                            // ✅ Solo disparar LoginSuccessful en caso de login normal (sin modal)
+                            LoginSuccessful?.Invoke();
                         }
                     }
-                    LoginSuccessful?.Invoke();
                 }
                 else
                 {
@@ -154,27 +163,22 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [RelayCommand]
         private void ClearFields()
         {
-            Username = string.Empty;
+            // ✅ Solo limpiar contraseña, mantener usuario visible
             Password = string.Empty;
             RememberMe = false;
             ClearError();
             StatusMessage = "Ingrese sus credenciales para acceder";
-            
+        }
 
-        }        [RelayCommand]
+        [RelayCommand]
         private void ForgotPassword()
         {
             _logger.LogInformation("Solicitud de recuperación de contraseña. Mostrando modal de recuperación.");
             ShowForgotPasswordModal?.Invoke();
         }
 
-        /// <summary>
-        /// Evento que se dispara cuando el login es exitoso
-        /// </summary>
-        public event Action? LoginSuccessful;        private bool ValidateInput()
+        private bool ValidateInput()
         {
-
-            
             if (string.IsNullOrWhiteSpace(Username))
             {
                 _logger.LogWarning("Validación falló: Usuario vacío o nulo");
@@ -203,7 +207,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 return false;
             }
 
-
             return true;
         }
 
@@ -211,7 +214,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             ErrorMessage = message;
             HasError = true;
-
         }
 
         private void ClearError()
@@ -226,7 +228,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         public void SetFocusToUsername()
         {
             // Este método puede ser llamado desde la vista para establecer el foco inicial
-
         }
 
         /// <summary>
@@ -238,43 +239,46 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 _ = LoginAsync();
             }
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Método para actualizar la contraseña desde el código behind y disparar validaciones
         /// </summary>
         public void UpdatePassword(string password)
         {
             Password = password;
-            
+
             // Limpiar error específicamente si la contraseña ahora es válida
             if (!string.IsNullOrWhiteSpace(password) && password.Length >= 4)
             {
                 // Solo limpiar si el error actual es sobre la contraseña
-                if (HasError && (ErrorMessage?.Contains("contraseña") == true || ErrorMessage?.Contains("password") == true || 
+                if (HasError && (ErrorMessage?.Contains("contraseña") == true || ErrorMessage?.Contains("password") == true ||
                                ErrorMessage?.Contains("obligatoria") == true || ErrorMessage?.Contains("requerida") == true))
                 {
                     ClearError();
                     StatusMessage = "Ingrese sus credenciales para acceder";
                 }
             }
-        }/// <summary>
+        }
+
+        /// <summary>
         /// Método para limpiar errores cuando el usuario está escribiendo
         /// </summary>
         public void UpdateUsername(string username)
         {
             Username = username;
-            
+
             // Limpiar error específicamente si el usuario ahora es válido
             if (!string.IsNullOrWhiteSpace(username) && username.Length >= 3)
             {
                 // Solo limpiar si el error actual es sobre el usuario
-                if (HasError && (ErrorMessage.Contains("usuario") || ErrorMessage.Contains("username") || 
+                if (HasError && (ErrorMessage.Contains("usuario") || ErrorMessage.Contains("username") ||
                                ErrorMessage.Contains("obligatorio") || ErrorMessage.Contains("requerido")))
                 {
                     ClearError();
                     StatusMessage = "Ingrese sus credenciales para acceder";
                 }
             }
-  
         }
     }
 }
