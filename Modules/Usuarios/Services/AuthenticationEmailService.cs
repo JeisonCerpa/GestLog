@@ -50,7 +50,19 @@ namespace GestLog.Modules.Usuarios.Services
             _useSSL = emailConfig.GetValue("UseSSL", true);
             _senderEmail = emailConfig.GetValue<string>("SenderEmail");
             _senderName = emailConfig.GetValue<string>("SenderName") ?? "GestLog";
-            _timeout = (int)TimeSpan.Parse(emailConfig.GetValue("Timeout", "00:00:30")).TotalMilliseconds;
+
+            // Manejar Timeout de forma segura (evitar pasar null a TimeSpan.Parse)
+            var timeoutStr = emailConfig.GetValue<string>("Timeout");
+            if (string.IsNullOrWhiteSpace(timeoutStr))
+            {
+                timeoutStr = "00:00:30"; // valor por defecto
+            }
+            if (!TimeSpan.TryParse(timeoutStr, out var timeoutSpan))
+            {
+                timeoutSpan = TimeSpan.FromSeconds(30);
+            }
+            _timeout = (int)timeoutSpan.TotalMilliseconds;
+
             _retryCount = emailConfig.GetValue("RetryCount", 3);
             _retryDelayMs = emailConfig.GetValue("RetryDelayMs", 1000);
 
@@ -77,8 +89,9 @@ namespace GestLog.Modules.Usuarios.Services
 
             if (_isConfigured)
             {
+                // Evitar pasar null en el arreglo params del logger
                 _logger.LogInformation("Servicio de email de autenticación configurado correctamente para {SmtpServer}:{SmtpPort}", 
-                    _smtpServer, _smtpPort);
+                    _smtpServer ?? "<unset>", _smtpPort);
             }
             else
             {
@@ -88,6 +101,13 @@ namespace GestLog.Modules.Usuarios.Services
 
         public async Task<bool> SendTemporaryPasswordAsync(string userEmail, string userName, string temporaryPassword, CancellationToken cancellationToken = default)
         {
+            // Validación de entrada para evitar pasar null al envío
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                _logger.LogWarning("Intento de envío de contraseña temporal fallido: userEmail no especificado");
+                return false;
+            }
+
             if (!_isConfigured)
             {
                 _logger.LogWarning("Intento de envío de contraseña temporal pero el servicio no está configurado");
@@ -112,6 +132,13 @@ namespace GestLog.Modules.Usuarios.Services
 
         public async Task<bool> SendPasswordChangeConfirmationAsync(string userEmail, string userName, DateTime timestamp, CancellationToken cancellationToken = default)
         {
+            // Validación de entrada para evitar pasar null al envío
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                _logger.LogWarning("Intento de envío de confirmación de cambio fallido: userEmail no especificado");
+                return false;
+            }
+
             if (!_isConfigured)
             {
                 _logger.LogWarning("Intento de envío de confirmación pero el servicio no está configurado");
@@ -136,6 +163,13 @@ namespace GestLog.Modules.Usuarios.Services
 
         public async Task<bool> SendPasswordRecoveryAlertAsync(string userEmail, string userName, DateTime timestamp, CancellationToken cancellationToken = default)
         {
+            // Validación de entrada para evitar pasar null al envío
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                _logger.LogWarning("Intento de envío de alerta de recuperación fallido: userEmail no especificado");
+                return false;
+            }
+
             if (!_isConfigured)
             {
                 _logger.LogWarning("Intento de envío de alerta pero el servicio no está configurado");
@@ -165,6 +199,13 @@ namespace GestLog.Modules.Usuarios.Services
 
             try
             {
+                // Validar sender antes de crear MailMessage
+                if (string.IsNullOrWhiteSpace(_senderEmail))
+                {
+                    _logger.LogWarning("No se puede comprobar servicio SMTP: SenderEmail no está configurado");
+                    return false;
+                }
+
                 using (var client = new SmtpClient(_smtpServer, _smtpPort))
                 {
                     client.EnableSsl = _useSSL;
@@ -172,13 +213,20 @@ namespace GestLog.Modules.Usuarios.Services
                     client.Credentials = new NetworkCredential(_username, _password);
 
                     // Intento de conexión sin enviar email
-                    await client.SendMailAsync(
-                        new MailMessage(_senderEmail, _senderEmail)
-                        {
-                            Subject = "Test",
-                            Body = "Test"
-                        },
-                        cancellationToken);
+                    var testMessage = new MailMessage();
+                    try
+                    {
+                        testMessage.From = new MailAddress(_senderEmail);
+                        testMessage.To.Add(_senderEmail);
+                        testMessage.Subject = "Test";
+                        testMessage.Body = "Test";
+
+                        await client.SendMailAsync(testMessage, cancellationToken);
+                    }
+                    finally
+                    {
+                        testMessage.Dispose();
+                    }
                 }
 
                 _logger.LogInformation("Servicio de email de autenticación disponible");
@@ -195,6 +243,18 @@ namespace GestLog.Modules.Usuarios.Services
 
         private async Task<bool> SendEmailWithRetryAsync(string recipientEmail, string subject, string body, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                _logger.LogWarning("Intento de enviar email fallido: recipientEmail no especificado");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(_senderEmail))
+            {
+                _logger.LogWarning("Intento de enviar email fallido: sender email no configurado");
+                return false;
+            }
+
             int attempt = 0;
             while (attempt < _retryCount)
             {
@@ -206,18 +266,25 @@ namespace GestLog.Modules.Usuarios.Services
                         client.Timeout = _timeout;
                         client.Credentials = new NetworkCredential(_username, _password);
 
-                        var mailMessage = new MailMessage
+                        var mailMessage = new MailMessage();
+                        try
                         {
-                            From = new MailAddress(_senderEmail, _senderName),
-                            Subject = subject,
-                            Body = body,
-                            IsBodyHtml = true
-                        };
-                        mailMessage.To.Add(recipientEmail);
+                            mailMessage.From = new MailAddress(_senderEmail, _senderName ?? string.Empty);
+                            mailMessage.Subject = subject;
+                            mailMessage.Body = body;
+                            mailMessage.IsBodyHtml = true;
 
-                        await client.SendMailAsync(mailMessage, cancellationToken);
-                        _logger.LogInformation("Email enviado exitosamente a {RecipientEmail}", recipientEmail);
-                        return true;
+                            // Añadir destinatario de forma segura
+                            mailMessage.To.Add(new MailAddress(recipientEmail));
+
+                            await client.SendMailAsync(mailMessage, cancellationToken);
+                            _logger.LogInformation("Email enviado exitosamente a {RecipientEmail}", recipientEmail);
+                            return true;
+                        }
+                        finally
+                        {
+                            mailMessage.Dispose();
+                        }
                     }
                 }
                 catch (Exception ex) when (attempt < _retryCount - 1)
