@@ -24,7 +24,7 @@ namespace GestLog.Views
         private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.34\n\n" +
+                "GestLog v1.0.36\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
@@ -33,7 +33,7 @@ namespace GestLog.Views
                 "• Envío de Catálogo - Envío masivo de catálogo\n\n" +
                 "Estado: ✅ Operativo\n" +
                 "Actualizaciones: ✅ Sistema Velopack 100% funcional\n" +
-                "Cambios en v1.0.34: ✨ Actualización de dependencias y mejoras en el proceso de empaquetado",
+                "Cambios en v1.0.36: ✨ Mejoras en la interfaz de equipos, correcciones en validación y manejo de ventanas modales",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
