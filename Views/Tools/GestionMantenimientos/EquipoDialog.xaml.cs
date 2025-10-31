@@ -95,6 +95,10 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             if (string.IsNullOrWhiteSpace(Equipo.Nombre))
                 errores.Add("El nombre del equipo es obligatorio.");
 
+            // ✅ NUEVA: Validar que la Sede sea obligatoria
+            if (Equipo.Sede == null)
+                errores.Add("La sede del equipo es obligatoria.");
+
             if (Equipo.Precio != null && Equipo.Precio < 0)
                 errores.Add("El precio no puede ser negativo.");
 
@@ -159,7 +163,17 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 }
             }
             public EstadoEquipo? Estado { get => Equipo.Estado; set => Equipo.Estado = value; }
-            public Sede? Sede { get => Equipo.Sede; set => Equipo.Sede = value; }
+            public Sede? Sede 
+            { 
+                get => Equipo.Sede; 
+                set 
+                { 
+                    Equipo.Sede = value; 
+                    RaisePropertyChanged(nameof(Sede));
+                    RaisePropertyChanged(nameof(IsSedeVacio));
+                    RaisePropertyChanged(nameof(IsFormularioValido));
+                } 
+            }
             public FrecuenciaMantenimiento? FrecuenciaMtto { get => Equipo.FrecuenciaMtto; set => Equipo.FrecuenciaMtto = value; }
             public decimal? Precio { get => Equipo.Precio; set => Equipo.Precio = value; }
             public string? Observaciones { get => Equipo.Observaciones; set => Equipo.Observaciones = value; }
@@ -198,9 +212,14 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public bool IsNombreVacio => string.IsNullOrWhiteSpace(Nombre);
 
             /// <summary>
-            /// Indica si el formulario es válido para guardar (Nombre no puede estar vacío)
+            /// Indica si el campo Sede está vacío (para mostrar error visual)
             /// </summary>
-            public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo);
+            public bool IsSedeVacio => Sede == null;
+
+            /// <summary>
+            /// Indica si el formulario es válido para guardar (Nombre y Sede no pueden estar vacíos)
+            /// </summary>
+            public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo) && Sede != null;
 
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
