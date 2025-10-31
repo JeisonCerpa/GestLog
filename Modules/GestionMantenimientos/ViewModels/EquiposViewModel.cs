@@ -280,7 +280,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         try
         {
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.EquipoDialog();
-            var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+            var owner = System.Windows.Application.Current?.MainWindow;
             if (owner != null) dialog.Owner = owner;
             dialog.ConfigurarParaVentanaPadre(owner);
             var result = dialog.ShowDialog();            if (result == true)
@@ -308,7 +308,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         try
         {
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.EquipoDialog(SelectedEquipo);
-            var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+            var owner = System.Windows.Application.Current?.MainWindow;
             if (owner != null) dialog.Owner = owner;
             dialog.ConfigurarParaVentanaPadre(owner);
             var result = dialog.ShowDialog();
@@ -316,8 +316,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             {
                 // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
                 if (dialog.Equipo.Estado == EstadoEquipo.Activo)
-                    dialog.Equipo.FechaBaja = null;                await _equipoService.UpdateAsync(dialog.Equipo);
+                    dialog.Equipo.FechaBaja = null;                
+                await _equipoService.UpdateAsync(dialog.Equipo);
                 await LoadEquiposAsync(forceReload: true); // Forzar recarga tras editar
+                // Reasignar SelectedEquipo para refrescar la vista de detalles
+                SelectedEquipo = Equipos.FirstOrDefault(e => e.Codigo == dialog.Equipo.Codigo);
                 StatusMessage = "Equipo editado exitosamente.";
                 WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
             }

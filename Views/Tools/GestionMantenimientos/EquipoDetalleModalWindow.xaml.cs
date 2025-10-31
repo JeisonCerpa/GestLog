@@ -64,10 +64,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     var task = editMethod.Invoke(viewModel, null) as System.Threading.Tasks.Task;
                     if (task != null)
                     {
-                        // NO esperar de forma sincrónica (esto bloquearía la UI)
-                        // Solo cerrar el modal y dejar que el ViewModel maneje la recarga
-                        this.DialogResult = true;
-                        this.Close();
+                        // Mantener la ventana de detalles abierta mientras se edita
+                        // No cerrar el modal aquí
                     }
                 }
                 else
