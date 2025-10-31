@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Forms;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
@@ -13,6 +15,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
     {
         public EquipoDto Equipo { get; private set; }
         public bool IsEditMode { get; }
+        private System.Windows.Forms.Screen? _lastScreenOwner;
 
         public EquipoDialog(EquipoDto? equipo = null)
         {
@@ -43,9 +46,38 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 Sedes = System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0],
                 FrecuenciasMantenimiento = System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0]
             };
+
+            // Manejar tecla Escape
+            this.KeyDown += EquipoDialog_KeyDown;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void EquipoDialog_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                this.DialogResult = false;
+                this.Close();
+            }
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        private void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
         {
             // Establecer fecha máxima permitida en DatePicker para evitar fechas futuras
             try
@@ -53,6 +85,15 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 FechaCompraPicker.DisplayDateEnd = DateTime.Today;
             }
             catch { }
+
+            if (this.Owner != null)
+            {
+                // Si el Owner se mueve/redimensiona, mantener sincronizado
+                this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+            }
+
+            ConfigurarParaVentanaPadre(this.Owner);
         }
 
         private void OnFechaCompra_SelectedDateChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -86,7 +127,12 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 Equipo.Marca = viewModel.FiltroMarca ?? string.Empty;
                 Equipo.Clasificacion = viewModel.FiltroClasificacion ?? string.Empty;
                 Equipo.CompradoA = viewModel.FiltroCompradoA ?? string.Empty;
-            }            var errores = new List<string>();
+                
+                // ✅ NUEVO: Activar flag para mostrar errores de validación
+                viewModel.ShowValidationErrors = true;
+            }
+
+            var errores = new List<string>();
             // Validaciones: Código y Nombre son obligatorios
             if (string.IsNullOrWhiteSpace(Equipo.Codigo))
                 errores.Add("El código del equipo es obligatorio.");
@@ -127,7 +173,63 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         {
             DialogResult = false;
             Close();
-        }        public class EquipoDialogViewModel : System.ComponentModel.INotifyPropertyChanged
+        }
+
+        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
+        {
+            if (parentWindow == null) return;
+            
+            this.Owner = parentWindow;
+            this.ShowInTaskbar = false;
+
+            try
+            {
+                // Guardar referencia a la pantalla actual del owner
+                var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
+                var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+                _lastScreenOwner = screen;
+
+                // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
+                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+                this.WindowState = WindowState.Maximized;
+            }
+            catch
+            {
+                // Fallback: maximizar en pantalla principal
+                this.WindowState = WindowState.Maximized;
+            }
+        }
+
+        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        {
+            if (this.Owner == null) return;
+
+            this.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
+                    this.WindowState = WindowState.Maximized;
+                    
+                    // Detectar si el Owner cambió de pantalla
+                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
+                    var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+
+                    // Si cambió de pantalla, actualizar la referencia
+                    if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+                    {
+                        _lastScreenOwner = currentScreen;
+                    }
+                }
+                catch
+                {
+                    // En caso de error, asegurar que la ventana está maximizada
+                    this.WindowState = WindowState.Maximized;
+                }
+            });
+        }
+
+        public class EquipoDialogViewModel : System.ComponentModel.INotifyPropertyChanged
         {
             public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
@@ -139,7 +241,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public EquipoDto Equipo { get; set; }
             public IEnumerable<EstadoEquipo> EstadosEquipo { get; set; } = new EstadoEquipo[0];
             public IEnumerable<Sede> Sedes { get; set; } = new Sede[0];
-            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];            // Proxy directo a las propiedades del EquipoDto para binding simple
+            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];
+
+            // Proxy directo a las propiedades del EquipoDto para binding simple
             public string? Codigo { get => Equipo.Codigo; set => Equipo.Codigo = value; }
             public string? Nombre 
             { 
@@ -207,14 +311,29 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
             // ✅ NUEVAS PROPIEDADES PARA VALIDACIÓN EN TIEMPO REAL
             /// <summary>
-            /// Indica si el campo Nombre está vacío (para mostrar error visual)
+            /// Flag que controla si se deben mostrar los errores de validación.
+            /// Se activa solo después de que el usuario intenta guardar.
             /// </summary>
-            public bool IsNombreVacio => string.IsNullOrWhiteSpace(Nombre);
+            private bool _showValidationErrors = false;
+            public bool ShowValidationErrors 
+            { 
+                get => _showValidationErrors; 
+                set 
+                { 
+                    _showValidationErrors = value; 
+                    RaisePropertyChanged(nameof(ShowValidationErrors));
+                } 
+            }
 
             /// <summary>
-            /// Indica si el campo Sede está vacío (para mostrar error visual)
+            /// Indica si el campo Nombre está vacío Y se deben mostrar errores de validación
             /// </summary>
-            public bool IsSedeVacio => Sede == null;
+            public bool IsNombreVacio => _showValidationErrors && string.IsNullOrWhiteSpace(Nombre);
+
+            /// <summary>
+            /// Indica si el campo Sede está vacío Y se deben mostrar errores de validación
+            /// </summary>
+            public bool IsSedeVacio => _showValidationErrors && Sede == null;
 
             /// <summary>
             /// Indica si el formulario es válido para guardar (Nombre y Sede no pueden estar vacíos)
@@ -234,7 +353,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             private bool _suppressFiltroMarcaChanged = false;
             private System.Threading.CancellationTokenSource? _clasificacionFilterCts;
             private System.Threading.CancellationTokenSource? _compradoAFilterCts;
-            private System.Threading.CancellationTokenSource? _marcaFilterCts;private string filtroClasificacion = string.Empty;
+            private System.Threading.CancellationTokenSource? _marcaFilterCts;
+
+            private string filtroClasificacion = string.Empty;
             public string FiltroClasificacion
             {
                 get => filtroClasificacion;
@@ -258,7 +379,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
                     _ = DebounceFiltrarClasificacionesAsync(token);
                 }
-            }            private string filtroCompradoA = string.Empty;
+            }
+
+            private string filtroCompradoA = string.Empty;
             public string FiltroCompradoA
             {
                 get => filtroCompradoA;
@@ -306,7 +429,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
 
                     _ = DebounceFiltrarMarcasAsync(token);
                 }
-            }            public EquipoDialogViewModel(EquipoDto equipo)
+            }
+
+            public EquipoDialogViewModel(EquipoDto equipo)
             {
                 Equipo = equipo;
                 // Inicializar colecciones para autocompletado
@@ -401,7 +526,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     // ignore
                 }
                 catch { }
-            }            private async Task DebounceFiltrarCompradoAAsync(System.Threading.CancellationToken token)
+            }
+
+            private async Task DebounceFiltrarCompradoAAsync(System.Threading.CancellationToken token)
             {
                 try
                 {
@@ -429,7 +556,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     // ignore
                 }
                 catch { }
-            }private async Task FiltrarClasificacionesAsync(System.Threading.CancellationToken cancellationToken)
+            }
+
+            private async Task FiltrarClasificacionesAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {
@@ -463,7 +592,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     });
                 }
                 catch { }
-            }            private async Task FiltrarCompradoAAsync(System.Threading.CancellationToken cancellationToken)
+            }
+
+            private async Task FiltrarCompradoAAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {
@@ -497,7 +628,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     });
                 }
                 catch { }
-            }            private Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
+            }
+
+            private Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {

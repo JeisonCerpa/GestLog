@@ -282,6 +282,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.EquipoDialog();
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
+            dialog.ConfigurarParaVentanaPadre(owner);
             var result = dialog.ShowDialog();            if (result == true)
             {
                 await _equipoService.AddAsync(dialog.Equipo);
@@ -309,6 +310,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.EquipoDialog(SelectedEquipo);
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
+            dialog.ConfigurarParaVentanaPadre(owner);
             var result = dialog.ShowDialog();
             if (result == true)
             {

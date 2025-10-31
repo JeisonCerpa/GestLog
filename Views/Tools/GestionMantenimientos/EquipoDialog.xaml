@@ -3,146 +3,286 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:GestLog.Converters"
         Title="Equipo" Height="Auto" Width="600" MinHeight="520" MinWidth="520" WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#FAFAFA" SizeToContent="Height"
-        Loaded="Window_Loaded">    <Window.Resources>
-        <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
-        <converters:BooleanToErrorStyleConverter x:Key="BooleanToErrorStyleConverter" />
-        <!-- InputStyle compartido (copiado de PerifericoDialog.xaml) -->
-        <Style x:Key="InputStyle" TargetType="Control">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Margin" Value="0,0,0,20"/>
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <!-- Estilo para campos requeridos con error -->
-        <Style x:Key="RequiredFieldStyle" TargetType="TextBox">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Margin" Value="0,4"/>
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <!-- Estilo para error en campos -->
-        <Style x:Key="ErrorFieldStyle" TargetType="TextBox" BasedOn="{StaticResource RequiredFieldStyle}">
-            <Setter Property="BorderBrush" Value="#E53935"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Background" Value="#FFEBEE"/>
-        </Style>
-        <!-- Estilo para error en ComboBox -->
-        <Style x:Key="ErrorComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="BorderBrush" Value="#E53935"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Background" Value="#FFEBEE"/>
-        </Style>
+        ResizeMode="CanResize" WindowStyle="None" AllowsTransparency="True" Background="Transparent" SizeToContent="Manual"
+        ShowInTaskbar="False" Loaded="EquipoDialog_Loaded">
+
+    <Window.Resources>
+        <!-- Referencia al diccionario estándar de modales -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Tools/GestionEquipos/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
+            <converters:BooleanToErrorStyleConverter x:Key="BooleanToErrorStyleConverter" />
+            <!-- InputStyle compartido (copiado de PerifericoDialog.xaml) -->
+            <Style x:Key="InputStyle" TargetType="Control">
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                        <Setter Property="BorderThickness" Value="2"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>            <!-- Estilo para campos requeridos con error -->
+            <Style x:Key="RequiredFieldStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
+                <Setter Property="Margin" Value="0,0,0,8"/>
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding ShowValidationErrors}" Value="True"/>
+                            <Condition Binding="{Binding IsNombreVacio}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="BorderBrush" Value="#E53935"/>
+                        <Setter Property="BorderThickness" Value="2"/>
+                        <Setter Property="Background" Value="#FFEBEE"/>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+            <!-- Estilo para error en campos -->
+            <Style x:Key="ErrorFieldStyle" TargetType="TextBox" BasedOn="{StaticResource RequiredFieldStyle}">
+                <Setter Property="BorderBrush" Value="#E53935"/>
+                <Setter Property="BorderThickness" Value="2"/>
+                <Setter Property="Background" Value="#FFEBEE"/>
+            </Style>
+            <!-- Estilo para error en ComboBox -->
+            <Style x:Key="ErrorComboBoxStyle" TargetType="ComboBox">
+                <Setter Property="BorderBrush" Value="#E53935"/>
+                <Setter Property="BorderThickness" Value="2"/>
+                <Setter Property="Background" Value="#FFEBEE"/>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
-    <Border Margin="16" Background="White" CornerRadius="8" Padding="20" BorderBrush="#DDD" BorderThickness="1">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
-                <TextBlock Text="Datos del Equipo" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,18"/>
-                <Grid Margin="0,0,0,10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="140"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>                    <!-- Campos -->
-                    <TextBlock Text="Código:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" Margin="0,4" IsReadOnly="{Binding Path=IsCodigoReadOnly}" IsEnabled="{Binding Path=IsCodigoEnabled}"/>                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Nombre:" />
-                        <TextBlock Text="*" Foreground="#E53935" FontWeight="Bold" Margin="4,0,0,0" ToolTip="Campo requerido"/>
+
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <!-- Panel centrado -->
+        <Border x:Name="Card" Width="720" MaxHeight="900" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="0"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" Padding="12" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White"
+                                    CornerRadius="6"
+                                    Padding="6"
+                                    Margin="0,0,12,0"
+                                    Width="36"
+                                    Height="36"
+                                    Effect="{StaticResource SectionShadow}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <!-- Icono de equipo: engranaje (U+2699) -->
+                                <TextBlock Text="⚙" FontSize="16" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="Datos del Equipo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Información detallada" Style="{StaticResource SubHeaderTextStyle}" Foreground="White"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="BtnCerrar" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Cuerpo -->
+                <Border Grid.Row="1" Padding="12,8" Background="{StaticResource LightGrayBrush}">
+                    <StackPanel Margin="0" Orientation="Vertical">
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,8" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <StackPanel Orientation="Vertical" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                <!-- Código -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Código:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Style="{StaticResource InputStyle}" IsReadOnly="{Binding Path=IsCodigoReadOnly}" IsEnabled="{Binding Path=IsCodigoEnabled}"/>
+                                </Grid>
+
+                                <!-- Nombre -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Nombre:" Style="{StaticResource LabelTextStyle}" />
+                                        <TextBlock Text="*" Foreground="#E53935" FontWeight="Bold" Margin="4,0,0,0" ToolTip="Campo requerido"/>
+                                    </StackPanel>                                    <TextBox x:Name="NombreTextBox"
+                                             Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                                             Grid.Column="1"
+                                             ToolTip="El nombre del equipo es obligatorio"
+                                             Style="{StaticResource RequiredFieldStyle}"
+                                             HorizontalAlignment="Stretch"
+                                    />
+                                </Grid>
+
+                                <!-- Marca -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Marca:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <ComboBox x:Name="CmbMarca"
+                                              IsEditable="True" IsTextSearchEnabled="False"
+                                              ItemsSource="{Binding MarcasFiltradas}"
+                                              Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Estado -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Estado:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <ComboBox ItemsSource="{Binding EstadosEquipo}"
+                                              SelectedItem="{Binding Estado, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Sede -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Sede:" Style="{StaticResource LabelTextStyle}" />
+                                        <TextBlock Text="*" Foreground="#E53935" FontWeight="Bold" Margin="4,0,0,0" ToolTip="Campo requerido"/>
+                                    </StackPanel>                                    <ComboBox ItemsSource="{Binding Sedes}"
+                                              SelectedItem="{Binding Sede, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource InputStyle}">
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding ShowValidationErrors}" Value="True"/>
+                                                            <Condition Binding="{Binding IsSedeVacio}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="BorderBrush" Value="#E53935"/>
+                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- Fecha de Compra -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Fecha de Compra:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <DatePicker x:Name="FechaCompraPicker" SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" SelectedDateChanged="OnFechaCompra_SelectedDateChanged" Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Precio -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Precio:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}" Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Observaciones -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Observaciones:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Frecuencia Mtto -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Frecuencia Mtto:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <ComboBox ItemsSource="{Binding FrecuenciasMantenimiento}"
+                                              SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Clasificación -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Clasificación:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <ComboBox x:Name="CmbClasificacion"
+                                              IsEditable="True" IsTextSearchEnabled="False"
+                                              ItemsSource="{Binding ClasificacionesFiltradas}"
+                                              Text="{Binding FiltroClasificacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+
+                                <!-- Comprado a -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Comprado a:" Grid.Column="0" Style="{StaticResource LabelTextStyle}"/>
+                                    <ComboBox x:Name="CmbCompradoA"
+                                              IsEditable="True" IsTextSearchEnabled="False"
+                                              ItemsSource="{Binding CompradoAFiltrados}"
+                                              Text="{Binding FiltroCompradoA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Panel de acciones -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="12" Margin="0,8,0,0" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button Content="Guardar" Width="100" Margin="0,0,8,0" IsDefault="True" Click="OnGuardar_Click" IsEnabled="{Binding IsFormularioValido}" Style="{StaticResource PrimaryButtonStyle}"/>
+                                <Button Content="Cancelar" Width="100" IsCancel="True" Click="OnCancelar_Click" Style="{StaticResource GhostButton}"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                    <TextBox x:Name="NombreTextBox"
-                             Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" 
-                             Grid.Row="1" 
-                             Grid.Column="1" 
-                             Margin="0,4"
-                             ToolTip="El nombre del equipo es obligatorio"
-                             Style="{Binding IsNombreVacio, Converter={StaticResource BooleanToErrorStyleConverter}, FallbackValue={StaticResource RequiredFieldStyle}}"
-                    /><TextBlock Text="Marca:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="CmbMarca"
-                              IsEditable="True" IsTextSearchEnabled="False"
-                              ItemsSource="{Binding MarcasFiltradas}"
-                              Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="2" Grid.Column="1" Margin="0,4"/>
-                    <TextBlock Text="Estado:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
-                    <ComboBox ItemsSource="{Binding EstadosEquipo}"
-                              SelectedItem="{Binding Estado, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="3" Grid.Column="1" Margin="0,4"/>
-                    <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Sede:" />
-                        <TextBlock Text="*" Foreground="#E53935" FontWeight="Bold" Margin="4,0,0,0" ToolTip="Campo requerido"/>
-                    </StackPanel>
-                    <ComboBox ItemsSource="{Binding Sedes}"
-                              SelectedItem="{Binding Sede, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="4" Grid.Column="1" Margin="0,4">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsSedeVacio}" Value="True">
-                                        <Setter Property="BorderBrush" Value="#E53935"/>
-                                        <Setter Property="BorderThickness" Value="2"/>
-                                        <Setter Property="Background" Value="#FFEBEE"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                    </ComboBox>
-                    <TextBlock Text="Fecha de Compra:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center"/>
-                    <DatePicker x:Name="FechaCompraPicker" SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" SelectedDateChanged="OnFechaCompra_SelectedDateChanged" Grid.Row="5" Grid.Column="1" Margin="0,4"/>
-                    <TextBlock Text="Precio:" Grid.Row="6" Grid.Column="0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}" Grid.Row="6" Grid.Column="1" Margin="0,4"/>
-                    <TextBlock Text="Observaciones:" Grid.Row="7" Grid.Column="0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Grid.Row="7" Grid.Column="1" Margin="0,4"/>
-                    <TextBlock Text="Frecuencia Mtto:" Grid.Row="8" Grid.Column="0" VerticalAlignment="Center"/>
-                    <ComboBox ItemsSource="{Binding FrecuenciasMantenimiento}"
-                              SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="8" Grid.Column="1" Margin="0,4"/>                    <!-- Nueva fila: Clasificación -->
-                    <TextBlock Text="Clasificación:" Grid.Row="9" Grid.Column="0" VerticalAlignment="Center"/>                    <ComboBox x:Name="CmbClasificacion"
-                              IsEditable="True" IsTextSearchEnabled="False"
-                              ItemsSource="{Binding ClasificacionesFiltradas}"
-                              Text="{Binding FiltroClasificacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="9" Grid.Column="1" Margin="0,4" Style="{StaticResource InputStyle}"/><!-- Nueva fila: Comprado a -->
-                    <TextBlock Text="Comprado a:" Grid.Row="10" Grid.Column="0" VerticalAlignment="Center"/>                    <ComboBox x:Name="CmbCompradoA"
-                              IsEditable="True" IsTextSearchEnabled="False"
-                              ItemsSource="{Binding CompradoAFiltrados}"
-                              Text="{Binding FiltroCompradoA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              Grid.Row="10" Grid.Column="1" Margin="0,4" Style="{StaticResource InputStyle}"/>
-                </Grid>                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                    <Button Content="Guardar" Width="100" Margin="0,0,8,0" IsDefault="True" Click="OnGuardar_Click" IsEnabled="{Binding IsFormularioValido}"/>
-                    <Button Content="Cancelar" Width="100" IsCancel="True" Click="OnCancelar_Click"/>
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
-    </Border>
+                </Border>
+
+            </Grid>
+        </Border>
+    </Grid>
 </Window>
