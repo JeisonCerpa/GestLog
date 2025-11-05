@@ -81,10 +81,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 ValidarEquipo(equipo);
                 using var dbContext = _dbContextFactory.CreateDbContext();                if (await dbContext.Equipos.AnyAsync(e => e.Codigo == equipo.Codigo))
                     throw new GestionMantenimientosDomainException($"Ya existe un equipo con el código '{equipo.Codigo}'.");
-                
-                // Forzar la fecha de registro a la fecha actual
+                  // Forzar la fecha de registro a la fecha actual
                 var fechaRegistro = DateTime.Now;
-                int semanaInicio = CalcularSemanaISO8601(fechaRegistro);
+                // Si FechaCompra no se proporciona, usar la fecha de registro
+                var fechaCompra = equipo.FechaCompra ?? fechaRegistro;
+                int semanaInicio = CalcularSemanaISO8601(fechaCompra);
                 // Si Nombre se deja vacio, permitir null (nombre ahora nullable en entidad)
                 if (string.IsNullOrWhiteSpace(equipo.Nombre))
                     equipo.Nombre = null;
@@ -102,17 +103,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     Observaciones = equipo.Observaciones,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
                     FechaBaja = equipo.FechaBaja,
-                    FechaCompra = equipo.FechaCompra
+                    FechaCompra = fechaCompra
                     // SemanaInicioMtto eliminado
                 };                dbContext.Equipos.Add(entity);
                 await dbContext.SaveChangesAsync();
                 
-                // Actualizar el DTO con la FechaRegistro para que esté disponible en cronogramas
+                // Actualizar el DTO con las fechas para que estén disponibles
                 equipo.FechaRegistro = fechaRegistro;
+                equipo.FechaCompra = fechaCompra;
+                  _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
                 
-                _logger.LogInformation("[EquipoService] Equipo agregado correctamente: {Codigo}", equipo.Codigo ?? "");
-                
-                // Generar cronogramas desde el año de registro hasta el siguiente año (solo si es octubre o después)
+                // Generar cronogramas desde el año de compra hasta el siguiente año (solo si es octubre o después)
                 if (equipo.FrecuenciaMtto != null)
                 {
                     // Primero, eliminar cronogramas anteriores si existen (para evitar duplicados)
@@ -125,8 +126,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             await dbContextClean.SaveChangesAsync();
                             _logger.LogInformation("[EquipoService] Cronogramas anteriores eliminados para: {Codigo}", equipo.Codigo ?? "");
                         }
-                    }
-                    var anioRegistro = fechaRegistro.Year;
+                    }                    var anioRegistro = fechaCompra.Year;
                     var anioActual = DateTime.Now.Year;
                     var mesActual = DateTime.Now.Month;
                     

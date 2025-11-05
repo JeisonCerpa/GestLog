@@ -580,17 +580,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             int anioActual = now.Year;
             int anioLimite = anioActual;
             if (now.Month >= 10) // Octubre o más, también crear el del siguiente año
-                anioLimite = anioActual + 1;
-            using var dbContext = _dbContextFactory.CreateDbContext();
-            var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaRegistro != null && e.FrecuenciaMtto != null).ToListAsync();
+                anioLimite = anioActual + 1;            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaCompra != null && e.FrecuenciaMtto != null).ToListAsync();
             
             _logger.LogInformation($"[CRONOGRAMA] ✓ Equipos activos encontrados: {equipos.Count}, Años a procesar: {anioActual} a {anioLimite}");            
             int totalCronogramasCreados = 0;            foreach (var equipo in equipos)
             {
                 _logger.LogDebug($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
-                int anioRegistro = equipo.FechaRegistro!.Value.Year;
-                int semanaRegistro = CalcularSemanaISO8601(equipo.FechaRegistro.Value);
-                _logger.LogDebug($"[CRONOGRAMA] FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
+                int anioRegistro = equipo.FechaCompra!.Value.Year;
+                int semanaRegistro = CalcularSemanaISO8601(equipo.FechaCompra.Value);
+                _logger.LogDebug($"[CRONOGRAMA] FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
                 
                 for (int anio = anioRegistro; anio <= anioLimite; anio++)
                 {
@@ -628,7 +627,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         }
                           semanaInicio = proximaSemana;
                         
-                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaRegistro={equipo.FechaRegistro:yyyy-MM-dd}, SemanaRegistro={semanaRegistro}, Salto={salto}, SemanaInicio={semanaInicio}, TotalSemanas={yearsWeeks}, Año={anio}");
+                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Salto={salto}, SemanaInicio={semanaInicio}, TotalSemanas={yearsWeeks}, Año={anio}");
                     }
                     else
                     {
@@ -668,12 +667,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             {
                                 _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene mantenimientos en {anio - 1}, iniciando en semana 1");
                                 semanaInicio = 1;
-                            }                        }
-                        else if (anio - 1 == anioRegistro && equipo.FechaRegistro.HasValue)
+                            }                        }                        else if (anio - 1 == anioRegistro && equipo.FechaCompra.HasValue)
                         {
                             // Caso especial: Si el cronograma del año anterior se saltó (porque la próxima semana > semanas en año)
-                            // pero el equipo se registró ese año, usar la semana de registro del equipo
-                            int semanaRegistroEquipo = ISOWeek.GetWeekOfYear(equipo.FechaRegistro.Value);
+                            // pero el equipo se compró ese año, usar la semana de compra del equipo
+                            int semanaRegistroEquipo = ISOWeek.GetWeekOfYear(equipo.FechaCompra.Value);
                             
                             int saltoEspecial = equipo.FrecuenciaMtto switch
                             {

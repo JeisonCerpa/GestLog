@@ -13,10 +13,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public string? Nombre { get; set; } // Nombre ahora puede ser null
         public string? Marca { get; set; }
         public EstadoEquipo? Estado { get; set; }
-        public Sede? Sede { get; set; }
-        public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
-        public DateTime? FechaRegistro { get; set; } // Usar como fecha de alta y referencia
-        public DateTime? FechaCompra { get; set; }
+        public Sede? Sede { get; set; }        public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
+        public DateTime? FechaRegistro { get; set; } // Fecha de alta del equipo
+        public DateTime? FechaCompra { get; set; }   // Fecha de compra - usada como referencia para generar cronogramas
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
         public decimal? Precio { get; set; }
         public string? Observaciones { get; set; }
@@ -24,7 +23,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         // Nuevas propiedades
         public string? Clasificacion { get; set; }
         public string? CompradoA { get; set; }
-        // SemanaInicioMtto eliminado: se calcula a partir de FechaRegistro
+        // SemanaInicioMtto eliminado: se calcula a partir de FechaCompra
 
         // Propiedades auxiliares para la UI (no persistentes)
         private bool _isCodigoReadOnly = false;
