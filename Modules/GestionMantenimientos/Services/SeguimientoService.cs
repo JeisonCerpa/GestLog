@@ -70,9 +70,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 Estado = entity.Estado,
                 Frecuencia = entity.Frecuencia
             };
-        }
-
-        public async Task AddAsync(SeguimientoMantenimientoDto seguimiento)
+        }        public async Task AddAsync(SeguimientoMantenimientoDto seguimiento)
         {
             try
             {
@@ -83,8 +81,15 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 int anioActual = hoy.Year;
                 if (!(seguimiento.Anio < anioActual || (seguimiento.Anio == anioActual && seguimiento.Semana <= semanaActual)))
                     throw new GestionMantenimientosDomainException("Solo se permite registrar mantenimientos en semanas anteriores o la actual.");
+                
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
+                
+                // NUEVA LÓGICA: Buscar por (Codigo, Semana, Anio, TipoMtno)
+                var existentePrevio = await dbContext.Seguimientos
+                    .FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && 
+                                            s.Semana == seguimiento.Semana && 
+                                            s.Anio == seguimiento.Anio &&
+                                            s.TipoMtno == seguimiento.TipoMtno);
 
                 // Calcular intervalo de la semana programada
                 DateTime fechaInicioSemana = FirstDateOfWeekISO8601(seguimiento.Anio, seguimiento.Semana);
@@ -92,28 +97,31 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 string observacionSemana = $"Programado en la semana {seguimiento.Semana} entre {fechaInicioSemana:dd/MM/yyyy} y {fechaFinSemana:dd/MM/yyyy}";
                 bool agregarObservacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado;
 
-                if (entity != null)
+                // Si ya existe un registro del MISMO tipo (preventivo o correctivo), actualizar
+                if (existentePrevio != null)
                 {
-                    entity.Nombre = seguimiento.Nombre ?? string.Empty;
-                    entity.TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo;
-                    entity.Descripcion = seguimiento.Descripcion ?? string.Empty;
-                    entity.Responsable = seguimiento.Responsable ?? string.Empty;
-                    entity.Costo = seguimiento.Costo.HasValue ? seguimiento.Costo.Value : 0m;
-                    entity.Observaciones = seguimiento.Observaciones ?? string.Empty;
+                    existentePrevio.Nombre = seguimiento.Nombre ?? string.Empty;
+                    existentePrevio.TipoMtno = seguimiento.TipoMtno ?? TipoMantenimiento.Preventivo;
+                    existentePrevio.Descripcion = seguimiento.Descripcion ?? string.Empty;
+                    existentePrevio.Responsable = seguimiento.Responsable ?? string.Empty;
+                    existentePrevio.Costo = seguimiento.Costo.HasValue ? seguimiento.Costo.Value : 0m;
+                    existentePrevio.Observaciones = seguimiento.Observaciones ?? string.Empty;
                     if (agregarObservacion)
-                        entity.Observaciones = observacionSemana;
-                    entity.FechaRegistro = DateTime.Now;
-                    entity.FechaRealizacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado ? null : seguimiento.FechaRealizacion;
-                    entity.Estado = seguimiento.Estado;
-                    entity.Frecuencia = seguimiento.Frecuencia;
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation("[SeguimientoService] Seguimiento actualizado (sobrescrito) correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                        existentePrevio.Observaciones = observacionSemana;
+                    existentePrevio.FechaRegistro = DateTime.Now;
+                    existentePrevio.FechaRealizacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado ? null : seguimiento.FechaRealizacion;
+                    existentePrevio.Estado = seguimiento.Estado;
+                    existentePrevio.Frecuencia = seguimiento.Frecuencia;                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("[SeguimientoService] Seguimiento actualizado: {Codigo} Tipo {Tipo} Semana {Semana} Año {Anio}", 
+                        seguimiento.Codigo ?? "", seguimiento.TipoMtno?.ToString() ?? "Preventivo", seguimiento.Semana, seguimiento.Anio);
                 }
                 else
                 {
+                    // No existe del mismo tipo. Crear uno NUEVO
                     string observacionesFinal = seguimiento.Observaciones ?? string.Empty;
                     if (agregarObservacion)
                         observacionesFinal = observacionSemana;
+                    
                     var nuevo = new SeguimientoMantenimiento
                     {
                         Codigo = seguimiento.Codigo ?? string.Empty,
@@ -130,9 +138,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         Estado = seguimiento.Estado,
                         Frecuencia = seguimiento.Frecuencia
                     };
-                    dbContext.Seguimientos.Add(nuevo);
-                    await dbContext.SaveChangesAsync();
-                    _logger.LogInformation("[SeguimientoService] Seguimiento agregado correctamente: {Codigo} Semana {Semana} Año {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
+                    dbContext.Seguimientos.Add(nuevo);                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("[SeguimientoService] Seguimiento agregado: {Codigo} Tipo {Tipo} Semana {Semana} Año {Anio}", 
+                        seguimiento.Codigo ?? "", seguimiento.TipoMtno?.ToString() ?? "Preventivo", seguimiento.Semana, seguimiento.Anio);
                 }
             }
             catch (GestionMantenimientosDomainException ex)

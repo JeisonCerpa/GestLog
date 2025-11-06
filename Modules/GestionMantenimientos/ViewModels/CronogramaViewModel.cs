@@ -375,12 +375,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                         {
                             semanaVM.Mantenimientos.Add(c);
                         }
-                    }
-                    var codigosProgramados = CronogramasFiltrados
+                    }                    var codigosProgramados = CronogramasFiltrados
                         .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
                         .Select(c => c.Codigo)
                         .ToHashSet();
-                    var seguimientosSemana = seguimientos.Where(s => s.Semana == i && !codigosProgramados.Contains(s.Codigo)).ToList();
+                    
+                    // NUEVA LÓGICA: Mostrar seguimientos que NO están programados en el cronograma
+                    // O que son Correctivos (incluso si hay un Preventivo programado)
+                    var seguimientosSemana = seguimientos.Where(s => 
+                        s.Semana == i && 
+                        (!codigosProgramados.Contains(s.Codigo) || 
+                         s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo)
+                    ).ToList();
+                    
                     foreach (var s in seguimientosSemana)
                     {
                         var noProgramado = new CronogramaMantenimientoDto

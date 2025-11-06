@@ -11,6 +11,7 @@ using GestLog.Modules.GestionMantenimientos.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
 {
@@ -30,10 +31,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         private ObservableCollection<CronogramaMantenimientoDto> mantenimientos = new();
 
         [ObservableProperty]
-        private ObservableCollection<MantenimientoSemanaEstadoDto> estadosMantenimientos = new();
+        private ObservableCollection<MantenimientoSemanaEstadoDto> estadosMantenimientos = new();        private readonly ICronogramaService _cronogramaService;
+        private readonly int _anio;
 
-        private readonly ICronogramaService _cronogramaService;
-        private readonly int _anio;        public SemanaViewModel(int numeroSemana, DateTime fechaInicio, DateTime fechaFin, ICronogramaService cronogramaService, int anio)
+        public SemanaViewModel(int numeroSemana, DateTime fechaInicio, DateTime fechaFin, ICronogramaService cronogramaService, int anio)
         {
             NumeroSemana = numeroSemana;
             FechaInicio = fechaInicio;
@@ -46,7 +47,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         {
             if (Mantenimientos == null || Mantenimientos.Count == 0)
                 return;
-              var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(NumeroSemana, _anio);
+            
+            var estados = await _cronogramaService.GetEstadoMantenimientosSemanaAsync(NumeroSemana, _anio);
             
             // Obtener el servicio de seguimiento usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
@@ -61,14 +63,44 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 LastActivity = DateTime.Now,
                 Roles = new List<string>(),
                 Permissions = new List<string>()
-            };            var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel(
+            };            // NUEVA LÓGICA: Agregar estados para correctivos que están en esta semana
+            var estadosConCorrectivos = new ObservableCollection<MantenimientoSemanaEstadoDto>(estados);
+            
+            var todosSeguimientos = await seguimientoService.GetSeguimientosAsync();
+            var correctivosEnSemana = todosSeguimientos.Where(s => 
+                s.Semana == NumeroSemana && 
+                s.Anio == _anio &&
+                s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo
+            ).ToList();
+            
+            // Agregar TODOS los correctivos encontrados, sin importar duplicados
+            // Los correctivos deben coexistir con los preventivos en la misma semana
+            foreach (var correctivo in correctivosEnSemana)
+            {
+                var nuevoEstado = new MantenimientoSemanaEstadoDto
+                {
+                    CodigoEquipo = correctivo.Codigo ?? "",
+                    NombreEquipo = correctivo.Nombre ?? "",
+                    Semana = NumeroSemana,
+                    Anio = _anio,
+                    Frecuencia = correctivo.Frecuencia,
+                    Estado = correctivo.Estado,
+                    PuedeRegistrar = true,
+                    Seguimiento = correctivo
+                };
+                estadosConCorrectivos.Add(nuevoEstado);
+            }
+            
+            var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel(
                 $"Semana {NumeroSemana}",
                 $"{FechaInicio:dd/MM/yyyy} - {FechaFin:dd/MM/yyyy}",
-                new ObservableCollection<MantenimientoSemanaEstadoDto>(estados),
-                new ObservableCollection<CronogramaMantenimientoDto>(Mantenimientos),
+                estadosConCorrectivos,
+                Mantenimientos ?? new ObservableCollection<CronogramaMantenimientoDto>(),
                 seguimientoService,
-                currentUserService            );
-              var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
+                currentUserService
+            );
+            
+            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
             dialog.ShowDialog();
         }[RelayCommand]
         public async Task VerSemana()

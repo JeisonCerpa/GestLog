@@ -679,7 +679,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 Semana = semanaActual,
                 Anio = anioActual,
                 FechaRegistro = now,
-                TipoMtno = TipoMantenimiento.Correctivo // Preseleccionado
+                TipoMtno = TipoMantenimiento.Correctivo, // Preseleccionado
+                Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo // Los correctivos se registran cuando ya se han realizado
                 // Los campos TipoMtno y Frecuencia se llenan en el diálogo y al guardar
             };
             // Asignar la frecuencia por defecto para el flujo de Equipos (Correctivo) y abrir el diálogo en modo restringido
