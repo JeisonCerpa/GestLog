@@ -142,10 +142,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         
                         // No duplicar cronogramas si ya existen
                         bool existe = await dbContext2.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
-                        if (existe) continue;                          int semanaIni = 1;
-                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
+                        if (existe) continue;                          int semanaIni = 1;                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
                         {
-                            // PRIMER AÑO: La primera semana de mantenimiento es la semana de registro + salto
+                            // PRIMER AÑO: La primera semana de mantenimiento es la semana de FechaCompra + salto
                             int salto = equipo.FrecuenciaMtto switch
                             {
                                 Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
@@ -155,18 +154,21 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
                                 Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
                                 Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
-                                _ => 1                            };                            int proximaSemana = semanaInicio + salto;
+                                _ => 1
+                            };
+                            int proximaSemana = semanaInicio + salto;
                             int yearsWeeks = System.Globalization.ISOWeek.GetWeeksInYear(anio);
                             
-                            // Si excede el año, la próxima semana será en el siguiente año
-                            // No generar cronograma en este año si la primera semana se pasa
+                            // Si excede el año actual, la primera semana será en el siguiente año
+                            // No generar cronograma en este año, se creará en el siguiente
                             if (proximaSemana > yearsWeeks)
                             {
-                                // Saltar este año, el cronograma se creará en el siguiente
+                                _logger.LogInformation("[EquipoService] Primera semana de mantenimiento ({Original}) excede el año {Codigo}, se generará en siguiente año", 
+                                    proximaSemana, equipo.Codigo ?? "");
                                 continue;
                             }
                             semanaIni = proximaSemana;
-                        }                        else if (anio > anioRegistro && equipo.FrecuenciaMtto != null)
+                        }else if (anio > anioRegistro && equipo.FrecuenciaMtto != null)
                         {
                             // AÑOS POSTERIORES: Calcular a partir del último mantenimiento del año anterior
                             var cronogramaAnterior = await dbContext2.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
@@ -206,11 +208,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                     semanaIni = proximaSemana;
                                     _logger.LogInformation($"[EquipoService] Cronograma {anio} creado - Equipo={equipo.Codigo}, SemanaInicio={semanaIni}");
                                 }
-                            }                            else if (anio - 1 == anioRegistro && equipo.FechaRegistro.HasValue)
+                            }                            else if (anio - 1 == anioRegistro && (equipo.FechaCompra.HasValue || equipo.FechaRegistro.HasValue))
                             {
                                 // Caso especial: Si el cronograma del año anterior se saltó (porque la próxima semana > semanas en año)
                                 // pero el equipo se registró ese año, usar la semana de registro del equipo
-                                int semanaRegistroEquipo = System.Globalization.ISOWeek.GetWeekOfYear(equipo.FechaRegistro.Value);
+                                var fechaParaCalculo = equipo.FechaCompra ?? equipo.FechaRegistro;
+                                int semanaRegistroEquipo = System.Globalization.ISOWeek.GetWeekOfYear(fechaParaCalculo.Value);
                                 
                                 int salto = equipo.FrecuenciaMtto switch
                                 {
@@ -352,13 +355,15 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
                                 Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
                                 _ => 1
-                            };
-                            
-                            int proximaSemana = semanaInicio + salto;
+                            };                            int proximaSemana = semanaInicio + salto;
                             int yearsWeeks = System.Globalization.ISOWeek.GetWeeksInYear(anio);
                             
+                            // Si excede el año actual, la primera semana será en el siguiente año
+                            // No generar cronograma en este año, se creará en el siguiente
                             if (proximaSemana > yearsWeeks)
                             {
+                                _logger.LogInformation("[EquipoService] Primera semana de mantenimiento ({Original}) excede el año {Codigo}, se generará en siguiente año (Update)", 
+                                    proximaSemana, equipo.Codigo ?? "");
                                 continue;
                             }
                             semanaIni = proximaSemana;
@@ -397,9 +402,44 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                             proximaSemana = ((proximaSemana - 1) % weeksInCurrentYear) + 1;
                                         }
                                     }
-                                    
-                                    semanaIni = proximaSemana;
+                                      semanaIni = proximaSemana;
                                 }
+                            }                            else if (anio - 1 == anioRegistro && (equipo.FechaCompra.HasValue || entity.FechaCompra.HasValue || entity.FechaRegistro.HasValue))
+                            {
+                                // Caso especial: Si el cronograma del año anterior se saltó (porque excede semanas)
+                                // pero el equipo se registró ese año, usar la semana de registro del equipo
+                                var fechaParaCalculo = equipo.FechaCompra ?? entity.FechaCompra ?? entity.FechaRegistro ?? DateTime.Now;
+                                int semanaRegistroEquipo = CalcularSemanaISO8601(fechaParaCalculo);
+                                
+                                int salto = equipo.FrecuenciaMtto switch
+                                {
+                                    Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                    Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                    Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                    Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                    Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                    Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                    Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
+                                    _ => 1
+                                };
+                                
+                                int proximaSemana = semanaRegistroEquipo + salto;
+                                int weeksInPreviousYear = System.Globalization.ISOWeek.GetWeeksInYear(anio - 1);
+                                int weeksInCurrentYear = System.Globalization.ISOWeek.GetWeeksInYear(anio);
+                                
+                                // Si se pasa del año anterior, ajustar al año actual
+                                if (proximaSemana > weeksInPreviousYear)
+                                {
+                                    proximaSemana = proximaSemana - weeksInPreviousYear;
+                                    // Asegurar que la semana calculada sea válida en el año actual
+                                    if (proximaSemana > weeksInCurrentYear)
+                                    {
+                                        proximaSemana = ((proximaSemana - 1) % weeksInCurrentYear) + 1;
+                                    }
+                                }
+                                
+                                semanaIni = proximaSemana;
+                                _logger.LogInformation($"[EquipoService] Cronograma {anio} creado desde semana registro (Update) - Equipo={equipo.Codigo}, SemanaRegistro={semanaRegistroEquipo}, SemanaInicio={semanaIni}");
                             }
                             else
                             {
