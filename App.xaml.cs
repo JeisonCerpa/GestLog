@@ -26,7 +26,53 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
-        // ✅ PRIMERO: Inicializar Velopack ANTES de cualquier otra operación
+        // ✅ PRIMERO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
+        var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
+        if (string.IsNullOrEmpty(environment))
+        {
+            // Si no está establecida, usar default de launchSettings.json
+            environment = "Production";
+        }
+        
+        // Establecer las variables de base de datos basadas en el ambiente
+        var databaseConfigFileName = environment.ToLower() switch
+        {
+            "development" => "database-development.json",
+            "testing" => "database-testing.json",
+            _ => "database-production.json"
+        };
+
+        // Construir la ruta completa al archivo de configuración (relativa o absoluta)
+        // Primero intenta con ruta relativa, luego con ruta absoluta desde el directorio de ejecución
+        var appDirectory = AppContext.BaseDirectory;
+        var databaseConfigFile = Path.Combine(appDirectory, "config", databaseConfigFileName);
+        
+        // Si no existe en la ruta esperada, intenta en el directorio de ejecución actual
+        if (!File.Exists(databaseConfigFile))
+        {
+            databaseConfigFile = Path.Combine(Directory.GetCurrentDirectory(), "config", databaseConfigFileName);
+        }
+        
+        // Fallback: intenta con ruta relativa simple
+        if (!File.Exists(databaseConfigFile))
+        {
+            databaseConfigFile = Path.Combine("config", databaseConfigFileName);
+        }
+
+        // Leer configuración de BD desde el archivo correspondiente
+        if (File.Exists(databaseConfigFile))
+        {
+            var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(databaseConfigFile));
+            var dbSection = json.RootElement.GetProperty("Database");
+            
+            Environment.SetEnvironmentVariable("GESTLOG_DB_SERVER", dbSection.GetProperty("Server").GetString() ?? "");
+            Environment.SetEnvironmentVariable("GESTLOG_DB_NAME", dbSection.GetProperty("Database").GetString() ?? "");
+            Environment.SetEnvironmentVariable("GESTLOG_DB_USER", dbSection.GetProperty("Username").GetString() ?? "");
+            Environment.SetEnvironmentVariable("GESTLOG_DB_PASSWORD", dbSection.GetProperty("Password").GetString() ?? "");
+            Environment.SetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY", dbSection.GetProperty("UseIntegratedSecurity").GetBoolean().ToString());
+        }
+
+        // ✅ SEGUNDO: Inicializar Velopack ANTES de cualquier otra operación
 #if !DEBUG
         VelopackApp.Build().Run();
 #endif

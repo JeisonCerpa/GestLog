@@ -35,12 +35,19 @@ public static class LoggingService
             if (!Directory.Exists(logsDirectory))
             {
                 Directory.CreateDirectory(logsDirectory);
-            }
+            }            // Configurar el builder de configuración
+            var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+            var databaseConfigFile = environment.ToLower() switch
+            {
+                "development" => "config/database-development.json",
+                "testing" => "config/database-testing.json",
+                _ => "config/database-production.json"
+            };
 
-            // Configurar el builder de configuración
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile(databaseConfigFile, optional: false, reloadOnChange: true);
 
             var configuration = configurationBuilder.Build();
 
