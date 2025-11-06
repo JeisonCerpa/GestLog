@@ -101,6 +101,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             );
             
             var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
+            var ownerWindow = System.Windows.Application.Current?.MainWindow;
+            dialog.ConfigurarParaVentanaPadre(ownerWindow);
             dialog.ShowDialog();
         }[RelayCommand]
         public async Task VerSemana()

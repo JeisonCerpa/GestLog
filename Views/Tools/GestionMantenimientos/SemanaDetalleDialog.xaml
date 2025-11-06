@@ -2,10 +2,15 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:GestLog.Converters"
-        Title="Detalle de la Semana" Height="420" Width="600" WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#FAFAFA" SizeToContent="Height"
-        SnapsToDevicePixels="True" UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display">
+        Title="Detalle de la Semana" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
     <Window.Resources>
         <converters:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Realizado" FalseText="Pendiente" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
@@ -58,86 +63,88 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    <Border Style="{StaticResource CardBorderStyle}" Margin="8">
-        <StackPanel>
-            <TextBlock Text="{Binding Titulo}" FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10"/>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                <TextBlock Text="Semana:" FontSize="13" Foreground="#504F4E" FontWeight="SemiBold" Margin="0,0,6,0"/>
-                <TextBlock Text="{Binding RangoFechas}" FontSize="13" Foreground="#504F4E"/>
+    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">
+        <Border Style="{StaticResource CardBorderStyle}" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="Panel_MouseLeftButtonDown" Width="600">
+            <StackPanel>
+                <TextBlock Text="{Binding Titulo}" FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="Semana:" FontSize="13" Foreground="#504F4E" FontWeight="SemiBold" Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding RangoFechas}" FontSize="13" Foreground="#504F4E"/>
+                </StackPanel>
+                <Separator Margin="0,0,0,8"/>
+                <TextBlock Text="Estados de Mantenimiento" FontSize="15" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,10,0,6"/>
+                <DataGrid ItemsSource="{Binding EstadosMantenimientos}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,6" Background="#FAFAFA" RowBackground="White" AlternatingRowBackground="#F5F5F5" HeadersVisibility="Column" GridLinesVisibility="None" 
+                          CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True" 
+                          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" 
+                          MinWidth="350" MaxWidth="450" 
+                          ColumnWidth="*" 
+                          SnapsToDevicePixels="True" UseLayoutRounding="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="90" Width="*"/>
+                        <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="60" Width="Auto"/>
+                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="60" Width="Auto"/>
+                        <DataGridTemplateColumn Header="Estado" MinWidth="80" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Margin="6,0,0,0" FontSize="14">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value=""/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="RealizadoEnTiempo">
+                                                            <Setter Property="Text" Value="✅"/>
+                                                            <Setter Property="Foreground" Value="#118938"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="RealizadoFueraDeTiempo">
+                                                            <Setter Property="Text" Value="⏱️"/>
+                                                            <Setter Property="Foreground" Value="#2B8E3F"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="Atrasado">
+                                                            <Setter Property="Text" Value="⚠️"/>
+                                                            <Setter Property="Foreground" Value="#C0392B"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="NoRealizado">
+                                                            <Setter Property="Text" Value="❌"/>
+                                                            <Setter Property="Foreground" Value="#C0392B"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="Pendiente">
+                                                            <Setter Property="Text" Value="⏸️"/>
+                                                            <Setter Property="Foreground" Value="#706F6F"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Acción" MinWidth="80" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Registrar"
+                                            Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Visibility="{Binding PuedeRegistrar, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Text="No hay estados de mantenimiento para esta semana." 
+                           Foreground="#C0392B" FontWeight="SemiBold" FontSize="12" 
+                           HorizontalAlignment="Center" Margin="0,8,0,8"
+                           Visibility="{Binding EstadosMantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
+                <TextBlock Text="{Binding MensajeUsuario}" Foreground="Red" FontWeight="SemiBold" Margin="0,0,0,6"
+                           Visibility="{Binding MensajeUsuario, Converter={StaticResource StringToVisibilityConverter}}"/>
+                <Separator Margin="0,8,0,8"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cerrar" Width="100" IsCancel="True" Click="OnCerrar_Click" Style="{StaticResource PrimaryButtonStyle}" FontSize="16" FontFamily="Segoe UI" FontWeight="Bold" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"/>
+                </StackPanel>
             </StackPanel>
-            <Separator Margin="0,0,0,8"/>
-            <TextBlock Text="Estados de Mantenimiento" FontSize="15" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,10,0,6"/>
-            <DataGrid ItemsSource="{Binding EstadosMantenimientos}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,6" Background="#FAFAFA" RowBackground="White" AlternatingRowBackground="#F5F5F5" HeadersVisibility="Column" GridLinesVisibility="None" 
-                      CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True" 
-                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" 
-                      MinWidth="480" MaxWidth="580" 
-                      ColumnWidth="*" 
-                      SnapsToDevicePixels="True" UseLayoutRounding="True">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="90" Width="*"/>
-                    <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="60" Width="Auto"/>
-                    <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="60" Width="Auto"/>
-                    <DataGridTemplateColumn Header="Estado" MinWidth="80" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" FontWeight="SemiBold" FontSize="13"/>
-                                    <TextBlock Margin="6,0,0,0" FontSize="14">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value=""/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Estado}" Value="RealizadoEnTiempo">
-                                                        <Setter Property="Text" Value="✅"/>
-                                                        <Setter Property="Foreground" Value="#118938"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Estado}" Value="RealizadoFueraDeTiempo">
-                                                        <Setter Property="Text" Value="⏱️"/>
-                                                        <Setter Property="Foreground" Value="#2B8E3F"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Estado}" Value="Atrasado">
-                                                        <Setter Property="Text" Value="⚠️"/>
-                                                        <Setter Property="Foreground" Value="#C0392B"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Estado}" Value="NoRealizado">
-                                                        <Setter Property="Text" Value="❌"/>
-                                                        <Setter Property="Foreground" Value="#C0392B"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Estado}" Value="Pendiente">
-                                                        <Setter Property="Text" Value="⏸️"/>
-                                                        <Setter Property="Foreground" Value="#706F6F"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Acción" MinWidth="80" Width="Auto">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="Registrar"
-                                        Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Visibility="{Binding PuedeRegistrar, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-            <TextBlock Text="No hay estados de mantenimiento para esta semana." 
-                       Foreground="#C0392B" FontWeight="SemiBold" FontSize="12" 
-                       HorizontalAlignment="Center" Margin="0,8,0,8"
-                       Visibility="{Binding EstadosMantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
-            <TextBlock Text="{Binding MensajeUsuario}" Foreground="Red" FontWeight="SemiBold" Margin="0,0,0,6"
-                       Visibility="{Binding MensajeUsuario, Converter={StaticResource StringToVisibilityConverter}}"/>
-            <Separator Margin="0,8,0,8"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Cerrar" Width="100" IsCancel="True" Click="OnCerrar_Click" Style="{StaticResource PrimaryButtonStyle}" FontSize="16" FontFamily="Segoe UI" FontWeight="Bold" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"/>
-            </StackPanel>
-        </StackPanel>
-    </Border>
+        </Border>
+    </Grid>
 </Window>
