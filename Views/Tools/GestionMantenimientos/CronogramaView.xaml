@@ -8,8 +8,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900"
-             Background="#F5F5F5">
-    <UserControl.Resources>
+             Background="#F5F5F5">    <UserControl.Resources>
         <!-- ...otros recursos... -->
         <converters:CardButtonBackgroundColorConverter x:Key="CardButtonBackgroundColorConverter" />
         <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
@@ -17,106 +16,160 @@
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        
+        <!-- Estilos copiados de EquiposView para coherencia -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
+        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#118938" Offset="0"/>
+            <GradientStop Color="#2B8E3F" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Tipografías y tamaños consistentes -->
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0.9"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- PrimaryButtonStyle alineado con EquiposView -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo para botones circulares flotantes -->
+        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderBrush" Value="#E5E5E5"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" x:Name="BorderCircular">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderCircular" Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderCircular" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- ...otros recursos... -->
-    </UserControl.Resources>
-    <Grid Background="#F5F5F5" Margin="10">
+    </UserControl.Resources>    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <!-- Nuevo encabezado simplificado -->
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
-                <TextBlock Text="Cronograma" FontSize="24" FontWeight="Bold" Foreground="#118938" Margin="0,0,18,0" VerticalAlignment="Center"/>
-                <TextBlock Text="Año:" VerticalAlignment="Center" Margin="0,0,4,0" FontWeight="SemiBold" FontSize="14"/>
-                <ComboBox Width="90"
-                          ItemsSource="{Binding AniosDisponibles}"
-                          SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          VerticalAlignment="Center"
-                          Margin="0,0,0,0"
-                          FontSize="14"
-                          Padding="4,2"
-                          BorderBrush="#1976D2"
-                          BorderThickness="1"
-                          Background="#F5F8FF"/>            </StackPanel>            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="1">
-                <!-- Botón Refrescar -->
-                <Button Content="🔄"
-                        Command="{Binding RefreshCommand}"
-                        FontSize="16"
-                        Padding="10,4"
-                        Margin="0,0,8,0"
-                        Background="#118938"
-                        Foreground="White"
-                        BorderBrush="#118938"
-                        BorderThickness="1.5"
-                        FontWeight="SemiBold"
-                        VerticalAlignment="Center"                        ToolTip="Refrescar cronograma"
-                        IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" 
-                        Opacity="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                    <Button.Effect>
-                        <DropShadowEffect BlurRadius="4" ShadowDepth="2" Color="#118938" Opacity="0.18"/>
-                    </Button.Effect>
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Grid>
-                                            <Border x:Name="BorderElement" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                                                <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <VisualStateManager.VisualStateGroups>
-                                                <VisualStateGroup x:Name="CommonStates">
-                                                    <VisualState x:Name="MouseOver">
-                                                        <Storyboard>
-                                                            <ColorAnimation To="#0D6B2F" Duration="0" Storyboard.TargetName="BorderElement" Storyboard.TargetProperty="Background.Color"/>
-                                                        </Storyboard>
-                                                    </VisualState>
-                                                </VisualStateGroup>
-                                            </VisualStateManager.VisualStateGroups>
-                                        </Grid>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <!-- Botón Exportar -->
-                <Button Content="Exportar"
-                        Command="{Binding ExportarCronogramasCommand}"
-                        FontSize="14"
-                        Padding="16,4"
-                        Background="#118938"
-                        Foreground="White"
-                        BorderBrush="#118938"
-                        BorderThickness="1.5"
-                        FontWeight="SemiBold"
-                        VerticalAlignment="Center"
-                        IsEnabled="{Binding CanExportCronograma}" 
-                        Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                    <Button.Effect>
-                        <DropShadowEffect BlurRadius="4" ShadowDepth="2" Color="#118938" Opacity="0.18"/>
-                    </Button.Effect>
-                </Button>
-            </StackPanel>
-        </Grid>        <!-- Vista semanal tipo calendario -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#F5F5F5">
-            <Grid Background="#F5F5F5">
+
+        <!-- Header remodelado similar a EquiposView -->
+        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#118938" Offset="0"/>
+                    <GradientStop Color="#2B8E3F" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
+                        <TextBlock Text="📅" FontFamily="Segoe UI Emoji" FontSize="26"
+                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Cronograma de Mantenimientos" Style="{StaticResource HeaderTextStyle}"/>
+                        <TextBlock Text="Vista general de mantenimientos programados" Style="{StaticResource SubHeaderTextStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <!-- ComboBox de Año -->
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock Text="Año:" Foreground="White" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0"/>
+                        <ComboBox Width="100"
+                                  ItemsSource="{Binding AniosDisponibles}"
+                                  SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  VerticalAlignment="Center"
+                                  FontSize="13"
+                                  Padding="8,4"
+                                  BorderBrush="#FFFFFF"
+                                  BorderThickness="1.5"
+                                  Background="White"
+                                  Foreground="#504F4E"
+                                  FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Botón Refrescar circular -->
+                    <Button Content="&#xE72C;" Command="{Binding RefreshCommand}" ToolTip="Actualizar cronograma"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" 
+                            Opacity="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+
+                    <!-- Botón Exportar circular -->
+                    <Button Content="⭱" Command="{Binding ExportarCronogramasCommand}" ToolTip="Exportar cronograma"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
+                            IsEnabled="{Binding CanExportCronograma}" 
+                            Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>        <!-- Vista semanal tipo calendario -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#FAFAFA" Margin="16,0,16,0">
+            <Grid Background="#FAFAFA">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -321,12 +374,10 @@
                     </StackPanel>
                 </StackPanel>
             </Grid>
-        </ScrollViewer>
-
-        <!-- Overlay en nivel superior para cubrir encabezado + semanas (dimmer suave) -->
+        </ScrollViewer>        <!-- Overlay en nivel superior para cubrir encabezado + semanas (dimmer suave) -->
         <Grid x:Name="LoadingOverlay"
               Grid.Row="0"
-              Grid.RowSpan="2"
+              Grid.RowSpan="3"
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
               Background="#40000000"
               Panel.ZIndex="999"
