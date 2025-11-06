@@ -66,7 +66,7 @@ cd "E:\Softwares\GestLog" `
 </PropertyGroup>
 ```
 
-#### **1.2 Actualizar MainWindow.xaml (Opcional)**
+#### **1.2 Actualizar MainWindow.xaml**
 ```xml
 Title="GestLog - Sistema de Gestión v1.0.X"
 ```
