@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Forms;
+using System.Linq;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
@@ -39,12 +40,13 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 // Preseleccionar Activo por defecto
                 Equipo.Estado = GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Activo;
                 IsEditMode = false;
-            }
-            DataContext = new EquipoDialogViewModel(Equipo)
+            }            DataContext = new EquipoDialogViewModel(Equipo)
             {
                 EstadosEquipo = new[] { GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Activo, GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.Inactivo },
                 Sedes = System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0],
-                FrecuenciasMantenimiento = System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0]
+                FrecuenciasMantenimiento = (System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0])
+                    .Where(f => f != FrecuenciaMantenimiento.Correctivo && f != FrecuenciaMantenimiento.Predictivo)
+                    .ToArray()
             };
 
             // Manejar tecla Escape

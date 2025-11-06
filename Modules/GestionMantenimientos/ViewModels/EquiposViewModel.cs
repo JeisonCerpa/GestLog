@@ -465,7 +465,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     public IEnumerable<EstadoEquipo> EstadosEquipo => System.Enum.GetValues(typeof(EstadoEquipo)) as EstadoEquipo[] ?? new EstadoEquipo[0];
     public IEnumerable<TipoMantenimiento> TiposMantenimiento => System.Enum.GetValues(typeof(TipoMantenimiento)) as TipoMantenimiento[] ?? new TipoMantenimiento[0];
     public IEnumerable<Sede> Sedes => System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0];
-    public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0];    partial void OnMostrarDadosDeBajaChanged(bool value)
+    public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => (System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0])
+        .Where(f => f != FrecuenciaMantenimiento.Correctivo && f != FrecuenciaMantenimiento.Predictivo);    partial void OnMostrarDadosDeBajaChanged(bool value)
     {
         // Aplicar filtro a la colección existente sin recargar del servicio
         if (_allEquipos == null || _allEquipos.Count == 0)
@@ -687,15 +688,14 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
             var result = dialog.ShowDialog();
-            if (result == true)
-            {
+            if (result == true)            {
                 // Asignar la frecuencia automáticamente según el tipo
                 if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
                     dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
                 else if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Predictivo)
                     dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Predictivo;
                 else
-                    dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Otro;
+                    dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Anual;
                 await _seguimientoService.AddAsync(dialog.Seguimiento);
                 StatusMessage = "Mantenimiento registrado exitosamente.";
                 WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
