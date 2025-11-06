@@ -355,9 +355,38 @@
                                 <TextBlock Text="Observaciones" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
                                 <TextBlock Text="{Binding SelectedEquipo.Observaciones}" Style="{StaticResource ValueTextStyle}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
                             </StackPanel>
-                        </Border>
-                          <!-- Panel de acciones -->
+                        </Border>                          <!-- Panel de acciones -->
                         <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,12,0,0" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button x:Name="RegistrarMantenimientoActionButton" Content="🔧 Registrar Mantenimiento" Margin="0,0,12,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
+                                            <Setter Property="IsEnabled" Value="True"/>
+                                            <Setter Property="Command" Value="{Binding RegistrarMantenimientoCommand}"/>
+                                            <Setter Property="CommandParameter" Value="{Binding SelectedEquipo}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="Activo">
+                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="Inactivo">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="EnMantenimiento">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="EnReparacion">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Opacity" Value="0.5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                                 <Button x:Name="DeleteActionButton" Content="🗑 Dar de Baja" Click="DeleteButton_Click" Margin="0,0,12,0">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource DangerActionButtonStyle}">
