@@ -431,14 +431,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             int weeksInYear = ISOWeek.GetWeeksInYear(year);
             var semanas = new bool[weeksInYear];
             if (frecuencia == null) return semanas;
-            if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;
-            int salto = frecuencia switch
+            if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;            int salto = frecuencia switch
             {
                 FrecuenciaMantenimiento.Semanal => 1,
                 FrecuenciaMantenimiento.Quincenal => 2,
                 FrecuenciaMantenimiento.Mensual => 4,
                 FrecuenciaMantenimiento.Bimestral => 8,
                 FrecuenciaMantenimiento.Trimestral => 13,
+                FrecuenciaMantenimiento.Cuatrimestral => 17,
                 FrecuenciaMantenimiento.Semestral => 26,
                 FrecuenciaMantenimiento.Anual => weeksInYear,
                 _ => 1
