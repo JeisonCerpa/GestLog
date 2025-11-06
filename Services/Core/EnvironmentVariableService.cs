@@ -87,9 +87,7 @@ namespace GestLog.Services.Core
 
                         // Logging sin mostrar valores sensibles
                         var displayValue = variable.IsSensitive ? "***" : expectedValue;
-                        var displayCurrent = variable.IsSensitive ? "***" : currentValue;
-
-                        if (currentValue == null)
+                        var displayCurrent = variable.IsSensitive ? "***" : currentValue;                        if (currentValue == null)
                         {
                             // Variable no existe, crearla
                             if (!string.IsNullOrEmpty(expectedValue))
@@ -111,19 +109,34 @@ namespace GestLog.Services.Core
                         }
                         else if (currentValue != expectedValue)
                         {
-                            // Variable existe pero con valor diferente, actualizar
-                            try
+                            // ⚠️ IMPORTANTE: En modo Development, respeta las variables ya definidas
+                            // Solo actualiza si el ambiente es Production o si la variable viene de appsettings
+                            var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+                            var isDevelopment = environment.Equals("Development", StringComparison.OrdinalIgnoreCase);
+                            
+                            if (!isDevelopment || variable.Name == "GESTLOG_ENVIRONMENT")
                             {
-                                Environment.SetEnvironmentVariable(variable.Name, expectedValue, EnvironmentVariableTarget.User);
-                                result.Updated++;
-                                result.Logs.Add($"🔄 ACTUALIZADA: {variable.Name}");
-                                _logger.Logger.LogInformation("🔄 Variable actualizada: {VariableName}", variable.Name);
+                                // Variable existe pero con valor diferente, actualizar (solo en producción)
+                                try
+                                {
+                                    Environment.SetEnvironmentVariable(variable.Name, expectedValue, EnvironmentVariableTarget.User);
+                                    result.Updated++;
+                                    result.Logs.Add($"🔄 ACTUALIZADA: {variable.Name}");
+                                    _logger.Logger.LogInformation("🔄 Variable actualizada: {VariableName}", variable.Name);
+                                }
+                                catch (Exception ex)
+                                {
+                                    result.Failed++;
+                                    result.Logs.Add($"❌ ERROR actualizando {variable.Name}: {ex.Message}");
+                                    _logger.Logger.LogError(ex, "❌ Error al actualizar variable: {VariableName}", variable.Name);
+                                }
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                result.Failed++;
-                                result.Logs.Add($"❌ ERROR actualizando {variable.Name}: {ex.Message}");
-                                _logger.Logger.LogError(ex, "❌ Error al actualizar variable: {VariableName}", variable.Name);
+                                // En desarrollo, respetar la variable existente
+                                result.Unchanged++;
+                                result.Logs.Add($"⏭️ SIN CAMBIOS (Dev): {variable.Name}");
+                                _logger.Logger.LogInformation("⏭️ Variable respetada en development: {VariableName}", variable.Name);
                             }
                         }
                         else
@@ -162,22 +175,29 @@ namespace GestLog.Services.Core
             }
 
             return await Task.FromResult(result);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Obtiene la lista de variables de entorno requeridas desde appsettings.json
         /// </summary>
         private List<EnvironmentVariableDefinition> GetRequiredEnvironmentVariables()
         {
             var variables = new List<EnvironmentVariableDefinition>();
 
+            // 🔍 Detectar el ambiente actual
+            var currentEnvironment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+            _logger.Logger.LogInformation("🔍 Leyendo configuración para ambiente: {Environment}", currentEnvironment);
+
             // Variables de Base de Datos
+            // ✅ IMPORTANTE: Solo usar valores de appsettings.json si NO están ya definidos en variables de entorno
+            // Esto permite que los desarrolladores mantengan su configuración de desarrollo sin que sea sobrescrita
+            
             var dbSection = _configuration.GetSection("Database");
-            var dbServer = dbSection["FallbackServer"];
-            var dbName = dbSection["FallbackDatabase"];
-            var dbUser = dbSection["FallbackUsername"];
-            var dbPassword = dbSection["FallbackPassword"];
-            var dbIntegratedSecurity = dbSection["FallbackUseIntegratedSecurity"];
+            
+            // Leer valores actuales primero (si existen, respetarlos)
+            var dbServer = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["FallbackServer"];
+            var dbName = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["FallbackDatabase"];
+            var dbUser = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["FallbackUsername"];
+            var dbPassword = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["FallbackPassword"];
+            var dbIntegratedSecurity = Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY") ?? dbSection["FallbackUseIntegratedSecurity"];
 
             variables.Add(new EnvironmentVariableDefinition
             {

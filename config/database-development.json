@@ -1,7 +1,7 @@
 {
   "Database": {
     "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
-    "Database": "GestLogDB", 
+    "Database": "GestLogDB_DEV", 
     "Username": "sa",
     "Password": "REMOVED_SECRET",
     "UseIntegratedSecurity": false,
@@ -13,13 +13,13 @@
   "Updater": {
     "UpdateServerPath": "\\\\SIMICSGROUPWKS1\\GestLogUpdates",
     "CheckInterval": "00:30:00",
-    "AutoInstall": true,
-    "BackupBeforeUpdate": true
+    "AutoInstall": false,
+    "BackupBeforeUpdate": false
   },
   "Metadata": {
     "Environment": "Development",
     "Version": "1.0",
-    "LastUpdated": "2025-08-12",
-    "Description": "Configuración de desarrollo/pruebas para SIMICS Group"
+    "LastUpdated": "2025-11-06",
+    "Description": "Configuración de desarrollo/pruebas con BD separada para SIMICS Group"
   }
 }

@@ -274,9 +274,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 _logger.LogError(ex, "[EquipoService] Unexpected error on add");
                 throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al agregar el equipo. Por favor, contacte al administrador.", ex);
             }
-        }
-
-        public async Task UpdateAsync(EquipoDto equipo)
+        }        public async Task UpdateAsync(EquipoDto equipo)
         {
             try
             {
@@ -285,6 +283,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var entity = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == equipo.Codigo);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontró el equipo a actualizar.");
+                
+                // 🔍 Detectar si la frecuencia de mantenimiento cambió
+                bool frecuenciaChanged = entity.FrecuenciaMtto != equipo.FrecuenciaMtto;
+                
                 // No permitir cambiar el código
                 // entity.Codigo = equipo.Codigo; // NO modificar
                 // Evitar forzar Nombre a "-"; permitir null
@@ -303,6 +305,227 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 // SemanaInicioMtto eliminado
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[EquipoService] Equipo actualizado correctamente: {Codigo}", equipo.Codigo ?? "");
+                
+                // 🔄 Si la frecuencia cambió, regenerar cronogramas
+                if (frecuenciaChanged && equipo.FrecuenciaMtto != null)
+                {
+                    _logger.LogInformation("[EquipoService] Frecuencia cambió para {Codigo}. Regenerando cronogramas...", equipo.Codigo ?? "");
+                    
+                    // Eliminar cronogramas antiguos
+                    var cronogramasAntiguos = await dbContext.Cronogramas.Where(c => c.Codigo == equipo.Codigo).ToListAsync();
+                    if (cronogramasAntiguos.Any())
+                    {
+                        dbContext.Cronogramas.RemoveRange(cronogramasAntiguos);
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation("[EquipoService] Cronogramas antiguos eliminados para: {Codigo}", equipo.Codigo ?? "");
+                    }
+                    
+                    // Regenerar cronogramas con la nueva frecuencia
+                    var anioRegistro = (equipo.FechaCompra ?? entity.FechaCompra ?? DateTime.Now).Year;
+                    var anioActual = DateTime.Now.Year;
+                    var mesActual = DateTime.Now.Month;
+                    var anioLimite = anioActual;
+                    if (mesActual >= 10)
+                    {
+                        anioLimite = anioActual + 1;
+                    }
+                    
+                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                    {
+                        // Evitar duplicados
+                        bool existe = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
+                        if (existe) continue;
+                        
+                        int semanaIni = 1;
+                        
+                        if (anio == anioRegistro)
+                        {
+                            // PRIMER AÑO: Primera semana de mantenimiento
+                            int semanaInicio = CalcularSemanaISO8601(equipo.FechaCompra ?? entity.FechaCompra ?? DateTime.Now);
+                            int salto = equipo.FrecuenciaMtto switch
+                            {
+                                Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
+                                _ => 1
+                            };
+                            
+                            int proximaSemana = semanaInicio + salto;
+                            int yearsWeeks = System.Globalization.ISOWeek.GetWeeksInYear(anio);
+                            
+                            if (proximaSemana > yearsWeeks)
+                            {
+                                continue;
+                            }
+                            semanaIni = proximaSemana;
+                        }
+                        else if (anio > anioRegistro)
+                        {
+                            // AÑOS POSTERIORES: Calcular a partir del último mantenimiento del año anterior
+                            var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
+                            if (cronogramaAnterior != null)
+                            {
+                                int lastWeek = System.Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
+                                if (lastWeek >= 0)
+                                {
+                                    int salto = equipo.FrecuenciaMtto switch
+                                    {
+                                        Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
+                                        Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
+                                        Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
+                                        Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
+                                        Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
+                                        Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
+                                        Models.Enums.FrecuenciaMantenimiento.Anual => System.Globalization.ISOWeek.GetWeeksInYear(anio),
+                                        _ => 1
+                                    };
+                                    
+                                    int ultimaSemana = lastWeek + 1;
+                                    int proximaSemana = ultimaSemana + salto;
+                                    int weeksInPreviousYear = System.Globalization.ISOWeek.GetWeeksInYear(anio - 1);
+                                    int weeksInCurrentYear = System.Globalization.ISOWeek.GetWeeksInYear(anio);
+                                    
+                                    if (proximaSemana > weeksInPreviousYear)
+                                    {
+                                        proximaSemana = proximaSemana - weeksInPreviousYear;
+                                        if (proximaSemana > weeksInCurrentYear)
+                                        {
+                                            proximaSemana = ((proximaSemana - 1) % weeksInCurrentYear) + 1;
+                                        }
+                                    }
+                                    
+                                    semanaIni = proximaSemana;
+                                }
+                            }
+                            else
+                            {
+                                semanaIni = 1;
+                            }
+                        }
+                        
+                        // Generar nuevo cronograma
+                        var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto, anio);
+                        var cronograma = new CronogramaMantenimiento
+                        {
+                            Codigo = equipo.Codigo!,
+                            Nombre = equipo.Nombre!,
+                            Marca = equipo.Marca,
+                            Sede = equipo.Sede?.ToString(),
+                            FrecuenciaMtto = equipo.FrecuenciaMtto,
+                            Semanas = semanas,
+                            Anio = anio
+                        };
+                        
+                        dbContext.Cronogramas.Add(cronograma);
+                        await dbContext.SaveChangesAsync();
+                    }                    _logger.LogInformation("[EquipoService] Cronogramas regenerados exitosamente para: {Codigo}", equipo.Codigo ?? "");
+                    
+                    // 🔄 Ajustar seguimientos: eliminar pendientes de semanas que ya no están programadas
+                    // Y crear nuevos seguimientos para semanas que se agregaron
+                    // Mantener: Realizados, Atrasados, No Realizados (ya completados)
+                    var seguimientosExistentes = await dbContext.Seguimientos
+                        .Where(s => s.Codigo == equipo.Codigo)
+                        .ToListAsync();
+                    
+                    int seguimientosEliminados = 0;
+                    int seguimientosCreados = 0;
+                    
+                    // Obtener todos los cronogramas regenerados
+                    var cronogramasRegenerados = await dbContext.Cronogramas
+                        .Where(c => c.Codigo == equipo.Codigo)
+                        .ToListAsync();
+                    
+                    // 1️⃣ ELIMINAR seguimientos pendientes que NO están en el nuevo cronograma
+                    var seguimientosPendientes = seguimientosExistentes
+                        .Where(s => s.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente)
+                        .ToList();
+                    
+                    foreach (var seg in seguimientosPendientes)
+                    {
+                        var cronogramaAnio = cronogramasRegenerados.FirstOrDefault(c => c.Anio == seg.Anio);
+                        if (cronogramaAnio != null)
+                        {
+                            int semanaIndex = seg.Semana - 1;
+                            if (semanaIndex >= 0 && semanaIndex < cronogramaAnio.Semanas.Length)
+                            {
+                                if (!cronogramaAnio.Semanas[semanaIndex])
+                                {
+                                    dbContext.Seguimientos.Remove(seg);
+                                    seguimientosEliminados++;
+                                    _logger.LogInformation("[EquipoService] Seguimiento pendiente eliminado: {Codigo}, Semana={Semana}, Año={Anio}", 
+                                        equipo.Codigo ?? "", seg.Semana, seg.Anio);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (seguimientosEliminados > 0)
+                    {
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation("[EquipoService] Total seguimientos pendientes eliminados: {Count} para {Codigo}", 
+                            seguimientosEliminados, equipo.Codigo ?? "");
+                    }
+                    
+                    // 2️⃣ CREAR seguimientos nuevos para semanas que se agregaron en el cronograma
+                    foreach (var cronograma in cronogramasRegenerados)
+                    {
+                        for (int i = 0; i < cronograma.Semanas.Length; i++)
+                        {
+                            int semana = i + 1; // Convertir a 1-based
+                            
+                            // Si la semana está programada en el cronograma
+                            if (cronograma.Semanas[i])
+                            {
+                                // Verificar si ya existe un seguimiento para esta semana
+                                bool existe = seguimientosExistentes.Any(s => 
+                                    s.Codigo == equipo.Codigo && 
+                                    s.Semana == semana && 
+                                    s.Anio == cronograma.Anio);
+                                
+                                if (!existe)
+                                {
+                                    // Crear nuevo seguimiento pendiente
+                                    var nuevoSeguimiento = new SeguimientoMantenimiento
+                                    {
+                                        Codigo = equipo.Codigo!,
+                                        Nombre = equipo.Nombre!,
+                                        Semana = semana,
+                                        Anio = cronograma.Anio,
+                                        TipoMtno = TipoMantenimiento.Preventivo,
+                                        Descripcion = "Mantenimiento programado",
+                                        Responsable = string.Empty,
+                                        FechaRegistro = DateTime.Now,
+                                        Estado = Models.Enums.EstadoSeguimientoMantenimiento.Pendiente,
+                                        Frecuencia = equipo.FrecuenciaMtto
+                                    };
+                                    
+                                    dbContext.Seguimientos.Add(nuevoSeguimiento);
+                                    seguimientosCreados++;
+                                    _logger.LogInformation("[EquipoService] Nuevo seguimiento pendiente creado: {Codigo}, Semana={Semana}, Año={Anio}", 
+                                        equipo.Codigo ?? "", semana, cronograma.Anio);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (seguimientosCreados > 0)
+                    {
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation("[EquipoService] Total nuevos seguimientos pendientes creados: {Count} para {Codigo}", 
+                            seguimientosCreados, equipo.Codigo ?? "");
+                    }
+                    
+                    // 📢 Notificar que los cronogramas y seguimientos han sido actualizados
+                    WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    
+                    _logger.LogInformation("[EquipoService] Resumen: {Codigo} - Seguimientos Eliminados={Elim}, Creados={Crea}", 
+                        equipo.Codigo ?? "", seguimientosEliminados, seguimientosCreados);
+                }
             }
             catch (GestionMantenimientosDomainException ex)
             {
