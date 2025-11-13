@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -28,11 +29,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 /// ViewModel para la gestión de equipos.
 /// </summary>
 public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
-{    private readonly IEquipoService _equipoService;
+{    
+    private readonly IEquipoService _equipoService;
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
     private readonly ICurrentUserService _currentUserService;
-    private CurrentUserInfo _currentUser;    [ObservableProperty]
+    private CurrentUserInfo _currentUser;    
+
+    [ObservableProperty]
     private ObservableCollection<EquipoDto> equipos = new();
 
     // Colección completa sin filtrar - usada para calcular estadísticas correctas
@@ -72,6 +76,21 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private int equiposDadosBaja;
 
+    [ObservableProperty]
+    private int historialPaginaActual = 1;
+
+    [ObservableProperty]
+    private int historialRegistrosPorPagina = 10;
+
+    [ObservableProperty]
+    private int historialTotalPaginas = 0;
+
+    [ObservableProperty]
+    private ObservableCollection<SeguimientoMantenimientoDto> historialMantenimientosVisibles = new();
+
+    [ObservableProperty]
+    private bool historialPuedeIrSiguiente;
+
     // Helper: normalizar estado y comparar
     private static string NormalizeEstado(object? estado)
     {
@@ -90,7 +109,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     {
         var s = NormalizeEstado(estado);
         return s == "dadodebaja" || s.Contains("dadodebaja") || s.Contains("baja");
-    }    private void RecalcularEstadisticas()
+    }    
+
+    private void RecalcularEstadisticas()
     {
         // Usar _allEquipos (colección completa sin filtros) para obtener estadísticas totales reales
         var list = _allEquipos ?? new ObservableCollection<EquipoDto>();
@@ -99,6 +120,183 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         EquiposEnReparacion = list.Count(e => EsEstado(e.Estado, "enreparacion") || EsEstado(e.Estado, "en reparacion"));
         EquiposInactivos = list.Count(e => EsEstado(e.Estado, "inactivo"));
         EquiposDadosBaja = list.Count(e => EsDadoDeBaja(e.Estado));
+    }    /// <summary>
+    /// Se ejecuta cuando cambia el equipo seleccionado. Carga el historial de mantenimientos realizados.
+    /// </summary>
+    partial void OnSelectedEquipoChanged(EquipoDto? value)
+    {
+        if (value == null)
+            return;
+
+        // Cargar los mantenimientos realizados de forma asíncrona
+        _ = CargarMantenimientosRealizadosAsync(value);
+        
+        // Resetear paginación
+        HistorialPaginaActual = 1;
+        ActualizarHistorialVisible();
+    }
+
+    /// <summary>
+    /// Carga los mantenimientos realizados (completados) del equipo seleccionado.
+    /// Excluye los mantenimientos pendientes.
+    /// </summary>
+    private async Task CargarMantenimientosRealizadosAsync(EquipoDto equipo)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(equipo.Codigo))
+                return;
+
+            // Obtener todos los seguimientos
+            var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
+
+            // Filtrar solo los del equipo actual y que no estén pendientes
+            var mantenimientosRealizados = todosSeguimientos
+                .Where(s => s.Codigo == equipo.Codigo && 
+                           s.Estado != EstadoSeguimientoMantenimiento.Pendiente &&
+                           s.Estado != EstadoSeguimientoMantenimiento.Atrasado)
+                .OrderByDescending(s => s.FechaRegistro) // Ordenar por fecha más reciente primero
+                .ToList();
+
+            // Limpiar y actualizar la colección de mantenimientos realizados
+            equipo.MantenimientosRealizados.Clear();
+            foreach (var m in mantenimientosRealizados)
+            {
+                equipo.MantenimientosRealizados.Add(m);
+            }
+
+            ActualizarHistorialVisible();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error al cargar mantenimientos realizados para el equipo {equipo.Codigo}");
+        }
+    }
+
+    /// <summary>
+    /// Actualiza el historial visible según la página actual.
+    /// </summary>
+    private void ActualizarHistorialVisible()
+    {
+        if (SelectedEquipo?.MantenimientosRealizados == null || SelectedEquipo.MantenimientosRealizados.Count == 0)
+        {
+            HistorialTotalPaginas = 0;
+            HistorialMantenimientosVisibles.Clear();
+            return;
+        }
+
+        // Ordenar de más recientes a más antiguos
+        var mantenimientosOrdenados = SelectedEquipo.MantenimientosRealizados
+            .OrderByDescending(m => m.FechaRegistro)
+            .ToList();
+
+        // Calcular total de páginas
+        HistorialTotalPaginas = (int)Math.Ceiling((double)mantenimientosOrdenados.Count / HistorialRegistrosPorPagina);
+
+        // Validar página actual
+        if (HistorialPaginaActual > HistorialTotalPaginas)
+            HistorialPaginaActual = Math.Max(1, HistorialTotalPaginas);
+
+        // Obtener registros de la página actual
+        var registrosPagina = mantenimientosOrdenados
+            .Skip((HistorialPaginaActual - 1) * HistorialRegistrosPorPagina)
+            .Take(HistorialRegistrosPorPagina)
+            .ToList();
+
+        HistorialMantenimientosVisibles.Clear();
+        foreach (var registro in registrosPagina)
+        {
+            HistorialMantenimientosVisibles.Add(registro);
+        }
+
+        // Actualizar estado de los botones de paginación
+        HistorialPuedeIrSiguiente = HistorialPaginaActual < HistorialTotalPaginas;
+    }
+
+    /// <summary>
+    /// Ir a la página anterior del historial.
+    /// </summary>
+    [RelayCommand]
+    private void HistorialPaginaAnterior()
+    {
+        if (HistorialPaginaActual > 1)
+        {
+            HistorialPaginaActual--;
+            ActualizarHistorialVisible();
+        }
+    }
+
+    /// <summary>
+    /// Ir a la página siguiente del historial.
+    /// </summary>
+    [RelayCommand]
+    private void HistorialPaginaSiguiente()
+    {
+        if (HistorialPaginaActual < HistorialTotalPaginas)
+        {
+            HistorialPaginaActual++;
+            ActualizarHistorialVisible();
+        }
+    }
+
+    /// <summary>
+    /// Exporta la hoja de vida completa del equipo a Excel.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExportarHojaVidaEquipo()
+    {
+        try
+        {
+            if (SelectedEquipo == null)
+            {
+                StatusMessage = "Seleccione un equipo para exportar.";
+                return;
+            }
+
+            IsLoading = true;
+            StatusMessage = "Generando hoja de vida...";
+
+            // Crear servicio de exportación
+            var exportService = new HojaVidaExportService();
+            
+            // Obtener todos los mantenimientos realizados (no paginados)
+            var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
+            var mantenimientosRealizados = todosSeguimientos
+                .Where(s => s.Codigo == SelectedEquipo.Codigo && 
+                           s.Estado != EstadoSeguimientoMantenimiento.Pendiente &&
+                           s.Estado != EstadoSeguimientoMantenimiento.Atrasado)
+                .OrderByDescending(s => s.FechaRegistro)
+                .ToList();
+
+            // Abrir diálogo para guardar archivo
+            var dlg = new VistaSaveFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                FileName = $"HojaVida_{SelectedEquipo.Codigo}_{DateTime.Now:yyyyMMdd}.xlsx"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                await exportService.ExportarHojaVidaAsync(
+                    SelectedEquipo,
+                    mantenimientosRealizados,
+                    dlg.FileName
+                );
+
+                StatusMessage = $"Hoja de vida exportada correctamente a {Path.GetFileName(dlg.FileName)}";
+                System.Windows.MessageBox.Show("¡Hoja de vida exportada correctamente!", "Éxito", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al exportar hoja de vida");
+            StatusMessage = "Error al exportar hoja de vida.";
+            System.Windows.MessageBox.Show($"Error: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // Optimización: Control de carga para evitar recargas innecesarias
@@ -112,8 +310,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private bool canEditarEquipo;
     [ObservableProperty]
-    private bool canDarDeBajaEquipo;    [ObservableProperty]
+    private bool canDarDeBajaEquipo;    
+    [ObservableProperty]
     private bool canRegistrarMantenimientoPermiso;
+
     // Propiedades alias para compatibilidad con la vista XAML
     public bool CanAddEquipo => CanRegistrarEquipo;
     public bool CanDeleteEquipo => CanDarDeBajaEquipo;
@@ -127,7 +327,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         ICurrentUserService currentUserService,
         IDatabaseConnectionService databaseService)
         : base(databaseService, logger)
-    {        try
+    {        
+        try
         {
             _equipoService = equipoService;
             _cronogramaService = cronogramaService;
@@ -188,10 +389,13 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
         }
         catch (Exception ex)
-        {            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
+        {            
+            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
             throw; // Re-lanzar para que se capture en el nivel superior
         }
-    }    [RelayCommand]
+    }    
+
+    [RelayCommand]
     public async Task LoadEquipos()
     {
         await LoadEquiposAsync(forceReload: true);
@@ -231,7 +435,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         StatusMessage = "Cargando equipos...";
         
         try
-        {        var lista = await _equipoService.GetAllAsync();
+        {        
+            var lista = await _equipoService.GetAllAsync();
             
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -283,7 +488,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var owner = System.Windows.Application.Current?.MainWindow;
             if (owner != null) dialog.Owner = owner;
             dialog.ConfigurarParaVentanaPadre(owner);
-            var result = dialog.ShowDialog();            if (result == true)
+            var result = dialog.ShowDialog();            
+            if (result == true)
             {
                 await _equipoService.AddAsync(dialog.Equipo);
                 await LoadEquiposAsync(forceReload: true); // Forzar recarga tras agregar
@@ -466,7 +672,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     public IEnumerable<TipoMantenimiento> TiposMantenimiento => System.Enum.GetValues(typeof(TipoMantenimiento)) as TipoMantenimiento[] ?? new TipoMantenimiento[0];
     public IEnumerable<Sede> Sedes => System.Enum.GetValues(typeof(Sede)) as Sede[] ?? new Sede[0];
     public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento => (System.Enum.GetValues(typeof(FrecuenciaMantenimiento)) as FrecuenciaMantenimiento[] ?? new FrecuenciaMantenimiento[0])
-        .Where(f => f != FrecuenciaMantenimiento.Correctivo && f != FrecuenciaMantenimiento.Predictivo);    partial void OnMostrarDadosDeBajaChanged(bool value)
+        .Where(f => f != FrecuenciaMantenimiento.Correctivo && f != FrecuenciaMantenimiento.Predictivo);    
+
+    partial void OnMostrarDadosDeBajaChanged(bool value)
     {
         // Aplicar filtro a la colección existente sin recargar del servicio
         if (_allEquipos == null || _allEquipos.Count == 0)
@@ -615,7 +823,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 IsLoading = false;
             }
         }
-    }    [RelayCommand]
+    }    
+
+    [RelayCommand]
     public void VerDetallesEquipo(EquipoDto? equipo)
     {
         if (equipo == null)
@@ -688,7 +898,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
             var result = dialog.ShowDialog();
-            if (result == true)            {
+            if (result == true)            
+            {
                 // Asignar la frecuencia automáticamente según el tipo
                 if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
                     dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
@@ -712,7 +923,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     {
         _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
         RecalcularPermisos();
-    }    private void RecalcularPermisos()
+    }    
+
+    private void RecalcularPermisos()
     {
         CanRegistrarEquipo = _currentUser.HasPermission("GestionMantenimientos.NuevoEquipo");
         CanEditarEquipo = _currentUser.HasPermission("GestionMantenimientos.EditarEquipo"); // Si existe este permiso en la BD
@@ -721,7 +934,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         // Notificar cambios en las propiedades alias
         OnPropertyChanged(nameof(CanAddEquipo));
         OnPropertyChanged(nameof(CanDeleteEquipo));
-        OnPropertyChanged(nameof(CanExportEquipo));    }
+        OnPropertyChanged(nameof(CanExportEquipo));    
+    }
 
     // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
     protected override async Task RefreshDataAsync()

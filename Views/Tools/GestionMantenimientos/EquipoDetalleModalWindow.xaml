@@ -1,6 +1,7 @@
 <Window x:Class="GestLog.Views.Tools.GestionMantenimientos.EquipoDetalleModalWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:converters="clr-namespace:GestLog.Converters"
         Title="Detalle del Equipo" 
         WindowStyle="None"
@@ -14,6 +15,8 @@
     
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         
         <DropShadowEffect x:Key="WindowShadow" Color="#504F4E" Direction="315" ShadowDepth="4" Opacity="0.08" BlurRadius="8" RenderingBias="Quality"/>
         <DropShadowEffect x:Key="SectionShadow" Color="#9D9D9C" Direction="270" ShadowDepth="1" Opacity="0.03" BlurRadius="3" RenderingBias="Quality"/>
@@ -35,16 +38,20 @@
         <SolidColorBrush x:Key="WarningBrush" Color="#F9B233"/>
         <SolidColorBrush x:Key="SuccessBrush" Color="#27AE60"/>
         
+        <!-- Opciones para registros por página -->
+        <x:Array x:Key="registrosPorPaginaItems" Type="sys:Int32" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+            <sys:Int32>5</sys:Int32>
+            <sys:Int32>10</sys:Int32>
+            <sys:Int32>15</sys:Int32>
+            <sys:Int32>20</sys:Int32>
+        </x:Array>
+        
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="19"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
@@ -53,10 +60,6 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Opacity" Value="0.85"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="LabelTextStyle" TargetType="TextBlock">
@@ -66,10 +69,6 @@
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
             <Setter Property="Margin" Value="0,0,8,4"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="ValueTextStyle" TargetType="TextBlock">
@@ -79,10 +78,6 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
             <Setter Property="LineHeight" Value="18"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
@@ -91,10 +86,6 @@
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
         
         <Style x:Key="StatusBadge" TargetType="Border">
@@ -102,8 +93,6 @@
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect Color="#00000015" Direction="270" ShadowDepth="1" BlurRadius="2" Opacity="0.15" RenderingBias="Quality"/>
@@ -134,12 +123,9 @@
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
-            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
         </Style>
-          <Style x:Key="PrimaryActionButtonStyle" TargetType="Button">
+        
+        <Style x:Key="PrimaryActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -149,13 +135,11 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="MinHeight" Value="40"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -172,22 +156,19 @@
                 </Setter.Value>
             </Setter>
         </Style>
-          <Style x:Key="CloseButton" TargetType="Button">
+        
+        <Style x:Key="CloseButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
-            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Width" Value="36"/>
             <Setter Property="Height" Value="36"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -201,7 +182,8 @@
                 </Setter.Value>
             </Setter>
         </Style>
-          <Style x:Key="DangerActionButtonStyle" TargetType="Button">
+        
+        <Style x:Key="DangerActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
@@ -211,13 +193,11 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="MinHeight" Value="40"/>
-            <Setter Property="UseLayoutRounding" Value="True"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -233,48 +213,73 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style></Window.Resources>    <!-- Overlay con renderizado optimizado -->
-    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
-          UseLayoutRounding="True"
-          SnapsToDevicePixels="True"
-          Background="#80000000">          <!-- Panel principal con renderizado optimizado -->
-        <Border Width="720" 
-                MaxHeight="900" 
-                Background="{StaticResource SurfaceBrush}" 
-                CornerRadius="8"
-                Padding="0" 
-                HorizontalAlignment="Center" 
-                VerticalAlignment="Center"
-                Margin="20"
-                BorderThickness="1"
-                BorderBrush="{StaticResource BorderBrush}"
-                Effect="{StaticResource WindowShadow}"
-                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
-                UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
-            <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+        </Style>
+        
+        <Style x:Key="CancelActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#DC3545"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="28,12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E74C3C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#A93226"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">
+        <Border Width="720" MaxHeight="900" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="0" 
+                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20" BorderThickness="1"
+                BorderBrush="{StaticResource BorderBrush}" Effect="{StaticResource WindowShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
+                <!-- Header -->
                 <Border Grid.Row="0" CornerRadius="8,8,0,0" Padding="24,14" Effect="{StaticResource HeaderShadow}">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                             <GradientStop Color="#118938" Offset="0"/>
                             <GradientStop Color="#2B8E3F" Offset="1"/>
                         </LinearGradientBrush>
-                    </Border.Background>                    <DockPanel LastChildFill="False">
+                    </Border.Background>
+                    <DockPanel LastChildFill="False">
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36">
+                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="Detalle del Equipo" Style="{StaticResource HeaderTextStyle}"/>
                                 <TextBlock Text="Información completa del equipo y sus detalles" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
                             </StackPanel>
                         </StackPanel>
-                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource CloseButton}" Click="CloseButton_Click" ToolTip="Cerrar (Esc)" Margin="0,-6,-6,0">
+                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource CloseButton}" 
+                                Click="CloseButton_Click" ToolTip="Cerrar (Esc)" Margin="0,-6,-6,0">
                             <Grid Width="14" Height="14">
                                 <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                 <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
@@ -282,10 +287,14 @@
                         </Button>
                     </DockPanel>
                 </Border>
-                  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,12" Background="{StaticResource LightGrayBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,12" Background="{StaticResource LightGrayBrush}">
+                    <StackPanel>
+                        <!-- Información General -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" 
+                                Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
@@ -332,8 +341,11 @@
                                 <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedEquipo.Precio, StringFormat='C0'}" Style="{StaticResource ValueTextStyle}"/>
                             </Grid>
                         </Border>
-                          <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                        
+                        <!-- Fechas -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" 
+                                Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="*"/>
@@ -345,77 +357,273 @@
                                 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Fecha Compra:" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEquipo.FechaCompra, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}"/>
-                                  <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha Baja:" Style="{StaticResource LabelTextStyle}"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha Baja:" Style="{StaticResource LabelTextStyle}"/>
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEquipo.FechaBaja, StringFormat='dd/MM/yyyy'}" Style="{StaticResource ValueTextStyle}"/>
-                            </Grid>                        </Border>
+                            </Grid>
+                        </Border>
                         
-                        <!-- Panel de observaciones -->
-                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
+                        <!-- Observaciones -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" 
+                                Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <StackPanel>
                                 <TextBlock Text="Observaciones" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,12"/>
                                 <TextBlock Text="{Binding SelectedEquipo.Observaciones}" Style="{StaticResource ValueTextStyle}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
                             </StackPanel>
-                        </Border>                          <!-- Panel de acciones -->
-                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,12,0,0" Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True">                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <Button x:Name="RegistrarMantenimientoActionButton" Content="🔧 Registrar Mantenimiento" Margin="0,0,12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
-                                            <Setter Property="IsEnabled" Value="True"/>
-                                            <Setter Property="Command" Value="{Binding RegistrarMantenimientoCommand}"/>
-                                            <Setter Property="CommandParameter" Value="{Binding SelectedEquipo}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="Activo">
-                                                    <Setter Property="IsEnabled" Value="True"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="Inactivo">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="EnMantenimiento">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="EnReparacion">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Button x:Name="DeleteActionButton" Content="🗑 Dar de Baja" Click="DeleteButton_Click" Margin="0,0,12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource DangerActionButtonStyle}">
-                                            <Setter Property="IsEnabled" Value="True"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Button x:Name="EditActionButton" Content="✎ Editar" Click="EditButton_Click">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
-                                            <Setter Property="IsEnabled" Value="True"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
-                                                    <Setter Property="IsEnabled" Value="False"/>
-                                                    <Setter Property="Opacity" Value="0.5"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
+                        </Border>
+                          <!-- Historial de Mantenimientos -->
+                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="18" Margin="0,0,0,12" 
+                                Effect="{StaticResource SectionShadow}" BorderThickness="1" BorderBrush="{StaticResource BorderLightBrush}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="📋 Historial de Mantenimientos" Style="{StaticResource SectionTitleStyle}"/>
+                                    <Button Grid.Column="1" Content="📥 Exportar a Excel" 
+                                            Command="{Binding ExportarHojaVidaEquipoCommand}"
+                                            Style="{StaticResource PrimaryActionButtonStyle}"
+                                            Padding="16,8" FontSize="11" MinHeight="32"
+                                            ToolTip="Exportar toda la hoja de vida del equipo a Excel"/>
+                                </Grid>
+                                
+                                <ItemsControl ItemsSource="{Binding HistorialMantenimientosVisibles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="6" BorderThickness="1" Padding="12" Margin="0,0,0,10"
+                                                    BorderBrush="{StaticResource BorderLightBrush}" Background="{StaticResource SurfaceElevatedBrush}">
+                                                <StackPanel>
+                                                    <!-- Tipo y Descripción -->
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                        <TextBlock Text="{Binding TipoMtno}" FontWeight="SemiBold" FontSize="12" 
+                                                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding Descripcion}" FontSize="12" FontWeight="Medium"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    </StackPanel>
+                                                    
+                                                    <!-- Estado -->
+                                                    <Border CornerRadius="4" Padding="8,4" Margin="0,0,0,8" HorizontalAlignment="Left" Background="{StaticResource SuccessBrush}">
+                                                        <TextBlock Text="{Binding Estado}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                    
+                                                    <!-- Responsable y Costo -->
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto" MinWidth="100"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="👤 " Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,3,0"/>
+                                                            <TextBlock Text="{Binding Responsable}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Costo, StringFormat='${0:N0}'}" 
+                                                                   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    </Grid>
+                                                    
+                                                    <!-- Fechas -->
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Orientation="Vertical">
+                                                            <TextBlock Text="Programado:" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,2"/>
+                                                            <TextBlock Text="{Binding SemanaTexto}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                                                            <TextBlock Text="Realizado:" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,2"/>
+                                                            <TextBlock Text="{Binding FechaRegistro, StringFormat='dd/MM/yyyy'}" 
+                                                                       FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    
+                                                    <!-- Observaciones -->
+                                                    <TextBlock Text="{Binding Observaciones}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" 
+                                                               TextWrapping="Wrap">
+                                                        <TextBlock.Visibility>
+                                                            <Binding Path="Observaciones" Converter="{StaticResource NullToVisibilityConverter}"/>
+                                                        </TextBlock.Visibility>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                                <!-- Mensaje sin mantenimientos -->
+                                <TextBlock Text="No hay mantenimientos realizados aún." FontSize="12" Foreground="{StaticResource TextMutedBrush}" 
+                                           FontStyle="Italic" Margin="0,12,0,0">
+                                    <TextBlock.Visibility>
+                                        <Binding Path="SelectedEquipo.MantenimientosRealizados.Count" Converter="{StaticResource CountToVisibilityConverter}"/>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
+                                
+                                <!-- Controles de Paginación -->
+                                <Border Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="6" Padding="12" Margin="0,16,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>                                        <!-- Botón Anterior -->
+                                        <Button Grid.Column="0" Content="◄ Anterior" 
+                                                Command="{Binding HistorialPaginaAnteriorCommand}"
+                                                Background="{StaticResource PrimaryBrush}"
+                                                Foreground="White"
+                                                Padding="12,6" 
+                                                FontSize="11"
+                                                Cursor="Hand">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        CornerRadius="4">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HistorialPaginaActual}" Value="1">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Setter Property="Opacity" Value="0.5"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        
+                                        <!-- Información de página -->
+                                        <TextBlock Grid.Column="1">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="Página {0:D0} de {1:D0}">
+                                                    <Binding Path="HistorialPaginaActual"/>
+                                                    <Binding Path="HistorialTotalPaginas"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="8,0"/>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <!-- Registros por página -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                            <TextBlock Text="Mostrar:" Foreground="{StaticResource TextMutedBrush}" FontSize="10" Margin="0,0,6,0"/>
+                                            <ComboBox ItemsSource="{Binding Source={StaticResource registrosPorPaginaItems}}"
+                                                     SelectedItem="{Binding HistorialRegistrosPorPagina}"
+                                                     Width="50"
+                                                     Height="24"
+                                                     FontSize="10"
+                                                     Padding="4"/>
+                                        </StackPanel>
+                                          <!-- Botón Siguiente -->
+                                        <Button Grid.Column="4" Content="Siguiente ►" 
+                                                Command="{Binding HistorialPaginaSiguienteCommand}"
+                                                Background="{StaticResource PrimaryBrush}"
+                                                Foreground="White"
+                                                Padding="12,6" 
+                                                FontSize="11"
+                                                Cursor="Hand"
+                                                IsEnabled="{Binding HistorialPuedeIrSiguiente}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        CornerRadius="4">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
-                        </Border></StackPanel>
+                        </Border>
+                    </StackPanel>
                 </ScrollViewer>
+                
+                <!-- Footer con acciones sticky -->
+                <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,8,8" Padding="18" 
+                        Effect="{StaticResource SectionShadow}" BorderThickness="1,0,1,1" BorderBrush="{StaticResource BorderLightBrush}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="RegistrarMantenimientoActionButton" Content="🔧 Registrar Mantenimiento" Margin="0,0,12,0"
+                                Command="{Binding RegistrarMantenimientoCommand}"
+                                CommandParameter="{Binding SelectedEquipo}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="Inactivo">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button x:Name="DeleteActionButton" Content="🗑 Dar de Baja" Click="DeleteButton_Click" Margin="0,0,12,0"
+>
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource DangerActionButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button x:Name="EditActionButton" Content="✎ Editar" Click="EditButton_Click" Margin="0,0,12,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedEquipo.Estado}" Value="DadoDeBaja">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
     </Grid>

@@ -55,6 +55,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             _semanaNorm = Semana.ToString();
             _anioNorm = Anio.ToString();
         }
+        
+        /// <summary>
+        /// Propiedad calculada que retorna el texto de la semana programada en formato legible
+        /// </summary>
+        public string SemanaTexto => $"Semana {Semana}, año {Anio}";
+
         public string CodigoNorm => _codigoNorm ?? string.Empty;
         public string NombreNorm => _nombreNorm ?? string.Empty;
         public string TipoMtnoNorm => _tipoMtnoNorm ?? string.Empty;

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using System.Runtime.CompilerServices;
+using System.Collections.ObjectModel;
 
 namespace GestLog.Modules.GestionMantenimientos.Models
 {
@@ -13,7 +14,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         public string? Nombre { get; set; } // Nombre ahora puede ser null
         public string? Marca { get; set; }
         public EstadoEquipo? Estado { get; set; }
-        public Sede? Sede { get; set; }        public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
+        public Sede? Sede { get; set; }        
+        public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
         public DateTime? FechaRegistro { get; set; } // Fecha de alta del equipo
         public DateTime? FechaCompra { get; set; }   // Fecha de compra - usada como referencia para generar cronogramas
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
@@ -23,8 +25,10 @@ namespace GestLog.Modules.GestionMantenimientos.Models
         // Nuevas propiedades
         public string? Clasificacion { get; set; }
         public string? CompradoA { get; set; }
-        // SemanaInicioMtto eliminado: se calcula a partir de FechaCompra
-
+        
+        // Colección de seguimientos (historial de mantenimientos realizados)
+        public ObservableCollection<SeguimientoMantenimientoDto> MantenimientosRealizados { get; set; } = new();
+    
         // Propiedades auxiliares para la UI (no persistentes)
         private bool _isCodigoReadOnly = false;
         public bool IsCodigoReadOnly
@@ -74,6 +78,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models
             FrecuenciaMtto = other.FrecuenciaMtto;
             FechaBaja = other.FechaBaja;
             FechaCompra = other.FechaCompra;
+            // Copiar el historial de mantenimientos
+            MantenimientosRealizados = new ObservableCollection<SeguimientoMantenimientoDto>(other.MantenimientosRealizados);
             // SemanaInicioMtto eliminado
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
