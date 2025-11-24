@@ -100,9 +100,7 @@ namespace GestLog.Views.Tools.GestionEquipos
         private bool isReadOnlyMode = false;
 
         [ObservableProperty]
-        private bool showDeleteButton = false;
-
-        public PerifericoDialogViewModel(
+        private bool showDeleteButton = false;        public PerifericoDialogViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             DispositivoAutocompletadoService dispositivoService,
             MarcaAutocompletadoService marcaService)
@@ -113,12 +111,30 @@ namespace GestLog.Views.Tools.GestionEquipos
             
             PerifericoActual.FechaCompra = DateTime.Now;
             PerifericoActual.Estado = EstadoPeriferico.EnUso;
-            PerifericoActual.Sede = SedePeriferico.AdministrativaBarranquilla;
             PerifericoActual.Costo = 0;
             
-            PropertyChanged += OnPropertyChanged;
+            // NO establecer Sede aquí por defecto. Si es nuevo, se asignará en la llamada CreatePerifericoForNew().
+            // Si es edición, ConfigurarParaEdicion() lo establecerá correctamente.
             
-            _ = Task.Run(CargarDatosAutocompletadoAsync);
+            PropertyChanged += OnPropertyChanged;
+              _ = Task.Run(CargarDatosAutocompletadoAsync);
+        }
+
+        /// <summary>
+        /// Configura el ViewModel para crear un nuevo periférico con valores por defecto
+        /// </summary>
+        public void ConfigurarParaNuevo()
+        {
+            // Asegurar que se tiene un nuevo DTO
+            if (PerifericoActual == null)
+                PerifericoActual = new PerifericoEquipoInformaticoDto();
+
+            // Establecer Sede por defecto para nuevos
+            PerifericoActual.Sede = SedePeriferico.AdministrativaBarranquilla;
+            
+            TituloDialog = "Agregar Periférico";
+            TextoBotonPrincipal = "Guardar";
+            IsEditing = false;
         }
 
         private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -832,9 +848,7 @@ namespace GestLog.Views.Tools.GestionEquipos
     /// </summary>
     public partial class PerifericoDialog : Window
     {
-        public PerifericoDialogViewModel ViewModel { get; }
-
-        public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
+        public PerifericoDialogViewModel ViewModel { get; }        public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             InitializeComponent();
 
@@ -849,13 +863,15 @@ namespace GestLog.Views.Tools.GestionEquipos
                 marcaService = new MarcaAutocompletadoService(dbContextFactory);
 
             ViewModel = new PerifericoDialogViewModel(dbContextFactory, dispositivoService, marcaService);
+            // Configurar para nuevo periférico por defecto
+            ViewModel.ConfigurarParaNuevo();
             DataContext = ViewModel;
 
             Loaded += async (s, e) =>
             {
                 await ViewModel.CargarPersonasConEquipoAsync();
             };
-        }        // Helper para asignar Owner sin forzar tamaño (PerifericoDialog es un dialog normal, no overlay modal)
+        }// Helper para asignar Owner sin forzar tamaño (PerifericoDialog es un dialog normal, no overlay modal)
         public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
         {
             if (parentWindow != null)

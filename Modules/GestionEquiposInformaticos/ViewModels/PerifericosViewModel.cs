@@ -454,14 +454,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     if (ownerWindow != null)
                     {
                         dialog.Owner = ownerWindow;
-                    }
-
-                    if (dialog.ShowDialog() == true)
+                    }                    if (dialog.ShowDialog() == true)
                     {
                         _logger.LogInformation($"[PerifericosViewModel] VerDetallesPerifericoAsync: Editor devolvió TRUE para {codigoOriginal}. Guardando cambios...");
                         var perifericoEditado = dialog.ViewModel.PerifericoActual;
                         await GuardarPerifericoAsync(perifericoEditado, esNuevo: false, originalCodigo: codigoOriginal);
-                        await CargarPerifericosAsync();
+                        // No recargar: GuardarPerifericoAsync ya actualiza la colección correctamente
+                        // await CargarPerifericosAsync() causaría duplicación visual temporal
                         StatusMessage = "Periférico actualizado correctamente";
                     }
                     else
@@ -702,27 +701,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                 // Actualizar UI de forma asíncrona
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    if (esNuevo)
+                {                    if (esNuevo)
                     {
                         var nuevoDto = ConvertirEntityADto(entity);
                         Perifericos.Add(nuevoDto);
-                    }
-                    else
+                    }                    else
                     {
-                        // Para ediciones, reemplazar completamente el DTO para asegurar que se actualice la vista
+                        // Para ediciones, actualizar in-place sin reemplazar para evitar duplicación visual
                         var searchCodigo = string.IsNullOrWhiteSpace(originalNonNull) ? actualCodigoNonNull : originalNonNull;
-                        var indice = Perifericos.ToList().FindIndex(p => p.Codigo == searchCodigo);
-                        if (indice >= 0)
+                        var dtoExistente = Perifericos.FirstOrDefault(p => p.Codigo == searchCodigo);
+                        if (dtoExistente != null)
                         {
-                            var dtoActualizado = ConvertirEntityADto(entity);
-                            Perifericos[indice] = dtoActualizado;
-
-                            // Actualizar la selección si es necesario
-                            if (PerifericoSeleccionado?.Codigo == searchCodigo)
-                            {
-                                PerifericoSeleccionado = dtoActualizado;
-                            }
+                            // Actualizar propiedades del DTO existente sin crear uno nuevo
+                            // Esto evita duplicación porque no se reemplaza el item en la colección observable
+                            ActualizarDto(dtoExistente, entity);
                         }
                     }
 

@@ -288,13 +288,11 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
-                            <!-- Fila 1: Sede y Estado -->
-                            <StackPanel Grid.Row="0" Grid.Column="0">
+                            <!-- Fila 1: Sede y Estado -->                            <StackPanel Grid.Row="0" Grid.Column="0">
                                 <TextBlock Text="Sede *" Style="{StaticResource LabelTextStyle}"/>
                                 <ComboBox x:Name="CmbSede" 
                                           ItemsSource="{Binding SedesDisponibles}"
-                                          SelectedValuePath="Content"
-                                          SelectedValue="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                          SelectedItem="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                           Style="{StaticResource InputStyle}"
                                           IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
@@ -304,12 +302,11 @@
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
-                            
-                            <StackPanel Grid.Row="0" Grid.Column="2">
+                              <StackPanel Grid.Row="0" Grid.Column="2">
                                 <TextBlock Text="Estado *" Style="{StaticResource LabelTextStyle}"/>
                                 <ComboBox x:Name="CmbEstado" 
                                           ItemsSource="{Binding EstadosDisponibles}"
-                                          SelectedItem="{Binding PerifericoActual.Estado, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectedItem="{Binding PerifericoActual.Estado, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                           Style="{StaticResource InputStyle}"
                                           IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
