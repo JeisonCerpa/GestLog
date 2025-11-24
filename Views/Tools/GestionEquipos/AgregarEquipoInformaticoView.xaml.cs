@@ -30,10 +30,15 @@ namespace GestLog.Views.Tools.GestionEquipos
             {
                 // No crítico
             }
+              // ✅ MIGRADO: Configurar DataContext usando DI para resolver dependencias DatabaseAwareViewModel
+            var app = (App?)System.Windows.Application.Current;
+            var serviceProvider = app?.ServiceProvider;
+            if (serviceProvider == null)
+            {
+                // Fallback si no se puede resolver
+                return;
+            }
             
-            // ✅ MIGRADO: Configurar DataContext usando DI para resolver dependencias DatabaseAwareViewModel
-            var app = (App)System.Windows.Application.Current;
-            var serviceProvider = app.ServiceProvider;
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
             var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLog.Modules.DatabaseConnection.GestLogDbContext>>();
             var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
