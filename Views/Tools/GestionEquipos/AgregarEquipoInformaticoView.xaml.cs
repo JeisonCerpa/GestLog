@@ -10,12 +10,26 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Views.Tools.GestionEquipos
-{
-    public partial class AgregarEquipoInformaticoView : Window
+{    public partial class AgregarEquipoInformaticoView : Window
     {
+        private System.Windows.Forms.Screen? _lastScreenOwner;
+
         public AgregarEquipoInformaticoView()
         {
             InitializeComponent();
+            
+            // Configurar como overlay modal
+            try
+            {
+                this.Owner = System.Windows.Application.Current?.MainWindow;
+                this.ShowInTaskbar = false;
+                // Maximizar ANTES de mostrar para que se abra ya en pantalla completa
+                this.WindowState = WindowState.Maximized;
+            }
+            catch
+            {
+                // No crítico
+            }
             
             // ✅ MIGRADO: Configurar DataContext usando DI para resolver dependencias DatabaseAwareViewModel
             var app = (App)System.Windows.Application.Current;
@@ -36,6 +50,13 @@ namespace GestLog.Views.Tools.GestionEquipos
                     if (viewModel.PersonasDisponibles == null || !viewModel.PersonasDisponibles.Any())
                     {
                         await viewModel.InicializarAsync();
+                    }
+
+                    // Si tiene Owner, sincronizar cambios de tamaño
+                    if (this.Owner != null)
+                    {
+                        this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                        this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
                     }
                 }
                 catch { }
@@ -110,6 +131,62 @@ namespace GestLog.Views.Tools.GestionEquipos
                 this.DialogResult = false;
                 this.Close();
             }
+        }        /// <summary>
+        /// Manejador para sincronizar tamaño cuando la ventana padre cambia
+        /// </summary>
+        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        {
+            if (this.Owner == null) return;
+
+            this.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
+                    this.WindowState = WindowState.Maximized;
+                    
+                    // Detectar si el Owner cambió de pantalla
+                    var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
+                    var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+
+                    // Si cambió de pantalla, actualizar la referencia
+                    if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+                    {
+                        _lastScreenOwner = currentScreen;
+                    }
+                }
+                catch
+                {
+                    // En caso de error, asegurar que la ventana está maximizada
+                    this.WindowState = WindowState.Maximized;
+                }
+            });
+        }
+
+        /// <summary>
+        /// Manejador de clic en overlay - cierra la ventana
+        /// </summary>
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        /// <summary>
+        /// Previene que el clic en la card cierre la ventana
+        /// </summary>
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Cierra la ventana desde el botón X del header
+        /// </summary>
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
         }
     }
 }

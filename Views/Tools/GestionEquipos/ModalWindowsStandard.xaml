@@ -19,13 +19,20 @@
                       Opacity="0.03" 
                       BlurRadius="3"
                       RenderingBias="Quality"/>
-                       
-    <DropShadowEffect x:Key="HeaderShadow" 
+                         <DropShadowEffect x:Key="HeaderShadow" 
                       Color="#0F7530" 
                       Direction="270" 
                       ShadowDepth="1" 
                       Opacity="0.04" 
                       BlurRadius="2"
+                      RenderingBias="Quality"/>
+
+    <DropShadowEffect x:Key="CardShadow" 
+                      Color="#20000000" 
+                      Direction="270" 
+                      ShadowDepth="2" 
+                      Opacity="0.08" 
+                      BlurRadius="8"
                       RenderingBias="Quality"/>
 
     <!-- Paleta corporativa de GestLog -->
@@ -60,15 +67,44 @@
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="Opacity" Value="0.85"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-
-    <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+    </Style>    <Style x:Key="LabelTextStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
         <Setter Property="Margin" Value="0,0,8,4"/>
         <Setter Property="VerticalAlignment" Value="Top"/>
+    </Style>
+
+    <!-- InputStyle para campos de entrada (TextBox, ComboBox, DatePicker, etc.) -->
+    <Style x:Key="InputStyle" TargetType="Control">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Style.Triggers>
+            <Trigger Property="IsFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- SectionHeaderStyle para títulos de secciones -->
+    <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,20"/>
     </Style>
 
     <Style x:Key="ValueTextStyle" TargetType="TextBlock">

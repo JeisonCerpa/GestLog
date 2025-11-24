@@ -841,14 +841,14 @@ namespace GestLog.Views.Tools.GestionEquipos
         {
             return IsReadOnlyMode;
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Code-behind para el diálogo de periféricos
     /// </summary>
     public partial class PerifericoDialog : Window
     {
-        public PerifericoDialogViewModel ViewModel { get; }        public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
+        public PerifericoDialogViewModel ViewModel { get; }
+
+        public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             InitializeComponent();
 
@@ -860,43 +860,83 @@ namespace GestLog.Views.Tools.GestionEquipos
             if (dispositivoService == null)
                 dispositivoService = new DispositivoAutocompletadoService(dbContextFactory);
             if (marcaService == null)
-                marcaService = new MarcaAutocompletadoService(dbContextFactory);
-
-            ViewModel = new PerifericoDialogViewModel(dbContextFactory, dispositivoService, marcaService);
+                marcaService = new MarcaAutocompletadoService(dbContextFactory);            ViewModel = new PerifericoDialogViewModel(dbContextFactory, dispositivoService, marcaService);
             // Configurar para nuevo periférico por defecto
             ViewModel.ConfigurarParaNuevo();
-            DataContext = ViewModel;
+            DataContext = ViewModel;            // Configurar como overlay modal
+            try
+            {
+                this.Owner = System.Windows.Application.Current?.MainWindow;
+                this.ShowInTaskbar = false;
+                // Maximizar ANTES de mostrar para que se abra ya en pantalla completa
+                this.WindowState = WindowState.Maximized;
+            }
+            catch
+            {
+                // No crítico
+            }
 
             Loaded += async (s, e) =>
             {
                 await ViewModel.CargarPersonasConEquipoAsync();
+                
+                // Si tiene Owner, sincronizar cambios de tamaño
+                if (this.Owner != null)
+                {
+                    this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                    this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+                }
             };
-        }// Helper para asignar Owner sin forzar tamaño (PerifericoDialog es un dialog normal, no overlay modal)
+        }
+
+        /// <summary>
+        /// Constructor para editar un periférico existente
+        /// </summary>
+        public PerifericoDialog(PerifericoEquipoInformaticoDto perifericoParaEditar, IDbContextFactory<GestLogDbContext> dbContextFactory) : this(dbContextFactory)
+        {
+            ViewModel.ConfigurarParaEdicion(perifericoParaEditar);
+        }        /// <summary>
+        /// Helper para configurar la ventana como overlay modal (opcional, ya se configura en Loaded)
+        /// </summary>
         public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
         {
             if (parentWindow != null)
             {
                 Owner = parentWindow;
                 ShowInTaskbar = false;
-                // PerifericoDialog respeta sus propios tamaños (Height="700" Width="900")
-                // No forzar WindowState.Maximized ya que no es un overlay modal
+                // El WindowState se configurará en Loaded
             }
         }
 
-        public PerifericoDialog(PerifericoEquipoInformaticoDto perifericoParaEditar, IDbContextFactory<GestLogDbContext> dbContextFactory) : this(dbContextFactory)
+        /// <summary>
+        /// Manejador para cerrar el modal al hacer clic en el overlay
+        /// </summary>
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            ViewModel.ConfigurarParaEdicion(perifericoParaEditar);
+            this.DialogResult = false;
+            this.Close();
         }
 
-        private void BtnCancelar_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Manejador para prevenir que el clic dentro del card cierre la ventana
+        /// </summary>
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            DialogResult = false;
-            Close();
+            e.Handled = true;
         }
 
-        // BtnGuardar_Click eliminado: uso exclusivo de GuardarCommand desde XAML
+        /// <summary>
+        /// Manejador para el botón Cerrar/Cancelar
+        /// </summary>
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
 
-        
+        /// <summary>
+        /// Manejador para el evento OnClosing
+        /// </summary>
         protected override void OnClosing(CancelEventArgs e)
         {
             if (ViewModel.DialogResult)
@@ -904,6 +944,28 @@ namespace GestLog.Views.Tools.GestionEquipos
                 DialogResult = true;
             }
             base.OnClosing(e);
+        }
+
+        /// <summary>
+        /// Manejador para sincronizar tamaño cuando la ventana padre cambia
+        /// </summary>
+        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        {
+            if (this.Owner == null) return;
+
+            this.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
+                    this.WindowState = WindowState.Maximized;
+                }
+                catch
+                {
+                    // En caso de error, asegurar que la ventana está maximizada
+                    this.WindowState = WindowState.Maximized;
+                }
+            });
         }
     }
 }
