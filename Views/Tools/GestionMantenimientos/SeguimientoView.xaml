@@ -6,11 +6,11 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
-    <UserControl.Resources>
+             d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <converters:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
+        <converters:EstadoSeguimientoToColorConverter x:Key="EstadoSeguimientoToColorConverter"/>
         <converters:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter"/>
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
@@ -301,12 +301,11 @@
                         <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
+                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="12" Padding="6,2"
-                                            Background="{Binding Estado, Converter={StaticResource EstadoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
+                                            Background="{Binding Estado, Converter={StaticResource EstadoSeguimientoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
                                         <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}"
                                                    Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12"/>
                                     </Border>
