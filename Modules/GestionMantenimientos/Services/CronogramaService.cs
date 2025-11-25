@@ -431,25 +431,106 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             int weeksInYear = ISOWeek.GetWeeksInYear(year);
             var semanas = new bool[weeksInYear];
             if (frecuencia == null) return semanas;
-            if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;            int salto = frecuencia switch
+            if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;
+
+            // Usar el nuevo método mejorado que calcula basado en fechas reales
+            return GenerarSemanasBasadoEnFechas(semanaInicio, frecuencia, year);
+        }        /// <summary>
+        /// Genera un array de semanas basado en cálculos de fechas reales.
+        /// Esto es más preciso que usar saltos fijos de semanas, especialmente para 
+        /// frecuencias como cuatrimestral que dependen de meses específicos.
+        /// </summary>
+        private static bool[] GenerarSemanasBasadoEnFechas(int semanaInicio, FrecuenciaMantenimiento? frecuencia, int year)
+        {
+            int weeksInYear = ISOWeek.GetWeeksInYear(year);
+            var semanas = new bool[weeksInYear];
+            
+            if (frecuencia == null || semanaInicio < 1 || semanaInicio > weeksInYear)
+                return semanas;
+
+            // Calcular la fecha del lunes de la semana de inicio
+            var fechaInicio = GetLunesDeISOMeek(year, semanaInicio);
+            
+            // Determinar cuántos meses se deben sumar según la frecuencia
+            int mesesAsumar = frecuencia switch
             {
-                FrecuenciaMantenimiento.Semanal => 1,
-                FrecuenciaMantenimiento.Quincenal => 2,
-                FrecuenciaMantenimiento.Mensual => 4,
-                FrecuenciaMantenimiento.Bimestral => 8,
-                FrecuenciaMantenimiento.Trimestral => 13,
-                FrecuenciaMantenimiento.Cuatrimestral => 17,
-                FrecuenciaMantenimiento.Semestral => 26,
-                FrecuenciaMantenimiento.Anual => weeksInYear,
+                FrecuenciaMantenimiento.Semanal => 0, // Especial: 1 semana
+                FrecuenciaMantenimiento.Quincenal => 0, // Especial: 2 semanas
+                FrecuenciaMantenimiento.Mensual => 1,
+                FrecuenciaMantenimiento.Bimestral => 2,
+                FrecuenciaMantenimiento.Trimestral => 3,
+                FrecuenciaMantenimiento.Cuatrimestral => 4, // ✅ AQUÍ ESTÁ LA SOLUCIÓN
+                FrecuenciaMantenimiento.Semestral => 6,
+                FrecuenciaMantenimiento.Anual => 12,
                 _ => 1
             };
-            int i = semanaInicio - 1;
-            while (i < weeksInYear)
+
+            // Marcar semanas según la frecuencia
+            var fechaActual = fechaInicio;
+            
+            while (fechaActual.Year <= year)
             {
-                semanas[i] = true;
-                i += salto;
-            }
-            return semanas;
+                // Si estamos fuera del año, detener
+                if (fechaActual.Year > year)
+                    break;
+
+                // Obtener la semana ISO de esta fecha
+                int isoWeek = ISOWeek.GetWeekOfYear(fechaActual);
+                int isoYear = fechaActual.Year; // La semana obtenida es del año de la fecha
+                
+                // Nota: ISOWeek.GetWeekOfYear solo retorna el número de semana, 
+                // pero la fecha puede estar en una semana que pertenece a otro año
+                // Necesitamos verificar esto manualmente
+                if (fechaActual.Month == 1 && isoWeek > 30)
+                {
+                    // Esa semana pertenece al año anterior
+                    isoYear = fechaActual.Year - 1;
+                }
+                else if (fechaActual.Month == 12 && isoWeek < 10)
+                {
+                    // Esa semana pertenece al siguiente año
+                    isoYear = fechaActual.Year + 1;
+                }
+                
+                // Si la semana pertenece al año actual, marcarla
+                if (isoYear == year && isoWeek >= 1 && isoWeek <= weeksInYear)
+                {
+                    semanas[isoWeek - 1] = true; // Convertir a índice 0-based
+                }
+
+                // Calcular próxima fecha según frecuencia
+                if (frecuencia == FrecuenciaMantenimiento.Semanal)
+                {
+                    fechaActual = fechaActual.AddDays(7); // 1 semana
+                }
+                else if (frecuencia == FrecuenciaMantenimiento.Quincenal)
+                {
+                    fechaActual = fechaActual.AddDays(14); // 2 semanas
+                }
+                else
+                {
+                    fechaActual = fechaActual.AddMonths(mesesAsumar);
+                }
+            }            return semanas;
+        }
+
+        /// <summary>
+        /// Obtiene la fecha del lunes correspondiente a una semana ISO específica.
+        /// </summary>
+        private static DateTime GetLunesDeISOMeek(int year, int week)
+        {
+            // El 4 de enero siempre está en la semana 1 ISO
+            var ref4Enero = new DateTime(year, 1, 4);
+            
+            // Calcular el lunes de la semana 1:
+            // DayOfWeek: Monday=1, Tuesday=2, ..., Sunday=0
+            // Necesitamos retroceder al lunes anterior (o quedarnos en lunes si ya lo es)
+            int daysFromMonday = ((int)ref4Enero.DayOfWeek - 1 + 7) % 7;
+            var lunesSemana1 = ref4Enero.AddDays(-daysFromMonday);
+            
+            // El lunes de la semana requerida
+            int diasDiferencia = (week - 1) * 7;
+            return lunesSemana1.AddDays(diasDiferencia);
         }
 
         // Sobrecarga para compatibilidad (usa el año actual)
@@ -476,34 +557,80 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 if (exists) continue;                // Buscar cronograma del año actual
                 var cronogramaActual = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == now.Year);
                 int semanaInicio = 1;
+                
                 if (cronogramaActual != null)
                 {
                     // Buscar última semana con mantenimiento programado
-                    int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);
-                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
+                    int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
                     {
-                        int salto = equipo.FrecuenciaMtto switch
-                        {
-                            Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
-                            Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
-                            Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
-                            Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
-                            Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
-                            Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                            Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(now.Year),
-                            _ => 1
-                        };                        // Calcular la siguiente semana: última semana del año anterior + salto
-                        int ultimaSemana = lastWeek + 1; // base 1
-                        int proximaSemana = ultimaSemana + salto;
-                        int weeksInPreviousYear = ISOWeek.GetWeeksInYear(now.Year);
+                        // ✅ NUEVO: Usar el DÍA DEL MES específico, no solo el offset de día de semana
+                        // Obtener la fecha del lunes de la última semana del año actual
+                        var lunesUltimaSemana = GetLunesDeISOMeek(now.Year, lastWeek + 1);
                         
-                        // Si se pasa del año anterior, ajustar al año siguiente
-                        if (proximaSemana > weeksInPreviousYear)
+                        // Buscar el día específico del mes dentro de la última semana
+                        int diaDelMes = equipo.FechaCompra!.Value.Day; // Ej: 15
+                        DateTime? fechaUltimaSemana = null;
+                        
+                        for (int d = 0; d < 7; d++)
                         {
-                            proximaSemana = proximaSemana - weeksInPreviousYear;
+                            var fechaEnSemana = lunesUltimaSemana.AddDays(d);
+                            if (fechaEnSemana.Day == diaDelMes)
+                            {
+                                fechaUltimaSemana = fechaEnSemana;
+                                break;
+                            }
                         }
                         
-                        semanaInicio = proximaSemana;
+                        // Si no existe ese día en la última semana, usar el domingo de la semana
+                        if (!fechaUltimaSemana.HasValue)
+                        {
+                            fechaUltimaSemana = lunesUltimaSemana.AddDays(6);
+                        }
+                        
+                        // Calcular cuántos meses según frecuencia
+                        int mesesAsumar = equipo.FrecuenciaMtto switch
+                        {
+                            Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
+                            Models.Enums.FrecuenciaMantenimiento.Quincenal => 0,
+                            Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
+                            Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
+                            Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
+                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4,
+                            Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
+                            Models.Enums.FrecuenciaMantenimiento.Anual => 12,
+                            _ => 1
+                        };
+                          // Calcular próxima fecha de mantenimiento
+                        DateTime fechaProxima;
+                        if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
+                            fechaProxima = fechaUltimaSemana.Value.AddDays(7);
+                        else if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Quincenal)
+                            fechaProxima = fechaUltimaSemana.Value.AddDays(14);
+                        else
+                            fechaProxima = fechaUltimaSemana.Value.AddMonths(mesesAsumar);
+                          // Obtener la semana ISO de la próxima fecha
+                        int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
+                        int isoYear = fechaProxima.Year;
+                        
+                        // Ajustar para semanas que cruzan años
+                        if (fechaProxima.Month == 1 && isoWeek > 30)
+                        {
+                            isoYear = fechaProxima.Year - 1;
+                        }
+                        else if (fechaProxima.Month == 12 && isoWeek < 10)
+                        {
+                            isoYear = fechaProxima.Year + 1;
+                        }
+                        
+                        // Si cae en el siguiente año, usar esa semana
+                        if (isoYear == nextYear)
+                        {
+                            semanaInicio = isoWeek;
+                        }
+                        else
+                        {
+                            semanaInicio = 1; // Fallback
+                        }
                     }
                     else
                     {
@@ -597,104 +724,202 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     {
                         _logger.LogDebug($"[CRONOGRAMA] ⏭️ Cronograma existe para {equipo.Codigo} año {anio}, saltando");
                         continue;
-                    }
-                    
-                    _logger.LogDebug($"[CRONOGRAMA] ✅ Creando cronograma para {equipo.Codigo} año {anio}");
+                    }                    _logger.LogDebug($"[CRONOGRAMA] ✅ Creando cronograma para {equipo.Codigo} año {anio}");
                     int semanaInicio;
-                    int salto = equipo.FrecuenciaMtto switch
+                    if (anio == anioRegistro)
                     {
-                        Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
-                        Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
-                        Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
-                        Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
-                        Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
-                        Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                        Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(anio),
-                        _ => 1
-                    };                    if (anio == anioRegistro)
-                    {
-                        // Calcular semana de inicio a partir de la semana de registro y la frecuencia usando módulo weeksInYear
-                        // El primer mantenimiento debe ser después del registro, no en el mismo día
+                        // ✅ CORREGIDO: Usar cálculo basado en fechas reales, NO saltos de semanas fijas
                         int yearsWeeks = ISOWeek.GetWeeksInYear(anio);
                         
-                        // La semana de inicio debe ser: semana_registro + salto
-                        // Esto asegura que el primer mantenimiento sea DESPUÉS del registro
-                        int proximaSemana = semanaRegistro + salto;
-                          // Si se pasa del año, NO generar cronograma en este año
-                        if (proximaSemana > yearsWeeks)
+                        // Obtener fecha del lunes de la semana de compra
+                        var fechaCompra = GetLunesDeISOMeek(anio, semanaRegistro);
+                        
+                        // Calcular cuántos meses según frecuencia
+                        int mesesAsumar = equipo.FrecuenciaMtto switch
                         {
+                            Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
+                            Models.Enums.FrecuenciaMantenimiento.Quincenal => 0,
+                            Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
+                            Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
+                            Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
+                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // ✅ 4 MESES EXACTOS
+                            Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
+                            Models.Enums.FrecuenciaMantenimiento.Anual => 12,
+                            _ => 1
+                        };
+                        
+                        // Calcular próxima fecha de mantenimiento
+                        DateTime fechaProxima;
+                        if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
+                            fechaProxima = fechaCompra.AddDays(7);
+                        else if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Quincenal)
+                            fechaProxima = fechaCompra.AddDays(14);
+                        else
+                            fechaProxima = fechaCompra.AddMonths(mesesAsumar);
+                        
+                        // Obtener la semana ISO de la próxima fecha
+                        int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
+                        int isoYear = fechaProxima.Year;
+                        
+                        // Ajustar para semanas que cruzan años
+                        if (fechaProxima.Month == 1 && isoWeek > 30)
+                        {
+                            isoYear = fechaProxima.Year - 1;
+                        }
+                        else if (fechaProxima.Month == 12 && isoWeek < 10)
+                        {
+                            isoYear = fechaProxima.Year + 1;
+                        }
+                        
+                        // Si cae en el siguiente año, NO generar cronograma en este año
+                        if (isoYear > anio)
+                        {
+                            _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, Próximo mtto={fechaProxima:yyyy-MM-dd} (semana {isoWeek}), está en año {isoYear}, saltando {anio}");
                             continue;  // Saltar este año, el cronograma se creará en el siguiente
                         }
-                          semanaInicio = proximaSemana;
                         
-                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Salto={salto}, SemanaInicio={semanaInicio}, TotalSemanas={yearsWeeks}, Año={anio}");
-                    }
-                    else
+                        semanaInicio = isoWeek;
+                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, Próximo mtto={fechaProxima:yyyy-MM-dd}, SemanaInicio={semanaInicio}, Año={anio}");
+                    }                    else
                     {
-                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));                        if (cronogramaAnterior != null)
+                        var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
+                          if (cronogramaAnterior != null)
                         {
+                            // ✅ CORREGIDO: Usar el DÍA DEL MES específico, no solo el offset de día de semana
                             int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
                             if (lastWeek >= 0)
                             {
-                                int saltoAnterior = equipo.FrecuenciaMtto switch
-                                {
-                                    Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
-                                    Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
-                                    Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
-                                    Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
-                                    Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
-                                    Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                                    Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(anio),
-                                    _ => 1
-                                };
-                                // Calcular la semana de inicio para el año actual a partir del último mantenimiento del año anterior
-                                int ultimaSemana = lastWeek + 1;
-                                int proximaSemana = ultimaSemana + saltoAnterior;
-                                int weeksInPreviousYear = ISOWeek.GetWeeksInYear(anio - 1);
-                                int weeksInCurrentYear = ISOWeek.GetWeeksInYear(anio);
+                                // Obtener la fecha del lunes de la última semana del año anterior
+                                var lunesUltimaSemana = GetLunesDeISOMeek(anio - 1, lastWeek + 1);
                                 
-                                // Si se pasa del año anterior, ajustar al año actual
-                                if (proximaSemana > weeksInPreviousYear)
+                                // Buscar el día específico del mes dentro de la última semana
+                                int diaDelMes = equipo.FechaCompra!.Value.Day; // Ej: 15
+                                DateTime? fechaUltimaSemana = null;
+                                
+                                for (int d = 0; d < 7; d++)
                                 {
-                                    proximaSemana = proximaSemana - weeksInPreviousYear;
+                                    var fechaEnSemana = lunesUltimaSemana.AddDays(d);
+                                    if (fechaEnSemana.Day == diaDelMes)
+                                    {
+                                        fechaUltimaSemana = fechaEnSemana;
+                                        break;
+                                    }
                                 }
                                 
-                                semanaInicio = proximaSemana;
+                                // Si no existe ese día en la última semana, usar el domingo de la semana
+                                if (!fechaUltimaSemana.HasValue)
+                                {
+                                    fechaUltimaSemana = lunesUltimaSemana.AddDays(6);
+                                }
                                 
-                                _logger.LogInformation($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo}, UltimaSemanaAñoAnterior={ultimaSemana}, Salto={saltoAnterior}, WeeksInPreviousYear={weeksInPreviousYear}, WeeksInCurrentYear={weeksInCurrentYear}, SemanaInicio={semanaInicio}, Año={anio}");
+                                // Calcular cuántos meses según frecuencia
+                                int mesesAsumar = equipo.FrecuenciaMtto switch
+                                {
+                                    Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
+                                    Models.Enums.FrecuenciaMantenimiento.Quincenal => 0,
+                                    Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
+                                    Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
+                                    Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
+                                    Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4,
+                                    Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
+                                    Models.Enums.FrecuenciaMantenimiento.Anual => 12,
+                                    _ => 1
+                                };                                
+                                // Calcular próxima fecha de mantenimiento
+                                DateTime fechaProxima;
+                                if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
+                                    fechaProxima = fechaUltimaSemana.Value.AddDays(7);
+                                else if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Quincenal)
+                                    fechaProxima = fechaUltimaSemana.Value.AddDays(14);
+                                else
+                                    fechaProxima = fechaUltimaSemana.Value.AddMonths(mesesAsumar);
+                                
+                                // Obtener la semana ISO de la próxima fecha
+                                int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
+                                int isoYear = fechaProxima.Year;
+                                
+                                // Ajustar para semanas que cruzan años
+                                if (fechaProxima.Month == 1 && isoWeek > 30)
+                                {
+                                    isoYear = fechaProxima.Year - 1;
+                                }
+                                else if (fechaProxima.Month == 12 && isoWeek < 10)
+                                {
+                                    isoYear = fechaProxima.Year + 1;
+                                }
+                                
+                                // Si cae en el año actual, usar esa semana
+                                if (isoYear == anio)
+                                {
+                                    semanaInicio = isoWeek;
+                                }
+                                else
+                                {
+                                    semanaInicio = 1; // Fallback
+                                }
+                                
+                                _logger.LogInformation($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo}, UltimaMttoAñoAnterior={fechaUltimaSemana:yyyy-MM-dd} (sem {lastWeek + 1}), ProximoMtto={fechaProxima:yyyy-MM-dd} (sem {isoWeek}/{isoYear}), SemanaInicio={semanaInicio}, Año={anio}");
                             }
                             else
                             {
                                 _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene mantenimientos en {anio - 1}, iniciando en semana 1");
                                 semanaInicio = 1;
-                            }                        }                        else if (anio - 1 == anioRegistro && equipo.FechaCompra.HasValue)
+                            }
+                        }
+                        else if (anio - 1 == anioRegistro && equipo.FechaCompra.HasValue)
                         {
-                            // Caso especial: Si el cronograma del año anterior se saltó (porque la próxima semana > semanas en año)
-                            // pero el equipo se compró ese año, usar la semana de compra del equipo
+                            // ✅ CORREGIDO: Caso especial cuando cronograma del año de compra se saltó
                             int semanaRegistroEquipo = ISOWeek.GetWeekOfYear(equipo.FechaCompra.Value);
                             
-                            int saltoEspecial = equipo.FrecuenciaMtto switch
+                            // Obtener fecha del lunes de la semana de compra
+                            var fechaCompra = GetLunesDeISOMeek(anioRegistro, semanaRegistroEquipo);
+                            
+                            // Calcular cuántos meses según frecuencia
+                            int mesesAsumar = equipo.FrecuenciaMtto switch
                             {
-                                Models.Enums.FrecuenciaMantenimiento.Semanal => 1,
-                                Models.Enums.FrecuenciaMantenimiento.Quincenal => 2,
-                                Models.Enums.FrecuenciaMantenimiento.Mensual => 4,
-                                Models.Enums.FrecuenciaMantenimiento.Bimestral => 8,
-                                Models.Enums.FrecuenciaMantenimiento.Trimestral => 13,
-                                Models.Enums.FrecuenciaMantenimiento.Semestral => 26,
-                                Models.Enums.FrecuenciaMantenimiento.Anual => ISOWeek.GetWeeksInYear(anio),
+                                Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
+                                Models.Enums.FrecuenciaMantenimiento.Quincenal => 0,
+                                Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
+                                Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
+                                Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
+                                Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4,
+                                Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
+                                Models.Enums.FrecuenciaMantenimiento.Anual => 12,
                                 _ => 1
                             };
                             
-                            int proximaSemanaEspecial = semanaRegistroEquipo + saltoEspecial;
-                            int weeksInPreviousYear = ISOWeek.GetWeeksInYear(anio - 1);
-                            int weeksInCurrentYear = ISOWeek.GetWeeksInYear(anio);
+                            // Calcular próxima fecha de mantenimiento
+                            DateTime fechaProxima;
+                            if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
+                                fechaProxima = fechaCompra.AddDays(7);
+                            else if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Quincenal)
+                                fechaProxima = fechaCompra.AddDays(14);
+                            else
+                                fechaProxima = fechaCompra.AddMonths(mesesAsumar);
                             
-                            // Si se pasa del año anterior, ajustar al año actual
-                            if (proximaSemanaEspecial > weeksInPreviousYear)
+                            // Obtener la semana ISO de la próxima fecha
+                            int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
+                            int isoYear = fechaProxima.Year;
+                            
+                            // Ajustar para semanas que cruzan años
+                            if (fechaProxima.Month == 1 && isoWeek > 30)
                             {
-                                proximaSemanaEspecial = proximaSemanaEspecial - weeksInPreviousYear;
+                                isoYear = fechaProxima.Year - 1;
                             }
-                              semanaInicio = proximaSemanaEspecial;
+                            else if (fechaProxima.Month == 12 && isoWeek < 10)
+                            {
+                                isoYear = fechaProxima.Year + 1;
+                            }
+                            
+                            // Si cae en el año actual, usar esa semana
+                            if (isoYear == anio)
+                            {
+                                semanaInicio = isoWeek;
+                            }
+                            else
+                            {
+                                semanaInicio = 1;
+                            }
                         }
                         else
                         {
