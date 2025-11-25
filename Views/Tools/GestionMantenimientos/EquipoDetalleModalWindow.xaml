@@ -12,11 +12,11 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         Loaded="Window_Loaded">
-    
-    <Window.Resources>
+      <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <converters:EstadoSeguimientoToColorConverter x:Key="EstadoSeguimientoToColorConverter" />
         
         <DropShadowEffect x:Key="WindowShadow" Color="#504F4E" Direction="315" ShadowDepth="4" Opacity="0.08" BlurRadius="8" RenderingBias="Quality"/>
         <DropShadowEffect x:Key="SectionShadow" Color="#9D9D9C" Direction="270" ShadowDepth="1" Opacity="0.03" BlurRadius="3" RenderingBias="Quality"/>
@@ -401,11 +401,10 @@
                                                         <TextBlock Text="{Binding Descripcion}" FontSize="12" FontWeight="Medium"
                                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
                                                     </StackPanel>
-                                                    
-                                                    <!-- Estado -->
-                                                    <Border CornerRadius="4" Padding="8,4" Margin="0,0,0,8" HorizontalAlignment="Left" Background="{StaticResource SuccessBrush}">
-                                                        <TextBlock Text="{Binding Estado}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
-                                                    </Border>
+                                                                      <!-- Estado -->
+                                    <Border CornerRadius="4" Padding="8,4" Margin="0,0,0,8" HorizontalAlignment="Left" Background="{Binding Estado, Converter={StaticResource EstadoSeguimientoToColorConverter}}">
+                                        <TextBlock Text="{Binding Estado}" Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                    </Border>
                                                     
                                                     <!-- Responsable y Costo -->
                                                     <Grid Margin="0,0,0,8">
