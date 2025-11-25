@@ -129,20 +129,26 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     }                    var anioRegistro = fechaCompra.Year;
                     var anioActual = DateTime.Now.Year;
                     var mesActual = DateTime.Now.Month;
-                    
-                    // Solo generar el año siguiente si estamos en octubre o después
+                      // Solo generar el año siguiente si estamos en octubre o después
                     var anioLimite = anioActual;
                     if (mesActual >= 10)
                     {
                         anioLimite = anioActual + 1;
                     }
-                      for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                    
+                    // Acumular cronogramas para guardar en batch (evita múltiples SaveChangesAsync)
+                    var cronogramasAAgregar = new List<CronogramaMantenimiento>();
+                    
+                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
                     {
                         using var dbContext2 = _dbContextFactory.CreateDbContext();
                         
                         // No duplicar cronogramas si ya existen
                         bool existe = await dbContext2.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
-                        if (existe) continue;                          int semanaIni = 1;                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
+                        if (existe) continue;
+                        
+                        int semanaIni = 1;
+                        if (anio == anioRegistro && equipo.FrecuenciaMtto != null)
                         {                            // PRIMER AÑO: La primera semana de mantenimiento es la semana de FechaCompra + salto
                             int salto = equipo.FrecuenciaMtto switch
                             {
@@ -249,8 +255,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 // Si no hay cronograma anterior ni el equipo se registró en el año anterior, usar semana 1 por defecto
                                 semanaIni = 1;
                                 _logger.LogWarning($"[EquipoService] No se encontró cronograma anterior para {equipo.Codigo} año {anio - 1}. Usando semana 1.");
-                            }
-                        }
+                            }                        }
                         var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto, anio);
                         var cronograma = new CronogramaMantenimiento
                         {
@@ -260,10 +265,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Sede = equipo.Sede?.ToString(),
                             FrecuenciaMtto = equipo.FrecuenciaMtto,
                             Semanas = semanas,
-                            Anio = anio                        };                        dbContext2.Cronogramas.Add(cronograma);
+                            Anio = anio
+                        };
                         
-                        // Guardar inmediatamente para que el siguiente año pueda leer este cronograma
-                        await dbContext2.SaveChangesAsync();
+                        cronogramasAAgregar.Add(cronograma);
+                    }
+                    
+                    // Guardar todos los cronogramas en una sola operación (mucho más eficiente)
+                    if (cronogramasAAgregar.Any())
+                    {
+                        using var dbContextFinal = _dbContextFactory.CreateDbContext();
+                        dbContextFinal.Cronogramas.AddRange(cronogramasAAgregar);
+                        await dbContextFinal.SaveChangesAsync();
+                        _logger.LogInformation("[EquipoService] {Count} cronogramas agregados para: {Codigo}", cronogramasAAgregar.Count, equipo.Codigo ?? "");
                     }
                 }
             }
@@ -332,6 +346,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                     {
                         anioLimite = anioActual + 1;
                     }
+                      // Acumular cronogramas nuevos para guardar en batch (evita múltiples SaveChangesAsync)
+                    var cronogramasNuevos = new List<CronogramaMantenimiento>();
                     
                     for (int anio = anioRegistro; anio <= anioLimite; anio++)
                     {
@@ -339,7 +355,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         bool existe = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);
                         if (existe) continue;
                         
-                        int semanaIni = 1;                        if (anio == anioRegistro)
+                        int semanaIni = 1;
+                        if (anio == anioRegistro)
                         {
                             // PRIMER AÑO: Primera semana de mantenimiento
                             int semanaInicio = CalcularSemanaISO8601(equipo.FechaCompra ?? entity.FechaCompra ?? DateTime.Now);
@@ -445,8 +462,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                 semanaIni = 1;
                             }
                         }
-                        
-                        // Generar nuevo cronograma
+                          // Generar nuevo cronograma
                         var semanas = CronogramaService.GenerarSemanas(semanaIni, equipo.FrecuenciaMtto, anio);
                         var cronograma = new CronogramaMantenimiento
                         {
@@ -459,31 +475,38 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             Anio = anio
                         };
                         
-                        dbContext.Cronogramas.Add(cronograma);
-                        await dbContext.SaveChangesAsync();
-                    }                    _logger.LogInformation("[EquipoService] Cronogramas regenerados exitosamente para: {Codigo}", equipo.Codigo ?? "");
+                        cronogramasNuevos.Add(cronograma);
+                    }
                     
-                    // 🔄 Ajustar seguimientos: eliminar pendientes de semanas que ya no están programadas
+                    // Guardar todos los cronogramas nuevos en una sola operación (mucho más eficiente)
+                    if (cronogramasNuevos.Any())
+                    {
+                        dbContext.Cronogramas.AddRange(cronogramasNuevos);
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation("[EquipoService] {Count} cronogramas nuevos creados para: {Codigo}", cronogramasNuevos.Count, equipo.Codigo ?? "");
+                    }
+                      // 🔄 Ajustar seguimientos: eliminar pendientes de semanas que ya no están programadas
                     // Y crear nuevos seguimientos para semanas que se agregaron
                     // Mantener: Realizados, Atrasados, No Realizados (ya completados)
                     var seguimientosExistentes = await dbContext.Seguimientos
                         .Where(s => s.Codigo == equipo.Codigo)
                         .ToListAsync();
                     
+                    var cronogramasRegenerados = cronogramasNuevos; // Usar los cronogramas recién creados
+                    
                     int seguimientosEliminados = 0;
                     int seguimientosCreados = 0;
                     
-                    // Obtener todos los cronogramas regenerados
-                    var cronogramasRegenerados = await dbContext.Cronogramas
-                        .Where(c => c.Codigo == equipo.Codigo)
-                        .ToListAsync();
+                    // Crear un HashSet para búsqueda rápida O(1) en lugar de Any() que es O(n)
+                    var seguimientosPendientesPorSemana = new HashSet<string>();
+                    foreach (var seg in seguimientosExistentes.Where(s => s.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente))
+                    {
+                        seguimientosPendientesPorSemana.Add($"{seg.Codigo}_{seg.Semana}_{seg.Anio}");
+                    }
                     
                     // 1️⃣ ELIMINAR seguimientos pendientes que NO están en el nuevo cronograma
-                    var seguimientosPendientes = seguimientosExistentes
-                        .Where(s => s.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente)
-                        .ToList();
-                    
-                    foreach (var seg in seguimientosPendientes)
+                    var seguimientosAEliminar = new List<SeguimientoMantenimiento>();
+                    foreach (var seg in seguimientosExistentes.Where(s => s.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente))
                     {
                         var cronogramaAnio = cronogramasRegenerados.FirstOrDefault(c => c.Anio == seg.Anio);
                         if (cronogramaAnio != null)
@@ -493,23 +516,26 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             {
                                 if (!cronogramaAnio.Semanas[semanaIndex])
                                 {
-                                    dbContext.Seguimientos.Remove(seg);
+                                    seguimientosAEliminar.Add(seg);
                                     seguimientosEliminados++;
-                                    _logger.LogInformation("[EquipoService] Seguimiento pendiente eliminado: {Codigo}, Semana={Semana}, Año={Anio}", 
+                                    _logger.LogInformation("[EquipoService] Seguimiento pendiente a eliminar: {Codigo}, Semana={Semana}, Año={Anio}", 
                                         equipo.Codigo ?? "", seg.Semana, seg.Anio);
                                 }
                             }
                         }
                     }
                     
-                    if (seguimientosEliminados > 0)
+                    // Eliminar en batch
+                    if (seguimientosAEliminar.Any())
                     {
+                        dbContext.Seguimientos.RemoveRange(seguimientosAEliminar);
                         await dbContext.SaveChangesAsync();
                         _logger.LogInformation("[EquipoService] Total seguimientos pendientes eliminados: {Count} para {Codigo}", 
                             seguimientosEliminados, equipo.Codigo ?? "");
                     }
                     
                     // 2️⃣ CREAR seguimientos nuevos para semanas que se agregaron en el cronograma
+                    var seguimientosACrear = new List<SeguimientoMantenimiento>();
                     foreach (var cronograma in cronogramasRegenerados)
                     {
                         for (int i = 0; i < cronograma.Semanas.Length; i++)
@@ -519,13 +545,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             // Si la semana está programada en el cronograma
                             if (cronograma.Semanas[i])
                             {
-                                // Verificar si ya existe un seguimiento para esta semana
-                                bool existe = seguimientosExistentes.Any(s => 
-                                    s.Codigo == equipo.Codigo && 
-                                    s.Semana == semana && 
-                                    s.Anio == cronograma.Anio);
-                                
-                                if (!existe)
+                                // Verificar si ya existe un seguimiento para esta semana usando HashSet (O(1))
+                                var key = $"{equipo.Codigo}_{semana}_{cronograma.Anio}";
+                                if (!seguimientosPendientesPorSemana.Contains(key))
                                 {
                                     // Crear nuevo seguimiento pendiente
                                     var nuevoSeguimiento = new SeguimientoMantenimiento
@@ -542,17 +564,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                                         Frecuencia = equipo.FrecuenciaMtto
                                     };
                                     
-                                    dbContext.Seguimientos.Add(nuevoSeguimiento);
+                                    seguimientosACrear.Add(nuevoSeguimiento);
                                     seguimientosCreados++;
-                                    _logger.LogInformation("[EquipoService] Nuevo seguimiento pendiente creado: {Codigo}, Semana={Semana}, Año={Anio}", 
+                                    _logger.LogInformation("[EquipoService] Nuevo seguimiento pendiente a crear: {Codigo}, Semana={Semana}, Año={Anio}", 
                                         equipo.Codigo ?? "", semana, cronograma.Anio);
                                 }
                             }
                         }
                     }
                     
-                    if (seguimientosCreados > 0)
+                    // Crear en batch
+                    if (seguimientosACrear.Any())
                     {
+                        dbContext.Seguimientos.AddRange(seguimientosACrear);
                         await dbContext.SaveChangesAsync();
                         _logger.LogInformation("[EquipoService] Total nuevos seguimientos pendientes creados: {Count} para {Codigo}", 
                             seguimientosCreados, equipo.Codigo ?? "");

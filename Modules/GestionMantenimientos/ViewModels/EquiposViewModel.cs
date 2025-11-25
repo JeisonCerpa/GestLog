@@ -477,9 +477,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private void Equipos_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         RecalcularEstadisticas();
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     public async Task AddEquipoAsync()
     {
         try
@@ -491,8 +489,21 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var result = dialog.ShowDialog();            
             if (result == true)
             {
-                await _equipoService.AddAsync(dialog.Equipo);
-                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras agregar
+                // 🔧 Ejecutar la adición en un thread background para no bloquear la UI
+                IsLoading = true;
+                StatusMessage = "Guardando equipo...";
+                
+                await Task.Run(async () =>
+                {
+                    await _equipoService.AddAsync(dialog.Equipo);
+                });
+                
+                // Recargar en thread background también
+                await Task.Run(async () =>
+                {
+                    await LoadEquiposAsync(forceReload: true);
+                });
+                
                 StatusMessage = "Equipo agregado exitosamente.";
             }
         }
@@ -501,9 +512,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             _logger.LogError(ex, "Error al agregar equipo");
             StatusMessage = "Error al agregar equipo.";
         }
-    }
-
-    [RelayCommand]
+        finally
+        {
+            IsLoading = false;
+        }
+    }[RelayCommand]
     public async Task EditEquipoAsync()
     {
         if (SelectedEquipo == null)
@@ -522,9 +535,23 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             {
                 // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
                 if (dialog.Equipo.Estado == EstadoEquipo.Activo)
-                    dialog.Equipo.FechaBaja = null;                
-                await _equipoService.UpdateAsync(dialog.Equipo);
-                await LoadEquiposAsync(forceReload: true); // Forzar recarga tras editar
+                    dialog.Equipo.FechaBaja = null;
+                
+                // 🔧 Ejecutar la actualización en un thread background para no bloquear la UI
+                IsLoading = true;
+                StatusMessage = "Guardando cambios...";
+                
+                await Task.Run(async () =>
+                {
+                    await _equipoService.UpdateAsync(dialog.Equipo);
+                });
+                
+                // Recargar en thread background también
+                await Task.Run(async () =>
+                {
+                    await LoadEquiposAsync(forceReload: true);
+                });
+                
                 // Reasignar SelectedEquipo para refrescar la vista de detalles
                 SelectedEquipo = Equipos.FirstOrDefault(e => e.Codigo == dialog.Equipo.Codigo);
                 StatusMessage = "Equipo editado exitosamente.";
@@ -535,6 +562,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         {
             _logger.LogError(ex, "Error al editar equipo");
             StatusMessage = "Error al editar equipo.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
