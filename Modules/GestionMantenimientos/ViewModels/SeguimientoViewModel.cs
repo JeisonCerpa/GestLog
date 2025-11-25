@@ -341,10 +341,10 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]
-    public async Task AddSeguimientoAsync()
+    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]    public async Task AddSeguimientoAsync()
     {
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog();
+        dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
             var nuevo = dialog.Seguimiento;
@@ -361,15 +361,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 StatusMessage = "Error al agregar seguimiento.";
             }
         }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanEditSeguimiento))]
+    }    [RelayCommand(CanExecute = nameof(CanEditSeguimiento))]
     public async Task EditSeguimientoAsync()
     {
         if (SelectedSeguimiento == null)
             return;
 
         var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(SelectedSeguimiento);
+        dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
             var editado = dialog.Seguimiento;

@@ -1,14 +1,20 @@
 using System.Windows;
 using System.Windows.Data;
+using System.Collections.Generic;
+// se usan tipos WPF fully-qualified para evitar ambigüedad con WinForms
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Views.Tools.GestionMantenimientos
-{
+{    
     public partial class SeguimientoDialog : Window
     {
         public SeguimientoMantenimientoDto Seguimiento { get; private set; }
-        public bool ModoRestringido { get; }
+        public bool ModoRestringido { get; }        
+        
+        // Prefijo generado por el checklist para no duplicarlo al componer la descripción
+        private string lastGeneratedChecklist = string.Empty;
+
         public SeguimientoDialog(SeguimientoMantenimientoDto? seguimiento = null, bool modoRestringido = false)
         {
             InitializeComponent();
@@ -18,6 +24,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             if (seguimiento == null || Seguimiento.FechaRealizacion == null)
                 Seguimiento.FechaRealizacion = System.DateTime.Now;
             DataContext = Seguimiento;
+            this.ShowInTaskbar = false;
+            this.KeyDown += SeguimientoDialog_KeyDown;
+            this.Loaded += SeguimientoDialog_OnLoaded;
             Loaded += (s, e) =>
             {
                 var cvs = (CollectionViewSource)this.Resources["TipoMantenimientoFiltrado"];
@@ -25,6 +34,154 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 cvs.Filter += TipoMantenimientoFilterHandler;
                 cvs.View.Refresh();
             };
+        }        
+        
+        private void SeguimientoDialog_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            // Si no tiene Owner, usar la ventana principal como Owner
+            if (this.Owner == null)
+            {
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    this.Owner = mainWindow;
+                }
+            }
+
+            // Maximizar ventana para que el overlay cubra toda la pantalla
+            this.WindowState = WindowState.Maximized;
+
+            // Sincronizar con cambios de tamaño/posición del owner
+            if (this.Owner != null)
+            {
+                this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
+                this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
+            }
+
+            // Inicializar los CheckBoxes del checklist si la descripción ya contiene esos textos
+            try
+            {
+                var desc = (Seguimiento?.Descripcion ?? string.Empty);
+                if (!string.IsNullOrEmpty(desc))
+                {
+                    // Marcar checkboxes si aparecen las frases esperadas
+                    if (this.FindName("cbRevision") is System.Windows.Controls.CheckBox cbRev)
+                        cbRev.IsChecked = desc.Contains("Revisión General");
+                    if (this.FindName("cbLimpieza") is System.Windows.Controls.CheckBox cbLimp)
+                        cbLimp.IsChecked = desc.Contains("Limpieza");
+                    if (this.FindName("cbAjustes") is System.Windows.Controls.CheckBox cbAj)
+                        cbAj.IsChecked = desc.Contains("Ajustes");
+
+                    // Guardar el prefijo generado actualmente para evitar duplicados posteriores
+                    lastGeneratedChecklist = BuildChecklistPrefixFromControls();
+                }
+            }
+            catch
+            {
+                // No crítico si falla la inicialización de controles
+            }
+        }
+
+        // Construye el prefijo de checklist según los CheckBoxes actuales
+        private string BuildChecklistPrefixFromControls()
+        {
+            var items = new List<string>();
+            if (this.FindName("cbRevision") is System.Windows.Controls.CheckBox cbRev && cbRev.IsChecked == true)
+                items.Add("Revisión General");
+            if (this.FindName("cbLimpieza") is System.Windows.Controls.CheckBox cbLimp && cbLimp.IsChecked == true)
+                items.Add("Limpieza");
+            if (this.FindName("cbAjustes") is System.Windows.Controls.CheckBox cbAj && cbAj.IsChecked == true)
+                items.Add("Ajustes");
+            return items.Count > 0 ? string.Join("; ", items) : string.Empty;
+        }
+
+        // Evento común para Checked/Unchecked de los items del checklist
+        private void ChecklistItem_Checked(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var newPrefix = BuildChecklistPrefixFromControls();
+
+                // Tomar el texto actual (puede venir del binding)
+                var current = Seguimiento.Descripcion ?? string.Empty;
+
+                // Si el texto actual empieza con el último prefijo generado, removerlo para reemplazar por el nuevo
+                var remaining = current;
+                if (!string.IsNullOrEmpty(lastGeneratedChecklist) && remaining.StartsWith(lastGeneratedChecklist))
+                {
+                    remaining = remaining.Substring(lastGeneratedChecklist.Length).TrimStart(' ', '–', '-', ':');
+                    if (remaining.StartsWith("—")) // caracteres de separación
+                        remaining = remaining.TrimStart('—', ' ', '-', ':');
+                }
+
+                // Si queda un separador al inicio, limpiarlo
+                remaining = remaining.TrimStart(' ', '–', '-', ':');
+
+                // Formar nueva descripción combinando el prefijo generado y el texto manual restante
+                string nueva;
+                if (string.IsNullOrEmpty(newPrefix))
+                    nueva = remaining; // no hay items seleccionados
+                else if (string.IsNullOrEmpty(remaining))
+                    nueva = newPrefix;
+                else
+                    nueva = newPrefix + " — " + remaining;
+
+                // Actualizar primero el TextBox visual (el binding no notificará el cambio desde el DTO)
+                try
+                {
+                    if (this.FindName("DescripcionTextBox") is System.Windows.Controls.TextBox tb)
+                    {
+                        tb.Text = nueva ?? string.Empty;
+                        tb.CaretIndex = tb.Text.Length;
+                    }
+                }
+                catch { }
+                // Luego sincronizar el DTO
+                Seguimiento.Descripcion = nueva;
+                lastGeneratedChecklist = newPrefix;
+            }
+            catch
+            {
+                // Silenciar errores no críticos
+            }
+        }
+
+        private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
+        {
+            if (this.Owner == null) return;
+
+            this.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Mantener maximizada para que el overlay cubra toda la pantalla
+                    this.WindowState = WindowState.Maximized;
+                }
+                catch
+                {
+                    this.WindowState = WindowState.Maximized;
+                }
+            });
+        }
+
+        private void SeguimientoDialog_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                this.DialogResult = false;
+                this.Close();
+            }
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            e.Handled = true;
         }
 
         private void TipoMantenimientoFilterHandler(object sender, FilterEventArgs args)
