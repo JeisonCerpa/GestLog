@@ -8,6 +8,10 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
     {
         Task<IEnumerable<EquipoDto>> GetAllAsync();
         Task<EquipoDto?> GetByCodigoAsync(string codigo);
+        /// <summary>
+        /// 🚀 Obtiene solo los códigos de todos los equipos (optimizado para validación)
+        /// </summary>
+        Task<IEnumerable<string>> GetAllCodigosAsync();
         Task AddAsync(EquipoDto equipo);
         Task UpdateAsync(EquipoDto equipo);
         Task DeleteAsync(string codigo);

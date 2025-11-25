@@ -6,6 +6,7 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Services;
+using GestLog.Modules.GestionMantenimientos.Interfaces;
 
 namespace GestLog.Views.Tools.GestionMantenimientos
 {
@@ -77,9 +78,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         {
             this.DialogResult = false;
             this.Close();
-        }
-
-        private void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
+        }        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
         {
             // Establecer fecha máxima permitida en DatePicker para evitar fechas futuras
             try
@@ -95,8 +94,34 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
             }
 
-            ConfigurarParaVentanaPadre(this.Owner);
+            // ✅ IMPORTANTE: No reasignar Owner aquí - ya se estableció en el constructor
+            // ConfigurarParaVentanaPadre(this.Owner);
+            if (this.DataContext is EquipoDialogViewModel viewModel)
+            {
+                try
+                {
+                    // Pequeño delay para asegurar que todo esté inicializado
+                    await System.Threading.Tasks.Task.Delay(50);
+
+                    // Obtener el servicio de equipos inyectado
+                    var equipoService = ((App)System.Windows.Application.Current).ServiceProvider
+                        ?.GetService(typeof(IEquipoService)) as IEquipoService;
+
+                    if (equipoService != null)
+                    {
+                        // Cargar códigos de forma asincrónica sin bloquear la UI
+                        await viewModel.CargarCodigosExistentesAsync(equipoService, IsEditMode);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    // Log del error (sin mostrar al usuario)
+                    System.Diagnostics.Debug.WriteLine($"Error al cargar códigos existentes: {ex.Message}");
+                }
+            }
         }
+
+
 
         private void OnFechaCompra_SelectedDateChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
@@ -243,10 +268,35 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             public EquipoDto Equipo { get; set; }
             public IEnumerable<EstadoEquipo> EstadosEquipo { get; set; } = new EstadoEquipo[0];
             public IEnumerable<Sede> Sedes { get; set; } = new Sede[0];
-            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];
+            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];            // ✅ PROPIEDADES PARA VALIDACIÓN DE CÓDIGOS DUPLICADOS
+            /// <summary>
+            /// Conjunto de códigos existentes cargados para validación rápida en memoria
+            /// </summary>
+            private System.Collections.Generic.HashSet<string> _codigosExistentes = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            
+            /// <summary>
+            /// El código original del equipo en modo edición (para ignorarlo en validación)
+            /// </summary>
+            private string? _codigoOriginal;
 
-            // Proxy directo a las propiedades del EquipoDto para binding simple
-            public string? Codigo { get => Equipo.Codigo; set => Equipo.Codigo = value; }
+            /// <summary>
+            /// Proxy directo a las propiedades del EquipoDto para binding simple
+            /// Con validación de duplicados en tiempo real
+            /// </summary>
+            public string? Codigo 
+            { 
+                get => Equipo.Codigo; 
+                set 
+                { 
+                    Equipo.Codigo = value;
+                    // Validar códigos duplicados
+                    ValidarCodigoDuplicado();
+                    RaisePropertyChanged(nameof(Codigo));
+                    RaisePropertyChanged(nameof(IsCodigoDuplicado));
+                    RaisePropertyChanged(nameof(MensajeCodigoDuplicado));
+                    RaisePropertyChanged(nameof(IsFormularioValido));
+                } 
+            }
             public string? Nombre 
             { 
                 get => Equipo.Nombre; 
@@ -335,12 +385,33 @@ namespace GestLog.Views.Tools.GestionMantenimientos
             /// <summary>
             /// Indica si el campo Sede está vacío Y se deben mostrar errores de validación
             /// </summary>
-            public bool IsSedeVacio => _showValidationErrors && Sede == null;
+            public bool IsSedeVacio => _showValidationErrors && Sede == null;            /// <summary>
+            /// Indica si el formulario es válido para guardar (Nombre y Sede no pueden estar vacíos, Codigo no duplicado)
+            /// </summary>
+            public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo) && Sede != null && !IsCodigoDuplicado;
 
             /// <summary>
-            /// Indica si el formulario es válido para guardar (Nombre y Sede no pueden estar vacíos)
+            /// 🚀 Indica si el código actual ya existe en la base de datos
             /// </summary>
-            public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo) && Sede != null;
+            private bool _isCodigoDuplicado = false;
+            public bool IsCodigoDuplicado
+            {
+                get => _isCodigoDuplicado;
+                private set
+                {
+                    if (_isCodigoDuplicado != value)
+                    {
+                        _isCodigoDuplicado = value;
+                        RaisePropertyChanged(nameof(IsCodigoDuplicado));
+                        RaisePropertyChanged(nameof(IsFormularioValido));
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Mensaje de error cuando hay código duplicado
+            /// </summary>
+            public string MensajeCodigoDuplicado => IsCodigoDuplicado ? "⚠️ Este código ya existe en el sistema." : string.Empty;
 
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
@@ -671,6 +742,71 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 }
                 catch { }
                 return Task.CompletedTask;
+            }            /// <summary>
+            /// 🚀 Valida si el código actual es duplicado (comparando contra los códigos cargados en memoria)
+            /// </summary>
+            private void ValidarCodigoDuplicado()
+            {
+                // Si el código es nulo o vacío, no hay duplicado
+                if (string.IsNullOrWhiteSpace(Codigo))
+                {
+                    IsCodigoDuplicado = false;
+                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] Código vacío, no hay duplicado");
+                    return;
+                }
+
+                // Si estamos en modo edición y el código es el mismo que el original, no es duplicado
+                if (!string.IsNullOrWhiteSpace(_codigoOriginal) && 
+                    Codigo.Equals(_codigoOriginal, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    IsCodigoDuplicado = false;
+                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] Código original en edición, no hay duplicado");
+                    return;
+                }
+
+                // Verificar en la lista de códigos existentes (O(1) con HashSet)
+                bool isDuplicate = _codigosExistentes.Contains(Codigo);
+                IsCodigoDuplicado = isDuplicate;
+                System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] '{Codigo}' - Total códigos en BD: {_codigosExistentes.Count}, Es duplicado: {isDuplicate}");
+            }            /// <summary>
+            /// 🚀 Carga todos los códigos existentes de forma asincrónica
+            /// Se llama al abrir el diálogo para cargar la lista de validación
+            /// </summary>
+            public async Task CargarCodigosExistentesAsync(IEquipoService equipoService, bool isEditMode)
+            {
+                try
+                {
+                    // Guardar el código original en modo edición
+                    _codigoOriginal = isEditMode ? Codigo : null;
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Modo edición: {isEditMode}, Código original: {_codigoOriginal}");
+
+                    // Obtener todos los códigos de forma eficiente (solo SELECT Codigo)
+                    var codigos = await equipoService.GetAllCodigosAsync();
+                    var codigosList = codigos.ToList();
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Total de códigos obtenidos: {codigosList.Count}");
+
+                    // Llenar el HashSet (case-insensitive)
+                    _codigosExistentes.Clear();
+                    foreach (var codigo in codigosList)
+                    {
+                        if (!string.IsNullOrWhiteSpace(codigo))
+                        {
+                            _codigosExistentes.Add(codigo);
+                            System.Diagnostics.Debug.WriteLine($"  - Código cargado: '{codigo}'");
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] HashSet finalizado con {_codigosExistentes.Count} códigos");
+
+                    // Validar el código actual
+                    ValidarCodigoDuplicado();
+                }
+                catch (System.Exception ex)
+                {
+                    // Log detallado del error
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] ❌ Error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Stack: {ex.StackTrace}");
+                }
             }
         }
     }

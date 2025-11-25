@@ -74,6 +74,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             };
         }
 
+        /// <summary>
+        /// 🚀 Obtiene solo los códigos de todos los equipos (optimizado para validación)
+        /// Usado en diálogos de creación/edición para validar códigos duplicados rápidamente
+        /// </summary>
+        public async Task<IEnumerable<string>> GetAllCodigosAsync()
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            return await dbContext.Equipos
+                .AsNoTracking()
+                .Select(e => e.Codigo)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(EquipoDto equipo)
         {
             try
