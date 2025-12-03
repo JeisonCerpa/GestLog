@@ -566,9 +566,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 });
             }
         }, cancellationToken);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanExportCronograma))]
+    }    [RelayCommand(CanExecute = nameof(CanExportCronograma))]
     public async Task ExportarCronogramasAsync()
     {
         try
@@ -582,7 +580,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             if (saveFileDialog.ShowDialog() != true)
                 return;
             IsLoading = true;
-            StatusMessage = "Exportando cronograma...";
+            StatusMessage = "Exportando cronograma y seguimientos...";
 
             // Obtener todos los equipos y semanas del año seleccionado
             var cronogramas = CronogramasFiltrados.ToList();
@@ -615,50 +613,573 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     if (estado != null)
                         estadosPorEquipo[c.Codigo!][s] = estado;
                 }
-             }
-
-            using var workbook = new XLWorkbook();
+             }            // Obtener seguimientos del año seleccionado (solo realizados o no realizados, excluyendo pendientes y atrasados)
+            var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
+            var seguimientosAnio = todosSeguimientos
+                .Where(s => s.Anio == AnioSeleccionado && 
+                    (s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo ||
+                     s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo ||
+                     s.Estado == EstadoSeguimientoMantenimiento.NoRealizado) &&
+                    cronogramas.Any(c => c.Codigo == s.Codigo))
+                .ToList();            using var workbook = new XLWorkbook();
+            
+            // ========== HOJA 1: CRONOGRAMA ==========
             var ws = workbook.Worksheets.Add($"Cronograma {AnioSeleccionado}");
-            // Encabezados
-            ws.Cell(1, 1).Value = "Equipo";
-            ws.Cell(1, 2).Value = "Nombre";
-            ws.Cell(1, 3).Value = "Marca";
-            ws.Cell(1, 4).Value = "Sede";
+            
+            // ===== CONFIGURAR ANCHO DE COLUMNAS =====
+            ws.Column("A").Width = 12;
+            ws.Column("B").Width = 20;
+            ws.Column("C").Width = 15;
+            ws.Column("D").Width = 15;
+            
+            // Configurar ancho para columnas de semanas (ajustado a lo que cabe). Semanas empezarán en la columna E (índice 5).
+            try
+            {
+                // Ajustar en bloque todas las columnas de semanas para que tengan el mismo ancho
+                ws.Columns(5, 4 + weeksInYearExport).Width = 8;
+            }
+            catch
+            {
+                // Fallback: iterar si la asignación en bloque falla por alguna razón
+                for (int s = 1; s <= weeksInYearExport; s++)
+                    ws.Column(4 + s).Width = 8;
+            }
+            
+            // Ocultar líneas de cuadrícula para apariencia más limpia
+            ws.ShowGridLines = false;
+            
+            // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
+            ws.Row(1).Height = 35;
+            ws.Row(2).Height = 35;
+            
+            // Combinar celdas A1:B2 para el logo
+            ws.Range(1, 1, 2, 2).Merge();
+            
+            // Agregar logo
+            var logoCronPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
+            try
+            {
+                if (System.IO.File.Exists(logoCronPath))
+                {
+                    var pictureCron = ws.AddPicture(logoCronPath);
+                    pictureCron.MoveTo(ws.Cell(1, 1), 10, 10);
+                    pictureCron.Scale(0.15);
+                }
+            }
+            catch
+            {
+                // Si hay error al cargar el logo, continuar sin él
+            }
+            
+            // Agregar título en C1:K2+ (ajustado según número de semanas)
+            int lastWeekCol = 4 + weeksInYearExport; // Semanas empiezan en columna E (4 + 1 = 5)
+            // No extender el título sobre todas las columnas de semanas si hay muchas.
+            // Limitar la mezcla hasta la columna 11 (K) como máximo para mantener el título visible.
+            int titleEndCol = Math.Min(11, lastWeekCol);
+
+            var titleRangeCron = ws.Range(1, 3, 2, titleEndCol);
+            titleRangeCron.Merge();
+            var titleCellCron = titleRangeCron.FirstCell();
+            titleCellCron.Value = "CRONOGRAMA DE MANTENIMIENTOS";
+            titleCellCron.Style.Font.Bold = true;
+            titleCellCron.Style.Font.FontSize = 18;
+            titleCellCron.Style.Font.FontColor = XLColor.Black; // Negro
+            titleCellCron.Style.Fill.BackgroundColor = XLColor.White;
+            titleCellCron.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            titleCellCron.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            // Dibujar una línea horizontal (border) justo debajo del título para separar visualmente
+            try
+            {
+                ws.Range(2, 1, 2, titleEndCol).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            }
+            catch { }
+
+            // Agregar borde derecho al título
+            titleRangeCron.Style.Border.RightBorder = XLBorderStyleValues.Thin;            // ===== CUADROS DE INFORMACIÓN ABAJO DEL TÍTULO =====
+            // Usaremos 4 filas de alto (3..6) y colocaremos 4 cuadros horizontales dentro del área del título.
+            int infoStartRow = 3;
+            int infoEndRow = 7; // filas 3,4,5,6,7
+
+            // Definir límites de las 4 cajas dentro del área disponible (1..titleEndCol)
+            int b1s = 1; int b1e = Math.Min(2, titleEndCol);       // REALIZADO POR
+            int b2s = 3; int b2e = Math.Min(4, titleEndCol);       // NOMBRE
+            int b3s = 5; int b3e = Math.Min(6, titleEndCol);       // AÑO
+            int b4s = 7; int b4e = Math.Min(titleEndCol, 8);       // ACTIVIDAD (intentar hasta la col 8)
+
+            // Caja 1: REALIZADO POR:
+            if (b1s <= b1e)
+            {
+                ws.Range(infoStartRow, b1s, infoEndRow, b1e).Merge();
+                var box1 = ws.Cell(infoStartRow, b1s);
+                box1.Value = "REALIZADO POR:";
+                box1.Style.Font.Bold = true;
+                box1.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                box1.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                // Mantener solo la línea horizontal superior e inferior; quitar líneas verticales
+                box1.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                box1.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                box1.Style.Border.LeftBorder = XLBorderStyleValues.None;
+                box1.Style.Border.RightBorder = XLBorderStyleValues.None;
+            }
+
+            // Caja 2: NOMBRE DEL USUARIO
+            if (b2s <= b2e)
+            {
+                ws.Range(infoStartRow, b2s, infoEndRow, b2e).Merge();
+                var box2 = ws.Cell(infoStartRow, b2s);
+                box2.Value = _currentUser?.FullName ?? _currentUser?.Username ?? "-";
+                box2.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                box2.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                box2.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                box2.Style.Border.LeftBorder = XLBorderStyleValues.None;
+                box2.Style.Border.RightBorder = XLBorderStyleValues.None;
+            }
+
+            // Caja 3: AÑO
+            if (b3s <= b3e)
+            {
+                ws.Range(infoStartRow, b3s, infoEndRow, b3e).Merge();
+                var box3 = ws.Cell(infoStartRow, b3s);
+                box3.Value = $"AÑO: {AnioSeleccionado}";
+                box3.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                box3.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                box3.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                box3.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                box3.Style.Border.LeftBorder = XLBorderStyleValues.None;
+                box3.Style.Border.RightBorder = XLBorderStyleValues.None;
+            }
+
+            // Caja 4: ACTIVIDAD
+            if (b4s <= b4e)
+            {
+                ws.Range(infoStartRow, b4s, infoEndRow, b4e).Merge();
+                var box4 = ws.Cell(infoStartRow, b4s);
+                box4.Value = "ACTIVIDAD:";
+                box4.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                box4.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                box4.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                box4.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                box4.Style.Border.LeftBorder = XLBorderStyleValues.None;
+                box4.Style.Border.RightBorder = XLBorderStyleValues.None;
+            }
+
+            // Asegurar alturas para las filas de info
+            for (int rr = infoStartRow; rr <= infoEndRow; rr++) ws.Row(rr).Height = 18;            // ===== LEYENDA DE COLORES (a la derecha, filas 3..7, sin centrar) =====
+            // Intentar colocar la leyenda justo a la derecha de la caja 'ACTIVIDAD'
+            int preferredLegendCol = b4e + 1; // columna preferida: inmediatamente después de la caja ACTIVIDAD
+            int legendColBox;
+            int legendLabelCol;
+
+            // Si la leyenda (2 columnas: caja + etiqueta) cabe antes de las columnas de semanas, usar la preferida
+            if (preferredLegendCol + 1 <= lastWeekCol)
+            {
+                legendColBox = preferredLegendCol;
+                legendLabelCol = legendColBox + 1;
+            }
+            else
+            {
+                // Si no cabe a la derecha, intentar ponerla a la izquierda de ACTIVIDAD (si hay espacio)
+                int leftCandidate = b4s - 2; // dos columnas a la izquierda de la caja ACTIVIDAD
+                if (leftCandidate >= 1 && leftCandidate + 1 < b4s)
+                {
+                    legendColBox = leftCandidate;
+                    legendLabelCol = legendColBox + 1;
+                }
+                else
+                {
+                    // Último recurso: colocar la leyenda después de las columnas de semanas
+                    legendColBox = lastWeekCol + 1;
+                    legendLabelCol = legendColBox + 1;
+                }
+            }
+
+            var legendItems = new (string label, XLColor color)[]
+            {
+                ("Realizado en Tiempo", XLColorFromEstado(EstadoSeguimientoMantenimiento.RealizadoEnTiempo)),
+                ("Realizado fuera de tiempo", XLColorFromEstado(EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo)),
+                ("No realizado", XLColorFromEstado(EstadoSeguimientoMantenimiento.NoRealizado)),
+                ("Pendiente / Programado", XLColorFromEstado(EstadoSeguimientoMantenimiento.Pendiente)),
+                ("Correctivo", XLColor.FromHtml("#7E57C2"))
+            };
+
+            for (int i = 0; i < legendItems.Length; i++)
+            {
+                int r = infoStartRow + i; // filas 3..7
+                // Caja de color (alineada a la izquierda)
+                ws.Cell(r, legendColBox).Style.Fill.BackgroundColor = legendItems[i].color;
+                // Aplicar borde exterior normal a la caja de color
+                ws.Cell(r, legendColBox).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                ws.Cell(r, legendColBox).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                ws.Cell(r, legendColBox).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                try { ws.Column(legendColBox).Width = ws.Column(5).Width; } catch { }
+
+                // Para Correctivo, agregar la 'C' en negrita blanca centrada
+                if (legendItems[i].label == "Correctivo")
+                {
+                    ws.Cell(r, legendColBox).Value = "C";
+                    ws.Cell(r, legendColBox).Style.Font.Bold = true;
+                    ws.Cell(r, legendColBox).Style.Font.FontColor = XLColor.White;
+                    ws.Cell(r, legendColBox).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+
+                // Etiqueta al lado (no centrada)
+                ws.Cell(r, legendLabelCol).Value = legendItems[i].label;
+                ws.Cell(r, legendLabelCol).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                ws.Cell(r, legendLabelCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                ws.Cell(r, legendLabelCol).Style.Font.FontSize = 9;
+                // No aplicar borde grueso a la etiqueta; el borde sólo debe rodear la caja de color
+                // (se eliminó la línea que colocaba OutsideBorder = Thick en la etiqueta)
+            }
+
+            // ===== ENCABEZADOS DE TABLA =====
+            // currentRowCron comienza justo después del bloque informativo (infoEndRow)
+            int currentRowCron = infoEndRow + 1;
+            var headersCron = new[] { "Equipo", "Nombre", "Marca", "Sede" };
+            for (int col = 1; col <= headersCron.Length; col++)
+            {
+                var headerCell = ws.Cell(currentRowCron, col);
+                headerCell.Value = headersCron[col - 1];
+                headerCell.Style.Font.Bold = true;
+                headerCell.Style.Font.FontColor = XLColor.White;
+                headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
+                headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            }
+
+            // Encabezados de semanas (a partir de la columna E, índice 5 => 4 + s)
             for (int s = 1; s <= weeksInYearExport; s++)
             {
-                ws.Cell(1, 4 + s).Value = $"S{s}";
-                ws.Cell(1, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                var weekCell = ws.Cell(currentRowCron, 4 + s);
+                weekCell.Value = $"S{s}";
+                weekCell.Style.Font.Bold = true;
+                weekCell.Style.Font.FontColor = XLColor.White;
+                weekCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
+                weekCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                weekCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                // NO aplicar borde grueso a los encabezados de semana (solo las celdas con mantenimiento deben mostrar el borde)
             }
-            ws.Row(1).Style.Font.Bold = true;
-            int row = 2;
+            // Congelar encabezados y las primeras 4 columnas (Equipo, Nombre, Marca, Sede)
+            try
+            {
+                int headerRow = currentRowCron; // fila con los encabezados
+                ws.SheetView.FreezeRows(headerRow);   // mantiene la(s) fila(s) superiores fijas al hacer scroll vertical
+                ws.SheetView.FreezeColumns(4);        // mantiene fijas las primeras 4 columnas al hacer scroll horizontal
+            }
+            catch { }
+
+            ws.Row(currentRowCron).Height = 22;
+            currentRowCron++;
+
+            // ===== FILAS DE DATOS =====
+            int rowCountCron = 0;
             foreach (var c in cronogramas)
             {
-                ws.Cell(row, 1).Value = c.Codigo;
-                ws.Cell(row, 2).Value = c.Nombre;
-                ws.Cell(row, 3).Value = c.Marca;
-                ws.Cell(row, 4).Value = c.Sede;
+                ws.Cell(currentRowCron, 1).Value = c.Codigo;
+                ws.Cell(currentRowCron, 2).Value = c.Nombre;
+                ws.Cell(currentRowCron, 3).Value = c.Marca;
+                ws.Cell(currentRowCron, 4).Value = c.Sede;
+
                 for (int s = 1; s <= weeksInYearExport; s++)
                 {
                     if (estadosPorEquipo.TryGetValue(c.Codigo!, out var estadosSemana) && estadosSemana.TryGetValue(s, out var estado))
                     {
-                        ws.Cell(row, 4 + s).Value = EstadoToTexto(estado.Estado);
-                        ws.Cell(row, 4 + s).Style.Fill.BackgroundColor = XLColorFromEstado(estado.Estado);
-                        ws.Cell(row, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        ws.Cell(row, 4 + s).Style.Font.FontColor = XLColor.White;
+                        var cell = ws.Cell(currentRowCron, 4 + s);
+                        // Si es correctivo: fondo púrpura y una 'C' en mayúscula y negrita centrada
+                        if (estado.Seguimiento?.TipoMtno == TipoMantenimiento.Correctivo)
+                        {
+                            cell.Value = "C";
+                            cell.Style.Font.Bold = true;
+                            cell.Style.Font.FontColor = XLColor.White;
+                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#7E57C2"); // Púrpura recomendado
+                            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                            // Borde exterior normal para resaltar
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        }
+                        else
+                        {
+                            // No mostrar texto en la celda coloreada: solo el color visual debe indicar el estado
+                            cell.Value = string.Empty;
+                            cell.Style.Fill.BackgroundColor = XLColorFromEstado(estado.Estado);
+                            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                            cell.Style.Font.FontColor = XLColor.White;
+                            // Borde exterior normal solo para la celda de estado (cuando existe mantenimiento)
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        }
                     }
                     else
                     {
-                        ws.Cell(row, 4 + s).Value = "-";
-                        ws.Cell(row, 4 + s).Style.Fill.BackgroundColor = XLColor.White;
-                        ws.Cell(row, 4 + s).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        ws.Cell(row, 4 + s).Style.Font.FontColor = XLColor.Black;
+                        var cell = ws.Cell(currentRowCron, 4 + s);
+                        cell.Value = "-";
+                        cell.Style.Fill.BackgroundColor = XLColor.White;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Font.FontColor = XLColor.Black;
+                        // NO aplicar borde grueso a celdas sin mantenimiento
                     }
                 }
-                row++;
+
+                // Filas alternas con color gris claro ahora para columnas 1..4
+                if (rowCountCron % 2 == 0)
+                {
+                    for (int col = 1; col <= 4; col++)
+                    {
+                        ws.Cell(currentRowCron, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                    }
+                }
+
+                ws.Row(currentRowCron).Height = 22;
+                currentRowCron++;
+                rowCountCron++;
             }
-            ws.Columns().AdjustToContents();
+
+            // Agregar filtros automáticos a la tabla
+            if (cronogramas.Count > 0)
+            {
+                int headerRowCron = currentRowCron - cronogramas.Count - 1;
+                ws.Range(headerRowCron, 1, currentRowCron - 1, 4).SetAutoFilter();
+            }
+
+            // ===== PIE DE PÁGINA =====
+            currentRowCron += 2;
+            var footerCellCron = ws.Cell(currentRowCron, 1);
+            footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Año {AnioSeleccionado} • Sistema GestLog © SIMICS Group SAS";
+            footerCellCron.Style.Font.Italic = true;
+            footerCellCron.Style.Font.FontSize = 9;
+            footerCellCron.Style.Font.FontColor = XLColor.Gray;
+            ws.Range(currentRowCron, 1, currentRowCron, 4 + weeksInYearExport).Merge();
+
+            // Configurar página para exportación
+            ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+            ws.PageSetup.AdjustTo(100);
+            ws.PageSetup.FitToPages(1, 0);
+            ws.PageSetup.Margins.Top = 0.5;
+            ws.PageSetup.Margins.Bottom = 0.5;
+            ws.PageSetup.Margins.Left = 0.5;
+            ws.PageSetup.Margins.Right = 0.5;// ========== HOJA 2: SEGUIMIENTOS ==========
+            var wsSeguimientos = workbook.Worksheets.Add($"Seguimientos {AnioSeleccionado}");
+              // ===== CONFIGURAR ANCHO DE COLUMNAS =====
+            wsSeguimientos.Column("A").Width = 12;
+            wsSeguimientos.Column("B").Width = 16;
+            // Configurar resto de columnas
+            wsSeguimientos.Column("C").Width = 12;
+            wsSeguimientos.Column("D").Width = 15;
+            wsSeguimientos.Column("E").Width = 35;  // Más ancho para descripción
+            wsSeguimientos.Column("F").Width = 20;
+            wsSeguimientos.Column("G").Width = 15;
+            wsSeguimientos.Column("H").Width = 18;
+            wsSeguimientos.Column("I").Width = 18;
+            wsSeguimientos.Column("J").Width = 15;
+            wsSeguimientos.Column("K").Width = 35;  // Más ancho para observaciones
+              // Ocultar líneas de cuadrícula para apariencia más limpia
+            wsSeguimientos.ShowGridLines = false;            // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
+            // PRIMERO: Aumentar altura de filas 1-2 para el logo y título
+            wsSeguimientos.Row(1).Height = 35;
+            wsSeguimientos.Row(2).Height = 35;
+            
+            // SEGUNDO: Combinar celdas A1:B2 para el logo (solo lado izquierdo)
+            wsSeguimientos.Range(1, 1, 2, 2).Merge();            // TERCERO: Agregar y posicionar la imagen
+            var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
+            try
+            {                if (System.IO.File.Exists(logoPath))
+                {
+                    var picture = wsSeguimientos.AddPicture(logoPath);
+                    // Posicionar en A1 con offset de 10 píxeles desde los bordes izquierdo y superior
+                    picture.MoveTo(wsSeguimientos.Cell(1, 1), 10, 10);
+                    // Escalar para que se ajuste a las 2 filas (70px cada una = 140px total)
+                    picture.Scale(0.15); // Escalar al 10% del tamaño original
+                }
+            }
+            catch
+            {
+                // Si hay error al cargar el logo, continuar sin él
+            }
+            
+            // CUARTO: Agregar título en C1:K2 (lado derecho, centrado vertical y horizontal)
+            var titleRange = wsSeguimientos.Range(1, 3, 2, 11);
+            titleRange.Merge();            var titleCellSeg = titleRange.FirstCell();
+            titleCellSeg.Value = "SEGUIMIENTOS DE MANTENIMIENTOS";
+            titleCellSeg.Style.Font.Bold = true;
+            titleCellSeg.Style.Font.FontSize = 18;
+            titleCellSeg.Style.Font.FontColor = XLColor.Black; // Negro
+            titleCellSeg.Style.Fill.BackgroundColor = XLColor.White;
+            titleCellSeg.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            titleCellSeg.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            
+            int currentRowSeg = 3; // Comenzar desde fila 3 (encabezados)
+            
+            // ===== ENCABEZADOS DE TABLA =====
+            var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+            for (int col = 1; col <= headersSeg.Length; col++)
+            {
+                var headerCell = wsSeguimientos.Cell(currentRowSeg, col);
+                headerCell.Value = headersSeg[col - 1];
+                headerCell.Style.Font.Bold = true;
+                headerCell.Style.Font.FontColor = XLColor.White;
+                headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
+                headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            }
+            wsSeguimientos.Row(currentRowSeg).Height = 22;
+            currentRowSeg++;
+              // ===== FILAS DE DATOS =====
+            int rowCountSeg = 0;
+            foreach (var seg in seguimientosAnio.OrderBy(s => s.Semana).ThenBy(s => s.Codigo))
+            {
+                wsSeguimientos.Cell(currentRowSeg, 1).Value = seg.Codigo;
+                wsSeguimientos.Cell(currentRowSeg, 2).Value = seg.Nombre;
+                wsSeguimientos.Cell(currentRowSeg, 3).Value = seg.Semana;
+                wsSeguimientos.Cell(currentRowSeg, 4).Value = seg.TipoMtno?.ToString() ?? "-";
+                
+                // Descripción con word wrap
+                var descCell = wsSeguimientos.Cell(currentRowSeg, 5);
+                descCell.Value = seg.Descripcion;
+                descCell.Style.Alignment.WrapText = true;
+                
+                wsSeguimientos.Cell(currentRowSeg, 6).Value = seg.Responsable;
+                
+                // Estado con color de fondo
+                var estadoCell = wsSeguimientos.Cell(currentRowSeg, 7);
+                estadoCell.Value = EstadoToTexto(seg.Estado);
+                estadoCell.Style.Fill.BackgroundColor = XLColorFromEstado(seg.Estado);
+                estadoCell.Style.Font.FontColor = XLColor.White;
+                estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                
+                wsSeguimientos.Cell(currentRowSeg, 8).Value = seg.FechaRegistro?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+                wsSeguimientos.Cell(currentRowSeg, 9).Value = seg.FechaRealizacion?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+                
+                // Costo formateado
+                var costoCell = wsSeguimientos.Cell(currentRowSeg, 10);
+                costoCell.Value = seg.Costo ?? 0;
+                costoCell.Style.NumberFormat.Format = "$#,##0";
+                  // Observaciones con word wrap y padding izquierdo
+                var obsCell = wsSeguimientos.Cell(currentRowSeg, 11);
+                obsCell.Value = seg.Observaciones ?? "-";
+                obsCell.Style.Alignment.WrapText = true;
+                obsCell.Style.Alignment.Indent = 2; // Agregar indentación para separación visual
+                
+                // Filas alternas con color gris claro (excluyendo columna de estado)
+                if (rowCountSeg % 2 == 0)
+                {
+                    for (int col = 1; col <= 11; col++)
+                    {
+                        if (col != 7) // No colorear la columna de estado
+                            wsSeguimientos.Cell(currentRowSeg, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                    }
+                }
+                
+                // Centrar columnas numéricas
+                wsSeguimientos.Cell(currentRowSeg, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSeguimientos.Cell(currentRowSeg, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSeguimientos.Cell(currentRowSeg, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                
+                // Ajustar altura de fila automáticamente para textos largos
+                wsSeguimientos.Row(currentRowSeg).Height = 30; // Altura mínima para acomodar textos
+                
+                currentRowSeg++;
+                rowCountSeg++;
+            }
+            
+            // Agregar filtros automáticos a la tabla
+            if (seguimientosAnio.Count > 0)
+            {
+                int headerRow = currentRowSeg - seguimientosAnio.Count - 1;
+                wsSeguimientos.Range(headerRow, 1, currentRowSeg - 1, 11).SetAutoFilter();
+            }
+            
+            // ===== RESUMEN DE ESTADÍSTICAS =====
+            if (seguimientosAnio.Count > 0)
+            {
+                currentRowSeg += 2;
+                
+                var statsTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                statsTitle.Value = "RESUMEN DE ESTADÍSTICAS";
+                statsTitle.Style.Font.Bold = true;
+                statsTitle.Style.Font.FontSize = 12;
+                statsTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F); // Verde medio
+                statsTitle.Style.Font.FontColor = XLColor.White;
+                statsTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+                wsSeguimientos.Row(currentRowSeg).Height = 20;
+                currentRowSeg += 2;
+                
+                // Calcular estadísticas
+                var realizadosEnTiempo = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
+                var realizadosFueraTiempo = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
+                var noRealizados = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
+                var pendientes = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
+                var totalCosto = seguimientosAnio.Sum(s => s.Costo ?? 0);
+                
+                var stats = new (string label, int count, string color)[]
+                {
+                    ("Realizados en Tiempo", realizadosEnTiempo, "27AE60"),
+                    ("Realizados Fuera de Tiempo", realizadosFueraTiempo, "F9B233"),
+                    ("No Realizados", noRealizados, "C0392B"),
+                    ("Pendientes", pendientes, "BDBDBD"),
+                };
+                
+                // Mostrar estadísticas en formato 2x2
+                for (int i = 0; i < stats.Length; i++)
+                {
+                    int colOffset = (i % 2) * 5; // 0 para primera columna, 5 para segunda
+                    int rowOffset = i / 2; // 0 para primera fila, 1 para segunda
+                    
+                    var labelCell = wsSeguimientos.Cell(currentRowSeg + rowOffset, 1 + colOffset);
+                    labelCell.Value = stats[i].label;
+                    labelCell.Style.Font.Bold = true;
+                    labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF8F9FA);
+                    
+                    var valueCell = wsSeguimientos.Cell(currentRowSeg + rowOffset, 2 + colOffset);
+                    valueCell.Value = stats[i].count;
+                    valueCell.Style.Font.Bold = true;
+                    valueCell.Style.Font.FontSize = 11;
+                    valueCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#" + stats[i].color);
+                    valueCell.Style.Font.FontColor = XLColor.White;
+                    valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+                
+                // Mostrar total costo a la derecha del resumen
+                var totalCostoLabel = wsSeguimientos.Cell(currentRowSeg, 9);
+                totalCostoLabel.Value = "Total Costo";
+                totalCostoLabel.Style.Font.Bold = true;
+                totalCostoLabel.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF8F9FA);
+                
+                var totalCostoValue = wsSeguimientos.Cell(currentRowSeg, 10);
+                totalCostoValue.Value = totalCosto;
+                totalCostoValue.Style.NumberFormat.Format = "$#,##0";
+                totalCostoValue.Style.Font.Bold = true;
+                totalCostoValue.Style.Fill.BackgroundColor = XLColor.FromArgb(0x0193B5); // Azul
+                totalCostoValue.Style.Font.FontColor = XLColor.White;
+                totalCostoValue.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            }
+            
+            // ===== PIE DE PÁGINA =====
+            currentRowSeg += 2;
+            var footerCellSeg = wsSeguimientos.Cell(currentRowSeg, 1);
+            footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Sistema GestLog © SIMICS Group SAS";
+            footerCellSeg.Style.Font.Italic = true;
+            footerCellSeg.Style.Font.FontSize = 9;
+            footerCellSeg.Style.Font.FontColor = XLColor.Gray;
+            wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+            
+            // Agregar borde exterior grueso
+            wsSeguimientos.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
+            
+            // Configurar página para exportación a PDF
+            wsSeguimientos.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+            wsSeguimientos.PageSetup.AdjustTo(100);
+            wsSeguimientos.PageSetup.FitToPages(1, 0);
+            wsSeguimientos.PageSetup.Margins.Top = 0.5;
+            wsSeguimientos.PageSetup.Margins.Bottom = 0.5;
+            wsSeguimientos.PageSetup.Margins.Left = 0.5;
+            wsSeguimientos.PageSetup.Margins.Right = 0.5;
+
             workbook.SaveAs(saveFileDialog.FileName);
-            StatusMessage = $"Exportación completada: {saveFileDialog.FileName}";
+            StatusMessage = $"Exportación completada: {saveFileDialog.FileName} ({cronogramas.Count} cronogramas, {seguimientosAnio.Count} seguimientos)";
         }
         catch (Exception ex)
         {
@@ -692,7 +1213,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"), // Ámbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"), // Verde
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // Ámbar
-            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#BDBDBD"), // Gris
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#B3E5FC"), // Azul cielo pastel
             _ => XLColor.White        };
     }    /// <summary>
     /// Implementación del método abstracto para auto-refresh automático
