@@ -621,9 +621,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             _logger.LogError(ex, "Error al dar de baja equipo");
             StatusMessage = "Error al dar de baja equipo.";
         }
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     public async Task ExportarEquiposAsync()
     {
         try
@@ -633,52 +631,217 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 Filter = "Archivos Excel (*.xlsx)|*.xlsx",
                 DefaultExt = ".xlsx",
                 Title = "Exportar equipos a Excel",
-                FileName = "Equipos.xlsx"
+                FileName = $"EQUIPOS_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
             };
             if (dialog.ShowDialog() == true)
             {
+                IsLoading = true;
+                StatusMessage = "Exportando equipos...";
+
                 await Task.Run(() =>
                 {
                     using var workbook = new XLWorkbook();
                     var ws = workbook.Worksheets.Add("Equipos");
-                    // Encabezados
-                    ws.Cell(1, 1).Value = "Código";
-                    ws.Cell(1, 2).Value = "Nombre";
-                    ws.Cell(1, 3).Value = "Marca";
-                    ws.Cell(1, 4).Value = "Estado";
-                    ws.Cell(1, 5).Value = "Sede";
-                    ws.Cell(1, 6).Value = "Frecuencia Mtto";
-                    ws.Cell(1, 7).Value = "Precio";
-                    ws.Cell(1, 8).Value = "Fecha Registro";
-                    ws.Cell(1, 9).Value = "Fecha Compra";
-                    ws.Cell(1, 10).Value = "Clasificacion";
-                    ws.Cell(1, 11).Value = "Comprado a";
-                    int row = 2;
-                    foreach (var eq in Equipos)
+
+                    // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
+                    ws.Row(1).Height = 35;
+                    ws.Row(2).Height = 35;
+                    ws.ShowGridLines = false;
+
+                    // Combinar celdas A1:B2 para el logo
+                    ws.Range(1, 1, 2, 2).Merge();
+
+                    // Agregar logo
+                    var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
+                    try
                     {
-                        ws.Cell(row, 1).Value = eq.Codigo ?? "";
-                        ws.Cell(row, 2).Value = eq.Nombre ?? "";
-                        ws.Cell(row, 3).Value = eq.Marca ?? "";
-                        ws.Cell(row, 4).Value = eq.Estado?.ToString() ?? "";
-                        ws.Cell(row, 5).Value = eq.Sede?.ToString() ?? "";
-                        ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
-                        ws.Cell(row, 7).Value = eq.Precio ?? 0;
-                        ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 10).Value = eq.Clasificacion ?? "";
-                        ws.Cell(row, 11).Value = eq.CompradoA ?? "";
-                        row++;
+                        if (System.IO.File.Exists(logoPath))
+                        {
+                            var picture = ws.AddPicture(logoPath);
+                            picture.MoveTo(ws.Cell(1, 1), 10, 10);
+                            picture.Scale(0.15);
+                        }
                     }
-                    ws.Columns().AdjustToContents();
+                    catch { }
+
+                    // Agregar título en C1:J2
+                    var titleRange = ws.Range(1, 3, 2, 10);
+                    titleRange.Merge();
+                    var titleCell = titleRange.FirstCell();
+                    titleCell.Value = "INVENTARIO DE EQUIPOS";
+                    titleCell.Style.Font.Bold = true;
+                    titleCell.Style.Font.FontSize = 18;
+                    titleCell.Style.Font.FontColor = XLColor.Black;
+                    titleCell.Style.Fill.BackgroundColor = XLColor.White;
+                    titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                    // ===== ENCABEZADOS DE TABLA =====
+                    int currentRow = 3;
+                    var headers = new[] { "Código", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "Clasificación", "Comprado a" };
+                    for (int col = 1; col <= headers.Length; col++)
+                    {
+                        var headerCell = ws.Cell(currentRow, col);
+                        headerCell.Value = headers[col - 1];
+                        headerCell.Style.Font.Bold = true;
+                        headerCell.Style.Font.FontColor = XLColor.White;
+                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
+                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                    }
+                    ws.Row(currentRow).Height = 22;
+                    currentRow++;
+
+                    // ===== FILAS DE DATOS =====
+                    int rowCount = 0;
+                    var equiposExportar = Equipos.OrderBy(e => e.Codigo).ToList();
+                    foreach (var eq in equiposExportar)
+                    {
+                        ws.Cell(currentRow, 1).Value = eq.Codigo ?? "";
+                        ws.Cell(currentRow, 2).Value = eq.Nombre ?? "";
+                        ws.Cell(currentRow, 3).Value = eq.Marca ?? "";
+                        ws.Cell(currentRow, 4).Value = eq.Estado?.ToString() ?? "";
+                        ws.Cell(currentRow, 5).Value = eq.Sede?.ToString() ?? "";
+                        ws.Cell(currentRow, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
+
+                        // Precio formateado
+                        var precioCell = ws.Cell(currentRow, 7);
+                        precioCell.Value = eq.Precio ?? 0;
+                        precioCell.Style.NumberFormat.Format = "$#,##0";
+
+                        ws.Cell(currentRow, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(currentRow, 9).Value = eq.Clasificacion ?? "";
+                        ws.Cell(currentRow, 10).Value = eq.CompradoA ?? "";
+
+                        // Filas alternas con color gris claro
+                        if (rowCount % 2 == 0)
+                        {
+                            for (int col = 1; col <= 10; col++)
+                            {
+                                ws.Cell(currentRow, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                            }
+                        }
+
+                        ws.Row(currentRow).Height = 20;
+                        currentRow++;
+                        rowCount++;
+                    }
+
+                    // Agregar filtros automáticos
+                    if (equiposExportar.Count > 0)
+                    {
+                        int headerRow = currentRow - equiposExportar.Count - 1;
+                        ws.Range(headerRow, 1, currentRow - 1, 10).SetAutoFilter();
+                    }
+
+                    // ===== PANEL DE KPIs (INDICADORES BÁSICOS) =====
+                    if (equiposExportar.Count > 0)
+                    {
+                        currentRow += 2;
+
+                        // Calcular estadísticas
+                        var totalEquipos = equiposExportar.Count;
+                        var equiposActPor = equiposExportar.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));                        var equiposInactivosPor = equiposExportar.Count(e => EsEstado(e.Estado, "inactivo"));
+                        var equiposSinPrecio = equiposExportar.Count(e => (e.Precio ?? 0) == 0);
+                        var precioTotal = equiposExportar.Sum(e => e.Precio ?? 0);
+
+                        // Título KPIs
+                        var kpiTitle = ws.Cell(currentRow, 1);
+                        kpiTitle.Value = "INDICADORES DE INVENTARIO";
+                        kpiTitle.Style.Font.Bold = true;
+                        kpiTitle.Style.Font.FontSize = 12;
+                        kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                        kpiTitle.Style.Font.FontColor = XLColor.White;
+                        kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Range(currentRow, 1, currentRow, 11).Merge();
+                        ws.Row(currentRow).Height = 20;
+                        currentRow++;
+
+                        // KPI Row
+                        var kpiLabels = new[] { "Total Equipos", "Activos", "Inactivos", "Sin Precio", "Valor Total Inventario" };
+                        var kpiValues = new object[] 
+                        { 
+                            totalEquipos,
+                            equiposActPor,
+                            equiposInactivosPor,
+                            equiposSinPrecio,
+                            precioTotal                        };for (int col = 0; col < kpiLabels.Length; col++)
+                        {
+                            // Etiqueta
+                            var labelCell = ws.Cell(currentRow, col + 1);
+                            labelCell.Value = kpiLabels[col];
+                            labelCell.Style.Font.Bold = true;
+                            labelCell.Style.Font.FontSize = 10;
+                            labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
+                            labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+
+                            // Valor
+                            var valueCell = ws.Cell(currentRow + 1, col + 1);
+                            if (col == 4) // Valor Total Inventario
+                            {
+                                valueCell.Value = (decimal)kpiValues[col];
+                                valueCell.Style.NumberFormat.Format = "$#,##0";
+                            }
+                            else
+                            {
+                                valueCell.Value = (int)kpiValues[col];
+                            }
+
+                            valueCell.Style.Font.Bold = true;
+                            valueCell.Style.Font.FontSize = 12;
+                            valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                            valueCell.Style.Font.FontColor = XLColor.White;
+                            valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        }
+                        currentRow += 2;
+                    }
+
+                    // ===== AJUSTAR ANCHO DE COLUMNAS =====
+                    ws.Column(1).Width = 12;
+                    ws.Column(2).Width = 20;
+                    ws.Column(3).Width = 15;
+                    ws.Column(4).Width = 15;
+                    ws.Column(5).Width = 12;
+                    ws.Column(6).Width = 15;
+                    ws.Column(7).Width = 14;
+                    ws.Column(8).Width = 14;
+                    ws.Column(9).Width = 16;
+                    ws.Column(10).Width = 18;
+
+                    // ===== PIE DE PÁGINA =====
+                    currentRow += 1;
+                    var footerCell = ws.Cell(currentRow, 1);
+                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • {equiposExportar.Count} equipos • Sistema GestLog © SIMICS Group SAS";
+                    footerCell.Style.Font.Italic = true;
+                    footerCell.Style.Font.FontSize = 9;
+                    footerCell.Style.Font.FontColor = XLColor.Gray;
+                    ws.Range(currentRow, 1, currentRow, 10).Merge();
+
+                    // Configurar página para exportación
+                    ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+                    ws.PageSetup.Scale = 90;
+                    ws.PageSetup.Margins.Top = 0.5;
+                    ws.PageSetup.Margins.Bottom = 0.5;
+                    ws.PageSetup.Margins.Left = 0.5;
+                    ws.PageSetup.Margins.Right = 0.5;
+
                     workbook.SaveAs(dialog.FileName);
                 });
-                StatusMessage = $"Exportación completada: {Path.GetFileName(dialog.FileName)}";
+
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({Equipos.Count} equipos)";
             }
         }
         catch (System.Exception ex)
         {
             _logger.LogError(ex, "Error al exportar equipos");
             StatusMessage = "Error al exportar equipos.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -789,72 +952,228 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
             .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
             .Replace("ñ", "n").Replace("Ñ", "N");
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     public async Task ExportarEquiposFiltradosAsync()
     {
-        var dialog = new VistaSaveFileDialog
+        try
         {
-            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
-            DefaultExt = ".xlsx",
-            Title = "Exportar equipos filtrados a Excel",
-            FileName = "EquiposFiltrados.xlsx"
-        };
-        if (dialog.ShowDialog() == true)
-        {
-            IsLoading = true;
-            StatusMessage = "Exportando a Excel...";
-            try
+            var dialog = new VistaSaveFileDialog
             {
-                var filtrados = EquiposView?.Cast<EquipoDto>().ToList() ?? new List<EquipoDto>();
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                DefaultExt = ".xlsx",
+                Title = "Exportar equipos filtrados a Excel",
+                FileName = $"EQUIPOS_FILTRADOS_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                IsLoading = true;
+                StatusMessage = "Exportando equipos filtrados...";
+
                 await Task.Run(() =>
                 {
+                    var filtrados = EquiposView?.Cast<EquipoDto>().ToList() ?? new List<EquipoDto>();
+
                     using var workbook = new XLWorkbook();
                     var ws = workbook.Worksheets.Add("Equipos");
-                    ws.Cell(1, 1).Value = "Código";
-                    ws.Cell(1, 2).Value = "Nombre";
-                    ws.Cell(1, 3).Value = "Marca";
-                    ws.Cell(1, 4).Value = "Estado";
-                    ws.Cell(1, 5).Value = "Sede";
-                    ws.Cell(1, 6).Value = "Frecuencia Mtto";
-                    ws.Cell(1, 7).Value = "Precio";
-                    ws.Cell(1, 8).Value = "Fecha Registro";
-                    ws.Cell(1, 9).Value = "Fecha Compra";
-                    ws.Cell(1, 10).Value = "Clasificacion";
-                    ws.Cell(1, 11).Value = "Comprado a";
-                    int row = 2;
+
+                    // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
+                    ws.Row(1).Height = 35;
+                    ws.Row(2).Height = 35;
+                    ws.ShowGridLines = false;
+
+                    // Combinar celdas A1:B2 para el logo
+                    ws.Range(1, 1, 2, 2).Merge();
+
+                    // Agregar logo
+                    var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
+                    try
+                    {
+                        if (System.IO.File.Exists(logoPath))
+                        {
+                            var picture = ws.AddPicture(logoPath);
+                            picture.MoveTo(ws.Cell(1, 1), 10, 10);
+                            picture.Scale(0.15);
+                        }
+                    }
+                    catch { }
+
+                    // Agregar título en C1:J2
+                    var titleRange = ws.Range(1, 3, 2, 10);
+                    titleRange.Merge();
+                    var titleCell = titleRange.FirstCell();
+                    titleCell.Value = "INVENTARIO DE EQUIPOS (FILTRADOS)";
+                    titleCell.Style.Font.Bold = true;
+                    titleCell.Style.Font.FontSize = 18;
+                    titleCell.Style.Font.FontColor = XLColor.Black;
+                    titleCell.Style.Fill.BackgroundColor = XLColor.White;
+                    titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                    // ===== ENCABEZADOS DE TABLA =====
+                    int currentRow = 3;
+                    var headers = new[] { "Código", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "Clasificación", "Comprado a" };
+                    for (int col = 1; col <= headers.Length; col++)
+                    {
+                        var headerCell = ws.Cell(currentRow, col);
+                        headerCell.Value = headers[col - 1];
+                        headerCell.Style.Font.Bold = true;
+                        headerCell.Style.Font.FontColor = XLColor.White;
+                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
+                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                    }
+                    ws.Row(currentRow).Height = 22;
+                    currentRow++;
+
+                    // ===== FILAS DE DATOS =====
+                    int rowCount = 0;
                     foreach (var eq in filtrados)
                     {
-                        ws.Cell(row, 1).Value = eq.Codigo ?? "";
-                        ws.Cell(row, 2).Value = eq.Nombre ?? "";
-                        ws.Cell(row, 3).Value = eq.Marca ?? "";
-                        ws.Cell(row, 4).Value = eq.Estado?.ToString() ?? "";
-                        ws.Cell(row, 5).Value = eq.Sede?.ToString() ?? "";
-                        ws.Cell(row, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
-                        ws.Cell(row, 7).Value = eq.Precio ?? 0;
-                        ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 9).Value = eq.FechaCompra?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 10).Value = eq.Clasificacion ?? "";
-                        ws.Cell(row, 11).Value = eq.CompradoA ?? "";
-                        row++;
+                        ws.Cell(currentRow, 1).Value = eq.Codigo ?? "";
+                        ws.Cell(currentRow, 2).Value = eq.Nombre ?? "";
+                        ws.Cell(currentRow, 3).Value = eq.Marca ?? "";
+                        ws.Cell(currentRow, 4).Value = eq.Estado?.ToString() ?? "";
+                        ws.Cell(currentRow, 5).Value = eq.Sede?.ToString() ?? "";
+                        ws.Cell(currentRow, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
+
+                        // Precio formateado
+                        var precioCell = ws.Cell(currentRow, 7);
+                        precioCell.Value = eq.Precio ?? 0;
+                        precioCell.Style.NumberFormat.Format = "$#,##0";
+
+                        ws.Cell(currentRow, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
+                        ws.Cell(currentRow, 9).Value = eq.Clasificacion ?? "";
+                        ws.Cell(currentRow, 10).Value = eq.CompradoA ?? "";
+
+                        // Filas alternas con color gris claro
+                        if (rowCount % 2 == 0)
+                        {
+                            for (int col = 1; col <= 10; col++)
+                            {
+                                ws.Cell(currentRow, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                            }
+                        }
+
+                        ws.Row(currentRow).Height = 20;
+                        currentRow++;
+                        rowCount++;
                     }
-                    ws.Columns().AdjustToContents();
+
+                    // Agregar filtros automáticos
+                    if (filtrados.Count > 0)
+                    {
+                        int headerRow = currentRow - filtrados.Count - 1;
+                        ws.Range(headerRow, 1, currentRow - 1, 10).SetAutoFilter();
+                    }
+
+                    // ===== PANEL DE KPIs (INDICADORES BÁSICOS) =====
+                    if (filtrados.Count > 0)
+                    {
+                        currentRow += 2;                        // Calcular estadísticas
+                        var totalEquipos = filtrados.Count;
+                        var equiposActPor = filtrados.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));
+                        var equiposInactivosPor = filtrados.Count(e => EsEstado(e.Estado, "inactivo"));
+                        var equiposSinPrecio = filtrados.Count(e => (e.Precio ?? 0) == 0);
+                        var precioTotal = filtrados.Sum(e => e.Precio ?? 0);
+
+                        // Título KPIs
+                        var kpiTitle = ws.Cell(currentRow, 1);
+                        kpiTitle.Value = "INDICADORES DE INVENTARIO";
+                        kpiTitle.Style.Font.Bold = true;
+                        kpiTitle.Style.Font.FontSize = 12;
+                        kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                        kpiTitle.Style.Font.FontColor = XLColor.White;
+                        kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Range(currentRow, 1, currentRow, 11).Merge();
+                        ws.Row(currentRow).Height = 20;
+                        currentRow++;                        // KPI Row
+                        var kpiLabels = new[] { "Total Equipos", "Activos", "Inactivos", "Sin Precio", "Valor Total Inventario" };
+                        var kpiValues = new object[] 
+                        { 
+                            totalEquipos,
+                            equiposActPor,
+                            equiposInactivosPor,
+                            equiposSinPrecio,
+                            precioTotal
+                        };                        for (int col = 0; col < kpiLabels.Length; col++)
+                        {
+                            // Etiqueta
+                            var labelCell = ws.Cell(currentRow, col + 1);
+                            labelCell.Value = kpiLabels[col];
+                            labelCell.Style.Font.Bold = true;
+                            labelCell.Style.Font.FontSize = 10;
+                            labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
+                            labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+
+                            // Valor
+                            var valueCell = ws.Cell(currentRow + 1, col + 1);
+                            if (col == 4) // Valor Total Inventario
+                            {
+                                valueCell.Value = (decimal)kpiValues[col];
+                                valueCell.Style.NumberFormat.Format = "$#,##0";
+                            }
+                            else
+                            {
+                                valueCell.Value = (int)kpiValues[col];
+                            }
+
+                            valueCell.Style.Font.Bold = true;
+                            valueCell.Style.Font.FontSize = 12;
+                            valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                            valueCell.Style.Font.FontColor = XLColor.White;
+                            valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        }
+                        currentRow += 2;
+                    }
+
+                    // ===== AJUSTAR ANCHO DE COLUMNAS =====
+                    ws.Column(1).Width = 12;
+                    ws.Column(2).Width = 20;
+                    ws.Column(3).Width = 15;
+                    ws.Column(4).Width = 15;
+                    ws.Column(5).Width = 12;
+                    ws.Column(6).Width = 15;
+                    ws.Column(7).Width = 14;
+                    ws.Column(8).Width = 14;
+                    ws.Column(9).Width = 16;
+                    ws.Column(10).Width = 18;
+
+                    // ===== PIE DE PÁGINA =====
+                    currentRow += 1;
+                    var footerCell = ws.Cell(currentRow, 1);
+                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • {filtrados.Count} equipos • Sistema GestLog © SIMICS Group SAS";
+                    footerCell.Style.Font.Italic = true;
+                    footerCell.Style.Font.FontSize = 9;
+                    footerCell.Style.Font.FontColor = XLColor.Gray;
+                    ws.Range(currentRow, 1, currentRow, 10).Merge();
+
+                    // Configurar página para exportación
+                    ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+                    ws.PageSetup.Scale = 90;
+                    ws.PageSetup.Margins.Top = 0.5;
+                    ws.PageSetup.Margins.Bottom = 0.5;
+                    ws.PageSetup.Margins.Left = 0.5;
+                    ws.PageSetup.Margins.Right = 0.5;
+
                     workbook.SaveAs(dialog.FileName);
                 });
-                StatusMessage = $"Exportación completada: {dialog.FileName}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al exportar equipos filtrados");
-                StatusMessage = $"Error al exportar: {ex.Message}";
-            }
-            finally
-            {
-                IsLoading = false;
+
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({(EquiposView?.Cast<EquipoDto>().Count() ?? 0)} equipos filtrados)";
             }
         }
-    }    
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al exportar equipos filtrados");
+            StatusMessage = $"Error al exportar: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 
     [RelayCommand]
     public void VerDetallesEquipo(EquipoDto? equipo)
@@ -996,55 +1315,31 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
         
         base.Dispose();
-    }
-
-    [RelayCommand]
+    }    [RelayCommand]
     public async Task ExportarInteligenteAsync()
     {
-        // Si hay filtro aplicado (texto no vacío) o la vista está filtrada, exportar filtrados
+        // Detectar si realmente hay un filtro activo
         try
         {
-            var hayFiltroActivo = !string.IsNullOrWhiteSpace(FiltroEquipo);
-            // Si hay filtro textual, preferir ExportarEquiposFiltradosAsync
-            if (hayFiltroActivo)
+            // 1. Verificar si hay filtro de texto
+            var hayFiltroTexto = !string.IsNullOrWhiteSpace(FiltroEquipo);
+            if (hayFiltroTexto)
             {
                 await ExportarEquiposFiltradosAsync();
                 return;
             }
 
-            // Si no hay filtro textual, verificar si la vista tiene un filtro activo distinto de null
-            var viewHasFilter = EquiposView != null && EquiposView.Filter != null;
-            if (viewHasFilter)
+            // 2. Verificar si Equipos (visible) es diferente de _allEquipos (total)
+            // Esto indica que hay un filtro activo como "MostrarDadosDeBaja"
+            var hayFiltroEstado = Equipos.Count != _allEquipos.Count;
+            if (hayFiltroEstado)
             {
-                // Si el filtro es activo pero no hay texto (por ejemplo MostrarDadosDeBaja cambia), exportar lo que muestra la vista
                 await ExportarEquiposFiltradosAsync();
                 return;
             }
 
-            // Si no hay filtro, exportar todo (la colección completa _allEquipos si está disponible, sino Equipos)
-            // Temporalmente cambiar la propiedad Equipos para asegurarnos de exportar todo sin filtrar
-            var originalEquipos = Equipos;
-            try
-            {
-                if (_allEquipos != null && _allEquipos.Count > 0)
-                {
-                    Equipos = new ObservableCollection<EquipoDto>(_allEquipos);
-                    EquiposView = CollectionViewSource.GetDefaultView(Equipos);
-                    if (EquiposView != null)
-                        EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
-                }
-
-                await ExportarEquiposAsync();
-            }
-            finally
-            {
-                // Restaurar colección original y vista
-                Equipos = originalEquipos;
-                EquiposView = CollectionViewSource.GetDefaultView(Equipos);
-                if (EquiposView != null)
-                    EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
-                EquiposView?.Refresh();
-            }
+            // Si no hay filtro alguno, exportar todo (sin cambios temporales)
+            await ExportarEquiposAsync();
         }
         catch (System.Exception ex)
         {
