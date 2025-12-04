@@ -622,27 +622,23 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                      s.Estado == EstadoSeguimientoMantenimiento.NoRealizado) &&
                     cronogramas.Any(c => c.Codigo == s.Codigo))
                 .ToList();            using var workbook = new XLWorkbook();
-            
-            // ========== HOJA 1: CRONOGRAMA ==========
+              // ========== HOJA 1: CRONOGRAMA ==========
             var ws = workbook.Worksheets.Add($"Cronograma {AnioSeleccionado}");
+              // ===== CONFIGURAR ANCHO DE COLUMNAS =====
+            // IMPORTANTE: NO asignar anchos fijos a A-E, se ajustarán automáticamente con AdjustToContents()
+            // al final después de llenar los datos
             
-            // ===== CONFIGURAR ANCHO DE COLUMNAS =====
-            ws.Column("A").Width = 12;
-            ws.Column("B").Width = 20;
-            ws.Column("C").Width = 15;
-            ws.Column("D").Width = 15;
-            
-            // Configurar ancho para columnas de semanas (ajustado a lo que cabe). Semanas empezarán en la columna E (índice 5).
+            // Configurar ancho para columnas de semanas (ajustado a lo que cabe). Semanas empezarán en la columna F (índice 6).
             try
             {
                 // Ajustar en bloque todas las columnas de semanas para que tengan el mismo ancho
-                ws.Columns(5, 4 + weeksInYearExport).Width = 8;
+                ws.Columns(6, 5 + weeksInYearExport).Width = 8;
             }
             catch
             {
                 // Fallback: iterar si la asignación en bloque falla por alguna razón
                 for (int s = 1; s <= weeksInYearExport; s++)
-                    ws.Column(4 + s).Width = 8;
+                    ws.Column(5 + s).Width = 8;
             }
             
             // Ocultar líneas de cuadrícula para apariencia más limpia
@@ -697,103 +693,36 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
 
             // Agregar borde derecho al título
             titleRangeCron.Style.Border.RightBorder = XLBorderStyleValues.Thin;            // ===== CUADROS DE INFORMACIÓN ABAJO DEL TÍTULO =====
-            // Usaremos 4 filas de alto (3..6) y colocaremos 4 cuadros horizontales dentro del área del título.
+            // Cajas sin merge horizontal: A1=REALIZADO POR (merge vertical), B1=NOMBRE (merge vertical), C1=AÑO (merge vertical)
             int infoStartRow = 3;
-            int infoEndRow = 7; // filas 3,4,5,6,7
+            int infoEndRow = 7; // filas 3,4,5,6,7            // Caja 1: REALIZADO POR (columna A, merge vertical)
+            ws.Range(infoStartRow, 1, infoEndRow, 1).Merge();
+            var box1 = ws.Cell(infoStartRow, 1);
+            box1.Value = "REALIZADO POR:";
+            box1.Style.Font.Bold = true;
+            box1.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            box1.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            // SIN BORDES - Solo la leyenda debe tener bordes
 
-            // Definir límites de las 4 cajas dentro del área disponible (1..titleEndCol)
-            int b1s = 1; int b1e = Math.Min(2, titleEndCol);       // REALIZADO POR
-            int b2s = 3; int b2e = Math.Min(4, titleEndCol);       // NOMBRE
-            int b3s = 5; int b3e = Math.Min(6, titleEndCol);       // AÑO
-            int b4s = 7; int b4e = Math.Min(titleEndCol, 8);       // ACTIVIDAD (intentar hasta la col 8)
+            // Caja 2: NOMBRE DEL USUARIO (columna B, merge vertical)
+            ws.Range(infoStartRow, 2, infoEndRow, 2).Merge();
+            var box2 = ws.Cell(infoStartRow, 2);
+            box2.Value = _currentUser?.FullName ?? _currentUser?.Username ?? "-";
+            box2.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            // SIN BORDES - Solo la leyenda debe tener bordes
 
-            // Caja 1: REALIZADO POR:
-            if (b1s <= b1e)
-            {
-                ws.Range(infoStartRow, b1s, infoEndRow, b1e).Merge();
-                var box1 = ws.Cell(infoStartRow, b1s);
-                box1.Value = "REALIZADO POR:";
-                box1.Style.Font.Bold = true;
-                box1.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                box1.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                // Mantener solo la línea horizontal superior e inferior; quitar líneas verticales
-                box1.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-                box1.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                box1.Style.Border.LeftBorder = XLBorderStyleValues.None;
-                box1.Style.Border.RightBorder = XLBorderStyleValues.None;
-            }
-
-            // Caja 2: NOMBRE DEL USUARIO
-            if (b2s <= b2e)
-            {
-                ws.Range(infoStartRow, b2s, infoEndRow, b2e).Merge();
-                var box2 = ws.Cell(infoStartRow, b2s);
-                box2.Value = _currentUser?.FullName ?? _currentUser?.Username ?? "-";
-                box2.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                box2.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-                box2.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                box2.Style.Border.LeftBorder = XLBorderStyleValues.None;
-                box2.Style.Border.RightBorder = XLBorderStyleValues.None;
-            }
-
-            // Caja 3: AÑO
-            if (b3s <= b3e)
-            {
-                ws.Range(infoStartRow, b3s, infoEndRow, b3e).Merge();
-                var box3 = ws.Cell(infoStartRow, b3s);
-                box3.Value = $"AÑO: {AnioSeleccionado}";
-                box3.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                box3.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                box3.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-                box3.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                box3.Style.Border.LeftBorder = XLBorderStyleValues.None;
-                box3.Style.Border.RightBorder = XLBorderStyleValues.None;
-            }
-
-            // Caja 4: ACTIVIDAD
-            if (b4s <= b4e)
-            {
-                ws.Range(infoStartRow, b4s, infoEndRow, b4e).Merge();
-                var box4 = ws.Cell(infoStartRow, b4s);
-                box4.Value = "ACTIVIDAD:";
-                box4.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                box4.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                box4.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-                box4.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                box4.Style.Border.LeftBorder = XLBorderStyleValues.None;
-                box4.Style.Border.RightBorder = XLBorderStyleValues.None;
-            }
-
-            // Asegurar alturas para las filas de info
-            for (int rr = infoStartRow; rr <= infoEndRow; rr++) ws.Row(rr).Height = 18;            // ===== LEYENDA DE COLORES (a la derecha, filas 3..7, sin centrar) =====
-            // Intentar colocar la leyenda justo a la derecha de la caja 'ACTIVIDAD'
-            int preferredLegendCol = b4e + 1; // columna preferida: inmediatamente después de la caja ACTIVIDAD
-            int legendColBox;
-            int legendLabelCol;
-
-            // Si la leyenda (2 columnas: caja + etiqueta) cabe antes de las columnas de semanas, usar la preferida
-            if (preferredLegendCol + 1 <= lastWeekCol)
-            {
-                legendColBox = preferredLegendCol;
-                legendLabelCol = legendColBox + 1;
-            }
-            else
-            {
-                // Si no cabe a la derecha, intentar ponerla a la izquierda de ACTIVIDAD (si hay espacio)
-                int leftCandidate = b4s - 2; // dos columnas a la izquierda de la caja ACTIVIDAD
-                if (leftCandidate >= 1 && leftCandidate + 1 < b4s)
-                {
-                    legendColBox = leftCandidate;
-                    legendLabelCol = legendColBox + 1;
-                }
-                else
-                {
-                    // Último recurso: colocar la leyenda después de las columnas de semanas
-                    legendColBox = lastWeekCol + 1;
-                    legendLabelCol = legendColBox + 1;
-                }
-            }
+            // Caja 3: AÑO (columna C, merge vertical)
+            ws.Range(infoStartRow, 3, infoEndRow, 3).Merge();
+            var box3 = ws.Cell(infoStartRow, 3);
+            box3.Value = $"AÑO: {AnioSeleccionado}";
+            box3.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            box3.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            // SIN BORDES - Solo la leyenda debe tener bordes// Asegurar alturas para las filas de info
+            for (int rr = infoStartRow; rr <= infoEndRow; rr++) ws.Row(rr).Height = 18;            // ===== LEYENDA DE COLORES (columnas D-E, filas 3-7, sin merge vertical) =====
+            // Leyenda en D (caja de color) y E (etiqueta), sin combinar verticalmente
+            int legendColBox = 4;      // Columna D
+            int legendLabelCol = 5;    // Columna E
 
             var legendItems = new (string label, XLColor color)[]
             {
@@ -807,13 +736,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             for (int i = 0; i < legendItems.Length; i++)
             {
                 int r = infoStartRow + i; // filas 3..7
-                // Caja de color (alineada a la izquierda)
+                // Caja de color (sin merge)
                 ws.Cell(r, legendColBox).Style.Fill.BackgroundColor = legendItems[i].color;
-                // Aplicar borde exterior normal a la caja de color
                 ws.Cell(r, legendColBox).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                 ws.Cell(r, legendColBox).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                ws.Cell(r, legendColBox).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-                try { ws.Column(legendColBox).Width = ws.Column(5).Width; } catch { }
+                ws.Cell(r, legendColBox).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 // Para Correctivo, agregar la 'C' en negrita blanca centrada
                 if (legendItems[i].label == "Correctivo")
@@ -821,22 +748,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     ws.Cell(r, legendColBox).Value = "C";
                     ws.Cell(r, legendColBox).Style.Font.Bold = true;
                     ws.Cell(r, legendColBox).Style.Font.FontColor = XLColor.White;
-                    ws.Cell(r, legendColBox).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                }
-
-                // Etiqueta al lado (no centrada)
+                }                // Etiqueta al lado (sin merge, SIN BORDES)
                 ws.Cell(r, legendLabelCol).Value = legendItems[i].label;
                 ws.Cell(r, legendLabelCol).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 ws.Cell(r, legendLabelCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
                 ws.Cell(r, legendLabelCol).Style.Font.FontSize = 9;
-                // No aplicar borde grueso a la etiqueta; el borde sólo debe rodear la caja de color
-                // (se eliminó la línea que colocaba OutsideBorder = Thick en la etiqueta)
-            }
-
-            // ===== ENCABEZADOS DE TABLA =====
+                // SIN BORDES - Solo las cajas de color tienen bordes
+            }            // ===== ENCABEZADOS DE TABLA =====
             // currentRowCron comienza justo después del bloque informativo (infoEndRow)
             int currentRowCron = infoEndRow + 1;
-            var headersCron = new[] { "Equipo", "Nombre", "Marca", "Sede" };
+            var headersCron = new[] { "Equipo", "Nombre", "Marca", "Frecuencia", "Sede" };
             for (int col = 1; col <= headersCron.Length; col++)
             {
                 var headerCell = ws.Cell(currentRowCron, col);
@@ -849,10 +770,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
             }
 
-            // Encabezados de semanas (a partir de la columna E, índice 5 => 4 + s)
+            // Encabezados de semanas (a partir de la columna F, índice 6 => 5 + s)
             for (int s = 1; s <= weeksInYearExport; s++)
             {
-                var weekCell = ws.Cell(currentRowCron, 4 + s);
+                var weekCell = ws.Cell(currentRowCron, 5 + s);
                 weekCell.Value = $"S{s}";
                 weekCell.Style.Font.Bold = true;
                 weekCell.Style.Font.FontColor = XLColor.White;
@@ -861,32 +782,31 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 weekCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 // NO aplicar borde grueso a los encabezados de semana (solo las celdas con mantenimiento deben mostrar el borde)
             }
-            // Congelar encabezados y las primeras 4 columnas (Equipo, Nombre, Marca, Sede)
+            // Congelar encabezados y las primeras 5 columnas (Equipo, Nombre, Marca, Frecuencia, Sede)
             try
             {
                 int headerRow = currentRowCron; // fila con los encabezados
                 ws.SheetView.FreezeRows(headerRow);   // mantiene la(s) fila(s) superiores fijas al hacer scroll vertical
-                ws.SheetView.FreezeColumns(4);        // mantiene fijas las primeras 4 columnas al hacer scroll horizontal
+                ws.SheetView.FreezeColumns(5);        // mantiene fijas las primeras 5 columnas al hacer scroll horizontal
             }
             catch { }
 
             ws.Row(currentRowCron).Height = 22;
-            currentRowCron++;
-
-            // ===== FILAS DE DATOS =====
+            currentRowCron++;            // ===== FILAS DE DATOS =====
             int rowCountCron = 0;
             foreach (var c in cronogramas)
             {
                 ws.Cell(currentRowCron, 1).Value = c.Codigo;
                 ws.Cell(currentRowCron, 2).Value = c.Nombre;
                 ws.Cell(currentRowCron, 3).Value = c.Marca;
-                ws.Cell(currentRowCron, 4).Value = c.Sede;
+                ws.Cell(currentRowCron, 4).Value = c.FrecuenciaMtto?.ToString() ?? "-";
+                ws.Cell(currentRowCron, 5).Value = c.Sede;
 
                 for (int s = 1; s <= weeksInYearExport; s++)
                 {
                     if (estadosPorEquipo.TryGetValue(c.Codigo!, out var estadosSemana) && estadosSemana.TryGetValue(s, out var estado))
                     {
-                        var cell = ws.Cell(currentRowCron, 4 + s);
+                        var cell = ws.Cell(currentRowCron, 5 + s);
                         // Si es correctivo: fondo púrpura y una 'C' en mayúscula y negrita centrada
                         if (estado.Seguimiento?.TipoMtno == TipoMantenimiento.Correctivo)
                         {
@@ -913,7 +833,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     }
                     else
                     {
-                        var cell = ws.Cell(currentRowCron, 4 + s);
+                        var cell = ws.Cell(currentRowCron, 5 + s);
                         cell.Value = "-";
                         cell.Style.Fill.BackgroundColor = XLColor.White;
                         cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -922,10 +842,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     }
                 }
 
-                // Filas alternas con color gris claro ahora para columnas 1..4
+                // Filas alternas con color gris claro ahora para columnas 1..5
                 if (rowCountCron % 2 == 0)
                 {
-                    for (int col = 1; col <= 4; col++)
+                    for (int col = 1; col <= 5; col++)
                     {
                         ws.Cell(currentRowCron, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
                     }
@@ -934,14 +854,35 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 ws.Row(currentRowCron).Height = 22;
                 currentRowCron++;
                 rowCountCron++;
-            }
-
-            // Agregar filtros automáticos a la tabla
+            }            // Agregar filtros automáticos a la tabla
             if (cronogramas.Count > 0)
             {
                 int headerRowCron = currentRowCron - cronogramas.Count - 1;
-                ws.Range(headerRowCron, 1, currentRowCron - 1, 4).SetAutoFilter();
-            }
+                ws.Range(headerRowCron, 1, currentRowCron - 1, 5).SetAutoFilter();
+            }            // ===== AJUSTAR ANCHO DE COLUMNAS A-E AL CONTENIDO =====
+            // Primero calcular ancho automático
+            ws.Column(1).AdjustToContents();
+            ws.Column(2).AdjustToContents();
+            ws.Column(3).AdjustToContents();
+            ws.Column(4).AdjustToContents();
+            ws.Column(5).AdjustToContents();
+
+            // CORRECCIÓN CRÍTICA: Asegurar que los anchos sean suficientes para el contenido visible
+            // "REALIZADO POR:" tiene aproximadamente 14 caracteres (ancho mínimo 17-18 unidades)
+            // "NOMBRE" o nombres largos típicamente necesitan 15-20
+            // "MARCA", "FRECUENCIA", "SEDE" necesitan 12-15 cada uno
+            
+            double colAWidth = Math.Max(ws.Column(1).Width, 18);     // Mínimo 18 para "REALIZADO POR:"
+            double colBWidth = Math.Max(ws.Column(2).Width, 16);     // Mínimo 16 para nombres
+            double colCWidth = Math.Max(ws.Column(3).Width, 14);     // Mínimo 14 para marcas
+            double colDWidth = Math.Max(ws.Column(4).Width, 14);     // Mínimo 14 para frecuencia
+            double colEWidth = Math.Max(ws.Column(5).Width, 14);     // Mínimo 14 para sede
+
+            ws.Column(1).Width = colAWidth + 2;     // Agregar margen de seguridad
+            ws.Column(2).Width = colBWidth + 2;
+            ws.Column(3).Width = colCWidth + 1.5;
+            ws.Column(4).Width = colDWidth + 1.5;
+            ws.Column(5).Width = colEWidth + 1.5;
 
             // ===== PIE DE PÁGINA =====
             currentRowCron += 2;
@@ -950,12 +891,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             footerCellCron.Style.Font.Italic = true;
             footerCellCron.Style.Font.FontSize = 9;
             footerCellCron.Style.Font.FontColor = XLColor.Gray;
-            ws.Range(currentRowCron, 1, currentRowCron, 4 + weeksInYearExport).Merge();
-
-            // Configurar página para exportación
+            ws.Range(currentRowCron, 1, currentRowCron, 5 + weeksInYearExport).Merge();            // Configurar página para exportación
             ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-            ws.PageSetup.AdjustTo(100);
-            ws.PageSetup.FitToPages(1, 0);
+            // NO usar AdjustTo() o FitToPages() porque invalidan los anchos de columna ajustados manualmente
+            // Usar scaling directo al 90% para que quepa todo sin comprimir las columnas
+            ws.PageSetup.Scale = 90;
             ws.PageSetup.Margins.Top = 0.5;
             ws.PageSetup.Margins.Bottom = 0.5;
             ws.PageSetup.Margins.Left = 0.5;
