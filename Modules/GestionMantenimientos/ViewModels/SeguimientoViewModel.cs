@@ -8,11 +8,12 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.ViewModels.Base;
+using GestLog.Services.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Win32;
+using ClosedXML.Excel;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -75,6 +76,15 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
     [ObservableProperty]
     private System.ComponentModel.ICollectionView? seguimientosView;
+
+    [ObservableProperty]
+    private int anioSeleccionado = DateTime.Now.Year;
+
+    [ObservableProperty]
+    private ObservableCollection<int> aniosDisponibles = new();
+
+    [ObservableProperty]
+    private ObservableCollection<SeguimientoMantenimientoDto> seguimientosFiltrados = new();
 
     // Optimización: Control de carga para evitar actualizaciones innecesarias
     private CancellationTokenSource? _loadCancellationToken;
@@ -151,6 +161,54 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         CanEditSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EditarSeguimiento");
         CanDeleteSeguimiento = _currentUser.HasPermission("GestionMantenimientos.EliminarSeguimiento");
         CanExportSeguimiento = _currentUser.HasPermission("GestionMantenimientos.ExportarExcel");
+    }
+
+    partial void OnAnioSeleccionadoChanged(int value)
+    {
+        FiltrarPorAnio();
+    }    private void FiltrarPorAnio()
+    {
+        if (Seguimientos == null) return;
+        var filtrados = Seguimientos.Where(s => s.Anio == AnioSeleccionado).ToList();
+        SeguimientosFiltrados = new ObservableCollection<SeguimientoMantenimientoDto>(filtrados);
+        
+        // Refrescar la ICollectionView para que el DataGrid se actualice con el nuevo filtro de año
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            try
+            {
+                SeguimientosView?.Refresh();
+            }
+            catch (System.InvalidOperationException)
+            {
+                // Si Refresh está aplazado, reintentar con prioridad más baja
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                    new Action(() => { try { SeguimientosView?.Refresh(); } catch { } }),
+                    System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            }
+        });
+        
+        // Recalcular estadísticas para el año seleccionado
+        CalcularEstadisticasPorAnio();
+    }private void CalcularEstadisticasPorAnio()
+    {
+        if (SeguimientosFiltrados == null)
+        {
+            SeguimientosTotal = 0;
+            SeguimientosPendientes = 0;
+            SeguimientosEjecutados = 0;
+            SeguimientosRetrasados = 0;
+            SeguimientosRealizadosFueraDeTiempo = 0;
+            SeguimientosNoRealizados = 0;
+            return;
+        }
+
+        SeguimientosTotal = SeguimientosFiltrados.Count;
+        SeguimientosPendientes = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
+        SeguimientosEjecutados = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
+        SeguimientosRetrasados = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
+        SeguimientosRealizadosFueraDeTiempo = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo);
+        SeguimientosNoRealizados = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
     }
 
     // Wrapper sin parámetros para que MVVM Toolkit genere el comando
@@ -236,9 +294,15 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     await _seguimientoService.UpdateAsync(s);
                 }
                 s.RefrescarCacheFiltro(); // Refresca la caché de campos normalizados
-            }
-
-            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
+            }            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
+            
+            // Cargar años disponibles y filtrar por año seleccionado
+            var anios = lista.Select(s => s.Anio).Distinct().OrderByDescending(a => a).ToList();
+            AniosDisponibles = new ObservableCollection<int>(anios);
+            if (!AniosDisponibles.Contains(AnioSeleccionado))
+                AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
+            
+            FiltrarPorAnio();
             RecalcularEstadisticas();
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
             _lastLoadTime = DateTime.Now;
@@ -411,88 +475,421 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         return !string.IsNullOrWhiteSpace(FiltroSeguimiento) || 
                FechaDesde.HasValue || 
                FechaHasta.HasValue;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
+    }    [RelayCommand(CanExecute = nameof(CanExportSeguimiento))]
     public async Task ExportarAsync()
     {
-        var tieneFiltradores = TieneFiltrosActivos();
-        var titulo = tieneFiltradores ? "Exportar seguimientos filtrados a Excel" : "Exportar todos los seguimientos a Excel";
-        var nombreArchivo = tieneFiltradores 
-            ? $"SeguimientosFiltrados_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
-            : $"Seguimientos_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
-
-        var dialog = new Microsoft.Win32.SaveFileDialog
+        try
         {
-            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
-            Title = titulo,
-            FileName = nombreArchivo
-        };
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                FileName = $"SEGUIMIENTOS_{AnioSeleccionado}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                Title = "Exportar seguimientos a Excel"
+            };
+            if (saveFileDialog.ShowDialog() != true)
+                return;
 
-        if (dialog.ShowDialog() == true)
-        {
             IsLoading = true;
-            StatusMessage = "Exportando a Excel...";
-            try
-            {
-                // Si hay filtros, exportar datos filtrados; si no, exportar todos
-                var datosAExportar = tieneFiltradores 
-                    ? (SeguimientosView?.Cast<SeguimientoMantenimientoDto>().ToList() ?? new List<SeguimientoMantenimientoDto>())
-                    : Seguimientos.ToList();
+            StatusMessage = "Exportando seguimientos...";
 
-                await Task.Run(() =>
+            var datosAExportar = SeguimientosFiltrados.ToList();
+
+            await Task.Run(() =>
+            {
+                using var workbook = new XLWorkbook();
+                var ws = workbook.Worksheets.Add($"Seguimientos {AnioSeleccionado}");
+
+                // ===== CONFIGURAR ANCHO DE COLUMNAS =====
+                ws.Column("A").Width = 12;
+                ws.Column("B").Width = 16;
+                ws.Column("C").Width = 12;
+                ws.Column("D").Width = 15;
+                ws.Column("E").Width = 35;
+                ws.Column("F").Width = 20;
+                ws.Column("G").Width = 15;
+                ws.Column("H").Width = 18;
+                ws.Column("I").Width = 18;
+                ws.Column("J").Width = 15;
+                ws.Column("K").Width = 35;
+
+                ws.ShowGridLines = false;
+
+                // ===== FILAS 1-2: LOGO + TÍTULO =====
+                ws.Row(1).Height = 35;
+                ws.Row(2).Height = 35;
+                ws.Range(1, 1, 2, 2).Merge();
+
+                var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
+                try
                 {
-                    using var workbook = new ClosedXML.Excel.XLWorkbook();
-                    var ws = workbook.Worksheets.Add("Seguimientos");
-
-                    ws.Cell(1, 1).Value = "Código";
-                    ws.Cell(1, 2).Value = "Nombre";
-                    ws.Cell(1, 3).Value = "Fecha Realizada";
-                    ws.Cell(1, 4).Value = "Tipo Mtto";
-                    ws.Cell(1, 5).Value = "Descripción";
-                    ws.Cell(1, 6).Value = "Responsable";
-                    ws.Cell(1, 7).Value = "Costo";
-                    ws.Cell(1, 8).Value = "Observaciones";
-                    ws.Cell(1, 9).Value = "Fecha Registro";
-                    ws.Cell(1, 10).Value = "Semana";
-                    ws.Cell(1, 11).Value = "Año";
-                    ws.Cell(1, 12).Value = "Estado";
-
-                    int row = 2;
-                    foreach (var s in datosAExportar)
+                    if (System.IO.File.Exists(logoPath))
                     {
-                        ws.Cell(row, 1).Value = s.Codigo ?? "";
-                        ws.Cell(row, 2).Value = s.Nombre ?? "";
-                        ws.Cell(row, 3).Value = s.FechaRealizacion?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 4).Value = s.TipoMtno?.ToString() ?? "";
-                        ws.Cell(row, 5).Value = s.Descripcion ?? "";
-                        ws.Cell(row, 6).Value = s.Responsable ?? "";
-                        ws.Cell(row, 7).Value = s.Costo;
-                        ws.Cell(row, 8).Value = s.Observaciones ?? "";
-                        ws.Cell(row, 9).Value = s.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(row, 10).Value = s.Semana;
-                        ws.Cell(row, 11).Value = s.Anio;
-                        ws.Cell(row, 12).Value = s.Estado.ToString();
-                        row++;
+                        var picture = ws.AddPicture(logoPath);
+                        picture.MoveTo(ws.Cell(1, 1), 10, 10);
+                        picture.Scale(0.15);
                     }
+                }
+                catch { }
 
-                    ws.Columns().AdjustToContents();
-                    workbook.SaveAs(dialog.FileName);
-                });
+                var titleRange = ws.Range(1, 3, 2, 11);
+                titleRange.Merge();
+                var titleCell = titleRange.FirstCell();
+                titleCell.Value = "SEGUIMIENTOS DE MANTENIMIENTOS";
+                titleCell.Style.Font.Bold = true;
+                titleCell.Style.Font.FontSize = 18;
+                titleCell.Style.Font.FontColor = XLColor.Black;
+                titleCell.Style.Fill.BackgroundColor = XLColor.White;
+                titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                StatusMessage = $"Exportación completada: {dialog.FileName}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al exportar seguimientos");
-                StatusMessage = $"Error al exportar: {ex.Message}";
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+                // Dibujar una línea horizontal (border) justo debajo del título para separar visualmente
+                try
+                {
+                    ws.Range(2, 1, 2, 11).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                }
+                catch { }
+
+                // Agregar borde derecho al título
+                titleRange.Style.Border.RightBorder = XLBorderStyleValues.Thin;
+
+                int currentRowSeg = 3;
+
+                // ===== ENCABEZADOS DE TABLA =====
+                var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+                for (int col = 1; col <= headersSeg.Length; col++)
+                {
+                    var headerCell = ws.Cell(currentRowSeg, col);
+                    headerCell.Value = headersSeg[col - 1];
+                    headerCell.Style.Font.Bold = true;
+                    headerCell.Style.Font.FontColor = XLColor.White;
+                    headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                    headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                }
+                ws.Row(currentRowSeg).Height = 22;
+                currentRowSeg++;
+
+                // ===== FILAS DE DATOS =====
+                int rowCountSeg = 0;
+                foreach (var seg in datosAExportar.OrderBy(s => s.Semana).ThenBy(s => s.Codigo))
+                {
+                    ws.Cell(currentRowSeg, 1).Value = seg.Codigo ?? "";
+                    ws.Cell(currentRowSeg, 2).Value = seg.Nombre ?? "";
+                    ws.Cell(currentRowSeg, 3).Value = seg.Semana;
+                    ws.Cell(currentRowSeg, 4).Value = seg.TipoMtno?.ToString() ?? "-";
+                    
+                    var descCell = ws.Cell(currentRowSeg, 5);
+                    descCell.Value = seg.Descripcion ?? "";
+                    descCell.Style.Alignment.WrapText = true;
+                    
+                    ws.Cell(currentRowSeg, 6).Value = seg.Responsable ?? "";
+                    
+                    var estadoCell = ws.Cell(currentRowSeg, 7);
+                    estadoCell.Value = EstadoToTexto(seg.Estado);
+                    estadoCell.Style.Fill.BackgroundColor = XLColorFromEstado(seg.Estado);
+                    estadoCell.Style.Font.FontColor = XLColor.White;
+                    estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    
+                    ws.Cell(currentRowSeg, 8).Value = seg.FechaRegistro?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+                    ws.Cell(currentRowSeg, 9).Value = seg.FechaRealizacion?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+                    
+                    var costoCell = ws.Cell(currentRowSeg, 10);
+                    costoCell.Value = seg.Costo ?? 0;
+                    costoCell.Style.NumberFormat.Format = "$#,##0";
+                    
+                    var obsCell = ws.Cell(currentRowSeg, 11);
+                    obsCell.Value = seg.Observaciones ?? "-";
+                    obsCell.Style.Alignment.WrapText = true;
+                    obsCell.Style.Alignment.Indent = 2;
+                    
+                    // Filas alternas con color gris claro
+                    if (rowCountSeg % 2 == 0)
+                    {
+                        for (int col = 1; col <= 11; col++)
+                        {
+                            if (col != 7)
+                                ws.Cell(currentRowSeg, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                        }
+                    }
+                    
+                    ws.Cell(currentRowSeg, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    ws.Cell(currentRowSeg, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    ws.Cell(currentRowSeg, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    
+                    ws.Row(currentRowSeg).Height = 30;
+                    currentRowSeg++;
+                    rowCountSeg++;
+                }
+
+                // Agregar filtros automáticos
+                if (datosAExportar.Count > 0)
+                {
+                    int headerRow = currentRowSeg - datosAExportar.Count - 1;
+                    ws.Range(headerRow, 1, currentRowSeg - 1, 11).SetAutoFilter();
+                }
+
+                // ===== PANEL DE KPIs (INDICADORES CLAVE) =====
+                if (datosAExportar.Count > 0)
+                {
+                    currentRowSeg += 2;
+                    
+                    var preventivos = datosAExportar.Count(s => s.TipoMtno == TipoMantenimiento.Preventivo);
+                    var correctivos = datosAExportar.Count(s => s.TipoMtno == TipoMantenimiento.Correctivo);
+                    var realizadosEnTiempo = datosAExportar.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
+                    var realizadosFueraTiempo = datosAExportar.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
+                    var noRealizados = datosAExportar.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
+                    var pendientes = datosAExportar.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
+                    var totalCosto = datosAExportar.Sum(s => s.Costo ?? 0);
+                    var costoPreventivoTotal = datosAExportar.Where(s => s.TipoMtno == TipoMantenimiento.Preventivo).Sum(s => s.Costo ?? 0);
+                    var costoCorrectivo = totalCosto - costoPreventivoTotal;
+                    
+                    var totalMtto = datosAExportar.Count;
+                    var pctCumplimiento = totalMtto > 0 ? (realizadosEnTiempo + realizadosFueraTiempo) / (decimal)totalMtto * 100 : 0;
+                    var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
+                    var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;
+                    
+                    // Título KPIs
+                    var kpiTitle = ws.Cell(currentRowSeg, 1);
+                    kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + AnioSeleccionado;
+                    kpiTitle.Style.Font.Bold = true;
+                    kpiTitle.Style.Font.FontSize = 14;
+                    kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                    kpiTitle.Style.Font.FontColor = XLColor.White;
+                    kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    ws.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+                    ws.Row(currentRowSeg).Height = 22;
+                    currentRowSeg++;
+
+                    // KPI Row
+                    var kpiLabels = new[] { "Cumplimiento", "Total Mtos", "Correctivos", "Preventivos" };
+                    var kpiValues = new object[] 
+                    { 
+                        $"{pctCumplimiento:F1}%", 
+                        totalMtto, 
+                        $"{correctivos} ({pctCorrectivos:F1}%)",
+                        $"{preventivos} ({pctPreventivos:F1}%)"
+                    };
+
+                    for (int col = 0; col < kpiLabels.Length; col++)
+                    {
+                        var labelCell = ws.Cell(currentRowSeg, col + 1);
+                        labelCell.Value = kpiLabels[col];
+                        labelCell.Style.Font.Bold = true;
+                        labelCell.Style.Font.FontSize = 10;
+                        labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
+                        labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                        
+                        var valueCell = ws.Cell(currentRowSeg + 1, col + 1);
+                        if (kpiValues[col] is string strVal)
+                            valueCell.Value = strVal;
+                        else if (kpiValues[col] is int intVal)
+                            valueCell.Value = intVal;
+                        else
+                            valueCell.Value = kpiValues[col]?.ToString() ?? "-";
+                        
+                        valueCell.Style.Font.Bold = true;
+                        valueCell.Style.Font.FontSize = 12;
+                        valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                        valueCell.Style.Font.FontColor = XLColor.White;
+                        valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    }
+                    currentRowSeg += 2;
+                    
+                    // ===== RESUMEN POR TIPO DE MANTENIMIENTO =====
+                    currentRowSeg += 1;
+                    var tipoTitle = ws.Cell(currentRowSeg, 1);
+                    tipoTitle.Value = "RESUMEN POR TIPO DE MANTENIMIENTO";
+                    tipoTitle.Style.Font.Bold = true;
+                    tipoTitle.Style.Font.FontSize = 12;
+                    tipoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
+                    tipoTitle.Style.Font.FontColor = XLColor.White;
+                    tipoTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    ws.Range(currentRowSeg, 1, currentRowSeg, 5).Merge();
+                    ws.Row(currentRowSeg).Height = 20;
+                    currentRowSeg++;
+                    
+                    var tipoHeaders = new[] { "Tipo", "Cantidad", "%", "Costo Total", "% Costo" };
+                    for (int col = 0; col < tipoHeaders.Length; col++)
+                    {
+                        var headerCell = ws.Cell(currentRowSeg, col + 1);
+                        headerCell.Value = tipoHeaders[col];
+                        headerCell.Style.Font.Bold = true;
+                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x504F4E);
+                        headerCell.Style.Font.FontColor = XLColor.White;
+                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    }
+                    currentRowSeg++;
+                    
+                    var tipoData = new (string tipo, int cantidad, decimal costo)[]
+                    {
+                        ("Preventivo", preventivos, costoPreventivoTotal),
+                        ("Correctivo", correctivos, costoCorrectivo),
+                        ("TOTAL", totalMtto, totalCosto)
+                    };
+                    
+                    foreach (var data in tipoData)
+                    {
+                        int col = 1;
+                        var tipoCell = ws.Cell(currentRowSeg, col++);
+                        tipoCell.Value = data.tipo;
+                        tipoCell.Style.Font.Bold = data.tipo == "TOTAL";
+                        tipoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                        
+                        var cantCell = ws.Cell(currentRowSeg, col++);
+                        cantCell.Value = data.cantidad;
+                        cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cantCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                        
+                        var pctCell = ws.Cell(currentRowSeg, col++);
+                        if (data.tipo != "TOTAL")
+                            pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
+                        pctCell.Style.NumberFormat.Format = "0.0\"%\"";
+                        pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        pctCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                        
+                        var costoCell = ws.Cell(currentRowSeg, col++);
+                        costoCell.Value = data.costo;
+                        costoCell.Style.NumberFormat.Format = "$#,##0";
+                        costoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        costoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                        
+                        var pctCostoCell = ws.Cell(currentRowSeg, col++);
+                        if (data.tipo != "TOTAL")
+                            pctCostoCell.Value = (data.costo / totalCosto * 100);
+                        pctCostoCell.Style.NumberFormat.Format = "0.0\"%\"";
+                        pctCostoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        pctCostoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                        
+                        currentRowSeg++;
+                    }
+                    
+                    // ===== ANÁLISIS DE ESTADOS =====
+                    currentRowSeg += 1;
+                    var estadoTitle = ws.Cell(currentRowSeg, 1);
+                    estadoTitle.Value = "ANÁLISIS DE CUMPLIMIENTO POR ESTADO";
+                    estadoTitle.Style.Font.Bold = true;
+                    estadoTitle.Style.Font.FontSize = 12;
+                    estadoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
+                    estadoTitle.Style.Font.FontColor = XLColor.White;
+                    estadoTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    ws.Range(currentRowSeg, 1, currentRowSeg, 6).Merge();
+                    ws.Row(currentRowSeg).Height = 20;
+                    currentRowSeg++;
+
+                    var estadoHeaders = new[] { "Estado", "Cantidad", "%", "Color" };
+                    for (int col = 0; col < estadoHeaders.Length; col++)
+                    {
+                        var headerCell = ws.Cell(currentRowSeg, col + 1);
+                        headerCell.Value = estadoHeaders[col];
+                        headerCell.Style.Font.Bold = true;
+                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x504F4E);
+                        headerCell.Style.Font.FontColor = XLColor.White;
+                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    }
+                    currentRowSeg++;
+                    
+                    var estadoData = new (string estado, int cantidad, decimal costo, string colorHex)[]
+                    {
+                        ("Realizado en Tiempo", realizadosEnTiempo, datosAExportar.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo).Sum(s => s.Costo ?? 0), "388E3C"),
+                        ("Realizado Fuera de Tiempo", realizadosFueraTiempo, datosAExportar.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado).Sum(s => s.Costo ?? 0), "FFB300"),
+                        ("No Realizado", noRealizados, datosAExportar.Where(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado).Sum(s => s.Costo ?? 0), "C80000"),
+                        ("Pendiente", pendientes, datosAExportar.Where(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente).Sum(s => s.Costo ?? 0), "B3E5FC")
+                    };
+                    
+                    foreach (var data in estadoData)
+                    {
+                        if (data.cantidad == 0) continue;
+                        
+                        int col = 1;
+                        var estadoCell = ws.Cell(currentRowSeg, col++);
+                        estadoCell.Value = data.estado;
+                        
+                        var cantCell = ws.Cell(currentRowSeg, col++);
+                        cantCell.Value = data.cantidad;
+                        cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        
+                        var pctCell = ws.Cell(currentRowSeg, col++);
+                        pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
+                        pctCell.Style.NumberFormat.Format = "0.0\"%\"";
+                        pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        
+                        var colorCell = ws.Cell(currentRowSeg, col++);
+                        colorCell.Value = "■";
+                        colorCell.Style.Font.FontSize = 14;
+                        var colorValue = XLColor.FromArgb(int.Parse(data.colorHex, System.Globalization.NumberStyles.HexNumber));
+                        colorCell.Style.Fill.BackgroundColor = colorValue;
+                        colorCell.Style.Font.FontColor = colorValue;
+                        colorCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        colorCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        
+                        currentRowSeg++;
+                    }
+                }
+
+                // ===== PIE DE PÁGINA =====
+                currentRowSeg += 2;
+                var footerCell = ws.Cell(currentRowSeg, 1);
+                footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Sistema GestLog © SIMICS Group SAS";
+                footerCell.Style.Font.Italic = true;
+                footerCell.Style.Font.FontSize = 9;
+                footerCell.Style.Font.FontColor = XLColor.Gray;
+                ws.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+                
+                // Agregar borde exterior grueso
+                ws.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
+                
+                ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+                ws.PageSetup.AdjustTo(100);
+                ws.PageSetup.FitToPages(1, 0);
+                ws.PageSetup.Margins.Top = 0.5;
+                ws.PageSetup.Margins.Bottom = 0.5;
+                ws.PageSetup.Margins.Left = 0.5;
+                ws.PageSetup.Margins.Right = 0.5;
+
+                workbook.SaveAs(saveFileDialog.FileName);
+            });
+
+            StatusMessage = $"Exportación completada: {saveFileDialog.FileName} ({datosAExportar.Count} seguimientos)";
         }
-    }    [RelayCommand]
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al exportar seguimientos");
+            StatusMessage = $"Error al exportar: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string EstadoToTexto(EstadoSeguimientoMantenimiento estado)
+    {
+        return estado switch
+        {
+            EstadoSeguimientoMantenimiento.NoRealizado => "No realizado",
+            EstadoSeguimientoMantenimiento.Atrasado => "Atrasado",
+            EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "Realizado",
+            EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado fuera de tiempo",
+            EstadoSeguimientoMantenimiento.Pendiente => "Pendiente",
+            _ => "-"
+        };
+    }
+
+    private static XLColor XLColorFromEstado(EstadoSeguimientoMantenimiento estado)
+    {
+        return estado switch
+        {
+            EstadoSeguimientoMantenimiento.NoRealizado => XLColor.FromHtml("#C80000"),
+            EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"),
+            EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"),
+            EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"),
+            EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#B3E5FC"),
+            _ => XLColor.White
+        };
+    }[RelayCommand]
     public void Filtrar()
     {
         SeguimientosView?.Refresh();
@@ -576,11 +973,13 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 _logger?.LogError(ex, "Error en OnSeguimientosChanged al actualizar la vista de seguimientos");
             }
         }), System.Windows.Threading.DispatcherPriority.Background);
-    }
-
-    private bool FiltrarSeguimiento(object obj)
+    }    private bool FiltrarSeguimiento(object obj)
     {
         if (obj is not SeguimientoMantenimientoDto s) return false;
+
+        // ✅ FILTRO POR AÑO (primero y más importante)
+        if (s.Anio != AnioSeleccionado)
+            return false;
 
         // Filtro múltiple por texto
         if (!string.IsNullOrWhiteSpace(FiltroSeguimiento))

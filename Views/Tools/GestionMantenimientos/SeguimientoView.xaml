@@ -183,9 +183,32 @@
                         <TextBlock Text="Registro y administración de mantenimientos" Style="{StaticResource SubHeaderTextStyle}"/>
                     </StackPanel>
                 </StackPanel>
-                
-                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right"/>
+                  <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <!-- ComboBox de Año -->
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock Text="Año:" Foreground="White" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0"/>
+                        <ComboBox Width="100"
+                                  ItemsSource="{Binding AniosDisponibles}"
+                                  SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  VerticalAlignment="Center"
+                                  FontSize="13"
+                                  Padding="8,4"
+                                  BorderBrush="#FFFFFF"
+                                  BorderThickness="1.5"
+                                  Background="White"
+                                  Foreground="#504F4E"
+                                  FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Botón Refrescar circular -->
+                    <Button Content="&#xE72C;" Command="{Binding LoadSeguimientosCommand}" ToolTip="Actualizar lista de seguimientos"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+
+                    <!-- Botón Exportar circular -->
+                    <Button Content="⭱" Command="{Binding ExportarCommand}" ToolTip="Exportar seguimientos (filtrados o todos)"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
+                            IsEnabled="{Binding CanExportSeguimiento}"
+                            Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
                 </StackPanel>
             </DockPanel>
         </Border>        <!-- Estadísticas -->
