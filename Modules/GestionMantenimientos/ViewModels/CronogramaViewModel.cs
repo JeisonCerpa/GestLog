@@ -658,8 +658,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (System.IO.File.Exists(logoCronPath))
                 {
                     var pictureCron = ws.AddPicture(logoCronPath);
-                    pictureCron.MoveTo(ws.Cell(1, 1), 10, 10);
-                    pictureCron.Scale(0.15);
+                    pictureCron.MoveTo(ws.Cell(1, 1), 15, 15);
+                    pictureCron.Scale(0.10);
                 }
             }
             catch
@@ -681,7 +681,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             titleCellCron.Style.Font.FontSize = 18;
             titleCellCron.Style.Font.FontColor = XLColor.Black; // Negro
             titleCellCron.Style.Fill.BackgroundColor = XLColor.White;
-            titleCellCron.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            titleCellCron.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
             titleCellCron.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
             // Dibujar una línea horizontal (border) justo debajo del título para separar visualmente
