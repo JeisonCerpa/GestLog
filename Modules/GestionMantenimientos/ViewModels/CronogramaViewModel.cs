@@ -1030,71 +1030,211 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 int headerRow = currentRowSeg - seguimientosAnio.Count - 1;
                 wsSeguimientos.Range(headerRow, 1, currentRowSeg - 1, 11).SetAutoFilter();
             }
-            
-            // ===== RESUMEN DE ESTADÍSTICAS =====
+              // ===== PANEL DE KPIs (INDICADORES CLAVE) =====
             if (seguimientosAnio.Count > 0)
             {
                 currentRowSeg += 2;
                 
-                var statsTitle = wsSeguimientos.Cell(currentRowSeg, 1);
-                statsTitle.Value = "RESUMEN DE ESTADÍSTICAS";
-                statsTitle.Style.Font.Bold = true;
-                statsTitle.Style.Font.FontSize = 12;
-                statsTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F); // Verde medio
-                statsTitle.Style.Font.FontColor = XLColor.White;
-                statsTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
-                wsSeguimientos.Row(currentRowSeg).Height = 20;
-                currentRowSeg += 2;
-                
-                // Calcular estadísticas
+                // Calcular métricas clave
+                var preventivos = seguimientosAnio.Count(s => s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Preventivo);
+                var correctivos = seguimientosAnio.Count(s => s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo);
                 var realizadosEnTiempo = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
                 var realizadosFueraTiempo = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
                 var noRealizados = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
                 var pendientes = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
                 var totalCosto = seguimientosAnio.Sum(s => s.Costo ?? 0);
+                var costoPreventivoTotal = seguimientosAnio.Where(s => s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Preventivo).Sum(s => s.Costo ?? 0);
+                var costoCorrectivo = totalCosto - costoPreventivoTotal;
                 
-                var stats = new (string label, int count, string color)[]
-                {
-                    ("Realizados en Tiempo", realizadosEnTiempo, "27AE60"),
-                    ("Realizados Fuera de Tiempo", realizadosFueraTiempo, "F9B233"),
-                    ("No Realizados", noRealizados, "C0392B"),
-                    ("Pendientes", pendientes, "BDBDBD"),
+                // Calcular porcentajes
+                var totalMtto = seguimientosAnio.Count;
+                var pctCumplimiento = totalMtto > 0 ? (realizadosEnTiempo + realizadosFueraTiempo) / (decimal)totalMtto * 100 : 0;
+                var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
+                var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;
+                
+                // ===== TÍTULO KPIs =====
+                var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + AnioSeleccionado;
+                kpiTitle.Style.Font.Bold = true;
+                kpiTitle.Style.Font.FontSize = 14;
+                kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
+                kpiTitle.Style.Font.FontColor = XLColor.White;
+                kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+                wsSeguimientos.Row(currentRowSeg).Height = 22;
+                currentRowSeg++;                  // ===== KPI ROW =====
+                var kpiLabels = new[] { "Cumplimiento", "Total Mtos", "Correctivos", "Preventivos" };
+                var kpiValues = new object[] 
+                { 
+                    $"{pctCumplimiento:F1}%", 
+                    totalMtto, 
+                    $"{correctivos} ({pctCorrectivos:F1}%)",
+                    $"{preventivos} ({pctPreventivos:F1}%)"
                 };
-                
-                // Mostrar estadísticas en formato 2x2
-                for (int i = 0; i < stats.Length; i++)
+                  for (int col = 0; col < kpiLabels.Length; col++)
                 {
-                    int colOffset = (i % 2) * 5; // 0 para primera columna, 5 para segunda
-                    int rowOffset = i / 2; // 0 para primera fila, 1 para segunda
-                    
-                    var labelCell = wsSeguimientos.Cell(currentRowSeg + rowOffset, 1 + colOffset);
-                    labelCell.Value = stats[i].label;
+                    // Etiqueta
+                    var labelCell = wsSeguimientos.Cell(currentRowSeg, col + 1);
+                    labelCell.Value = kpiLabels[col];
                     labelCell.Style.Font.Bold = true;
-                    labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF8F9FA);
+                    labelCell.Style.Font.FontSize = 10;
+                    labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
+                    labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
                     
-                    var valueCell = wsSeguimientos.Cell(currentRowSeg + rowOffset, 2 + colOffset);
-                    valueCell.Value = stats[i].count;
+                    // Valor
+                    var valueCell = wsSeguimientos.Cell(currentRowSeg + 1, col + 1);
+                    
+                    // Convertir el valor apropiadamen según su tipo
+                    if (kpiValues[col] is string strVal)
+                        valueCell.Value = strVal;
+                    else if (kpiValues[col] is int intVal)
+                        valueCell.Value = intVal;
+                    else if (kpiValues[col] is decimal decVal)
+                    {
+                        valueCell.Value = decVal;
+                        valueCell.Style.NumberFormat.Format = "$#,##0";
+                    }
+                    else
+                        valueCell.Value = kpiValues[col]?.ToString() ?? "-";
+                    
                     valueCell.Style.Font.Bold = true;
-                    valueCell.Style.Font.FontSize = 11;
-                    valueCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#" + stats[i].color);
+                    valueCell.Style.Font.FontSize = 12;
+                    valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
                     valueCell.Style.Font.FontColor = XLColor.White;
                     valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                }
+                currentRowSeg += 2;
+                
+                // ===== RESUMEN POR TIPO DE MANTENIMIENTO =====
+                currentRowSeg += 1;
+                var tipoTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                tipoTitle.Value = "RESUMEN POR TIPO DE MANTENIMIENTO";
+                tipoTitle.Style.Font.Bold = true;
+                tipoTitle.Style.Font.FontSize = 12;
+                tipoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
+                tipoTitle.Style.Font.FontColor = XLColor.White;
+                tipoTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;                wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 5).Merge();
+                wsSeguimientos.Row(currentRowSeg).Height = 20;
+                currentRowSeg++;
+                
+                // Headers
+                var tipoHeaders = new[] { "Tipo", "Cantidad", "%", "Costo Total", "% Costo" };
+                for (int col = 0; col < tipoHeaders.Length; col++)
+                {
+                    var headerCell = wsSeguimientos.Cell(currentRowSeg, col + 1);
+                    headerCell.Value = tipoHeaders[col];
+                    headerCell.Style.Font.Bold = true;
+                    headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x504F4E);
+                    headerCell.Style.Font.FontColor = XLColor.White;
+                    headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+                currentRowSeg++;
+                
+                // Data rows
+                var tipoData = new (string tipo, int cantidad, decimal costo)[]
+                {
+                    ("Preventivo", preventivos, costoPreventivoTotal),
+                    ("Correctivo", correctivos, costoCorrectivo),
+                    ("TOTAL", totalMtto, totalCosto)
+                };
+                
+                foreach (var data in tipoData)
+                {
+                    int col = 1;
+                    var tipoCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    tipoCell.Value = data.tipo;
+                    tipoCell.Style.Font.Bold = data.tipo == "TOTAL";
+                    tipoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                    
+                    var cantCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    cantCell.Value = data.cantidad;
+                    cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    cantCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                    
+                    var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    if (data.tipo != "TOTAL")
+                        pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
+                    pctCell.Style.NumberFormat.Format = "0.0\"%\"";
+                    pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    pctCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                      var costoCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    costoCell.Value = data.costo;
+                    costoCell.Style.NumberFormat.Format = "$#,##0";
+                    costoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    costoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                    
+                    var pctCostoCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    if (data.tipo != "TOTAL")
+                        pctCostoCell.Value = (data.costo / totalCosto * 100);
+                    pctCostoCell.Style.NumberFormat.Format = "0.0\"%\"";
+                    pctCostoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    pctCostoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
+                    
+                    currentRowSeg++;
                 }
                 
-                // Mostrar total costo a la derecha del resumen
-                var totalCostoLabel = wsSeguimientos.Cell(currentRowSeg, 9);
-                totalCostoLabel.Value = "Total Costo";
-                totalCostoLabel.Style.Font.Bold = true;
-                totalCostoLabel.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF8F9FA);
+                // ===== ANÁLISIS DE ESTADOS =====
+                currentRowSeg += 1;
+                var estadoTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                estadoTitle.Value = "ANÁLISIS DE CUMPLIMIENTO POR ESTADO";
+                estadoTitle.Style.Font.Bold = true;
+                estadoTitle.Style.Font.FontSize = 12;
+                estadoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
+                estadoTitle.Style.Font.FontColor = XLColor.White;
+                estadoTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 6).Merge();
+                wsSeguimientos.Row(currentRowSeg).Height = 20;
+                currentRowSeg++;                // Headers
+                var estadoHeaders = new[] { "Estado", "Cantidad", "%", "Color" };
+                for (int col = 0; col < estadoHeaders.Length; col++)
+                {
+                    var headerCell = wsSeguimientos.Cell(currentRowSeg, col + 1);
+                    headerCell.Value = estadoHeaders[col];
+                    headerCell.Style.Font.Bold = true;
+                    headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x504F4E);
+                    headerCell.Style.Font.FontColor = XLColor.White;
+                    headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+                currentRowSeg++;
                 
-                var totalCostoValue = wsSeguimientos.Cell(currentRowSeg, 10);
-                totalCostoValue.Value = totalCosto;
-                totalCostoValue.Style.NumberFormat.Format = "$#,##0";
-                totalCostoValue.Style.Font.Bold = true;
-                totalCostoValue.Style.Fill.BackgroundColor = XLColor.FromArgb(0x0193B5); // Azul
-                totalCostoValue.Style.Font.FontColor = XLColor.White;
-                totalCostoValue.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                // Data rows
+                var estadoData = new (string estado, int cantidad, decimal costo, string colorHex)[]
+                {
+                    ("Realizado en Tiempo", realizadosEnTiempo, seguimientosAnio.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo).Sum(s => s.Costo ?? 0), "388E3C"),
+                    ("Realizado Fuera de Tiempo", realizadosFueraTiempo, seguimientosAnio.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado).Sum(s => s.Costo ?? 0), "FFB300"),
+                    ("No Realizado", noRealizados, seguimientosAnio.Where(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado).Sum(s => s.Costo ?? 0), "C80000"),
+                    ("Pendiente", pendientes, seguimientosAnio.Where(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente).Sum(s => s.Costo ?? 0), "B3E5FC")
+                };
+                  foreach (var data in estadoData)
+                {
+                    if (data.cantidad == 0) continue; // Saltar si no hay datos
+                    
+                    int col = 1;
+                    var estadoCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    estadoCell.Value = data.estado;
+                    
+                    var cantCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    cantCell.Value = data.cantidad;
+                    cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    
+                    var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
+                    pctCell.Style.NumberFormat.Format = "0.0\"%\"";
+                    pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                      // Columna Color - rectángulo coloreado
+                    var colorCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    colorCell.Value = "■"; // Símbolo de rectángulo
+                    colorCell.Style.Font.FontSize = 14;
+                    var colorValue = XLColor.FromArgb(int.Parse(data.colorHex, System.Globalization.NumberStyles.HexNumber));
+                    colorCell.Style.Fill.BackgroundColor = colorValue;
+                    colorCell.Style.Font.FontColor = colorValue;
+                    colorCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    colorCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    
+                    currentRowSeg++;
+                }
             }
             
             // ===== PIE DE PÁGINA =====
