@@ -9,6 +9,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.Views.Tools.GestionIdentidadCatalogos.Personas;
 using GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario;
 using GestLog.Views.Tools.GestionIdentidadCatalogos;
+using GestLog.Modules.GestionMantenimientos.Views;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.ViewModels.Tools;
 using GestLog.Modules.Usuarios.Models.Authentication;
@@ -117,9 +118,7 @@ namespace GestLog.Views.Tools
                 var errorHandler = LoggingService.GetErrorHandler();
                 errorHandler.HandleException(ex, "Mostrar envío de catálogo desde herramientas");
             }
-        }
-
-        private void BtnGestionMantenimientos_Click(object sender, RoutedEventArgs e)
+        }        private void BtnGestionMantenimientos_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessGestionMantenimientos)
@@ -130,7 +129,7 @@ namespace GestLog.Views.Tools
             try
             {
                 // Ahora navega a la vista contenedora con tabs
-                var gestionMantenimientosView = new Views.Tools.GestionMantenimientos.GestionMantenimientosView();
+                var gestionMantenimientosView = new GestionMantenimientosView();
                 _mainWindow?.NavigateToView(gestionMantenimientosView, "Gestión de Mantenimientos");
             }
             catch (System.Exception ex)

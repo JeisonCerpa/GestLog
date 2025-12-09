@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     /// <summary>
     /// Lógica de interacción para CronogramaView.xaml
@@ -20,3 +20,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

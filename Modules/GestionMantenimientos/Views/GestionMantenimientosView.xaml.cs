@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using WpfUserControl = System.Windows.Controls.UserControl;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     /// <summary>
     /// Vista principal de Gestión de Mantenimientos con tabs para Equipos, Cronograma y Seguimiento
@@ -84,3 +84,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

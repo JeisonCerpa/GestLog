@@ -1,9 +1,9 @@
-ï»¿using System.Windows;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Forms; // Para Screen.FromHandle() en ConfigurarParaVentanaPadre
 using GestLog.Modules.GestionMantenimientos.ViewModels;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     /// <summary>
     /// Ventana modal para mostrar el detalle de un equipo de mantenimiento
@@ -55,8 +55,8 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 if (viewModel == null)
                     return;
 
-                // âœ… Llamar directamente al mÃ©todo EditEquipoAsync del ViewModel
-                // usando reflexiÃ³n como fallback si el comando no existe
+                // ? Llamar directamente al método EditEquipoAsync del ViewModel
+                // usando reflexión como fallback si el comando no existe
                 var editMethod = viewModel?.GetType()?.GetMethod("EditEquipoAsync", 
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 if (editMethod != null)
@@ -65,12 +65,12 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     if (task != null)
                     {
                         // Mantener la ventana de detalles abierta mientras se edita
-                        // No cerrar el modal aquÃ­
+                        // No cerrar el modal aquí
                     }
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("No se pudo encontrar el mÃ©todo EditEquipoAsync", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("No se pudo encontrar el método EditEquipoAsync", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
             catch (System.Exception ex)
@@ -92,9 +92,9 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 if (viewModel == null)
                     return;
 
-                // Llamar directamente al mÃ©todo DeleteEquipoAsync del ViewModel
-                // El decorador [RelayCommand] deberÃ­a haber generado el comando, pero
-                // si no estÃ¡ disponible, podemos llamar el mÃ©todo directamente
+                // Llamar directamente al método DeleteEquipoAsync del ViewModel
+                // El decorador [RelayCommand] debería haber generado el comando, pero
+                // si no está disponible, podemos llamar el método directamente
                 try
                 {
 #pragma warning disable CS8602
@@ -102,7 +102,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     if (deleteCommand != null && deleteCommand.CanExecute(null))
                     {
                         await deleteCommand.ExecuteAsync(null);
-                        // Cerrar modal despuÃ©s de ejecutar el comando
+                        // Cerrar modal después de ejecutar el comando
                         this.DialogResult = true;
                         this.Close();
                     }
@@ -110,7 +110,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 }
                 catch
                 {
-                    // Si el comando no existe, intentar llamar el mÃ©todo directamente
+                    // Si el comando no existe, intentar llamar el método directamente
                     var deleteMethod = viewModel?.GetType()?.GetMethod("DeleteEquipoAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                     if (deleteMethod != null)
                     {
@@ -118,7 +118,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                         if (result is System.Threading.Tasks.Task task)
                         {
                             await task;
-                            // Cerrar modal despuÃ©s de ejecutar el comando
+                            // Cerrar modal después de ejecutar el comando
                             this.DialogResult = true;
                             this.Close();
                         }
@@ -150,7 +150,7 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 _lastScreenOwner = screen;
 
                 // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
-                // Esto evita problemas de DPI, pantallas mÃºltiples y posicionamiento
+                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
                 this.WindowState = WindowState.Maximized;
             }
             catch
@@ -181,11 +181,11 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                     // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
                     this.WindowState = WindowState.Maximized;
                     
-                    // Detectar si el Owner cambiÃ³ de pantalla
+                    // Detectar si el Owner cambió de pantalla
                     var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
                     var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
 
-                    // Si cambiÃ³ de pantalla, actualizar la referencia
+                    // Si cambió de pantalla, actualizar la referencia
                     if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
                     {
                         _lastScreenOwner = currentScreen;
@@ -193,10 +193,12 @@ namespace GestLog.Views.Tools.GestionMantenimientos
                 }
                 catch
                 {
-                    // En caso de error, asegurar que la ventana estÃ¡ maximizada
+                    // En caso de error, asegurar que la ventana está maximizada
                     this.WindowState = WindowState.Maximized;
                 }
             });
         }
     }
 }
+
+

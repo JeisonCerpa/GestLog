@@ -19,7 +19,7 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 5. **MVVM**: Cero lógica en code-behind
 6. **Validación**: Antes de procesar
 7. **Errores**: Específicos del dominio + mensajes claros en español
-8. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas van dentro de la carpeta /Views (Siguiendo su estructura).
+8. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas XAML van dentro de la carpeta `/Views` de cada módulo, no en `Views/Tools/` del nivel superior.
 9. **Archivos vacíos**: No crear archivos vacíos como `.keep` para mantener carpetas en el repositorio; la gestión de carpetas vacías la maneja el `.gitignore` y las reglas del repositorio.
 
 ## 🏗️ **Arquitectura Base**
@@ -264,10 +264,13 @@ private void Button_Click() { LoadData(); } // Lógica en code-behind
 
 ```
 Modules/[NombreModulo]/
+├── Views/               # Vistas XAML y code-behind
 ├── ViewModels/          # Una responsabilidad UI por ViewModel
 ├── Services/            # Una responsabilidad de negocio por Service
 ├── Models/              # DTOs y entidades
-└── Interfaces/          # Contratos
+├── Interfaces/          # Contratos
+├── Messages/            # Mensajes para CommunityToolkit.Mvvm.Messaging (opcional)
+└── Docs/                # Documentación específica del módulo (opcional)
 ```
 
 ## 💡 Mensajes de Usuario

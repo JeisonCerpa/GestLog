@@ -2,7 +2,7 @@ using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
 using System.Collections.ObjectModel;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     public partial class SemanaDetalleDialog : Window
     {
@@ -90,3 +90,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

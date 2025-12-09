@@ -7,8 +7,8 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.ViewModels.Base;           //  NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       //  NUEVO: IDatabaseConnectionService
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -18,7 +18,7 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels
 {    /// <summary>
-    /// ViewModel para la gestión del cronograma de mantenimientos.
+    /// ViewModel para la gestin del cronograma de mantenimientos.
     /// </summary>
     public partial class CronogramaViewModel : DatabaseAwareViewModel
 {    private readonly ICronogramaService _cronogramaService;
@@ -44,20 +44,20 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     private bool isLoading;
 
     [ObservableProperty]
-    private string? statusMessage;    // Flag para controlar cargas múltiples
+    private string? statusMessage;    // Flag para controlar cargas mltiples
     private bool _isInitialized;
     private readonly object _initializationLock = new object();
     
-    // Flag para evitar agrupación duplicada durante refresh
+    // Flag para evitar agrupacin duplicada durante refresh
     private bool _isRefreshing = false;
 
-    // Flag atómico para evitar reentradas en AgruparPorSemana
+    // Flag atmico para evitar reentradas en AgruparPorSemana
     private int _isGroupingFlag = 0;
 
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
 
-    // Colección de placeholders para reservar el espacio visual mientras carga
+    // Coleccin de placeholders para reservar el espacio visual mientras carga
     [ObservableProperty]
     private ObservableCollection<int> placeholderSemanas = new();
 
@@ -84,10 +84,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
             RecalcularPermisos();
-            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;            // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+            _currentUserService.CurrentUserChanged += OnCurrentUserChanged;            // Suscribirse a mensajes de actualizacin de cronogramas y seguimientos
             WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => 
             {
-                // Solo recargar si ya está inicializado
+                // Solo recargar si ya est inicializado
                 lock (_initializationLock)
                 {
                     if (!_isInitialized) return;
@@ -95,7 +95,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 await LoadCronogramasAsync();
             });            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) =>
             {
-                // Solo recargar si ya está inicializado
+                // Solo recargar si ya est inicializado
                 lock (_initializationLock)
                 {
                     if (!_isInitialized) return;
@@ -114,7 +114,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
               // Suscribirse a mensaje cuando se agrega/actualiza un equipo
             WeakReferenceMessenger.Default.Register<EquiposActualizadosMessage>(this, async (r, m) =>
             {
-                // Solo recargar si ya está inicializado
+                // Solo recargar si ya est inicializado
                 lock (_initializationLock)
                 {
                     if (!_isInitialized) return;
@@ -122,32 +122,32 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 
                 try
                 {
-                    _logger.LogInformation("[CronogramaViewModel] 📋 Equipos actualizados - regenerando cronogramas y seguimientos");
+                    _logger.LogInformation("[CronogramaViewModel]  Equipos actualizados - regenerando cronogramas y seguimientos");
                     
-                    // PASO 1: Asegurar que los cronogramas estén actualizados para todos los equipos activos
-                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 1: Actualizando cronogramas...");
+                    // PASO 1: Asegurar que los cronogramas est©n actualizados para todos los equipos activos
+                    _logger.LogInformation("[CronogramaViewModel]  PASO 1: Actualizando cronogramas...");
                     await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
                     
                     // PASO 2: Generar los seguimientos para las semanas programadas
-                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 2: Generando seguimientos...");
+                    _logger.LogInformation("[CronogramaViewModel]  PASO 2: Generando seguimientos...");
                     await _cronogramaService.GenerarSeguimientosFaltantesAsync();
                     
                     // PASO 3: Recargar la vista con los nuevos datos
-                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 3: Recargando vista...");
+                    _logger.LogInformation("[CronogramaViewModel]  PASO 3: Recargando vista...");
                     await LoadCronogramasAsync();
                       // PASO 4: Agrupar por semana
-                    _logger.LogInformation("[CronogramaViewModel] ✓ PASO 4: Agrupando por semanas...");
+                    _logger.LogInformation("[CronogramaViewModel]  PASO 4: Agrupando por semanas...");
                     await AgruparPorSemanaAsync();
                     
-                    _logger.LogInformation("[CronogramaViewModel] ✅ Actualización completada exitosamente");
+                    _logger.LogInformation("[CronogramaViewModel]  Actualizacin completada exitosamente");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[CronogramaViewModel] ❌ Error en mensaje EquiposActualizados");
+                    _logger.LogError(ex, "[CronogramaViewModel]  Error en mensaje EquiposActualizados");
                 }
             });
             
-            // Cargar datos automáticamente al crear el ViewModel
+            // Cargar datos automticamente al crear el ViewModel
             Task.Run(async () => 
             {
                 try
@@ -173,7 +173,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
         catch (Exception ex)
         {
-            logger?.LogError(ex, "[CronogramaViewModel] Error crítico en constructor");
+            logger?.LogError(ex, "[CronogramaViewModel] Error crtico en constructor");
             throw; // Re-lanzar para que se capture en el nivel superior
         }
     }
@@ -199,26 +199,26 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
           var filtrados = Cronogramas.Where(c => c.Anio == AnioSeleccionado).ToList();
         CronogramasFiltrados = new ObservableCollection<CronogramaMantenimientoDto>(filtrados);
         
-        // Solo ejecutar AgruparPorSemana si ya está inicializado, NO está refrescando Y no es la carga inicial
+        // Solo ejecutar AgruparPorSemana si ya est inicializado, NO est refrescando Y no es la carga inicial
         lock (_initializationLock)
         {
             if (_isInitialized && !_isRefreshing)
             {
-                // No esperar aquí, se ejecutará en background
+                // No esperar aqu, se ejecutar en background
                 _ = AgruparPorSemanaAsync();
             }
         }
     }[RelayCommand]
     public async Task LoadCronogramasAsync()
     {
-        // Evitar cargas múltiples simultáneas
+        // Evitar cargas mltiples simultneas
         lock (_initializationLock)
         {
             if (IsLoading) return;
         }        IsLoading = true;
         StatusMessage = "Cargando cronogramas...";
 
-        // Mostrar placeholders que ocupen el ancho completo según semanas del año seleccionado
+        // Mostrar placeholders que ocupen el ancho completo segn semanas del ao seleccionado
         try
         {
             var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(AnioSeleccionado);
@@ -238,14 +238,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
                 FiltrarPorAnio();
                 StatusMessage = $"{Cronogramas.Count} cronogramas cargados.";
-                // Marcar como inicializado después de la primera carga exitosa
+                // Marcar como inicializado despu©s de la primera carga exitosa
                 lock (_initializationLock)
                 {
                     _isInitialized = true;
                 }
             });
             
-            // Ejecutar AgruparPorSemana automáticamente después de la carga inicial (fuera del Dispatcher)
+            // Ejecutar AgruparPorSemana automticamente despu©s de la carga inicial (fuera del Dispatcher)
             await AgruparPorSemanaAsync();
         }
         catch (System.Exception ex)
@@ -263,7 +263,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     [RelayCommand(CanExecute = nameof(CanAddCronograma))]
     public async Task AddCronogramaAsync()
     {
-        var dialog = new GestLog.Views.Tools.GestionMantenimientos.CronogramaDialog();
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.CronogramaDialog();
         if (dialog.ShowDialog() == true)
         {
             var nuevo = dialog.Cronograma;
@@ -284,7 +284,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     {
         if (SelectedCronograma == null)
             return;
-        var dialog = new GestLog.Views.Tools.GestionMantenimientos.CronogramaDialog(SelectedCronograma);
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.CronogramaDialog(SelectedCronograma);
         if (dialog.ShowDialog() == true)
         {
             var editado = dialog.Cronograma;
@@ -318,7 +318,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
     }
 
-    // Utilidad para obtener el primer día de la semana ISO8601
+    // Utilidad para obtener el primer da de la semana ISO8601
     private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
     {
         var jan1 = new DateTime(year, 1, 1);
@@ -330,13 +330,13 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         if (firstWeek <= 1)
             weekNum -= 1;
         var result = firstThursday.AddDays(weekNum * 7);
-        return result.AddDays(-3);    }    // Agrupa los cronogramas por semana del año (ISO 8601)
+        return result.AddDays(-3);    }    // Agrupa los cronogramas por semana del ao (ISO 8601)
     public async Task AgruparPorSemanaAsync()
     {
-        // Evitar reentradas simultáneas
+        // Evitar reentradas simultneas
         if (System.Threading.Interlocked.CompareExchange(ref _isGroupingFlag, 1, 0) == 1)
         {
-            _logger.LogDebug("[CronogramaViewModel] Agrupación ya en progreso, evitando reentrada");
+            _logger.LogDebug("[CronogramaViewModel] Agrupacin ya en progreso, evitando reentrada");
             return;
         }
 
@@ -345,26 +345,26 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             // Verificar que tengamos datos para procesar
             if (CronogramasFiltrados == null || !CronogramasFiltrados.Any())
             {
-                _logger.LogDebug("[CronogramaViewModel] ⚠️ No hay cronogramas filtrados para agrupar");
+                _logger.LogDebug("[CronogramaViewModel]   No hay cronogramas filtrados para agrupar");
                 return;
             }
 
-            _logger.LogDebug("[CronogramaViewModel] 🔄 Iniciando agrupación por semana para {Count} cronogramas", CronogramasFiltrados.Count);
+            _logger.LogDebug("[CronogramaViewModel]  Iniciando agrupacin por semana para {Count} cronogramas", CronogramasFiltrados.Count);
             
             // Limpiar en el hilo de UI
             System.Windows.Application.Current.Dispatcher.Invoke(() => Semanas.Clear());
             
-            var añoActual = AnioSeleccionado;
-            var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(añoActual);
+            var aoActual = AnioSeleccionado;
+            var weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(aoActual);
             var seguimientos = (await _seguimientoService.GetSeguimientosAsync())
-                .Where(s => s.Anio == añoActual)
+                .Where(s => s.Anio == aoActual)
                 .ToList();        var tareas = new List<Task>();
-            var semaphore = new System.Threading.SemaphoreSlim(3); // 🔴 Reducido a 3 para evitar agotamiento del pool
+            var semaphore = new System.Threading.SemaphoreSlim(3); //  Reducido a 3 para evitar agotamiento del pool
             var semanasTemp = new List<SemanaViewModel>(); // Lista temporal para construir fuera del UI thread
             
             for (int i = 1; i <= weeksInYear; i++)
             {
-                var fechaInicio = FirstDateOfWeekISO8601(añoActual, i);
+                var fechaInicio = FirstDateOfWeekISO8601(aoActual, i);
                 var fechaFin = fechaInicio.AddDays(6);
                 var semanaVM = new SemanaViewModel(i, fechaInicio, fechaFin, _cronogramaService, AnioSeleccionado);
                 if (CronogramasFiltrados != null)
@@ -380,7 +380,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                         .Select(c => c.Codigo)
                         .ToHashSet();
                     
-                    // NUEVA LÓGICA: Mostrar seguimientos que NO están programados en el cronograma
+                    // NUEVA LGICA: Mostrar seguimientos que NO estn programados en el cronograma
                     // O que son Correctivos (incluso si hay un Preventivo programado)
                     var seguimientosSemana = seguimientos.Where(s => 
                         s.Semana == i && 
@@ -403,22 +403,22 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                         semanaVM.Mantenimientos.Add(noProgramado);
                     }
                 }
-                // Inicializar estados de mantenimientos para la semana (carga asíncrona, con manejo de errores y semáforo)
+                // Inicializar estados de mantenimientos para la semana (carga asncrona, con manejo de errores y semforo)
                 tareas.Add(Task.Run(async () =>
                 {
                     await semaphore.WaitAsync();
                     try
                     {
-                        await semanaVM.CargarEstadosMantenimientosAsync(añoActual, _cronogramaService);
+                        await semanaVM.CargarEstadosMantenimientosAsync(aoActual, _cronogramaService);
                     }
                     catch (InvalidOperationException ex) when (ex.Message.Contains("Timeout"))
                     {
-                        _logger.LogWarning(ex, $"⚠️ Timeout al cargar estados de la semana {i} - Pool agotado");
+                        _logger.LogWarning(ex, $"  Timeout al cargar estados de la semana {i} - Pool agotado");
                         // No fallar todo, solo registrar el aviso
                     }
                     catch (System.Exception ex)
                     {
-                        _logger.LogError(ex, $"❌ Error al cargar estados de la semana {i}");
+                        _logger.LogError(ex, $" Error al cargar estados de la semana {i}");
                     }
                     finally
                     {
@@ -428,14 +428,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 semanasTemp.Add(semanaVM);
             }
             await Task.WhenAll(tareas);
-              // Agregar todas las semanas a la colección observable en el hilo de UI
+              // Agregar todas las semanas a la coleccin observable en el hilo de UI
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 foreach (var semana in semanasTemp)            {
                     Semanas.Add(semana);
                 }
                 
-                _logger.LogDebug("[CronogramaViewModel] Agrupación completada: {Count} semanas agregadas", semanasTemp.Count);
+                _logger.LogDebug("[CronogramaViewModel] Agrupacin completada: {Count} semanas agregadas", semanasTemp.Count);
             });
         }
         finally
@@ -445,7 +445,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     }    [RelayCommand]
     public async Task AgruparSemanalmente()
     {
-        // Solo ejecutar si ya está inicializado para evitar cargas múltiples
+        // Solo ejecutar si ya est inicializado para evitar cargas mltiples
         lock (_initializationLock)
         {
             if (!_isInitialized) return;
@@ -455,10 +455,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     }    [RelayCommand]
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        // Evitar múltiples refrescos simultáneos
+        // Evitar mltiples refrescos simultneos
         if (IsLoading) return;
 
-        // 🔵 Ejecutar en background thread para NO bloquear la UI
+        //  Ejecutar en background thread para NO bloquear la UI
         await Task.Run(async () =>
         {
             try
@@ -466,8 +466,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     IsLoading = true;
-                    _isRefreshing = true;  // 🔴 Indicar que estamos refrescando
-                    StatusMessage = "🔄 Refrescando cronograma...";
+                    _isRefreshing = true;  //  Indicar que estamos refrescando
+                    StatusMessage = " Refrescando cronograma...";
 
                     // Inicializar placeholders mientras se realiza el refresco
                     try
@@ -479,10 +479,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     catch { /* swallo contenido si falla */ }
                 });
 
-                _logger.LogInformation("[CronogramaViewModel] 🔄 Iniciando refresco completo del cronograma desde 0");
+                _logger.LogInformation("[CronogramaViewModel]  Iniciando refresco completo del cronograma desde 0");
 
                 // PASO 1: Limpiar toda la UI
-                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 1: Limpiando datos previos...");
+                _logger.LogInformation("[CronogramaViewModel]  PASO 1: Limpiando datos previos...");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusMessage = "Paso 1/5: Limpiando datos previos...";
@@ -492,8 +492,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     AniosDisponibles.Clear();
                 });
 
-                // PASO 2: Actualizar cronogramas (asegurar que estén completos)
-                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 2: Actualizando cronogramas en BD...");
+                // PASO 2: Actualizar cronogramas (asegurar que est©n completos)
+                _logger.LogInformation("[CronogramaViewModel]  PASO 2: Actualizando cronogramas en BD...");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusMessage = "Paso 2/5: Actualizando cronogramas en BD...";
@@ -501,7 +501,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 await _cronogramaService.EnsureAllCronogramasUpToDateAsync().ConfigureAwait(false);
 
                 // PASO 3: Generar seguimientos faltantes
-                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 3: Generando seguimientos faltantes...");
+                _logger.LogInformation("[CronogramaViewModel]  PASO 3: Generando seguimientos faltantes...");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusMessage = "Paso 3/5: Generando seguimientos faltantes...";
@@ -509,7 +509,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 await _cronogramaService.GenerarSeguimientosFaltantesAsync().ConfigureAwait(false);
 
                 // PASO 4: Cargar cronogramas desde BD
-                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 4: Cargando cronogramas desde BD...");
+                _logger.LogInformation("[CronogramaViewModel]  PASO 4: Cargando cronogramas desde BD...");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusMessage = "Paso 4/5: Cargando cronogramas desde BD...";
@@ -527,24 +527,24 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 });
 
                 // PASO 5: Reagrupar por semanas
-                _logger.LogInformation("[CronogramaViewModel] ✓ PASO 5: Agrupando por semanas...");
+                _logger.LogInformation("[CronogramaViewModel]  PASO 5: Agrupando por semanas...");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusMessage = "Paso 5/5: Agrupando por semanas...";
                 });
                 await AgruparPorSemanaAsync().ConfigureAwait(false);
 
-                _logger.LogInformation("[CronogramaViewModel] ✅ Refresco completado exitosamente");
+                _logger.LogInformation("[CronogramaViewModel]  Refresco completado exitosamente");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    StatusMessage = $"✅ Cronograma refrescado: {Cronogramas.Count} cronogramas y {Semanas.Count} semanas.";
+                    StatusMessage = $" Cronograma refrescado: {Cronogramas.Count} cronogramas y {Semanas.Count} semanas.";
                 });
             }
             catch (OperationCanceledException)
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    StatusMessage = "⚠️ Refresco cancelado.";
+                    StatusMessage = "  Refresco cancelado.";
                 });
                 _logger.LogInformation("[CronogramaViewModel] Refresco cancelado por el usuario");
             }
@@ -553,7 +553,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 _logger.LogError(ex, "[CronogramaViewModel] Error durante el refresco completo");
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    StatusMessage = $"❌ Error al refrescar: {ex.Message}";
+                    StatusMessage = $" Error al refrescar: {ex.Message}";
                 });
             }
             finally
@@ -561,7 +561,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     IsLoading = false;
-                    _isRefreshing = false;  // 🟢 Finalizar refresco, permitir agrupación normal
+                    _isRefreshing = false;  //  Finalizar refresco, permitir agrupacin normal
                     PlaceholderSemanas.Clear();
                 });
             }
@@ -582,7 +582,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             IsLoading = true;
             StatusMessage = "Exportando cronograma y seguimientos...";
 
-            // Obtener todos los equipos y semanas del año seleccionado
+            // Obtener todos los equipos y semanas del ao seleccionado
             var cronogramas = CronogramasFiltrados.ToList();
             var weeksInYearExport = System.Globalization.ISOWeek.GetWeeksInYear(AnioSeleccionado);
             var semanas = Enumerable.Range(1, weeksInYearExport).ToList();
@@ -613,7 +613,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     if (estado != null)
                         estadosPorEquipo[c.Codigo!][s] = estado;
                 }
-             }            // Obtener seguimientos del año seleccionado (solo realizados o no realizados, excluyendo pendientes y atrasados)
+             }            // Obtener seguimientos del ao seleccionado (solo realizados o no realizados, excluyendo pendientes y atrasados)
             var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
             var seguimientosAnio = todosSeguimientos
                 .Where(s => s.Anio == AnioSeleccionado && 
@@ -625,10 +625,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
               // ========== HOJA 1: CRONOGRAMA ==========
             var ws = workbook.Worksheets.Add($"Cronograma {AnioSeleccionado}");
               // ===== CONFIGURAR ANCHO DE COLUMNAS =====
-            // IMPORTANTE: NO asignar anchos fijos a A-E, se ajustarán automáticamente con AdjustToContents()
-            // al final después de llenar los datos
+            // IMPORTANTE: NO asignar anchos fijos a A-E, se ajustarn automticamente con AdjustToContents()
+            // al final despu©s de llenar los datos
             
-            // Configurar ancho para columnas de semanas (ajustado a lo que cabe). Semanas empezarán en la columna F (índice 6).
+            // Configurar ancho para columnas de semanas (ajustado a lo que cabe). Semanas empezarn en la columna F (ndice 6).
             try
             {
                 // Ajustar en bloque todas las columnas de semanas para que tengan el mismo ancho
@@ -636,15 +636,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             }
             catch
             {
-                // Fallback: iterar si la asignación en bloque falla por alguna razón
+                // Fallback: iterar si la asignacin en bloque falla por alguna razn
                 for (int s = 1; s <= weeksInYearExport; s++)
                     ws.Column(5 + s).Width = 8;
             }
             
-            // Ocultar líneas de cuadrícula para apariencia más limpia
+            // Ocultar lneas de cuadrcula para apariencia ms limpia
             ws.ShowGridLines = false;
             
-            // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
+            // ===== FILAS 1-2: LOGO (izquierda) + TTULO (derecha) =====
             ws.Row(1).Height = 35;
             ws.Row(2).Height = 35;
             
@@ -664,13 +664,13 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             }
             catch
             {
-                // Si hay error al cargar el logo, continuar sin él
+                // Si hay error al cargar el logo, continuar sin ©l
             }
             
-            // Agregar título en C1:K2+ (ajustado según número de semanas)
+            // Agregar ttulo en C1:K2+ (ajustado segn nmero de semanas)
             int lastWeekCol = 4 + weeksInYearExport; // Semanas empiezan en columna E (4 + 1 = 5)
-            // No extender el título sobre todas las columnas de semanas si hay muchas.
-            // Limitar la mezcla hasta la columna 11 (K) como máximo para mantener el título visible.
+            // No extender el ttulo sobre todas las columnas de semanas si hay muchas.
+            // Limitar la mezcla hasta la columna 11 (K) como mximo para mantener el ttulo visible.
             int titleEndCol = Math.Min(11, lastWeekCol);
 
             var titleRangeCron = ws.Range(1, 3, 2, titleEndCol);
@@ -684,16 +684,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             titleCellCron.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
             titleCellCron.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            // Dibujar una línea horizontal (border) justo debajo del título para separar visualmente
+            // Dibujar una lnea horizontal (border) justo debajo del ttulo para separar visualmente
             try
             {
                 ws.Range(2, 1, 2, titleEndCol).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
             }
             catch { }
 
-            // Agregar borde derecho al título
-            titleRangeCron.Style.Border.RightBorder = XLBorderStyleValues.Thin;            // ===== CUADROS DE INFORMACIÓN ABAJO DEL TÍTULO =====
-            // Cajas sin merge horizontal: A1=REALIZADO POR (merge vertical), B1=NOMBRE (merge vertical), C1=AÑO (merge vertical)
+            // Agregar borde derecho al ttulo
+            titleRangeCron.Style.Border.RightBorder = XLBorderStyleValues.Thin;            // ===== CUADROS DE INFORMACIN ABAJO DEL TTULO =====
+            // Cajas sin merge horizontal: A1=REALIZADO POR (merge vertical), B1=NOMBRE (merge vertical), C1=AO (merge vertical)
             int infoStartRow = 3;
             int infoEndRow = 7; // filas 3,4,5,6,7            // Caja 1: REALIZADO POR (columna A, merge vertical)
             ws.Range(infoStartRow, 1, infoEndRow, 1).Merge();
@@ -712,10 +712,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             // SIN BORDES - Solo la leyenda debe tener bordes
 
-            // Caja 3: AÑO (columna C, merge vertical)
+            // Caja 3: AO (columna C, merge vertical)
             ws.Range(infoStartRow, 3, infoEndRow, 3).Merge();
             var box3 = ws.Cell(infoStartRow, 3);
-            box3.Value = $"AÑO: {AnioSeleccionado}";
+            box3.Value = $"AO: {AnioSeleccionado}";
             box3.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             box3.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             // SIN BORDES - Solo la leyenda debe tener bordes// Asegurar alturas para las filas de info
@@ -755,7 +755,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 ws.Cell(r, legendLabelCol).Style.Font.FontSize = 9;
                 // SIN BORDES - Solo las cajas de color tienen bordes
             }            // ===== ENCABEZADOS DE TABLA =====
-            // currentRowCron comienza justo después del bloque informativo (infoEndRow)
+            // currentRowCron comienza justo despu©s del bloque informativo (infoEndRow)
             int currentRowCron = infoEndRow + 1;
             var headersCron = new[] { "Equipo", "Nombre", "Marca", "Frecuencia", "Sede" };
             for (int col = 1; col <= headersCron.Length; col++)
@@ -770,7 +770,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
             }
 
-            // Encabezados de semanas (a partir de la columna F, índice 6 => 5 + s)
+            // Encabezados de semanas (a partir de la columna F, ndice 6 => 5 + s)
             for (int s = 1; s <= weeksInYearExport; s++)
             {
                 var weekCell = ws.Cell(currentRowCron, 5 + s);
@@ -807,13 +807,13 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     if (estadosPorEquipo.TryGetValue(c.Codigo!, out var estadosSemana) && estadosSemana.TryGetValue(s, out var estado))
                     {
                         var cell = ws.Cell(currentRowCron, 5 + s);
-                        // Si es correctivo: fondo púrpura y una 'C' en mayúscula y negrita centrada
+                        // Si es correctivo: fondo prpura y una 'C' en mayscula y negrita centrada
                         if (estado.Seguimiento?.TipoMtno == TipoMantenimiento.Correctivo)
                         {
                             cell.Value = "C";
                             cell.Style.Font.Bold = true;
                             cell.Style.Font.FontColor = XLColor.White;
-                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#7E57C2"); // Púrpura recomendado
+                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#7E57C2"); // Prpura recomendado
                             cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                             cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                             // Borde exterior normal para resaltar
@@ -854,29 +854,29 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 ws.Row(currentRowCron).Height = 22;
                 currentRowCron++;
                 rowCountCron++;
-            }            // Agregar filtros automáticos a la tabla
+            }            // Agregar filtros automticos a la tabla
             if (cronogramas.Count > 0)
             {
                 int headerRowCron = currentRowCron - cronogramas.Count - 1;
                 ws.Range(headerRowCron, 1, currentRowCron - 1, 5).SetAutoFilter();
             }            // ===== AJUSTAR ANCHO DE COLUMNAS A-E AL CONTENIDO =====
-            // Primero calcular ancho automático
+            // Primero calcular ancho automtico
             ws.Column(1).AdjustToContents();
             ws.Column(2).AdjustToContents();
             ws.Column(3).AdjustToContents();
             ws.Column(4).AdjustToContents();
             ws.Column(5).AdjustToContents();
 
-            // CORRECCIÓN CRÍTICA: Asegurar que los anchos sean suficientes para el contenido visible
-            // "REALIZADO POR:" tiene aproximadamente 14 caracteres (ancho mínimo 17-18 unidades)
-            // "NOMBRE" o nombres largos típicamente necesitan 15-20
+            // CORRECCIN CRTICA: Asegurar que los anchos sean suficientes para el contenido visible
+            // "REALIZADO POR:" tiene aproximadamente 14 caracteres (ancho mnimo 17-18 unidades)
+            // "NOMBRE" o nombres largos tpicamente necesitan 15-20
             // "MARCA", "FRECUENCIA", "SEDE" necesitan 12-15 cada uno
             
-            double colAWidth = Math.Max(ws.Column(1).Width, 18);     // Mínimo 18 para "REALIZADO POR:"
-            double colBWidth = Math.Max(ws.Column(2).Width, 16);     // Mínimo 16 para nombres
-            double colCWidth = Math.Max(ws.Column(3).Width, 14);     // Mínimo 14 para marcas
-            double colDWidth = Math.Max(ws.Column(4).Width, 14);     // Mínimo 14 para frecuencia
-            double colEWidth = Math.Max(ws.Column(5).Width, 14);     // Mínimo 14 para sede
+            double colAWidth = Math.Max(ws.Column(1).Width, 18);     // Mnimo 18 para "REALIZADO POR:"
+            double colBWidth = Math.Max(ws.Column(2).Width, 16);     // Mnimo 16 para nombres
+            double colCWidth = Math.Max(ws.Column(3).Width, 14);     // Mnimo 14 para marcas
+            double colDWidth = Math.Max(ws.Column(4).Width, 14);     // Mnimo 14 para frecuencia
+            double colEWidth = Math.Max(ws.Column(5).Width, 14);     // Mnimo 14 para sede
 
             ws.Column(1).Width = colAWidth + 2;     // Agregar margen de seguridad
             ws.Column(2).Width = colBWidth + 2;
@@ -884,14 +884,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             ws.Column(4).Width = colDWidth + 1.5;
             ws.Column(5).Width = colEWidth + 1.5;
 
-            // ===== PIE DE PÁGINA =====
+            // ===== PIE DE PGINA =====
             currentRowCron += 2;
             var footerCellCron = ws.Cell(currentRowCron, 1);
-            footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Año {AnioSeleccionado} • Sistema GestLog © SIMICS Group SAS";
+            footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Ao {AnioSeleccionado}  Sistema GestLog © SIMICS Group SAS";
             footerCellCron.Style.Font.Italic = true;
             footerCellCron.Style.Font.FontSize = 9;
             footerCellCron.Style.Font.FontColor = XLColor.Gray;
-            ws.Range(currentRowCron, 1, currentRowCron, 5 + weeksInYearExport).Merge();            // Configurar página para exportación
+            ws.Range(currentRowCron, 1, currentRowCron, 5 + weeksInYearExport).Merge();            // Configurar pgina para exportacin
             ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
             // NO usar AdjustTo() o FitToPages() porque invalidan los anchos de columna ajustados manualmente
             // Usar scaling directo al 90% para que quepa todo sin comprimir las columnas
@@ -907,16 +907,16 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             // Configurar resto de columnas
             wsSeguimientos.Column("C").Width = 12;
             wsSeguimientos.Column("D").Width = 15;
-            wsSeguimientos.Column("E").Width = 35;  // Más ancho para descripción
+            wsSeguimientos.Column("E").Width = 35;  // Ms ancho para descripcin
             wsSeguimientos.Column("F").Width = 20;
             wsSeguimientos.Column("G").Width = 15;
             wsSeguimientos.Column("H").Width = 18;
             wsSeguimientos.Column("I").Width = 18;
             wsSeguimientos.Column("J").Width = 15;
-            wsSeguimientos.Column("K").Width = 35;  // Más ancho para observaciones
-              // Ocultar líneas de cuadrícula para apariencia más limpia
-            wsSeguimientos.ShowGridLines = false;            // ===== FILAS 1-2: LOGO (izquierda) + TÍTULO (derecha) =====
-            // PRIMERO: Aumentar altura de filas 1-2 para el logo y título
+            wsSeguimientos.Column("K").Width = 35;  // Ms ancho para observaciones
+              // Ocultar lneas de cuadrcula para apariencia ms limpia
+            wsSeguimientos.ShowGridLines = false;            // ===== FILAS 1-2: LOGO (izquierda) + TTULO (derecha) =====
+            // PRIMERO: Aumentar altura de filas 1-2 para el logo y ttulo
             wsSeguimientos.Row(1).Height = 35;
             wsSeguimientos.Row(2).Height = 35;
             
@@ -927,18 +927,18 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             {                if (System.IO.File.Exists(logoPath))
                 {
                     var picture = wsSeguimientos.AddPicture(logoPath);
-                    // Posicionar en A1 con offset de 10 píxeles desde los bordes izquierdo y superior
+                    // Posicionar en A1 con offset de 10 pxeles desde los bordes izquierdo y superior
                     picture.MoveTo(wsSeguimientos.Cell(1, 1), 10, 10);
                     // Escalar para que se ajuste a las 2 filas (70px cada una = 140px total)
-                    picture.Scale(0.15); // Escalar al 10% del tamaño original
+                    picture.Scale(0.15); // Escalar al 10% del tamao original
                 }
             }
             catch
             {
-                // Si hay error al cargar el logo, continuar sin él
+                // Si hay error al cargar el logo, continuar sin ©l
             }
             
-            // CUARTO: Agregar título en C1:K2 (lado derecho, centrado vertical y horizontal)
+            // CUARTO: Agregar ttulo en C1:K2 (lado derecho, centrado vertical y horizontal)
             var titleRange = wsSeguimientos.Range(1, 3, 2, 11);
             titleRange.Merge();            var titleCellSeg = titleRange.FirstCell();
             titleCellSeg.Value = "SEGUIMIENTOS DE MANTENIMIENTOS";
@@ -952,7 +952,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             int currentRowSeg = 3; // Comenzar desde fila 3 (encabezados)
             
             // ===== ENCABEZADOS DE TABLA =====
-            var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+            var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripcin", "Responsable", "Estado", "Fecha Registro", "Fecha Realizacin", "Costo", "Observaciones" };
             for (int col = 1; col <= headersSeg.Length; col++)
             {
                 var headerCell = wsSeguimientos.Cell(currentRowSeg, col);
@@ -975,7 +975,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 wsSeguimientos.Cell(currentRowSeg, 3).Value = seg.Semana;
                 wsSeguimientos.Cell(currentRowSeg, 4).Value = seg.TipoMtno?.ToString() ?? "-";
                 
-                // Descripción con word wrap
+                // Descripcin con word wrap
                 var descCell = wsSeguimientos.Cell(currentRowSeg, 5);
                 descCell.Value = seg.Descripcion;
                 descCell.Style.Alignment.WrapText = true;
@@ -1000,7 +1000,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 var obsCell = wsSeguimientos.Cell(currentRowSeg, 11);
                 obsCell.Value = seg.Observaciones ?? "-";
                 obsCell.Style.Alignment.WrapText = true;
-                obsCell.Style.Alignment.Indent = 2; // Agregar indentación para separación visual
+                obsCell.Style.Alignment.Indent = 2; // Agregar indentacin para separacin visual
                 
                 // Filas alternas con color gris claro (excluyendo columna de estado)
                 if (rowCountSeg % 2 == 0)
@@ -1012,19 +1012,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     }
                 }
                 
-                // Centrar columnas numéricas
+                // Centrar columnas num©ricas
                 wsSeguimientos.Cell(currentRowSeg, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 wsSeguimientos.Cell(currentRowSeg, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 wsSeguimientos.Cell(currentRowSeg, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
-                // Ajustar altura de fila automáticamente para textos largos
-                wsSeguimientos.Row(currentRowSeg).Height = 30; // Altura mínima para acomodar textos
+                // Ajustar altura de fila automticamente para textos largos
+                wsSeguimientos.Row(currentRowSeg).Height = 30; // Altura mnima para acomodar textos
                 
                 currentRowSeg++;
                 rowCountSeg++;
             }
             
-            // Agregar filtros automáticos a la tabla
+            // Agregar filtros automticos a la tabla
             if (seguimientosAnio.Count > 0)
             {
                 int headerRow = currentRowSeg - seguimientosAnio.Count - 1;
@@ -1035,7 +1035,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             {
                 currentRowSeg += 2;
                 
-                // Calcular métricas clave
+                // Calcular m©tricas clave
                 var preventivos = seguimientosAnio.Count(s => s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Preventivo);
                 var correctivos = seguimientosAnio.Count(s => s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo);
                 var realizadosEnTiempo = seguimientosAnio.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
@@ -1052,9 +1052,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
                 var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;
                 
-                // ===== TÍTULO KPIs =====
+                // ===== TTULO KPIs =====
                 var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
-                kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + AnioSeleccionado;
+                kpiTitle.Value = "INDICADORES DE DESEMPEO - AO " + AnioSeleccionado;
                 kpiTitle.Style.Font.Bold = true;
                 kpiTitle.Style.Font.FontSize = 14;
                 kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
@@ -1085,7 +1085,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     // Valor
                     var valueCell = wsSeguimientos.Cell(currentRowSeg + 1, col + 1);
                     
-                    // Convertir el valor apropiadamen según su tipo
+                    // Convertir el valor apropiadamen segn su tipo
                     if (kpiValues[col] is string strVal)
                         valueCell.Value = strVal;
                     else if (kpiValues[col] is int intVal)
@@ -1174,10 +1174,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     currentRowSeg++;
                 }
                 
-                // ===== ANÁLISIS DE ESTADOS =====
+                // ===== ANLISIS DE ESTADOS =====
                 currentRowSeg += 1;
                 var estadoTitle = wsSeguimientos.Cell(currentRowSeg, 1);
-                estadoTitle.Value = "ANÁLISIS DE CUMPLIMIENTO POR ESTADO";
+                estadoTitle.Value = "ANLISIS DE CUMPLIMIENTO POR ESTADO";
                 estadoTitle.Style.Font.Bold = true;
                 estadoTitle.Style.Font.FontSize = 12;
                 estadoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
@@ -1222,9 +1222,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                         pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
                     pctCell.Style.NumberFormat.Format = "0.0\"%\"";
                     pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                      // Columna Color - rectángulo coloreado
+                      // Columna Color - rectngulo coloreado
                     var colorCell = wsSeguimientos.Cell(currentRowSeg, col++);
-                    colorCell.Value = "■"; // Símbolo de rectángulo
+                    colorCell.Value = " "; // Smbolo de rectngulo
                     colorCell.Style.Font.FontSize = 14;
                     var colorValue = XLColor.FromArgb(int.Parse(data.colorHex, System.Globalization.NumberStyles.HexNumber));
                     colorCell.Style.Fill.BackgroundColor = colorValue;
@@ -1236,10 +1236,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 }
             }
             
-            // ===== PIE DE PÁGINA =====
+            // ===== PIE DE PGINA =====
             currentRowSeg += 2;
             var footerCellSeg = wsSeguimientos.Cell(currentRowSeg, 1);
-            footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Sistema GestLog © SIMICS Group SAS";
+            footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Sistema GestLog © SIMICS Group SAS";
             footerCellSeg.Style.Font.Italic = true;
             footerCellSeg.Style.Font.FontSize = 9;
             footerCellSeg.Style.Font.FontColor = XLColor.Gray;
@@ -1248,7 +1248,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             // Agregar borde exterior grueso
             wsSeguimientos.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
             
-            // Configurar página para exportación a PDF
+            // Configurar pgina para exportacin a PDF
             wsSeguimientos.PageSetup.PageOrientation = XLPageOrientation.Landscape;
             wsSeguimientos.PageSetup.AdjustTo(100);
             wsSeguimientos.PageSetup.FitToPages(1, 0);
@@ -1258,7 +1258,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             wsSeguimientos.PageSetup.Margins.Right = 0.5;
 
             workbook.SaveAs(saveFileDialog.FileName);
-            StatusMessage = $"Exportación completada: {saveFileDialog.FileName} ({cronogramas.Count} cronogramas, {seguimientosAnio.Count} seguimientos)";
+            StatusMessage = $"Exportacin completada: {saveFileDialog.FileName} ({cronogramas.Count} cronogramas, {seguimientosAnio.Count} seguimientos)";
         }
         catch (Exception ex)
         {
@@ -1289,19 +1289,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         return estado switch
         {
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado => XLColor.FromHtml("#C80000"), // Rojo
-            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"), // Ámbar
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"), // mbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"), // Verde
-            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // Ámbar
+            GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"), // mbar
             GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#B3E5FC"), // Azul cielo pastel
             _ => XLColor.White        };
     }    /// <summary>
-    /// Implementación del método abstracto para auto-refresh automático
+    /// Implementacin del m©todo abstracto para auto-refresh automtico
     /// </summary>
     protected override async Task RefreshDataAsync()
     {
         try
         {
-            _logger.LogInformation("[CronogramaViewModel] Refrescando datos automáticamente");
+            _logger.LogInformation("[CronogramaViewModel] Refrescando datos automticamente");
             await LoadCronogramasAsync();
             await AgruparPorSemanaAsync();
             _logger.LogInformation("[CronogramaViewModel] Datos refrescados exitosamente");
@@ -1314,11 +1314,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     }
 
     /// <summary>
-    /// Override para manejar cuando se pierde la conexión específicamente para cronogramas
+    /// Override para manejar cuando se pierde la conexin especficamente para cronogramas
     /// </summary>
     protected override void OnConnectionLost()
     {
-        StatusMessage = "Sin conexión - Gestión de cronogramas no disponible";
+        StatusMessage = "Sin conexin - Gestin de cronogramas no disponible";
     }
 }
 }
+

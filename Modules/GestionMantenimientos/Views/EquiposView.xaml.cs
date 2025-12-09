@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     /// <summary>
     /// Lógica de interacción para EquiposView.xaml
@@ -22,3 +22,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

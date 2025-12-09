@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
@@ -34,7 +34,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private bool canDeleteSeguimiento;
     [ObservableProperty]
-    private bool canExportSeguimiento;    // Propiedades de estadísticas para el header
+    private bool canExportSeguimiento;    // Propiedades de estadÃ­sticas para el header
     [ObservableProperty]
     private int seguimientosTotal;
 
@@ -86,13 +86,13 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private ObservableCollection<SeguimientoMantenimientoDto> seguimientosFiltrados = new();
 
-    // Optimización: Control de carga para evitar actualizaciones innecesarias
+    // OptimizaciÃ³n: Control de carga para evitar actualizaciones innecesarias
     private CancellationTokenSource? _loadCancellationToken;
     private DateTime _lastLoadTime = DateTime.MinValue;
     private DateTime _lastObservacionesUpdateTime = DateTime.MinValue;
     private const int DEBOUNCE_DELAY_MS = 300; // 300ms de debounce para seguimientos
-    private const int MIN_RELOAD_INTERVAL_MS = 1500; // Mínimo 1.5 segundos entre cargas
-    private const int MIN_OBSERVACIONES_UPDATE_INTERVAL_MS = 5000; // Mínimo 5 segundos entre actualizaciones de observaciones
+    private const int MIN_RELOAD_INTERVAL_MS = 1500; // MÃ­nimo 1.5 segundos entre cargas
+    private const int MIN_OBSERVACIONES_UPDATE_INTERVAL_MS = 5000; // MÃ­nimo 5 segundos entre actualizaciones de observaciones
 
     public SeguimientoViewModel(
         ISeguimientoService seguimientoService, 
@@ -110,13 +110,13 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             RecalcularPermisos();
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
 
-            // Suscribirse a mensajes de actualización de seguimientos
-            // OPTIMIZACIÓN: Solo recargar cuando sea realmente necesario
+            // Suscribirse a mensajes de actualizaciÃ³n de seguimientos
+            // OPTIMIZACIÃ“N: Solo recargar cuando sea realmente necesario
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
             {
                 try
                 {
-                    // Solo recargar si han pasado al menos 1.5 segundos desde la última carga
+                    // Solo recargar si han pasado al menos 1.5 segundos desde la Ãºltima carga
                     await LoadSeguimientosAsync(forceReload: false);
                 }
                 catch (Exception ex)
@@ -129,7 +129,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             if (SeguimientosView != null)
                 SeguimientosView.Filter = FiltrarSeguimiento;
 
-            // Cargar datos automáticamente al crear el ViewModel
+            // Cargar datos automÃ¡ticamente al crear el ViewModel
             Task.Run(async () => 
             {
                 try
@@ -144,7 +144,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         }
         catch (Exception ex)
         {
-            logger?.LogError(ex, "[SeguimientoViewModel] Error crítico en constructor");
+            logger?.LogError(ex, "[SeguimientoViewModel] Error crÃ­tico en constructor");
             throw; // Re-lanzar para que se capture en el nivel superior
         }
     }
@@ -172,7 +172,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         var filtrados = Seguimientos.Where(s => s.Anio == AnioSeleccionado).ToList();
         SeguimientosFiltrados = new ObservableCollection<SeguimientoMantenimientoDto>(filtrados);
         
-        // Refrescar la ICollectionView para que el DataGrid se actualice con el nuevo filtro de año
+        // Refrescar la ICollectionView para que el DataGrid se actualice con el nuevo filtro de aÃ±o
         System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             try
@@ -181,14 +181,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             }
             catch (System.InvalidOperationException)
             {
-                // Si Refresh está aplazado, reintentar con prioridad más baja
+                // Si Refresh estÃ¡ aplazado, reintentar con prioridad mÃ¡s baja
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(
                     new Action(() => { try { SeguimientosView?.Refresh(); } catch { } }),
                     System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
         });
         
-        // Recalcular estadísticas para el año seleccionado
+        // Recalcular estadÃ­sticas para el aÃ±o seleccionado
         CalcularEstadisticasPorAnio();
     }private void CalcularEstadisticasPorAnio()
     {
@@ -211,23 +211,23 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         SeguimientosNoRealizados = SeguimientosFiltrados.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
     }
 
-    // Wrapper sin parámetros para que MVVM Toolkit genere el comando
+    // Wrapper sin parÃ¡metros para que MVVM Toolkit genere el comando
     [RelayCommand]
     public async Task LoadSeguimientos()
     {
         await LoadSeguimientosAsync(forceReload: true);
     }
 
-    // Método original (sin [RelayCommand])
+    // MÃ©todo original (sin [RelayCommand])
     public async Task LoadSeguimientosAsync(bool forceReload = true)
     {
-        // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias
+        // OPTIMIZACIÃ“N: Evitar cargas duplicadas innecesarias
         if (!forceReload)
         {
             var timeSinceLastLoad = DateTime.Now - _lastLoadTime;
             if (timeSinceLastLoad.TotalMilliseconds < MIN_RELOAD_INTERVAL_MS && !IsLoading)
             {
-                return; // Muy pronto desde la última carga, omitir
+                return; // Muy pronto desde la Ãºltima carga, omitir
             }
         }
 
@@ -245,7 +245,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             }
             catch (OperationCanceledException)
             {
-                return; // Cancelado, otra carga está en progreso
+                return; // Cancelado, otra carga estÃ¡ en progreso
             }
         }
 
@@ -253,7 +253,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         StatusMessage = "Cargando seguimientos...";
         try
         {
-            // OPTIMIZACIÓN: Actualizar observaciones solo si han pasado más de 5 segundos
+            // OPTIMIZACIÃ“N: Actualizar observaciones solo si han pasado mÃ¡s de 5 segundos
             var timeSinceLastObservacionesUpdate = DateTime.Now - _lastObservacionesUpdateTime;
             if (forceReload || timeSinceLastObservacionesUpdate.TotalMilliseconds > MIN_OBSERVACIONES_UPDATE_INTERVAL_MS)
             {
@@ -272,7 +272,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Continuar con la carga aunque falle la actualización de observaciones
+            // Continuar con la carga aunque falle la actualizaciÃ³n de observaciones
             var lista = await _seguimientoService.GetSeguimientosAsync();
             
             if (cancellationToken.IsCancellationRequested)
@@ -290,13 +290,13 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 {
                     s.Estado = estadoCalculado;
                     if (string.IsNullOrWhiteSpace(s.Responsable))
-                        s.Responsable = "Automático";
+                        s.Responsable = "AutomÃ¡tico";
                     await _seguimientoService.UpdateAsync(s);
                 }
-                s.RefrescarCacheFiltro(); // Refresca la caché de campos normalizados
+                s.RefrescarCacheFiltro(); // Refresca la cachÃ© de campos normalizados
             }            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             
-            // Cargar años disponibles y filtrar por año seleccionado
+            // Cargar aÃ±os disponibles y filtrar por aÃ±o seleccionado
             var anios = lista.Select(s => s.Anio).Distinct().OrderByDescending(a => a).ToList();
             AniosDisponibles = new ObservableCollection<int>(anios);
             if (!AniosDisponibles.Contains(AnioSeleccionado))
@@ -407,7 +407,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
     [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]    public async Task AddSeguimientoAsync()
     {
-        var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog();
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog();
         dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
@@ -431,7 +431,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         if (SelectedSeguimiento == null)
             return;
 
-        var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(SelectedSeguimiento);
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog(SelectedSeguimiento);
         dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
@@ -468,7 +468,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             StatusMessage = "Error al eliminar seguimiento.";
         }
     }    /// <summary>
-    /// Determina si hay filtros activos (búsqueda o fechas).
+    /// Determina si hay filtros activos (bÃºsqueda o fechas).
     /// </summary>
     private bool TieneFiltrosActivos()
     {
@@ -514,7 +514,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
                 ws.ShowGridLines = false;
 
-                // ===== FILAS 1-2: LOGO + TÍTULO =====
+                // ===== FILAS 1-2: LOGO + TÃTULO =====
                 ws.Row(1).Height = 35;
                 ws.Row(2).Height = 35;
                 ws.Range(1, 1, 2, 2).Merge();
@@ -542,20 +542,20 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                // Dibujar una línea horizontal (border) justo debajo del título para separar visualmente
+                // Dibujar una lÃ­nea horizontal (border) justo debajo del tÃ­tulo para separar visualmente
                 try
                 {
                     ws.Range(2, 1, 2, 11).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
                 }
                 catch { }
 
-                // Agregar borde derecho al título
+                // Agregar borde derecho al tÃ­tulo
                 titleRange.Style.Border.RightBorder = XLBorderStyleValues.Thin;
 
                 int currentRowSeg = 3;
 
                 // ===== ENCABEZADOS DE TABLA =====
-                var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+                var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "DescripciÃ³n", "Responsable", "Estado", "Fecha Registro", "Fecha RealizaciÃ³n", "Costo", "Observaciones" };
                 for (int col = 1; col <= headersSeg.Length; col++)
                 {
                     var headerCell = ws.Cell(currentRowSeg, col);
@@ -622,7 +622,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     rowCountSeg++;
                 }
 
-                // Agregar filtros automáticos
+                // Agregar filtros automÃ¡ticos
                 if (datosAExportar.Count > 0)
                 {
                     int headerRow = currentRowSeg - datosAExportar.Count - 1;
@@ -649,9 +649,9 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
                     var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;
                     
-                    // Título KPIs
+                    // TÃ­tulo KPIs
                     var kpiTitle = ws.Cell(currentRowSeg, 1);
-                    kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + AnioSeleccionado;
+                    kpiTitle.Value = "INDICADORES DE DESEMPEÃ‘O - AÃ‘O " + AnioSeleccionado;
                     kpiTitle.Style.Font.Bold = true;
                     kpiTitle.Style.Font.FontSize = 14;
                     kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
@@ -765,10 +765,10 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                         currentRowSeg++;
                     }
                     
-                    // ===== ANÁLISIS DE ESTADOS =====
+                    // ===== ANÃLISIS DE ESTADOS =====
                     currentRowSeg += 1;
                     var estadoTitle = ws.Cell(currentRowSeg, 1);
-                    estadoTitle.Value = "ANÁLISIS DE CUMPLIMIENTO POR ESTADO";
+                    estadoTitle.Value = "ANÃLISIS DE CUMPLIMIENTO POR ESTADO";
                     estadoTitle.Style.Font.Bold = true;
                     estadoTitle.Style.Font.FontSize = 12;
                     estadoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
@@ -816,7 +816,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                         pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                         
                         var colorCell = ws.Cell(currentRowSeg, col++);
-                        colorCell.Value = "■";
+                        colorCell.Value = "â– ";
                         colorCell.Style.Font.FontSize = 14;
                         var colorValue = XLColor.FromArgb(int.Parse(data.colorHex, System.Globalization.NumberStyles.HexNumber));
                         colorCell.Style.Fill.BackgroundColor = colorValue;
@@ -828,10 +828,10 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     }
                 }
 
-                // ===== PIE DE PÁGINA =====
+                // ===== PIE DE PÃGINA =====
                 currentRowSeg += 2;
                 var footerCell = ws.Cell(currentRowSeg, 1);
-                footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Sistema GestLog © SIMICS Group SAS";
+                footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} â€¢ Sistema GestLog Â© SIMICS Group SAS";
                 footerCell.Style.Font.Italic = true;
                 footerCell.Style.Font.FontSize = 9;
                 footerCell.Style.Font.FontColor = XLColor.Gray;
@@ -851,7 +851,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 workbook.SaveAs(saveFileDialog.FileName);
             });
 
-            StatusMessage = $"Exportación completada: {saveFileDialog.FileName} ({datosAExportar.Count} seguimientos)";
+            StatusMessage = $"ExportaciÃ³n completada: {saveFileDialog.FileName} ({datosAExportar.Count} seguimientos)";
         }
         catch (Exception ex)
         {
@@ -939,26 +939,26 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
     partial void OnFiltroSeguimientoChanged(string value)
     {
-        // No refrescar automáticamente
+        // No refrescar automÃ¡ticamente
     }
 
     partial void OnFechaDesdeChanged(DateTime? value)
     {
-        // No refrescar automáticamente
+        // No refrescar automÃ¡ticamente
     }
 
     partial void OnFechaHastaChanged(DateTime? value)
     {
-        // No refrescar automáticamente
+        // No refrescar automÃ¡ticamente
     }
 
     partial void OnSeguimientosChanged(ObservableCollection<SeguimientoMantenimientoDto> value)
     {
-        // Ejecutar la actualización de la vista en el Dispatcher para evitar InvalidOperationException
+        // Ejecutar la actualizaciÃ³n de la vista en el Dispatcher para evitar InvalidOperationException
         var app = System.Windows.Application.Current;
         if (app == null)
         {
-            // Fallback si no hay aplicación (ej. pruebas unitarias)
+            // Fallback si no hay aplicaciÃ³n (ej. pruebas unitarias)
             if (value != null)
             {
                 foreach (var s in value)
@@ -968,7 +968,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             SeguimientosView = System.Windows.Data.CollectionViewSource.GetDefaultView(Seguimientos);
             if (SeguimientosView != null)
                 SeguimientosView.Filter = FiltrarSeguimiento;
-            try { SeguimientosView?.Refresh(); } catch (System.InvalidOperationException) { /* ignorar si está en DeferRefresh */ }
+            try { SeguimientosView?.Refresh(); } catch (System.InvalidOperationException) { /* ignorar si estÃ¡ en DeferRefresh */ }
             return;
         }
 
@@ -986,14 +986,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 if (SeguimientosView != null)
                     SeguimientosView.Filter = FiltrarSeguimiento;
 
-                // Intentar refrescar; si falla porque Refresh está aplazado, reintentar con prioridad más baja
+                // Intentar refrescar; si falla porque Refresh estÃ¡ aplazado, reintentar con prioridad mÃ¡s baja
                 try
                 {
                     SeguimientosView?.Refresh();
                 }
                 catch (System.InvalidOperationException)
                 {
-                    // Reagendar un reintento cuando la UI esté ociosa
+                    // Reagendar un reintento cuando la UI estÃ© ociosa
                     app.Dispatcher.BeginInvoke(new Action(() =>
                     {
                         try { SeguimientosView?.Refresh(); } catch { /* swallow */ }
@@ -1009,11 +1009,11 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     {
         if (obj is not SeguimientoMantenimientoDto s) return false;
 
-        // ✅ FILTRO POR AÑO (primero y más importante)
+        // âœ… FILTRO POR AÃ‘O (primero y mÃ¡s importante)
         if (s.Anio != AnioSeleccionado)
             return false;
 
-        // Filtro múltiple por texto
+        // Filtro mÃºltiple por texto
         if (!string.IsNullOrWhiteSpace(FiltroSeguimiento))
         {
             var terminos = FiltroSeguimiento.Split(';')
@@ -1053,11 +1053,11 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     private string RemoverTildes(string texto)
     {
         return texto
-            .Replace("á", "a").Replace("é", "e").Replace("í", "i")
-            .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
-            .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
-            .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
-            .Replace("ñ", "n").Replace("Ñ", "N");
+            .Replace("Ã¡", "a").Replace("Ã©", "e").Replace("Ã­", "i")
+            .Replace("Ã³", "o").Replace("Ãº", "u").Replace("Ã¼", "u")
+            .Replace("Ã", "A").Replace("Ã‰", "E").Replace("Ã", "I")
+            .Replace("Ã“", "O").Replace("Ãš", "U").Replace("Ãœ", "U")
+            .Replace("Ã±", "n").Replace("Ã‘", "N");
     }
 
     private string SepararCamelCase(string texto)
@@ -1074,7 +1074,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         SeguimientosNoRealizados = Seguimientos.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
     }
 
-    // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+    // âœ… IMPLEMENTACIÃ“N REQUERIDA: DatabaseAwareViewModel
     protected override async Task RefreshDataAsync()
     {
         await LoadSeguimientosAsync(forceReload: true);
@@ -1082,7 +1082,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
     protected override void OnConnectionLost()
     {
-        StatusMessage = "Sin conexión - Módulo no disponible";
+        StatusMessage = "Sin conexiÃ³n - MÃ³dulo no disponible";
     }    // Implementar IDisposable para limpieza de recursos
     public new void Dispose()
     {
@@ -1098,3 +1098,4 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         base.Dispose();
     }
 }
+

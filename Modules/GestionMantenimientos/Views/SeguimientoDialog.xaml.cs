@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {    
     public partial class SeguimientoDialog : Window
     {
@@ -268,3 +268,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using GestLog.Modules.GestionMantenimientos.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -66,7 +66,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             return false;
         }
 
-        // Determina el estado de registro según la fecha actual
+        // Determina el estado de registro segÃºn la fecha actual
         public Models.Enums.EstadoSeguimientoMantenimiento CalcularEstadoRegistro(int semana, int anio)
         {
             var hoy = DateTime.Now;
@@ -80,7 +80,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             return Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
         }
 
-        // Utilidad para obtener el primer día de la semana ISO 8601
+        // Utilidad para obtener el primer dÃ­a de la semana ISO 8601
         private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
         {
             var jan1 = new DateTime(year, 1, 1);
@@ -138,7 +138,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             RecalcularPermisos();
 
-            // Suscribirse a mensajes de actualización de seguimientos            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
+            // Suscribirse a mensajes de actualizaciÃ³n de seguimientos            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
             
             // Inicializar comandos
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
@@ -184,7 +184,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             _seguimientoService = null;
             _currentUserService = currentUserService;
             
-            // Suscribirse a cambios de usuario si el servicio está disponible
+            // Suscribirse a cambios de usuario si el servicio estÃ¡ disponible
             if (_currentUserService != null)
             {
                 _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
@@ -209,7 +209,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 }
                 if (_seguimientoService == null)
                 {
-                    MensajeUsuario = "El servicio de seguimiento no está disponible.";
+                    MensajeUsuario = "El servicio de seguimiento no estÃ¡ disponible.";
                     return;
                 }
                 // Permitir registrar como NoRealizado y guardar la fecha de registro
@@ -221,7 +221,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     TipoMtno = estado.Seguimiento?.TipoMtno,
                     Semana = estado.Semana,
                     Anio = estado.Anio
-                };                var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimientoDto, true); // modoRestringido: true
+                };                var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog(seguimientoDto, true); // modoRestringido: true
                 dialog.Owner = System.Windows.Application.Current.MainWindow;
                 if (dialog.ShowDialog() == true)
                 {
@@ -258,7 +258,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 MensajeUsuario = null;
                   if (estado?.Seguimiento != null)
                 {
-                    var dialog = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog();
+                    var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog();
                     dialog.Owner = System.Windows.Application.Current.MainWindow;
                     dialog.DataContext = estado.Seguimiento;
                     dialog.ShowDialog();
@@ -286,7 +286,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 estado.Atrasado = true;
                 if (_seguimientoService == null)
                 {
-                    MensajeUsuario = "El servicio de seguimiento no está disponible.";
+                    MensajeUsuario = "El servicio de seguimiento no estÃ¡ disponible.";
                     RefrescarEstados(EstadosMantenimientos);
                     ActualizarPuedeRegistrarMantenimientos();
                     return;
@@ -353,3 +353,4 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -41,7 +41,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             FechaFin = fechaFin;
             _cronogramaService = cronogramaService;
             _anio = anio;
-            // Suscribirse a mensajes de actualización de seguimientos
+            // Suscribirse a mensajes de actualizaciÃ³n de seguimientos
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync(_anio, _cronogramaService));
         }        public async Task VerSemanaAsync()
         {
@@ -63,7 +63,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 LastActivity = DateTime.Now,
                 Roles = new List<string>(),
                 Permissions = new List<string>()
-            };            // NUEVA LÓGICA: Agregar estados para correctivos que están en esta semana
+            };            // NUEVA LÃ“GICA: Agregar estados para correctivos que estÃ¡n en esta semana
             var estadosConCorrectivos = new ObservableCollection<MantenimientoSemanaEstadoDto>(estados);
             
             var todosSeguimientos = await seguimientoService.GetSeguimientosAsync();
@@ -100,7 +100,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 currentUserService
             );
             
-            var dialog = new GestLog.Views.Tools.GestionMantenimientos.SemanaDetalleDialog(vm);
+            var dialog = new GestLog.Modules.GestionMantenimientos.Views.SemanaDetalleDialog(vm);
             var ownerWindow = System.Windows.Application.Current?.MainWindow;
             dialog.ConfigurarParaVentanaPadre(ownerWindow);
             dialog.ShowDialog();
@@ -115,7 +115,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             {
                 EstadosMantenimientos.Add(estado);
             }
-            // Forzar refresco de color y semana vacía tras carga asíncrona
+            // Forzar refresco de color y semana vacÃ­a tras carga asÃ­ncrona
             OnPropertyChanged(nameof(ColorSemana));
             OnPropertyChanged(nameof(EsSemanaVacia));
         }
@@ -129,7 +129,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         public async Task RecargarEstadosAsync(int anio, ICronogramaService cronogramaService)
         {
             await CargarEstadosMantenimientosAsync(anio, cronogramaService);
-        }        // Propiedad calculada para el color de la semana según los estados de los mantenimientos
+        }        // Propiedad calculada para el color de la semana segÃºn los estados de los mantenimientos
         public string ColorSemana
         {
             get
@@ -139,14 +139,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.NoRealizado))
                     return "#C80000"; // Rojo fuerte personalizado
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Atrasado))
-                    return "#FFB300"; // Ámbar
+                    return "#FFB300"; // Ãmbar
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente))
                     return "#90CAF9"; // Azul clarito para pendientes
                 if (EstadosMantenimientos.All(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
                     return "#388E3C"; // Verde fuerte
                 if (EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.Pendiente) &&
                     EstadosMantenimientos.Any(m => m.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo || m.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo))
-                    return "#FFB300"; // Ámbar
+                    return "#FFB300"; // Ãmbar
                 return "Transparent"; // Default: transparente
             }
         }
@@ -162,10 +162,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 int anioActual = hoy.Year;
                 return NumeroSemana == semanaActual && _anio == anioActual;
             }
-        }        // Propiedad que indica si la semana está vacía (sin estados de mantenimiento)
+        }        // Propiedad que indica si la semana estÃ¡ vacÃ­a (sin estados de mantenimiento)
         public bool EsSemanaVacia => EstadosMantenimientos == null || EstadosMantenimientos.Count == 0;
 
-        // Propiedad que indica si es semana actual Y está vacía
+        // Propiedad que indica si es semana actual Y estÃ¡ vacÃ­a
         public bool IsSemanaActualYVacia => IsSemanaActual && EsSemanaVacia;        // Notificar cambio de color si cambian los estados
         partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
         {
@@ -175,3 +175,4 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
         }
     }
 }
+

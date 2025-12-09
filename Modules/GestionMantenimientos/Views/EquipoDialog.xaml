@@ -1,4 +1,4 @@
-<Window x:Class="GestLog.Views.Tools.GestionMantenimientos.EquipoDialog"
+<Window x:Class="GestLog.Modules.GestionMantenimientos.Views.EquipoDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:GestLog.Converters"
@@ -327,3 +327,6 @@
         </Border>
     </Grid>
 </Window>
+
+
+

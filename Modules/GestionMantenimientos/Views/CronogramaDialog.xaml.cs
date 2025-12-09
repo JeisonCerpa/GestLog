@@ -1,7 +1,7 @@
 using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
 
-namespace GestLog.Views.Tools.GestionMantenimientos
+namespace GestLog.Modules.GestionMantenimientos.Views
 {
     public partial class CronogramaDialog : Window
     {
@@ -35,3 +35,5 @@ namespace GestLog.Views.Tools.GestionMantenimientos
         }
     }
 }
+
+

@@ -30,10 +30,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private readonly ICronogramaService _cronogramaService;
         private readonly IPlanCronogramaService _planCronogramaService;
         private readonly IEquipoInformaticoService _equipoInformaticoService;
-        private readonly IUsuarioService _usuarioService;
-        private readonly ISeguimientoService _seguimientoService; // NUEVO: para registrar ejecuciones
+        private readonly IUsuarioService _usuarioService;        private readonly ISeguimientoService _seguimientoService; // NUEVO: para registrar ejecuciones
         private readonly ICurrentUserService _currentUserService; // NUEVO: usuario actual
-        private readonly IRegistroMantenimientoEquipoDialogService? _registroDialogService; // nuevo servicio desacoplado
+        private readonly IRegistroMantenimientoEquipoDialogService _registroDialogService; // nuevo servicio desacoplado
         private readonly IRegistroEjecucionPlanDialogService? _registroEjecucionPlanDialogService; // nuevo servicio ejecucion plan
         private readonly Dictionary<CronogramaMantenimientoDto, PlanCronogramaEquipo> _planMap = new(); // mapa plan
 
@@ -46,17 +45,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             ICurrentUserService currentUserService,
             IDatabaseConnectionService databaseService,
             IGestLogLogger logger,
-            IRegistroMantenimientoEquipoDialogService? registroDialogService = null, 
+            IRegistroMantenimientoEquipoDialogService registroDialogService, 
             IRegistroEjecucionPlanDialogService? registroEjecucionPlanDialogService = null)
             : base(databaseService, logger)
-        {
-            _cronogramaService = cronogramaService;
+        {            _cronogramaService = cronogramaService;
             _planCronogramaService = planCronogramaService;
             _equipoInformaticoService = equipoInformaticoService;
             _usuarioService = usuarioService;
             _seguimientoService = seguimientoService; // asignar servicio
             _currentUserService = currentUserService; // asignar usuario actual
-            _registroDialogService = registroDialogService; // puede ser null (fallback al diálogo antiguo si existiera)
+            _registroDialogService = registroDialogService; // servicio desacoplado para diálogos
             _registroEjecucionPlanDialogService = registroEjecucionPlanDialogService;
             SelectedYear = System.DateTime.Now.Year;
         }
@@ -386,28 +384,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     Anio = SelectedYear,
                     Estado = EstadoSeguimientoMantenimiento.Pendiente,
                     Observaciones = mantenimiento.Marca == "Plan Semanal" ? $"Generado desde plan semanal (Semana {SelectedWeek})" : string.Empty
-                };
-
-                // Abrir diálogo propio desacoplado (si está registrado) en lugar del SeguimientoDialog
+                };                // Abrir diálogo propio desacoplado usando el servicio registrado en DI
                 SeguimientoMantenimientoDto? result = null;
-                bool confirmado = false;
-                if (_registroDialogService != null)
-                {
-                    confirmado = _registroDialogService.TryShowRegistroDialog(seguimiento, out result);
-                }
-                else
-                {
-                    // Fallback temporal: usar diálogo antiguo si el servicio no está disponible
-                    var dialogFallback = new GestLog.Views.Tools.GestionMantenimientos.SeguimientoDialog(seguimiento, modoRestringido: true);
-                    var parentWindowFallback = System.Windows.Application.Current.Windows
-                        .OfType<System.Windows.Window>()
-                        .FirstOrDefault(w => w.IsActive) ?? System.Windows.Application.Current.MainWindow;
-                    if (parentWindowFallback != null)
-                        dialogFallback.Owner = parentWindowFallback;
-                    if (dialogFallback.ShowDialog() == true)
-                        result = dialogFallback.Seguimiento;
-                    confirmado = result != null;
-                }
+                bool confirmado = _registroDialogService.TryShowRegistroDialog(seguimiento, out result);
 
                 if (confirmado && result != null)
                 {
