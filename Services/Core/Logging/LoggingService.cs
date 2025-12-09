@@ -156,7 +156,13 @@ public static class LoggingService
 
             // Servicios de Gestión de Mantenimientos
             services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService, GestLog.Modules.GestionMantenimientos.Services.SeguimientoService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>(sp =>
+            {
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var dbContextFactory = sp.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLog.Modules.DatabaseConnection.GestLogDbContext>>();
+                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
+                return new GestLog.Modules.GestionMantenimientos.Services.SeguimientoService(logger, dbContextFactory, cronogramaService);
+            });
 
             // ViewModels de Gestión de Mantenimientos
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>(sp =>

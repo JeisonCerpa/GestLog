@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models;
 
 namespace GestLog.Modules.GestionMantenimientos.Interfaces
-{
-    public interface ISeguimientoService
+{    public interface ISeguimientoService
     {
         Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync();
         Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo);
@@ -17,5 +16,6 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task<List<SeguimientoMantenimientoDto>> GetSeguimientosAsync();
         Task DeletePendientesByEquipoCodigoAsync(string codigoEquipo);
         Task ActualizarObservacionesPendientesAsync();
+        Task CrearCronogramasDesdeSeguidmientosAsync();
     }
 }

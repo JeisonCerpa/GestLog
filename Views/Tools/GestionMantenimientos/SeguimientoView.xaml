@@ -198,11 +198,13 @@
                                   Background="White"
                                   Foreground="#504F4E"
                                   FontWeight="SemiBold"/>
-                    </StackPanel>
-
-                    <!-- Botón Refrescar circular -->
+                    </StackPanel>                    <!-- Botón Refrescar circular -->
                     <Button Content="&#xE72C;" Command="{Binding LoadSeguimientosCommand}" ToolTip="Actualizar lista de seguimientos"
                             Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+
+                    <!-- Botón Importar circular -->
+                    <Button Content="⭲" Command="{Binding ImportarSeguimientosAntiguosCommand}" ToolTip="Importar seguimientos antiguos desde Excel"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"/>
 
                     <!-- Botón Exportar circular -->
                     <Button Content="⭱" Command="{Binding ExportarCommand}" ToolTip="Exportar seguimientos (filtrados o todos)"

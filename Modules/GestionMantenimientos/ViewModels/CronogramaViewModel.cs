@@ -1152,9 +1152,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     cantCell.Value = data.cantidad;
                     cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     cantCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
-                    
-                    var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
-                    if (data.tipo != "TOTAL")
+                      var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    if (data.tipo != "TOTAL" && totalMtto > 0)
                         pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
                     pctCell.Style.NumberFormat.Format = "0.0\"%\"";
                     pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -1166,7 +1165,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     costoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
                     
                     var pctCostoCell = wsSeguimientos.Cell(currentRowSeg, col++);
-                    if (data.tipo != "TOTAL")
+                    if (data.tipo != "TOTAL" && totalCosto > 0)
                         pctCostoCell.Value = (data.costo / totalCosto * 100);
                     pctCostoCell.Style.NumberFormat.Format = "0.0\"%\"";
                     pctCostoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -1218,9 +1217,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     var cantCell = wsSeguimientos.Cell(currentRowSeg, col++);
                     cantCell.Value = data.cantidad;
                     cantCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    
-                    var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
-                    pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
+                      var pctCell = wsSeguimientos.Cell(currentRowSeg, col++);
+                    if (totalMtto > 0)
+                        pctCell.Value = (data.cantidad / (decimal)totalMtto * 100);
                     pctCell.Style.NumberFormat.Format = "0.0\"%\"";
                     pctCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                       // Columna Color - rectángulo coloreado
