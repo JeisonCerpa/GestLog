@@ -6,20 +6,21 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
-{    
-    public partial class SeguimientoDialog : Window
+{      public partial class SeguimientoDialog : Window
     {
         public SeguimientoMantenimientoDto Seguimiento { get; private set; }
-        public bool ModoRestringido { get; }        
+        public bool ModoRestringido { get; }
+        private bool _esDesdeCronograma { get; }
         
         // Prefijo generado por el checklist para no duplicarlo al componer la descripción
         private string lastGeneratedChecklist = string.Empty;
 
-        public SeguimientoDialog(SeguimientoMantenimientoDto? seguimiento = null, bool modoRestringido = false)
+        public SeguimientoDialog(SeguimientoMantenimientoDto? seguimiento = null, bool modoRestringido = false, bool esDesdeCronograma = false)
         {
             InitializeComponent();
             Seguimiento = seguimiento != null ? new SeguimientoMantenimientoDto(seguimiento) : new SeguimientoMantenimientoDto();
             ModoRestringido = modoRestringido;
+            _esDesdeCronograma = esDesdeCronograma;
             // Si es registro nuevo y no tiene fecha, prellenar con la fecha actual
             if (seguimiento == null || Seguimiento.FechaRealizacion == null)
                 Seguimiento.FechaRealizacion = System.DateTime.Now;
@@ -56,20 +57,30 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             {
                 this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
                 this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
-            }
-
-            // Inicializar los CheckBoxes del checklist si la descripción ya contiene esos textos
+            }            // Inicializar los CheckBoxes del checklist si la descripción ya contiene esos textos
+            // O si viene del Cronograma (preventivos), pre-marcar todos los checkboxes
             try
             {
                 var desc = (Seguimiento?.Descripcion ?? string.Empty);
-                if (!string.IsNullOrEmpty(desc))
+                var cbRev = this.FindName("cbRevision") as System.Windows.Controls.CheckBox;
+                var cbLimp = this.FindName("cbLimpieza") as System.Windows.Controls.CheckBox;
+                var cbAj = this.FindName("cbAjustes") as System.Windows.Controls.CheckBox;
+
+                if (_esDesdeCronograma)
+                {
+                    // Si viene del Cronograma, pre-marcar todos los checkboxes de preventivos
+                    if (cbRev != null) cbRev.IsChecked = true;
+                    if (cbLimp != null) cbLimp.IsChecked = true;
+                    if (cbAj != null) cbAj.IsChecked = true;
+                }
+                else if (!string.IsNullOrEmpty(desc))
                 {
                     // Marcar checkboxes si aparecen las frases esperadas
-                    if (this.FindName("cbRevision") is System.Windows.Controls.CheckBox cbRev)
+                    if (cbRev != null)
                         cbRev.IsChecked = desc.Contains("Revisión General");
-                    if (this.FindName("cbLimpieza") is System.Windows.Controls.CheckBox cbLimp)
+                    if (cbLimp != null)
                         cbLimp.IsChecked = desc.Contains("Limpieza");
-                    if (this.FindName("cbAjustes") is System.Windows.Controls.CheckBox cbAj)
+                    if (cbAj != null)
                         cbAj.IsChecked = desc.Contains("Ajustes");
 
                     // Guardar el prefijo generado actualmente para evitar duplicados posteriores

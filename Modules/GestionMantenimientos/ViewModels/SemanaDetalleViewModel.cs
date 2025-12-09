@@ -221,7 +221,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                     TipoMtno = estado.Seguimiento?.TipoMtno,
                     Semana = estado.Semana,
                     Anio = estado.Anio
-                };                var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(seguimientoDto, true); // modoRestringido: true
+                };                var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(seguimientoDto, true, esDesdeCronograma: true); // modoRestringido: true, esDesdeCronograma: true
                 dialog.Owner = System.Windows.Application.Current.MainWindow;
                 if (dialog.ShowDialog() == true)
                 {
