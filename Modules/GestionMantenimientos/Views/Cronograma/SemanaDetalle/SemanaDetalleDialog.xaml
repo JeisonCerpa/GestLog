@@ -10,15 +10,31 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         Loaded="Window_Loaded"
-        KeyDown="Window_KeyDown">
-    <Window.Resources>
+        KeyDown="Window_KeyDown">    <Window.Resources>
         <converters:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Realizado" FalseText="Pendiente" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <converters:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter" />
-        <!-- Estilos visuales -->
+        <!-- Badge de Tipo de Mantenimiento -->
+        <Style x:Key="BadgePreventivo" TargetType="Border">
+            <Setter Property="Background" Value="#E3F2FD"/>
+            <Setter Property="BorderBrush" Value="#2196F3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style x:Key="BadgeCorrectivo" TargetType="Border">
+            <Setter Property="Background" Value="#FFF3E0"/>
+            <Setter Property="BorderBrush" Value="#FF9800"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>        <!-- Estilos visuales -->
+        <Style x:Key="EquipoCellStyle" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,0,0,0"/>
+        </Style>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -62,9 +78,8 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-    </Window.Resources>
-    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">
-        <Border Style="{StaticResource CardBorderStyle}" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="Panel_MouseLeftButtonDown" Width="600">
+    </Window.Resources>    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">
+        <Border Style="{StaticResource CardBorderStyle}" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="Panel_MouseLeftButtonDown" Width="Auto" MinWidth="700" MaxWidth="1000">
             <StackPanel>
                 <TextBlock Text="{Binding Titulo}" FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
@@ -72,18 +87,36 @@
                     <TextBlock Text="{Binding RangoFechas}" FontSize="13" Foreground="#504F4E"/>
                 </StackPanel>
                 <Separator Margin="0,0,0,8"/>
-                <TextBlock Text="Estados de Mantenimiento" FontSize="15" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,10,0,6"/>
-                <DataGrid ItemsSource="{Binding EstadosMantenimientos}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,6" Background="#FAFAFA" RowBackground="White" AlternatingRowBackground="#F5F5F5" HeadersVisibility="Column" GridLinesVisibility="None" 
+                <TextBlock Text="Estados de Mantenimiento" FontSize="15" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,10,0,6"/>                <DataGrid ItemsSource="{Binding EstadosMantenimientos}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,0,6" Background="#FAFAFA" RowBackground="White" AlternatingRowBackground="#F5F5F5" HeadersVisibility="Column" GridLinesVisibility="None" 
                           CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True" 
-                          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" 
-                          MinWidth="350" MaxWidth="450" 
-                          ColumnWidth="*" 
-                          SnapsToDevicePixels="True" UseLayoutRounding="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="90" Width="*"/>
-                        <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="60" Width="Auto"/>
-                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="60" Width="Auto"/>
-                        <DataGridTemplateColumn Header="Estado" MinWidth="80" Width="Auto">
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" 
+                          MinWidth="650" 
+                          SnapsToDevicePixels="True" UseLayoutRounding="True">                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="140" Width="Auto" CellStyle="{StaticResource EquipoCellStyle}"/>
+                        <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="80" Width="Auto"/>
+                        <DataGridTemplateColumn Header="Tipo" MinWidth="130" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <Border x:Name="BadgePreventivo" Style="{StaticResource BadgePreventivo}" Visibility="Collapsed">
+                                            <TextBlock Text="🔧 Preventivo" FontSize="12" FontWeight="SemiBold" Foreground="#1976D2"/>
+                                        </Border>
+                                        <Border x:Name="BadgeCorrectivo" Style="{StaticResource BadgeCorrectivo}" Visibility="Collapsed">
+                                            <TextBlock Text="⚠️ Correctivo" FontSize="12" FontWeight="SemiBold" Foreground="#E65100"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno}" Value="Preventivo">
+                                            <Setter TargetName="BadgePreventivo" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno}" Value="Correctivo">
+                                            <Setter TargetName="BadgeCorrectivo" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="100" Width="Auto"/>
+                        <DataGridTemplateColumn Header="Estado" MinWidth="120" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -121,7 +154,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Acción" MinWidth="80" Width="Auto">
+                        <DataGridTemplateColumn Header="Acción" MinWidth="100" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="Registrar"
