@@ -392,11 +392,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                         seguimientosIgnorados.Add((row, ex.Message));
                         _logger.LogWarning(ex, "[SeguimientoService] Error inesperado en importación - Fila {Row}", row);
                     }
-                }
-
-                // Guardar todos los seguimientos válidos
+                }                // Guardar todos los seguimientos válidos
                 if (seguimientosImportados.Any())
                 {
+                    var actualizados = 0;
+                    var preventivosIgnorados = 0;
+                    
                     foreach (var seg in seguimientosImportados)
                     {
                         // Verificar duplicados por (Codigo, Semana, Anio, TipoMtno)
@@ -408,6 +409,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services
 
                         if (existente == null)
                         {
+                            // ✅ NUEVO: Agregar siempre
                             var nuevoSeg = new SeguimientoMantenimiento
                             {
                                 Codigo = seg.Codigo ?? "",
@@ -426,9 +428,39 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             };
                             dbContext.Seguimientos.Add(nuevoSeg);
                         }
+                        else if (existente.TipoMtno == TipoMantenimiento.Preventivo && seg.TipoMtno == TipoMantenimiento.Preventivo)
+                        {
+                            // ✏️ ACTUALIZAR: Solo si AMBOS son Preventivos
+                            existente.Nombre = seg.Nombre ?? existente.Nombre;
+                            existente.Descripcion = seg.Descripcion ?? existente.Descripcion;
+                            existente.Responsable = seg.Responsable ?? existente.Responsable;
+                            existente.Costo = seg.Costo ?? existente.Costo;
+                            existente.Observaciones = seg.Observaciones ?? existente.Observaciones;
+                            existente.FechaRegistro = seg.FechaRegistro ?? existente.FechaRegistro;
+                            existente.FechaRealizacion = seg.FechaRealizacion ?? existente.FechaRealizacion;
+                            existente.Estado = seg.Estado;
+                            
+                            dbContext.Seguimientos.Update(existente);
+                            actualizados++;
+                            
+                            _logger.LogInformation("[SeguimientoService] Actualizado Preventivo: {Codigo} - Semana {Semana}", 
+                                seg.Codigo, seg.Semana);
+                        }
+                        else if (existente.TipoMtno == TipoMantenimiento.Correctivo)
+                        {
+                            // 🔒 IGNORAR: Los Correctivos NUNCA se actualizan (son independientes)
+                            preventivosIgnorados++;
+                            _logger.LogWarning("[SeguimientoService] No se actualiza Correctivo (son independientes): {Codigo} - Semana {Semana}", 
+                                seg.Codigo, seg.Semana);
+                        }
                     }
 
                     await dbContext.SaveChangesAsync();
+                    
+                    _logger.LogInformation("[SeguimientoService] Importación completada: Nuevos={Nuevos}, Actualizados={Actualizados}, Correctivos ignorados={IgnoradosCorrectivos}", 
+                        seguimientosImportados.Count - actualizados - preventivosIgnorados, 
+                        actualizados, 
+                        preventivosIgnorados);
                 }
 
                 _logger.LogInformation("[SeguimientoService] Importación completada: {Importados} importados, {Ignorados} ignorados",
