@@ -2,7 +2,7 @@ using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
 using System.Collections.ObjectModel;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
 {
     public partial class SemanaDetalleDialog : Window
     {

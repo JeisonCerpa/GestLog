@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma
 {
     /// <summary>
     /// Lógica de interacción para CronogramaView.xaml

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows.Data;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
 {
     /// <summary>
     /// Lógica de interacción para SeguimientoView.xaml

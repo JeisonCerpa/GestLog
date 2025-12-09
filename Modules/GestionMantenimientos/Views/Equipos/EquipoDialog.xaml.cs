@@ -8,7 +8,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 {
     /// <summary>
     /// Lógica de interacción para EquipoDialog.xaml

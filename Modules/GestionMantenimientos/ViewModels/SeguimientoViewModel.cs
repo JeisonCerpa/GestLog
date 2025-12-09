@@ -297,13 +297,15 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             }            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
             
             // Cargar aÃ±os disponibles y filtrar por aÃ±o seleccionado
-            var anios = lista.Select(s => s.Anio).Distinct().OrderByDescending(a => a).ToList();
-            AniosDisponibles = new ObservableCollection<int>(anios);
+            var anios = lista.Select(s => s.Anio).Distinct().OrderByDescending(a => a).ToList();            AniosDisponibles = new ObservableCollection<int>(anios);
             if (!AniosDisponibles.Contains(AnioSeleccionado))
-                AnioSeleccionado = anios.FirstOrDefault(DateTime.Now.Year);
+            {
+                // Si el año actual no existe en los datos, usar el primer año disponible
+                AnioSeleccionado = anios.FirstOrDefault() == 0 ? DateTime.Now.Year : anios.FirstOrDefault();
+            }
             
             FiltrarPorAnio();
-            RecalcularEstadisticas();
+            // Nota: FiltrarPorAnio() ya llama a CalcularEstadisticasPorAnio() que usa SeguimientosFiltrados
             StatusMessage = $"{Seguimientos.Count} seguimientos cargados.";
             _lastLoadTime = DateTime.Now;
         }
@@ -403,11 +405,9 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         {
             IsLoading = false;
         }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]    public async Task AddSeguimientoAsync()
+    }    [RelayCommand(CanExecute = nameof(CanAddSeguimiento))]    public async Task AddSeguimientoAsync()
     {
-        var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog();
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog();
         dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
@@ -431,7 +431,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         if (SelectedSeguimiento == null)
             return;
 
-        var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog(SelectedSeguimiento);
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(SelectedSeguimiento);
         dialog.Owner = System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {

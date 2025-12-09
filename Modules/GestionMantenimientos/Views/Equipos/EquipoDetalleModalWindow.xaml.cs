@@ -3,7 +3,7 @@ using System.Windows.Input;
 using System.Windows.Forms; // Para Screen.FromHandle() en ConfigurarParaVentanaPadre
 using GestLog.Modules.GestionMantenimientos.ViewModels;
 
-namespace GestLog.Modules.GestionMantenimientos.Views
+namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 {
     /// <summary>
     /// Ventana modal para mostrar el detalle de un equipo de mantenimiento

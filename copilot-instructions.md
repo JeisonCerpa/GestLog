@@ -264,7 +264,15 @@ private void Button_Click() { LoadData(); } // Lógica en code-behind
 
 ```
 Modules/[NombreModulo]/
-├── Views/               # Vistas XAML y code-behind
+├── Views/                      # Vistas XAML y code-behind, organizadas por feature
+│   ├── [Feature1]/             # Carpeta principal por feature
+│   │   ├── [Feature1]View.xaml(.cs)
+│   │   ├── [Feature1]Dialog.xaml(.cs)
+│   │   └── [SubFeature]/       # Sub-features anidadas si aplica
+│   │       └── SubFeatureDialog.xaml(.cs)
+│   └── [Feature2]/
+│       ├── [Feature2]View.xaml(.cs)
+│       └── [Feature2]Dialog.xaml(.cs)
 ├── ViewModels/          # Una responsabilidad UI por ViewModel
 ├── Services/            # Una responsabilidad de negocio por Service
 ├── Models/              # DTOs y entidades
@@ -272,6 +280,30 @@ Modules/[NombreModulo]/
 ├── Messages/            # Mensajes para CommunityToolkit.Mvvm.Messaging (opcional)
 └── Docs/                # Documentación específica del módulo (opcional)
 ```
+
+### **Ejemplo real: GestionMantenimientos**
+```
+Modules/GestionMantenimientos/Views/
+├── Cronograma/
+│   ├── CronogramaView.xaml(.cs)
+│   ├── CronogramaDialog.xaml(.cs)
+│   └── SemanaDetalle/          # Sub-feature de Cronograma
+│       └── SemanaDetalleDialog.xaml(.cs)
+├── Equipos/
+│   ├── EquiposView.xaml(.cs)
+│   ├── EquipoDialog.xaml(.cs)
+│   └── EquipoDetalleModalWindow.xaml(.cs)
+└── Seguimiento/
+    ├── SeguimientoView.xaml(.cs)
+    └── SeguimientoDialog.xaml(.cs)
+```
+
+### **Reglas de organización por features:**
+- ✅ Agrupa vistas por su feature/agregado de dominio (Cronograma, Equipos, Seguimiento)
+- ✅ Anida sub-features si tienen relación jerárquica (SemanaDetalle dentro de Cronograma)
+- ✅ Mantén orden alfabético dentro de cada nivel para predecibilidad
+- ✅ Actualiza los namespaces: `GestLog.Modules.[ModuleName].Views.[FeatureName]`
+- ❌ No crees más de 3 niveles de profundidad sin justificación
 
 ## 💡 Mensajes de Usuario
 

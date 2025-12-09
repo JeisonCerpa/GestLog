@@ -1,5 +1,8 @@
 using System.Windows.Controls;
 using WpfUserControl = System.Windows.Controls.UserControl;
+using GestLog.Modules.GestionMantenimientos.Views.Cronograma;
+using GestLog.Modules.GestionMantenimientos.Views.Equipos;
+using GestLog.Modules.GestionMantenimientos.Views.Seguimiento;
 
 namespace GestLog.Modules.GestionMantenimientos.Views
 {

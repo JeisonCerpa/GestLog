@@ -125,8 +125,7 @@ namespace GestLog.Views.Tools
             {
                 System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Mantenimientos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
-            }
-            try
+            }            try
             {
                 // Ahora navega a la vista contenedora con tabs
                 var gestionMantenimientosView = new GestionMantenimientosView();

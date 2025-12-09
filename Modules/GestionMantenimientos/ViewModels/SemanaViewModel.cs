@@ -100,7 +100,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
                 currentUserService
             );
             
-            var dialog = new GestLog.Modules.GestionMantenimientos.Views.SemanaDetalleDialog(vm);
+            var dialog = new GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle.SemanaDetalleDialog(vm);
             var ownerWindow = System.Windows.Application.Current?.MainWindow;
             dialog.ConfigurarParaVentanaPadre(ownerWindow);
             dialog.ShowDialog();

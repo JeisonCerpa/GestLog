@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
@@ -258,12 +258,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
             // Limpiar placeholders al finalizar la carga
             System.Windows.Application.Current.Dispatcher.Invoke(() => PlaceholderSemanas.Clear());
             IsLoading = false;
-        }    }
-
-    [RelayCommand(CanExecute = nameof(CanAddCronograma))]
+        }    }    [RelayCommand(CanExecute = nameof(CanAddCronograma))]
     public async Task AddCronogramaAsync()
     {
-        var dialog = new GestLog.Modules.GestionMantenimientos.Views.CronogramaDialog();
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.Cronograma.CronogramaDialog();
         if (dialog.ShowDialog() == true)
         {
             var nuevo = dialog.Cronograma;
@@ -284,7 +282,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels
     {
         if (SelectedCronograma == null)
             return;
-        var dialog = new GestLog.Modules.GestionMantenimientos.Views.CronogramaDialog(SelectedCronograma);
+        var dialog = new GestLog.Modules.GestionMantenimientos.Views.Cronograma.CronogramaDialog(SelectedCronograma);
         if (dialog.ShowDialog() == true)
         {
             var editado = dialog.Cronograma;

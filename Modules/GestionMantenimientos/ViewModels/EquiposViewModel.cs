@@ -482,7 +482,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     {
         try
         {
-            var dialog = new GestLog.Modules.GestionMantenimientos.Views.EquipoDialog();
+            var dialog = new GestLog.Modules.GestionMantenimientos.Views.Equipos.EquipoDialog();
             var owner = System.Windows.Application.Current?.MainWindow;
             if (owner != null) dialog.Owner = owner;
             dialog.ConfigurarParaVentanaPadre(owner);
@@ -523,10 +523,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         {
             StatusMessage = "Debe seleccionar un equipo para editar.";
             return;
-        }
-        try
+        }        try
         {
-            var dialog = new GestLog.Modules.GestionMantenimientos.Views.EquipoDialog(SelectedEquipo);
+            var dialog = new GestLog.Modules.GestionMantenimientos.Views.Equipos.EquipoDialog(SelectedEquipo);
             var owner = System.Windows.Application.Current?.MainWindow;
             if (owner != null) dialog.Owner = owner;
             dialog.ConfigurarParaVentanaPadre(owner);
@@ -1182,12 +1181,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         {
             StatusMessage = "Debe seleccionar un equipo para ver detalles.";
             return;
-        }
-
-        try
+        }        try
         {
             SelectedEquipo = equipo;
-            var detalleWindow = new GestLog.Modules.GestionMantenimientos.Views.EquipoDetalleModalWindow
+            var detalleWindow = new GestLog.Modules.GestionMantenimientos.Views.Equipos.EquipoDetalleModalWindow
             {
                 DataContext = this
             };
@@ -1244,7 +1241,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             };
             // Asignar la frecuencia por defecto para el flujo de Equipos (Correctivo) y abrir el diÃ¡logo en modo restringido
             seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
-            var dialog = new GestLog.Modules.GestionMantenimientos.Views.SeguimientoDialog(seguimiento, true);
+            var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(seguimiento, true);
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
             if (owner != null) dialog.Owner = owner;
             var result = dialog.ShowDialog();
