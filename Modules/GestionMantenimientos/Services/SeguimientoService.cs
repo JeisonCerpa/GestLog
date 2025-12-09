@@ -442,16 +442,15 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                             
                             dbContext.Seguimientos.Update(existente);
                             actualizados++;
-                            
-                            _logger.LogInformation("[SeguimientoService] Actualizado Preventivo: {Codigo} - Semana {Semana}", 
-                                seg.Codigo, seg.Semana);
+                              _logger.LogInformation("[SeguimientoService] Actualizado Preventivo: {Codigo} - Semana {Semana}", 
+                                seg.Codigo ?? "DESCONOCIDO", seg.Semana);
                         }
                         else if (existente.TipoMtno == TipoMantenimiento.Correctivo)
                         {
                             // 🔒 IGNORAR: Los Correctivos NUNCA se actualizan (son independientes)
                             preventivosIgnorados++;
                             _logger.LogWarning("[SeguimientoService] No se actualiza Correctivo (son independientes): {Codigo} - Semana {Semana}", 
-                                seg.Codigo, seg.Semana);
+                                seg.Codigo ?? "DESCONOCIDO", seg.Semana);
                         }
                     }
 
