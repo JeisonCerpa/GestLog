@@ -1,8 +1,7 @@
 using System.ComponentModel;
 
 namespace GestLog.Modules.GestionMantenimientos.Models.Enums
-{
-    public enum EstadoSeguimientoMantenimiento
+{    public enum EstadoSeguimientoMantenimiento
     {
         [Description("Pendiente")]
         Pendiente = 0, // No realizado y la semana aún no ha terminado
@@ -13,6 +12,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Enums
         [Description("Atrasado")]
         Atrasado = 3, // No realizado y la semana anterior ya terminó
         [Description("No realizado")]
-        NoRealizado = 4 // No realizado y la semana es anterior a la anterior
+        NoRealizado = 4, // No realizado y la semana es anterior a la anterior
+        [Description("Correctivo")]
+        Correctivo = 5 // Mantenimiento correctivo (no planificado, urgencia especial)
     }
 }

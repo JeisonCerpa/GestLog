@@ -9,6 +9,8 @@ using GestLog.Models.Configuration;
 using GestLog.Services.Interfaces;
 using GestLog.ViewModels;
 using GestLog.Services;
+using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Services;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -155,7 +157,9 @@ public static class LoggingService
             });
 
             // Servicios de Gestión de Mantenimientos
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();            
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaExportService, GestLog.Modules.GestionMantenimientos.Services.CronogramaExportService>();
             services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>(sp =>
             {
                 var logger = sp.GetRequiredService<IGestLogLogger>();
@@ -183,7 +187,8 @@ public static class LoggingService
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger);
+                var exportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaExportService>();
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger, exportService);
             });
 
             // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel

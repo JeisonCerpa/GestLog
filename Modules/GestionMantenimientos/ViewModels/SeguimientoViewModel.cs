@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using ClosedXML.Excel;
+using GestLog.Modules.GestionMantenimientos.Utilities;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels;
 
@@ -586,8 +587,8 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     ws.Cell(currentRowSeg, 6).Value = seg.Responsable ?? "";
                     
                     var estadoCell = ws.Cell(currentRowSeg, 7);
-                    estadoCell.Value = EstadoToTexto(seg.Estado);
-                    estadoCell.Style.Fill.BackgroundColor = XLColorFromEstado(seg.Estado);
+                    estadoCell.Value = EstadoSeguimientoUtils.EstadoToTexto(seg.Estado);
+                    estadoCell.Style.Fill.BackgroundColor = EstadoSeguimientoUtils.XLColorFromEstado(seg.Estado);
                     estadoCell.Style.Font.FontColor = XLColor.White;
                     estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     
@@ -862,30 +863,6 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
         {
             IsLoading = false;
         }
-    }
-
-    private static string EstadoToTexto(EstadoSeguimientoMantenimiento estado)
-    {
-        return estado switch
-        {
-            EstadoSeguimientoMantenimiento.NoRealizado => "No realizado",
-            EstadoSeguimientoMantenimiento.Atrasado => "Atrasado",
-            EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "Realizado",
-            EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "Realizado fuera de tiempo",
-            EstadoSeguimientoMantenimiento.Pendiente => "Pendiente",
-            _ => "-"
-        };
-    }    private static XLColor XLColorFromEstado(EstadoSeguimientoMantenimiento estado)
-    {
-        return estado switch
-        {
-            EstadoSeguimientoMantenimiento.NoRealizado => XLColor.FromHtml("#C80000"),
-            EstadoSeguimientoMantenimiento.Atrasado => XLColor.FromHtml("#FFB300"),
-            EstadoSeguimientoMantenimiento.RealizadoEnTiempo => XLColor.FromHtml("#388E3C"),
-            EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => XLColor.FromHtml("#FFB300"),
-            EstadoSeguimientoMantenimiento.Pendiente => XLColor.FromHtml("#B3E5FC"),
-            _ => XLColor.White
-        };
     }
 
     [RelayCommand]

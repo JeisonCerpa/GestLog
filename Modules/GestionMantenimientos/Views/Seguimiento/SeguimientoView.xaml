@@ -7,10 +7,11 @@
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <converters:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
         <converters:EstadoSeguimientoToColorConverter x:Key="EstadoSeguimientoToColorConverter"/>
+        <converters:SeguimientoEstadoToColorConverter x:Key="SeguimientoEstadoToColorConverter"/>
+        <converters:SeguimientoEstadoToTextConverter x:Key="SeguimientoEstadoToTextConverter"/>
         <converters:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
         <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter"/>
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
@@ -330,8 +331,8 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="12" Padding="6,2"
-                                            Background="{Binding Estado, Converter={StaticResource EstadoSeguimientoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
-                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}"
+                                            Background="{Binding ., Converter={StaticResource SeguimientoEstadoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
+                                        <TextBlock Text="{Binding ., Converter={StaticResource SeguimientoEstadoToTextConverter}}"
                                                    Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12"/>
                                     </Border>
                                 </DataTemplate>
