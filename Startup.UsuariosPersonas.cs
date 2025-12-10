@@ -111,14 +111,13 @@ namespace GestLog
             });
             
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.PerifericosViewModel>();
-            
-            // RegistrarMantenimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel>(sp =>
+              // RegistrarMantenimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.RegistrarMantenimientoViewModel>(sp =>
             {
                 var mantenimientoService = sp.GetRequiredService<IMantenimientoService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.RegistrarMantenimientoViewModel(mantenimientoService, databaseService, logger);
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.RegistrarMantenimientoViewModel(mantenimientoService, databaseService, logger);
             });
             // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel>();

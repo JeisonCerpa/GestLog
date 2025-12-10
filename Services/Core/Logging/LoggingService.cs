@@ -156,9 +156,8 @@ public static class LoggingService
                 return new GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel(excelSvc, logger, currentUser);
             });            // Servicios de Gestión de Mantenimientos
             services.AddGestionMantenimientosServices();
-            
-            // ViewModels de Gestión de Mantenimientos
-            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>(sp =>
+              // ViewModels de Gestión de Mantenimientos
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel>(sp =>
             {
                 var equipoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
@@ -166,10 +165,10 @@ public static class LoggingService
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel(equipoService, logger, cronogramaService, seguimientoService, currentUserService, databaseService);
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel(equipoService, logger, cronogramaService, seguimientoService, currentUserService, databaseService);
             });
 
-            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>(sp =>
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel>(sp =>
             {
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
@@ -177,18 +176,18 @@ public static class LoggingService
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 var exportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaExportService>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger, exportService);
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger, exportService);
             });
 
             // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
-            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>(sp =>
+            services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel>(sp =>
             {
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel(seguimientoService, currentUserService, databaseService, logger);
-            });            // Configuración de base de datos EF Core
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel(seguimientoService, currentUserService, databaseService, logger);
+            });// Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
 
             // --- REGISTRO DE SERVICIOS DE USUARIOS Y PERSONAS ---

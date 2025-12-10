@@ -15,7 +15,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.ViewModels
+namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
 {    /// <summary>
     /// ViewModel para la gestin del cronograma de mantenimientos.
     /// </summary>

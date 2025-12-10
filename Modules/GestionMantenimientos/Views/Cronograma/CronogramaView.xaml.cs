@@ -13,7 +13,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma
         {
             InitializeComponent();
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.CronogramaViewModel>();
+            var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel>();
             DataContext = viewModel;
         }
     }

@@ -9,13 +9,12 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
     /// Lógica de interacción para SeguimientoView.xaml
     /// </summary>
     public partial class SeguimientoView : System.Windows.Controls.UserControl
-    {
-        public SeguimientoView()
+    {        public SeguimientoView()
         {
             InitializeComponent();
             // Asignar el DataContext usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.SeguimientoViewModel>();
+            var viewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel>();
             DataContext = viewModel;
             // El filtrado se realiza ahora en el ViewModel, no en el code-behind ni con CollectionViewSource
             // var cvs = (CollectionViewSource)this.Resources["SeguimientosFiltrados"];

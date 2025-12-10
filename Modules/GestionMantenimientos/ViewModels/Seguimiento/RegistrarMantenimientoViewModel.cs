@@ -10,7 +10,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 
-namespace GestLog.Modules.GestionMantenimientos.ViewModels
+namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
 {
     public partial class RegistrarMantenimientoViewModel : DatabaseAwareViewModel
     {

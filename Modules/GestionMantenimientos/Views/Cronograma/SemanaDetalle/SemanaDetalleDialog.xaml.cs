@@ -1,12 +1,13 @@
 using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma;
 using System.Collections.ObjectModel;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
 {
     public partial class SemanaDetalleDialog : Window
     {
-        public SemanaDetalleDialog(GestLog.Modules.GestionMantenimientos.ViewModels.SemanaDetalleViewModel vm)
+        public SemanaDetalleDialog(SemanaDetalleViewModel vm)
         {
             InitializeComponent();
             DataContext = vm;
