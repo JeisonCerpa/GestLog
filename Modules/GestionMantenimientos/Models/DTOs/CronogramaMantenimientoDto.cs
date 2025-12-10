@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.Models
+namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
 {
     public class CronogramaMantenimientoDto
     {

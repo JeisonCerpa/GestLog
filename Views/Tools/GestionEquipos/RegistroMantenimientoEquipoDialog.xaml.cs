@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using System.Collections.Generic;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Utilities; // Utilidad compartida de fechas de semana
@@ -38,12 +39,12 @@ public partial class RegistroMantenimientoEquipoDialog : Window
         if (vm.TipoMtno == null)
             errores.Add("Debe seleccionar el tipo de mantenimiento.");
         if (string.IsNullOrWhiteSpace(vm.Descripcion))
-            errores.Add("La descripción es obligatoria.");
+            errores.Add("La descripciÃ³n es obligatoria.");
         if (string.IsNullOrWhiteSpace(vm.Responsable))
             errores.Add("El responsable es obligatorio.");
         if (errores.Count > 0)
         {
-            System.Windows.MessageBox.Show(string.Join("\n", errores), "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show(string.Join("\n", errores), "ValidaciÃ³n", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -69,3 +70,4 @@ public partial class RegistroMantenimientoEquipoDialog : Window
         DialogResult = false;
     }
 }
+

@@ -1,6 +1,6 @@
 using System;
 
-namespace GestLog.Modules.GestionMantenimientos.Models
+namespace GestLog.Modules.GestionMantenimientos.Models.Exceptions
 {
     /// <summary>
     /// Excepción de dominio para errores de validación y reglas de negocio en Gestión de Mantenimientos.

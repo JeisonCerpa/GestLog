@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
@@ -66,7 +67,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             return false;
         }
 
-        // Determina el estado de registro según la fecha actual
+        // Determina el estado de registro segÃºn la fecha actual
         public Models.Enums.EstadoSeguimientoMantenimiento CalcularEstadoRegistro(int semana, int anio)
         {
             var hoy = DateTime.Now;
@@ -80,7 +81,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             return Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
         }
 
-        // Utilidad para obtener el primer día de la semana ISO 8601
+        // Utilidad para obtener el primer dÃ­a de la semana ISO 8601
         private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
         {
             var jan1 = new DateTime(year, 1, 1);
@@ -138,7 +139,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
             RecalcularPermisos();
 
-            // Suscribirse a mensajes de actualización de seguimientos            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
+            // Suscribirse a mensajes de actualizaciÃ³n de seguimientos            WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => await RecargarEstadosAsync());
             
             // Inicializar comandos
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
@@ -184,7 +185,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             _seguimientoService = null;
             _currentUserService = currentUserService;
             
-            // Suscribirse a cambios de usuario si el servicio está disponible
+            // Suscribirse a cambios de usuario si el servicio estÃ¡ disponible
             if (_currentUserService != null)
             {
                 _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
@@ -209,7 +210,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 }
                 if (_seguimientoService == null)
                 {
-                    MensajeUsuario = "El servicio de seguimiento no está disponible.";
+                    MensajeUsuario = "El servicio de seguimiento no estÃ¡ disponible.";
                     return;
                 }
                 // Permitir registrar como NoRealizado y guardar la fecha de registro
@@ -285,7 +286,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 estado.Atrasado = true;
                 if (_seguimientoService == null)
                 {
-                    MensajeUsuario = "El servicio de seguimiento no está disponible.";
+                    MensajeUsuario = "El servicio de seguimiento no estÃ¡ disponible.";
                     RefrescarEstados(EstadosMantenimientos);
                     ActualizarPuedeRegistrarMantenimientos();
                     return;
@@ -352,4 +353,5 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         }
     }
 }
+
 

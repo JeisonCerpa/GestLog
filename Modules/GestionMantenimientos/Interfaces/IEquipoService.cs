@@ -1,6 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
 namespace GestLog.Modules.GestionMantenimientos.Interfaces
 {
@@ -9,7 +10,7 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task<IEnumerable<EquipoDto>> GetAllAsync();
         Task<EquipoDto?> GetByCodigoAsync(string codigo);
         /// <summary>
-        /// 🚀 Obtiene solo los códigos de todos los equipos (optimizado para validación)
+        /// ðŸš€ Obtiene solo los cÃ³digos de todos los equipos (optimizado para validaciÃ³n)
         /// </summary>
         Task<IEnumerable<string>> GetAllCodigosAsync();
         Task AddAsync(EquipoDto equipo);
@@ -21,3 +22,4 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task<List<EquipoDto>> GetEquiposAsync();
     }
 }
+

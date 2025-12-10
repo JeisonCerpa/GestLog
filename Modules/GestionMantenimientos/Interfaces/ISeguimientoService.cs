@@ -1,6 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
 namespace GestLog.Modules.GestionMantenimientos.Interfaces
 {    public interface ISeguimientoService
@@ -19,3 +20,4 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces
         Task CrearCronogramasDesdeSeguidmientosAsync();
     }
 }
+

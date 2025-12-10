@@ -1,12 +1,13 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Messages;
-using GestLog.Modules.GestionMantenimientos.Models; // añadido para CronogramaMantenimientoDto
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
-using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
+using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs; // aÃ±adido para CronogramaMantenimientoDto
+using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // âœ… NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // âœ… NUEVO: IGestLogLogger
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -75,7 +76,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             _equipoService = equipoService;
             Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
             SelectedYear = DateTime.Now.Year;            
-            // Suscribirse a mensajes de actualización para refresh automático
+            // Suscribirse a mensajes de actualizaciÃ³n para refresh automÃ¡tico
             WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
             {
                 try
@@ -89,7 +90,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
             });
 
-            // También suscribirse a mensajes de seguimientos por compatibilidad
+            // TambiÃ©n suscribirse a mensajes de seguimientos por compatibilidad
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
             {
                 try
@@ -121,7 +122,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         [ObservableProperty] private int maxRows = 500;        
         [ObservableProperty] private EjecucionHistorialItem? selectedEjecucion; // para detalle
         [ObservableProperty] private bool mostrarDetalle;        
-        // Estadísticas para la vista
+        // EstadÃ­sticas para la vista
         [ObservableProperty] private int totalEjecuciones;
         [ObservableProperty] private int ejecutadasCount;
         [ObservableProperty] private int pendientesCount;
@@ -133,7 +134,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         /// </summary>
         public int NoEjecutadosCount => PendientesCount + AtrasadasCount;
 
-        // Refresh automático de la vista filtrada cuando cambian filtros
+        // Refresh automÃ¡tico de la vista filtrada cuando cambian filtros
         partial void OnFiltroCodigoChanged(string? value) => RefreshFilter();
         partial void OnFiltroDescripcionChanged(string? value) => RefreshFilter();
         partial void OnFiltroNombreChanged(string? value) => RefreshFilter();
@@ -164,7 +165,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             if (item == null) return;
 
-            // Construir un DTO mínimo para mostrar en la ventana de detalle
+            // Construir un DTO mÃ­nimo para mostrar en la ventana de detalle
             SelectedPlanDetalle = new CronogramaMantenimientoDto
             {
                 Codigo = item.CodigoEquipo,
@@ -245,7 +246,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 IsBusy = true;
                 StatusMessage = "Cargando...";
                 Items.Clear();
-                // asegurarse de que la vista filtrada está inicializada antes de añadir
+                // asegurarse de que la vista filtrada estÃ¡ inicializada antes de aÃ±adir
                 SetupCollectionView();
                 var ejecuciones = await _planService.GetEjecucionesByAnioAsync(SelectedYear);
                 var query = ejecuciones.AsQueryable();
@@ -255,7 +256,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     query = query.Where(e => e.Plan != null && e.Plan.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase));
                 
                 var codigosPendientes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                // Ordenar: atrasados primero (derivado), luego semana/año desc
+                // Ordenar: atrasados primero (derivado), luego semana/aÃ±o desc
                 var materialized = query.ToList();
                 foreach (var e in materialized
                              .OrderByDescending(x => x.FechaObjetivo.Date < DateTime.Today && x.FechaEjecucion == null && x.Estado != 2) // atrasados primero
@@ -288,7 +289,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                                     detalleItems.Add(det);
                                     if (completado) comp++; else if (!string.IsNullOrWhiteSpace(obs)) observados++; else pendientes++;
                                 }
-                                resumen = $"{comp}/{total} ítems OK";
+                                resumen = $"{comp}/{total} Ã­tems OK";
                                 var okList = detalleItems.Where(x=>x.Completado).Select(x=>x.Descripcion).Take(5).ToList();
                                 var obsList = detalleItems.Where(x=>!x.Completado && !string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
                                 var penList = detalleItems.Where(x=>!x.Completado && string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
@@ -352,7 +353,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
                 StatusMessage = $"{Items.Count} ejecuciones";
                 RecalcularEstadisticas();
-                // después de cargar recalcar filtro en la vista
+                // despuÃ©s de cargar recalcar filtro en la vista
                 RefreshFilter();
             }
             catch (Exception ex)
@@ -366,7 +367,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
         }        
         /// <summary>
-        /// Recalcula las estadísticas basadas en los items cargados
+        /// Recalcula las estadÃ­sticas basadas en los items cargados
         /// </summary>
         private void RecalcularEstadisticas()
         {
@@ -389,7 +390,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
             else
             {
-                // si ya existe, actualizar para que use la colección actual
+                // si ya existe, actualizar para que use la colecciÃ³n actual
                 _filteredView = CollectionViewSource.GetDefaultView(Items);
                 _filteredView.Filter = new Predicate<object?>(FilterPredicate);
             }
@@ -400,7 +401,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             if (obj is not EjecucionHistorialItem it) return false;
 
-            // Código
+            // CÃ³digo
             if (!string.IsNullOrWhiteSpace(FiltroCodigo))
             {
                 if (string.IsNullOrWhiteSpace(it.CodigoEquipo) || !it.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase))
@@ -414,7 +415,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     return false;
             }
 
-            // Usuario / Asignación
+            // Usuario / AsignaciÃ³n
             if (!string.IsNullOrWhiteSpace(FiltroUsuario))
             {
                 if (string.IsNullOrWhiteSpace(it.UsuarioAsignadoEquipo) || !it.UsuarioAsignadoEquipo.Contains(FiltroUsuario, StringComparison.OrdinalIgnoreCase))
@@ -430,12 +431,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
                 else
                 {
-                    // si no es número, comparar como texto
+                    // si no es nÃºmero, comparar como texto
                     if (!it.SemanaISO.ToString().Contains(FiltroSemana, StringComparison.OrdinalIgnoreCase)) return false;
                 }
             }
 
-            // Año
+            // AÃ±o
             if (SelectedYear != 0)
             {
                 if (it.AnioISO != SelectedYear) return false;
@@ -454,18 +455,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             catch { }
         }
 
-        // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
+        // âœ… IMPLEMENTACIÃ“N REQUERIDA: DatabaseAwareViewModel
         protected override async Task RefreshDataAsync()
         {
             await LoadAsync();
         }        
         protected override void OnConnectionLost()
         {
-            StatusMessage = "Sin conexión - Datos no disponibles";
+            StatusMessage = "Sin conexiÃ³n - Datos no disponibles";
         }
 
         /// <summary>
-        /// Limpieza de recursos y desuscripción de mensajes
+        /// Limpieza de recursos y desuscripciÃ³n de mensajes
         /// </summary>
         public new void Dispose()
         {
@@ -504,7 +505,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 var shown = dlg.ShowDialog();
                 if (shown != true)
                 {
-                    StatusMessage = "Exportación cancelada";
+                    StatusMessage = "ExportaciÃ³n cancelada";
                     return;
                 }
 
@@ -512,9 +513,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 {
                     using var workbook = new XLWorkbook();
 
-                    // Hoja principal con resumen por ejecución (ahora con métricas claras)
+                    // Hoja principal con resumen por ejecuciÃ³n (ahora con mÃ©tricas claras)
                     var ws = workbook.Worksheets.Add("Historial");
-                    var headers = new[] { "Código", "Nombre", "Año", "Semana", "Fecha Objetivo", "Fecha Ejecución", "Estado", "Usuario Asignado", "Total Ítems", "Ítems OK", "% Completado", "Resumen" };
+                    var headers = new[] { "CÃ³digo", "Nombre", "AÃ±o", "Semana", "Fecha Objetivo", "Fecha EjecuciÃ³n", "Estado", "Usuario Asignado", "Total Ãtems", "Ãtems OK", "% Completado", "Resumen" };
                     for (int i = 0; i < headers.Length; i++)
                         ws.Cell(1, i + 1).Value = headers[i];
 
@@ -569,9 +570,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     ws.Range(1, 1, row - 1, headers.Length).SetAutoFilter();
                     ws.Columns().AdjustToContents();
 
-                    // Hoja detalle: checklist por ejecución (con estado legible)
+                    // Hoja detalle: checklist por ejecuciÃ³n (con estado legible)
                     var wsChk = workbook.Worksheets.Add("Checklist");
-                    var chkHeaders = new[] { "EjecucionId", "PlanId", "CódigoEquipo", "NombreEquipo", "ItemId", "Descripción", "Completado", "Estado Item", "Observación" };
+                    var chkHeaders = new[] { "EjecucionId", "PlanId", "CÃ³digoEquipo", "NombreEquipo", "ItemId", "DescripciÃ³n", "Completado", "Estado Item", "ObservaciÃ³n" };
                     for (int i = 0; i < chkHeaders.Length; i++)
                         wsChk.Cell(1, i + 1).Value = chkHeaders[i];
 
@@ -589,7 +590,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             wsChk.Cell(chkRow, 4).Value = ejec.NombreEquipo;
                             wsChk.Cell(chkRow, 5).Value = det.Id?.ToString() ?? string.Empty;
                             wsChk.Cell(chkRow, 6).Value = det.Descripcion;
-                            wsChk.Cell(chkRow, 7).Value = det.Completado ? "Sí" : "No";
+                            wsChk.Cell(chkRow, 7).Value = det.Completado ? "SÃ­" : "No";
 
                             // Estado legible: OK / Observado / Pendiente
                             string estadoItem = det.Completado ? "OK" : (!string.IsNullOrWhiteSpace(det.Observacion) ? "Observado" : "Pendiente");
@@ -606,24 +607,24 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     wsChk.Range(1, 1, chkRow - 1, chkHeaders.Length).SetAutoFilter();
                     wsChk.Columns().AdjustToContents();
 
-                    // Hoja resumen explicativa para usuarios no técnicos
+                    // Hoja resumen explicativa para usuarios no tÃ©cnicos
                     var wsSummary = workbook.Worksheets.Add("Resumen");
-                    wsSummary.Cell(1, 1).Value = "Resumen de exportación";
+                    wsSummary.Cell(1, 1).Value = "Resumen de exportaciÃ³n";
                     wsSummary.Cell(1, 1).Style.Font.Bold = true;
-                    wsSummary.Cell(3, 1).Value = "Fecha de generación:";
+                    wsSummary.Cell(3, 1).Value = "Fecha de generaciÃ³n:";
                     wsSummary.Cell(3, 2).Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
 
                     wsSummary.Cell(4, 1).Value = "Hojas incluidas:";
-                    wsSummary.Cell(4, 2).Value = "Historial (resumen por ejecución)";
-                    wsSummary.Cell(5, 2).Value = "Checklist (cada ítem de checklist por fila)";
+                    wsSummary.Cell(4, 2).Value = "Historial (resumen por ejecuciÃ³n)";
+                    wsSummary.Cell(5, 2).Value = "Checklist (cada Ã­tem de checklist por fila)";
 
-                    wsSummary.Cell(7, 1).Value = "Qué significa cada columna (breve):";
-                    wsSummary.Cell(8, 1).Value = "Código:"; wsSummary.Cell(8, 2).Value = "Código identificador del equipo.";
+                    wsSummary.Cell(7, 1).Value = "QuÃ© significa cada columna (breve):";
+                    wsSummary.Cell(8, 1).Value = "CÃ³digo:"; wsSummary.Cell(8, 2).Value = "CÃ³digo identificador del equipo.";
                     wsSummary.Cell(9, 1).Value = "Nombre:"; wsSummary.Cell(9, 2).Value = "Nombre legible del equipo.";
-                    wsSummary.Cell(10, 1).Value = "Total Ítems:"; wsSummary.Cell(10, 2).Value = "Número total de ítems en el checklist para esa ejecución.";
-                    wsSummary.Cell(11, 1).Value = "Ítems OK:"; wsSummary.Cell(11, 2).Value = "Número de ítems marcados como completados.";
-                    wsSummary.Cell(12, 1).Value = "% Completado:"; wsSummary.Cell(12, 2).Value = "Porcentaje de ítems completados (formato porcentaje).";
-                    wsSummary.Cell(14, 1).Value = "Checklist - Estado Item:"; wsSummary.Cell(14, 2).Value = "OK = completado, Observado = tiene observación, Pendiente = no completado y sin observación.";
+                    wsSummary.Cell(10, 1).Value = "Total Ãtems:"; wsSummary.Cell(10, 2).Value = "NÃºmero total de Ã­tems en el checklist para esa ejecuciÃ³n.";
+                    wsSummary.Cell(11, 1).Value = "Ãtems OK:"; wsSummary.Cell(11, 2).Value = "NÃºmero de Ã­tems marcados como completados.";
+                    wsSummary.Cell(12, 1).Value = "% Completado:"; wsSummary.Cell(12, 2).Value = "Porcentaje de Ã­tems completados (formato porcentaje).";
+                    wsSummary.Cell(14, 1).Value = "Checklist - Estado Item:"; wsSummary.Cell(14, 2).Value = "OK = completado, Observado = tiene observaciÃ³n, Pendiente = no completado y sin observaciÃ³n.";
 
                     wsSummary.Columns().AdjustToContents();
 
@@ -640,15 +641,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
         }
 
-        // Método auxiliar para escapado CSV (conservado para compatibilidad, no usado en exportación Excel)
+        // MÃ©todo auxiliar para escapado CSV (conservado para compatibilidad, no usado en exportaciÃ³n Excel)
         private static string EscapeCsv(string? value)
         {
             if (string.IsNullOrEmpty(value)) return string.Empty;
             var escaped = value.Replace("\"", "\"\"");
-            // Encerrar en comillas si contiene comas, comillas o saltos de línea
+            // Encerrar en comillas si contiene comas, comillas o saltos de lÃ­nea
             if (escaped.Contains(',') || escaped.Contains('"') || escaped.Contains('\n') || escaped.Contains('\r'))
                 return "\"" + escaped + "\"";
             return escaped;
         }
     }
 }
+

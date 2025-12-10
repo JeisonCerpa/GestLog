@@ -1,6 +1,8 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +14,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 {
     /// <summary>
     /// Servicio para exportar la "Hoja de Vida" completa de un equipo a Excel.
-    /// Incluye información general del equipo y historial de mantenimientos realizados.
+    /// Incluye informaciÃ³n general del equipo y historial de mantenimientos realizados.
     /// </summary>
     public class HojaVidaExportService
     {
@@ -32,10 +34,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                 {
                     var worksheet = workbook.Worksheets.Add("Hoja de Vida");
 
-                    // Ocultar líneas de cuadrícula para una apariencia más limpia
+                    // Ocultar lÃ­neas de cuadrÃ­cula para una apariencia mÃ¡s limpia
                     worksheet.ShowGridLines = false;
 
-                    // Configurar ancho de columnas para mejor visualización en PDF
+                    // Configurar ancho de columnas para mejor visualizaciÃ³n en PDF
                     worksheet.Column("A").Width = 20;
                     worksheet.Column("B").Width = 35;
                     worksheet.Column("C").Width = 25;
@@ -45,25 +47,25 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     int currentRow = 1;
 
-                    // ===== ENCABEZADO CON LOGO Y TÍTULO =====
+                    // ===== ENCABEZADO CON LOGO Y TÃTULO =====
                     // Logo en la esquina superior derecha
                     try
                     {
                         if (File.Exists(_logoPath))
                         {
                             var picture = worksheet.AddPicture(_logoPath);
-                            // Logo original: 2124x486, escalar a ~8% para tamaño apropiado
-                            picture.Scale(0.08); // Aproximadamente 170x39 píxeles
+                            // Logo original: 2124x486, escalar a ~8% para tamaÃ±o apropiado
+                            picture.Scale(0.08); // Aproximadamente 170x39 pÃ­xeles
                             // Posicionar en las columnas E-F, filas 1-3
                             picture.MoveTo(worksheet.Cell(currentRow, 5), 5, 5); // Offset para centrar
                         }
                     }
                     catch
                     {
-                        // Si hay error al cargar el logo, continuar sin él
+                        // Si hay error al cargar el logo, continuar sin Ã©l
                     }
 
-                    // Título principal centrado
+                    // TÃ­tulo principal centrado
                     var titleCell = worksheet.Cell(currentRow, 1);
                     titleCell.Value = "HOJA DE VIDA - EQUIPO";
                     titleCell.Style.Font.Bold = true;
@@ -76,8 +78,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     currentRow += 2;
 
-                    // ===== SECCIÓN: INFORMACIÓN GENERAL =====
-                    worksheet.Cell(currentRow, 1).Value = "INFORMACIÓN GENERAL DEL EQUIPO";
+                    // ===== SECCIÃ“N: INFORMACIÃ“N GENERAL =====
+                    worksheet.Cell(currentRow, 1).Value = "INFORMACIÃ“N GENERAL DEL EQUIPO";
                     worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(currentRow, 1).Style.Font.FontSize = 14;
                     worksheet.Cell(currentRow, 1).Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
@@ -90,10 +92,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     // Datos generales
                     var equipoData = new (string label, string value)[]
                     {
-                        ("Código", equipo.Codigo ?? "N/A"),
+                        ("CÃ³digo", equipo.Codigo ?? "N/A"),
                         ("Nombre", equipo.Nombre ?? "N/A"),
                         ("Marca", equipo.Marca ?? "N/A"),
-                        ("Clasificación", equipo.Clasificacion ?? "N/A"),
+                        ("ClasificaciÃ³n", equipo.Clasificacion ?? "N/A"),
                         ("Comprado a", equipo.CompradoA ?? "N/A"),
                         ("Estado", equipo.Estado?.ToString() ?? "N/A"),
                         ("Sede", equipo.Sede?.ToString() ?? "N/A"),
@@ -103,7 +105,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                         ("Fecha Baja", equipo.FechaBaja?.ToString("dd/MM/yyyy") ?? "N/A"),
                     };
 
-                    // Organizar en 3 pares por fila para ocupar columnas A-F simétricamente
+                    // Organizar en 3 pares por fila para ocupar columnas A-F simÃ©tricamente
                     int itemsPerRow = 3;
                     for (int i = 0; i < equipoData.Length; i++)
                     {
@@ -117,7 +119,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                         worksheet.Cell(currentRow + rowOffset, 2 + colOffset).Value = equipoData[i].value;
                     }
 
-                    // Avanzar filas según la cantidad de filas usadas
+                    // Avanzar filas segÃºn la cantidad de filas usadas
                     currentRow += (equipoData.Length + itemsPerRow - 1) / itemsPerRow;
 
                     // Observaciones
@@ -135,7 +137,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     currentRow += 3;
 
-                    // ===== SECCIÓN: HISTORIAL DE MANTENIMIENTOS =====
+                    // ===== SECCIÃ“N: HISTORIAL DE MANTENIMIENTOS =====
                     worksheet.Cell(currentRow, 1).Value = $"HISTORIAL DE MANTENIMIENTOS ({mantenimientos.Count} registros)";
                     worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(currentRow, 1).Style.Font.FontSize = 12;
@@ -145,7 +147,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     currentRow++;
 
                     // Encabezados de tabla
-                    var headers = new[] { "Fecha", "Tipo", "Descripción", "Responsable", "Costo", "Estado" };
+                    var headers = new[] { "Fecha", "Tipo", "DescripciÃ³n", "Responsable", "Costo", "Estado" };
                     for (int col = 1; col <= headers.Length; col++)
                     {
                         var headerCell = worksheet.Cell(currentRow, col);
@@ -158,7 +160,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     }
                     currentRow++;
 
-                    // Filas de datos (ordenadas de más recientes a más antiguos)
+                    // Filas de datos (ordenadas de mÃ¡s recientes a mÃ¡s antiguos)
                     var mantenimientosOrdenados = mantenimientos
                         .OrderByDescending(m => m.FechaRegistro)
                         .ToList();
@@ -173,7 +175,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                         worksheet.Cell(currentRow, 5).Style.NumberFormat.Format = "$#,##0";
                         worksheet.Cell(currentRow, 6).Value = ObtenerEstadoColor(mtto.Estado);
 
-                        // Aplicar colores según estado
+                        // Aplicar colores segÃºn estado
                         var estadoCell = worksheet.Cell(currentRow, 6);
                         switch (mtto.Estado)
                         {
@@ -194,7 +196,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                                 estadoCell.Style.Font.FontColor = XLColor.Black;
                                 break;
                             case EstadoSeguimientoMantenimiento.Atrasado:
-                                estadoCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFB300"); // Ámbar
+                                estadoCell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFB300"); // Ãmbar
                                 estadoCell.Style.Font.FontColor = XLColor.Black;
                                 break;
                             default:
@@ -223,20 +225,20 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                         worksheet.Range(currentRow - mantenimientos.Count, 1, currentRow - 1, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     }
 
-                    // Agregar filtros automáticos a la tabla de historial
+                    // Agregar filtros automÃ¡ticos a la tabla de historial
                     if (mantenimientos.Count > 0)
                     {
                         int headerRow = currentRow - mantenimientos.Count - 1;
                         worksheet.Range(headerRow, 1, currentRow - 1, 6).SetAutoFilter();
-                        // Remover borde específico de la tabla
+                        // Remover borde especÃ­fico de la tabla
                     }
 
-                    // ===== RESUMEN DE ESTADÍSTICAS =====
+                    // ===== RESUMEN DE ESTADÃSTICAS =====
                     if (mantenimientos.Count > 0)
                     {
                         currentRow += 2;
 
-                        worksheet.Cell(currentRow, 1).Value = "RESUMEN DE ESTADÍSTICAS";
+                        worksheet.Cell(currentRow, 1).Value = "RESUMEN DE ESTADÃSTICAS";
                         worksheet.Cell(currentRow, 1).Style.Font.Bold = true;
                         worksheet.Cell(currentRow, 1).Style.Font.FontSize = 12;
                         worksheet.Cell(currentRow, 1).Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
@@ -254,7 +256,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                             ("Total Mantenimientos", mantenimientos.Count, "118938"),
                         };
 
-                        // Mostrar estadísticas en formato 2x2
+                        // Mostrar estadÃ­sticas en formato 2x2
                         for (int i = 0; i < estadisticas.Length; i++)
                         {
                             int colOffset = (i % 2) * 3; // 0 para primera columna, 3 para segunda
@@ -273,15 +275,15 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                             valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                         }
 
-                        currentRow += 2; // Avanzar después de las 2 filas de estadísticas
+                        currentRow += 2; // Avanzar despuÃ©s de las 2 filas de estadÃ­sticas
 
-                        // Remover borde específico de estadísticas
+                        // Remover borde especÃ­fico de estadÃ­sticas
                     }
 
-                    // ===== PIE DE PÁGINA =====
+                    // ===== PIE DE PÃGINA =====
                     currentRow += 2;
                     var footerCell = worksheet.Cell(currentRow, 1);
-                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} • Sistema GestLog © SIMICS Group SAS";
+                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} â€¢ Sistema GestLog Â© SIMICS Group SAS";
                     footerCell.Style.Font.Italic = true;
                     footerCell.Style.Font.FontSize = 9;
                     footerCell.Style.Font.FontColor = XLColor.Gray;
@@ -290,10 +292,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     // Agregar borde exterior grueso a toda la hoja de vida (A1 hasta F{currentRow})
                     worksheet.Range(1, 1, currentRow, 6).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 
-                    // Configurar página para mejor exportación a PDF
+                    // Configurar pÃ¡gina para mejor exportaciÃ³n a PDF
                     worksheet.PageSetup.PageOrientation = XLPageOrientation.Portrait;
                     worksheet.PageSetup.AdjustTo(100); // Ajustar al 100% para PDF
-                    worksheet.PageSetup.FitToPages(1, 0); // Ajustar a 1 página de ancho
+                    worksheet.PageSetup.FitToPages(1, 0); // Ajustar a 1 pÃ¡gina de ancho
                     worksheet.PageSetup.Margins.Top = 0.5;
                     worksheet.PageSetup.Margins.Bottom = 0.5;
                     worksheet.PageSetup.Margins.Left = 0.5;
@@ -306,19 +308,21 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
         }
 
         /// <summary>
-        /// Obtiene la descripción del estado del mantenimiento.
+        /// Obtiene la descripciÃ³n del estado del mantenimiento.
         /// </summary>
         private string ObtenerEstadoColor(EstadoSeguimientoMantenimiento estado)
         {
             return estado switch
             {
-                EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "✓ En Tiempo",
-                EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "⚠ Fuera de Tiempo",
-                EstadoSeguimientoMantenimiento.NoRealizado => "✗ No Realizado",
-                EstadoSeguimientoMantenimiento.Pendiente => "⏳ Pendiente",
-                EstadoSeguimientoMantenimiento.Atrasado => "⚠ Atrasado",
+                EstadoSeguimientoMantenimiento.RealizadoEnTiempo => "âœ“ En Tiempo",
+                EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo => "âš  Fuera de Tiempo",
+                EstadoSeguimientoMantenimiento.NoRealizado => "âœ— No Realizado",
+                EstadoSeguimientoMantenimiento.Pendiente => "â³ Pendiente",
+                EstadoSeguimientoMantenimiento.Atrasado => "âš  Atrasado",
                 _ => estado.ToString()
             };
         }
     }
 }
+
+

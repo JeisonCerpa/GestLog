@@ -1,10 +1,11 @@
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+﻿using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services;
 
 /// <summary>
-/// Implementación WPF del servicio de diálogo para registrar mantenimiento de equipo.
+/// ImplementaciÃ³n WPF del servicio de diÃ¡logo para registrar mantenimiento de equipo.
 /// </summary>
 public class RegistroMantenimientoEquipoDialogService : IRegistroMantenimientoEquipoDialogService
 {
@@ -27,3 +28,4 @@ public class RegistroMantenimientoEquipoDialogService : IRegistroMantenimientoEq
         return false;
     }
 }
+

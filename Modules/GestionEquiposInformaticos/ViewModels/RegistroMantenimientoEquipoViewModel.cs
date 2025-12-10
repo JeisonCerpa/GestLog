@@ -1,6 +1,7 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,8 @@ using System.Collections.Generic;
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels;
 
 /// <summary>
-/// ViewModel ligero para el registro de mantenimiento de un equipo desde el módulo de Gestión de Equipos.
-/// Evita dependencia directa con el ViewModel de Seguimiento de Gestión de Mantenimientos.
+/// ViewModel ligero para el registro de mantenimiento de un equipo desde el mÃ³dulo de GestiÃ³n de Equipos.
+/// Evita dependencia directa con el ViewModel de Seguimiento de GestiÃ³n de Mantenimientos.
 /// </summary>
 public partial class RegistroMantenimientoEquipoViewModel : ObservableObject
 {
@@ -82,3 +83,4 @@ public partial class RegistroMantenimientoEquipoViewModel : ObservableObject
         TipoMtno = TipoMantenimiento.Preventivo;
     }
 }
+

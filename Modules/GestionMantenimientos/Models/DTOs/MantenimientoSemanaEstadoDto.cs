@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.Models
+namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
 {
     public class MantenimientoSemanaEstadoDto : INotifyPropertyChanged
     {

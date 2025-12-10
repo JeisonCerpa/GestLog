@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
 namespace GestLog.Converters
 {
@@ -12,7 +13,7 @@ namespace GestLog.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is GestLog.Modules.GestionMantenimientos.Models.CronogramaMantenimientoDto cronograma)
+            if (value is CronogramaMantenimientoDto cronograma)
             {
                 // Si Marca es "Plan Semanal", es un plan de equipo
                 if (cronograma.Marca == "Plan Semanal")

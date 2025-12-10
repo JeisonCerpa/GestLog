@@ -1,12 +1,13 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Interfaces; // Reutilizamos servicios existentes de cronograma
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Services.Core.Logging;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
+using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // âœ… NUEVO: IDatabaseConnectionService
 using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
 using System.Threading;
@@ -17,14 +18,14 @@ using System.Collections.Generic;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
-using GestLog.Modules.Usuarios.Interfaces; // añadido para ICurrentUserService
+using GestLog.Modules.Usuarios.Interfaces; // aÃ±adido para ICurrentUserService
 using GestLog.Utilities; // NUEVO helper semanas centralizado
 using System.Text.Json; // para parse checklist
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 {    /// <summary>
-    /// ViewModel para el cronograma diario (vista semanal detallada L-V) correspondiente al módulo GestionEquiposInformaticos.
-    /// Respeta SRP: solo coordina carga y organización semanal diaria de mantenimientos planificados.
+    /// ViewModel para el cronograma diario (vista semanal detallada L-V) correspondiente al mÃ³dulo GestionEquiposInformaticos.
+    /// Respeta SRP: solo coordina carga y organizaciÃ³n semanal diaria de mantenimientos planificados.
     /// </summary>
     public partial class CronogramaDiarioViewModel : DatabaseAwareViewModel    {        
         private readonly ICronogramaService _cronogramaService;
@@ -54,7 +55,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             _usuarioService = usuarioService;
             _seguimientoService = seguimientoService; // asignar servicio
             _currentUserService = currentUserService; // asignar usuario actual
-            _registroDialogService = registroDialogService; // servicio desacoplado para diálogos
+            _registroDialogService = registroDialogService; // servicio desacoplado para diÃ¡logos
             _registroEjecucionPlanDialogService = registroEjecucionPlanDialogService;
             SelectedYear = System.DateTime.Now.Year;
         }
@@ -114,10 +115,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 Planificados.Clear();
                 Days.Clear();
                 _planMap.Clear();
-                var dias = new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes" };
+                var dias = new[] { "Lunes", "Martes", "MiÃ©rcoles", "Jueves", "Viernes" };
                 foreach (var d in dias) Days.Add(new DayScheduleViewModel(d));
                 
-                // Cargar planes de cronograma de equipos CON navegación de equipo
+                // Cargar planes de cronograma de equipos CON navegaciÃ³n de equipo
                 var planesEquipos = await _planCronogramaService.GetAllAsync();
                 
                 // Filtrar planes: mostrar activos + inactivos que tengan ejecuciones en la semana seleccionada
@@ -125,18 +126,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     p.Activo || 
                     (p.Ejecuciones != null && p.Ejecuciones.Any(e => 
                         e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2)) // completado
-                ).ToList();// Caches locales para evitar múltiples requests
+                ).ToList();// Caches locales para evitar mÃºltiples requests
                 var equipoNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 var usuarioNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 
-                // Mostrar planes sólo a partir de su semana efectiva (semana ISO de FechaCreacion)
+                // Mostrar planes sÃ³lo a partir de su semana efectiva (semana ISO de FechaCreacion)
                 foreach (var plan in planesActivos)
                 {
                     // DiaProgramado: 1=Lunes, 2=Martes, ..., 7=Domingo
                     // Solo mostramos L-V (1-5)
                     if (plan.DiaProgramado < 1 || plan.DiaProgramado > 5) continue;
 
-                    // Calcular semana ISO y año de la FechaCreacion del plan (más robusto: ISOWeek)
+                    // Calcular semana ISO y aÃ±o de la FechaCreacion del plan (mÃ¡s robusto: ISOWeek)
                     int semanaCreacion = System.Globalization.ISOWeek.GetWeekOfYear(plan.FechaCreacion);
                     int anioCreacion = System.Globalization.ISOWeek.GetYear(plan.FechaCreacion);
 
@@ -150,9 +151,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
 
                     if (!mostrar) continue;
 
-                    // Normalizar código de equipo para keys
+                    // Normalizar cÃ³digo de equipo para keys
                     var codigoEquipo = plan.CodigoEquipo;
-                    var codigoKey = string.IsNullOrWhiteSpace(codigoEquipo) ? string.Empty : codigoEquipo!;                    // Resolver nombre del equipo (navegación si existe, o servicio si no)
+                    var codigoKey = string.IsNullOrWhiteSpace(codigoEquipo) ? string.Empty : codigoEquipo!;                    // Resolver nombre del equipo (navegaciÃ³n si existe, o servicio si no)
                     string? equipoNombre = plan.Equipo?.NombreEquipo;
                     string? usuarioAsignado = plan.Equipo?.UsuarioAsignado;// Si no tenemos los datos del equipo cargados, intentar obtenerlos del contexto
                     if ((string.IsNullOrWhiteSpace(equipoNombre) || string.IsNullOrWhiteSpace(usuarioAsignado)) && !string.IsNullOrWhiteSpace(codigoKey))
@@ -161,7 +162,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         {
                             try
                             {
-                                // Obtener el equipo informático directamente
+                                // Obtener el equipo informÃ¡tico directamente
                                 var equipoInfo = await _equipoInformaticoService.GetByCodigoAsync(codigoKey);
                                 
                                 if (equipoInfo != null)
@@ -178,7 +179,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                                 _logger.LogWarning(ex, "[CronogramaDiarioViewModel] Error al obtener equipo {codigo}", codigoKey);
                             }
 
-                            // Guardar en cache solo si tenemos una clave válida
+                            // Guardar en cache solo si tenemos una clave vÃ¡lida
                             if (!string.IsNullOrWhiteSpace(codigoKey))
                             {
                                 equipoNameCache[codigoKey] = equipoNombre ?? string.Empty;
@@ -190,9 +191,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         }
                     }
 
-                    // Usar el nombre del equipo solo si está disponible, sino el código
+                    // Usar el nombre del equipo solo si estÃ¡ disponible, sino el cÃ³digo
                     var nombreFinal = !string.IsNullOrWhiteSpace(equipoNombre) ? equipoNombre : codigoKey;
-                      // Usar el usuario asignado solo si está disponible, sino vacío
+                      // Usar el usuario asignado solo si estÃ¡ disponible, sino vacÃ­o
                     var usuarioFinal = usuarioAsignado ?? string.Empty;
 
                     // Resolver usuario asignado: preferir el usuario asignado en el equipo; si no existe, usar el Responsable del plan
@@ -241,7 +242,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                         Anio = SelectedYear,
                         EsPlanSemanal = true, // marcar
                         PlanEjecutadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true, // completado
-                        // Es atrasado solo si la fecha objetivo ya pasó (fecha objetivo < hoy) y no ejecutado
+                        // Es atrasado solo si la fecha objetivo ya pasÃ³ (fecha objetivo < hoy) y no ejecutado
                         EsAtrasadoSemana = DateTimeWeekHelper.IsPlanAtrasado(SelectedYear, SelectedWeek, plan.DiaProgramado, 
                                                 plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true)
                     };
@@ -277,11 +278,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             if (mantenimiento == null)
             {
-                StatusMessage = "Elemento no válido";
+                StatusMessage = "Elemento no vÃ¡lido";
                 return;
             }
 
-            // Si corresponde a un plan semanal, abrir nuevo flujo de ejecución
+            // Si corresponde a un plan semanal, abrir nuevo flujo de ejecuciÃ³n
             if (_planMap.TryGetValue(mantenimiento, out var planEntity))
             {
                 try
@@ -293,29 +294,29 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     // Prohibir semanas futuras
                     if (SelectedYear > anioActual || (SelectedYear == anioActual && SelectedWeek > semanaActual))
                     {
-                        StatusMessage = "No se puede registrar una ejecución en semana futura";
+                        StatusMessage = "No se puede registrar una ejecuciÃ³n en semana futura";
                         return;
                     }
 
-                    // PROTECCIÓN ADICIONAL: Prohibir semanas pasadas
+                    // PROTECCIÃ“N ADICIONAL: Prohibir semanas pasadas
                     if (SelectedYear < anioActual || (SelectedYear == anioActual && SelectedWeek < semanaActual))
                     {
-                        StatusMessage = "No se puede registrar una ejecución en semanas pasadas";
+                        StatusMessage = "No se puede registrar una ejecuciÃ³n en semanas pasadas";
                         return;
                     }
 
                     if (_registroEjecucionPlanDialogService == null)
                     {
-                        StatusMessage = "Servicio de ejecución semanal no disponible";
+                        StatusMessage = "Servicio de ejecuciÃ³n semanal no disponible";
                         return;
                     }
                     var responsableActual = _currentUserService?.GetCurrentUserFullName() ?? Environment.UserName;                    var ok = await _registroEjecucionPlanDialogService.TryShowAsync(planEntity.PlanId, SelectedYear, SelectedWeek, responsableActual);
                     if (ok)
                     {
-                        StatusMessage = "Ejecución registrada";
+                        StatusMessage = "EjecuciÃ³n registrada";
                         await RefreshAsync(CancellationToken.None);
                         
-                        // Notificar actualización de ejecuciones de planes
+                        // Notificar actualizaciÃ³n de ejecuciones de planes
                         WeakReferenceMessenger.Default.Send(new EjecucionesPlanesActualizadasMessage());
                     }
                     else
@@ -326,8 +327,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[CronogramaDiarioViewModel] Error en ejecución semanal");
-                    StatusMessage = "Error al registrar ejecución semanal";
+                    _logger.LogError(ex, "[CronogramaDiarioViewModel] Error en ejecuciÃ³n semanal");
+                    StatusMessage = "Error al registrar ejecuciÃ³n semanal";
                     return;
                 }
             }
@@ -344,7 +345,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     return;
                 }
 
-                // PROTECCIÓN ADICIONAL: Prohibir registro en semanas pasadas
+                // PROTECCIÃ“N ADICIONAL: Prohibir registro en semanas pasadas
                 if (SelectedYear < anioActual || (SelectedYear == anioActual && SelectedWeek < semanaActual))
                 {
                     StatusMessage = "No se puede registrar en semanas pasadas";
@@ -375,7 +376,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 {
                     Codigo = mantenimiento.Codigo ?? string.Empty,
                     Nombre = !string.IsNullOrWhiteSpace(mantenimiento.Nombre) ? mantenimiento.Nombre : mantenimiento.Codigo,
-                    TipoMtno = TipoMantenimiento.Preventivo, // Default, se puede ajustar en el diálogo
+                    TipoMtno = TipoMantenimiento.Preventivo, // Default, se puede ajustar en el diÃ¡logo
                     Descripcion = string.Empty,
                     Responsable = responsableActual, // actualizado
                     FechaRegistro = DateTime.Now,
@@ -384,21 +385,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                     Anio = SelectedYear,
                     Estado = EstadoSeguimientoMantenimiento.Pendiente,
                     Observaciones = mantenimiento.Marca == "Plan Semanal" ? $"Generado desde plan semanal (Semana {SelectedWeek})" : string.Empty
-                };                // Abrir diálogo propio desacoplado usando el servicio registrado en DI
+                };                // Abrir diÃ¡logo propio desacoplado usando el servicio registrado en DI
                 SeguimientoMantenimientoDto? result = null;
                 bool confirmado = _registroDialogService.TryShowRegistroDialog(seguimiento, out result);
 
                 if (confirmado && result != null)
                 {
-                    // Validar duplicado antes de persistir (codigo + semana + año)
+                    // Validar duplicado antes de persistir (codigo + semana + aÃ±o)
                     var existentes = await _seguimientoService.GetAllAsync();
                     if (existentes.Any(s => s.Codigo == result.Codigo && s.Semana == result.Semana && s.Anio == result.Anio))
                     {
-                        StatusMessage = "Ya existe un registro para este código en la semana seleccionada";
+                        StatusMessage = "Ya existe un registro para este cÃ³digo en la semana seleccionada";
                         return;
                     }                    await _seguimientoService.AddAsync(result);
                     WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
-                    // También notificar ejecuciones de planes para mantener historial actualizado
+                    // TambiÃ©n notificar ejecuciones de planes para mantener historial actualizado
                     WeakReferenceMessenger.Default.Send(new EjecucionesPlanesActualizadasMessage());
                     StatusMessage = "Mantenimiento registrado";
                 }
@@ -414,7 +415,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             }
         }
 
-        // Utilidad local para calcular primer día de semana ISO (duplicado ligero para evitar dependencia circular)
+        // Utilidad local para calcular primer dÃ­a de semana ISO (duplicado ligero para evitar dependencia circular)
         private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
         {
             var jan1 = new DateTime(year, 1, 1);
@@ -434,7 +435,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                // Abrir diálogo para gestionar planes existentes
+                // Abrir diÃ¡logo para gestionar planes existentes
                 var dialog = new GestLog.Views.Tools.GestionEquipos.GestionarPlanesDialog(
                     _planCronogramaService, _logger);
                 
@@ -451,21 +452,21 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 var result = dialog.ShowDialog();
                 if (result == true)
                 {
-                    StatusMessage = "Gestión de planes completada";
-                    _logger.LogInformation("[CronogramaDiarioViewModel] Gestión de planes completada");
+                    StatusMessage = "GestiÃ³n de planes completada";
+                    _logger.LogInformation("[CronogramaDiarioViewModel] GestiÃ³n de planes completada");
                     
                     // Refrescar la vista para mostrar cambios
                     await RefreshAsync(CancellationToken.None);
                 }
                 else
                 {
-                    StatusMessage = "Gestión de planes cancelada";
+                    StatusMessage = "GestiÃ³n de planes cancelada";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al gestionar planes");
-                StatusMessage = "Error al abrir la gestión de planes";
+                StatusMessage = "Error al abrir la gestiÃ³n de planes";
             }
         }
 
@@ -474,7 +475,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         {
             try
             {
-                // Abrir diálogo para crear un nuevo plan
+                // Abrir diÃ¡logo para crear un nuevo plan
                 var dialog = new GestLog.Views.Tools.GestionEquipos.CrearPlanCronogramaDialog();
                 
                 // Obtener la ventana padre actual
@@ -498,13 +499,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                 }
                 else
                 {
-                    StatusMessage = "Creación de plan cancelada";
+                    StatusMessage = "CreaciÃ³n de plan cancelada";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CronogramaDiarioViewModel] Error al crear plan");
-                StatusMessage = "Error al abrir el diálogo de creación de plan";
+                StatusMessage = "Error al abrir el diÃ¡logo de creaciÃ³n de plan";
             }
         }        [RelayCommand]
         private void VerDetallePlan(CronogramaMantenimientoDto? dto)
@@ -546,14 +547,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
                             DetalleChecklist.Add(new PlanDetalleChecklistItem { Id = id, Descripcion = desc, Completado = comp, Observacion = ob });
                             total++; if (comp) ok++; else if (!string.IsNullOrWhiteSpace(ob)) obs++; else pend++;
                         }
-                        DetalleResumen = $"{ok}/{total} ítems OK, Observados {obs}, Pendientes {pend}";
+                        DetalleResumen = $"{ok}/{total} Ã­tems OK, Observados {obs}, Pendientes {pend}";
                     }
                 }
                 catch { /* ignorar parse errors */ }
             }
             else
             {
-                DetalleResumen = ejecutado ? "Ejecutado sin checklist" : "Sin ejecución registrada";
+                DetalleResumen = ejecutado ? "Ejecutado sin checklist" : "Sin ejecuciÃ³n registrada";
             }            // Abrir ventana modal
             try
             {
@@ -593,7 +594,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
             public bool Completado { get; set; }
             public string? Observacion { get; set; }            public string Estado => Completado ? "OK" : string.IsNullOrWhiteSpace(Observacion) ? "Pendiente" : "Observado";
         }        /// <summary>
-        /// Implementación del método abstracto para auto-refresh automático
+        /// ImplementaciÃ³n del mÃ©todo abstracto para auto-refresh automÃ¡tico
         /// </summary>
         protected override async Task RefreshDataAsync()
         {
@@ -610,12 +611,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         }
 
         /// <summary>
-        /// Override para manejar cuando se pierde la conexión específicamente para cronograma diario
+        /// Override para manejar cuando se pierde la conexiÃ³n especÃ­ficamente para cronograma diario
         /// </summary>
         protected override void OnConnectionLost()
         {
             // El ViewModel no tiene StatusMessage, usar logging en su lugar
-            _logger.LogWarning("[CronogramaDiarioViewModel] Sin conexión - Cronograma diario no disponible");
+            _logger.LogWarning("[CronogramaDiarioViewModel] Sin conexiÃ³n - Cronograma diario no disponible");
         }
     }
 
@@ -627,3 +628,4 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels
         private ObservableCollection<CronogramaMantenimientoDto> items = new();
     }
 }
+

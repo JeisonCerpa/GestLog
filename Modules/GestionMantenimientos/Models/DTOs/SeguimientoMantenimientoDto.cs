@@ -2,8 +2,8 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
-namespace GestLog.Modules.GestionMantenimientos.Models
-{    public class SeguimientoMantenimientoDto
+namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
+{public class SeguimientoMantenimientoDto
     {
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }

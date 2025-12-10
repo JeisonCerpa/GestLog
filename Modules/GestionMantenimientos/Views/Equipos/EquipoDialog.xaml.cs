@@ -1,8 +1,9 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Forms;
 using System.Linq;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Services;
@@ -12,7 +13,7 @@ using GestLog.Modules.GestionMantenimientos.Interfaces;
 namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 {
     /// <summary>
-    /// Lógica de interacción para EquipoDialog.xaml
+    /// LÃ³gica de interacciÃ³n para EquipoDialog.xaml
     /// </summary>
     public partial class EquipoDialog : Window
     {
@@ -25,7 +26,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             InitializeComponent();
             if (equipo != null)
             {
-                // Modo edición: clonar para no modificar el original hasta guardar
+                // Modo ediciÃ³n: clonar para no modificar el original hasta guardar
                 Equipo = new EquipoDto(equipo);
                 // Asegurar que si no tiene estado se preseleccione Activo
                 if (Equipo.Estado == null)
@@ -81,7 +82,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             this.Close();
         }        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
         {
-            // Establecer fecha máxima permitida en DatePicker para evitar fechas futuras
+            // Establecer fecha mÃ¡xima permitida en DatePicker para evitar fechas futuras
             try
             {
                 FechaCompraPicker.DisplayDateEnd = DateTime.Today;
@@ -95,13 +96,13 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
             }
 
-            // ✅ IMPORTANTE: No reasignar Owner aquí - ya se estableció en el constructor
+            // âœ… IMPORTANTE: No reasignar Owner aquÃ­ - ya se estableciÃ³ en el constructor
             // ConfigurarParaVentanaPadre(this.Owner);
             if (this.DataContext is EquipoDialogViewModel viewModel)
             {
                 try
                 {
-                    // Pequeño delay para asegurar que todo esté inicializado
+                    // PequeÃ±o delay para asegurar que todo estÃ© inicializado
                     await System.Threading.Tasks.Task.Delay(50);
 
                     // Obtener el servicio de equipos inyectado
@@ -110,14 +111,14 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 
                     if (equipoService != null)
                     {
-                        // Cargar códigos de forma asincrónica sin bloquear la UI
+                        // Cargar cÃ³digos de forma asincrÃ³nica sin bloquear la UI
                         await viewModel.CargarCodigosExistentesAsync(equipoService, IsEditMode);
                     }
                 }
                 catch (System.Exception ex)
                 {
                     // Log del error (sin mostrar al usuario)
-                    System.Diagnostics.Debug.WriteLine($"Error al cargar códigos existentes: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error al cargar cÃ³digos existentes: {ex.Message}");
                 }
             }
         }
@@ -130,14 +131,14 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             {
                 if (FechaCompraPicker.SelectedDate.HasValue && FechaCompraPicker.SelectedDate.Value.Date > DateTime.Today)
                 {
-                    System.Windows.MessageBox.Show("La fecha de compra no puede ser futura.", "Fecha inválida", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show("La fecha de compra no puede ser futura.", "Fecha invÃ¡lida", MessageBoxButton.OK, MessageBoxImage.Warning);
                     FechaCompraPicker.SelectedDate = null;
                 }
             }
             catch { }
         }        private async void OnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // Forzar actualización del binding del DatePicker para asegurar que la propiedad FechaCompra del DTO esté actualizada
+            // Forzar actualizaciÃ³n del binding del DatePicker para asegurar que la propiedad FechaCompra del DTO estÃ© actualizada
             try
             {
                 var expression = FechaCompraPicker.GetBindingExpression(System.Windows.Controls.DatePicker.SelectedDateProperty);
@@ -145,8 +146,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             }
             catch { }
 
-            // ✅ CRÍTICO: Sincronizar los valores de los ComboBox editables con el DTO
-            // Los ComboBox editables están vinculados solo a FiltroMarca, FiltroClasificacion, FiltroCompradoA
+            // âœ… CRÃTICO: Sincronizar los valores de los ComboBox editables con el DTO
+            // Los ComboBox editables estÃ¡n vinculados solo a FiltroMarca, FiltroClasificacion, FiltroCompradoA
             // Pero necesitamos actualizar Marca, Clasificacion, CompradoA con los valores del filtro
             var viewModel = DataContext as EquipoDialogViewModel;
             if (viewModel != null)
@@ -156,20 +157,20 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 Equipo.Clasificacion = viewModel.FiltroClasificacion ?? string.Empty;
                 Equipo.CompradoA = viewModel.FiltroCompradoA ?? string.Empty;
                 
-                // ✅ NUEVO: Activar flag para mostrar errores de validación
+                // âœ… NUEVO: Activar flag para mostrar errores de validaciÃ³n
                 viewModel.ShowValidationErrors = true;
             }
 
             var errores = new List<string>();
-            // Validaciones: Código y Nombre son obligatorios
+            // Validaciones: CÃ³digo y Nombre son obligatorios
             if (string.IsNullOrWhiteSpace(Equipo.Codigo))
-                errores.Add("El código del equipo es obligatorio.");
+                errores.Add("El cÃ³digo del equipo es obligatorio.");
             
-            // ✅ NUEVA: Validar que el Nombre sea obligatorio
+            // âœ… NUEVA: Validar que el Nombre sea obligatorio
             if (string.IsNullOrWhiteSpace(Equipo.Nombre))
                 errores.Add("El nombre del equipo es obligatorio.");
 
-            // ✅ NUEVA: Validar que la Sede sea obligatoria
+            // âœ… NUEVA: Validar que la Sede sea obligatoria
             if (Equipo.Sede == null)
                 errores.Add("La sede del equipo es obligatoria.");
 
@@ -177,20 +178,20 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 errores.Add("El precio no puede ser negativo.");
 
             if (Equipo.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.DadoDeBaja && !Equipo.FechaBaja.HasValue)
-                errores.Add("Debe indicar la fecha de baja si el equipo está dado de baja.");
+                errores.Add("Debe indicar la fecha de baja si el equipo estÃ¡ dado de baja.");
 
-            // Validación de unicidad de código solo en alta
+            // ValidaciÃ³n de unicidad de cÃ³digo solo en alta
             if (!IsEditMode && !string.IsNullOrWhiteSpace(Equipo.Codigo))
             {
                 var service = LoggingService.GetService<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService>();
                 var existente = await service.GetByCodigoAsync(Equipo.Codigo);
                 if (existente != null)
-                    errores.Add($"Ya existe un equipo con el código '{Equipo.Codigo}'.");
+                    errores.Add($"Ya existe un equipo con el cÃ³digo '{Equipo.Codigo}'.");
             }
 
             if (errores.Count > 0)
             {
-                System.Windows.MessageBox.Show(string.Join("\n", errores), "Errores de validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show(string.Join("\n", errores), "Errores de validaciÃ³n", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             DialogResult = true;
@@ -218,7 +219,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 _lastScreenOwner = screen;
 
                 // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
-                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+                // Esto evita problemas de DPI, pantallas mÃºltiples y posicionamiento
                 this.WindowState = WindowState.Maximized;
             }
             catch
@@ -239,11 +240,11 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
                     this.WindowState = WindowState.Maximized;
                     
-                    // Detectar si el Owner cambió de pantalla
+                    // Detectar si el Owner cambiÃ³ de pantalla
                     var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
                     var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
 
-                    // Si cambió de pantalla, actualizar la referencia
+                    // Si cambiÃ³ de pantalla, actualizar la referencia
                     if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
                     {
                         _lastScreenOwner = currentScreen;
@@ -251,7 +252,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 }
                 catch
                 {
-                    // En caso de error, asegurar que la ventana está maximizada
+                    // En caso de error, asegurar que la ventana estÃ¡ maximizada
                     this.WindowState = WindowState.Maximized;
                 }
             });
@@ -269,20 +270,20 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             public EquipoDto Equipo { get; set; }
             public IEnumerable<EstadoEquipo> EstadosEquipo { get; set; } = new EstadoEquipo[0];
             public IEnumerable<Sede> Sedes { get; set; } = new Sede[0];
-            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];            // ✅ PROPIEDADES PARA VALIDACIÓN DE CÓDIGOS DUPLICADOS
+            public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];            // âœ… PROPIEDADES PARA VALIDACIÃ“N DE CÃ“DIGOS DUPLICADOS
             /// <summary>
-            /// Conjunto de códigos existentes cargados para validación rápida en memoria
+            /// Conjunto de cÃ³digos existentes cargados para validaciÃ³n rÃ¡pida en memoria
             /// </summary>
             private System.Collections.Generic.HashSet<string> _codigosExistentes = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
             
             /// <summary>
-            /// El código original del equipo en modo edición (para ignorarlo en validación)
+            /// El cÃ³digo original del equipo en modo ediciÃ³n (para ignorarlo en validaciÃ³n)
             /// </summary>
             private string? _codigoOriginal;
 
             /// <summary>
             /// Proxy directo a las propiedades del EquipoDto para binding simple
-            /// Con validación de duplicados en tiempo real
+            /// Con validaciÃ³n de duplicados en tiempo real
             /// </summary>
             public string? Codigo 
             { 
@@ -290,7 +291,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 set 
                 { 
                     Equipo.Codigo = value;
-                    // Validar códigos duplicados
+                    // Validar cÃ³digos duplicados
                     ValidarCodigoDuplicado();
                     RaisePropertyChanged(nameof(Codigo));
                     RaisePropertyChanged(nameof(IsCodigoDuplicado));
@@ -341,7 +342,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             public bool IsCodigoReadOnly { get => Equipo.IsCodigoReadOnly; set => Equipo.IsCodigoReadOnly = value; }
             public bool IsCodigoEnabled { get => Equipo.IsCodigoEnabled; set => Equipo.IsCodigoEnabled = value; }
 
-            // Clasificación / CompradoA proxies: al modificar el texto también actualizamos el filtro para activar autocompletado
+            // ClasificaciÃ³n / CompradoA proxies: al modificar el texto tambiÃ©n actualizamos el filtro para activar autocompletado
             public string? Clasificacion
             {
                 get => Equipo.Clasificacion;
@@ -362,10 +363,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 }
             }
 
-            // ✅ NUEVAS PROPIEDADES PARA VALIDACIÓN EN TIEMPO REAL
+            // âœ… NUEVAS PROPIEDADES PARA VALIDACIÃ“N EN TIEMPO REAL
             /// <summary>
-            /// Flag que controla si se deben mostrar los errores de validación.
-            /// Se activa solo después de que el usuario intenta guardar.
+            /// Flag que controla si se deben mostrar los errores de validaciÃ³n.
+            /// Se activa solo despuÃ©s de que el usuario intenta guardar.
             /// </summary>
             private bool _showValidationErrors = false;
             public bool ShowValidationErrors 
@@ -379,20 +380,20 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             }
 
             /// <summary>
-            /// Indica si el campo Nombre está vacío Y se deben mostrar errores de validación
+            /// Indica si el campo Nombre estÃ¡ vacÃ­o Y se deben mostrar errores de validaciÃ³n
             /// </summary>
             public bool IsNombreVacio => _showValidationErrors && string.IsNullOrWhiteSpace(Nombre);
 
             /// <summary>
-            /// Indica si el campo Sede está vacío Y se deben mostrar errores de validación
+            /// Indica si el campo Sede estÃ¡ vacÃ­o Y se deben mostrar errores de validaciÃ³n
             /// </summary>
             public bool IsSedeVacio => _showValidationErrors && Sede == null;            /// <summary>
-            /// Indica si el formulario es válido para guardar (Nombre y Sede no pueden estar vacíos, Codigo no duplicado)
+            /// Indica si el formulario es vÃ¡lido para guardar (Nombre y Sede no pueden estar vacÃ­os, Codigo no duplicado)
             /// </summary>
             public bool IsFormularioValido => !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Codigo) && Sede != null && !IsCodigoDuplicado;
 
             /// <summary>
-            /// 🚀 Indica si el código actual ya existe en la base de datos
+            /// ðŸš€ Indica si el cÃ³digo actual ya existe en la base de datos
             /// </summary>
             private bool _isCodigoDuplicado = false;
             public bool IsCodigoDuplicado
@@ -410,9 +411,9 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             }
 
             /// <summary>
-            /// Mensaje de error cuando hay código duplicado
+            /// Mensaje de error cuando hay cÃ³digo duplicado
             /// </summary>
-            public string MensajeCodigoDuplicado => IsCodigoDuplicado ? "⚠️ Este código ya existe en el sistema." : string.Empty;
+            public string MensajeCodigoDuplicado => IsCodigoDuplicado ? "âš ï¸ Este cÃ³digo ya existe en el sistema." : string.Empty;
 
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> ClasificacionesFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
@@ -421,7 +422,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             public System.Collections.ObjectModel.ObservableCollection<string> MarcasDisponibles { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
             public System.Collections.ObjectModel.ObservableCollection<string> MarcasFiltradas { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
 
-            // Debounce / cancelación y supresión de cambios
+            // Debounce / cancelaciÃ³n y supresiÃ³n de cambios
             private bool _suppressFiltroClasificacionChanged = false;
             private bool _suppressFiltroCompradoAChanged = false;
             private bool _suppressFiltroMarcaChanged = false;
@@ -438,14 +439,14 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     if (_suppressFiltroClasificacionChanged)
                     {
                         filtroClasificacion = value ?? string.Empty;
-                        RaisePropertyChanged(nameof(FiltroClasificacion)); // ← CRÍTICO: Forzar PropertyChanged incluso cuando está suprimido
+                        RaisePropertyChanged(nameof(FiltroClasificacion)); // â† CRÃTICO: Forzar PropertyChanged incluso cuando estÃ¡ suprimido
                         return;
                     }
 
                     filtroClasificacion = value ?? string.Empty;
                     RaisePropertyChanged(nameof(FiltroClasificacion));
 
-                    // Cancelar búsqueda anterior y crear nueva CTS para debounce
+                    // Cancelar bÃºsqueda anterior y crear nueva CTS para debounce
                     _clasificacionFilterCts?.Cancel();
                     _clasificacionFilterCts?.Dispose();
                     _clasificacionFilterCts = new System.Threading.CancellationTokenSource();
@@ -464,7 +465,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     if (_suppressFiltroCompradoAChanged)
                     {
                         filtroCompradoA = value ?? string.Empty;
-                        RaisePropertyChanged(nameof(FiltroCompradoA)); // ← CRÍTICO: Forzar PropertyChanged incluso cuando está suprimido
+                        RaisePropertyChanged(nameof(FiltroCompradoA)); // â† CRÃTICO: Forzar PropertyChanged incluso cuando estÃ¡ suprimido
                         return;
                     }
 
@@ -489,7 +490,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     if (_suppressFiltroMarcaChanged)
                     {
                         filtroMarca = value ?? string.Empty;
-                        RaisePropertyChanged(nameof(FiltroMarca)); // ← CRÍTICO: Forzar PropertyChanged incluso cuando está suprimido
+                        RaisePropertyChanged(nameof(FiltroMarca)); // â† CRÃTICO: Forzar PropertyChanged incluso cuando estÃ¡ suprimido
                         return;
                     }
 
@@ -530,8 +531,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasFiltradas.Contains(Equipo.Marca))
                     MarcasFiltradas.Add(Equipo.Marca);
 
-                // ✅ INICIALIZAR LOS FILTROS CON LOS VALORES ACTUALES
-                // Esto prellenará los ComboBox editables cuando se edita un equipo
+                // âœ… INICIALIZAR LOS FILTROS CON LOS VALORES ACTUALES
+                // Esto prellenarÃ¡ los ComboBox editables cuando se edita un equipo
                 _suppressFiltroMarcaChanged = true;
                 filtroMarca = Equipo.Marca ?? string.Empty;
                 RaisePropertyChanged(nameof(FiltroMarca));
@@ -547,7 +548,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 RaisePropertyChanged(nameof(FiltroCompradoA));
                 _suppressFiltroCompradoAChanged = false;
                 
-                // Cargar los más usados desde servicios registrados (si están disponibles)
+                // Cargar los mÃ¡s usados desde servicios registrados (si estÃ¡n disponibles)
                 try
                 {
                     var clasService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;
@@ -649,10 +650,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             // PASO 1: Guardar el texto ANTES de cambiar ItemsSource
                             var textoPreservado = filtroClasificacion;
 
-                            // PASO 2: Limpiar la colección filtrada
+                            // PASO 2: Limpiar la colecciÃ³n filtrada
                             ClasificacionesFiltradas.Clear();
 
-                            // PASO 3: Añadir nuevos items
+                            // PASO 3: AÃ±adir nuevos items
                             foreach (var it in items)
                                 ClasificacionesFiltradas.Add(it);
 
@@ -685,10 +686,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             // PASO 1: Guardar el texto ANTES de cambiar ItemsSource
                             var textoPreservado = filtroCompradoA;
 
-                            // PASO 2: Limpiar la colección filtrada
+                            // PASO 2: Limpiar la colecciÃ³n filtrada
                             CompradoAFiltrados.Clear();
 
-                            // PASO 3: Añadir nuevos items
+                            // PASO 3: AÃ±adir nuevos items
                             foreach (var it in items)
                                 CompradoAFiltrados.Add(it);
 
@@ -712,7 +713,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     if (svc == null) return Task.CompletedTask;
                     var filtroActual = FiltroMarca ?? string.Empty;
                     
-                    // Ejecutar búsqueda de forma sincrónica para este método Task
+                    // Ejecutar bÃºsqueda de forma sincrÃ³nica para este mÃ©todo Task
                     var items = Task.Run(() => svc.BuscarAsync(filtroActual)).GetAwaiter().GetResult();
                     
                     if (cancellationToken.IsCancellationRequested) return Task.CompletedTask;
@@ -724,10 +725,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             // PASO 1: Guardar el texto ANTES de cambiar ItemsSource
                             var textoPreservado = filtroMarca;
 
-                            // PASO 2: Limpiar la colección filtrada
+                            // PASO 2: Limpiar la colecciÃ³n filtrada
                             MarcasFiltradas.Clear();
 
-                            // PASO 3: Añadir nuevos items
+                            // PASO 3: AÃ±adir nuevos items
                             foreach (var it in items)
                                 MarcasFiltradas.Add(it);
 
@@ -744,47 +745,47 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 catch { }
                 return Task.CompletedTask;
             }            /// <summary>
-            /// 🚀 Valida si el código actual es duplicado (comparando contra los códigos cargados en memoria)
+            /// ðŸš€ Valida si el cÃ³digo actual es duplicado (comparando contra los cÃ³digos cargados en memoria)
             /// </summary>
             private void ValidarCodigoDuplicado()
             {
-                // Si el código es nulo o vacío, no hay duplicado
+                // Si el cÃ³digo es nulo o vacÃ­o, no hay duplicado
                 if (string.IsNullOrWhiteSpace(Codigo))
                 {
                     IsCodigoDuplicado = false;
-                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] Código vacío, no hay duplicado");
+                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] CÃ³digo vacÃ­o, no hay duplicado");
                     return;
                 }
 
-                // Si estamos en modo edición y el código es el mismo que el original, no es duplicado
+                // Si estamos en modo ediciÃ³n y el cÃ³digo es el mismo que el original, no es duplicado
                 if (!string.IsNullOrWhiteSpace(_codigoOriginal) && 
                     Codigo.Equals(_codigoOriginal, System.StringComparison.OrdinalIgnoreCase))
                 {
                     IsCodigoDuplicado = false;
-                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] Código original en edición, no hay duplicado");
+                    System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] CÃ³digo original en ediciÃ³n, no hay duplicado");
                     return;
                 }
 
-                // Verificar en la lista de códigos existentes (O(1) con HashSet)
+                // Verificar en la lista de cÃ³digos existentes (O(1) con HashSet)
                 bool isDuplicate = _codigosExistentes.Contains(Codigo);
                 IsCodigoDuplicado = isDuplicate;
-                System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] '{Codigo}' - Total códigos en BD: {_codigosExistentes.Count}, Es duplicado: {isDuplicate}");
+                System.Diagnostics.Debug.WriteLine($"[ValidarCodigoDuplicado] '{Codigo}' - Total cÃ³digos en BD: {_codigosExistentes.Count}, Es duplicado: {isDuplicate}");
             }            /// <summary>
-            /// 🚀 Carga todos los códigos existentes de forma asincrónica
-            /// Se llama al abrir el diálogo para cargar la lista de validación
+            /// ðŸš€ Carga todos los cÃ³digos existentes de forma asincrÃ³nica
+            /// Se llama al abrir el diÃ¡logo para cargar la lista de validaciÃ³n
             /// </summary>
             public async Task CargarCodigosExistentesAsync(IEquipoService equipoService, bool isEditMode)
             {
                 try
                 {
-                    // Guardar el código original en modo edición
+                    // Guardar el cÃ³digo original en modo ediciÃ³n
                     _codigoOriginal = isEditMode ? Codigo : null;
-                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Modo edición: {isEditMode}, Código original: {_codigoOriginal}");
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Modo ediciÃ³n: {isEditMode}, CÃ³digo original: {_codigoOriginal}");
 
-                    // Obtener todos los códigos de forma eficiente (solo SELECT Codigo)
+                    // Obtener todos los cÃ³digos de forma eficiente (solo SELECT Codigo)
                     var codigos = await equipoService.GetAllCodigosAsync();
                     var codigosList = codigos.ToList();
-                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Total de códigos obtenidos: {codigosList.Count}");
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Total de cÃ³digos obtenidos: {codigosList.Count}");
 
                     // Llenar el HashSet (case-insensitive)
                     _codigosExistentes.Clear();
@@ -793,24 +794,25 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                         if (!string.IsNullOrWhiteSpace(codigo))
                         {
                             _codigosExistentes.Add(codigo);
-                            System.Diagnostics.Debug.WriteLine($"  - Código cargado: '{codigo}'");
+                            System.Diagnostics.Debug.WriteLine($"  - CÃ³digo cargado: '{codigo}'");
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] HashSet finalizado con {_codigosExistentes.Count} códigos");
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] HashSet finalizado con {_codigosExistentes.Count} cÃ³digos");
 
-                    // Validar el código actual
+                    // Validar el cÃ³digo actual
                     ValidarCodigoDuplicado();
                 }
                 catch (System.Exception ex)
                 {
                     // Log detallado del error
-                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] ❌ Error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] âŒ Error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[CargarCodigosExistentesAsync] Stack: {ex.StackTrace}");
                 }
             }
         }
     }
 }
+
 
 

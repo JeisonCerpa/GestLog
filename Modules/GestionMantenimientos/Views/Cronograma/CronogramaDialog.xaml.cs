@@ -1,5 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma
 {
@@ -10,7 +11,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma
         {
             InitializeComponent();
             Cronograma = cronograma != null ? new CronogramaMantenimientoDto(cronograma) : new CronogramaMantenimientoDto();
-            // Deshabilitar edición de Código si es edición
+            // Deshabilitar ediciÃ³n de CÃ³digo si es ediciÃ³n
             if (cronograma != null)
             {
                 Cronograma.IsCodigoReadOnly = true;
@@ -35,5 +36,6 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma
         }
     }
 }
+
 
 

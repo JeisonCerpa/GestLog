@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +8,8 @@ using ClosedXML.Excel;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Utilities;
 
@@ -268,7 +270,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     currentRowCron += 2;
                     var footerCellCron = ws.Cell(currentRowCron, 1);
-                    footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Ao {anio}  Sistema GestLog © SIMICS Group SAS";
+                    footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Ao {anio}  Sistema GestLog Â© SIMICS Group SAS";
                     footerCellCron.Style.Font.Italic = true;
                     footerCellCron.Style.Font.FontSize = 9;
                     footerCellCron.Style.Font.FontColor = XLColor.Gray;
@@ -613,7 +615,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     currentRowSeg += 2;
                     var footerCellSeg = wsSeguimientos.Cell(currentRowSeg, 1);
-                    footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Sistema GestLog © SIMICS Group SAS";
+                    footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Sistema GestLog Â© SIMICS Group SAS";
                     footerCellSeg.Style.Font.Italic = true;
                     footerCellSeg.Style.Font.FontSize = 9;
                     footerCellSeg.Style.Font.FontColor = XLColor.Gray;
@@ -640,7 +642,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[CronogramaExportService] Error durante la generación del Excel");
+                    _logger.LogError(ex, "[CronogramaExportService] Error durante la generaciÃ³n del Excel");
                     throw;
                 }
             }, ct);
@@ -664,7 +666,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
             var cron = cronogramas.FirstOrDefault(c => c.Codigo == codigo);
             if (cron != null)
             {
-                // Implementación conservadora: marcar pendiente cuando el cronograma existe
+                // ImplementaciÃ³n conservadora: marcar pendiente cuando el cronograma existe
                 estado.Seguimiento = null;
                 estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
                 estado.CodigoEquipo = codigo ?? string.Empty;
@@ -685,3 +687,5 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
         }
     }
 }
+
+

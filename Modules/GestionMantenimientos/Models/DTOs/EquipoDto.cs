@@ -5,7 +5,7 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
 
-namespace GestLog.Modules.GestionMantenimientos.Models
+namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
 {
     public class EquipoDto : INotifyPropertyChanged, IDataErrorInfo
     {
