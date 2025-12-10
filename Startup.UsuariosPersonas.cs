@@ -16,6 +16,9 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Services;
+using GestLog.Modules.GestionMantenimientos.Services.Data;
+using GestLog.Modules.GestionMantenimientos.Services.Autocomplete;
+using GestLog.Modules.GestionMantenimientos.Services.Cache;
 using GestLog.Modules.GestionMantenimientos.ViewModels;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
@@ -90,11 +93,10 @@ namespace GestLog
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.GestionEquiposInformaticosSeguimientoCronogramaService>();
               // Servicios de autocompletado para periféricos
             services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.DispositivoAutocompletadoService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();
-            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
-            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.ClasificacionAutocompletadoService>();
-            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.CompradoAAutocompletadoService>();
-            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.MarcaAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.ClasificacionAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.CompradoAAutocompletadoService>();
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.MarcaAutocompletadoService>();
             // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.CronogramaDiarioViewModel>();
             

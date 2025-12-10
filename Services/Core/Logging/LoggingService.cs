@@ -9,8 +9,8 @@ using GestLog.Models.Configuration;
 using GestLog.Services.Interfaces;
 using GestLog.ViewModels;
 using GestLog.Services;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionMantenimientos.Services;
+using GestLog.Modules.GestionMantenimientos.Interfaces;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -154,20 +154,9 @@ public static class LoggingService
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 var currentUser = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
                 return new GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel(excelSvc, logger, currentUser);
-            });
-
-            // Servicios de Gestión de Mantenimientos
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService, GestLog.Modules.GestionMantenimientos.Services.EquipoService>();            
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService, GestLog.Modules.GestionMantenimientos.Services.CronogramaService>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaExportService, GestLog.Modules.GestionMantenimientos.Services.CronogramaExportService>();
-            services.AddTransient<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>(sp =>
-            {
-                var logger = sp.GetRequiredService<IGestLogLogger>();
-                var dbContextFactory = sp.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLog.Modules.DatabaseConnection.GestLogDbContext>>();
-                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
-                return new GestLog.Modules.GestionMantenimientos.Services.SeguimientoService(logger, dbContextFactory, cronogramaService);
-            });
-
+            });            // Servicios de Gestión de Mantenimientos
+            services.AddGestionMantenimientosServices();
+            
             // ViewModels de Gestión de Mantenimientos
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.EquiposViewModel>(sp =>
             {

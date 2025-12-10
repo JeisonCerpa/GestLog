@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
+namespace GestLog.Modules.GestionMantenimientos.Services.Export
 {
     /// <summary>
     /// Servicio para exportar la "Hoja de Vida" completa de un equipo a Excel.

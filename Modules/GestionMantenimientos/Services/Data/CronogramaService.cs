@@ -16,7 +16,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using System.Globalization;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
+namespace GestLog.Modules.GestionMantenimientos.Services.Data
 {
     public class CronogramaService : ICronogramaService
     {

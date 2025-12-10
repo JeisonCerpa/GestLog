@@ -6,6 +6,7 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Services;
+using GestLog.Modules.GestionMantenimientos.Services.Autocomplete;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Equipos

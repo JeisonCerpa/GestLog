@@ -11,7 +11,7 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Utilities;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
+namespace GestLog.Modules.GestionMantenimientos.Services.Export
 {
     public class CronogramaExportService : ICronogramaExportService
     {

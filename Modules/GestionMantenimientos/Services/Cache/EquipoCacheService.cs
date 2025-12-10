@@ -8,12 +8,11 @@ using GestLog.Services.Core.Logging;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
-{
-    /// <summary>
+namespace GestLog.Modules.GestionMantenimientos.Services.Cache
+{    /// <summary>
     /// Servicio de cache para equipos que optimiza las consultas y evita recargas innecesarias.
     /// </summary>
-    public class EquipoCacheService : IDisposable
+    public class EquipoCacheService : IEquipoCacheService, IDisposable
     {
         private readonly IEquipoService _equipoService;
         private readonly IGestLogLogger _logger;

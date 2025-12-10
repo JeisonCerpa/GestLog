@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
+namespace GestLog.Modules.GestionMantenimientos.Services.Autocomplete
 {
     /// <summary>
     /// Servicio para obtener valores únicos de clasificación desde la tabla Equipos

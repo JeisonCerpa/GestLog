@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages;
 
-namespace GestLog.Modules.GestionMantenimientos.Services
+namespace GestLog.Modules.GestionMantenimientos.Services.Data
 {
     public class MaintenanceService : IMantenimientoService
     {
