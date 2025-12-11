@@ -19,6 +19,7 @@ using MessageBox = System.Windows.MessageBox;
 using GestLog.Services;
 using System.Threading;
 using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Services.Core.Logging;
 

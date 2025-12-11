@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.Messaging.Messages;
 
-namespace GestLog.Modules.GestionMantenimientos.Messages
+namespace GestLog.Modules.GestionEquiposInformaticos.Messages
 {
     /// <summary>
     /// Mensaje enviado cuando los periféricos de un equipo han sido actualizados en la base de datos.

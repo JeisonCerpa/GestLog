@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;

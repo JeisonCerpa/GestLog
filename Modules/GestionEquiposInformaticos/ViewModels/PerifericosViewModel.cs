@@ -15,6 +15,7 @@ using GestLog.Services;
 using GestLog.Services.Interfaces;
 using GestLog.Models.Events;
 using GestLog.ViewModels.Base;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Linq;

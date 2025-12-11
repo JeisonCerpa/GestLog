@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.DatabaseConnection;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1989,7 +1990,7 @@ Get-NetIPConfiguration | Where-Object {
                 await dbContext.SaveChangesAsync();
 
                 try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
-                try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.PerifericosActualizadosMessage(Codigo)); } catch { }
+                try { WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Codigo)); } catch { }
 
                 MessageBox.Show("Equipo dado de baja correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
