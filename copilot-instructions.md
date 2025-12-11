@@ -404,11 +404,17 @@ Modules/GestionMantenimientos/
 │       ├── TipoMantenimiento.cs
 │       └── ...
 │
-├── Messages/
-│   ├── EquiposActualizadosMessage.cs
-│   ├── EquiposCambioEstadoMessage.cs
-│   ├── CronogramaActualizadoMessage.cs
-│   └── ...
+├── Messages/                  # Organizados por dominio/feature
+│   ├── Equipos/
+│   │   ├── EquiposActualizadosMessage.cs
+│   │   └── EquiposCambioEstadoMessage.cs
+│   ├── Mantenimientos/
+│   │   ├── SeguimientosActualizadosMessage.cs
+│   │   ├── CronogramasActualizadosMessage.cs
+│   │   ├── MantenimientosActualizadosMessage.cs
+│   │   └── EjecucionesPlanesActualizadasMessage.cs
+│   └── UI/
+│       └── UiMessages.cs
 │
 ├── Utilities/
 │   ├── EstadoSeguimientoUtils.cs
@@ -426,6 +432,66 @@ Modules/GestionMantenimientos/
 - ✅ Actualiza los namespaces: `GestLog.Modules.[ModuleName].Views.[FeatureName]`
 - ✅ Si tienes 3+ servicios del mismo tipo, crea subcarpetas en Services e Interfaces
 - ❌ No crees más de 3 niveles de profundidad sin justificación
+
+### **Organización de Messages (Mensajería MVVM)**
+
+Los mensajes para **CommunityToolkit.Mvvm.Messaging** deben organizarse **por dominio/feature**, no en una carpeta plana. Esto mejora la cohesión y facilita el mantenimiento.
+
+**Estructura recomendada:**
+```
+Messages/
+├── [Feature1]/                                # Agrupa mensajes por su dominio
+│   ├── [Feature1]UpdatedMessage.cs
+│   ├── [Feature1]DeletedMessage.cs
+│   └── [Feature1]StateChangedMessage.cs
+├── [Feature2]/
+│   ├── [Feature2]Message.cs
+│   └── ...
+└── UI/                                        # Mensajes de UI genéricos (si aplica)
+    └── UiMessages.cs
+```
+
+**Ejemplo real: GestionMantenimientos**
+```
+Messages/
+├── Equipos/                                   # Mensajes relacionados con equipos
+│   ├── EquiposActualizadosMessage.cs
+│   └── EquiposCambioEstadoMessage.cs
+├── Mantenimientos/                            # Mensajes de mantenimientos
+│   ├── SeguimientosActualizadosMessage.cs
+│   ├── CronogramasActualizadosMessage.cs
+│   ├── MantenimientosActualizadosMessage.cs
+│   └── EjecucionesPlanesActualizadasMessage.cs
+└── UI/                                        # Mensajes de interfaz (reservado)
+    └── UiMessages.cs
+```
+
+**Reglas de namespace:**
+- ✅ `GestLog.Modules.GestionMantenimientos.Messages.Equipos.EquiposActualizadosMessage`
+- ✅ `GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos.CronogramasActualizadosMessage`
+- ✅ `GestLog.Modules.GestionMantenimientos.Messages.UI.UiMessages`
+- ❌ `GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage` (plano)
+
+**Al usar mensajes en ViewModels:**
+```csharp
+using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
+
+// Registrarse a un mensaje
+WeakReferenceMessenger.Default.Register<EquiposActualizadosMessage>(this, async (r, m) => 
+{
+    await RefreshAsync();
+});
+
+// Enviar un mensaje
+WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
+```
+
+**Beneficios:**
+- 🎯 **Cohesión**: Mensajes agrupados por responsabilidad
+- 🔍 **Navegación**: Fácil localizar mensajes relacionados
+- 📦 **Escalabilidad**: Permite agregar más mensajes sin caos
+- 🛡️ **Mantenibilidad**: Cambios en un dominio aislados a su carpeta
 
 ### **Uso de Utilities**
 Centraliza métodos utilitarios reutilizables específicos del módulo: conversiones de enums, mapeo de estados a colores, formateo de datos.
@@ -815,4 +881,51 @@ Se diferencia visual y semánticamente "Dado de baja" (gris muy claro, opacidad 
 - Estilos: EquiposInformaticosView.xaml
 
 ---
-Última actualización: 26/09/2025
+
+## 📋 Cambios Recientes en Refactorización de Módulos
+
+### **Diciembre 2025 - Refactorización de GestionMantenimientos**
+
+Se realizó una refactorización completa del módulo `GestionMantenimientos` siguiendo patrones SRP:
+
+#### **Cambios aplicados:**
+1. **Services refactorizados** en 4 subcarpetas:
+   - `Data/` - Servicios CRUD (4 servicios)
+   - `Export/` - Servicios de exportación (2 servicios)
+   - `Autocomplete/` - Servicios de autocompletado (3 servicios)
+   - `Cache/` - Servicios de caché (1 servicio)
+
+2. **Interfaces espejo** creadas en estructura idéntica a Services:
+   - `Interfaces/Data/` - 4 interfaces
+   - `Interfaces/Export/` - 1 interfaz
+   - `Interfaces/Cache/` - 1 interfaz
+
+3. **Models organizados** por tipo:
+   - `Models/DTOs/` - 4 DTOs
+   - `Models/Entities/` - 5 entidades
+   - `Models/Enums/` - 5 enumeraciones
+   - `Models/Exceptions/` - 1 excepción de dominio
+
+4. **ViewModels organizados** por feature:
+   - `ViewModels/Cronograma/` - 3 ViewModels
+   - `ViewModels/Equipos/` - 2 ViewModels
+   - `ViewModels/Seguimiento/` - 2 ViewModels
+   - `ViewModels/Mantenimiento/` - 1 ViewModel
+
+5. **Messages refactorizados** en 3 subcarpetas por dominio:
+   - `Messages/Equipos/` - Mensajes de equipos
+   - `Messages/Mantenimientos/` - Mensajes de mantenimientos
+   - `Messages/UI/` - Mensajes de interfaz (reservado)
+   - ✅ Todos los usings actualizados en 13 archivos
+   - ✅ Compilación exitosa: 0 errores
+
+#### **Patrón a seguir para otros módulos:**
+Use esta refactorización como referencia para reorganizar otros módulos existentes. La estructura proporciona:
+- ✅ Claridad en responsabilidades (SRP)
+- ✅ Mantenimiento facilitado
+- ✅ Escalabilidad sin caos
+- ✅ Namespaces jerárquicos y consistentes
+- ✅ DI centralizado (ServiceCollectionExtensions.cs)
+
+---
+Última actualización: 11/12/2025
