@@ -20,7 +20,7 @@ using GestLog.Services;
 using System.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Messages;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 using GestLog.Services.Core.Logging;
 
 #pragma warning disable CS8602 // Desreferencia de referencia posiblemente NULL (silenciado intencionalmente para esta clase de UI)

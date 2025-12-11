@@ -17,8 +17,8 @@ using System.Linq;
 using System.Collections.Generic;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
-using GestLog.Modules.Usuarios.Interfaces; // aÃ±adido para ICurrentUserService
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
+using GestLog.Modules.Usuarios.Interfaces; // añadido para ICurrentUserService
 using GestLog.Utilities; // NUEVO helper semanas centralizado
 using System.Text.Json; // para parse checklist
 

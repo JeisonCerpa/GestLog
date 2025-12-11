@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs; // aÃ±adido para CronogramaMantenimientoDto
 using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh

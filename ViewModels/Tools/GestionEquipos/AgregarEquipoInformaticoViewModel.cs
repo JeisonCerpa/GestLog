@@ -30,7 +30,7 @@ using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 
 namespace GestLog.ViewModels.Tools.GestionEquipos
 {

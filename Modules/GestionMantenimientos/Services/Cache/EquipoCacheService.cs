@@ -8,7 +8,7 @@ using GestLog.Modules.GestionMantenimientos.Interfaces.Cache;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Services.Core.Logging;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 
 namespace GestLog.Modules.GestionMantenimientos.Services.Cache
 {    /// <summary>

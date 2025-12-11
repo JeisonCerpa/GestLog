@@ -9,7 +9,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 using GestLog.ViewModels.Base;
 using GestLog.Services.Interfaces;
 using GestLog.Services.Core.Logging;
