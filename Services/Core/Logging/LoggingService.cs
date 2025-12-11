@@ -159,30 +159,27 @@ public static class LoggingService
               // ViewModels de Gestión de Mantenimientos
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel>(sp =>
             {
-                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService>();
+                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
-                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService>();
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel(equipoService, logger, cronogramaService, seguimientoService, currentUserService, databaseService);
             });
 
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel>(sp =>
-            {
-                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService>();
-                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+            {                var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService>();
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                var exportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaExportService>();
+                var exportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.ICronogramaExportService>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger, exportService);
-            });
-
-            // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            });            // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel>(sp =>
             {
-                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+                var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();

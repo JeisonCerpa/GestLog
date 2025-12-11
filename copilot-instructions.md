@@ -262,48 +262,259 @@ private void Button_Click() { LoadData(); } // Lógica en code-behind
 
 ## 📁 Estructura de Módulos
 
+Organiza el código en carpetas por responsabilidad. Estructura orientativa: adapta según la complejidad de tu módulo.
+
 ```
 Modules/[NombreModulo]/
-├── Views/                      # Vistas XAML y code-behind, organizadas por feature
-│   ├── [Feature1]/             # Carpeta principal por feature
+├── Views/                     # Vistas XAML y code-behind, organizadas por feature
+│   ├── [Feature1]/
 │   │   ├── [Feature1]View.xaml(.cs)
 │   │   ├── [Feature1]Dialog.xaml(.cs)
-│   │   └── [SubFeature]/       # Sub-features anidadas si aplica
+│   │   └── [SubFeature]/
 │   │       └── SubFeatureDialog.xaml(.cs)
 │   └── [Feature2]/
 │       ├── [Feature2]View.xaml(.cs)
 │       └── [Feature2]Dialog.xaml(.cs)
-├── ViewModels/          # Una responsabilidad UI por ViewModel
-├── Services/            # Una responsabilidad de negocio por Service
-├── Models/              # DTOs y entidades
-├── Interfaces/          # Contratos
-├── Messages/            # Mensajes para CommunityToolkit.Mvvm.Messaging (opcional)
-└── Docs/                # Documentación específica del módulo (opcional)
+├── ViewModels/                # Una responsabilidad UI por ViewModel
+│   ├── [Feature1]/            # ViewModels agrupados por feature
+│   │   ├── [Feature1]ViewModel.cs
+│   │   ├── [Feature1]DialogViewModel.cs
+│   │   └── [SubFeature]/
+│   │       └── SubFeatureDialogViewModel.cs
+│   └── [Feature2]/
+│       ├── [Feature2]ViewModel.cs
+│       └── [Feature2]DialogViewModel.cs
+├── Services/                  # Una responsabilidad de negocio por Service
+│   ├── Data/                  # Servicios de datos y operaciones CRUD
+│   │   ├── [Feature1]Service.cs
+│   │   ├── [Feature2]Service.cs
+│   │   └── ...
+│   ├── Cache/                 # Servicios de caché
+│   │   └── [CacheService].cs
+│   ├── Export/                # Servicios de exportación
+│   │   └── [ExportService].cs
+│   ├── Autocomplete/          # Servicios de autocompletado (si aplica)
+│   │   └── [AutocompleteService].cs
+│   └── ServiceCollectionExtensions.cs  # Registro de DI
+├── Interfaces/                # Contratos organizados por tipo de servicio
+│   ├── Data/                  # Interfaces para servicios de datos
+│   │   └── I[Feature]Service.cs
+│   ├── Cache/                 # Interfaces para servicios de caché
+│   │   └── I[CacheService].cs
+│   └── Export/                # Interfaces para servicios de exportación
+│       └── I[ExportService].cs
+├── Models/                    # DTOs y entidades organizadas por dominio
+│   ├── DTOs/
+│   │   ├── [Feature1]Dto.cs
+│   │   ├── [Feature2]Dto.cs
+│   │   └── ...
+│   ├── Entities/              # Entidades de base de datos
+│   │   ├── [Feature1].cs
+│   │   ├── [Feature2].cs
+│   │   └── ...
+│   └── Enums/                 # Enumeraciones del dominio
+│       ├── [Feature1]Estado.cs
+│       ├── [Feature2]Tipo.cs
+│       └── ...
+├── Messages/                  # Mensajes para CommunityToolkit.Mvvm.Messaging
+│   ├── [Feature1]UpdatedMessage.cs
+│   ├── [Feature1]DeletedMessage.cs
+│   └── ...
+├── Utilities/                 # Clases utilitarias reutilizables del módulo
+│   ├── [Feature1]Utils.cs
+│   ├── [Feature2]Utils.cs
+│   └── ...
+└── Docs/                      # Documentación específica del módulo (opcional)
+    ├── README.md
+    └── [Feature1]_guide.md
 ```
 
 ### **Ejemplo real: GestionMantenimientos**
+
 ```
-Modules/GestionMantenimientos/Views/
-├── Cronograma/
-│   ├── CronogramaView.xaml(.cs)
-│   ├── CronogramaDialog.xaml(.cs)
-│   └── SemanaDetalle/          # Sub-feature de Cronograma
-│       └── SemanaDetalleDialog.xaml(.cs)
-├── Equipos/
-│   ├── EquiposView.xaml(.cs)
-│   ├── EquipoDialog.xaml(.cs)
-│   └── EquipoDetalleModalWindow.xaml(.cs)
-└── Seguimiento/
-    ├── SeguimientoView.xaml(.cs)
-    └── SeguimientoDialog.xaml(.cs)
+Modules/GestionMantenimientos/
+├── Views/
+│   ├── Cronograma/
+│   │   ├── CronogramaView.xaml(.cs)
+│   │   ├── CronogramaDialog.xaml(.cs)
+│   │   └── SemanaDetalle/
+│   │       └── SemanaDetalleDialog.xaml(.cs)
+│   ├── Equipos/
+│   │   ├── EquiposView.xaml(.cs)
+│   │   ├── EquipoDialog.xaml(.cs)
+│   │   └── EquipoDetalleModalWindow.xaml(.cs)
+│   └── Seguimiento/
+│       ├── SeguimientoView.xaml(.cs)
+│       └── SeguimientoDialog.xaml(.cs)
+│
+├── ViewModels/
+│   ├── Cronograma/
+│   │   ├── CronogramaViewModel.cs
+│   │   ├── SemanaViewModel.cs
+│   │   └── SemanaDetalle/
+│   │       └── SemanaDetalleViewModel.cs
+│   ├── Equipos/
+│   │   └── EquiposViewModel.cs
+│   └── Seguimiento/
+│       ├── SeguimientoViewModel.cs
+│       └── RegistrarMantenimientoViewModel.cs
+│
+├── Services/
+│   ├── Data/
+│   │   ├── CronogramaService.cs
+│   │   ├── EquipoService.cs
+│   │   ├── SeguimientoService.cs
+│   │   └── MaintenanceService.cs
+│   ├── Cache/
+│   │   └── EquipoCacheService.cs
+│   ├── Export/
+│   │   └── CronogramaExportService.cs
+│   ├── Autocomplete/
+│   │   ├── ClasificacionAutocompletadoService.cs
+│   │   ├── CompradoAAutocompletadoService.cs
+│   │   └── MarcaAutocompletadoService.cs
+│   └── ServiceCollectionExtensions.cs
+│
+├── Interfaces/
+│   ├── Data/
+│   │   ├── ICronogramaService.cs
+│   │   ├── IEquipoService.cs
+│   │   ├── ISeguimientoService.cs
+│   │   └── IMantenimientoService.cs
+│   ├── Cache/
+│   │   └── IEquipoCacheService.cs
+│   └── Export/
+│       └── ICronogramaExportService.cs
+│
+├── Models/
+│   ├── DTOs/
+│   │   ├── CronogramaMantenimientoDto.cs
+│   │   ├── EquipoDto.cs
+│   │   ├── SeguimientoMantenimientoDto.cs
+│   │   ├── MantenimientoSemanaEstadoDto.cs
+│   │   └── ...
+│   ├── Entities/
+│   │   ├── Equipo.cs
+│   │   ├── CronogramaMantenimiento.cs
+│   │   ├── SeguimientoMantenimiento.cs
+│   │   └── ...
+│   └── Enums/
+│       ├── EstadoSeguimiento.cs
+│       ├── EstadoEquipo.cs
+│       ├── TipoMantenimiento.cs
+│       └── ...
+│
+├── Messages/
+│   ├── EquiposActualizadosMessage.cs
+│   ├── EquiposCambioEstadoMessage.cs
+│   ├── CronogramaActualizadoMessage.cs
+│   └── ...
+│
+├── Utilities/
+│   ├── EstadoSeguimientoUtils.cs
+│   └── EstadoEquipoUtils.cs
+│
+└── Docs/
+    ├── README.md
+    └── GestionMantenimientos_guide.md
 ```
 
 ### **Reglas de organización por features:**
 - ✅ Agrupa vistas por su feature/agregado de dominio (Cronograma, Equipos, Seguimiento)
 - ✅ Anida sub-features si tienen relación jerárquica (SemanaDetalle dentro de Cronograma)
-- ✅ Mantén orden alfabético dentro de cada nivel para predecibilidad
+- ✅ Mantén orden alfabético dentro de cada nivel
 - ✅ Actualiza los namespaces: `GestLog.Modules.[ModuleName].Views.[FeatureName]`
+- ✅ Si tienes 3+ servicios del mismo tipo, crea subcarpetas en Services e Interfaces
 - ❌ No crees más de 3 niveles de profundidad sin justificación
+
+### **Uso de Utilities**
+Centraliza métodos utilitarios reutilizables específicos del módulo: conversiones de enums, mapeo de estados a colores, formateo de datos.
+
+- **Ubicación**: `Modules/[NombreModulo]/Utilities/[NombreUtils].cs`
+- **Ejemplo**: `GestionMantenimientos/Utilities/EstadoSeguimientoUtils.cs`
+- ✅ Clases estáticas con métodos estáticos para utilidades puras
+- ✅ Una clase por responsabilidad (ej: conversiones de estados, colores, etc.)
+- ❌ No poner lógica de negocio que debería estar en Services
+- ❌ No crear si la funcionalidad cabe mejor en una clase de servicio existente
+
+### **Organización jerárquica de Interfaces**
+Las interfaces **DEBEN estar organizadas en la misma estructura jerárquica que sus implementaciones de Services**. Esto mejora la navegación, el mantenimiento y la coherencia del código.
+
+**Estructura esperada:**
+```
+Interfaces/
+├── Data/              # Interfaces para servicios de datos (CRUD, lógica de negocio)
+│   ├── IEquipoService.cs
+│   ├── ICronogramaService.cs
+│   ├── ISeguimientoService.cs
+│   └── IMantenimientoService.cs
+├── Cache/             # Interfaces para servicios de caché
+│   └── IEquipoCacheService.cs
+└── Export/            # Interfaces para servicios de exportación
+    └── ICronogramaExportService.cs
+```
+
+**Corresponde a la estructura de Services:**
+```
+Services/
+├── Data/              # Implementaciones de servicios de datos
+│   ├── EquipoService.cs
+│   ├── CronogramaService.cs
+│   ├── SeguimientoService.cs
+│   └── MaintenanceService.cs
+├── Cache/             # Implementaciones de servicios de caché
+│   └── EquipoCacheService.cs
+└── Export/            # Implementaciones de servicios de exportación
+    └── CronogramaExportService.cs
+```
+
+**Reglas de namespace:**
+- ✅ `GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService`
+- ✅ `GestLog.Modules.GestionMantenimientos.Interfaces.Cache.IEquipoCacheService`
+- ✅ `GestLog.Modules.GestionMantenimientos.Interfaces.Export.ICronogramaExportService`
+- ❌ `GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService` (plano)
+
+**Al registrar en DI (ServiceCollectionExtensions.cs):**
+```csharp
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Cache;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
+
+public static IServiceCollection AddGestionMantenimientosServices(this IServiceCollection services)
+{
+    // Data Services
+    services.AddScoped<IEquipoService, EquipoService>();
+    services.AddScoped<ICronogramaService, CronogramaService>();
+    services.AddScoped<ISeguimientoService, SeguimientoService>();
+    services.AddScoped<IMantenimientoService, MaintenanceService>();
+
+    // Cache Services
+    services.AddSingleton<IEquipoCacheService, EquipoCacheService>();
+
+    // Export Services
+    services.AddTransient<ICronogramaExportService, CronogramaExportService>();
+    
+    return services;
+}
+```
+
+**Al usar interfaces en ViewModels/Services:**
+```csharp
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Cache;
+
+public partial class EquiposViewModel : ObservableObject
+{
+    private readonly IEquipoService _equipoService;
+    private readonly IEquipoCacheService _cacheService;
+    
+    public EquiposViewModel(IEquipoService equipoService, IEquipoCacheService cacheService)
+    {
+        _equipoService = equipoService;
+        _cacheService = cacheService;
+    }
+}
+```
 
 ## 💡 Mensajes de Usuario
 

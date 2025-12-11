@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Messages;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
@@ -53,7 +53,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             
             // Obtener el servicio de seguimiento usando DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.ISeguimientoService>();
+            var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
             var currentUser = currentUserService.Current ?? new GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo {
                 UserId = Guid.Empty,

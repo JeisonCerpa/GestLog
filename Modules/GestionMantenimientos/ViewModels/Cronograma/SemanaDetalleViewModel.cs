@@ -4,7 +4,7 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
@@ -315,7 +315,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             {
                 var anio = EstadosMantenimientos[0].Anio;
                 var semana = EstadosMantenimientos[0].Semana;
-                var cronogramaService = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider().GetService(typeof(GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService)) as GestLog.Modules.GestionMantenimientos.Interfaces.ICronogramaService;
+                var cronogramaService = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider().GetService(typeof(GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService)) as GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService;
                 if (cronogramaService != null)
                 {
                     var nuevosEstados = await cronogramaService.GetEstadoMantenimientosSemanaAsync(semana, anio);

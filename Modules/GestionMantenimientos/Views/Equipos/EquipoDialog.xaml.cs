@@ -103,11 +103,9 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 try
                 {
                     // PequeÃ±o delay para asegurar que todo estÃ© inicializado
-                    await System.Threading.Tasks.Task.Delay(50);
-
-                    // Obtener el servicio de equipos inyectado
+                    await System.Threading.Tasks.Task.Delay(50);                    // Obtener el servicio de equipos inyectado
                     var equipoService = ((App)System.Windows.Application.Current).ServiceProvider
-                        ?.GetService(typeof(IEquipoService)) as IEquipoService;
+                        ?.GetService(typeof(GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService)) as GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService;
 
                     if (equipoService != null)
                     {
@@ -178,14 +176,12 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 errores.Add("El precio no puede ser negativo.");
 
             if (Equipo.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.DadoDeBaja && !Equipo.FechaBaja.HasValue)
-                errores.Add("Debe indicar la fecha de baja si el equipo estÃ¡ dado de baja.");
-
-            // ValidaciÃ³n de unicidad de cÃ³digo solo en alta
+                errores.Add("Debe indicar la fecha de baja si el equipo estÃ¡ dado de baja.");            // ValidaciÃ³n de unicidad de cÃ³digo solo en alta
             if (!IsEditMode && !string.IsNullOrWhiteSpace(Equipo.Codigo))
             {
-                var service = LoggingService.GetService<GestLog.Modules.GestionMantenimientos.Interfaces.IEquipoService>();
-                var existente = await service.GetByCodigoAsync(Equipo.Codigo);
-                if (existente != null)
+                var service = LoggingService.GetService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService>();
+                var equipo = await service.GetByCodigoAsync(Equipo.Codigo!);
+                if (equipo != null)
                     errores.Add($"Ya existe un equipo con el cÃ³digo '{Equipo.Codigo}'.");
             }
 
@@ -774,7 +770,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             /// ðŸš€ Carga todos los cÃ³digos existentes de forma asincrÃ³nica
             /// Se llama al abrir el diÃ¡logo para cargar la lista de validaciÃ³n
             /// </summary>
-            public async Task CargarCodigosExistentesAsync(IEquipoService equipoService, bool isEditMode)
+            public async Task CargarCodigosExistentesAsync(GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService equipoService, bool isEditMode)
             {
                 try
                 {

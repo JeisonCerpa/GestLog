@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Services.Core.Logging;

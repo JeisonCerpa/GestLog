@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 
-namespace GestLog.Modules.GestionMantenimientos.Interfaces
+namespace GestLog.Modules.GestionMantenimientos.Interfaces.Data
 {
     public interface IMantenimientoService
     {

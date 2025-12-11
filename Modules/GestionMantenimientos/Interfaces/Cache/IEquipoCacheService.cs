@@ -3,7 +3,7 @@ using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionMantenimientos.Interfaces
+namespace GestLog.Modules.GestionMantenimientos.Interfaces.Cache
 {
     /// <summary>
     /// Interfaz para el servicio de cachÃ© de equipos.

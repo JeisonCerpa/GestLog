@@ -14,7 +14,7 @@ using GestLog.Services.Core.Logging; // ✅ NUEVO: Para IGestLogLogger
 using GestLog.Views.Usuarios;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Services.Data;
 using GestLog.Modules.GestionMantenimientos.Services.Autocomplete;

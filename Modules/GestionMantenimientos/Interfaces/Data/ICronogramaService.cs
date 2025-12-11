@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 
-namespace GestLog.Modules.GestionMantenimientos.Interfaces
+namespace GestLog.Modules.GestionMantenimientos.Interfaces.Data
 {
     public interface ICronogramaService
     {

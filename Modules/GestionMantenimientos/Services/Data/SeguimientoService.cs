@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionMantenimientos.Models;
-using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using System;
 using GestLog.Services.Core.Logging;
 using System.IO;
