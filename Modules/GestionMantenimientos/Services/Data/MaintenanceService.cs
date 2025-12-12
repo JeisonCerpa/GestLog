@@ -9,7 +9,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Services.Core.Logging;
 using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 
 namespace GestLog.Modules.GestionMantenimientos.Services.Data
 {

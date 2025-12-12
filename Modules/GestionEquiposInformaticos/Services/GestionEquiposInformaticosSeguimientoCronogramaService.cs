@@ -7,7 +7,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using CommunityToolkit.Mvvm.Messaging;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services
@@ -66,13 +66,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
 
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("[GestionEquiposInformaticosSeguimientoCronogramaService] Desactivados {CountPlanes} planes y eliminados {CountSeguimientos} seguimientos futuros para equipo {Codigo}", planes.Count, pendientesList.Count, codigoEquipo);
-
-                // Notificar mediante mensajería del módulo de mantenimientos — usar WeakReferenceMessenger
+                _logger.LogInformation("[GestionEquiposInformaticosSeguimientoCronogramaService] Desactivados {CountPlanes} planes y eliminados {CountSeguimientos} seguimientos futuros para equipo {Codigo}", planes.Count, pendientesList.Count, codigoEquipo);                // Notificar mediante mensajería del módulo de mantenimientos — usar WeakReferenceMessenger
                 try
                 {
-                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage(true));
-                    WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage(true));
+                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
                 }
                 catch (Exception mex)
                 {

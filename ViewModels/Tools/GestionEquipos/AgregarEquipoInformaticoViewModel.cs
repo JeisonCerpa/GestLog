@@ -669,12 +669,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                                         return;
                                     }
                                 }
-                            }
-
-                            await transaction.CommitAsync();
+                            }                            await transaction.CommitAsync();
 
                             _logger.LogInformation("Actualización de código completada y datos guardados: {Codigo}", Codigo);
-                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
+                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.Equipos.EquiposActualizadosMessage()); } catch { }
                             MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         }                        
                         catch (Exception ex)
@@ -821,13 +819,11 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                             {
                                 entity.CodigoEquipoAsignado = Codigo;
                             }
-                        }
-
-                        try
+                        }                        try
                         {
                             await dbContext.SaveChangesAsync();
                             _logger.LogInformation("Equipo '{Codigo}' actualizado correctamente.", Codigo);
-                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
+                            try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.Equipos.EquiposActualizadosMessage()); } catch { }
                             MessageBox.Show("Equipo actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         catch (Exception ex)
@@ -942,11 +938,10 @@ namespace GestLog.ViewModels.Tools.GestionEquipos
                         }
                     }
 
-                    try
-                    {
+                    try                {
                         await dbContext.SaveChangesAsync();
                         _logger.LogInformation("Equipo '{Codigo}' creado correctamente.", Codigo);
-                        try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
+                        try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.Equipos.EquiposActualizadosMessage()); } catch { }
                         MessageBox.Show("Equipo guardado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
@@ -1985,11 +1980,9 @@ Get-NetIPConfiguration | Where-Object {
                     p.UsuarioAsignado = null;
                     p.Estado = GestLog.Modules.GestionEquiposInformaticos.Models.Enums.EstadoPeriferico.AlmacenadoFuncionando;
                     p.FechaModificacion = DateTime.Now;
-                }
+                }                await dbContext.SaveChangesAsync();
 
-                await dbContext.SaveChangesAsync();
-
-                try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.EquiposActualizadosMessage()); } catch { }
+                try { WeakReferenceMessenger.Default.Send(new GestLog.Modules.GestionMantenimientos.Messages.Equipos.EquiposActualizadosMessage()); } catch { }
                 try { WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage(Codigo)); } catch { }
 
                 MessageBox.Show("Equipo dado de baja correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);

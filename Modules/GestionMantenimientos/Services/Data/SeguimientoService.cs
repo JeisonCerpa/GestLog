@@ -16,7 +16,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 
 namespace GestLog.Modules.GestionMantenimientos.Services.Data
 {

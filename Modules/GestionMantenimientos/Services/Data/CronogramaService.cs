@@ -15,7 +15,7 @@ using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using CommunityToolkit.Mvvm.Messaging;
-using GestLog.Modules.GestionMantenimientos.Messages;
+using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using System.Globalization;
 
 namespace GestLog.Modules.GestionMantenimientos.Services.Data

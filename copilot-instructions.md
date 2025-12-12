@@ -152,21 +152,18 @@ private async Task ProcessAsync(CancellationToken cancellationToken)
 
 ## 🛡️ Permisos y Feedback Visual en la UI
 
-- Solo se deben implementar y documentar los permisos para las acciones que están disponibles para el usuario en cada módulo.
-- Ejemplo en Gestión de Mantenimientos: únicamente se aplican permisos para Registrar equipo, Editar equipo, Dar de baja equipo y Registrar mantenimiento. No se deben agregar permisos para acciones no presentes en la UI.
+- **Simplificación de permisos**: Cada módulo tiene solo dos permisos: `[Modulo].Acceder` (acceso completo al módulo) y `[Modulo].Eliminar` (eliminar elementos, solo para administradores).
 - Los botones y comandos deben enlazar `IsEnabled` y `Opacity` a las propiedades de permiso del ViewModel usando el convertidor `BooleanToOpacityConverter`.
-- Ejemplo:
+- Ejemplo para Gestión de Equipos Informáticos:
 
 ```xaml
-<Button Content="Registrar equipo" IsEnabled="{Binding CanRegistrarEquipo}" Opacity="{Binding CanRegistrarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
-<Button Content="Editar equipo" IsEnabled="{Binding CanEditarEquipo}" Opacity="{Binding CanEditarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
-<Button Content="Dar de baja" IsEnabled="{Binding CanDarDeBajaEquipo}" Opacity="{Binding CanDarDeBajaEquipo, Converter={StaticResource BooleanToOpacityConverter}}" />
-<Button Content="Registrar mantenimiento" IsEnabled="{Binding CanRegistrarMantenimiento}" Opacity="{Binding CanRegistrarMantenimiento, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Registrar equipo" IsEnabled="{Binding CanAccederGestionEquiposInformaticos}" Opacity="{Binding CanAccederGestionEquiposInformaticos, Converter={StaticResource BooleanToOpacityConverter}}" />
+<Button Content="Eliminar equipo" IsEnabled="{Binding CanEliminarGestionEquiposInformaticos}" Opacity="{Binding CanEliminarGestionEquiposInformaticos, Converter={StaticResource BooleanToOpacityConverter}}" />
 ```
 
 - Si falta configuración (Excel, carpeta, SMTP), el ViewModel expone mensajes claros (`DocumentStatusWarning`) que se muestran en la UI.
 - Para agregar un permiso:
-  1. Declara la propiedad bool en el ViewModel consultando CurrentUserInfo.HasPermission("Permiso")
+  1. Declara la propiedad bool en el ViewModel consultando CurrentUserInfo.HasPermission("[Modulo].Acceder") o "[Modulo].Eliminar"
   2. Usa esa propiedad en el método CanExecute del comando
   3. Enlaza la propiedad en la UI
   4. Documenta el permiso en README y copilot-instructions.md
@@ -175,27 +172,33 @@ private async Task ProcessAsync(CancellationToken cancellationToken)
 
 ## 🔐 Permisos por Módulo
 
-- Todo módulo nuevo debe definir y validar sus propios permisos de acceso y operación.
+- Cada módulo tiene solo dos permisos: `[Modulo].Acceder` (acceso completo al módulo) y `[Modulo].Eliminar` (eliminar elementos, solo para administradores).
 - Los permisos se gestionan por usuario y se consultan mediante la clase `CurrentUserInfo` y el método `HasPermission(string permiso)`.
 - Ejemplo de permisos:
-  - `Herramientas.AccederDaaterProccesor` (acceso al módulo DaaterProccesor)
-  - `DaaterProccesor.ProcesarArchivos` (procesar archivos en DaaterProccesor)
-- Los ViewModels deben exponer propiedades como `CanAccess[Modulo]` y `Can[Accion]` para el binding en la UI.
-- Los comandos deben usar `[RelayCommand(CanExecute = nameof(Can[Accion]))]` para habilitar/deshabilitar acciones según permisos.
+  - `GestionEquiposInformaticos.Acceder` (acceso completo al módulo)
+  - `GestionEquiposInformaticos.Eliminar` (eliminar equipos, solo admins)
+- Los ViewModels deben exponer propiedades como `CanAcceder[Modulo]` y `CanEliminar[Modulo]` para el binding en la UI.
+- Los comandos deben usar `[RelayCommand(CanExecute = nameof(CanAcceder[Modulo]))]` para habilitar/deshabilitar acciones según permisos.
 - La visibilidad y navegación en la UI debe estar condicionada por los permisos del usuario.
 
 ## ➕ ¿Cómo agregar permisos a un módulo nuevo?
 
-1. **Definir los permisos en la base de datos y en el sistema de autenticación.**
+1. **Definir los permisos en la base de datos y en el sistema de autenticación:**
+   - `[Modulo].Acceder`
+   - `[Modulo].Eliminar` (solo para administradores)
+
 2. **Agregar las validaciones en el ViewModel:**
    ```csharp
-   public bool CanAccessMiModulo => _currentUser.HasPermission("Herramientas.AccederMiModulo");
-   public bool CanProcesarMiModulo => _currentUser.HasPermission("MiModulo.Procesar");
+   public bool CanAccederMiModulo => _currentUser.HasPermission("MiModulo.Acceder");
+   public bool CanEliminarMiModulo => _currentUser.HasPermission("MiModulo.Eliminar");
    ```
+
 3. **Exponer los permisos en la UI:**
-   - Usar `{Binding CanAccessMiModulo}` para visibilidad.
-   - Usar `{Binding CanProcesarMiModulo}` para habilitar botones y comandos.
+   - Usar `{Binding CanAccederMiModulo}` para visibilidad y habilitar acciones.
+   - Usar `{Binding CanEliminarMiModulo}` para habilitar botones de eliminar.
+
 4. **Registrar el ViewModel en el contenedor DI con `CurrentUserInfo` inyectado.**
+
 5. **Validar la navegación y mostrar mensajes de acceso denegado si el usuario no tiene permisos.**
 
 ## 📖 Documentar los permisos
@@ -204,7 +207,7 @@ private async Task ProcessAsync(CancellationToken cancellationToken)
 - Ejemplo:
   - **Permisos requeridos:**
     - `Herramientas.AccederMiModulo`
-    - `MiModulo.Procesar`
+    - `MiModulo.Eliminar`
 - Explica cómo se validan y cómo se deben agregar nuevos permisos siguiendo el patrón de DaaterProccesor.
 
 ## 🔑 Persistencia de sesión (Recordar inicio de sesión)
@@ -928,4 +931,5 @@ Use esta refactorización como referencia para reorganizar otros módulos existe
 - ✅ DI centralizado (ServiceCollectionExtensions.cs)
 
 ---
-Última actualización: 11/12/2025
+Última actualización: 12/12/2025
+```
