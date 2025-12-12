@@ -3,7 +3,7 @@ using System;
 using System.Linq; // añadido para OfType
 using System.Threading.Tasks;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
-using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
+using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento;
 using GestLog.Services.Core.Logging;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services
@@ -20,12 +20,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
         public async Task<bool> TryShowAsync(Guid planId, int anioISO, int semanaISO, string usuarioActual)
         {
             try
-            {
-                var plan = await _planService.GetByIdAsync(planId).ConfigureAwait(true); // necesitamos continuar en hilo UI para dialog
+            {                var plan = await _planService.GetByIdAsync(planId).ConfigureAwait(true); // necesitamos continuar en hilo UI para dialog
                 if (plan == null) return false;
                 var vm = new RegistroEjecucionPlanViewModel(_planService, _logger);
                 vm.Load(plan, anioISO, semanaISO, usuarioActual);
-                var dlg = new GestLog.Views.Tools.GestionEquipos.RegistroEjecucionPlanDialog(vm);
+                var dlg = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.RegistroEjecucionPlanDialog(vm);
                 var owner = System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w=>w.IsActive) ?? System.Windows.Application.Current.MainWindow;
                 if (owner != null)
                 {

@@ -1,0 +1,525 @@
+<Window x:Class="GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma.PlanDetalleModalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:GestLog.Converters"
+        Title="Detalle del Plan de Mantenimiento" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed">
+    
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />        <!-- Efectos con colores de GestLog optimizados para renderizado nítido -->
+        <DropShadowEffect x:Key="WindowShadow" 
+                          Color="#504F4E" 
+                          Direction="315" 
+                          ShadowDepth="4" 
+                          Opacity="0.08" 
+                          BlurRadius="8"
+                          RenderingBias="Quality"/>
+                          
+        <DropShadowEffect x:Key="SectionShadow" 
+                          Color="#9D9D9C" 
+                          Direction="270" 
+                          ShadowDepth="1" 
+                          Opacity="0.03" 
+                          BlurRadius="3"
+                          RenderingBias="Quality"/>
+                          
+        <DropShadowEffect x:Key="HeaderShadow" 
+                          Color="#0F7530" 
+                          Direction="270" 
+                          ShadowDepth="1" 
+                          Opacity="0.04" 
+                          BlurRadius="2"
+                          RenderingBias="Quality"/>
+          <!-- Paleta corporativa de GestLog -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/><!-- Verde principal GestLog -->
+        <SolidColorBrush x:Key="PrimaryLightBrush" Color="#2B8E3F"/><!-- Verde secundario -->
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#504F4E"/><!-- Gris oscuro -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#0F7530"/><!-- Verde oscuro para acentos -->
+        <SolidColorBrush x:Key="AccentLightBrush" Color="#7AC943"/><!-- Verde intermedio -->
+        <SolidColorBrush x:Key="LightGrayBrush" Color="#FAFAFA"/><!-- Fondo off-white -->
+        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="BorderLightBrush" Color="#EDF2F7"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/><!-- Gris para texto -->
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/><!-- Gris claro -->
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#9D9D9C"/><!-- Gris muy claro -->
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/><!-- Cartas blancas -->
+        <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="#FAFBFC"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/><!-- Rojo de error -->
+        <SolidColorBrush x:Key="WarningBrush" Color="#F9B233"/><!-- Amarillo/ámbar -->        <!-- Estilos de texto optimizados para renderizado nítido -->
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="19"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+        
+        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0.85"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+        
+        <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="Margin" Value="0,0,8,4"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+        
+        <Style x:Key="ValueTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="LineHeight" Value="18"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+        
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>        <!-- Estados con colores de GestLog optimizados -->
+        <Style x:Key="StatusBadge" TargetType="Border">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#00000015" Direction="270" ShadowDepth="1" BlurRadius="2" Opacity="0.15" RenderingBias="Quality"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DetalleEstadoTexto}" Value="Ejecutado">
+                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/><!-- Verde #118938 -->
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DetalleEstadoTexto}" Value="Atrasado">
+                    <Setter Property="Background" Value="{StaticResource ErrorBrush}"/><!-- Rojo #C0392B -->
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DetalleEstadoTexto}" Value="Pendiente">
+                    <Setter Property="Background" Value="{StaticResource WarningBrush}"/><!-- Ámbar #F9B233 -->
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DetalleEstadoTexto}" Value="En Progreso">
+                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/><!-- Verde oscuro #0F7530 -->
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>        <!-- DataGrid con renderizado nítido optimizado -->
+        <Style x:Key="CorporateDataGrid" TargetType="DataGrid">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BorderLightBrush}"/>
+            <Setter Property="AlternatingRowBackground" Value="{StaticResource SurfaceElevatedBrush}"/>
+            <Setter Property="RowBackground" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="RowHeight" Value="36"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="CanUserResizeColumns" Value="True"/>
+            <Setter Property="CanUserSortColumns" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+        
+        <Style x:Key="DataGridHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                            VerticalAlignment="Center"
+                                            UseLayoutRounding="True"
+                                            SnapsToDevicePixels="True"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>        <!-- Botón de cierre con renderizado optimizado -->
+        <Style x:Key="CloseButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <!-- No depende de glyphs: usamos vector en el Content; mantener FontFamily si se usa texto en otros dialogs -->
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="UseLayoutRounding" Value="True"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="6"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            UseLayoutRounding="True"
+                                            SnapsToDevicePixels="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover más suave y consistente (blanco semitransparente) -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#29FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FFFFFF15"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>    <!-- Overlay con renderizado optimizado -->
+    <Grid MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True"
+          Background="#80000000">          <!-- Animación de entrada simplificada -->
+        <!-- Animación de entrada del overlay removida (sin fade) -->
+        <!-- Panel principal con renderizado optimizado -->
+        <Border Width="680" MaxHeight="720" 
+                Background="{StaticResource SurfaceBrush}" 
+                CornerRadius="8" 
+                Padding="0" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                BorderThickness="1"
+                BorderBrush="{StaticResource BorderBrush}"
+                Effect="{StaticResource WindowShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
+              <!-- Animaciones simples optimizadas -->
+            <!-- Animación de entrada del panel removida (sin fade) -->
+              <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions><!-- Header con gradiente verde GestLog -->
+                <Border Grid.Row="0" 
+                        CornerRadius="8,8,0,0" 
+                        Padding="24,18"
+                        Effect="{StaticResource HeaderShadow}">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#118938" Offset="0"/><!-- Verde principal -->
+                            <GradientStop Color="#2B8E3F" Offset="1"/><!-- Verde secundario -->
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">                            <!-- Icono con tema GestLog optimizado -->
+                            <Border Background="White" 
+                                    CornerRadius="6" 
+                                    Padding="6" 
+                                    Margin="0,0,16,0"
+                                    Width="36" 
+                                    Height="36"
+                                    Effect="{StaticResource SectionShadow}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <!-- Usar glyph Unicode común (⚙ U+2699) para evitar dependencias de fuentes propietarias -->
+                                <TextBlock Text="⚙" FontSize="16" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Detalle del Plan de Mantenimiento" Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Información detallada del cronograma" 
+                                           Style="{StaticResource SubHeaderTextStyle}" 
+                                           Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <Button x:Name="CloseButton"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource CloseButton}"
+                                Click="CloseButton_Click"
+                                ToolTip="Cerrar (Esc)"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,-6,-6,0">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </DockPanel>
+                </Border>                <!-- Contenido principal con fondo mejorado y renderizado optimizado con cache -->                <ScrollViewer Grid.Row="1" 
+                              VerticalScrollBarVisibility="Auto" 
+                              Padding="24,20"
+                              Background="{StaticResource LightGrayBrush}"
+                              UseLayoutRounding="True"
+                              SnapsToDevicePixels="True">
+                    <StackPanel UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                          <!-- Información principal con diseño optimizado y renderizado nítido -->
+                        <Border Background="{StaticResource SurfaceBrush}" 
+                                CornerRadius="6" 
+                                Padding="24" 
+                                Margin="0,0,0,20" 
+                                Effect="{StaticResource SectionShadow}"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource BorderLightBrush}"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Código:" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPlanDetalle.Codigo}" 
+                                           Style="{StaticResource ValueTextStyle}" FontWeight="SemiBold"/>
+                                
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Equipo:" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedPlanDetalle.Nombre}" 
+                                           Style="{StaticResource ValueTextStyle}" FontWeight="Medium"/>
+                                
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Asignado a:" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPlanDetalle.Sede}" 
+                                           Style="{StaticResource ValueTextStyle}"/>
+                                
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Estado:" Style="{StaticResource LabelTextStyle}"/>
+                                <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource StatusBadge}">
+                                    <TextBlock Text="{Binding DetalleEstadoTexto}" Style="{StaticResource StatusText}"/>
+                                </Border>
+                                
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="F. Objetivo:" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DetalleFechaObjetivo, StringFormat='dd/MM/yyyy'}" 
+                                           Style="{StaticResource ValueTextStyle}"/>
+                                
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="F. Ejecución:" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DetalleFechaEjecucion, StringFormat='dd/MM/yyyy HH:mm'}" 
+                                           Style="{StaticResource ValueTextStyle}"/>
+                                
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Resumen:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding DetalleResumen}" 
+                                           Style="{StaticResource ValueTextStyle}"/>
+                            </Grid>
+                        </Border>                        <!-- Lista de verificación con diseño mejorado y renderizado nítido -->
+                        <StackPanel>
+                            <Border Background="{StaticResource SurfaceBrush}" 
+                                    CornerRadius="6" 
+                                    Padding="24,20,24,24" 
+                                    Effect="{StaticResource SectionShadow}"
+                                    BorderThickness="1"
+                                    BorderBrush="{StaticResource BorderLightBrush}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
+                                    <DockPanel Margin="0,0,0,20">                                        <!-- Icono con tema GestLog optimizado -->
+                                        <Border DockPanel.Dock="Left" 
+                                                Background="{StaticResource PrimaryBrush}" 
+                                                CornerRadius="4" 
+                                                Padding="8,6" 
+                                                Margin="0,0,12,0"
+                                                Effect="{StaticResource SectionShadow}"
+                                                UseLayoutRounding="True"
+                                                SnapsToDevicePixels="True">
+                                            <TextBlock Text="&#xE8FD;" 
+                                                       FontFamily="Segoe MDL2 Assets" 
+                                                       FontSize="13" 
+                                                       Foreground="White"
+                                                       VerticalAlignment="Center"
+                                                       UseLayoutRounding="True"
+                                                       SnapsToDevicePixels="True"
+                                                       TextOptions.TextFormattingMode="Display"
+                                                       TextOptions.TextRenderingMode="ClearType"/>
+                                        </Border>
+                                        <TextBlock Text="Lista de Verificación" 
+                                                   Style="{StaticResource SectionTitleStyle}"
+                                                   VerticalAlignment="Center"/>
+                                    </DockPanel>                                    <!-- DataGrid contenedor con renderizado optimizado -->
+                                    <Border CornerRadius="4" 
+                                            BorderThickness="1" 
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            Effect="{StaticResource SectionShadow}"
+                                            UseLayoutRounding="True"
+                                            SnapsToDevicePixels="True">
+                                        <DataGrid ItemsSource="{Binding DetalleChecklist}" 
+                                                  Style="{StaticResource CorporateDataGrid}"
+                                                  AutoGenerateColumns="False" 
+                                                  CanUserAddRows="False" 
+                                                  MinHeight="160" 
+                                                  MaxHeight="320">
+                                            <DataGrid.Columns>                                                <DataGridTextColumn Header="ID" 
+                                                                    Binding="{Binding Id}" 
+                                                                    Width="60"
+                                                                    HeaderStyle="{StaticResource DataGridHeader}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="Padding" Value="8"/>
+                                                            <Setter Property="UseLayoutRounding" Value="True"/>
+                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                
+                                                <DataGridTextColumn Header="Descripción" 
+                                                                    Binding="{Binding Descripcion}" 
+                                                                    Width="*"
+                                                                    HeaderStyle="{StaticResource DataGridHeader}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="10,8"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                                            <Setter Property="FontSize" Value="12"/>
+                                                            <Setter Property="LineHeight" Value="16"/>
+                                                            <Setter Property="UseLayoutRounding" Value="True"/>
+                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                
+                                                <DataGridTextColumn Header="Estado" 
+                                                                    Binding="{Binding Estado}" 
+                                                                    Width="90"
+                                                                    HeaderStyle="{StaticResource DataGridHeader}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="FontWeight" Value="Medium"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                                            <Setter Property="Padding" Value="8"/>
+                                                            <Setter Property="UseLayoutRounding" Value="True"/>
+                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                                            <Style.Triggers>
+                                                                <!-- Ocultar texto cuando el estado es 'Pendiente' -->
+                                                                <DataTrigger Binding="{Binding Estado}" Value="Pendiente">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                                
+                                                <DataGridTextColumn Header="Observaciones" 
+                                                                    Binding="{Binding Observacion}" 
+                                                                    Width="180"
+                                                                    HeaderStyle="{StaticResource DataGridHeader}">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="10,8"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                                            <Setter Property="FontStyle" Value="Italic"/>
+                                                            <Setter Property="FontSize" Value="11"/>
+                                                            <Setter Property="LineHeight" Value="15"/>
+                                                            <Setter Property="UseLayoutRounding" Value="True"/>
+                                                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                                            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                                                            <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

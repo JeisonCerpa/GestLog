@@ -200,12 +200,11 @@ namespace GestLog.Views.Tools
             {
                 System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
-            }
-            try
+            }            try
             {
                 var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-                var gestionVm = serviceProvider.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
-                var gestionEquiposView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+                var gestionVm = serviceProvider.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel)) as GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel;
+                var gestionEquiposView = new GestLog.Modules.GestionEquiposInformaticos.Views.Equipos.GestionEquiposHomeView();
                 if (gestionVm != null)
                 {
                     gestionEquiposView.DataContext = gestionVm;
@@ -227,12 +226,11 @@ namespace GestLog.Views.Tools
             {
                 System.Windows.MessageBox.Show("No tiene permisos para acceder a Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
-            }
-            try
+            }            try
             {
                 var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-                var gestionVm = serviceProvider.GetService(typeof(GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel)) as GestLog.ViewModels.Tools.GestionEquipos.GestionEquiposHomeViewModel;
-                var equiposInformaticosView = new GestLog.Views.Tools.GestionEquipos.GestionEquiposHomeView();
+                var gestionVm = serviceProvider.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel)) as GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel;
+                var equiposInformaticosView = new GestLog.Modules.GestionEquiposInformaticos.Views.Equipos.GestionEquiposHomeView();
                 if (gestionVm != null)
                 {
                     equiposInformaticosView.DataContext = gestionVm;

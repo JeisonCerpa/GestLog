@@ -8,11 +8,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services;
 /// ImplementaciÃ³n WPF del servicio de diÃ¡logo para registrar mantenimiento de equipo.
 /// </summary>
 public class RegistroMantenimientoEquipoDialogService : IRegistroMantenimientoEquipoDialogService
-{
-    public bool TryShowRegistroDialog(SeguimientoMantenimientoDto seguimientoBase, out SeguimientoMantenimientoDto? resultado)
+{    public bool TryShowRegistroDialog(SeguimientoMantenimientoDto seguimientoBase, out SeguimientoMantenimientoDto? resultado)
     {
         resultado = null;
-        var dialog = new GestLog.Views.Tools.GestionEquipos.RegistroMantenimientoEquipoDialog();
+        var dialog = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.RegistroMantenimientoEquipoDialog();
         dialog.CargarDesde(seguimientoBase);
         var parentWindow = System.Windows.Application.Current.Windows
             .OfType<System.Windows.Window>()

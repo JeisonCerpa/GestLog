@@ -1,0 +1,338 @@
+<UserControl x:Class="GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos.PerifericosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:GestLog.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000"
+             Background="#FAFAFA">
+
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+        <conv:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
+        <conv:EstadoToBoolConverter x:Key="EstadoToDadoDeBajaConverter" TargetEstado="DadoDeBaja"/>
+        <conv:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
+
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/>
+
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0.9"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="StatsTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Estado, Converter={StaticResource EstadoToDadoDeBajaConverter}}" Value="True">
+                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
+            <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
+        </Style>
+
+        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderBrush" Value="#E5E5E5"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header: estructura idéntica a EquiposInformaticosView -->
+        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#118938" Offset="0"/>
+                    <GradientStop Color="#2B8E3F" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
+                        <TextBlock Text="🖱" FontFamily="Segoe UI Emoji" FontSize="26" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Gestión de Periféricos" Style="{StaticResource HeaderTextStyle}"/>
+                        <TextBlock Text="Administración de periféricos informáticos" Style="{StaticResource SubHeaderTextStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource SubHeaderTextStyle}" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Estadísticas: mantener estructura idéntica, adaptando bindings a Periféricos -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding TotalPerifericos}" Style="{StaticResource StatsTextStyle}"/>
+                    <TextBlock Text="Total" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding PerifericosEnUso}" Style="{StaticResource StatsTextStyle}" Foreground="#27AE60"/>
+                    <TextBlock Text="En Uso" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding PerifericosAlmacenados}" Style="{StaticResource StatsTextStyle}" Foreground="#F39C12"/>
+                    <TextBlock Text="Almacenados" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding PerifericosDadosBaja}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource ErrorBrush}"/>
+                    <TextBlock Text="Dados de Baja" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
+                    <Button Content="&#xE72C;" Command="{Binding CargarPerifericosCommand}" ToolTip="Actualizar lista de periféricos" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                    <Button Content="&#xE710;" Command="{Binding AgregarPerifericoCommand}" ToolTip="Agregar nuevo periférico" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal: filtros + DataGrid (idéntico en estructura al de Equipos) -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Filtros: igual estructura que Equipos pero con binding Filtro -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
+                        <TextBox Width="300" Padding="8" VerticalAlignment="Center" Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"/>
+                        <!-- En Equipos había botón 'Exportar filtrados' ligado a Equipos; lo omitimos si no existe en ViewModel -->
+                    </StackPanel>
+
+                    <!-- Toggle a la derecha (igual que Equipos) -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <ToggleButton x:Name="toggleDadoDeBaja" Width="110" Height="32" IsChecked="{Binding ShowDadoDeBaja, Mode=TwoWay}" ToolTip="Mostrar periféricos dados de baja" VerticalAlignment="Center">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                    <Setter Property="BorderBrush" Value="#DDD"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Grid>
+                                                    <Border x:Name="SwitchBorder" Background="#F0F0F0" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16" Height="32" Width="110">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect Color="#A85B00" BlurRadius="8" ShadowDepth="1" Opacity="0.18"/>
+                                                        </Border.Effect>
+                                                    </Border>
+                                                    <Ellipse x:Name="SwitchKnob" Width="24" Height="24" Margin="4,4,0,4" Fill="#C8C8C8" HorizontalAlignment="Left"/>
+                                                    <TextBlock x:Name="SwitchText" Text="Dados de baja" Foreground="#504F4E" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,18,0"/>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#888"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="82,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#888" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="False">
+                                                        <Setter TargetName="SwitchKnob" Property="Fill" Value="#C8C8C8"/>
+                                                        <Setter TargetName="SwitchBorder" Property="Background" Value="#F0F0F0"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Margin" Value="4,4,0,4"/>
+                                                        <Setter TargetName="SwitchKnob" Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect Color="#706F6F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter TargetName="SwitchText" Property="Foreground" Value="#504F4E"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                    </StackPanel>
+                </Grid>                <!-- DataGrid con estilos completos (idéntico a EquiposInformaticosView) -->
+                <DataGrid Grid.Row="1" ItemsSource="{Binding PerifericosView}" SelectedItem="{Binding PerifericoSeleccionado}"
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False" 
+                          CanUserDeleteRows="False"
+                          SelectionMode="Single" 
+                          RowHeaderWidth="0" 
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="{StaticResource BorderBrush}" 
+                          AlternatingRowBackground="#F9F9F9"
+                          FontSize="13" 
+                          RowHeight="40"
+                          RowStyle="{StaticResource DataGridRowEstadoStyle}"
+                          ColumnWidth="*"
+                          EnableColumnVirtualization="False"
+                          VirtualizingPanel.VirtualizationMode="Standard"
+                          ScrollViewer.CanContentScroll="True">
+
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="110" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Dispositivo" Binding="{Binding Dispositivo}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Asignación" Binding="{Binding TextoAsignacion}" Width="*" MinWidth="240" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" Width="SizeToCells" MinWidth="160" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="EstadoOrden">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
+                                        <Ellipse Width="14" Height="14" VerticalAlignment="Center" Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}" Stroke="#BFBFBF" StrokeThickness="0.5"/>
+                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="120" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Detalles" 
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding DataContext.VerDetallesPerifericoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}" 
+                                            MinWidth="88" Width="Auto" Height="32" HorizontalAlignment="Center" Margin="4,0"
+                                            Focusable="False"
+                                            IsHitTestVisible="True"
+                                            ClickMode="Release"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Botones de acción -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <!-- espacio para acciones adicionales si se requieren -->
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Loading overlay -->
+        <Border Grid.Row="0" Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,16"/>
+                <TextBlock Text="Cargando..." Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

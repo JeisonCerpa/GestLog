@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels;
+using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma;
 
 namespace GestLog.Converters
 {

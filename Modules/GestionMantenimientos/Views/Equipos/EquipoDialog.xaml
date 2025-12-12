@@ -10,7 +10,7 @@
         <!-- Referencia al diccionario estándar de modales -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Views/Tools/GestionEquipos/ModalWindowsStandard.xaml" />
+                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
