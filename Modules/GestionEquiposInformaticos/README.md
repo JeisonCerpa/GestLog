@@ -1,5 +1,39 @@
 # 📖 README - Gestión de Equipos Informáticos
 
+## 🏗️ Estructura del Módulo
+
+Este módulo está organizado siguiendo el patrón de separación de responsabilidades (SRP):
+
+```
+GestionEquiposInformaticos/
+├── Services/                  # Lógica de negocio por tipo
+│   ├── Data/                  # CRUD y operaciones de datos
+│   ├── Autocomplete/          # Servicios de autocompletado
+│   ├── Dialog/                # Servicios de presentación (diálogos)
+│   └── ServiceCollectionExtensions.cs
+├── Interfaces/                # Contratos espejo de Services
+│   ├── Data/
+│   ├── Autocomplete/
+│   └── Dialog/
+├── ViewModels/                # Lógica de presentación por feature
+│   ├── Equipos/
+│   ├── Cronograma/
+│   ├── Mantenimiento/
+│   └── Perifericos/
+├── Views/                     # Vistas XAML por feature
+│   ├── Equipos/
+│   ├── Cronograma/
+│   ├── Mantenimiento/
+│   └── Perifericos/
+├── Models/                    # DTOs, Entities, Enums
+│   ├── DTOs/
+│   ├── Entities/
+│   └── Enums/
+├── Messages/                  # Mensajería MVVM (opcional)
+└── README.md
+
+```
+
 ## 🔐 Permisos del Módulo
 
 Este módulo implementa control granular de permisos para todas las acciones disponibles en la UI y lógica de negocio. Los permisos se gestionan por usuario y se consultan mediante la clase `CurrentUserInfo` y el método `HasPermission(string permiso)`. Todas las acciones relevantes están protegidas y reflejadas visualmente en la interfaz.
@@ -62,4 +96,36 @@ Todos los comandos usan `[RelayCommand(CanExecute = nameof(Can[Accion]))]` para 
 
 ---
 
-*Actualizado: Septiembre 2025*
+## 🔧 Registro de Servicios en DI
+
+Todos los servicios del módulo se registran a través de `ServiceCollectionExtensions.cs`:
+
+```csharp
+// En Startup.UsuariosPersonas.cs
+services.AddGestionEquiposInformaticosServices();
+```
+
+### Para agregar un nuevo servicio:
+
+1. **Crea la interfaz** en la carpeta correspondiente:
+   - `Interfaces/Data/` para servicios CRUD
+   - `Interfaces/Autocomplete/` para autocompletado
+   - `Interfaces/Dialog/` para diálogos
+
+2. **Implementa el servicio** en la carpeta correspondiente de `Services/`
+
+3. **Registra en ServiceCollectionExtensions.cs**:
+```csharp
+public static IServiceCollection AddGestionEquiposInformaticosServices(this IServiceCollection services)
+{
+    // ...
+    services.AddScoped<IMyService, MyService>(); // Nuevo servicio
+    // ...
+    return services;
+}
+```
+
+---
+
+*Actualizado: Diciembre 2025*  
+*Versión: 2.0 (Refactorización de Services e Interfaces)*

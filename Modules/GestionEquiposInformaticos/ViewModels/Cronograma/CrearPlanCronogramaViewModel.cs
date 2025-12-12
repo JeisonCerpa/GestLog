@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Services.Core.Logging;
 using System;

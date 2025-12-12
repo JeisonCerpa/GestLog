@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces
+namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data
 {
     /// <summary>
     /// Servicio del módulo GestionEquiposInformaticos responsable de: 

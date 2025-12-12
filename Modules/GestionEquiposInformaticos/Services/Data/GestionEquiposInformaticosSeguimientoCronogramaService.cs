@@ -3,14 +3,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using CommunityToolkit.Mvvm.Messaging;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Services
+namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 {
     public class GestionEquiposInformaticosSeguimientoCronogramaService : IGestionEquiposInformaticosSeguimientoCronogramaService
     {

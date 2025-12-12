@@ -1,12 +1,12 @@
-// filepath: e:\Softwares\GestLog\Modules\GestionEquiposInformaticos\Services\RegistroEjecucionPlanDialogService.cs
 using System;
 using System.Linq; // añadido para OfType
 using System.Threading.Tasks;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento;
 using GestLog.Services.Core.Logging;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Services
+namespace GestLog.Modules.GestionEquiposInformaticos.Services.Dialog
 {
     public class RegistroEjecucionPlanDialogService : IRegistroEjecucionPlanDialogService
     {

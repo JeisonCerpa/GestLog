@@ -1,7 +1,7 @@
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma;
 using System.Windows;
 using System.Windows.Controls;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
@@ -15,13 +15,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
     /// <summary>
     /// Interaction logic for GestionarPlanesDialog.xaml
     /// </summary>
-    public partial class GestionarPlanesDialog : Window
-    {
+    public partial class GestionarPlanesDialog : Window    {
         private readonly IPlanCronogramaService _planCronogramaService;
         private readonly IGestLogLogger _logger;
         // Servicio de equipos y cache local para validaciones durante edición
-        private GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService? _equipoService;
-        private System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> _equiposCache = new();        public ObservableCollection<PlanCronogramaEquipo> Planes { get; set; } = new();
+        private GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService? _equipoService;
+        private System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity> _equiposCache = new();public ObservableCollection<PlanCronogramaEquipo> Planes { get; set; } = new();
 
         private string _statusMessage = "Listo";
         public string StatusMessage 
@@ -87,7 +86,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
                     var sp = app?.ServiceProvider;
                     if (sp != null)
                     {
-                        _equipoService = sp.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService)) as GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService;
+                        _equipoService = sp.GetService(typeof(GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService)) as GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService;
                     }
                 }
                 catch (Exception ex)

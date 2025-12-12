@@ -53,12 +53,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
                 {
                     System.Windows.MessageBox.Show("Error: No se pudo acceder a las dependencias de la aplicación.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }
-
-                var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
+                }                var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
                 var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
-                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
+                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IGestionEquiposInformaticosSeguimientoCronogramaService>();
                 
                 DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
             }
@@ -66,7 +64,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
             {
                 System.Windows.MessageBox.Show($"Error al cargar el ViewModel: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }        /// <summary>
+        }/// <summary>
         /// Configura el overlay de la ventana modal para cubrir exactamente la pantalla del Owner.
         /// Usa WindowState.Maximized para soporte multi-monitor robusto sin problemas de DPI.
         /// Método basado en estándar ModalWindowsStandard.md
@@ -252,7 +250,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
                                 var dbContextFactory = serviceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.IDbContextFactory<GestLogDbContext>>();
                                 var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                                 var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
-                                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService>();
+                                var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IGestionEquiposInformaticosSeguimientoCronogramaService>();
                                 
                                 this.DataContext = new DetallesEquipoInformaticoViewModel(equipoEditado, dbContextFactory, databaseService, logger, seguimientoService);
                             }

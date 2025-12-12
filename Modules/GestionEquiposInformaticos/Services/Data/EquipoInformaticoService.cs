@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Services.Core.Logging;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Services
+namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 {
     public class EquipoInformaticoService : IEquipoInformaticoService
     {

@@ -14,7 +14,7 @@ using GestLog.ViewModels.Base;
 using GestLog.Services.Interfaces;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
 {

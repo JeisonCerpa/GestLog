@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces
+namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data
 {
     public interface IEquipoInformaticoService
     {

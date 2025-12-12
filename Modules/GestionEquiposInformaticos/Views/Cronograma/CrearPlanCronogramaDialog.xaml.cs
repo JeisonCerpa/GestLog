@@ -17,12 +17,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
 
         public CrearPlanCronogramaDialog(string? codigoEquipoInicial = null)
         {
-            InitializeComponent();
-
-            // Obtener ViewModel del contenedor DI
+            InitializeComponent();            // Obtener ViewModel del contenedor DI
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var planService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService>();
-            var equipoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService>();
+            var planService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
+            var equipoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
             var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
             
             _viewModel = new CrearPlanCronogramaViewModel(planService, equipoService, logger);

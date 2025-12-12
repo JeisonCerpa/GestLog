@@ -3,7 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data; // Reutilizamos servicios existentes de cronograma
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Services.Core.Logging;
 using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh

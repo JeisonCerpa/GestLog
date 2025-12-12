@@ -1,48 +1,47 @@
 using GestLog.Modules.DatabaseConnection;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Services
+namespace GestLog.Modules.GestionEquiposInformaticos.Services.Autocomplete
 {
     /// <summary>
-    /// Servicio para obtener valores únicos de dispositivos desde la tabla PerifericosEquiposInformaticos
+    /// Servicio para obtener valores únicos de marcas desde la tabla PerifericosEquiposInformaticos
     /// con funcionalidad de autocompletado y aprendizaje automático
     /// </summary>
-    public class DispositivoAutocompletadoService
+    public class MarcaAutocompletadoService : IMarcaAutocompletadoService
     {
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
 
-        public DispositivoAutocompletadoService(IDbContextFactory<GestLogDbContext> dbContextFactory)
+        public MarcaAutocompletadoService(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }
 
         /// <summary>
-        /// Obtiene todos los dispositivos únicos ordenados por frecuencia de uso
+        /// Obtiene todas las marcas únicas ordenadas por frecuencia de uso
         /// </summary>
         public async Task<List<string>> ObtenerTodosAsync()
         {
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             
-            var dispositivos = await context.PerifericosEquiposInformaticos
-                .Where(p => !string.IsNullOrEmpty(p.Dispositivo))
-                .GroupBy(p => p.Dispositivo.Trim().ToLower())
+            var marcas = await context.PerifericosEquiposInformaticos
+                .Where(p => !string.IsNullOrEmpty(p.Marca))
+                .GroupBy(p => p.Marca!.Trim().ToLower())
                 .Select(g => new { 
-                    Dispositivo = g.First().Dispositivo.Trim(), 
+                    Marca = g.First().Marca!.Trim(), 
                     Cantidad = g.Count() 
                 })
                 .OrderByDescending(x => x.Cantidad)
-                .ThenBy(x => x.Dispositivo)
-                .Select(x => x.Dispositivo)
+                .ThenBy(x => x.Marca)
+                .Select(x => x.Marca)
                 .ToListAsync();
 
-            return dispositivos;
-        }
-
-        /// <summary>
-        /// Busca dispositivos que contengan el texto especificado
+            return marcas;
+        }        /// <summary>
+        /// Obtiene marcas que coinciden con el filtro especificado
         /// </summary>
         public async Task<List<string>> BuscarAsync(string filtro)
         {
@@ -53,57 +52,57 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             
             var filtroLower = filtro.Trim().ToLower();
             
-            var dispositivos = await context.PerifericosEquiposInformaticos
-                .Where(p => !string.IsNullOrEmpty(p.Dispositivo) && 
-                           p.Dispositivo.ToLower().Contains(filtroLower))
-                .GroupBy(p => p.Dispositivo.Trim().ToLower())
+            var marcas = await context.PerifericosEquiposInformaticos
+                .Where(p => !string.IsNullOrEmpty(p.Marca) && 
+                           p.Marca!.ToLower().Contains(filtroLower))
+                .GroupBy(p => p.Marca!.Trim().ToLower())
                 .Select(g => new { 
-                    Dispositivo = g.First().Dispositivo.Trim(), 
+                    Marca = g.First().Marca!.Trim(), 
                     Cantidad = g.Count() 
                 })
                 .OrderByDescending(x => x.Cantidad)
-                .ThenBy(x => x.Dispositivo)
-                .Select(x => x.Dispositivo)
+                .ThenBy(x => x.Marca)
+                .Select(x => x.Marca)
                 .ToListAsync();
 
-            return dispositivos;
+            return marcas;
         }
 
         /// <summary>
-        /// Obtiene estadísticas de uso de dispositivos
+        /// Obtiene estadísticas de uso de marcas
         /// </summary>
         public async Task<Dictionary<string, int>> ObtenerEstadisticasAsync()
         {
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             
             var estadisticas = await context.PerifericosEquiposInformaticos
-                .Where(p => !string.IsNullOrEmpty(p.Dispositivo))
-                .GroupBy(p => p.Dispositivo.Trim())
+                .Where(p => !string.IsNullOrEmpty(p.Marca))
+                .GroupBy(p => p.Marca!.Trim())
                 .ToDictionaryAsync(g => g.Key, g => g.Count());
 
             return estadisticas;
         }
 
         /// <summary>
-        /// Obtiene los dispositivos más utilizados (top N)
+        /// Obtiene las marcas más utilizadas (top N)
         /// </summary>
-        public async Task<List<string>> ObtenerMasUtilizadosAsync(int limite = 10)
+        public async Task<List<string>> ObtenerMasUtilizadasAsync(int limite = 10)
         {
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             
-            var dispositivos = await context.PerifericosEquiposInformaticos
-                .Where(p => !string.IsNullOrEmpty(p.Dispositivo))
-                .GroupBy(p => p.Dispositivo.Trim().ToLower())
+            var marcas = await context.PerifericosEquiposInformaticos
+                .Where(p => !string.IsNullOrEmpty(p.Marca))
+                .GroupBy(p => p.Marca!.Trim().ToLower())
                 .Select(g => new { 
-                    Dispositivo = g.First().Dispositivo.Trim(), 
+                    Marca = g.First().Marca!.Trim(), 
                     Cantidad = g.Count() 
                 })
                 .OrderByDescending(x => x.Cantidad)
                 .Take(limite)
-                .Select(x => x.Dispositivo)
+                .Select(x => x.Marca)
                 .ToListAsync();
 
-            return dispositivos;
+            return marcas;
         }
     }
 }

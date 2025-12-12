@@ -20,7 +20,9 @@ using GestLog.Modules.GestionMantenimientos.Services.Data;
 using GestLog.Modules.GestionMantenimientos.Services.Autocomplete;
 using GestLog.Modules.GestionMantenimientos.Services.Cache;
 using GestLog.Modules.GestionMantenimientos.ViewModels;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
 
 namespace GestLog
@@ -83,41 +85,34 @@ namespace GestLog
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel(passwordManagementService, logger);
             });// Servicios y ViewModels para Gestión de Mantenimientos
-            services.AddScoped<IMantenimientoService, MaintenanceService>();
-              // Servicios para Gestión de Equipos Informáticos
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.PlanCronogramaService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService, GestLog.Modules.GestionEquiposInformaticos.Services.EquipoInformaticoService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroMantenimientoEquipoDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroMantenimientoEquipoDialogService>();
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService, GestLog.Modules.GestionEquiposInformaticos.Services.RegistroEjecucionPlanDialogService>();
-            // Servicio del módulo GestionEquiposInformaticos para desactivar planes y eliminar seguimientos futuros al dar de baja un equipo
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IGestionEquiposInformaticosSeguimientoCronogramaService, GestLog.Modules.GestionEquiposInformaticos.Services.GestionEquiposInformaticosSeguimientoCronogramaService>();
-              // Servicios de autocompletado para periféricos
-            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.DispositivoAutocompletadoService>();            services.AddScoped<GestLog.Modules.GestionEquiposInformaticos.Services.MarcaAutocompletadoService>();            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
+            services.AddScoped<IMantenimientoService, MaintenanceService>();            // ✅ Servicios para Gestión de Equipos Informáticos (Data, Autocomplete, Dialog)            services.AddGestionEquiposInformaticosServices();
+            
+            // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.ClasificacionAutocompletadoService>();
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.CompradoAAutocompletadoService>();
-            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.MarcaAutocompletadoService>();            // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
+            services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.MarcaAutocompletadoService>();
+              // Registrar ViewModels: CronogramaDiario como Transient (instancia por vista), el registrador es transient (modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel>(sp =>
             {
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService>();
-                var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService>();
-                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService>();
+                var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
+                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
                 var usuarioService = sp.GetRequiredService<IUsuarioService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                var registroDialogService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroMantenimientoEquipoDialogService>();
-                var registroEjecucionService = sp.GetService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IRegistroEjecucionPlanDialogService>();
+                var registroDialogService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog.IRegistroMantenimientoEquipoDialogService>();
+                var registroEjecucionService = sp.GetService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog.IRegistroEjecucionPlanDialogService>();
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel(
                     cronogramaService, planService, equipoService, usuarioService, seguimientoService, 
                     currentUserService, databaseService, logger, registroDialogService, registroEjecucionService);
             });
-            
-            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
+              // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel>(sp =>
             {
-                var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IPlanCronogramaService>();
-                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.IEquipoInformaticoService>();
+                var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
+                var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);

@@ -1,7 +1,8 @@
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
-using GestLog.Modules.GestionEquiposInformaticos.Services;
+using GestLog.Modules.GestionEquiposInformaticos.Services.Autocomplete;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -34,11 +35,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
     public partial class PerifericoDialogViewModel : ObservableObject
     {
         // Helper para obtener logger desde el contenedor DI del App
-        private IGestLogLogger? GetLogger() => ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IGestLogLogger>();
-
-        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
-        private readonly DispositivoAutocompletadoService _dispositivoService;
-        private readonly MarcaAutocompletadoService _marcaService;
+        private IGestLogLogger? GetLogger() => ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IGestLogLogger>();        private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        private readonly IDispositivoAutocompletadoService _dispositivoService;
+        private readonly IMarcaAutocompletadoService _marcaService;
 
         [ObservableProperty]
         private PerifericoEquipoInformaticoDto perifericoActual = new();

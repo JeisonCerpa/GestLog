@@ -6,7 +6,7 @@ using GestLog.Services.Core.Logging;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces; // añadido para IPlanCronogramaService
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data; // añadido para IPlanCronogramaService
 using System.Collections.Specialized; // para CollectionChanged
 using System.ComponentModel; // para PropertyChanged
 using System.Text;

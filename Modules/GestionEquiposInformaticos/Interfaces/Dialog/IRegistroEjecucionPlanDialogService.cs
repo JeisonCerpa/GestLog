@@ -1,8 +1,7 @@
-// filepath: e:\Softwares\GestLog\Modules\GestionEquiposInformaticos\Interfaces\IRegistroEjecucionPlanDialogService.cs
 using System;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces
+namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog
 {
     /// <summary>
     /// Servicio de presentación para registrar la ejecución semanal (EjecucionSemanal) de un plan.
