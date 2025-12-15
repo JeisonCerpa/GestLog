@@ -17,8 +17,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para mostrar detalles de un equipo informático específico.
     /// ✅ MIGRADO: Hereda de DatabaseAwareViewModel para auto-refresh automático con timeout ultrarrápido.
     /// </summary>
@@ -27,6 +26,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         #region ✅ NUEVAS DEPENDENCIAS - AUTO-REFRESH
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         private readonly IGestionEquiposInformaticosSeguimientoCronogramaService _seguimientoService;
+        private readonly IMantenimientoCorrectivoService? _mantenimientoCorrectivoService;
         #endregion
 
         #region Propiedades del Equipo
@@ -91,8 +91,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             : "Modificado: -";
         #endregion
 
-        #region ✅ CONSTRUCTOR MIGRADO - DatabaseAwareViewModel
-        /// <summary>
+        #region ✅ CONSTRUCTOR MIGRADO - DatabaseAwareViewModel        /// <summary>
         /// Constructor migrado a DatabaseAwareViewModel con auto-refresh automático
         /// </summary>
         public DetallesEquipoInformaticoViewModel(
@@ -100,11 +99,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             IDatabaseConnectionService databaseService,
             IGestLogLogger logger,
-            IGestionEquiposInformaticosSeguimientoCronogramaService seguimientoService)
+            IGestionEquiposInformaticosSeguimientoCronogramaService seguimientoService,
+            IMantenimientoCorrectivoService? mantenimientoCorrectivoService = null)
             : base(databaseService, logger) // ✅ MIGRADO: Llama al constructor base para auto-refresh
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _seguimientoService = seguimientoService ?? throw new ArgumentNullException(nameof(seguimientoService));
+            _mantenimientoCorrectivoService = mantenimientoCorrectivoService;
             Equipo = equipo ?? throw new ArgumentNullException(nameof(equipo));
 
             // Inicializar colecciones vacías
@@ -273,11 +274,33 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         #region Métodos de Negocio (Estados del Equipo)        /// <summary>
         /// Intenta dar de baja el equipo: si hay DbContext persiste los cambios; si no, actualiza la entidad en memoria.
         /// Devuelve true si la operación se completó (aunque sea solo en memoria), false si hubo error fatal.
+        /// ✅ ACTUALIZADO: Valida que no haya mantenimientos en estado "EnReparacion"
         /// </summary>
         public bool DarDeBaja(out string mensaje, out bool persistedToDb)
         {
             try
             {
+                // ✅ PASO 11: Validar que no haya mantenimientos en progreso
+                if (_mantenimientoCorrectivoService != null)
+                {
+                    var tarea = Task.Run(async () =>
+                    {
+                        return await _mantenimientoCorrectivoService.ExisteMantenimientoEnProgresoAsync(
+                            equipoInformaticoId: Equipo.Codigo.GetHashCode()); // Usar hash del código como ID
+                    });
+                    
+                    tarea.Wait();
+                    bool existeEnProgreso = tarea.Result;
+                    
+                    if (existeEnProgreso)
+                    {
+                        mensaje = $"⚠️ No se puede dar de baja este equipo. Hay mantenimientos correctivos en reparación actualmente.\n\n" +
+                                  "Por favor, complete o cancele los mantenimientos antes de dar de baja el equipo.";
+                        persistedToDb = false;
+                        return false;
+                    }
+                }
+
                 return SetEstado("Dado de baja", out mensaje, out persistedToDb);
             }
             catch (Exception ex)

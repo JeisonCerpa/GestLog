@@ -1,293 +1,279 @@
-Estándar para ventanas modales (Agregar / Editar / Dialog)
-===========================================================
+# Estándar para Ventanas Modales (Diálogos)
 
-Propósito
---------
-Documento de referencia para diseñar y desarrollar ventanas modales coherentes en GestLog: ventanas de tipo agregar, editar, detalle y dialog. Describe estructura visual, comportamiento (overlay, cierre), accesibilidad y recursos recomendados para mantener consistencia entre vistas como `PlanDetalleModalWindow` y `RegistroEjecucionPlanDialog`.
+Guía rápida para crear ventanas modales consistentes en GestLog.
 
-Principios generales
---------------------
-- Visual coherente con la identidad (colores, corner radius, sombras suaves).
-- Overlay semitransparente que cubre la ventana padre y evita interacción detrás del modal.
-- Ventana centrada con tarjeta (card) como contenedor del contenido.
-- Controles accesibles (contraste alto para acciones principales y para botón cerrar "X").
-- Evitar animaciones innecesarias al abrir (sin fade por defecto) para respuestas inmediatas.
-
-Anatomía de la ventana
-----------------------
-1. Window (host):
-   - WindowStyle="None"
-   - AllowsTransparency="True"
-   - Background="Transparent"
-   - WindowStartupLocation="CenterOwner"
-   - SizeToContent: recomendamos usar Manual cuando se necesita que el overlay cubra la ventana owner y se usará un método como `ConfigurarParaVentanaPadre` que fije Left/Top/Width/Height. En casos simples (diálogos pequeños sin overlay que cubra la aplicación) puede usarse Width/Height o SizeToContent.
-   - Topmost: No establecer Topmost="True" en modales estándar. Dejar la propiedad sin especificar (o explícitamente Topmost="False") es la recomendación. Usar Owner + ShowDialog() y, cuando sea necesario, `ConfigurarParaVentanaPadre(owner)` garantiza que el diálogo quede encima de la ventana padre sin forzarlo por encima de otras aplicaciones. Solo usar Topmost para alertas críticas que deben permanecer sobre todas las ventanas del sistema.
-
-2. Overlay (Grid raíz):
-   - Debe cubrir todo el área del Window (el Window debe haberse dimensionado para cubrir la ventana padre cuando se espera bloquearla).
-   - Background recomendado: #80000000 (50% negro) — igual para todas las modales para consistencia.
-   - MouseLeftButtonDown -> cierra el diálogo (comportamiento configurable).
-   - No animación de fade por defecto (se removió DoubleAnimation de Opacity en estándares actuales).
-
-3. Panel central (Border/Card):
-   - Centrado HorizontalAlignment="Center" VerticalAlignment="Center".
-   - MaxWidth / MaxHeight para limitar tamaño en pantallas grandes (ej. MaxWidth=880, MaxHeight=760).
-   - CornerRadius entre 6 y 10 px (ej. 8).
-   - Fondo: Surface/White.
-   - Borde sutil y sombra ligera (DropShadowEffect) para elevar sobre el overlay.
-   - MouseLeftButtonDown en el panel debe hacer e.Handled = true para evitar cierre por clic fuera.
-
-4. Header
-   - Barra superior con fondo de color primario (gradient opcional) y texto del título a la izquierda.
-   - Botón de cierre X en la esquina superior derecha: usar glyph MDL2 (\uE711) con estilo de alto contraste (Foreground blanco, fondo transparente). Tamaño 36x36 y CornerRadius pequeño.
-   - El X debe tener ToolTip "Cerrar (Esc)" y Click ligado a cerrar (DialogResult=false / Close()).
-
-5. Cuerpo
-   - Estructura en columnas si procede (ej. checklist a la izquierda y tarjeta lateral con información a la derecha).
-   - Evitar que controles multilínea expandan la ventana: fijar Height y usar VerticalScrollBarVisibility="Auto" en TextBox/ScrollViewer internos.
-   - Wrapping en TextBlocks y TextBoxes donde el texto pueda crecer.
-
-6. Footer / Acciones
-   - Botón principal "Guardar" estilizado y prominente (Primary/GuardarButtonStyle), con IsDefault="True" para activarse con Enter.
-   - Evitar colocar botón cerrar redundante si ya existe X en header; si hay, usar estilo GhostButton.
-   - Confirmar que GuardarCommand (o lógica) cierre el diálogo y notifique al caller (evento OnEjecucionRegistrada o similar).
-
-Comportamientos y handlers recomendados
---------------------------------------
-- Cierre por clic en overlay: Grid.MouseLeftButtonDown -> método que cierra (DialogResult=false; Close()).
-- Evitar cierre cuando se clica dentro del panel: Panel.MouseLeftButtonDown -> e.Handled = true.
-- Tecla Escape: registrar KeyDown en el Window y cerrar si Key == Key.Escape.
-- Owner y cobertura: al mostrar desde un servicio, asignar Owner al Window activo y llamar a un helper `ConfigurarParaVentanaPadre(Window parent)` que:
-  - Siempre usar `WindowState = WindowState.Maximized` para cubrir toda la pantalla.
-  - Esta es la forma estándar y robusta de WPF para cubrir la pantalla sin problemas de DPI o pantallas múltiples.
-  - No calcular bounds manualmente ni usar TransformFromDevice, ya que introducen errores de alineamiento y desbordamientos en pantallas múltiples.
-  - El Owner aseguura que el diálogo quede siempre encima de la ventana padre y que se cierre cuando el padre se cierra.
-
-Tamaño y layout
-----------------
-- Usar MaxWidth/MaxHeight en Border principal para limitar crecimiento.
-- Tener en cuenta DPI y scaling; probar en 125%/150% y pantallas múltiples.
-- Campos de observaciones largos: TextBox con Height fijo (ej. 160px) y VerticalScrollBarVisibility="Auto" para evitar que la ventana crezca.
-
-Estado y bindings
------------------
-- Unificar observaciones por modal: usar una propiedad en el ViewModel, p. ej. `ObservacionCentral : string` enlazada a la TextBox.
-- Mantener bindings clave: Checklist, CompletedItems, TotalItems, PercentComplete, ResumenEnVivo, SemanaISO, CodigoEquipo, ResponsablePlan, GuardarCommand.
-
-Estilos y recursos
-------------------
-- Definir en recursos compartidos (App.xaml o ResourceDictionary del módulo):
-  - Brushes: PrimaryBrush, AccentBrush, SurfaceBrush, LightGrayBrush, BorderBrush.
-  - Botones: PrimaryButtonStyle, GhostButton, CloseButtonStyle, GuardarButtonStyle.
-  - Efectos: DropShadowEffect para ventana y secciones.
-  - Iconos: registrar glyphs MDL2 como recursos reutilizables (DrawingImage, Geometry o estilos) para evitar duplicación. Ejemplo recomendado en un ResourceDictionary `ModalIcons.xaml`:
-    - Clave: `Icon_Close_Glyph` = "\uE711" (usar FontFamily="Segoe MDL2 Assets" al mostrar).
-    - Alternativa: exponer como `DrawingImage` o `Geometry` para usar en `Image`/`Path` y controlar tintado (Foreground).
-    - Uso en XAML: `<TextBlock Text="{StaticResource Icon_Close_Glyph}" FontFamily="Segoe MDL2 Assets"/>` o `<Path Data="{StaticResource Icon_Close_Geometry}" Fill="White"/>`.
-
-Animaciones
------------
-- Política actual: sin animación de fade al mostrar. Las transiciones deben ser opcionales y consistentes; si se añaden, documentar y usar la misma duración para todas las modales.
-
-Accesibilidad
--------------
-- Contraste alto para acciones importantes (guardar, cerrar).
-- Asegurar navegación por teclado (TabIndex consistente, IsDefault para guardar, focus visual claro).
-- ToolTips en iconos (Cerrar) y etiquetas claras en campos.
-
-Implementación en servicios
----------------------------
-- Al instanciar un modal desde un servicio: asignar `Owner = ventanaActiva` y, si se desea bloquear cobertura, llamar a `dlg.ConfigurarParaVentanaPadre(owner)` antes de ShowDialog().
-- Manejar resultado de ShowDialog() y exponer un valor booleano indicando si se guardó o no.
-
-Checklist para añadir una nueva ventana modal
---------------------------------------------
-- [ ] Crear XAML siguiendo la estructura: Grid overlay -> Border card -> Header/Cuerpo/Footer.
-- [ ] Usar Background del overlay: `{StaticResource ModalOverlayBrush}` o literal `#80000000`.
-- [ ] Añadir CloseButton en header con estilo CloseButton.
-- [ ] Implementar Panel_MouseLeftButtonDown -> e.Handled = true y Overlay_MouseLeftButtonDown -> cierre.
-- [ ] Registrar KeyDown para Escape en el code-behind.
-- [ ] Si la ventana debe bloquear toda la app, en el servicio asignar Owner y llamar ConfigurarParaVentanaPadre.
-- [ ] Fijar Height y VerticalScrollBarVisibility en cajas de texto multilinea para evitar crecimiento del Window.
-- [ ] Añadir GuardarCommand en ViewModel y exponer evento de éxito para que el dialog retorne DialogResult true.
-
-Secciones añadidas y notas prácticas
-====================================
-
-Recursos expuestos por ModalWindowsStandard.xaml
-------------------------------------------------
-El ResourceDictionary creado (`ModalWindowsStandard.xaml`) incluye (claves relevantes):
-
-- Brushes
-  - `PrimaryBrush` (verde corporativo #118938)
-  - `PrimaryLightBrush` (verde secundario)
-  - `AccentBrush`, `AccentLightBrush`
-  - `SurfaceBrush` (blanco de tarjeta)
-  - `LightGrayBrush`, `BorderBrush`, `BorderLightBrush`
-  - `TextPrimaryBrush`, `TextMutedBrush`
-  - `ErrorBrush`, `WarningBrush`
-
-- Effects
-  - `WindowShadow`, `SectionShadow`, `HeaderShadow` (DropShadowEffect optimizados)
-
-- Text Styles
-  - `HeaderTextStyle`, `SubHeaderTextStyle`, `SectionTitleStyle`, `LabelTextStyle`, `ValueTextStyle`, `StatusText`
-
-- Controls / Styles
-  - `CorporateDataGrid`, `DataGridHeader`
-  - `CloseButton` (botón X de header)
-  - `PrimaryButtonStyle`, `DangerButtonStyle` (botones estándar)
-  - `HeaderActionButtonStyle` (botones de header: fondo blanco, texto verde, Padding aumentado y MinWidth)
-  - `StatusBadge` (badge con DataTriggers en vistas que lo usen)
-
-Uso recomendado de `HeaderActionButtonStyle`
--------------------------------------------
-- Diseñado para botones en el header sobre fondos primarios (gradiente verde).
-- Proporciona mayor contraste (fondo blanco, texto/ícono en `PrimaryBrush`) y espacio interior (Padding aumentado y `MinWidth`) para evitar texto pegado a bordes.
-- Ejemplo de uso en XAML:
+## Estructura XAML
 
 ```xaml
-<Button Style="{StaticResource HeaderActionButtonStyle}" Click="BtnEditar_Click"> 
-    <StackPanel Orientation="Horizontal">
-        <TextBlock Text="" FontFamily="Segoe MDL2 Assets"/>
-        <TextBlock Text="Editar"/>
-    </StackPanel>
-</Button>
-```
+<Window x:Class="GestLog.Modules.[Modulo].Views.[Carpeta].MiDialogView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:GestLog.Converters"
+        Title="Título del Diálogo" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed">
 
-Visibilidad condicional / permisos
-----------------------------------
-- Para ocultar/mostrar acciones según permisos, enlazar `Visibility` a una propiedad booleana del ViewModel usando `BooleanToVisibilityConverter` o a una propiedad `CanEditarEquipo`.
-- Ejemplo: `Visibility="{Binding CanEditarEquipo, Converter={StaticResource BooleanToVisibilityConverter}}"`.
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
 
-Ejemplo práctico: asignar Owner y cubrir overlay correctamente
--------------------------------------------------------------
-- Implementar en el code-behind un método `ConfigurarParaVentanaPadre(Window parent)` que:
-
-```csharp
-public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
-{
-    if (parentWindow == null) return;
-    
-    this.Owner = parentWindow;
-    this.ShowInTaskbar = false;
-
-    try
-    {
-        // Guardar referencia a la pantalla actual del owner
-        var interopHelper = new System.Windows.Interop.WindowInteropHelper(parentWindow);
-        var screen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
-        _lastScreenOwner = screen;
-
-        // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
-        // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
-        this.WindowState = WindowState.Maximized;
-    }
-    catch
-    {
-        // Fallback: maximizar en pantalla principal
-        this.WindowState = WindowState.Maximized;
-    }
-}
-```
-
-- Llamar antes de `ShowDialog()`: `dialog.ConfigurarParaVentanaPadre(owner);`
-- **Importante**: No calcular Left/Top/Width/Height manualmente. Usar `WindowState.Maximized` es más simple, robusto y evita problemas con:
-  - Conversiones DPI incorrectas
-  - Desbordamientos a pantallas secundarias
-  - Problemas de posicionamiento en pantallas múltiples
-- Para detectar cambios de pantalla del owner, guardar referencia a `Screen` y comparar `DeviceName` en `LocationChanged` y `SizeChanged` events.
-
-Sugerencias para rendimiento y virtualización
---------------------------------------------
-- Si las secciones del modal contienen listas grandes (RAM, Discos, Periféricos, Conexiones), usar virtualización (`VirtualizingStackPanel`, `VirtualizingPanel.IsVirtualizing=True`, `VirtualizationMode=Recycling`) o cambiar a `ListBox`/`DataGrid` con virtualización activada. Esto evita el bloqueo visual al abrir el modal.
-- Si se usan ItemsControl con DataTemplates complejos, probar con 100+ ítems para validar performance.
-
-Política de sombras y contraste
-------------------------------
-- Mantener sombras muy suaves (opacidad < 0.15) para no afectar legibilidad.
-- Botón de cierre `CloseButton` debe tener Foreground blanco cuando el header es color primario; si se cambia el header a fondos claros, usar `CloseButton` con `Foreground={StaticResource TextPrimaryBrush}` (o crear variación si se necesita).
-
-Sincronización con cambios de pantalla (multi-monitor)
------------------------------------------------------
-- Implementar handlers en `Loaded()` para detectar cambios de Owner:
-
-```csharp
-private void PerifericoDetalleView_Loaded(object? sender, RoutedEventArgs e)
-{
-    if (this.Owner != null)
-    {
-        // Si el Owner se mueve/redimensiona, mantener sincronizado
-        this.Owner.LocationChanged += Owner_SizeOrLocationChanged;
-        this.Owner.SizeChanged += Owner_SizeOrLocationChanged;
-    }
-}
-
-private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
-{
-    if (this.Owner == null) return;
-
-    this.Dispatcher.Invoke(() =>
-    {
-        try
-        {
-            // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
-            this.WindowState = WindowState.Maximized;
+    <!-- OVERLAY MODAL - Fondo oscuro semitransparente -->
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" 
+          UseLayoutRounding="True" SnapsToDevicePixels="True">
+        
+        <!-- CARD CENTRADA -->
+        <Border x:Name="Card" Width="750" MaxHeight="700"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8" Padding="0"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
             
-            // Detectar si el Owner cambió de pantalla
-            var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
-            var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-            // Si cambió de pantalla, actualizar la referencia (para logs/diagnostics)
-            if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
+                <!-- HEADER - Barra superior con gradiente -->
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" 
+                        Padding="24,16" Effect="{StaticResource HeaderShadow}">
+                    <DockPanel>
+                        <!-- Título e ícono a la izquierda -->
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" 
+                                    Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Título del Diálogo" Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Descripción breve" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- Botón Cerrar X a la derecha -->
+                        <Button DockPanel.Dock="Right" Style="{StaticResource CloseButton}" 
+                                Click="CancelarButton_Click" ToolTip="Cerrar (Esc)">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" 
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" 
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </DockPanel>
+                </Border>
+
+                <!-- CONTENIDO - Scrolleable -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20" 
+                              Background="{StaticResource LightGrayBrush}">
+                    <StackPanel>
+                        <!-- [AQUÍ VA TU CONTENIDO - CAMPOS DE FORMULARIO] -->
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- FOOTER - Botones de acción -->
+                <Border Grid.Row="2" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" 
+                        CornerRadius="0,0,8,8" Padding="24,16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Width="120" Height="36"
+                                Background="#EEEEEE" Foreground="{StaticResource TextPrimaryBrush}"
+                                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                                FontWeight="SemiBold" Click="CancelarButton_Click"/>
+                        <Button Content="Guardar" Width="120" Height="36" Margin="12,0,0,0"
+                                Background="{StaticResource PrimaryBrush}" Foreground="White"
+                                BorderThickness="0" FontWeight="SemiBold" FontSize="13"
+                                Command="{Binding GuardarCommand}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+```
+
+## Code-Behind (C#)
+
+```csharp
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Controls;
+using GestLog.Modules.[Modulo].ViewModels.[Carpeta];
+using Microsoft.Extensions.DependencyInjection;
+
+namespace GestLog.Modules.[Modulo].Views.[Carpeta]
+{
+    public partial class MiDialogView : Window
+    {
+        public [VIEWMODEL] ViewModel { get; private set; }
+
+        public MiDialogView()
+        {
+            InitializeComponent();
+
+            // Obtener ViewModel desde DI
+            var app = (App)System.Windows.Application.Current;
+            var viewModel = app.ServiceProvider?.GetRequiredService<[VIEWMODEL]>();
+            
+            if (viewModel == null)
+                throw new InvalidOperationException($"No se pudo obtener [VIEWMODEL]");
+
+            ViewModel = viewModel;
+            DataContext = ViewModel;
+
+            // Suscribirse al evento de éxito para cerrar automáticamente
+            ViewModel.OnExito += (s, e) =>
             {
-                _lastScreenOwner = currentScreen;
+                DialogResult = true;
+                Close();
+            };
+
+            // Manejar Escape para cerrar
+            this.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    DialogResult = false;
+                    Close();
+                }
+            };
+        }
+
+        private void CancelarButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Cerrar al hacer clic en el overlay oscuro (solo RootGrid)
+            if (sender is Grid grid && grid.Name == "RootGrid")
+            {
+                e.Handled = true;
+                DialogResult = false;
+                Close();
             }
         }
-        catch
+
+        private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // En caso de error, asegurar que la ventana está maximizada
-            this.WindowState = WindowState.Maximized;
+            e.Handled = true;
         }
-    });
+
+        /// <summary>
+        /// Configura la ventana como modal maximizado sobre una ventana padre
+        /// </summary>
+        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
+        {
+            if (parentWindow == null) return;
+            
+            this.Owner = parentWindow;
+            this.ShowInTaskbar = false;
+            this.WindowState = WindowState.Maximized;
+            
+            // Mantener maximizado si el owner se mueve/redimensiona
+            this.Loaded += (s, e) =>
+            {
+                if (this.Owner != null)
+                {
+                    this.Owner.LocationChanged += (s2, e2) => 
+                    {
+                        if (this.WindowState != WindowState.Maximized)
+                            this.WindowState = WindowState.Maximized;
+                    };
+                    this.Owner.SizeChanged += (s2, e2) => 
+                    {
+                        if (this.WindowState != WindowState.Maximized)
+                            this.WindowState = WindowState.Maximized;
+                    };
+                }
+            };
+        }
+    }
 }
 ```
 
-- Beneficio: el overlay se mantiene perfectamente sincronizado si el usuario mueve la ventana entre pantallas o cambia su tamaño.
-- No es necesario recalcular posiciones; `WindowState.Maximized` se ajusta automáticamente.
+## ViewModel
 
-Comportamiento de edición y acciones destructivas
-------------------------------------------------
-- No colocar acciones destructivas (Dar de baja) en el header por motivos de UX. Deben estar en el flujo de edición o dentro de un menú contextual.
-- En la vista Detalles implementada se ha movido el botón "Dar de baja" al flujo de edición: el editor (`AgregarEquipoInformaticoView`) debe exponer esa acción con confirmación y razonamiento (modal de confirmación `MessageBox` o dialog propio).
+En tu ViewModel, agrega este evento:
 
-Pruebas y validación (QA)
--------------------------
-- Probar las modales en 3 configuraciones: 100% DPI, 125% y 150% en monitores primarios y secundarios.
-- Probar con Owner normal y Owner maximizado.
-- Probar apertura de modal con listas pequeñas y listas grandes (>=100 ítems) para validar virtualización.
-- Validar que overlay bloquea interacción en la ventana detrás (intentar click en controles del Owner).
-- Validar accesibilidad: navegar por teclado, Tab order, Escape cierra la ventana, Enter activa botón por defecto si aplica.
-- **IMPORTANTE**: Probar movimiento de Owner entre pantallas (si es multi-monitor) para validar que el overlay se mantiene sincronizado.
+```csharp
+public event EventHandler? OnExito;
 
-Checklist ampliado (para incluir antes de crear nueva modal)
------------------------------------------------------------
-- [ ] Usar `ModalWindowsStandard.xaml` y referenciar sus claves en `Window.Resources`.
-- [ ] Incluir `Overlay_MouseLeftButtonDown` y `Panel_MouseLeftButtonDown` handlers.
-- [ ] Registrar `KeyDown` o `PreviewKeyDown` para Escape.
-- [ ] Configurar Owner y, si es necesario, llamar `ConfigurarParaVentanaPadre(owner)`.
-- [ ] Usar `HeaderActionButtonStyle` para botones del header que requieran contraste o `PrimaryButtonStyle` en el cuerpo/footer.
-- [ ] Evitar animaciones por defecto; si se añaden, documentarlas en el md.
-- [ ] Documentar cualquier nueva clave de recurso que se agregue al ResourceDictionary.
+// En el comando de guardar exitoso:
+protected virtual void AlGuardarExitoso()
+{
+    OnExito?.Invoke(this, EventArgs.Empty);
+}
+```
 
-Notas finales y mantenimiento
-----------------------------
-- Cada vez que se modifique `ModalWindowsStandard.xaml` debe actualizarse este documento con las nuevas claves (añadir en la sección "Recursos expuestos").
-- Mantener este documento bajo revisión por UI/UX y QA para asegurar coherencia visual y accesibilidad.
+## Uso desde ViewModel Principal
 
-Historial de cambios (versión inicial)
---------------------------------------
-- 2025-10-10: Estándar creado a partir de las modificaciones realizadas en `RegistroEjecucionPlanDialog` y `PlanDetalleModalWindow`. Se unificó el overlay a `#80000000`, se eliminó animación de fade y se estandarizó comportamiento de owner/overlay mediante `ConfigurarParaVentanaPadre`.
-- 2025-10-24: Actualización crítica - se reemplazó el cálculo manual de bounds con `WindowState.Maximized`. Esto resuelve problemas de DPI múltiple, pantallas múltiples y desbordamientos de overlay. Se removió toda conversión con `TransformFromDevice` que introducía errores de alineamiento.
+```csharp
+[RelayCommand]
+public async Task AbrirDialogoAsync()
+{
+    var dialog = new MiDialogView();
+    var ownerWindow = System.Windows.Application.Current?.MainWindow;
 
-Fin del documento.
+    if (ownerWindow != null)
+    {
+        dialog.ConfigurarParaVentanaPadre(ownerWindow);
+    }
+
+    if (dialog.ShowDialog() == true)
+    {
+        // Hacer lo que corresponda después del éxito
+        await RecargarDatos();
+    }
+}
+```
+
+## Checklist Rápido
+
+- ✅ XAML: Grid overlay (#80000000) → Border card → Header/Contenido/Footer
+- ✅ Referenciar `ModalWindowsStandard.xaml` en Window.Resources
+- ✅ Code-Behind: Constructor sin argumentos, obtener ViewModel desde DI
+- ✅ Handlers: `Overlay_MouseLeftButtonDown`, `Panel_MouseLeftButtonDown`, `KeyDown` para Escape
+- ✅ Método: `ConfigurarParaVentanaPadre(owner)` para maximizar
+- ✅ Evento: `OnExito` en ViewModel que dispare `DialogResult = true`
+- ✅ Comando: `GuardarCommand` en ViewModel que dispare `OnExito`
+
+## Notas Importantes
+
+- **Window.Resources**: Siempre mergear `ModalWindowsStandard.xaml`
+- **Overlay**: Usar `#80000000` (50% negro) para consistencia
+- **Maximizar**: Usar `WindowState.Maximized` en `ConfigurarParaVentanaPadre()` - evita problemas de DPI y pantallas múltiples
+- **Eventos**: `OnExito` debe dispararse en el ViewModel cuando el guardado sea exitoso
+- **Cierre por Overlay**: Validar que `RootGrid` sea el Name del Grid raíz para evitar cierres accidentales
+- **DI**: El ViewModel se obtiene desde `app.ServiceProvider.GetRequiredService<[VIEWMODEL]>()` - debe estar registrado en `Startup.UsuariosPersonas.cs`
+
+## Recursos Disponibles (desde ModalWindowsStandard.xaml)
+
+- **Brushes**: `PrimaryBrush`, `SurfaceBrush`, `LightGrayBrush`, `BorderBrush`, `TextPrimaryBrush`, `ErrorBrush`
+- **Effects**: `WindowShadow`, `SectionShadow`, `HeaderShadow`
+- **Styles**: `HeaderTextStyle`, `SubHeaderTextStyle`, `CloseButton`, `PrimaryButtonStyle`
+
+---
+
+**Última actualización**: 2025-12-15  
+**Ejemplos**: `RegistroMantenimientoCorrectivoDialog`, `CompletarCancelarMantenimientoDialog`, `DetallesEquipoInformaticoView`

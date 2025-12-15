@@ -22,6 +22,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             services.AddScoped<IEquipoInformaticoService, EquipoInformaticoService>();
             services.AddScoped<IGestionEquiposInformaticosSeguimientoCronogramaService, GestionEquiposInformaticosSeguimientoCronogramaService>();
             services.AddScoped<IPlanCronogramaService, PlanCronogramaService>();
+            services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();
 
             // Autocomplete Services - Servicios de autocompletado
             services.AddScoped<IDispositivoAutocompletadoService, DispositivoAutocompletadoService>();

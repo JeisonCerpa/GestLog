@@ -42,8 +42,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
 
             // Pasar el DbContext al ViewModel para que realice persistencia cuando corresponda
             _db = db;
-            
-            // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel de forma segura
+              // ✅ MIGRADO: Resolver dependencias para DatabaseAwareViewModel de forma segura
             try
             {
                 var app = System.Windows.Application.Current as App;
@@ -57,8 +56,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
                 var databaseService = serviceProvider.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = serviceProvider.GetRequiredService<GestLog.Services.Core.Logging.IGestLogLogger>();
                 var seguimientoService = serviceProvider.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IGestionEquiposInformaticosSeguimientoCronogramaService>();
+                var mantenimientoCorrectivoService = serviceProvider.GetService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
                 
-                DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService);
+                DataContext = new DetallesEquipoInformaticoViewModel(equipo, dbContextFactory, databaseService, logger, seguimientoService, mantenimientoCorrectivoService);
             }
             catch (Exception ex)
             {

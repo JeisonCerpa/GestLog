@@ -1,0 +1,238 @@
+<UserControl x:Class="GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.MantenimientosCorrectivosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:GestLog.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+        <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+        <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        <!-- Colores y brushes - Unificados con EquiposInformaticosView -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#10B981"/>
+
+        <!-- Estilos de texto - Unificados -->
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0.9"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,8,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+
+        <!-- PrimaryButtonStyle - Unificado -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- SecondaryButtonStyle -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#FAFAFA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header remodelado similar a EquiposInformaticosView -->
+        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#118938" Offset="0"/>
+                    <GradientStop Color="#2B8E3F" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
+                        <TextBlock Text="🔧" FontFamily="Segoe UI Emoji" FontSize="26"
+                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Mantenimientos Correctivos" Style="{StaticResource HeaderTextStyle}"/>
+                        <TextBlock Text="Gestión de reparaciones y fallos no programados" Style="{StaticResource SubHeaderTextStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Barra de herramientas y filtros -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" CornerRadius="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Filtros -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,12,0" FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <ComboBox Width="150" Padding="8,6" VerticalAlignment="Center" Margin="0,0,16,0"
+                              SelectedValuePath="Content"
+                              SelectedItem="{Binding FiltroEstadoSeleccionado, UpdateSourceTrigger=PropertyChanged}">
+                        <ComboBoxItem>Todos</ComboBoxItem>
+                        <ComboBoxItem>Pendiente</ComboBoxItem>
+                        <ComboBoxItem>En Reparación</ComboBoxItem>
+                        <ComboBoxItem>Completado</ComboBoxItem>
+                        <ComboBoxItem>Cancelado</ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>                <!-- Botones de acción -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Button Content="🔄 Actualizar" Command="{Binding CargarMantenimientosCommand}"
+                            ToolTip="Actualizar lista de mantenimientos"
+                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+
+                    <Button Content="➕ Nuevo Mantenimiento" Click="BtnNuevoMantenimiento_Click"
+                            ToolTip="Registrar nuevo mantenimiento correctivo"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            IsEnabled="{Binding CanAccederGestionEquiposInformaticos}"
+                            Opacity="{Binding CanAccederGestionEquiposInformaticos, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- DataGrid de mantenimientos -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <DataGrid Grid.Row="0" ItemsSource="{Binding MantenimientosCorrectivos}" SelectedItem="{Binding SelectedMantenimiento}"
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          SelectionMode="Single" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="{StaticResource BorderBrush}" AlternatingRowBackground="#F9F9F9"
+                          FontSize="12" RowHeight="45"
+                          ColumnWidth="*"
+                          EnableColumnVirtualization="False"
+                          VirtualizingPanel.VirtualizationMode="Standard"
+                          ScrollViewer.CanContentScroll="True">
+
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </DataGrid.CellStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="SizeToCells" MinWidth="50" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Equipo/Periférico" Binding="{Binding CodigoEquipo}" Width="*" MinWidth="150" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Descripción Falla" Binding="{Binding DescripcionFalla}" Width="*" MinWidth="220" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorAsignado}" Width="*" MinWidth="150" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        
+                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="110" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" 
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Margin="8,0" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="Pendiente">
+                                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="EnReparacion">
+                                                        <Setter Property="Foreground" Value="#A85B00"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="Completado">
+                                                        <Setter Property="Foreground" Value="#27AE60"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Estado}" Value="Cancelado">
+                                                        <Setter Property="Foreground" Value="#C0392B"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Fecha Falla" Binding="{Binding FechaFalla, StringFormat='dd/MM/yyyy'}" Width="SizeToCells" MinWidth="100" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Acciones" Width="SizeToCells" MinWidth="150" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4,0">
+                                        <Button Content="Ver" 
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                MinWidth="60" Height="28" Margin="2,0" FontSize="11"
+                                                Click="BtnVerMantenimiento_Click" Tag="{Binding Id}"/>
+                                        <Button Content="Completar" 
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                MinWidth="80" Height="28" Margin="2,0" FontSize="11"
+                                                Click="BtnCompletarMantenimiento_Click" Tag="{Binding Id}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Mensaje si no hay datos -->
+                <TextBlock Grid.Row="0" Text="No hay mantenimientos correctivos registrados" 
+                           VerticalAlignment="Center" HorizontalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="14"
+                           Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <!-- Pie de página: estadísticas -->
+                <Border Grid.Row="1" Padding="0,12,0,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                    <TextBlock Text="{Binding EstadisticasText}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

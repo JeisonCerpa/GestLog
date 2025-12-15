@@ -6,6 +6,7 @@
              xmlns:views="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Equipos"
              xmlns:cronogramaViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma"
              xmlns:historialViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento"
+             xmlns:mantenimientoViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento"
              xmlns:perifericosViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
@@ -90,7 +91,16 @@
                 <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
                     <historialViews:HistorialEjecucionesView DataContext="{Binding HistorialVm}" />
                 </Border>
-            </TabItem>            <TabItem Header="Periféricos">
+            </TabItem>
+
+            <!-- ✅ NUEVO: Tab para Mantenimientos Correctivos -->
+            <TabItem Header="Mantenimientos Correctivos">
+                <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
+                    <mantenimientoViews:MantenimientosCorrectivosView />
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Periféricos">
                 <Border Background="#F5F5F5" Padding="0" CornerRadius="0 0 8 8">
                     <perifericosViews:PerifericosView DataContext="{Binding PerifericosVm}" />
                 </Border>

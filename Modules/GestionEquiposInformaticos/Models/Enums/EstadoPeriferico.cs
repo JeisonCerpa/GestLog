@@ -1,8 +1,7 @@
 using System.ComponentModel;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Models.Enums
-{
-    /// <summary>
+{    /// <summary>
     /// Estados posibles de un periférico informático
     /// </summary>
     public enum EstadoPeriferico
@@ -14,6 +13,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Enums
         AlmacenadoFuncionando = 2,
 
         [Description("Dado de baja")]
-        DadoDeBaja = 3
+        DadoDeBaja = 3,
+
+        [Description("En Reparación")]
+        EnReparacion = 4
     }
 }

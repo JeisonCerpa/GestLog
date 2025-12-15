@@ -82,10 +82,14 @@ namespace GestLog
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel>(sp =>
             {
                 var passwordManagementService = sp.GetRequiredService<GestLog.Services.Interfaces.IPasswordManagementService>();
-                var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel(passwordManagementService, logger);
-            });// Servicios y ViewModels para Gestión de Mantenimientos
-            services.AddScoped<IMantenimientoService, MaintenanceService>();            // ✅ Servicios para Gestión de Equipos Informáticos (Data, Autocomplete, Dialog)            services.AddGestionEquiposInformaticosServices();
+                var logger = sp.GetRequiredService<IGestLogLogger>();            return new GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel(passwordManagementService, logger);
+            });
+
+            // Servicios y ViewModels para Gestión de Mantenimientos
+            services.AddScoped<IMantenimientoService, MaintenanceService>();
+
+            // ✅ Servicios para Gestión de Equipos Informáticos (Data, Autocomplete, Dialog)
+            services.AddGestionEquiposInformaticosServices();
             
             // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.ClasificacionAutocompletadoService>();
@@ -107,8 +111,7 @@ namespace GestLog
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel(
                     cronogramaService, planService, equipoService, usuarioService, seguimientoService, 
                     currentUserService, databaseService, logger, registroDialogService, registroEjecucionService);
-            });
-              // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
+            });            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel>(sp =>
             {
                 var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
@@ -116,6 +119,32 @@ namespace GestLog
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);
+            });
+              // MantenimientosCorrectivosViewModel - ✅ NUEVO: Mantenimientos correctivos (reactivos)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.MantenimientosCorrectivosViewModel>(sp =>
+            {
+                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.MantenimientosCorrectivosViewModel(mantenimientoService, logger, currentUserInfo);
+            });            // RegistroMantenimientoCorrectivoViewModel - ✅ NUEVO: Diálogo de registro de correctivo
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.RegistroMantenimientoCorrectivoViewModel>(sp =>
+            {
+                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
+                var equipoService = sp.GetService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
+                var dbContextFactory = sp.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.RegistroMantenimientoCorrectivoViewModel(mantenimientoService, equipoService, dbContextFactory, logger, currentUserInfo);
+            });
+
+            // CompletarCancelarMantenimientoViewModel - ✅ NUEVO: Diálogo de completar/cancelar correctivo
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CompletarCancelarMantenimientoViewModel>(sp =>
+            {
+                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
+                var logger = sp.GetRequiredService<IGestLogLogger>();
+                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CompletarCancelarMantenimientoViewModel(mantenimientoService, logger, currentUserInfo);
             });
             
             // PerifericosViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
