@@ -1,130 +1,186 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
-using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
-using System.Windows;
-using GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento;
-using WPFApplication = System.Windows.Application;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
 {
     /// <summary>
-    /// ViewModel para gestionar mantenimientos correctivos (reactivos) de equipos e periféricos
+    /// ViewModel para la vista de Mantenimientos Correctivos
+    /// Gestiona la carga, filtrado y visualización de mantenimientos correctivos (reactivos)
     /// </summary>
     public partial class MantenimientosCorrectivosViewModel : ObservableObject
     {
-        private readonly IMantenimientoCorrectivoService _service;
+        private readonly IMantenimientoCorrectivoService _mantenimientoService;
         private readonly IGestLogLogger _logger;
-        private readonly CurrentUserInfo _currentUser;
+        private readonly CurrentUserInfo _currentUserInfo;
+        private CancellationTokenSource? _cancellationTokenSource;
+        // Debounce token para evitar aplicar filtros en cada tecla
+        private CancellationTokenSource? _debounceCts;
+        private const int DebounceDelayMs = 300;
+
+        // Lista maestra con todos los mantenimientos cargados (sin filtrar)
+        private List<MantenimientoCorrectivoDto> _allMantenimientos = new();
+
+        // Filtro único de texto para buscar por equipo, proveedor o texto libre
+        [ObservableProperty]
+        private string filter = string.Empty;
+
+        partial void OnFilterChanged(string value)
+        {
+            // Aplicar filtros con debounce para evitar ejecuciones por cada tecla
+            _ = DebounceApplyFiltersAsync();
+        }
 
         [ObservableProperty]
-        private ObservableCollection<MantenimientoCorrectivoDto> mantenimientosCorrectivos = new();
+        private bool filtrarCompletados = false;
 
+        partial void OnFiltrarCompletadosChanged(bool value)
+        {
+            ApplyFilters();
+        }
+
+        [ObservableProperty]
+        private bool filtrarCancelados = false;
+
+        partial void OnFiltrarCanceladosChanged(bool value)
+        {
+            ApplyFilters();
+        }
+
+        [ObservableProperty]
+        private bool filtrarEnReparacion = false;
+
+        partial void OnFiltrarEnReparacionChanged(bool value)
+        {
+            ApplyFilters();
+        }
+
+        /// <summary>
+        /// Debounce wrapper para ApplyFilters: espera un pequeño retraso antes de aplicar, cancelable si el usuario sigue escribiendo.
+        /// </summary>
+        private async Task DebounceApplyFiltersAsync()
+        {
+            try
+            {
+                _debounceCts?.Cancel();
+                _debounceCts?.Dispose();
+                _debounceCts = new CancellationTokenSource();
+                var token = _debounceCts.Token;
+
+                // Esperar en el contexto actual (UI) y luego aplicar filtros ahí mismo
+                await Task.Delay(DebounceDelayMs, token);
+
+                ApplyFilters();
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignorar
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en debounce de filtros");
+            }
+        }
+
+        /// <summary>
+        /// Colección de mantenimientos correctivos
+        /// </summary>
+        [ObservableProperty]
+        private ObservableCollection<MantenimientoCorrectivoDto> mantenimientos = new();
+
+        /// <summary>
+        /// Mantenimiento seleccionado actualmente
+        /// </summary>
         [ObservableProperty]
         private MantenimientoCorrectivoDto? selectedMantenimiento;
 
+        /// <summary>
+        /// Indica si se están cargando los datos
+        /// </summary>
         [ObservableProperty]
-        private bool isLoading = false;
+        private bool isLoading;
 
+        /// <summary>
+        /// Mensaje de error para mostrar en la UI
+        /// </summary>
         [ObservableProperty]
-        private string? errorMessage;
+        private string errorMessage = string.Empty;
 
-        [ObservableProperty]
-        private string? successMessage;
-
-        [ObservableProperty]
-        private bool canAccederGestionEquiposInformaticos;
-
-        [ObservableProperty]
-        private bool canEliminarGestionEquiposInformaticos;
-
+        /// <summary>
+        /// Filtro de estado para mostrar solo mantenimientos en cierto estado
+        /// </summary>
         [ObservableProperty]
         private EstadoMantenimientoCorrectivo? filtroEstado;
 
+        /// <summary>
+        /// Indica si solo mostrar mantenimientos en reparación
+        /// </summary>
         [ObservableProperty]
-        private bool incluirDadosDeBaja = false;
+        private bool mostrarSoloEnReparacion;
 
+        /// <summary>
+        /// Indica si incluir registros dados de baja
+        /// </summary>
         [ObservableProperty]
-        private string filtroEstadoSeleccionado = "Todos";
-
-        [ObservableProperty]
-        private string estadisticasText = "No hay mantenimientos";
-
-        [ObservableProperty]
-        private bool isEmpty = true;
+        private bool incluirDadosDeBaja;
 
         public MantenimientosCorrectivosViewModel(
-            IMantenimientoCorrectivoService service,
+            IMantenimientoCorrectivoService mantenimientoService,
             IGestLogLogger logger,
-            CurrentUserInfo currentUser)
+            CurrentUserInfo currentUserInfo)
         {
-            _service = service ?? throw new ArgumentNullException(nameof(service));
+            _mantenimientoService = mantenimientoService ?? throw new ArgumentNullException(nameof(mantenimientoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-
-            RecalcularPermisos();
-            PropertyChanged += MantenimientosCorrectivosViewModel_PropertyChanged;
+            _currentUserInfo = currentUserInfo ?? throw new ArgumentNullException(nameof(currentUserInfo));
         }
 
-        private async void MantenimientosCorrectivosViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(FiltroEstadoSeleccionado))
-            {
-                await CargarMantenimientosAsync();
-            }
-        }
-
+        /// <summary>
+        /// Inicializa la carga de mantenimientos correctivos
+        /// </summary>
         [RelayCommand]
-        public async Task CargarMantenimientosAsync(CancellationToken cancellationToken = default)
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            await CargarMantenimientosAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Carga todos los mantenimientos correctivos
+        /// </summary>
+        private async Task CargarMantenimientosAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource = new CancellationTokenSource();
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellationTokenSource.Token);
+
                 IsLoading = true;
                 ErrorMessage = string.Empty;
-                SuccessMessage = string.Empty;
 
-                var mantenimientos = await _service.ObtenerTodosAsync(
-                    includeDadosDeBaja: IncluirDadosDeBaja,
-                    cancellationToken: cancellationToken);
+                _logger.LogDebug("Iniciando carga de mantenimientos correctivos");
 
-                if (!string.IsNullOrWhiteSpace(FiltroEstadoSeleccionado) && FiltroEstadoSeleccionado != "Todos")
-                {
-                    var filtroEnum = FiltroEstadoSeleccionado switch
-                    {
-                        "Pendiente" => EstadoMantenimientoCorrectivo.Pendiente,
-                        "En Reparación" => EstadoMantenimientoCorrectivo.EnReparacion,
-                        "Completado" => EstadoMantenimientoCorrectivo.Completado,
-                        "Cancelado" => EstadoMantenimientoCorrectivo.Cancelado,
-                        _ => (EstadoMantenimientoCorrectivo?)null
-                    };
+                var mantenimientos = await _mantenimientoService.ObtenerTodosAsync(IncluirDadosDeBaja, cts.Token);
 
-                    if (filtroEnum.HasValue)
-                    {
-                        mantenimientos = mantenimientos
-                            .Where(m => m.Estado == filtroEnum.Value)
-                            .ToList();
-                    }
-                }
-
-                MantenimientosCorrectivos.Clear();
-                foreach (var mtto in mantenimientos)
-                {
-                    MantenimientosCorrectivos.Add(mtto);
-                }
-
-                ActualizarEstadisticas(mantenimientos);
-                _logger.LogInformation("Mantenimientos correctivos cargados. Total: {Count}", mantenimientos.Count);
+                // Guardar lista maestra y aplicar filtros locales
+                _allMantenimientos = mantenimientos.ToList();
+                ApplyFilters();
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogDebug("Operación de carga de mantenimientos cancelada");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cargando mantenimientos correctivos");
-                ErrorMessage = "Error al cargar los mantenimientos correctivos";
+                _logger.LogError(ex, "Error al cargar mantenimientos correctivos");
+                ErrorMessage = "Error al cargar los mantenimientos. Intente nuevamente.";
             }
             finally
             {
@@ -132,106 +188,114 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             }
         }
 
-        [RelayCommand]
-        public async Task CargarMantenimientosEquipoAsync(int equipoId, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Aplica los filtros actuales sobre la colección maestra y actualiza la colección expuesta <see cref="Mantenimientos"/>.
+        /// </summary>
+        private void ApplyFilters()
         {
             try
             {
-                IsLoading = true;
-                ErrorMessage = string.Empty;
+                if (_allMantenimientos == null) return;
 
-                var mantenimientos = await _service.ObtenerPorEquipoAsync(equipoId, cancellationToken);
+                IEnumerable<MantenimientoCorrectivoDto> query = _allMantenimientos.AsEnumerable();
 
-                MantenimientosCorrectivos.Clear();
-                foreach (var mtto in mantenimientos)
+                // Filtro por estado específico (si está seleccionado)
+                if (FiltroEstado.HasValue)
                 {
-                    MantenimientosCorrectivos.Add(mtto);
+                    query = query.Where(m => m.Estado == FiltroEstado.Value);
                 }
 
-                _logger.LogInformation("Mantenimientos del equipo {EquipoId} cargados. Total: {Count}", equipoId, mantenimientos.Count);
+                // Mostrar solo en reparación
+                if (MostrarSoloEnReparacion)
+                {
+                    query = query.Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion);
+                }
+
+                // Filtro de texto único: buscar en NombreEntidad, EquipoInformaticoCodigo y ProveedorAsignado
+                if (!string.IsNullOrWhiteSpace(Filter))
+                {
+                    var term = Filter.Trim().ToLowerInvariant();
+                    query = query.Where(m => (m.NombreEntidad ?? string.Empty).ToLowerInvariant().Contains(term)
+                                              || (m.EquipoInformaticoCodigo ?? string.Empty).ToLowerInvariant().Contains(term)
+                                              || (m.ProveedorAsignado ?? string.Empty).ToLowerInvariant().Contains(term));
+                }
+
+                // Filtrado por checkboxes de estado: si ninguno está marcado, no restringir; si alguno marcado -> incluir sólo esos estados
+                var estadosSeleccionados = new List<EstadoMantenimientoCorrectivo>();
+                if (FiltrarCompletados) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.Completado);
+                if (FiltrarCancelados) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.Cancelado);
+                if (FiltrarEnReparacion) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.EnReparacion);
+
+                if (estadosSeleccionados.Any())
+                {
+                    query = query.Where(m => estadosSeleccionados.Contains(m.Estado));
+                }
+
+                // Asignar colección observable
+                Mantenimientos = new ObservableCollection<MantenimientoCorrectivoDto>(query);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cargando mantenimientos del equipo {EquipoId}", equipoId);
-                ErrorMessage = "Error al cargar los mantenimientos del equipo";
-            }
-            finally
-            {
-                IsLoading = false;
+                _logger.LogError(ex, "Error aplicando filtros en MantenimientosCorrectivosViewModel");
             }
         }
 
+        /// <summary>
+        /// Recarga los mantenimientos aplicando filtros actuales
+        /// </summary>
         [RelayCommand]
-        public async Task CargarMantenimientosPerifericoAsync(int perifericoId, CancellationToken cancellationToken = default)
+        public async Task RefreshAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = string.Empty;
-
-                var mantenimientos = await _service.ObtenerPorPerifericoAsync(perifericoId, cancellationToken);
-
-                MantenimientosCorrectivos.Clear();
-                foreach (var mtto in mantenimientos)
-                {
-                    MantenimientosCorrectivos.Add(mtto);
-                }
-
-                _logger.LogInformation("Mantenimientos del periférico {PerifericoId} cargados. Total: {Count}", perifericoId, mantenimientos.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error cargando mantenimientos del periférico {PerifericoId}", perifericoId);
-                ErrorMessage = "Error al cargar los mantenimientos del periférico";
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+            SelectedMantenimiento = null;
+            await CargarMantenimientosAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Cambia el filtro de estado y recarga
+        /// </summary>
+        [RelayCommand]
+        public async Task CambiarFiltroEstadoAsync(EstadoMantenimientoCorrectivo? nuevoEstado, CancellationToken cancellationToken = default)
+        {
+            FiltroEstado = nuevoEstado;
+            await RefreshAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Completa un mantenimiento correctivo seleccionado
+        /// </summary>
         [RelayCommand]
         public async Task CompletarMantenimientoAsync(CancellationToken cancellationToken = default)
         {
+            if (SelectedMantenimiento?.Id == null)
+            {
+                ErrorMessage = "Debe seleccionar un mantenimiento para completar";
+                return;
+            }
+
             try
             {
-                if (SelectedMantenimiento == null)
-                {
-                    ErrorMessage = "Debe seleccionar un mantenimiento para completar";
-                    return;
-                }
-
-                if (!CanAccederGestionEquiposInformaticos)
-                {
-                    ErrorMessage = "No tiene permisos para completar mantenimientos correctivos";
-                    return;
-                }
-
                 IsLoading = true;
                 ErrorMessage = string.Empty;
 
-                var resultado = await _service.CompletarAsync(
-                    SelectedMantenimiento.Id ?? 0,
+                var resultado = await _mantenimientoService.CompletarAsync(
+                    SelectedMantenimiento.Id.Value,
                     SelectedMantenimiento.Observaciones,
                     cancellationToken);
 
                 if (resultado)
                 {
-                    SuccessMessage = "Mantenimiento correctivo marcado como completado";
-                    _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}", SelectedMantenimiento?.Id ?? 0);
-
-                    await CargarMantenimientosAsync(cancellationToken);
-                    WeakReferenceMessenger.Default.Send(new MantenimientosCorrectivosActualizadosMessage());
+                    _logger.LogDebug($"Mantenimiento {SelectedMantenimiento.Id} completado exitosamente");
+                    await RefreshAsync(cancellationToken);
                 }
                 else
                 {
-                    ErrorMessage = "No se encontró el mantenimiento correctivo a completar";
+                    ErrorMessage = "No fue posible completar el mantenimiento";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error completando mantenimiento correctivo");
-                ErrorMessage = "Error al completar el mantenimiento correctivo";
+                _logger.LogError(ex, "Error al completar mantenimiento");
+                ErrorMessage = "Error al completar el mantenimiento. Intente nuevamente.";
             }
             finally
             {
@@ -239,48 +303,48 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             }
         }
 
+        /// <summary>
+        /// Cancela un mantenimiento correctivo seleccionado
+        /// </summary>
         [RelayCommand]
-        public async Task CancelarMantenimientoAsync(CancellationToken cancellationToken = default)
+        public async Task CancelarMantenimientoAsync(string razonCancelacion = "", CancellationToken cancellationToken = default)
         {
+            if (SelectedMantenimiento?.Id == null)
+            {
+                ErrorMessage = "Debe seleccionar un mantenimiento para cancelar";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(razonCancelacion))
+            {
+                ErrorMessage = "Debe proporcionar una razón para cancelar el mantenimiento";
+                return;
+            }
+
             try
             {
-                if (SelectedMantenimiento == null)
-                {
-                    ErrorMessage = "Debe seleccionar un mantenimiento para cancelar";
-                    return;
-                }
-
-                if (!CanAccederGestionEquiposInformaticos)
-                {
-                    ErrorMessage = "No tiene permisos para cancelar mantenimientos correctivos";
-                    return;
-                }
-
                 IsLoading = true;
                 ErrorMessage = string.Empty;
 
-                var resultado = await _service.CancelarAsync(
-                    SelectedMantenimiento.Id ?? 0,
-                    SelectedMantenimiento.Observaciones ?? "Cancelación del usuario",
+                var resultado = await _mantenimientoService.CancelarAsync(
+                    SelectedMantenimiento.Id.Value,
+                    razonCancelacion,
                     cancellationToken);
 
                 if (resultado)
                 {
-                    SuccessMessage = "Mantenimiento correctivo cancelado";
-                    _logger.LogInformation("Mantenimiento correctivo cancelado. ID: {Id}", SelectedMantenimiento?.Id ?? 0);
-
-                    await CargarMantenimientosAsync(cancellationToken);
-                    WeakReferenceMessenger.Default.Send(new MantenimientosCorrectivosActualizadosMessage());
+                    _logger.LogDebug($"Mantenimiento {SelectedMantenimiento.Id} cancelado exitosamente");
+                    await RefreshAsync(cancellationToken);
                 }
                 else
                 {
-                    ErrorMessage = "No se encontró el mantenimiento correctivo a cancelar";
+                    ErrorMessage = "No fue posible cancelar el mantenimiento";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cancelando mantenimiento correctivo");
-                ErrorMessage = "Error al cancelar el mantenimiento correctivo";
+                _logger.LogError(ex, "Error al cancelar mantenimiento");
+                ErrorMessage = "Error al cancelar el mantenimiento. Intente nuevamente.";
             }
             finally
             {
@@ -288,136 +352,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             }
         }
 
-        [RelayCommand]
-        public async Task AplicarFiltrosAsync(CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Limpia los recursos al descartar el ViewModel
+        /// </summary>
+        public void Cleanup()
         {
-            await CargarMantenimientosAsync(cancellationToken);
-        }
-
-        [RelayCommand]
-        public async Task LimpiarFiltrosAsync(CancellationToken cancellationToken = default)
-        {
-            FiltroEstado = null;
-            FiltroEstadoSeleccionado = "Todos";
-            IncluirDadosDeBaja = false;
-            await CargarMantenimientosAsync(cancellationToken);
-        }        [RelayCommand]
-        public async Task AgregarMantenimientoAsync()
-        {
-            try
-            {
-                if (!CanAccederGestionEquiposInformaticos)
-                {
-                    ErrorMessage = "No tiene permisos para agregar mantenimientos correctivos";
-                    return;
-                }
-
-                var dialog = new RegistroMantenimientoCorrectivoDialog();
-                var ownerWindow = WPFApplication.Current?.MainWindow;
-                
-                if (ownerWindow != null)
-                {
-                    dialog.ConfigurarParaVentanaPadre(ownerWindow);
-                }
-
-                if (dialog.ShowDialog() == true)
-                {
-                    SuccessMessage = "Mantenimiento correctivo registrado exitosamente";
-                    _logger.LogInformation("Nuevo mantenimiento correctivo registrado por {Usuario}", _currentUser.Username);
-
-                    await CargarMantenimientosAsync();
-                    WeakReferenceMessenger.Default.Send(new MantenimientosCorrectivosActualizadosMessage());
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al abrir diálogo de registro de mantenimiento correctivo");
-                ErrorMessage = "Error al abrir el formulario de registro";
-            }
-        }        [RelayCommand]
-        public async Task GestionarMantenimientoAsync()
-        {
-            try
-            {
-                if (SelectedMantenimiento == null)
-                {
-                    ErrorMessage = "Debe seleccionar un mantenimiento para gestionar";
-                    return;
-                }
-
-                if (!CanAccederGestionEquiposInformaticos)
-                {
-                    ErrorMessage = "No tiene permisos para gestionar mantenimientos correctivos";
-                    return;
-                }
-
-                var dialog = new CompletarCancelarMantenimientoDialog();
-                var ownerWindow = WPFApplication.Current?.MainWindow;
-                
-                if (ownerWindow != null)
-                {
-                    dialog.ConfigurarParaVentanaPadre(ownerWindow);
-                }
-
-                if (dialog.ViewModel != null)
-                {
-                    dialog.ViewModel.MantenimientoSeleccionado = SelectedMantenimiento;
-                }
-
-                if (dialog.ShowDialog() == true)
-                {
-                    SuccessMessage = "Mantenimiento correctivo actualizado";
-                    _logger.LogInformation("Mantenimiento correctivo actualizado. ID: {Id}", SelectedMantenimiento?.Id ?? 0);
-
-                    await CargarMantenimientosAsync();
-                    WeakReferenceMessenger.Default.Send(new MantenimientosCorrectivosActualizadosMessage());
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al abrir diálogo de gestión de mantenimiento correctivo");
-                ErrorMessage = "Error al abrir el formulario de gestión";
-            }
-        }
-
-        private void RecalcularPermisos()
-        {
-            CanAccederGestionEquiposInformaticos = _currentUser.HasPermission("GestionEquiposInformaticos.Acceder");
-            CanEliminarGestionEquiposInformaticos = _currentUser.HasPermission("GestionEquiposInformaticos.Eliminar");
-        }
-
-        public static string ObtenerDescripcionEstado(EstadoMantenimientoCorrectivo estado)
-        {
-            return estado switch
-            {
-                EstadoMantenimientoCorrectivo.Pendiente => "Pendiente",
-                EstadoMantenimientoCorrectivo.EnReparacion => "En Reparación",
-                EstadoMantenimientoCorrectivo.Completado => "Completado",
-                EstadoMantenimientoCorrectivo.Cancelado => "Cancelado",
-                _ => "Desconocido"
-            };
-        }
-
-        private void ActualizarEstadisticas(List<MantenimientoCorrectivoDto> mantenimientos)
-        {
-            IsEmpty = mantenimientos.Count == 0;
-
-            if (IsEmpty)
-            {
-                EstadisticasText = "No hay mantenimientos correctivos registrados";
-                return;
-            }
-
-            var pendientes = mantenimientos.Count(m => m.Estado == EstadoMantenimientoCorrectivo.Pendiente);
-            var enReparacion = mantenimientos.Count(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion);
-            var completados = mantenimientos.Count(m => m.Estado == EstadoMantenimientoCorrectivo.Completado);
-            var cancelados = mantenimientos.Count(m => m.Estado == EstadoMantenimientoCorrectivo.Cancelado);
-
-            EstadisticasText = $"Total: {mantenimientos.Count} | " +
-                              $"🟡 Pendientes: {pendientes} | " +
-                              $"🟠 En Reparación: {enReparacion} | " +
-                              $"🟢 Completados: {completados} | " +
-                              $"🔴 Cancelados: {cancelados}";
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+            _debounceCts?.Cancel();
+            _debounceCts?.Dispose();
         }
     }
 }

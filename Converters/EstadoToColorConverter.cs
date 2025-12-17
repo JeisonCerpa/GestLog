@@ -21,6 +21,14 @@ namespace GestLog.Converters
                 estadoStr = estadoStr.Trim().ToLowerInvariant();
 
                 // Mapear estados a colores (usar paleta del proyecto)
+                // Completado -> verde éxito
+                if (estadoStr == "completado" || estadoStr == "completo")
+                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(39, 174, 96)); // #27AE60
+
+                // Cancelado -> rojo/error
+                if (estadoStr == "cancelado" || estadoStr == "anulado")
+                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(192, 57, 43)); // #C0392B
+
                 // Activo -> verde
                 if (estadoStr == "activo" || estadoStr == "enuso" || estadoStr == "en uso")
                     return new SolidColorBrush(System.Windows.Media.Color.FromRgb(43, 142, 63)); // #2B8E3F
@@ -29,9 +37,9 @@ namespace GestLog.Converters
                 if (estadoStr == "enmantenimiento" || estadoStr == "en mantenimiento")
                     return new SolidColorBrush(System.Windows.Media.Color.FromRgb(249, 178, 51)); // #F9B233
 
-                // En reparación -> naranja/ámbar oscuro
+                // En reparación -> ámbar (usar mismo tono ámbar para consistencia)
                 if (estadoStr == "enreparacion" || estadoStr == "en reparacion" || estadoStr == "enreparación")
-                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(168, 91, 0)); // #A85B00
+                    return new SolidColorBrush(System.Windows.Media.Color.FromRgb(249, 178, 51)); // #F9B233
 
                 // Dado de baja -> gris claro/neutral
                 if (estadoStr == "dadodebaja" || estadoStr == "dado de baja" || estadoStr == "dadode baja")

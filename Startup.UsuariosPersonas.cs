@@ -118,36 +118,9 @@ namespace GestLog
                 var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);
-            });
-              // MantenimientosCorrectivosViewModel - ✅ NUEVO: Mantenimientos correctivos (reactivos)
-            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.MantenimientosCorrectivosViewModel>(sp =>
-            {
-                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
-                var logger = sp.GetRequiredService<IGestLogLogger>();
-                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.MantenimientosCorrectivosViewModel(mantenimientoService, logger, currentUserInfo);
-            });            // RegistroMantenimientoCorrectivoViewModel - ✅ NUEVO: Diálogo de registro de correctivo
-            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.RegistroMantenimientoCorrectivoViewModel>(sp =>
-            {
-                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
-                var equipoService = sp.GetService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
-                var dbContextFactory = sp.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
-                var logger = sp.GetRequiredService<IGestLogLogger>();
-                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.RegistroMantenimientoCorrectivoViewModel(mantenimientoService, equipoService, dbContextFactory, logger, currentUserInfo);
-            });
-
-            // CompletarCancelarMantenimientoViewModel - ✅ NUEVO: Diálogo de completar/cancelar correctivo
-            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CompletarCancelarMantenimientoViewModel>(sp =>
-            {
-                var mantenimientoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IMantenimientoCorrectivoService>();
-                var logger = sp.GetRequiredService<IGestLogLogger>();
-                var currentUserInfo = sp.GetRequiredService<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CompletarCancelarMantenimientoViewModel(mantenimientoService, logger, currentUserInfo);
-            });
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);            });
             
-            // PerifericosViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            // PerifericosViewModel- ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos.PerifericosViewModel>(sp =>
             {
                 var logger = sp.GetRequiredService<IGestLogLogger>();
@@ -162,14 +135,14 @@ namespace GestLog
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.RegistrarMantenimientoViewModel(mantenimientoService, databaseService, logger);
-            });
-            // Registrar ViewModel contenedor para GestionEquipos
+            });            // Registrar ViewModel contenedor para GestionEquipos
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel>(sp =>
             {
                 var cronogramaVm = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel>();
                 var historialVm = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel>();
                 var perifericosVm = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos.PerifericosViewModel>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel(cronogramaVm, historialVm, perifericosVm);
+                var mantenimientosCorrectivosVm = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.MantenimientosCorrectivosViewModel>();
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.GestionEquiposHomeViewModel(cronogramaVm, historialVm, perifericosVm, mantenimientosCorrectivosVm);
             });
 
             // Servicios y repositorios de Personas

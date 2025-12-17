@@ -35,7 +35,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var query = _context.MantenimientosCorrectivos.AsQueryable();
+                // Incluir entidades relacionadas para obtener nombre del equipo/periférico
+                var query = _context.MantenimientosCorrectivos
+                    .Include(m => m.EquipoInformatico)
+                    .Include(m => m.PerifericoEquipoInformatico)
+                    .AsQueryable();
 
                 if (!includeDadosDeBaja)
                     query = query.Where(m => !m.DadoDeBaja);
@@ -61,6 +65,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimiento = await _context.MantenimientosCorrectivos
+                    .Include(m => m.EquipoInformatico)
+                    .Include(m => m.PerifericoEquipoInformatico)
                     .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
                 return mantenimiento == null ? null : MapearADto(mantenimiento);
@@ -80,6 +86,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
+                    .Include(m => m.EquipoInformatico)
+                    .Include(m => m.PerifericoEquipoInformatico)
                     .Where(m => m.EquipoInformaticoId == equipoInformaticoId && !m.DadoDeBaja)
                     .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
@@ -101,6 +109,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
+                    .Include(m => m.EquipoInformatico)
+                    .Include(m => m.PerifericoEquipoInformatico)
                     .Where(m => m.PerifericoEquipoInformaticoId == perifericoId && !m.DadoDeBaja)
                     .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
@@ -121,6 +131,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
+                    .Include(m => m.EquipoInformatico)
+                    .Include(m => m.PerifericoEquipoInformatico)
                     .Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion && !m.DadoDeBaja)
                     .OrderByDescending(m => m.FechaInicio)
                     .ToListAsync(cancellationToken);
@@ -161,14 +173,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     FechaRegistro = DateTime.Now,
                     FechaCreacion = DateTime.Now,
                     FechaActualizacion = DateTime.Now
-                };                _context.MantenimientosCorrectivos.Add(mantenimiento);
+                };
+                _context.MantenimientosCorrectivos.Add(mantenimiento);
 
                 // ✅ PASO 12: Cambiar estado del equipo/periférico a "En Reparación"
                 if (dto.TipoEntidad == "Equipo" && !string.IsNullOrEmpty(dto.EquipoInformaticoCodigo))
                 {
                     var equipo = await _context.EquiposInformaticos
                         .FirstOrDefaultAsync(e => e.Codigo == dto.EquipoInformaticoCodigo, cancellationToken);
-                    
+
                     if (equipo != null)
                     {
                         equipo.Estado = "En Reparación";
@@ -180,7 +193,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 {
                     var periferico = await _context.PerifericosEquiposInformaticos
                         .FirstOrDefaultAsync(p => p.Codigo == dto.PerifericoEquipoInformaticoCodigo, cancellationToken);
-                    
+
                     if (periferico != null)
                     {
                         periferico.Estado = EstadoPeriferico.EnReparacion;
@@ -202,7 +215,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 _logger.LogError(ex, "Error creando mantenimiento correctivo");
                 throw;
             }
-        }        /// <inheritdoc/>
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> ActualizarAsync(
             MantenimientoCorrectivoDto dto,
             CancellationToken cancellationToken = default)
@@ -247,7 +262,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
                 if (mantenimiento == null)
-                    return false;                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Completado;
+                    return false;
+                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Completado;
                 mantenimiento.FechaCompletado = DateTime.Now;
                 if (!string.IsNullOrWhiteSpace(observaciones))
                     mantenimiento.Observaciones = observaciones;
@@ -292,7 +308,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
                 if (mantenimiento == null)
-                    return false;                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
+                    return false;
+                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
                 mantenimiento.Observaciones = $"Cancelado: {razonCancelacion}";
                 mantenimiento.FechaActualizacion = DateTime.Now;
 
@@ -402,7 +419,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 Id = entity.Id,
                 TipoEntidad = entity.TipoEntidad,
                 EquipoInformaticoId = entity.EquipoInformaticoId,
+                EquipoInformaticoCodigo = entity.EquipoInformatico?.Codigo ?? null,
                 PerifericoEquipoInformaticoId = entity.PerifericoEquipoInformaticoId,
+                PerifericoEquipoInformaticoCodigo = entity.PerifericoEquipoInformatico?.Codigo ?? null,
                 FechaFalla = entity.FechaFalla,
                 DescripcionFalla = entity.DescripcionFalla,
                 ProveedorAsignado = entity.ProveedorAsignado,
@@ -412,9 +431,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 Observaciones = entity.Observaciones,
                 DadoDeBaja = entity.DadoDeBaja,
                 UsuarioRegistroId = entity.UsuarioRegistroId,
+                UsuarioAsignado = entity.EquipoInformatico?.UsuarioAsignado ?? entity.PerifericoEquipoInformatico?.UsuarioAsignado,
                 FechaRegistro = entity.FechaRegistro,
                 FechaCreacion = entity.FechaCreacion,
-                FechaActualizacion = entity.FechaActualizacion
+                FechaActualizacion = entity.FechaActualizacion,
+                NombreEntidad = entity.EquipoInformatico?.NombreEquipo ?? entity.PerifericoEquipoInformatico?.Dispositivo ?? entity.EquipoInformatico?.Codigo ?? entity.PerifericoEquipoInformatico?.Codigo,
+                CostoReparacion = entity.CostoReparacion
             };
         }
 

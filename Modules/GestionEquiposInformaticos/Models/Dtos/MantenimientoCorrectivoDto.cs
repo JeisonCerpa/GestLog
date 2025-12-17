@@ -100,6 +100,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         private bool _dadoDeBaja = false;
 
         /// <summary>
+        /// Costo total de la reparación (si aplica)
+        /// </summary>
+        [ObservableProperty]
+        private decimal? _costoReparacion;
+
+        /// <summary>
         /// ID del usuario que registró el mantenimiento correctivo
         /// </summary>
         [ObservableProperty]

@@ -47,7 +47,12 @@ public class MantenimientoCorrectivoEntity
     public DateTime? FechaCompletado { get; set; }
 
     /// <summary>Observaciones adicionales (diagnóstico, trabajo realizado, etc.).</summary>
-    public string? Observaciones { get; set; }    /// <summary>Indica si la entidad fue dado de baja debido a una reparación imposible.</summary>
+    public string? Observaciones { get; set; }
+
+    /// <summary>Costo total de la reparación realizada por el proveedor (en COP).</summary>
+    public decimal? CostoReparacion { get; set; }
+
+    /// <summary>Indica si la entidad fue dado de baja debido a una reparación imposible.</summary>
     public bool DadoDeBaja { get; set; }
 
     /// <summary>FK: Usuario que reportó la falla.</summary>

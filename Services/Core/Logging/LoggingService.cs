@@ -11,6 +11,7 @@ using GestLog.ViewModels;
 using GestLog.Services;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
+using GestLog.Modules.GestionEquiposInformaticos.Services;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -156,7 +157,11 @@ public static class LoggingService
                 return new GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel(excelSvc, logger, currentUser);
             });            // Servicios de Gestión de Mantenimientos
             services.AddGestionMantenimientosServices();
-              // ViewModels de Gestión de Mantenimientos
+            
+            // Servicios de Gestión de Equipos Informáticos
+            services.AddGestionEquiposInformaticosServices();
+            
+            // ViewModels de Gestión de Mantenimientos
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel>(sp =>
             {
                 var equipoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService>();

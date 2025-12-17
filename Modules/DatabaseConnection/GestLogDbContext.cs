@@ -93,15 +93,18 @@ namespace GestLog.Modules.DatabaseConnection
             
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
                 .Property(p => p.Sede)
-                .HasConversion<int>();
-
-            // Configuración para MantenimientoCorrectivoEntity - mapeo de tabla
+                .HasConversion<int>();            // Configuración para MantenimientoCorrectivoEntity - mapeo de tabla
             modelBuilder.Entity<MantenimientoCorrectivoEntity>()
                 .ToTable("EquiposInformaticos_MantenimientosCorrectivos");
             
             modelBuilder.Entity<MantenimientoCorrectivoEntity>()
                 .Property(m => m.Estado)
                 .HasConversion<int>();
+
+            modelBuilder.Entity<MantenimientoCorrectivoEntity>()
+                .Property(m => m.CostoReparacion)
+                .HasPrecision(18, 2)
+                .IsRequired(false);
 
             modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
             {

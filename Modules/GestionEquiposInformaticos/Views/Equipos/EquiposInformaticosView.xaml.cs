@@ -15,14 +15,30 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
     {
         public EquiposInformaticosView()
         {
-            this.InitializeComponent();
-            var app = (App)System.Windows.Application.Current;
-            var serviceProvider = app.ServiceProvider;
-            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
-            var currentUserService = serviceProvider.GetRequiredService<ICurrentUserService>();
-            var databaseService = serviceProvider.GetRequiredService<IDatabaseConnectionService>();
-            var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
-            this.DataContext = new EquiposInformaticosViewModel(dbContextFactory, currentUserService, databaseService, logger);
+            try
+            {
+                this.InitializeComponent();
+                var app = (App)System.Windows.Application.Current;
+                var serviceProvider = app.ServiceProvider;
+                var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
+                var currentUserService = serviceProvider.GetRequiredService<ICurrentUserService>();
+                var databaseService = serviceProvider.GetRequiredService<IDatabaseConnectionService>();
+                var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
+                this.DataContext = new EquiposInformaticosViewModel(dbContextFactory, currentUserService, databaseService, logger);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    System.Windows.MessageBox.Show($"Error al inicializar EquiposInformaticosView:\n{ex}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+                catch
+                {
+                    // ignored
+                }
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                throw;
+            }
         }
 
         private void ActualizarButton_Click(object sender, System.Windows.RoutedEventArgs e)
