@@ -104,5 +104,27 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Autocomplete
 
             return dispositivos;
         }
+
+        /// <summary>
+        /// Obtiene pares (Codigo, Dispositivo) para los periféricos que coinciden con el filtro.
+        /// </summary>
+        public async Task<List<(string Code, string Dispositivo)>> BuscarConCodigoAsync(string filtro)
+        {
+            await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+            var q = context.PerifericosEquiposInformaticos.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                var f = filtro.Trim().ToLower();
+                q = q.Where(p => (!string.IsNullOrEmpty(p.Codigo) && p.Codigo.ToLower().Contains(f)) || (!string.IsNullOrEmpty(p.Dispositivo) && p.Dispositivo.ToLower().Contains(f)));
+            }
+
+            var list = await q
+                .OrderBy(p => p.Codigo)
+                .Select(p => new { p.Codigo, p.Dispositivo })
+                .ToListAsync();
+
+            return list.Select(x => (x.Codigo ?? string.Empty, x.Dispositivo ?? string.Empty)).ToList();
+        }
     }
 }

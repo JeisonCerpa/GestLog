@@ -1,28 +1,27 @@
 using GestLog.Modules.DatabaseConnection;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
-using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Services.Core.Logging;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 {
     /// <summary>
-    /// Servicio para gestionar mantenimientos correctivos (reactivos) de equipos e periféricos
-    /// Responsabilidades:
-    /// - CRUD de mantenimientos correctivos
-    /// - Cambio de estado de equipos/periféricos durante reparación
-    /// - Validación de bloqueos para dar de baja durante mantenimiento
+    /// Servicio para gestión de mantenimientos correctivos (reactivos)
     /// </summary>
     public class MantenimientoCorrectivoService : IMantenimientoCorrectivoService
     {
         private readonly GestLogDbContext _context;
         private readonly IGestLogLogger _logger;
 
-        public MantenimientoCorrectivoService(
-            GestLogDbContext context,
-            IGestLogLogger logger)
+        public MantenimientoCorrectivoService(GestLogDbContext context, IGestLogLogger logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -35,20 +34,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                // Incluir entidades relacionadas para obtener nombre del equipo/periférico
-                var query = _context.MantenimientosCorrectivos
-                    .Include(m => m.EquipoInformatico)
-                    .Include(m => m.PerifericoEquipoInformatico)
-                    .AsQueryable();
-
-                if (!includeDadosDeBaja)
-                    query = query.Where(m => !m.DadoDeBaja);
-
+                var query = _context.MantenimientosCorrectivos.AsQueryable();
                 var mantenimientos = await query
                     .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
-
-                return MapearListaADtos(mantenimientos);
+                return MantenimientosADtos(mantenimientos);
             }
             catch (Exception ex)
             {
@@ -65,15 +55,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimiento = await _context.MantenimientosCorrectivos
-                    .Include(m => m.EquipoInformatico)
-                    .Include(m => m.PerifericoEquipoInformatico)
                     .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-
-                return mantenimiento == null ? null : MapearADto(mantenimiento);
+                return mantenimiento == null ? null : MantenimientoADto(mantenimiento);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo mantenimiento correctivo con ID {Id}", id);
+                _logger.LogError(ex, "Error obteniendo mantenimiento con ID {Id}", id);
                 throw;
             }
         }
@@ -86,13 +73,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Include(m => m.EquipoInformatico)
-                    .Include(m => m.PerifericoEquipoInformatico)
-                    .Where(m => m.EquipoInformaticoId == equipoInformaticoId && !m.DadoDeBaja)
+                    .Where(m => m.TipoEntidad == "Equipo")
                     .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
-
-                return MapearListaADtos(mantenimientos);
+                return MantenimientosADtos(mantenimientos);
             }
             catch (Exception ex)
             {
@@ -109,13 +93,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Include(m => m.EquipoInformatico)
-                    .Include(m => m.PerifericoEquipoInformatico)
-                    .Where(m => m.PerifericoEquipoInformaticoId == perifericoId && !m.DadoDeBaja)
+                    .Where(m => m.TipoEntidad == "Periférico")
                     .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
-
-                return MapearListaADtos(mantenimientos);
+                return MantenimientosADtos(mantenimientos);
             }
             catch (Exception ex)
             {
@@ -131,13 +112,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Include(m => m.EquipoInformatico)
-                    .Include(m => m.PerifericoEquipoInformatico)
-                    .Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion && !m.DadoDeBaja)
-                    .OrderByDescending(m => m.FechaInicio)
+                    .Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion)
+                    .OrderByDescending(m => m.FechaRegistro)
                     .ToListAsync(cancellationToken);
-
-                return MapearListaADtos(mantenimientos);
+                return MantenimientosADtos(mantenimientos);
             }
             catch (Exception ex)
             {
@@ -159,55 +137,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 
                 var mantenimiento = new MantenimientoCorrectivoEntity
                 {
-                    TipoEntidad = dto.TipoEntidad,
-                    EquipoInformaticoId = dto.EquipoInformaticoId,
-                    PerifericoEquipoInformaticoId = dto.PerifericoEquipoInformaticoId,
+                    TipoEntidad = dto.TipoEntidad ?? "Equipo",
+                    Codigo = dto.Codigo,
                     FechaFalla = dto.FechaFalla,
                     DescripcionFalla = dto.DescripcionFalla,
                     ProveedorAsignado = dto.ProveedorAsignado,
-                    Estado = EstadoMantenimientoCorrectivo.EnReparacion, // Se inicia en En Reparación
-                    FechaInicio = DateTime.Now,
-                    Observaciones = dto.Observaciones,
-                    DadoDeBaja = false,
-                    UsuarioRegistroId = usuarioRegistroId,
-                    FechaRegistro = DateTime.Now,
-                    FechaCreacion = DateTime.Now,
-                    FechaActualizacion = DateTime.Now
+                    Estado = EstadoMantenimientoCorrectivo.Pendiente,
+                    FechaInicio = null,
+                    Observaciones = null,
+                    CostoReparacion = null,
+                    FechaRegistro = DateTime.UtcNow,
+                    FechaActualizacion = DateTime.UtcNow
                 };
+
                 _context.MantenimientosCorrectivos.Add(mantenimiento);
-
-                // ✅ PASO 12: Cambiar estado del equipo/periférico a "En Reparación"
-                if (dto.TipoEntidad == "Equipo" && !string.IsNullOrEmpty(dto.EquipoInformaticoCodigo))
-                {
-                    var equipo = await _context.EquiposInformaticos
-                        .FirstOrDefaultAsync(e => e.Codigo == dto.EquipoInformaticoCodigo, cancellationToken);
-
-                    if (equipo != null)
-                    {
-                        equipo.Estado = "En Reparación";
-                        equipo.FechaModificacion = DateTime.Now;
-                        _context.EquiposInformaticos.Update(equipo);
-                    }
-                }
-                else if (dto.TipoEntidad == "Periferico" && !string.IsNullOrEmpty(dto.PerifericoEquipoInformaticoCodigo))
-                {
-                    var periferico = await _context.PerifericosEquiposInformaticos
-                        .FirstOrDefaultAsync(p => p.Codigo == dto.PerifericoEquipoInformaticoCodigo, cancellationToken);
-
-                    if (periferico != null)
-                    {
-                        periferico.Estado = EstadoPeriferico.EnReparacion;
-                        periferico.FechaModificacion = DateTime.Now;
-                        _context.PerifericosEquiposInformaticos.Update(periferico);
-                    }
-                }
-
                 await _context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation(
-                    "Mantenimiento correctivo creado. ID: {Id}, Tipo: {Tipo}, Estado: {Estado}",
-                    mantenimiento.Id, dto.TipoEntidad, mantenimiento.Estado);
-
+                _logger.LogInformation("Mantenimiento correctivo creado. ID: {Id}", mantenimiento.Id);
                 return mantenimiento.Id;
             }
             catch (Exception ex)
@@ -224,18 +170,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                if (dto == null || !dto.Id.HasValue)
-                    throw new ArgumentException("ID del mantenimiento es requerido");
+                if (dto?.Id == null)
+                    return false;
 
                 var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == dto.Id, cancellationToken);
+                    .FirstOrDefaultAsync(m => m.Id == dto.Id.Value, cancellationToken);
 
                 if (mantenimiento == null)
                     return false;
 
                 mantenimiento.ProveedorAsignado = dto.ProveedorAsignado;
                 mantenimiento.Observaciones = dto.Observaciones;
-                mantenimiento.FechaActualizacion = DateTime.Now;
+                mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
                 _context.MantenimientosCorrectivos.Update(mantenimiento);
                 await _context.SaveChangesAsync(cancellationToken);
@@ -245,7 +191,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error actualizando mantenimiento correctivo con ID {Id}", dto.Id?.ToString() ?? "sin ID");
+                _logger.LogError(ex, "Error actualizando mantenimiento correctivo con ID {Id}", dto?.Id?.ToString() ?? "sin ID");
                 throw;
             }
         }
@@ -263,25 +209,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 
                 if (mantenimiento == null)
                     return false;
+
                 mantenimiento.Estado = EstadoMantenimientoCorrectivo.Completado;
-                mantenimiento.FechaCompletado = DateTime.Now;
+                mantenimiento.FechaCompletado = DateTime.UtcNow;
                 if (!string.IsNullOrWhiteSpace(observaciones))
                     mantenimiento.Observaciones = observaciones;
-                mantenimiento.FechaActualizacion = DateTime.Now;
-
-                // ✅ PASO 12: Cambiar estado del equipo/periférico a "Activo"
-                if (mantenimiento.TipoEntidad == "Equipo" && mantenimiento.EquipoInformatico != null)
-                {
-                    mantenimiento.EquipoInformatico.Estado = "Activo";
-                    mantenimiento.EquipoInformatico.FechaModificacion = DateTime.Now;
-                    _context.EquiposInformaticos.Update(mantenimiento.EquipoInformatico);
-                }
-                else if (mantenimiento.TipoEntidad == "Periferico" && mantenimiento.PerifericoEquipoInformatico != null)
-                {
-                    mantenimiento.PerifericoEquipoInformatico.Estado = EstadoPeriferico.EnUso;
-                    mantenimiento.PerifericoEquipoInformatico.FechaModificacion = DateTime.Now;
-                    _context.PerifericosEquiposInformaticos.Update(mantenimiento.PerifericoEquipoInformatico);
-                }
+                mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
                 _context.MantenimientosCorrectivos.Update(mantenimiento);
                 await _context.SaveChangesAsync(cancellationToken);
@@ -309,33 +242,47 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 
                 if (mantenimiento == null)
                     return false;
-                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
-                mantenimiento.Observaciones = $"Cancelado: {razonCancelacion}";
-                mantenimiento.FechaActualizacion = DateTime.Now;
 
-                // ✅ PASO 12: Cambiar estado del equipo/periférico a "Activo" cuando se cancela
-                if (mantenimiento.TipoEntidad == "Equipo" && mantenimiento.EquipoInformatico != null)
-                {
-                    mantenimiento.EquipoInformatico.Estado = "Activo";
-                    mantenimiento.EquipoInformatico.FechaModificacion = DateTime.Now;
-                    _context.EquiposInformaticos.Update(mantenimiento.EquipoInformatico);
-                }
-                else if (mantenimiento.TipoEntidad == "Periferico" && mantenimiento.PerifericoEquipoInformatico != null)
-                {
-                    mantenimiento.PerifericoEquipoInformatico.Estado = EstadoPeriferico.EnUso;
-                    mantenimiento.PerifericoEquipoInformatico.FechaModificacion = DateTime.Now;
-                    _context.PerifericosEquiposInformaticos.Update(mantenimiento.PerifericoEquipoInformatico);
-                }
+                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
+                if (!string.IsNullOrWhiteSpace(razonCancelacion))
+                    mantenimiento.Observaciones = razonCancelacion;
+                mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
                 _context.MantenimientosCorrectivos.Update(mantenimiento);
                 await _context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo cancelado. ID: {Id}, Razón: {Razon}", id, razonCancelacion);
+                _logger.LogInformation("Mantenimiento correctivo cancelado. ID: {Id}", id);
                 return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error cancelando mantenimiento correctivo con ID {Id}", id);
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> EliminarAsync(
+            int id,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var mantenimiento = await _context.MantenimientosCorrectivos
+                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
+                if (mantenimiento == null)
+                    return false;
+
+                _context.MantenimientosCorrectivos.Remove(mantenimiento);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("Mantenimiento correctivo eliminado. ID: {Id}", id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error eliminando mantenimiento correctivo con ID {Id}", id);
                 throw;
             }
         }
@@ -353,8 +300,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 if (mantenimiento == null)
                     return false;
 
-                mantenimiento.DadoDeBaja = true;
-                mantenimiento.FechaActualizacion = DateTime.Now;
+                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
+                mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
                 _context.MantenimientosCorrectivos.Update(mantenimiento);
                 await _context.SaveChangesAsync(cancellationToken);
@@ -377,10 +324,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 return await _context.MantenimientosCorrectivos
-                    .AnyAsync(m => m.EquipoInformaticoId == equipoInformaticoId &&
-                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion &&
-                                   !m.DadoDeBaja,
-                            cancellationToken);
+                    .AnyAsync(m => m.TipoEntidad == "Equipo" && 
+                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
+                              cancellationToken);
             }
             catch (Exception ex)
             {
@@ -397,31 +343,27 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
             try
             {
                 return await _context.MantenimientosCorrectivos
-                    .AnyAsync(m => m.PerifericoEquipoInformaticoId == perifericoId &&
-                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion &&
-                                   !m.DadoDeBaja,
-                            cancellationToken);
+                    .AnyAsync(m => m.TipoEntidad == "Periférico" && 
+                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
+                              cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error verificando mantenimiento en progreso para periférico {PerifericoId}", perifericoId);
+                _logger.LogError(ex, "Error verificando mantenimiento periférico en progreso para periférico {PerifericoId}", perifericoId);
                 throw;
             }
         }
 
         /// <summary>
-        /// Mapea una entidad a DTO
+        /// Convierte una entidad a DTO
         /// </summary>
-        private MantenimientoCorrectivoDto MapearADto(MantenimientoCorrectivoEntity entity)
+        private MantenimientoCorrectivoDto MantenimientoADto(MantenimientoCorrectivoEntity entity)
         {
             return new MantenimientoCorrectivoDto
             {
                 Id = entity.Id,
                 TipoEntidad = entity.TipoEntidad,
-                EquipoInformaticoId = entity.EquipoInformaticoId,
-                EquipoInformaticoCodigo = entity.EquipoInformatico?.Codigo ?? null,
-                PerifericoEquipoInformaticoId = entity.PerifericoEquipoInformaticoId,
-                PerifericoEquipoInformaticoCodigo = entity.PerifericoEquipoInformatico?.Codigo ?? null,
+                Codigo = entity.Codigo,
                 FechaFalla = entity.FechaFalla,
                 DescripcionFalla = entity.DescripcionFalla,
                 ProveedorAsignado = entity.ProveedorAsignado,
@@ -429,23 +371,19 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 FechaInicio = entity.FechaInicio,
                 FechaCompletado = entity.FechaCompletado,
                 Observaciones = entity.Observaciones,
-                DadoDeBaja = entity.DadoDeBaja,
-                UsuarioRegistroId = entity.UsuarioRegistroId,
-                UsuarioAsignado = entity.EquipoInformatico?.UsuarioAsignado ?? entity.PerifericoEquipoInformatico?.UsuarioAsignado,
                 FechaRegistro = entity.FechaRegistro,
-                FechaCreacion = entity.FechaCreacion,
                 FechaActualizacion = entity.FechaActualizacion,
-                NombreEntidad = entity.EquipoInformatico?.NombreEquipo ?? entity.PerifericoEquipoInformatico?.Dispositivo ?? entity.EquipoInformatico?.Codigo ?? entity.PerifericoEquipoInformatico?.Codigo,
+                NombreEntidad = entity.Codigo,
                 CostoReparacion = entity.CostoReparacion
             };
         }
 
         /// <summary>
-        /// Mapea una lista de entidades a DTOs
+        /// Convierte una lista de entidades a DTOs
         /// </summary>
-        private List<MantenimientoCorrectivoDto> MapearListaADtos(List<MantenimientoCorrectivoEntity> entities)
+        private List<MantenimientoCorrectivoDto> MantenimientosADtos(List<MantenimientoCorrectivoEntity> entities)
         {
-            return entities.Select(MapearADto).ToList();
+            return entities.Select(MantenimientoADto).ToList();
         }
     }
 }

@@ -32,6 +32,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
 
             // ViewModels
             services.AddTransient<MantenimientosCorrectivosViewModel>();
+            // ViewModel para crear mantenimientos (ventana modal)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CrearMantenimientoCorrectivoViewModel>();
 
             return services;
         }

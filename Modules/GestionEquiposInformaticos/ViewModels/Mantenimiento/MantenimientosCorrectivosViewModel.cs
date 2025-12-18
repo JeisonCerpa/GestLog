@@ -40,6 +40,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         }
 
         [ObservableProperty]
+        private bool filtrarPendientes = false;
+
+        partial void OnFiltrarPendientesChanged(bool value)
+        {
+            ApplyFilters();
+        }
+
+        [ObservableProperty]
         private bool filtrarCompletados = false;
 
         partial void OnFiltrarCompletadosChanged(bool value)
@@ -143,6 +151,33 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         }
 
         /// <summary>
+        /// Abre la ventana modal para crear un nuevo mantenimiento correctivo.
+        /// La ventana resuelve su ViewModel desde el ServiceProvider en su code-behind.
+        /// </summary>
+        [RelayCommand]
+        public async Task AgregarMantenimientoAsync()
+        {
+            try
+            {
+                // Crear y mostrar la ventana modal. El code-behind resolverá el VM y suscribirá OnExito.
+                var window = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.CrearMantenimientoCorrectivoWindow();
+                var owner = System.Windows.Application.Current?.MainWindow;
+                window.ConfigurarParaVentanaPadre(owner);
+
+                var result = window.ShowDialog();
+                if (result == true)
+                {
+                    // Si se creó con éxito, refrescar la lista
+                    await RefreshAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error abriendo ventana de crear mantenimiento");
+            }
+        }
+
+        /// <summary>
         /// Inicializa la carga de mantenimientos correctivos
         /// </summary>
         [RelayCommand]
@@ -209,19 +244,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 if (MostrarSoloEnReparacion)
                 {
                     query = query.Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion);
-                }
-
-                // Filtro de texto único: buscar en NombreEntidad, EquipoInformaticoCodigo y ProveedorAsignado
+                }                // Filtro de texto único: buscar en NombreEntidad, Codigo y ProveedorAsignado
                 if (!string.IsNullOrWhiteSpace(Filter))
                 {
                     var term = Filter.Trim().ToLowerInvariant();
                     query = query.Where(m => (m.NombreEntidad ?? string.Empty).ToLowerInvariant().Contains(term)
-                                              || (m.EquipoInformaticoCodigo ?? string.Empty).ToLowerInvariant().Contains(term)
+                                              || (m.Codigo ?? string.Empty).ToLowerInvariant().Contains(term)
                                               || (m.ProveedorAsignado ?? string.Empty).ToLowerInvariant().Contains(term));
                 }
 
                 // Filtrado por checkboxes de estado: si ninguno está marcado, no restringir; si alguno marcado -> incluir sólo esos estados
                 var estadosSeleccionados = new List<EstadoMantenimientoCorrectivo>();
+                if (FiltrarPendientes) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.Pendiente);
                 if (FiltrarCompletados) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.Completado);
                 if (FiltrarCancelados) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.Cancelado);
                 if (FiltrarEnReparacion) estadosSeleccionados.Add(EstadoMantenimientoCorrectivo.EnReparacion);

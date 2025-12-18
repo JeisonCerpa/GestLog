@@ -22,40 +22,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         private string _tipoEntidad = "Equipo";
 
         /// <summary>
-        /// ID del equipo informático (si aplica)
+        /// Código del equipo o periférico (unificado)
         /// </summary>
         [ObservableProperty]
-        private int? _equipoInformaticoId;
-
-        /// <summary>
-        /// Código del equipo informático (si aplica)
-        /// </summary>
-        [ObservableProperty]
-        private string? _equipoInformaticoCodigo;
-
-        /// <summary>
-        /// ID del periférico (si aplica)
-        /// </summary>
-        [ObservableProperty]
-        private int? _perifericoEquipoInformaticoId;
-
-        /// <summary>
-        /// Código del periférico (si aplica)
-        /// </summary>
-        [ObservableProperty]
-        private string? _perifericoEquipoInformaticoCodigo;
+        private string? _codigo;
 
         /// <summary>
         /// Fecha en que ocurrió la falla
         /// </summary>
         [ObservableProperty]
         private DateTime _fechaFalla = DateTime.Now;
-
-        /// <summary>
-        /// Hora aproximada en que ocurrió la falla
-        /// </summary>
-        [ObservableProperty]
-        private string? _horaFalla;
 
         /// <summary>
         /// Descripción detallada de la falla reportada
@@ -94,40 +70,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         private string? _observaciones;
 
         /// <summary>
-        /// Indica si este registro ha sido dado de baja lógica
-        /// </summary>
-        [ObservableProperty]
-        private bool _dadoDeBaja = false;
-
-        /// <summary>
         /// Costo total de la reparación (si aplica)
         /// </summary>
         [ObservableProperty]
         private decimal? _costoReparacion;
 
         /// <summary>
-        /// ID del usuario que registró el mantenimiento correctivo
-        /// </summary>
-        [ObservableProperty]
-        private int? _usuarioRegistroId;
-
-        /// <summary>
-        /// Código del usuario que registró el mantenimiento
-        /// </summary>
-        [ObservableProperty]
-        private string? _usuarioRegistro;
-
-        /// <summary>
         /// Fecha y hora en que se registró este mantenimiento
         /// </summary>
         [ObservableProperty]
         private DateTime _fechaRegistro = DateTime.Now;
-
-        /// <summary>
-        /// Fecha de creación del registro
-        /// </summary>
-        [ObservableProperty]
-        private DateTime _fechaCreacion = DateTime.Now;
 
         /// <summary>
         /// Fecha de última actualización del registro

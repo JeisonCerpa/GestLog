@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:GestLog.Converters"
+             xmlns:equiposViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Equipos"
              mc:Ignorable="d" 
              d:DesignHeight="600" 
              d:DesignWidth="1000"
@@ -182,7 +183,10 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
+                    <!-- Botón Refrescar (círculo) -->
                     <Button Content="&#xE72C;" Command="{Binding RefreshCommand}" ToolTip="Actualizar lista de mantenimientos" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                    <!-- Botón Agregar (círculo con glyph) - estilo consistente con otras vistas -->
+                    <Button Content="&#xE710;" Command="{Binding AgregarMantenimientoCommand}" ToolTip="Agregar mantenimiento" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -206,9 +210,8 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                         <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
                         <TextBox Width="420" Padding="8" VerticalAlignment="Center" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por equipo, proveedor o texto libre"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    </StackPanel>                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <CheckBox Content="Pendientes" IsChecked="{Binding FiltrarPendientes, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
                         <CheckBox Content="Completados" IsChecked="{Binding FiltrarCompletados, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
                         <CheckBox Content="Cancelados" IsChecked="{Binding FiltrarCancelados, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
                         <CheckBox Content="En Reparación" IsChecked="{Binding FiltrarEnReparacion, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
@@ -242,10 +245,8 @@
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
-                    </DataGrid.CellStyle>
-
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Equipo" Binding="{Binding EquipoInformaticoCodigo}" Width="*" MinWidth="180" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                    </DataGrid.CellStyle>                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding Codigo}" Width="*" MinWidth="180" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Falla" Binding="{Binding DescripcionFalla}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorAsignado}" Width="SizeToCells" MinWidth="160" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha" Binding="{Binding FechaFalla, StringFormat=dd/MM/yyyy}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
