@@ -28,12 +28,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             services.AddScoped<IDispositivoAutocompletadoService, DispositivoAutocompletadoService>();
             services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();            // Dialog Services - Servicios de presentación (diálogos)
             services.AddTransient<IRegistroEjecucionPlanDialogService, RegistroEjecucionPlanDialogService>();
-            services.AddTransient<IRegistroMantenimientoEquipoDialogService, RegistroMantenimientoEquipoDialogService>();
-
-            // ViewModels
+            services.AddTransient<IRegistroMantenimientoEquipoDialogService, RegistroMantenimientoEquipoDialogService>();            // ViewModels
             services.AddTransient<MantenimientosCorrectivosViewModel>();
             // ViewModel para crear mantenimientos (ventana modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CrearMantenimientoCorrectivoViewModel>();
+            // ViewModel para enviar a reparación (ventana modal)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.EnviarAReparacionViewModel>();
+            // ViewModel para completar mantenimiento (ventana modal)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CompletarMantenimientoViewModel>();
+            // ViewModel para detalles de mantenimiento (ventana modal read-only)
+            services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.DetallesMantenimientoViewModel>();
 
             return services;
         }

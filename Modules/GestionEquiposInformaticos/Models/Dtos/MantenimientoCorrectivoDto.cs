@@ -67,13 +67,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         /// Observaciones adicionales sobre el mantenimiento
         /// </summary>
         [ObservableProperty]
-        private string? _observaciones;
-
-        /// <summary>
+        private string? _observaciones;        /// <summary>
         /// Costo total de la reparación (si aplica)
         /// </summary>
         [ObservableProperty]
         private decimal? _costoReparacion;
+
+        /// <summary>
+        /// Período de garantía en días (ej: 90, 180, 365)
+        /// </summary>
+        [ObservableProperty]
+        private int? _periodoGarantia;
 
         /// <summary>
         /// Fecha y hora en que se registró este mantenimiento

@@ -18,12 +18,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
     /// </summary>
     public class MantenimientoCorrectivoService : IMantenimientoCorrectivoService
     {
-        private readonly GestLogDbContext _context;
+        private readonly IDbContextFactory<GestLogDbContext> _contextFactory;
         private readonly IGestLogLogger _logger;
 
-        public MantenimientoCorrectivoService(GestLogDbContext context, IGestLogLogger logger)
+        public MantenimientoCorrectivoService(IDbContextFactory<GestLogDbContext> contextFactory, IGestLogLogger logger)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -34,11 +34,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var query = _context.MantenimientosCorrectivos.AsQueryable();
-                var mantenimientos = await query
-                    .OrderByDescending(m => m.FechaRegistro)
-                    .ToListAsync(cancellationToken);
-                return MantenimientosADtos(mantenimientos);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var query = context.MantenimientosCorrectivos.AsNoTracking().AsQueryable();
+                    var mantenimientos = await query
+                        .OrderByDescending(m => m.FechaRegistro)
+                        .ToListAsync(cancellationToken);
+                    return MantenimientosADtos(mantenimientos);
+                }
             }
             catch (Exception ex)
             {
@@ -54,9 +57,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-                return mantenimiento == null ? null : MantenimientoADto(mantenimiento);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+                    return mantenimiento == null ? null : MantenimientoADto(mantenimiento);
+                }
             }
             catch (Exception ex)
             {
@@ -72,11 +79,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Where(m => m.TipoEntidad == "Equipo")
-                    .OrderByDescending(m => m.FechaRegistro)
-                    .ToListAsync(cancellationToken);
-                return MantenimientosADtos(mantenimientos);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimientos = await context.MantenimientosCorrectivos
+                        .AsNoTracking()
+                        .Where(m => m.TipoEntidad == "Equipo")
+                        .OrderByDescending(m => m.FechaRegistro)
+                        .ToListAsync(cancellationToken);
+                    return MantenimientosADtos(mantenimientos);
+                }
             }
             catch (Exception ex)
             {
@@ -92,11 +103,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Where(m => m.TipoEntidad == "Periférico")
-                    .OrderByDescending(m => m.FechaRegistro)
-                    .ToListAsync(cancellationToken);
-                return MantenimientosADtos(mantenimientos);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimientos = await context.MantenimientosCorrectivos
+                        .AsNoTracking()
+                        .Where(m => m.TipoEntidad == "Periférico")
+                        .OrderByDescending(m => m.FechaRegistro)
+                        .ToListAsync(cancellationToken);
+                    return MantenimientosADtos(mantenimientos);
+                }
             }
             catch (Exception ex)
             {
@@ -111,11 +126,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimientos = await _context.MantenimientosCorrectivos
-                    .Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion)
-                    .OrderByDescending(m => m.FechaRegistro)
-                    .ToListAsync(cancellationToken);
-                return MantenimientosADtos(mantenimientos);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimientos = await context.MantenimientosCorrectivos
+                        .AsNoTracking()
+                        .Where(m => m.Estado == EstadoMantenimientoCorrectivo.EnReparacion)
+                        .OrderByDescending(m => m.FechaRegistro)
+                        .ToListAsync(cancellationToken);
+                    return MantenimientosADtos(mantenimientos);
+                }
             }
             catch (Exception ex)
             {
@@ -135,26 +154,29 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 if (dto == null)
                     throw new ArgumentNullException(nameof(dto));
 
-                var mantenimiento = new MantenimientoCorrectivoEntity
+                using (var context = _contextFactory.CreateDbContext())
                 {
-                    TipoEntidad = dto.TipoEntidad ?? "Equipo",
-                    Codigo = dto.Codigo,
-                    FechaFalla = dto.FechaFalla,
-                    DescripcionFalla = dto.DescripcionFalla,
-                    ProveedorAsignado = dto.ProveedorAsignado,
-                    Estado = EstadoMantenimientoCorrectivo.Pendiente,
-                    FechaInicio = null,
-                    Observaciones = null,
-                    CostoReparacion = null,
-                    FechaRegistro = DateTime.UtcNow,
-                    FechaActualizacion = DateTime.UtcNow
-                };
+                    var mantenimiento = new MantenimientoCorrectivoEntity
+                    {
+                        TipoEntidad = dto.TipoEntidad ?? "Equipo",
+                        Codigo = dto.Codigo,
+                        FechaFalla = dto.FechaFalla,
+                        DescripcionFalla = dto.DescripcionFalla,
+                        ProveedorAsignado = dto.ProveedorAsignado,
+                        Estado = EstadoMantenimientoCorrectivo.Pendiente,
+                        FechaInicio = null,
+                        Observaciones = null,
+                        CostoReparacion = null,
+                        FechaRegistro = DateTime.UtcNow,
+                        FechaActualizacion = DateTime.UtcNow
+                    };
 
-                _context.MantenimientosCorrectivos.Add(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    context.MantenimientosCorrectivos.Add(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo creado. ID: {Id}", mantenimiento.Id);
-                return mantenimiento.Id;
+                    _logger.LogInformation("Mantenimiento correctivo creado. ID: {Id}", mantenimiento.Id);
+                    return mantenimiento.Id;
+                }
             }
             catch (Exception ex)
             {
@@ -173,21 +195,24 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 if (dto?.Id == null)
                     return false;
 
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == dto.Id.Value, cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == dto.Id.Value, cancellationToken);
 
-                if (mantenimiento == null)
-                    return false;
+                    if (mantenimiento == null)
+                        return false;
 
-                mantenimiento.ProveedorAsignado = dto.ProveedorAsignado;
-                mantenimiento.Observaciones = dto.Observaciones;
-                mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    mantenimiento.ProveedorAsignado = dto.ProveedorAsignado;
+                    mantenimiento.Observaciones = dto.Observaciones;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
-                _context.MantenimientosCorrectivos.Update(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo actualizado. ID: {Id}", dto.Id.Value);
-                return true;
+                    _logger.LogInformation("Mantenimiento correctivo actualizado. ID: {Id}", dto.Id.Value);
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -197,30 +222,80 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         }
 
         /// <inheritdoc/>
-        public async Task<bool> CompletarAsync(
+        public async Task<bool> EnviarAReparacionAsync(
             int id,
+            string proveedorAsignado,
+            DateTime fechaInicio,
             string? observaciones = null,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
-                if (mantenimiento == null)
-                    return false;
+                    if (mantenimiento == null)
+                        return false;
 
-                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Completado;
-                mantenimiento.FechaCompletado = DateTime.UtcNow;
-                if (!string.IsNullOrWhiteSpace(observaciones))
-                    mantenimiento.Observaciones = observaciones;
-                mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    // Solo se puede enviar a reparación si está en estado Pendiente
+                    if (mantenimiento.Estado != EstadoMantenimientoCorrectivo.Pendiente)
+                        return false;
 
-                _context.MantenimientosCorrectivos.Update(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    mantenimiento.Estado = EstadoMantenimientoCorrectivo.EnReparacion;
+                    mantenimiento.ProveedorAsignado = proveedorAsignado;
+                    mantenimiento.FechaInicio = fechaInicio;
+                    if (!string.IsNullOrWhiteSpace(observaciones))
+                        mantenimiento.Observaciones = observaciones;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
-                _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}", id);
-                return true;
+                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation("Mantenimiento correctivo enviado a reparación. ID: {Id}, Proveedor: {Proveedor}", id, proveedorAsignado);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enviando mantenimiento correctivo a reparación con ID {Id}", id);
+                throw;
+            }
+        }        /// <inheritdoc/>
+        public async Task<bool> CompletarAsync(
+            int id,
+            decimal? costoReparacion = null,
+            string? observaciones = null,
+            int? periodoGarantia = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
+                    if (mantenimiento == null)
+                        return false;
+
+                    mantenimiento.Estado = EstadoMantenimientoCorrectivo.Completado;
+                    mantenimiento.FechaCompletado = DateTime.UtcNow;
+                    if (costoReparacion.HasValue)
+                        mantenimiento.CostoReparacion = costoReparacion;
+                    if (!string.IsNullOrWhiteSpace(observaciones))
+                        mantenimiento.Observaciones = observaciones;
+                    if (periodoGarantia.HasValue)
+                        mantenimiento.PeriodoGarantia = periodoGarantia;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
+
+                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}, Costo: {Costo}, Garantía: {Periodo} días", id, costoReparacion ?? 0, periodoGarantia ?? 0);
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -237,22 +312,25 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
-                if (mantenimiento == null)
-                    return false;
+                    if (mantenimiento == null)
+                        return false;
 
-                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
-                if (!string.IsNullOrWhiteSpace(razonCancelacion))
-                    mantenimiento.Observaciones = razonCancelacion;
-                mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
+                    if (!string.IsNullOrWhiteSpace(razonCancelacion))
+                        mantenimiento.Observaciones = razonCancelacion;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
-                _context.MantenimientosCorrectivos.Update(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo cancelado. ID: {Id}", id);
-                return true;
+                    _logger.LogInformation("Mantenimiento correctivo cancelado. ID: {Id}", id);
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -268,17 +346,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
-                if (mantenimiento == null)
-                    return false;
+                    if (mantenimiento == null)
+                        return false;
 
-                _context.MantenimientosCorrectivos.Remove(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    context.MantenimientosCorrectivos.Remove(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo eliminado. ID: {Id}", id);
-                return true;
+                    _logger.LogInformation("Mantenimiento correctivo eliminado. ID: {Id}", id);
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -294,20 +375,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                var mantenimiento = await _context.MantenimientosCorrectivos
-                    .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var mantenimiento = await context.MantenimientosCorrectivos
+                        .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
-                if (mantenimiento == null)
-                    return false;
+                    if (mantenimiento == null)
+                        return false;
 
-                mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
-                mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    mantenimiento.Estado = EstadoMantenimientoCorrectivo.Cancelado;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
 
-                _context.MantenimientosCorrectivos.Update(mantenimiento);
-                await _context.SaveChangesAsync(cancellationToken);
+                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Mantenimiento correctivo dado de baja. ID: {Id}", id);
-                return true;
+                    _logger.LogInformation("Mantenimiento correctivo dado de baja. ID: {Id}", id);
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -323,10 +407,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                return await _context.MantenimientosCorrectivos
-                    .AnyAsync(m => m.TipoEntidad == "Equipo" && 
-                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
-                              cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    return await context.MantenimientosCorrectivos
+                        .AnyAsync(m => m.TipoEntidad == "Equipo" && 
+                                       m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
+                                  cancellationToken);
+                }
             }
             catch (Exception ex)
             {
@@ -342,19 +429,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         {
             try
             {
-                return await _context.MantenimientosCorrectivos
-                    .AnyAsync(m => m.TipoEntidad == "Periférico" && 
-                                   m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
-                              cancellationToken);
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    return await context.MantenimientosCorrectivos
+                        .AnyAsync(m => m.TipoEntidad == "Periférico" && 
+                                       m.Estado == EstadoMantenimientoCorrectivo.EnReparacion,
+                                  cancellationToken);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error verificando mantenimiento periférico en progreso para periférico {PerifericoId}", perifericoId);
                 throw;
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Convierte una entidad a DTO
         /// </summary>
         private MantenimientoCorrectivoDto MantenimientoADto(MantenimientoCorrectivoEntity entity)
@@ -374,7 +462,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 FechaRegistro = entity.FechaRegistro,
                 FechaActualizacion = entity.FechaActualizacion,
                 NombreEntidad = entity.Codigo,
-                CostoReparacion = entity.CostoReparacion
+                CostoReparacion = entity.CostoReparacion,
+                PeriodoGarantia = entity.PeriodoGarantia
             };
         }
 
@@ -387,3 +476,4 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         }
     }
 }
+

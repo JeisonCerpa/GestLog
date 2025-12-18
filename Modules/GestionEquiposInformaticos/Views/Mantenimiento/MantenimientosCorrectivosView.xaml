@@ -8,18 +8,21 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" 
              d:DesignWidth="1000"
-             Background="#FAFAFA">
-
-    <UserControl.Resources>
+             Background="#FAFAFA">    <UserControl.Resources>
         <!-- Converters -->
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <conv:EstadoToColorConverter x:Key="EstadoToColorConverter" />
+        <conv:EstadoToActionButtonTextConverter x:Key="EstadoToActionButtonTextConverter" />
+        <conv:EstadoToActionButtonColorConverter x:Key="EstadoToActionButtonColorConverter" />
+        <conv:EstadoMantenimientoCountConverter x:Key="EstadoMantenimientoCountConverter" />
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <conv:IsStringNullOrEmptyConverter x:Key="IsStringNullOrEmptyConverter" />
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
         <conv:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
+        <conv:GarantiaStatusConverter x:Key="GarantiaStatusConverter" />
+        <conv:GarantiaStatusToColorConverter x:Key="GarantiaStatusToColorConverter" />
 
         <!-- Paleta corporativa GestLog -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
@@ -165,20 +168,18 @@
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding Mantenimientos.Count}" Style="{StaticResource StatsTextStyle}"/>
                     <TextBlock Text="Total" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="0" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource WarningBrush}"/>
+                </StackPanel>                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=Pendiente}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource WarningBrush}"/>
                     <TextBlock Text="Pendientes" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="0" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource PrimaryBrush}"/>
+                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=EnReparacion}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource PrimaryBrush}"/>
                     <TextBlock Text="En Reparación" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                    <TextBlock Text="0" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=Completado}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource SuccessBrush}"/>
                     <TextBlock Text="Completados" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
                 </StackPanel>
 
@@ -246,33 +247,73 @@
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
                     </DataGrid.CellStyle>                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Equipo" Binding="{Binding Codigo}" Width="*" MinWidth="180" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Falla" Binding="{Binding DescripcionFalla}" Width="*" MinWidth="260" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorAsignado}" Width="SizeToCells" MinWidth="160" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Fecha" Binding="{Binding FechaFalla, StringFormat=dd/MM/yyyy}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Costo" Binding="{Binding CostoReparacion, Converter={StaticResource DecimalToCopCurrencyConverter}}" Width="SizeToCells" MinWidth="120" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-
-                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="160" IsReadOnly="True" SortMemberPath="Estado">
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Falla" Binding="{Binding DescripcionFalla}" Width="*" MinWidth="200" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" Width="*" MinWidth="180" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorAsignado}" Width="SizeToCells" MinWidth="130" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Fecha" Binding="{Binding FechaFalla, StringFormat=dd/MM/yyyy}" Width="SizeToCells" MinWidth="100" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Costo" Binding="{Binding CostoReparacion, Converter={StaticResource DecimalToCopCurrencyConverter}}" Width="SizeToCells" MinWidth="100" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Garantía" Binding="{Binding PeriodoGarantia, StringFormat='0d'}" Width="SizeToCells" MinWidth="80" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Est. Garantía" Width="SizeToCells" MinWidth="110" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
-                                        <Ellipse Width="14" Height="14" VerticalAlignment="Center" Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}" Stroke="#BFBFBF" StrokeThickness="0.5"/>
-                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0">
+                                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,4,0" Stroke="#BFBFBF" StrokeThickness="0.5">
+                                            <Ellipse.Fill>
+                                                <MultiBinding Converter="{StaticResource GarantiaStatusToColorConverter}">
+                                                    <Binding Path="FechaCompletado"/>
+                                                    <Binding Path="PeriodoGarantia"/>
+                                                </MultiBinding>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <TextBlock VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium" FontSize="11">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource GarantiaStatusConverter}">
+                                                    <Binding Path="FechaCompletado"/>
+                                                    <Binding Path="PeriodoGarantia"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                        <DataGridTemplateColumn Header="" Width="SizeToCells" MinWidth="120" IsReadOnly="True">
+                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="110" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Detalles"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            Command="{Binding DataContext.VerDetallesMantenimientoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
+                                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}" Stroke="#BFBFBF" StrokeThickness="0.5"/>
+                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="4,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium" FontSize="11"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" Width="SizeToCells" MinWidth="100" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Estado, Converter={StaticResource EstadoToActionButtonTextConverter}}"
+                                            Background="{Binding Estado, Converter={StaticResource EstadoToActionButtonColorConverter}}"
+                                            Foreground="White"
+                                            Command="{Binding DataContext.EjecutarAccionDinamicaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
-                                            MinWidth="88" Width="Auto" Height="32" HorizontalAlignment="Center" Margin="4,0"
+                                            MinWidth="80" Width="Auto" Height="30" HorizontalAlignment="Center" Margin="2"
                                             Focusable="False"
-                                            ClickMode="Release"/>
+                                            ClickMode="Release"
+                                            FontWeight="SemiBold"
+                                            FontSize="11"
+                                            Padding="6,2"
+                                            BorderThickness="0"
+                                            Cursor="Hand">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Opacity" Value="0.85"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

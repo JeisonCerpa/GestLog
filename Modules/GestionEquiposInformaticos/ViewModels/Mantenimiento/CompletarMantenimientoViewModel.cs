@@ -1,0 +1,160 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
+using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
+using GestLog.Services.Core.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
+{
+    /// <summary>
+    /// ViewModel para la ventana de completar un mantenimiento correctivo
+    /// Permite registrar el costo final y observaciones de cierre
+    /// </summary>
+    public partial class CompletarMantenimientoViewModel : ObservableObject
+    {
+        private readonly IMantenimientoCorrectivoService _mantenimientoService;
+        private readonly IGestLogLogger _logger;
+
+        /// <summary>
+        /// Evento que se dispara cuando la operación fue exitosa
+        /// </summary>
+        public event EventHandler? OnExito;
+
+        /// <summary>
+        /// Mantenimiento a completar
+        /// </summary>
+        [ObservableProperty]
+        private MantenimientoCorrectivoDto? mantenimiento;
+
+        /// <summary>
+        /// Costo total de la reparación
+        /// </summary>
+        [ObservableProperty]
+        private decimal? costoReparacion;
+
+        /// <summary>
+        /// Observaciones adicionales (de cierre)
+        /// </summary>
+        [ObservableProperty]
+        private string? observaciones = string.Empty;
+
+        /// <summary>
+        /// Período de garantía en días
+        /// </summary>
+        [ObservableProperty]
+        private int? periodoGarantia;
+
+        /// <summary>
+        /// Indica si se está procesando la solicitud
+        /// </summary>
+        [ObservableProperty]
+        private bool isLoading;
+
+        /// <summary>
+        /// Mensaje de error para mostrar al usuario
+        /// </summary>
+        [ObservableProperty]
+        private string? errorMessage;
+
+        public CompletarMantenimientoViewModel(
+            IMantenimientoCorrectivoService mantenimientoService,
+            IGestLogLogger logger)
+        {
+            _mantenimientoService = mantenimientoService ?? throw new ArgumentNullException(nameof(mantenimientoService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }        /// <summary>
+        /// Inicializa el ViewModel con los datos del mantenimiento a completar
+        /// </summary>
+        public void InitializarMantenimiento(MantenimientoCorrectivoDto mantenimiento)
+        {
+            Mantenimiento = mantenimiento;
+            CostoReparacion = mantenimiento.CostoReparacion;
+            PeriodoGarantia = mantenimiento.PeriodoGarantia;
+            
+            // Las observaciones previas se muestran como contexto (solo lectura)
+            // El usuario puede agregar nuevas observaciones que se acumularán
+            Observaciones = string.Empty;
+            ErrorMessage = null;
+        }/// <summary>
+        /// Completa el mantenimiento correctivo con el costo y observaciones
+        /// </summary>
+        [RelayCommand]
+        public async Task CompletarMantenimientoAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("🔵 [INICIO] CompletarMantenimientoAsync");
+
+                // Validar datos básicos
+                if (Mantenimiento?.Id == null)
+                {
+                    ErrorMessage = "Datos del mantenimiento inválidos";
+                    _logger.LogWarning("⚠️ Validación fallida: Mantenimiento ID nulo");
+                    return;
+                }
+
+                IsLoading = true;
+                ErrorMessage = null;
+
+                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id}, Costo={CostoReparacion:C}");
+
+                // Acumular observaciones: observaciones previas + nuevas observaciones
+                var observacionesPrevias = Mantenimiento.Observaciones ?? string.Empty;
+                var observacionesAcumuladas = observacionesPrevias;
+                
+                if (!string.IsNullOrWhiteSpace(Observaciones))
+                {
+                    if (!string.IsNullOrWhiteSpace(observacionesPrevias))
+                    {
+                        observacionesAcumuladas = observacionesPrevias + Environment.NewLine + "• " + Observaciones;
+                    }
+                    else
+                    {
+                        observacionesAcumuladas = "• " + Observaciones;
+                    }
+                }                _logger.LogInformation($"📝 Observaciones acumuladas: {observacionesAcumuladas}");
+
+                // Llamar al servicio para completar el mantenimiento
+                var resultado = await _mantenimientoService.CompletarAsync(
+                    Mantenimiento.Id.Value,
+                    CostoReparacion,
+                    observacionesAcumuladas,
+                    PeriodoGarantia,
+                    cancellationToken);
+
+                _logger.LogInformation($"📋 Servicio retornó: resultado={resultado}");
+
+                if (resultado)
+                {
+                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} completado");
+                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    OnExito?.Invoke(this, EventArgs.Empty);
+                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
+                }
+                else
+                {
+                    ErrorMessage = "No fue posible completar el mantenimiento. Intente nuevamente.";
+                    _logger.LogWarning("❌ El servicio retornó false");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("⏸️ Operación cancelada");
+                ErrorMessage = "Operación cancelada.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [EXCEPCION] Error en CompletarMantenimientoAsync");
+                ErrorMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+                _logger.LogInformation("🔴 [FIN] CompletarMantenimientoAsync - IsLoading=false");
+            }
+        }
+    }
+}

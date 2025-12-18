@@ -78,19 +78,36 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data
         /// <returns>true si la actualización fue exitosa</returns>
         Task<bool> ActualizarAsync(
             MantenimientoCorrectivoDto dto,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
+            CancellationToken cancellationToken = default);        /// <summary>
+        /// Envía un mantenimiento a reparación con proveedor asignado
+        /// Cambia el estado a "EnReparacion" y registra la fecha de inicio y proveedor
+        /// </summary>
+        /// <param name="id">ID del mantenimiento</param>
+        /// <param name="proveedorAsignado">Nombre del proveedor encargado</param>
+        /// <param name="fechaInicio">Fecha de inicio de la reparación</param>
+        /// <param name="observaciones">Observaciones adicionales (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>true si se envió exitosamente a reparación</returns>
+        Task<bool> EnviarAReparacionAsync(
+            int id,
+            string proveedorAsignado,
+            DateTime fechaInicio,
+            string? observaciones = null,
+            CancellationToken cancellationToken = default);        /// <summary>
         /// Marca un mantenimiento como completado
         /// Cambia el estado a "Completado" y restaura el estado anterior del equipo/periférico
         /// </summary>
         /// <param name="id">ID del mantenimiento</param>
+        /// <param name="costoReparacion">Costo total de la reparación (opcional)</param>
         /// <param name="observaciones">Observaciones finales (opcional)</param>
+        /// <param name="periodoGarantia">Período de garantía en días (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>true si se completó exitosamente</returns>
         Task<bool> CompletarAsync(
             int id,
+            decimal? costoReparacion = null,
             string? observaciones = null,
+            int? periodoGarantia = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>

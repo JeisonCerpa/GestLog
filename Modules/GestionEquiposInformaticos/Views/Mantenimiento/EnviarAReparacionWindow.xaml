@@ -1,0 +1,173 @@
+<Window x:Class="GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.EnviarAReparacionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:GestLog.Converters"
+        mc:Ignorable="d"
+        Title="Enviar a Reparación"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        d:DesignHeight="420" d:DesignWidth="650">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+
+            <!-- Estilo: botones con esquinas redondeadas -->
+            <Style x:Key="RoundedButton" TargetType="Button">
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="Padding" Value="10,6" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="8" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CancelButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+                <Setter Property="Background" Value="#E0E0E0" />
+                <Setter Property="Foreground" Value="#333333" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- OVERLAY MODAL - Fondo oscuro semitransparente -->
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True" SnapsToDevicePixels="True">
+
+        <!-- CARD CENTRADA -->
+        <Border x:Name="Card" Width="650" MaxHeight="450"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8" Padding="0"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- HEADER - Barra superior con gradiente -->
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" 
+                        Padding="24,16" Effect="{StaticResource HeaderShadow}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" 
+                                    Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Enviar a Reparación" Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Asignar proveedor y detalles de envío" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- CONTENIDO - Scrolleable -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20" 
+                              Background="{StaticResource LightGrayBrush}">
+                    <StackPanel>
+                        <!-- Formulario -->
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Top" Width="580">
+                          <!-- Proveedor -->
+                            <TextBlock Text="Proveedor *" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>                            <ComboBox x:Name="CmbProveedor"
+                                     Text="{Binding ProveedorAsignado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding ProveedoresFiltrados}"
+                                     IsEditable="True"
+                                     IsTextSearchEnabled="False"
+                                     Padding="10,8" 
+                                     Margin="0,0,0,16"
+                                     MinHeight="36"
+                                     Background="White"
+                                     BorderBrush="{StaticResource BorderBrush}"
+                                     BorderThickness="1"
+                                     ToolTip="Seleccione un proveedor existente o escriba uno nuevo"/>
+
+                            <!-- Fecha de Inicio -->
+                            <TextBlock Text="Fecha de Inicio (Opcional)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>
+                            <DatePicker SelectedDate="{Binding FechaInicio, UpdateSourceTrigger=PropertyChanged}" 
+                                       Padding="10,8" 
+                                       Margin="0,0,0,16"
+                                       MinHeight="36"
+                                       Background="White"
+                                       BorderBrush="{StaticResource BorderBrush}"
+                                       BorderThickness="1"
+                                       ToolTip="Fecha en que inicia el mantenimiento"/>
+
+                            <!-- Observaciones -->
+                            <TextBlock Text="Observaciones (Opcional)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>
+                            <TextBox x:Name="ObservacionesTextBox" 
+                                     Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" 
+                                     Padding="10,8" 
+                                     Margin="0,0,0,16"
+                                     MinHeight="80"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Background="White"
+                                     BorderBrush="{StaticResource BorderBrush}"
+                                     BorderThickness="1"
+                                     ToolTip="Observaciones adicionales sobre el envío o la reparación"/>
+
+                            <!-- Mensaje de validación -->
+                            <TextBlock Text="{Binding ErrorMessage}" 
+                                       Foreground="#C0392B" 
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12"
+                                       Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- FOOTER - Botones de acción -->
+                <Border Grid.Row="2" Background="#FAFAFA" CornerRadius="0,0,8,8" 
+                        Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                    <DockPanel>
+                        <Button x:Name="CancelarButton" DockPanel.Dock="Right" Content="Cancelar" 
+                                Click="CancelarButton_Click"
+                                Style="{StaticResource CancelButton}"
+                                MinWidth="100" Margin="12,0,0,0"/>
+                        <Button x:Name="EnviarButton" DockPanel.Dock="Right" Content="Enviar a Reparación"
+                                Command="{Binding EnviarAReparacionCommand}"
+                                Style="{StaticResource RoundedButton}"
+                                MinWidth="140"
+                                IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+                        
+                        <!-- Indicador de carga -->
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="Procesando..." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

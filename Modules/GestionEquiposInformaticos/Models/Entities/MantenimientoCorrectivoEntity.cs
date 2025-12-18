@@ -34,10 +34,11 @@ public class MantenimientoCorrectivoEntity
 
     /// <summary>Fecha de finalización de la reparación.</summary>
     public DateTime? FechaCompletado { get; set; }    /// <summary>Observaciones adicionales (diagnóstico, trabajo realizado, etc.).</summary>
-    public string? Observaciones { get; set; }
-
-    /// <summary>Costo total de la reparación realizada por el proveedor (en COP).</summary>
+    public string? Observaciones { get; set; }    /// <summary>Costo total de la reparación realizada por el proveedor (en COP).</summary>
     public decimal? CostoReparacion { get; set; }
+
+    /// <summary>Período de garantía en días (ej: 90, 180, 365). Null si no aplica garantía.</summary>
+    public int? PeriodoGarantia { get; set; }
 
     /// <summary>Fecha y hora en que se registró la falla en el sistema.</summary>
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;

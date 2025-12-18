@@ -1,0 +1,191 @@
+<Window x:Class="GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.DetallesMantenimientoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:GestLog.Converters"
+        mc:Ignorable="d"
+        Title="Detalles del Mantenimiento"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        d:DesignHeight="600" d:DesignWidth="700">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+
+            <Style x:Key="DetailLabelStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#666666"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+                <Setter Property="Margin" Value="0,0,0,4"/>
+            </Style>
+
+            <Style x:Key="DetailValueStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#333333"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+
+            <Style x:Key="CloseButton" TargetType="Button">
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="Padding" Value="24,6" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="#E0E0E0" />
+                <Setter Property="Foreground" Value="#333333" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border x:Name="Card" Width="700" MaxHeight="620"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8" Padding="0"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" Padding="24,16">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36">
+                                <TextBlock Text="📋" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Detalles del Mantenimiento" Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Información completa del mantenimiento realizado" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Contenido principal -->
+                <ScrollViewer Grid.Row="1" Padding="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <!-- Sección: Información General -->
+                        <TextBlock Text="Información General" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
+                        
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
+                                <TextBlock Text="ID Mantenimiento" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.Id}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="0">
+                                <TextBlock Text="Estado" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.Estado}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,16,0">
+                                <TextBlock Text="Fecha Creación" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.FechaCreacion, StringFormat='dd/MM/yyyy HH:mm'}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="1">
+                                <TextBlock Text="Fecha Completado" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.FechaCompletado, StringFormat='dd/MM/yyyy HH:mm'}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+                        </Grid>                        <!-- Sección: Detalles de Reparación -->
+                        <TextBlock Text="Detalles de Reparación" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
+                        
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
+                                <TextBlock Text="Proveedor Asignado" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.ProveedorAsignado}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="0">
+                                <TextBlock Text="Costo de Reparación" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.CostoReparacion, StringFormat='C'}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,16,0">
+                                <TextBlock Text="Fecha Inicio" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.FechaInicio, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="1">
+                                <TextBlock Text="Equipo Afectado" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.NombreEquipo}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>                            <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,16,0">
+                                <TextBlock Text="Período de Garantía" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.PeriodoGarantia, StringFormat='0 días'}" Style="{StaticResource DetailValueStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Sección: Historial de Observaciones -->
+                        <TextBlock Text="Historial de Observaciones" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
+                        <TextBlock Text="{Binding Mantenimiento.Observaciones}" 
+                                   Padding="12,10" 
+                                   Margin="0,0,0,16" 
+                                   MinHeight="100" 
+                                   Background="#F5F5F5" 
+                                   Foreground="#333333" 
+                                   VerticalAlignment="Top" 
+                                   TextWrapping="Wrap" 
+                                   FontFamily="Courier New" 
+                                   FontSize="11"
+                                   LineHeight="18"/>
+                    </StackPanel>
+                </ScrollViewer>                <!-- Botones de acción -->
+                <Border Grid.Row="2" Background="{StaticResource BackgroundBrush}" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="CloseButton" 
+                                Content="Cerrar" 
+                                Style="{StaticResource CloseButton}"
+                                Click="CloseButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

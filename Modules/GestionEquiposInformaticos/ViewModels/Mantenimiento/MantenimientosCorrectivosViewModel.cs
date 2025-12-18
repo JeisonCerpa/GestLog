@@ -292,52 +292,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             FiltroEstado = nuevoEstado;
             await RefreshAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Completa un mantenimiento correctivo seleccionado
-        /// </summary>
-        [RelayCommand]
-        public async Task CompletarMantenimientoAsync(CancellationToken cancellationToken = default)
-        {
-            if (SelectedMantenimiento?.Id == null)
-            {
-                ErrorMessage = "Debe seleccionar un mantenimiento para completar";
-                return;
-            }
-
-            try
-            {
-                IsLoading = true;
-                ErrorMessage = string.Empty;
-
-                var resultado = await _mantenimientoService.CompletarAsync(
-                    SelectedMantenimiento.Id.Value,
-                    SelectedMantenimiento.Observaciones,
-                    cancellationToken);
-
-                if (resultado)
-                {
-                    _logger.LogDebug($"Mantenimiento {SelectedMantenimiento.Id} completado exitosamente");
-                    await RefreshAsync(cancellationToken);
-                }
-                else
-                {
-                    ErrorMessage = "No fue posible completar el mantenimiento";
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al completar mantenimiento");
-                ErrorMessage = "Error al completar el mantenimiento. Intente nuevamente.";
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Cancela un mantenimiento correctivo seleccionado
         /// </summary>
         [RelayCommand]
@@ -383,6 +338,176 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             finally
             {
                 IsLoading = false;
+            }
+        }        /// <summary>
+        /// Envía un mantenimiento a reparación con proveedor asignado
+        /// </summary>
+        [RelayCommand]
+        public async Task EnviarAReparacionAsync(MantenimientoCorrectivoDto mantenimiento, CancellationToken cancellationToken = default)
+        {
+            if (mantenimiento?.Id == null)
+            {
+                ErrorMessage = "Debe seleccionar un mantenimiento válido";
+                return;
+            }
+
+            try
+            {
+                // Crear y mostrar la ventana modal de envío a reparación
+                var window = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.EnviarAReparacionWindow();
+                var owner = System.Windows.Application.Current?.MainWindow;
+                window.ConfigurarParaVentanaPadre(owner);
+
+                // Resolver el ViewModel y pasar el mantenimiento
+                try
+                {
+                    var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                    if (serviceProvider != null)
+                    {
+                        var vm = serviceProvider.GetService(typeof(EnviarAReparacionViewModel)) as EnviarAReparacionViewModel;
+                        if (vm != null)
+                        {
+                            vm.InitializarMantenimiento(mantenimiento);
+                            window.DataContext = vm;
+                        }
+                    }
+                }
+                catch { /* No fatal */ }
+
+                var result = window.ShowDialog();
+                if (result == true)
+                {
+                    // Si se envió con éxito, refrescar la lista
+                    await RefreshAsync(cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error abriendo ventana de enviar a reparación");                ErrorMessage = "Error al abrir el formulario de envío a reparación";
+            }
+        }
+
+        /// <summary>
+        /// Abre la ventana modal para completar un mantenimiento en estado "En Reparación"
+        /// </summary>
+        [RelayCommand]
+        public async Task CompletarMantenimientoAsync(MantenimientoCorrectivoDto mantenimiento, CancellationToken cancellationToken = default)
+        {
+            if (mantenimiento?.Id == null)
+            {
+                ErrorMessage = "Debe seleccionar un mantenimiento válido";
+                return;
+            }
+
+            // Validar que el mantenimiento esté en estado "En Reparación"
+            if (mantenimiento.Estado != EstadoMantenimientoCorrectivo.EnReparacion)
+            {
+                ErrorMessage = "Solo se pueden completar mantenimientos que están en reparación";
+                return;
+            }
+
+            try
+            {
+                // Crear y mostrar la ventana modal de completar mantenimiento
+                var window = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.CompletarMantenimientoWindow();
+                var owner = System.Windows.Application.Current?.MainWindow;
+                window.ConfigurarParaVentanaPadre(owner);
+
+                // Resolver el ViewModel y pasar el mantenimiento
+                try
+                {
+                    var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                    if (serviceProvider != null)
+                    {
+                        var vm = serviceProvider.GetService(typeof(CompletarMantenimientoViewModel)) as CompletarMantenimientoViewModel;
+                        if (vm != null)
+                        {
+                            vm.InitializarMantenimiento(mantenimiento);
+                            window.DataContext = vm;
+                        }
+                    }
+                }
+                catch { /* No fatal */ }
+
+                var result = window.ShowDialog();
+                if (result == true)
+                {
+                    // Si se completó con éxito, refrescar la lista
+                    await RefreshAsync(cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error abriendo ventana de completar mantenimiento");
+                ErrorMessage = "Error al abrir el formulario de completar mantenimiento";
+            }
+        }        /// <summary>
+        /// Abre la ventana de detalles de un mantenimiento en modo lectura
+        /// </summary>
+        [RelayCommand]
+        public async Task VerDetallesMantenimientoAsync(MantenimientoCorrectivoDto mantenimiento, CancellationToken cancellationToken = default)
+        {
+            if (mantenimiento?.Id == null)
+            {
+                ErrorMessage = "Debe seleccionar un mantenimiento válido";
+                return;
+            }
+
+            try
+            {
+                // Crear y mostrar la ventana modal de detalles
+                var window = new GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento.DetallesMantenimientoWindow();
+                var owner = System.Windows.Application.Current?.MainWindow;
+                window.ConfigurarParaVentanaPadre(owner);
+
+                // Resolver el ViewModel y pasar el mantenimiento
+                try
+                {
+                    var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                    if (serviceProvider != null)
+                    {
+                        var vm = serviceProvider.GetService(typeof(DetallesMantenimientoViewModel)) as DetallesMantenimientoViewModel;
+                        if (vm != null)
+                        {
+                            vm.InitializarMantenimiento(mantenimiento);
+                            window.DataContext = vm;
+                        }
+                    }
+                }
+                catch { /* No fatal */ }
+
+                await Task.Run(() => window.ShowDialog(), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error abriendo detalles del mantenimiento");
+                ErrorMessage = "Error al abrir los detalles del mantenimiento";
+            }
+        }
+
+        /// <summary>
+        /// Ejecuta la acción apropiada basada en el estado del mantenimiento
+        /// </summary>
+        [RelayCommand]
+        public async Task EjecutarAccionDinamicaAsync(MantenimientoCorrectivoDto mantenimiento, CancellationToken cancellationToken = default)
+        {
+            if (mantenimiento == null)
+            {
+                return;
+            }            switch (mantenimiento.Estado)
+            {
+                case EstadoMantenimientoCorrectivo.Pendiente:
+                    await EnviarAReparacionAsync(mantenimiento, cancellationToken);
+                    break;
+
+                case EstadoMantenimientoCorrectivo.EnReparacion:
+                    await CompletarMantenimientoAsync(mantenimiento, cancellationToken);
+                    break;
+
+                case EstadoMantenimientoCorrectivo.Completado:
+                case EstadoMantenimientoCorrectivo.Cancelado:
+                    await VerDetallesMantenimientoAsync(mantenimiento, cancellationToken);
+                    break;
             }
         }
 
