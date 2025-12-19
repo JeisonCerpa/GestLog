@@ -87,8 +87,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                 ActualizarEstadisticas();
                 PerifericosView?.Refresh();
             };
-            
-            // Suscribirse a mensaje de periféricos actualizados para recargar datos cuando otro VM modifique asignaciones
+              // Suscribirse a mensaje de periféricos actualizados para recargar datos cuando otro VM modifique asignaciones
             try
             {
                 WeakReferenceMessenger.Default.Register<PerifericosActualizadosMessage>(this, (recipient, message) =>
@@ -100,6 +99,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "[PerifericosViewModel] No se pudo registrar el handler de PerifericosActualizadosMessage");
+            }
+            
+            // 📬 Suscribirse a cambios en mantenimientos correctivos para refrescar estados
+            try
+            {
+                WeakReferenceMessenger.Default.Register<MantenimientosCorrectivosActualizadosMessage>(this, (recipient, message) =>
+                {
+                    // Refrescar los datos cuando cambia el estado de reparación
+                    _ = CargarPerifericosAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[PerifericosViewModel] No se pudo registrar el handler de MantenimientosCorrectivosActualizadosMessage");
             }
         }        /// <summary>
         /// Inicializa el ViewModel con detección ultrarrápida de problemas de conexión

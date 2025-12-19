@@ -41,10 +41,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento
 
         private void Vm_OnExito(object? sender, EventArgs e)
         {
+            // Dar un pequeño delay para asegurar que el servicio haya terminado completamente
+            System.Threading.Thread.Sleep(500);
+            
             // Cerrar modal con éxito
             this.DialogResult = true;
             this.Close();
-        }        private void CompletarMantenimientoWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        }
+
+        private void CompletarMantenimientoWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
             {

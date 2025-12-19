@@ -35,10 +35,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento
             {
                 _currentViewModel.OnExito += Vm_OnExito;
             }
-        }
-
-        private void Vm_OnExito(object? sender, EventArgs e)
+        }        private void Vm_OnExito(object? sender, EventArgs e)
         {
+            // Dar un pequeño delay para asegurar que el servicio haya terminado completamente
+            System.Threading.Thread.Sleep(500);
+            
             // Cerrar modal con éxito
             this.DialogResult = true;
             this.Close();

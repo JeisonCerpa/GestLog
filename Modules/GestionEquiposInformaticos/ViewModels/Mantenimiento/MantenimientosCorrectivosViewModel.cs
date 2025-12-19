@@ -148,14 +148,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             _mantenimientoService = mantenimientoService ?? throw new ArgumentNullException(nameof(mantenimientoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _currentUserInfo = currentUserInfo ?? throw new ArgumentNullException(nameof(currentUserInfo));
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Abre la ventana modal para crear un nuevo mantenimiento correctivo.
         /// La ventana resuelve su ViewModel desde el ServiceProvider en su code-behind.
         /// </summary>
         [RelayCommand]
-        public async Task AgregarMantenimientoAsync()
+        public void AgregarMantenimiento()
         {
             try
             {
@@ -167,8 +165,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 var result = window.ShowDialog();
                 if (result == true)
                 {
-                    // Si se creó con éxito, refrescar la lista
-                    await RefreshAsync();
+                    // Si se creó con éxito, refrescar la lista de forma síncrona
+                    _ = RefreshAsync();
                 }
             }
             catch (Exception ex)
@@ -440,13 +438,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 _logger.LogError(ex, "Error abriendo ventana de completar mantenimiento");
                 ErrorMessage = "Error al abrir el formulario de completar mantenimiento";
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Abre la ventana de detalles de un mantenimiento en modo lectura
         /// </summary>
         [RelayCommand]
-        public async Task VerDetallesMantenimientoAsync(MantenimientoCorrectivoDto mantenimiento, CancellationToken cancellationToken = default)
+        public void VerDetallesMantenimiento(MantenimientoCorrectivoDto mantenimiento)
         {
             if (mantenimiento?.Id == null)
             {
@@ -506,8 +502,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 return;
             }
 
-            switch (mantenimiento.Estado)
-            {
+            switch (mantenimiento.Estado)            {
                 case EstadoMantenimientoCorrectivo.Pendiente:
                     await EnviarAReparacionAsync(mantenimiento, cancellationToken);
                     break;
@@ -518,7 +513,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
 
                 case EstadoMantenimientoCorrectivo.Completado:
                 case EstadoMantenimientoCorrectivo.Cancelado:
-                    await VerDetallesMantenimientoAsync(mantenimiento, cancellationToken);
+                    VerDetallesMantenimiento(mantenimiento);
                     break;
             }
         }

@@ -22,13 +22,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
         {
             // Data Services - CRUD y operaciones de negocio
             services.AddScoped<IEquipoInformaticoService, EquipoInformaticoService>();
+            services.AddScoped<IPerifericoService, PerifericoService>();
             services.AddScoped<IGestionEquiposInformaticosSeguimientoCronogramaService, GestionEquiposInformaticosSeguimientoCronogramaService>();
             services.AddScoped<IPlanCronogramaService, PlanCronogramaService>();
-            services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();            // Autocomplete Services - Servicios de autocompletado
+            services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();
+
+            // Autocomplete Services - Servicios de autocompletado
             services.AddScoped<IDispositivoAutocompletadoService, DispositivoAutocompletadoService>();
-            services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();            // Dialog Services - Servicios de presentación (diálogos)
+            services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();
+
+            // Dialog Services - Servicios de presentación (diálogos)
             services.AddTransient<IRegistroEjecucionPlanDialogService, RegistroEjecucionPlanDialogService>();
-            services.AddTransient<IRegistroMantenimientoEquipoDialogService, RegistroMantenimientoEquipoDialogService>();            // ViewModels
+            services.AddTransient<IRegistroMantenimientoEquipoDialogService, RegistroMantenimientoEquipoDialogService>();
+
+            // ViewModels
             services.AddTransient<MantenimientosCorrectivosViewModel>();
             // ViewModel para crear mantenimientos (ventana modal)
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.CrearMantenimientoCorrectivoViewModel>();

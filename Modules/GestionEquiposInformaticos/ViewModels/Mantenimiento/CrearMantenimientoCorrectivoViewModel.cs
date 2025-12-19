@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Interfaces;
 using System;
@@ -12,14 +14,14 @@ using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using System.Linq;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
-{
-    public partial class CrearMantenimientoCorrectivoViewModel : ObservableObject
+{    public partial class CrearMantenimientoCorrectivoViewModel : ObservableObject
     {
         private readonly IMantenimientoCorrectivoService _mantenimientoService;
         private readonly IGestLogLogger _logger;
         private readonly ICurrentUserService _currentUserService;
         private readonly IDispositivoAutocompletadoService _dispositivoAutocompletadoService;
         private readonly IEquipoInformaticoService _equipoInformaticoService;
+        private readonly IMessenger _messenger;
 
         // Debounce para autocompletado de código
         private CancellationTokenSource? _codigoDebounceCts;
@@ -93,15 +95,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private string descripcionFalla = string.Empty;
 
         [ObservableProperty]
-        private bool canSave;
-
-        public CrearMantenimientoCorrectivoViewModel(IMantenimientoCorrectivoService mantenimientoService, IGestLogLogger logger, ICurrentUserService currentUserService, IDispositivoAutocompletadoService dispositivoAutocompletadoService, IEquipoInformaticoService equipoInformaticoService)
+        private bool canSave;        public CrearMantenimientoCorrectivoViewModel(IMantenimientoCorrectivoService mantenimientoService, IGestLogLogger logger, ICurrentUserService currentUserService, IDispositivoAutocompletadoService dispositivoAutocompletadoService, IEquipoInformaticoService equipoInformaticoService, IMessenger messenger)
         {
             _mantenimientoService = mantenimientoService;
             _logger = logger;
             _currentUserService = currentUserService;
             _dispositivoAutocompletadoService = dispositivoAutocompletadoService;
             _equipoInformaticoService = equipoInformaticoService;
+            _messenger = messenger;
 
             // Re-evaluar si se puede guardar al cambiar campos críticos
             PropertyChanged += (s, e) =>
@@ -279,11 +280,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 {
                     _logger.LogDebug("No fue posible mapear usuario actual a Id numérico, usando 0: {Message}", ex.Message);
                     usuarioRegistroId = 0;
-                }
-
-                var resultId = await _mantenimientoService.CrearAsync(dto, usuarioRegistroId, cancellationToken);
+                }                var resultId = await _mantenimientoService.CrearAsync(dto, usuarioRegistroId, cancellationToken);
                 if (resultId <= 0) throw new Exception("No fue posible crear el mantenimiento");                // Close window should be handled by view via message or dialog result; we can expose success flag
                 _logger.LogDebug("Mantenimiento creado correctamente");
+                
+                // Enviar mensaje para notificar a otros ViewModels que refresquen
+                _messenger.Send(new MantenimientosCorrectivosActualizadosMessage(null));
+                
                 // Disparar evento de éxito para que la ventana modal se cierre
                 AlGuardarExitoso();
             }

@@ -4,11 +4,13 @@ using System.Linq;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionEquiposInformaticos.Views.Equipos;
 using GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma;
 using GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos;
 using GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using System.Windows;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
@@ -67,9 +69,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         [ObservableProperty]
         private int equiposInactivos;
         [ObservableProperty]
-        private int equiposDadosBaja;
-
-        public EquiposInformaticosViewModel(
+        private int equiposDadosBaja;        public EquiposInformaticosViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             ICurrentUserService currentUserService,
             IDatabaseConnectionService databaseService,
@@ -88,6 +88,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             
             // Suscribir cambios en la colección para recalcular las estadísticas automáticamente
             ListaEquiposInformaticos.CollectionChanged += (s, e) => RecalcularEstadisticas();
+            
+            // 📬 Suscribirse a notificaciones de cambios en mantenimientos correctivos
+            WeakReferenceMessenger.Default.Register<MantenimientosCorrectivosActualizadosMessage>(this, (r, m) =>
+            {
+                // Refrescar la lista de equipos cuando hay cambios en mantenimientos
+                _ = RefreshDataAsync();
+            });
                 
             // Inicialización asíncrona
             _ = InicializarAsync();

@@ -30,10 +30,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento
             this.KeyDown += CrearMantenimientoCorrectivoWindow_KeyDown;
             this.Loaded += CrearMantenimientoCorrectivoWindow_Loaded;
             this.Closing += CrearMantenimientoCorrectivoWindow_Closing;
-        }
-
-        private void Vm_OnExito(object? sender, EventArgs e)
+        }        private void Vm_OnExito(object? sender, EventArgs e)
         {
+            // Dar un pequeño delay para asegurar que el servicio haya terminado completamente
+            System.Threading.Thread.Sleep(500);
+            
             // Cerrar modal con éxito
             this.DialogResult = true;
             this.Close();

@@ -12,6 +12,7 @@ using GestLog.Services;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -70,12 +71,15 @@ public static class LoggingService
             {
                 builder.ClearProviders();
                 builder.AddSerilog(Log.Logger);
-            });            
-            // Servicios custom
+            });              // Servicios custom
             services.AddSingleton<IGestLogLogger, GestLogLogger>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
             services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
+            
+            // 📬 SERVICIO DE MENSAJERÍA (MVVM Toolkit)
+            services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
+            
             // 🔒 SERVICIOS DE SEGURIDAD Y CONFIGURACIÓN PROFESIONAL
             services.AddSingleton<IEnvironmentDetectionService, EnvironmentDetectionService>();
             services.AddSingleton<IUnifiedDatabaseConfigurationService, UnifiedDatabaseConfigurationService>();

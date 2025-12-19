@@ -1,5 +1,7 @@
+using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
+using GestLog.Modules.GestionEquiposInformaticos.Messages;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
@@ -13,18 +15,28 @@ using System.Threading.Tasks;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 {
-    /// <summary>
     /// Servicio para gestión de mantenimientos correctivos (reactivos)
     /// </summary>
     public class MantenimientoCorrectivoService : IMantenimientoCorrectivoService
     {
         private readonly IDbContextFactory<GestLogDbContext> _contextFactory;
         private readonly IGestLogLogger _logger;
+        private readonly IEquipoInformaticoService _equipoService;
+        private readonly IPerifericoService _perifericoService;
+        private readonly IMessenger _messenger;
 
-        public MantenimientoCorrectivoService(IDbContextFactory<GestLogDbContext> contextFactory, IGestLogLogger logger)
+        public MantenimientoCorrectivoService(
+            IDbContextFactory<GestLogDbContext> contextFactory,
+            IGestLogLogger logger,
+            IEquipoInformaticoService equipoService,
+            IPerifericoService perifericoService,
+            IMessenger messenger)
         {
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _equipoService = equipoService ?? throw new ArgumentNullException(nameof(equipoService));
+            _perifericoService = perifericoService ?? throw new ArgumentNullException(nameof(perifericoService));
+            _messenger = messenger ?? throw new ArgumentNullException(nameof(messenger));
         }
 
         /// <inheritdoc/>
@@ -219,9 +231,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 _logger.LogError(ex, "Error actualizando mantenimiento correctivo con ID {Id}", dto?.Id?.ToString() ?? "sin ID");
                 throw;
             }
-        }
-
-        /// <inheritdoc/>
+        }        /// <inheritdoc/>
         public async Task<bool> EnviarAReparacionAsync(
             int id,
             string proveedorAsignado,
@@ -248,12 +258,34 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     mantenimiento.FechaInicio = fechaInicio;
                     if (!string.IsNullOrWhiteSpace(observaciones))
                         mantenimiento.Observaciones = observaciones;
-                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);                    // Actualizar estado del equipo o periférico a "En Reparación"
+                    if (!string.IsNullOrWhiteSpace(mantenimiento.Codigo))
+                    {
+                        bool estadoCambiado = await ActualizarEstadoEquipoOPeriferico(
+                            mantenimiento.TipoEntidad,
+                            mantenimiento.Codigo,
+                            cancellationToken);
 
-                    context.MantenimientosCorrectivos.Update(mantenimiento);
-                    await context.SaveChangesAsync(cancellationToken);
+                        if (estadoCambiado)
+                        {
+                            _logger.LogInformation("Mantenimiento correctivo enviado a reparación. ID: {Id}, Proveedor: {Proveedor}, Estado de {TipoEntidad} actualizado", 
+                                id, proveedorAsignado, mantenimiento.TipoEntidad);
+                            
+                            // Enviar mensaje para notificar cambio de estado a otras vistas
+                            _messenger.Send(new MantenimientosCorrectivosActualizadosMessage(null));
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Mantenimiento correctivo enviado a reparación (ID: {Id}), pero no se pudo actualizar estado de {TipoEntidad} con código {Codigo}", 
+                                id, mantenimiento.TipoEntidad, mantenimiento.Codigo);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Mantenimiento correctivo enviado a reparación (ID: {Id}), código está vacío", id);
+                    }
 
-                    _logger.LogInformation("Mantenimiento correctivo enviado a reparación. ID: {Id}, Proveedor: {Proveedor}", id, proveedorAsignado);
                     return true;
                 }
             }
@@ -288,12 +320,34 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                         mantenimiento.Observaciones = observaciones;
                     if (periodoGarantia.HasValue)
                         mantenimiento.PeriodoGarantia = periodoGarantia;
-                    mantenimiento.FechaActualizacion = DateTime.UtcNow;
+                    mantenimiento.FechaActualizacion = DateTime.UtcNow;                    context.MantenimientosCorrectivos.Update(mantenimiento);
+                    await context.SaveChangesAsync(cancellationToken);                    // Restaurar estado del equipo o periférico a su estado normal
+                    if (!string.IsNullOrWhiteSpace(mantenimiento.Codigo))
+                    {
+                        bool estadoRestaurado = await RestaurarEstadoEquipoOPeriferico(
+                            mantenimiento.TipoEntidad,
+                            mantenimiento.Codigo,
+                            cancellationToken);
 
-                    context.MantenimientosCorrectivos.Update(mantenimiento);
-                    await context.SaveChangesAsync(cancellationToken);
+                        if (estadoRestaurado)
+                        {
+                            _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}, Costo: {Costo}, Garantía: {Periodo} días, Estado de {TipoEntidad} restaurado",
+                                id, costoReparacion ?? 0, periodoGarantia ?? 0, mantenimiento.TipoEntidad);
+                            
+                            // Enviar mensaje para notificar cambio de estado a otras vistas
+                            _messenger.Send(new MantenimientosCorrectivosActualizadosMessage(null));
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Mantenimiento correctivo completado (ID: {Id}), pero no se pudo restaurar estado de {TipoEntidad} con código {Codigo}",
+                                id, mantenimiento.TipoEntidad, mantenimiento.Codigo);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Mantenimiento correctivo completado (ID: {Id}), código está vacío", id);
+                    }
 
-                    _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}, Costo: {Costo}, Garantía: {Periodo} días", id, costoReparacion ?? 0, periodoGarantia ?? 0);
                     return true;
                 }
             }
@@ -443,6 +497,82 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 throw;
             }
         }        /// <summary>
+        /// Actualiza el estado del equipo o periférico cuando se envía a reparación
+        /// </summary>
+        private async Task<bool> ActualizarEstadoEquipoOPeriferico(
+            string tipoEntidad,
+            string codigo,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (tipoEntidad == "Equipo")
+                {
+                    return await _equipoService.CambiarEstadoAsync(
+                        codigo,
+                        EstadoEquipoInformatico.EnReparacion,
+                        cancellationToken);
+                }
+                else if (tipoEntidad == "Periférico")
+                {
+                    return await _perifericoService.CambiarEstadoAsync(
+                        codigo,
+                        EstadoPeriferico.EnReparacion,
+                        cancellationToken);
+                }
+
+                _logger.LogWarning("TipoEntidad desconocido: {TipoEntidad}", tipoEntidad);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error actualizando estado de {TipoEntidad} con código {Codigo}", tipoEntidad, codigo);
+                return false;
+            }
+        }        /// <summary>
+        /// Restaura el estado del equipo o periférico cuando se completa el mantenimiento
+        /// </summary>
+        private async Task<bool> RestaurarEstadoEquipoOPeriferico(
+            string tipoEntidad,
+            string codigo,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(codigo))
+                {
+                    _logger.LogWarning("Código vacío al restaurar estado de {TipoEntidad}", tipoEntidad);
+                    return false;
+                }
+
+                if (tipoEntidad == "Equipo")
+                {
+                    // Restaurar a "Activo" después de reparación
+                    return await _equipoService.CambiarEstadoAsync(
+                        codigo,
+                        EstadoEquipoInformatico.Activo,
+                        cancellationToken);
+                }
+                else if (tipoEntidad == "Periférico")
+                {
+                    // Restaurar a "AlmacenadoFuncionando" después de reparación
+                    return await _perifericoService.CambiarEstadoAsync(
+                        codigo,
+                        EstadoPeriferico.AlmacenadoFuncionando,
+                        cancellationToken);
+                }
+
+                _logger.LogWarning("TipoEntidad desconocido: {TipoEntidad}", tipoEntidad);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restaurando estado de {TipoEntidad} con código {Codigo}", tipoEntidad, codigo);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Convierte una entidad a DTO
         /// </summary>
         private MantenimientoCorrectivoDto MantenimientoADto(MantenimientoCorrectivoEntity entity)
