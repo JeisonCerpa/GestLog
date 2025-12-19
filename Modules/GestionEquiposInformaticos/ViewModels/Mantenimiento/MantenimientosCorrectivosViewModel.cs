@@ -282,9 +282,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             SelectedMantenimiento = null;
             await CargarMantenimientosAsync(cancellationToken);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Cambia el filtro de estado y recarga
         /// </summary>
         [RelayCommand]
@@ -292,7 +290,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             FiltroEstado = nuevoEstado;
             await RefreshAsync(cancellationToken);
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Cancela un mantenimiento correctivo seleccionado
         /// </summary>
         [RelayCommand]
@@ -380,10 +380,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     // Si se envió con éxito, refrescar la lista
                     await RefreshAsync(cancellationToken);
                 }
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
-                _logger.LogError(ex, "Error abriendo ventana de enviar a reparación");                ErrorMessage = "Error al abrir el formulario de envío a reparación";
+                _logger.LogError(ex, "Error abriendo ventana de enviar a reparación");
+                ErrorMessage = "Error al abrir el formulario de envío a reparación";
             }
         }
 
@@ -435,13 +435,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     // Si se completó con éxito, refrescar la lista
                     await RefreshAsync(cancellationToken);
                 }
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error abriendo ventana de completar mantenimiento");
                 ErrorMessage = "Error al abrir el formulario de completar mantenimiento";
             }
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Abre la ventana de detalles de un mantenimiento en modo lectura
         /// </summary>
         [RelayCommand]
@@ -476,7 +477,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 }
                 catch { /* No fatal */ }
 
-                await Task.Run(() => window.ShowDialog(), cancellationToken);
+                // Mostrar el diálogo en el thread UI usando Dispatcher
+                var mainWindow = System.Windows.Application.Current?.MainWindow;
+                if (mainWindow != null)
+                {
+                    mainWindow.Dispatcher.Invoke(() => window.ShowDialog(), System.Windows.Threading.DispatcherPriority.Normal);
+                }
+                else
+                {
+                    window.ShowDialog();
+                }
             }
             catch (Exception ex)
             {
@@ -494,7 +504,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             if (mantenimiento == null)
             {
                 return;
-            }            switch (mantenimiento.Estado)
+            }
+
+            switch (mantenimiento.Estado)
             {
                 case EstadoMantenimientoCorrectivo.Pendiente:
                     await EnviarAReparacionAsync(mantenimiento, cancellationToken);

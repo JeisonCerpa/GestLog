@@ -14,9 +14,7 @@
         ShowInTaskbar="False"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        d:DesignHeight="600" d:DesignWidth="700">
-
-    <Window.Resources>
+        d:DesignHeight="600" d:DesignWidth="700">    <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
@@ -24,6 +22,8 @@
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <conv:DateDifferenceToStringConverter x:Key="DateDifferenceToStringConverter" />
+            <conv:DateAddDaysConverter x:Key="DateAddDaysConverter" />
 
             <Style x:Key="DetailLabelStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="#666666"/>
@@ -58,10 +58,8 @@
                 </Setter>
             </Style>
         </ResourceDictionary>
-    </Window.Resources>
-
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
-        <Border x:Name="Card" Width="700" MaxHeight="620"
+    </Window.Resources>    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border x:Name="Card" Width="750" MaxHeight="680"
                 Background="{StaticResource SurfaceBrush}"
                 CornerRadius="8" Padding="0"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -87,16 +85,32 @@
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>
-                </Border>
-
-                <!-- Contenido principal -->
+                </Border>                <!-- Contenido principal -->
                 <ScrollViewer Grid.Row="1" Padding="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <!-- Sección: Información General -->
-                        <TextBlock Text="Información General" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
+                        <!-- Sección 1: Información del Equipo -->
+                        <TextBlock Text="📱 Equipo Afectado" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
                         
-                        <Grid Margin="0,0,0,16">
+                        <Border Background="#F9FAFB" CornerRadius="8" Padding="18" Margin="0,0,0,24" BorderThickness="1" BorderBrush="#E5E7EB">
+                            <StackPanel>
+                                <StackPanel Margin="0,0,0,14">
+                                    <TextBlock Text="Código del Equipo" Style="{StaticResource DetailLabelStyle}"/>
+                                    <TextBlock Text="{Binding Mantenimiento.Codigo}" Style="{StaticResource DetailValueStyle}"/>
+                                </StackPanel>
+
+                                <StackPanel>
+                                    <TextBlock Text="Descripción de la Falla" Style="{StaticResource DetailLabelStyle}"/>
+                                    <TextBlock Text="{Binding Mantenimiento.DescripcionFalla}" Style="{StaticResource DetailValueStyle}" MinHeight="60" FontSize="12"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sección 2: Cronología -->
+                        <TextBlock Text="📅 Cronología del Mantenimiento" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
+                        
+                        <Grid Margin="0,0,0,24">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
@@ -105,79 +119,100 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
-                                <TextBlock Text="ID Mantenimiento" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.Id}" Style="{StaticResource DetailValueStyle}"/>
+                            <!-- Fila 1 -->
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,12,0">
+                                <TextBlock Text="Estado Actual" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.Estado}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="1" Grid.Row="0">
-                                <TextBlock Text="Estado" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.Estado}" Style="{StaticResource DetailValueStyle}"/>
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,12,0">
+                                <TextBlock Text="Fecha de Inicio" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.FechaInicio, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,16,0">
-                                <TextBlock Text="Fecha Creación" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.FechaCreacion, StringFormat='dd/MM/yyyy HH:mm'}" Style="{StaticResource DetailValueStyle}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Grid.Row="1">
+                            <StackPanel Grid.Column="2" Grid.Row="0">
                                 <TextBlock Text="Fecha Completado" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.FechaCompletado, StringFormat='dd/MM/yyyy HH:mm'}" Style="{StaticResource DetailValueStyle}"/>
-                            </StackPanel>
-                        </Grid>                        <!-- Sección: Detalles de Reparación -->
-                        <TextBlock Text="Detalles de Reparación" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
-                        
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
-                                <TextBlock Text="Proveedor Asignado" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.ProveedorAsignado}" Style="{StaticResource DetailValueStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.FechaCompletado, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="1" Grid.Row="0">
-                                <TextBlock Text="Costo de Reparación" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.CostoReparacion, StringFormat='C'}" Style="{StaticResource DetailValueStyle}"/>
+                            <!-- Fila 2 -->
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,12,0">
+                                <TextBlock Text="Duración Total" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding DuracionTotalDias, StringFormat='0 \\ días'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#118938"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,16,0">
-                                <TextBlock Text="Fecha Inicio" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.FechaInicio, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Grid.Row="1">
-                                <TextBlock Text="Equipo Afectado" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.NombreEquipo}" Style="{StaticResource DetailValueStyle}"/>
-                            </StackPanel>                            <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,16,0">
+                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,12,0">
                                 <TextBlock Text="Período de Garantía" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.PeriodoGarantia, StringFormat='0 días'}" Style="{StaticResource DetailValueStyle}"/>
+                                <TextBlock Text="{Binding Mantenimiento.PeriodoGarantia, StringFormat='0 \\ días'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="1">
+                                <TextBlock Text="Vencimiento Garantía" Style="{StaticResource DetailLabelStyle}"/>
+                                <TextBlock Text="{Binding FechaVencimientoGarantia, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#C0392B"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- Sección: Historial de Observaciones -->
-                        <TextBlock Text="Historial de Observaciones" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="#333333" FontSize="13"/>
-                        <TextBlock Text="{Binding Mantenimiento.Observaciones}" 
-                                   Padding="12,10" 
-                                   Margin="0,0,0,16" 
-                                   MinHeight="100" 
-                                   Background="#F5F5F5" 
-                                   Foreground="#333333" 
-                                   VerticalAlignment="Top" 
-                                   TextWrapping="Wrap" 
-                                   FontFamily="Courier New" 
-                                   FontSize="11"
-                                   LineHeight="18"/>
+                        <!-- Sección 3: Detalles de Reparación -->
+                        <TextBlock Text="🔧 Detalles de Reparación" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
+                        
+                        <Border Background="#F9FAFB" CornerRadius="8" Padding="18" Margin="0,0,0,24" BorderThickness="1" BorderBrush="#E5E7EB">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Proveedor" Style="{StaticResource DetailLabelStyle}"/>
+                                        <TextBlock Text="{Binding Mantenimiento.ProveedorAsignado}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Costo de Reparación" Style="{StaticResource DetailLabelStyle}"/>
+                                        <TextBlock Text="{Binding Mantenimiento.CostoReparacion, StringFormat='C'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#059669" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border BorderThickness="0,1,0,0" BorderBrush="#E5E7EB" Padding="0,16,0,0" Margin="0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                            <TextBlock Text="Estado de Garantía" Style="{StaticResource DetailLabelStyle}"/>
+                                            <TextBlock Style="{StaticResource DetailValueStyle}" FontSize="12">
+                                                <Run Text="🟢 Vigente" Foreground="#059669"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Fecha de Vencimiento" Style="{StaticResource DetailLabelStyle}"/>
+                                            <TextBlock Text="{Binding FechaVencimientoGarantia, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sección 4: Historial de Observaciones -->
+                        <TextBlock Text="📝 Historial de Observaciones" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
+                        <Border Background="#FAFBFC" CornerRadius="8" Padding="16" Margin="0,0,0,16" MinHeight="120" BorderThickness="1" BorderBrush="#E5E7EB">
+                            <TextBlock Text="{Binding Mantenimiento.Observaciones}" 
+                                       Foreground="#333333" 
+                                       VerticalAlignment="Top" 
+                                       TextWrapping="Wrap" 
+                                       FontFamily="Courier New" 
+                                       FontSize="11"
+                                       LineHeight="18"/>
+                        </Border>
                     </StackPanel>
-                </ScrollViewer>                <!-- Botones de acción -->
-                <Border Grid.Row="2" Background="{StaticResource BackgroundBrush}" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                </ScrollViewer>
+
+                <!-- Botones de acción -->
+                <Border Grid.Row="2" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="CloseButton" 
                                 Content="Cerrar" 

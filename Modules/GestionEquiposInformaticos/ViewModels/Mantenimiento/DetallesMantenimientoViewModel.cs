@@ -10,18 +10,46 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
     /// </summary>
     public partial class DetallesMantenimientoViewModel : ObservableObject
     {
-        /// <summary>
-        /// Mantenimiento a mostrar en detalles
-        /// </summary>
-        [ObservableProperty]
-        private MantenimientoCorrectivoDto? mantenimiento;
+    /// <summary>
+    /// Mantenimiento a mostrar en detalles
+    /// </summary>
+    [ObservableProperty]
+    private MantenimientoCorrectivoDto? mantenimiento;
 
-        /// <summary>
-        /// Inicializa el ViewModel con los datos del mantenimiento
-        /// </summary>
-        public void InitializarMantenimiento(MantenimientoCorrectivoDto mantenimiento)
+    /// <summary>
+    /// Duración total del mantenimiento en días (calculada)
+    /// </summary>
+    public int? DuracionTotalDias
+    {
+        get
         {
-            Mantenimiento = mantenimiento;
+            if (Mantenimiento?.FechaInicio == null || Mantenimiento?.FechaCompletado == null)
+                return null;
+
+            return (int)(Mantenimiento.FechaCompletado.Value - Mantenimiento.FechaInicio.Value).TotalDays;
         }
+    }
+
+    /// <summary>
+    /// Fecha de vencimiento de la garantía (calculada)
+    /// </summary>
+    public DateTime? FechaVencimientoGarantia
+    {
+        get
+        {
+            if (Mantenimiento?.FechaCompletado == null || !Mantenimiento.PeriodoGarantia.HasValue)
+                return null;
+
+            return Mantenimiento.FechaCompletado.Value.AddDays(Mantenimiento.PeriodoGarantia.Value);
+        }
+    }
+
+    /// <summary>
+    /// Inicializa el ViewModel con los datos del mantenimiento
+    /// </summary>
+    public void InitializarMantenimiento(MantenimientoCorrectivoDto mantenimiento)
+    {
+        Mantenimiento = mantenimiento;
+    }
     }
 }

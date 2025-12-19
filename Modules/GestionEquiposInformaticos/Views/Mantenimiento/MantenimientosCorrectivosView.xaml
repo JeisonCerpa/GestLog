@@ -5,7 +5,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:GestLog.Converters"
              xmlns:equiposViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Equipos"
-             mc:Ignorable="d" 
+             x:Name="MantenimientosCorrectivosViewControl"
+             mc:Ignorable="d"
              d:DesignHeight="600" 
              d:DesignWidth="1000"
              Background="#FAFAFA">    <UserControl.Resources>
@@ -287,11 +288,10 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" Width="SizeToCells" MinWidth="100" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="{Binding Estado, Converter={StaticResource EstadoToActionButtonTextConverter}}"
+                                <DataTemplate>                                    <Button Content="{Binding Estado, Converter={StaticResource EstadoToActionButtonTextConverter}}"
                                             Background="{Binding Estado, Converter={StaticResource EstadoToActionButtonColorConverter}}"
                                             Foreground="White"
-                                            Command="{Binding DataContext.EjecutarAccionDinamicaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Command="{Binding DataContext.EjecutarAccionDinamicaCommand, ElementName=MantenimientosCorrectivosViewControl}"
                                             CommandParameter="{Binding}"
                                             MinWidth="80" Width="Auto" Height="30" HorizontalAlignment="Center" Margin="2"
                                             Focusable="False"
