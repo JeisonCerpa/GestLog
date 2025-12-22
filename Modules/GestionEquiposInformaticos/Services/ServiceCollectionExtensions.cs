@@ -2,9 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export;
 using GestLog.Modules.GestionEquiposInformaticos.Services.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Services.Autocomplete;
 using GestLog.Modules.GestionEquiposInformaticos.Services.Dialog;
+using GestLog.Modules.GestionEquiposInformaticos.Services.Export;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento;
 using GestLog.Modules.Usuarios.Models.Authentication;
 
@@ -25,11 +27,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             services.AddScoped<IPerifericoService, PerifericoService>();
             services.AddScoped<IGestionEquiposInformaticosSeguimientoCronogramaService, GestionEquiposInformaticosSeguimientoCronogramaService>();
             services.AddScoped<IPlanCronogramaService, PlanCronogramaService>();
-            services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();
-
-            // Autocomplete Services - Servicios de autocompletado
+            services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();            // Autocomplete Services - Servicios de autocompletado
             services.AddScoped<IDispositivoAutocompletadoService, DispositivoAutocompletadoService>();
             services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();
+
+            // Export Services - Servicios de exportación a Excel
+            services.AddTransient<IPerifericoExportService, PerifericoExportService>();
 
             // Dialog Services - Servicios de presentación (diálogos)
             services.AddTransient<IRegistroEjecucionPlanDialogService, RegistroEjecucionPlanDialogService>();

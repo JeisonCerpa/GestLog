@@ -179,10 +179,9 @@
                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding PerifericosDadosBaja}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource ErrorBrush}"/>
                     <TextBlock Text="Dados de Baja" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
+                </StackPanel>                <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
                     <Button Content="&#xE72C;" Command="{Binding CargarPerifericosCommand}" ToolTip="Actualizar lista de periféricos" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
+                    <Button Content="⭱" Command="{Binding ExportarPerifericosCommand}" ToolTip="Exportar periféricos a Excel" Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"/>
                     <Button Content="&#xE710;" Command="{Binding AgregarPerifericoCommand}" ToolTip="Agregar nuevo periférico" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
                 </StackPanel>
             </Grid>

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export;
 using GestLog.Modules.DatabaseConnection;
 using GestLog.Services.Core.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Linq;
 using System.Windows.Data;
 using System.ComponentModel;
+using Microsoft.Win32;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
 {    /// <summary>
@@ -34,6 +36,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
     public partial class PerifericosViewModel : DatabaseAwareViewModel
     {
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        private readonly IPerifericoExportService _exportService;
 
         private bool _isInitialized = false;
 
@@ -74,9 +77,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
         public Array SedesDisponibles { get; } = Enum.GetValues(typeof(SedePeriferico));        /// <summary>
         /// Constructor principal con inyección de dependencias
         /// </summary>
-        public PerifericosViewModel(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory, IDatabaseConnectionService databaseService)
+        public PerifericosViewModel(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory, IDatabaseConnectionService databaseService, IPerifericoExportService exportService)
             : base(databaseService, logger)
-        {            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+        {
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
             
             // NO inicializar PerifericosView aquí - se hará después de cargar datos en InicializarAsync
             // Esto evita problemas de rendering cuando el filtro se aplica sobre una colección vacía
@@ -819,6 +824,61 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
         partial void OnShowDadoDeBajaChanged(bool value)
         {
             System.Windows.Application.Current?.Dispatcher.Invoke(() => PerifericosView?.Refresh());
+        }        /// <summary>
+        /// Comando para exportar periféricos a archivo Excel
+        /// </summary>
+        [RelayCommand]
+        private async Task ExportarPerifericosAsync()
+        {
+            try
+            {
+                // Mostrar diálogo para seleccionar ubicación del archivo
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "Archivos Excel (*.xlsx)|*.xlsx|Todos los archivos (*.*)|*.*",
+                    DefaultExt = ".xlsx",
+                    FileName = $"Perifericos_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                    Title = "Exportar periféricos a Excel"
+                };
+
+                if (dialog.ShowDialog() != true)
+                    return;
+
+                IsLoading = true;
+                StatusMessage = "Exportando periféricos...";
+
+                // Exportar usando el servicio
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+                await _exportService.ExportarPerifericosAExcelAsync(dialog.FileName, Perifericos, cts.Token);
+
+                StatusMessage = $"Periféricos exportados exitosamente en {dialog.FileName}";
+                MessageBox.Show(
+                    "Periféricos exportados exitosamente",
+                    "Éxito",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                _logger.LogInformation("[PerifericosViewModel] Periféricos exportados: {RutaArchivo}", dialog.FileName);
+            }
+            catch (OperationCanceledException)
+            {
+                StatusMessage = "Exportación cancelada";
+                _logger.LogInformation("[PerifericosViewModel] Exportación cancelada por el usuario");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Error al exportar periféricos";
+                MessageBox.Show(
+                    $"Error al exportar periféricos: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                _logger.LogError(ex, "[PerifericosViewModel] Error al exportar periféricos");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
     }
 }

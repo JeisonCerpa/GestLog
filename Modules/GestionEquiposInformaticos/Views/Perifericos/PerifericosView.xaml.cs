@@ -2,6 +2,7 @@ using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos;
 using System.Windows;
 using System.Windows.Controls;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +21,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
             var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
             var databaseService = serviceProvider.GetRequiredService<IDatabaseConnectionService>();
-            this.DataContext = new PerifericosViewModel(logger, dbContextFactory, databaseService);
-        }        private void ActualizarButton_Click(object sender, System.Windows.RoutedEventArgs e)
+            var exportService = serviceProvider.GetRequiredService<IPerifericoExportService>();
+            this.DataContext = new PerifericosViewModel(logger, dbContextFactory, databaseService, exportService);
+        }private void ActualizarButton_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (this.DataContext is PerifericosViewModel vm)
             {
