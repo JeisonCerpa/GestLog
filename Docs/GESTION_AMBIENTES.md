@@ -23,7 +23,29 @@ $env:GESTLOG_ENVIRONMENT = "Production"
 
 ---
 
-## 🔧 OPCIÓN 2: Cambio permanente (RECOMENDADO) - Variables de Sistema Windows
+## 🔧 OPCIÓN 2: Cambio permanente (RECOMENDADO) - PowerShell
+
+```powershell
+# Para Production (PERMANENTE)
+[Environment]::SetEnvironmentVariable(
+  "GESTLOG_ENVIRONMENT",
+  "Production",
+  "User"
+)
+
+# Para Development (PERMANENTE)
+[Environment]::SetEnvironmentVariable(
+  "GESTLOG_ENVIRONMENT",
+  "Development",
+  "User"
+)
+```
+
+✅ **Ventaja**: Funciona inmediatamente en nuevas sesiones de PowerShell sin necesidad de GUI
+
+---
+
+## 🔧 OPCIÓN 3: Cambio permanente - Variables de Sistema Windows (GUI)
 
 1. **Windows + X** → "Sistema"
 2. **"Configuración avanzada del sistema"** en la derecha
@@ -46,10 +68,10 @@ $env:GESTLOG_ENVIRONMENT = "Production"
 | Ver ambiente actual | `$env:GESTLOG_ENVIRONMENT` en PowerShell |
 | Development (sesión) | `$env:GESTLOG_ENVIRONMENT = "Development"` |
 | Production (sesión) | `$env:GESTLOG_ENVIRONMENT = "Production"` |
-| Permanente (Development) | **Opción 2**: GUI → Variables de usuario |
-| Permanente (Production) | **Opción 2**: GUI → Variables de usuario |
+| Permanente (Development) | **Opción 2**: `[Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Development", "User")` |
+| Permanente (Production) | **Opción 2**: `[Environment]::SetEnvironmentVariable("GESTLOG_ENVIRONMENT", "Production", "User")` |
 
 ---
 
-**Última actualización**: 12 de noviembre de 2025
+**Última actualización**: 22 de diciembre de 2025
 
