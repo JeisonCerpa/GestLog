@@ -26,13 +26,42 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>            <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter"/>
+            </ResourceDictionary.MergedDictionaries>            
+            <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter"/>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter"/>
             <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
             <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
             <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
             <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
+            <conv:EstadoToBoolConverter x:Key="EstadoToEnReparacionConverter" TargetEstado="EnReparacion"/>
+            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion"/>
+
+            <!-- Estilo personalizado para tooltips con delay reducido -->
+            <Style x:Key="FastTooltipStyle" TargetType="ToolTip">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Background" Value="#333333"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Padding" Value="12,8,12,8"/>
+                <Setter Property="BorderBrush" Value="#666666"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToolTip">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter TextBlock.Foreground="{TemplateBinding Foreground}"
+                                                  TextBlock.FontSize="{TemplateBinding FontSize}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
             <DataTemplate x:Key="SlotRamTemplate">
             <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
@@ -590,15 +619,39 @@
                                     <Button.Effect>
                                         <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
                                     </Button.Effect>
-                                </Button>
-                                <!-- Mostrar botón 'Dar de baja' sólo en modo edición -->
-                                <Button Content="Dar de baja" Width="Auto" MinWidth="200" Height="40" Command="{Binding DarDeBajaCommand}"
-                                        Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1" Margin="0,0,0,16"
-                                        Cursor="Hand"
-                                        Padding="24,0,24,0"
-                                        Style="{StaticResource CardButtonStyle}"
-                                        FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"/>
+                                </Button>                                <!-- Mostrar botón 'Dar de baja' sólo en modo edición -->
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <Button Grid.Column="0" Content="Dar de baja" Width="Auto" MinWidth="200" Height="40" Command="{Binding DarDeBajaCommand}"
+                                            Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            IsEnabled="{Binding Estado, Converter={StaticResource EstadoToButtonEnabledConverter}}"
+                                            ToolTip="{Binding DarDeBajaButtonTooltip}"
+                                            Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
+                                            Cursor="Hand"
+                                            Padding="24,0,24,0"
+                                            Style="{StaticResource CardButtonStyle}"
+                                            FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"/>
+                                      <!-- Badge ícono de alerta cuando está en reparación -->
+                                    <Border Grid.Column="1" Margin="12,0,0,0" 
+                                            Visibility="{Binding Estado, Converter={StaticResource EstadoToVisibilityConverter}}"
+                                            Background="#FFC107" 
+                                            CornerRadius="50" 
+                                            Width="32" 
+                                            Height="32"
+                                            VerticalAlignment="Center"
+                                            ToolTip="{Binding DarDeBajaButtonTooltip}">
+                                        <TextBlock Text="⚠" 
+                                                   FontSize="18" 
+                                                   Foreground="#856404" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center" 
+                                                   FontWeight="Bold"/>
+                                    </Border>
+                                </Grid>
                                 <Button Content="Cancelar" Width="Auto" MinWidth="200" Height="40" Command="{Binding CancelarCommand}" Click="BtnCancelar_Click"
                                         Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
                                         Cursor="Hand"

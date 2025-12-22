@@ -65,6 +65,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private string? observaciones = string.Empty;
 
         /// <summary>
+        /// Marcar si el equipo/periférico no es reparable y debe darse de baja
+        /// </summary>
+        [ObservableProperty]
+        private bool incluirDarDeBaja = false;
+
+        /// <summary>
         /// Indica si se está procesando la solicitud
         /// </summary>
         [ObservableProperty]
@@ -226,6 +232,75 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             {
                 IsLoading = false;
                 _logger.LogInformation("🔴 [FIN] EnviarAReparacionAsync - IsLoading=false");
+            }
+        }
+
+        /// <summary>
+        /// Da de baja el mantenimiento directamente sin enviar a reparación
+        /// </summary>
+        [RelayCommand]
+        public async Task DarDeBajaAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("🔵 [INICIO] DarDeBajaAsync");
+
+                if (Mantenimiento?.Id == null)
+                {
+                    ErrorMessage = "Datos del mantenimiento inválidos";
+                    _logger.LogWarning("⚠️ Validación fallida: Mantenimiento ID nulo");
+                    return;
+                }
+
+                IsLoading = true;
+                ErrorMessage = null;
+
+                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id} - Dar de Baja");
+
+                // Formatear razón de baja
+                var razonBaja = "⚠️ NO REPARABLE - Equipo/Periférico dado de baja al enviar a reparación";
+                if (!string.IsNullOrWhiteSpace(Observaciones))
+                {
+                    razonBaja += " | " + Observaciones;
+                }
+
+                _logger.LogInformation($"📝 Razón de baja: {razonBaja}");
+
+                // Llamar al servicio para dar de baja
+                var resultado = await _mantenimientoService.CancelarAsync(
+                    Mantenimiento.Id.Value,
+                    razonBaja,
+                    cancellationToken);
+
+                _logger.LogInformation($"📋 Servicio retornó: resultado={resultado}");
+
+                if (resultado)
+                {
+                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} dado de baja");
+                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    OnExito?.Invoke(this, EventArgs.Empty);
+                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
+                }
+                else
+                {
+                    ErrorMessage = "No fue posible dar de baja el mantenimiento. Intente nuevamente.";
+                    _logger.LogWarning("❌ El servicio retornó false");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("⏸️ Operación cancelada");
+                ErrorMessage = "Operación cancelada.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [EXCEPCION] Error en DarDeBajaAsync");
+                ErrorMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+                _logger.LogInformation("🔴 [FIN] DarDeBajaAsync - IsLoading=false");
             }
         }
     }

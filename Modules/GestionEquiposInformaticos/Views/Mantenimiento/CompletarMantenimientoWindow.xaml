@@ -92,19 +92,23 @@
                         <TextBox x:Name="GarantiaTextBox" Text="{Binding PeriodoGarantia, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Margin="0,0,0,16" MinHeight="36" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" ToolTip="Ej: 90, 180, 365 días" PreviewTextInput="GarantiaTextBox_PreviewTextInput"/>
 
                         <TextBlock Text="Historial de Observaciones" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>
-                        <TextBlock Text="{Binding Mantenimiento.Observaciones}" Padding="10,8" Margin="0,0,0,16" MinHeight="60" Background="#F5F5F5" Foreground="#666666" VerticalAlignment="Top" TextWrapping="Wrap" FontFamily="Courier New" FontSize="11"/>
-
-                        <TextBlock Text="Agregar Observación (Opcional)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>
+                        <TextBlock Text="{Binding Mantenimiento.Observaciones}" Padding="10,8" Margin="0,0,0,16" MinHeight="60" Background="#F5F5F5" Foreground="#666666" VerticalAlignment="Top" TextWrapping="Wrap" FontFamily="Courier New" FontSize="11"/>                        <TextBlock Text="Agregar Observación (Opcional)" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="#333333"/>
                         <TextBox x:Name="ObservacionesTextBox" Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" Margin="0,0,0,16" MinHeight="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" ToolTip="Nueva observación a agregar al historial"/>
+
+                        <Border Padding="12,10" Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="6" Margin="0,0,0,16">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox x:Name="DarDeBajaCheckBox" IsChecked="{Binding IncluirDarDeBaja, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock Text="⚠️ El equipo/periférico NO es reparable. Dar de baja en lugar de completar reparación." TextWrapping="Wrap" VerticalAlignment="Center" Foreground="#856404" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
 
                         <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" TextWrapping="Wrap" Margin="0,0,0,12" Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
                     </StackPanel>
-                </ScrollViewer>
-
-                <Border Grid.Row="2" Background="#FAFAFA" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                </ScrollViewer>                <Border Grid.Row="2" Background="#FAFAFA" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
                     <DockPanel>
                         <Button x:Name="CancelarButton" DockPanel.Dock="Right" Content="Cancelar" Click="CancelarButton_Click" Style="{StaticResource CancelButton}" MinWidth="100" Margin="12,0,0,0"/>
-                        <Button x:Name="CompletarButton" DockPanel.Dock="Right" Content="Completar" Command="{Binding CompletarMantenimientoCommand}" Style="{StaticResource RoundedButton}" MinWidth="140" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+                        <Button x:Name="DarDeBajaButton" DockPanel.Dock="Right" Content="Dar de Baja" Command="{Binding CompletarYDarDeBajaCommand}" Style="{StaticResource RoundedButton}" MinWidth="140" Margin="12,0,0,0" Background="#DC3545" Visibility="{Binding IncluirDarDeBaja, Converter={StaticResource BooleanToVisibilityConverter}}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+                        <Button x:Name="CompletarButton" DockPanel.Dock="Right" Content="Completar" Command="{Binding CompletarMantenimientoCommand}" Style="{StaticResource RoundedButton}" MinWidth="140" Visibility="{Binding IncluirDarDeBaja, Converter={StaticResource InverseBooleanConverter}}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
                         <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="Procesando..." Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
                         </StackPanel>

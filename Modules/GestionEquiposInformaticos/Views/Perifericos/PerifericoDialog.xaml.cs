@@ -12,6 +12,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -101,7 +102,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
         private bool isReadOnlyMode = false;
 
         [ObservableProperty]
-        private bool showDeleteButton = false;        public PerifericoDialogViewModel(
+        private bool showDeleteButton = false;
+
+        /// <summary>
+        /// Tooltip dinámico para el botón "Dar de Baja"
+        /// </summary>
+        public string DarDeBajaButtonTooltip
+        {
+            get
+            {
+                if (PerifericoActual?.Estado == EstadoPeriferico.EnReparacion)
+                    return "⚠️ No se puede dar de baja porque hay un mantenimiento en progreso.\nCompleta o cancela el mantenimiento primero.";
+                
+                return "Dar de baja el periférico del inventario";
+            }
+        }
+
+        public PerifericoDialogViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             DispositivoAutocompletadoService dispositivoService,
             MarcaAutocompletadoService marcaService)
@@ -115,9 +132,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
             PerifericoActual.Costo = 0;
             
             // NO establecer Sede aquí por defecto. Si es nuevo, se asignará en la llamada CreatePerifericoForNew().
-            // Si es edición, ConfigurarParaEdicion() lo establecerá correctamente.
+            // Si es edición, ConfigurarParaEdicion() lo establecerá correctamente.            PropertyChanged += OnPropertyChanged;
             
-            PropertyChanged += OnPropertyChanged;
+            // Configurar handlers para notificar cambios en el tooltip
+            ConfigurarHandlerPerifericoActual();
+            
               _ = Task.Run(CargarDatosAutocompletadoAsync);
         }
 
@@ -148,6 +167,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 OnFiltroDispositivoChanged();
             else if (e.PropertyName == nameof(FiltroMarca))
                 OnFiltroMarcaChanged();
+        }
+
+        private void ConfigurarHandlerPerifericoActual()
+        {
+            // Suscribirse a cambios de PerifericoActual para notificar cambios en DarDeBajaButtonTooltip
+            PerifericoActual.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(PerifericoActual.Estado))
+                {
+                    OnPropertyChanged(this, new PropertyChangedEventArgs(nameof(DarDeBajaButtonTooltip)));
+                }
+            };
         }
 
         private async Task CargarDatosAutocompletadoAsync()
@@ -408,9 +439,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
             {
                 PersonaConEquipoSeleccionada = encontrada;
             }
-        }
-
-        public void ConfigurarParaEdicion(PerifericoEquipoInformaticoDto periferico)
+        }        public void ConfigurarParaEdicion(PerifericoEquipoInformaticoDto periferico)
         {
             PerifericoActual = new PerifericoEquipoInformaticoDto
             {
@@ -428,6 +457,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 Estado = periferico.Estado,
                 Observaciones = periferico.Observaciones
             };
+            
+            // Configurar handlers para notificar cambios en el tooltip
+            ConfigurarHandlerPerifericoActual();
 
             // Log Information: iniciar configuración para edición
             try
@@ -827,6 +859,65 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
             }
         }
 
+        [RelayCommand]
+        private async Task DarDeBajaAsync()
+        {
+            if (string.IsNullOrWhiteSpace(PerifericoActual?.Codigo)) return;
+
+            // Verificar que no está en reparación
+            if (PerifericoActual.Estado == EstadoPeriferico.EnReparacion)
+            {
+                MessageBox.Show(
+                    "⚠️ No se puede dar de baja porque hay un mantenimiento en progreso.\nCompleta o cancela el mantenimiento primero.",
+                    "Acción no permitida",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var resultado = MessageBox.Show(
+                $"¿Está seguro de que desea dar de baja el periférico '{PerifericoActual.Codigo}'?",
+                "Confirmar baja",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (resultado != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+                var entity = await dbContext.PerifericosEquiposInformaticos
+                    .FirstOrDefaultAsync(p => p.Codigo == PerifericoActual.Codigo);
+
+                if (entity != null)
+                {
+                    entity.Estado = EstadoPeriferico.DadoDeBaja;
+                    entity.FechaModificacion = DateTime.Now;
+                    
+                    dbContext.PerifericosEquiposInformaticos.Update(entity);
+                    await dbContext.SaveChangesAsync();
+
+                    // Enviar mensaje para refrescar listas
+                    WeakReferenceMessenger.Default.Send(new PerifericosActualizadosMessage());
+
+                    // Cerrar diálogo
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (System.Windows.Application.Current.Windows.Cast<Window>()
+                            .FirstOrDefault(w => w.DataContext == this) is PerifericoDialog dialog)
+                        {
+                            dialog.Close();
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al dar de baja el periférico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         [RelayCommand(CanExecute = nameof(CanStartEdit))]
         private void Editar()
         {
@@ -840,9 +931,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
 
         private bool CanStartEdit()
         {
-            return IsReadOnlyMode;
-        }
-    }    /// <summary>
+            return IsReadOnlyMode;        }
+    }
+
+    /// <summary>
     /// Code-behind para el diálogo de periféricos
     /// </summary>
     public partial class PerifericoDialog : Window
@@ -850,8 +942,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
         public PerifericoDialogViewModel ViewModel { get; }
 
         public PerifericoDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
-        {
-            InitializeComponent();
+        {            InitializeComponent();
 
             // Obtener servicios del contenedor DI
             var dispositivoService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<DispositivoAutocompletadoService>();

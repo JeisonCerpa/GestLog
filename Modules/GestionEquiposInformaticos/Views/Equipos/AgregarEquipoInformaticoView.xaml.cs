@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
-{    public partial class AgregarEquipoInformaticoView : Window
+{
+    public partial class AgregarEquipoInformaticoView : Window
     {
         private System.Windows.Forms.Screen? _lastScreenOwner;
 

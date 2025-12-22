@@ -75,10 +75,11 @@ public partial class App : System.Windows.Application
         // ✅ SEGUNDO: Inicializar Velopack ANTES de cualquier otra operación
 #if !DEBUG
         VelopackApp.Build().Run();
-#endif
-
-        // Configurar manejo global de excepciones ANTES de cualquier otra lógica
+#endif        // Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
+        
+        // Configurar tooltip delay a 150ms (SOLO UNA VEZ en toda la aplicación)
+        ConfigureTooltipDelay();
         
         // Cargar configuración de la aplicación ANTES de cualquier acceso a configuración
         await LoadApplicationConfigurationAsync();
@@ -651,6 +652,31 @@ public partial class App : System.Windows.Application
             // Por ejemplo, actualizar un contador de errores en la interfaz de usuario
             _logger?.Logger.LogDebug("Error registrado: {ErrorId} en {Context}", e.Error.Id, e.Error.Context);
         };
+    }
+
+    /// <summary>
+    /// Configura el delay del tooltip a 150ms (reducido de 400ms por defecto).
+    /// Se ejecuta una sola vez al inicio de la aplicación.
+    /// </summary>
+    private void ConfigureTooltipDelay()
+    {
+        try
+        {
+            // Registrar la metadata del delay solo una vez en toda la aplicación
+            System.Windows.Controls.ToolTipService.InitialShowDelayProperty.OverrideMetadata(
+                typeof(System.Windows.Controls.ToolTip),
+                new System.Windows.FrameworkPropertyMetadata(150));
+        }
+        catch (ArgumentException ex)
+        {
+            // Si ya está registrada, esto es esperado en casos raros
+            // No es crítico, continuamos sin problema
+            _logger?.Logger.LogWarning(ex, "⚠️ Tooltip delay ya estaba configurado");
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error al configurar tooltip delay");
+        }
     }
 
     /// <summary>

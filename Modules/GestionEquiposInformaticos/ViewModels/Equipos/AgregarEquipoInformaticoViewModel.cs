@@ -166,10 +166,27 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         private string filtroPersonaAsignada = string.Empty;
 
         [ObservableProperty]
-        private ObservableCollection<Persona> personasFiltradas = new();
-
-        [ObservableProperty]
+        private ObservableCollection<Persona> personasFiltradas = new();        [ObservableProperty]
         private string estado = string.Empty;
+
+        /// <summary>
+        /// Propiedad calculada que retorna un mensaje de tooltip descriptivo basado en el estado del equipo
+        /// </summary>
+        public string DarDeBajaButtonTooltip
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Estado))
+                    return "Dar de baja el equipo del inventario";
+
+                var estadoLower = Estado.Trim().ToLowerInvariant().Replace(" ", "");
+                
+                if (estadoLower == "enreparacion")
+                    return "⚠️ No se puede dar de baja porque hay un mantenimiento en progreso.\nCompleta o cancela el mantenimiento primero.";
+                
+                return "Dar de baja el equipo del inventario";
+            }
+        }
 
         [ObservableProperty]
         private ObservableCollection<ConexionEntity> listaConexiones = new();

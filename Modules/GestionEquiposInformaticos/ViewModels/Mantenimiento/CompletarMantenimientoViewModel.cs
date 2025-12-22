@@ -48,6 +48,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private int? periodoGarantia;
 
         /// <summary>
+        /// Marcar si el equipo/periférico no es reparable y debe darse de baja
+        /// </summary>
+        [ObservableProperty]
+        private bool incluirDarDeBaja = false;
+
+        /// <summary>
         /// Indica si se está procesando la solicitud
         /// </summary>
         [ObservableProperty]
@@ -154,6 +160,87 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             {
                 IsLoading = false;
                 _logger.LogInformation("🔴 [FIN] CompletarMantenimientoAsync - IsLoading=false");
+            }
+        }
+
+        /// <summary>
+        /// Completa el mantenimiento y da de baja el equipo/periférico
+        /// </summary>
+        [RelayCommand]
+        public async Task CompletarYDarDeBajaAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("🔵 [INICIO] CompletarYDarDeBajaAsync");
+
+                // Validar datos básicos
+                if (Mantenimiento?.Id == null)
+                {
+                    ErrorMessage = "Datos del mantenimiento inválidos";
+                    _logger.LogWarning("⚠️ Validación fallida: Mantenimiento ID nulo");
+                    return;
+                }
+
+                IsLoading = true;
+                ErrorMessage = null;
+
+                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id} - Dar de Baja");
+
+                // Acumular observaciones con nota de "No reparable"
+                var observacionesPrevias = Mantenimiento.Observaciones ?? string.Empty;
+                var observacionesAcumuladas = observacionesPrevias;
+                var motivoDarDeBaja = "⚠️ NO REPARABLE - Equipo/Periférico dado de baja por no ser reparable";
+                
+                if (!string.IsNullOrWhiteSpace(Observaciones))
+                {
+                    motivoDarDeBaja += " | " + Observaciones;
+                }
+
+                if (!string.IsNullOrWhiteSpace(observacionesPrevias))
+                {
+                    observacionesAcumuladas = observacionesPrevias + Environment.NewLine + "• " + motivoDarDeBaja;
+                }
+                else
+                {
+                    observacionesAcumuladas = "• " + motivoDarDeBaja;
+                }
+
+                _logger.LogInformation($"📝 Observaciones acumuladas: {observacionesAcumuladas}");
+
+                // Dar de baja el mantenimiento
+                var resultado = await _mantenimientoService.DarDeBajaAsync(
+                    Mantenimiento.Id.Value,
+                    cancellationToken);
+
+                _logger.LogInformation($"📋 Servicio DarDeBajaAsync retornó: resultado={resultado}");
+
+                if (resultado)
+                {
+                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} dado de baja");
+                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    OnExito?.Invoke(this, EventArgs.Empty);
+                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
+                }
+                else
+                {
+                    ErrorMessage = "No fue posible dar de baja el mantenimiento. Intente nuevamente.";
+                    _logger.LogWarning("❌ El servicio retornó false");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("⏸️ Operación cancelada");
+                ErrorMessage = "Operación cancelada.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [EXCEPCION] Error en CompletarYDarDeBajaAsync");
+                ErrorMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+                _logger.LogInformation("🔴 [FIN] CompletarYDarDeBajaAsync - IsLoading=false");
             }
         }
     }

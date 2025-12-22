@@ -24,12 +24,20 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
-            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+            </ResourceDictionary.MergedDictionaries>            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter"/>
+            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion"/>
+            
+            <!-- Estilo personalizado para tooltips con delay reducido -->
+            <Style x:Key="FastTooltipStyle" TargetType="ToolTip">
+                <Setter Property="Background" Value="#333333"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Padding" Value="12,8,12,8"/>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
         <!-- Panel centrado modal -->
@@ -296,15 +304,42 @@
                                 Visibility="{Binding ShowDeleteButton, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource DangerButtonStyle}"
                                 Margin="0,0,8,0"/>
-                        
-                        <!-- Editar: visible solo en modo solo lectura -->
+                          <!-- Editar: visible solo en modo solo lectura -->
                         <Button Content="Editar"
                                 Command="{Binding EditarCommand}"
                                 Visibility="{Binding IsReadOnlyMode, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Style="{StaticResource GhostButton}"
                                 Margin="0,0,8,0"/>
                         
-                        <Button Content="Cancelar" 
+                        <!-- Dar de Baja: con badge visual cuando está en reparación -->
+                        <Grid Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Button Grid.Column="0" 
+                                    Content="Dar de Baja"
+                                    Command="{Binding DarDeBajaCommand}"
+                                    IsEnabled="{Binding PerifericoActual.Estado, Converter={StaticResource EstadoToButtonEnabledConverter}}"
+                                    ToolTip="{Binding DarDeBajaButtonTooltip}"
+                                    Style="{StaticResource GhostButton}"/>
+                            
+                            <!-- Badge de advertencia cuando está en reparación -->
+                            <Border Grid.Column="1" 
+                                    Visibility="{Binding PerifericoActual.Estado, Converter={StaticResource EstadoToVisibilityConverter}}"
+                                    Background="#FFC107" 
+                                    CornerRadius="50" 
+                                    Width="24" 
+                                    Height="24"
+                                    Margin="-12,0,0,0"
+                                    ToolTip="{Binding DarDeBajaButtonTooltip}"
+                                    VerticalAlignment="Top">
+                                <TextBlock Text="⚠" FontSize="12" Foreground="#856404" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        
+                        <Button Content="Cancelar"
                                 Style="{StaticResource GhostButton}"
                                 Click="BtnCerrar_Click"
                                 Margin="0,0,8,0"/>
