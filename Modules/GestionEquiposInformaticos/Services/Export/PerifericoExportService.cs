@@ -17,9 +17,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
     /// </summary>
     public class PerifericoExportService : IPerifericoExportService
     {
-        private readonly IGestLogLogger _logger;
-
-        /// <summary>
+        private readonly IGestLogLogger _logger;        /// <summary>
         /// Colores para los estados de periféricos (basados en el diseño de equipos)
         /// </summary>
         private static class EstadoColores
@@ -27,6 +25,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             public static XLColor EnUso => XLColor.FromArgb(43, 142, 63);           // Verde #2B8E3F
             public static XLColor AlmacenadoFuncionando => XLColor.FromArgb(107, 114, 128);  // Gris #6B7280
             public static XLColor DadoDeBaja => XLColor.FromArgb(239, 68, 68);     // Rojo #EF4444
+            public static XLColor EnReparacion => XLColor.FromArgb(251, 191, 36);  // Amarillo #FBD136
         }
 
         public PerifericoExportService(IGestLogLogger logger)
@@ -121,11 +120,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
                 worksheet.Cell(row, 4).Value = periferico.Modelo ?? "";
                 worksheet.Cell(row, 5).Value = periferico.Serial ?? "";
                 worksheet.Cell(row, 6).Value = periferico.Costo ?? (decimal?)null;
-                worksheet.Cell(row, 7).Value = periferico.FechaCompra;
-                worksheet.Cell(row, 8).Value = periferico.CodigoEquipoAsignado ?? "";
+                worksheet.Cell(row, 7).Value = periferico.FechaCompra;                worksheet.Cell(row, 8).Value = periferico.CodigoEquipoAsignado ?? "";
                 worksheet.Cell(row, 9).Value = periferico.UsuarioAsignado ?? "";
-                worksheet.Cell(row, 10).Value = periferico.Sede.ToString();
-                worksheet.Cell(row, 11).Value = periferico.Estado.ToString();
+                worksheet.Cell(row, 10).Value = FormatearSedeEnum(periferico.Sede);
+                worksheet.Cell(row, 11).Value = FormatearEstado(periferico.Estado);
                 
                 // Limpiar observaciones: eliminar saltos de línea
                 var observacionesLimpia = (periferico.Observaciones ?? "")
@@ -146,14 +144,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
                 worksheet.Cell(row, 14).Style.DateFormat.Format = "dd/MM/yyyy hh:mm";
 
                 row++;
-            }
-
-            // Ajustar ancho de columnas
+            }            // Ajustar ancho de columnas
             worksheet.Columns().AdjustToContents();
             worksheet.Column(12).Width = 30;  // Observaciones más ancho
 
             // Congelar fila de headers
             worksheet.SheetView.FreezeRows(1);
+
+            // Agregar filtros automáticos en los encabezados
+            if (perifericos.Any())
+            {
+                var lastRow = perifericos.Count + 1; // +1 por la fila de headers
+                var lastColumn = headers.Length;
+                worksheet.Range(1, 1, lastRow, lastColumn).SetAutoFilter();
+            }
         }
 
         /// <summary>
@@ -167,9 +171,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
             cell.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
             cell.Style.Alignment.WrapText = true;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Aplica color de fondo a una celda según el estado del periférico
         /// </summary>
         private void AplicarColorEstado(IXLCell cell, EstadoPeriferico estado)
@@ -179,6 +181,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
                 EstadoPeriferico.EnUso => EstadoColores.EnUso,
                 EstadoPeriferico.AlmacenadoFuncionando => EstadoColores.AlmacenadoFuncionando,
                 EstadoPeriferico.DadoDeBaja => EstadoColores.DadoDeBaja,
+                EstadoPeriferico.EnReparacion => EstadoColores.EnReparacion,
                 _ => EstadoColores.EnUso
             };
 
@@ -186,6 +189,67 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             cell.Style.Font.FontColor = XLColor.White;
             cell.Style.Font.Bold = true;
             cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        }/// <summary>
+        /// Formatea la sede del periférico (enum) para mostrar correctamente en Excel
+        /// </summary>
+        private string FormatearSedeEnum(object? sede)
+        {
+            if (sede == null)
+                return "";
+
+            var sedeStr = sede.ToString();
+            if (string.IsNullOrWhiteSpace(sedeStr))
+                return "";
+
+            // Formatear: "AdministrativaBarranquilla" -> "Administrativa - Barranquilla"
+            return sedeStr switch
+            {
+                "AdministrativaBarranquilla" => "Administrativa - Barranquilla",
+                "AdministrativaBogota" => "Administrativa - Bogotá",
+                "AdministrativaMedellin" => "Administrativa - Medellín",
+                "OperativaBarranquilla" => "Operativa - Barranquilla",
+                "OperativaBogota" => "Operativa - Bogotá",
+                "OperativaMedellin" => "Operativa - Medellín",
+                // Si no coincide con patrón conocido, intentar separar por mayúsculas
+                _ => SepararPorMayusculas(sedeStr)
+            };
+        }        /// <summary>
+        /// Formatea el estado del periférico para mostrar correctamente en Excel
+        /// </summary>
+        private string FormatearEstado(EstadoPeriferico estado)
+        {
+            return estado switch
+            {
+                EstadoPeriferico.EnUso => "En Uso",
+                EstadoPeriferico.AlmacenadoFuncionando => "Almacenado Funcionando",
+                EstadoPeriferico.DadoDeBaja => "Dado de Baja",
+                EstadoPeriferico.EnReparacion => "En Reparación",
+                _ => estado.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Separa un texto por mayúsculas e inserta " - " entre partes
+        /// </summary>
+        private string SepararPorMayusculas(string texto)
+        {
+            if (string.IsNullOrEmpty(texto))
+                return texto;
+
+            var resultado = new System.Text.StringBuilder();
+            bool esFirstChar = true;
+
+            foreach (char c in texto)
+            {
+                if (char.IsUpper(c) && !esFirstChar)
+                {
+                    resultado.Append(" - ");
+                }
+                resultado.Append(c);
+                esFirstChar = false;
+            }
+
+            return resultado.ToString();
         }
     }
 }

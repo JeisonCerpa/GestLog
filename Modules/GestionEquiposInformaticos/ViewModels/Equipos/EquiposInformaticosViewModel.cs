@@ -468,9 +468,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                 var cell = worksheet.Cell(1, col);
                 cell.Value = headers[col - 1];
                 AplicarFormatoHeader(cell);
-            }
-
-            // Escribir datos
+            }            // Escribir datos
             int row = 2;
             foreach (var equipo in equipos)
             {
@@ -479,8 +477,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                 worksheet.Cell(row, 3).Value = equipo.Marca ?? "";
                 worksheet.Cell(row, 4).Value = equipo.Modelo ?? "";
                 worksheet.Cell(row, 5).Value = equipo.UsuarioAsignado ?? "";
-                worksheet.Cell(row, 6).Value = equipo.Sede ?? "";
-                worksheet.Cell(row, 7).Value = equipo.Estado ?? "";
+                worksheet.Cell(row, 6).Value = SepararPorMayusculas(equipo.Sede ?? "");
+                worksheet.Cell(row, 7).Value = FormatearEstadoEquipo(equipo.Estado);
                 worksheet.Cell(row, 8).Value = equipo.Procesador ?? "";
                 worksheet.Cell(row, 9).Value = equipo.SO ?? "";
                 worksheet.Cell(row, 10).Value = equipo.SerialNumber ?? "";
@@ -508,11 +506,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                 worksheet.Cell(row, 17).Style.DateFormat.Format = "dd/MM/yyyy hh:mm";
 
                 row++;
-            }
-
-            worksheet.Columns().AdjustToContents();
+            }            worksheet.Columns().AdjustToContents();
             worksheet.Column(15).Width = 30;
             worksheet.SheetView.FreezeRows(1);
+
+            // Agregar filtros automáticos en los encabezados
+            if (equipos.Any())
+            {
+                worksheet.Range(1, 1, equipos.Count + 1, headers.Length).SetAutoFilter();
+            }
         }
 
         /// <summary>
@@ -547,10 +549,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     worksheet.Cell(row, 9).Value = (slot.Observaciones ?? "").Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ").Trim();
                     row++;
                 }
-            }
-
-            worksheet.Columns().AdjustToContents();
+            }            worksheet.Columns().AdjustToContents();
             worksheet.SheetView.FreezeRows(1);
+
+            // Agregar filtros automáticos en los encabezados
+            if (row > 2)
+            {
+                worksheet.Range(1, 1, row - 1, headers.Length).SetAutoFilter();
+            }
         }        /// <summary>
         /// Exporta detalles de Discos
         /// </summary>
@@ -581,10 +587,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     worksheet.Cell(row, 7).Value = disco.Modelo ?? "";
                     row++;
                 }
-            }
-
-            worksheet.Columns().AdjustToContents();
+            }            worksheet.Columns().AdjustToContents();
             worksheet.SheetView.FreezeRows(1);
+
+            // Agregar filtros automáticos en los encabezados
+            if (row > 2)
+            {
+                worksheet.Range(1, 1, row - 1, headers.Length).SetAutoFilter();
+            }
         }
 
         /// <summary>
@@ -617,10 +627,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     worksheet.Cell(row, 7).Value = conexion.PuertoEnlace ?? "";
                     row++;
                 }
-            }
-
-            worksheet.Columns().AdjustToContents();
+            }            worksheet.Columns().AdjustToContents();
             worksheet.SheetView.FreezeRows(1);
+
+            // Agregar filtros automáticos en los encabezados
+            if (row > 2)
+            {
+                worksheet.Range(1, 1, row - 1, headers.Length).SetAutoFilter();
+            }
         }        /// <summary>
         /// Aplica formato estándar a headers
         /// </summary>
@@ -631,33 +645,79 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             cell.Style.Fill.BackgroundColor = XLColor.FromArgb(17, 137, 56);
             cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
             cell.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Aplica color de fondo a una celda según el estado del equipo
         /// </summary>
         private void AplicarColorEstado(IXLCell cell, string? estado)
         {
             if (string.IsNullOrWhiteSpace(estado)) return;
 
-            var estadoNormalizado = estado.Trim().ToLowerInvariant();
+            var estadoNormalizado = estado.Trim().Replace(" ", "").ToLowerInvariant();
 
             if (estadoNormalizado.Contains("inactivo"))
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(107, 114, 128); // Gris
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(107, 114, 128); // Gris #6B7280
             else if (estadoNormalizado.Contains("dadodebaja"))
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(239, 68, 68); // Rojo
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(239, 68, 68); // Rojo #EF4444
             else if (estadoNormalizado.Contains("enmantenimiento"))
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(245, 158, 11); // Naranja
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(245, 158, 11); // Naranja #F59E0B
             else if (estadoNormalizado.Contains("danado"))
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(220, 38, 38); // Rojo oscuro
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(220, 38, 38); // Rojo oscuro #DC2626
             else if (estadoNormalizado.Contains("enreparacion"))
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(251, 191, 36); // Amarillo
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(251, 191, 36); // Amarillo #FBD136
+            else if (estadoNormalizado.Contains("enuso") || estadoNormalizado.Contains("activo"))
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(43, 142, 63); // Verde #2B8E3F
             else
-                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(39, 174, 96); // Verde (Activo/Disponible)
+                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(39, 174, 96); // Verde por defecto
 
             cell.Style.Font.FontColor = XLColor.White;
             cell.Style.Font.Bold = true;
             cell.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        }
+
+        /// <summary>
+        /// Formatea el estado del equipo para mostrar correctamente en Excel
+        /// </summary>
+        private string FormatearEstadoEquipo(string? estado)
+        {
+            if (string.IsNullOrWhiteSpace(estado))
+                return "";
+
+            var estadoLower = estado.Replace(" ", "").ToLowerInvariant();
+
+            return estadoLower switch
+            {
+                "enuso" or "activo" => "En Uso",
+                "enmantenimiento" => "En Mantenimiento",
+                "enreparacion" => "En Reparación",
+                "inactivo" => "Inactivo",
+                "danado" => "Dañado",
+                "dadodebaja" => "Dado de Baja",
+                _ => estado // Devolver original si no coincide
+            };
+        }
+
+        /// <summary>
+        /// Separa un texto por mayúsculas e inserta " - " entre partes
+        /// </summary>
+        private string SepararPorMayusculas(string texto)
+        {
+            if (string.IsNullOrEmpty(texto))
+                return texto;
+
+            var resultado = new System.Text.StringBuilder();
+            bool esFirstChar = true;
+
+            foreach (char c in texto)
+            {
+                if (char.IsUpper(c) && !esFirstChar)
+                {
+                    resultado.Append(" - ");
+                }
+                resultado.Append(c);
+                esFirstChar = false;
+            }
+
+            return resultado.ToString();
         }
 
         [RelayCommand(CanExecute = nameof(CanCrearEquipo))]

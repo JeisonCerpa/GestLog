@@ -88,9 +88,7 @@ public class ExcelExportService : IExcelExportService
                         }
                     }
                     if (descriptionColIndex != -1) break;
-                }
-
-                if (descriptionColIndex == -1)
+                }                if (descriptionColIndex == -1)
                 {
                     // Fallback: usar la columna 23 si existe, o la última columna usada
                     descriptionColIndex = Math.Min(Math.Max(1, 23), Math.Max(1, lastColumn));
@@ -106,6 +104,10 @@ public class ExcelExportService : IExcelExportService
                 // Ajustar altura de filas globalmente (sin cambiar alineaciones)
                 genDescWorksheet.Rows().AdjustToContents();
 
+                // Agregar filtros automáticos en los encabezados
+                _logger.LogDebug("📊 Agregando filtros automáticos en los encabezados...");
+                genDescWorksheet.Range(1, 1, sortedData.Rows.Count + 1, lastColumn).SetAutoFilter();
+
                 cancellationToken.ThrowIfCancellationRequested();
                   // Configurar hoja SpecProd_Interes
                 _logger.LogDebug("📋 Configurando hoja 'SpecProd_Interes'...");
@@ -119,10 +121,14 @@ public class ExcelExportService : IExcelExportService
                 specProdWorksheet.Cell(1, 7).Value = "CANTIDAD";
                 specProdWorksheet.Cell(1, 8).Value = "PESO T";
                 specProdWorksheet.Cell(1, 9).Value = "DETALLES STD";
-                specProdWorksheet.Cell(1, 10).Value = "MES";
-                specProdWorksheet.Row(1).Style.Font.Bold = true;
+                specProdWorksheet.Cell(1, 10).Value = "MES";                specProdWorksheet.Row(1).Style.Font.Bold = true;
                 specProdWorksheet.Row(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 specProdWorksheet.Columns().AdjustToContents();
+
+                // Agregar filtros automáticos en los encabezados de SpecProd_Interes
+                _logger.LogDebug("📊 Agregando filtros automáticos en hoja 'SpecProd_Interes'...");
+                // El rango de filtro debe incluir el header y potencialmente filas de datos (aunque esté vacía)
+                specProdWorksheet.Range(1, 1, 1000, 10).SetAutoFilter();
                 
                 cancellationToken.ThrowIfCancellationRequested();
                 
