@@ -247,8 +247,7 @@
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
                                     </StackPanel>
-                                    
-                                    <!-- Fila 2: Usuario Asignado (span completo) -->
+                                      <!-- Fila 2: Usuario Asignado (span completo) -->
                                     <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
                                         <TextBlock Text="Usuario Asignado" Style="{StaticResource LabelTextStyle}"/>
                                         <ComboBox x:Name="CmbUsuarioAsignado"

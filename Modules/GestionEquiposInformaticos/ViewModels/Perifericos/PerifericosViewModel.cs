@@ -119,7 +119,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
             {
                 _logger.LogWarning(ex, "[PerifericosViewModel] No se pudo registrar el handler de MantenimientosCorrectivosActualizadosMessage");
             }
-        }        /// <summary>
+        }
+        /// <summary>
         /// Inicializa el ViewModel con detección ultrarrápida de problemas de conexión
         /// </summary>
         public async Task InicializarAsync(CancellationToken cancellationToken = default)
@@ -171,7 +172,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     _isInitialized = true; // Marcar como inicializado para evitar reintentos
                 });
             }
-        }        /// <summary>
+        }
+        /// <summary>
         /// Carga todos los periféricos desde la base de datos
         /// </summary>
         [RelayCommand]
@@ -199,7 +201,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
             
             // Recargar datos usando el método público
             await CargarPerifericosAsync();
-        }        /// <summary>
+        }
+        /// <summary>
         /// Método interno para cargar periféricos con detección ultrarrápida de problemas de conexión
         /// </summary>
         private async Task CargarPerifericosInternoAsync(CancellationToken cancellationToken = default)
@@ -327,11 +330,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                 _logger.LogError(ex, "[PerifericosViewModel] Error al agregar periférico");
 
                 // Actualizar UI de forma asíncrona
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>                {
                     StatusMessage = "Error al agregar periférico";
                 });
-            }        }
+            }
+        }
 
         /// <summary>
         /// Comando para editar el periférico seleccionado
@@ -424,7 +427,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     StatusMessage = "Error al eliminar periférico";
                 });
             }
-        }        /// <summary>
+        }
+        /// <summary>
         /// Verifica si se puede editar o eliminar un periférico
         /// </summary>
         public bool CanEditarEliminarPeriferico => PerifericoSeleccionado != null;
@@ -753,13 +757,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
 
                 MessageBox.Show("Error al guardar el periférico. Ver logs para más detalles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }        /// <summary>
+        }
+        /// <summary>
         /// Convierte una entidad a DTO
         /// </summary>
         private PerifericoEquipoInformaticoDto ConvertirEntityADto(PerifericoEquipoInformaticoEntity entity)
         {
             return new PerifericoEquipoInformaticoDto(entity);
-        }        /// <summary>
+        }
+        /// <summary>
         /// Actualiza un DTO existente con datos de la entidad
         /// </summary>
         private void ActualizarDto(PerifericoEquipoInformaticoDto dto, PerifericoEquipoInformaticoEntity entity)
@@ -824,7 +830,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
         partial void OnShowDadoDeBajaChanged(bool value)
         {
             System.Windows.Application.Current?.Dispatcher.Invoke(() => PerifericosView?.Refresh());
-        }        /// <summary>
+        }
+        /// <summary>
         /// Comando para exportar periféricos a archivo Excel
         /// </summary>
         [RelayCommand]
@@ -868,11 +875,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
             catch (Exception ex)
             {
                 StatusMessage = "Error al exportar periféricos";
-                MessageBox.Show(
-                    $"Error al exportar periféricos: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBox.Show($"Error al exportar periféricos: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _logger.LogError(ex, "[PerifericosViewModel] Error al exportar periféricos");
             }
             finally
@@ -880,6 +883,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                 IsLoading = false;
             }
         }
+        
     }
 }
 
