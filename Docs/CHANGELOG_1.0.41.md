@@ -14,7 +14,7 @@
 
 ## 🔧 Mejoras y Optimizaciones
 
-- 
+- Mejorado: Combobox de años en vista de Historial ahora muestra solo años que existen en los datos. En lugar de años hardcodeados (últimos 4 años), se cargan dinámicamente desde la base de datos. Si no hay datos, usa fallback a años por defecto.
 
 ---
 
@@ -35,6 +35,8 @@
 
 - Se cambió el método `BuscarPersonaConEquipoExistente()` a público en `PerifericoDialog.xaml.cs` para permitir su llamada desde el evento `Loaded` después de cargar las personas disponibles.
 - El flujo ahora es: Loaded → CargarPersonasConEquipoAsync() → BuscarPersonaConEquipoExistente() (secuencial)
+- Se agregó método `GetAvailableYearsAsync()` a `IPlanCronogramaService` e `PlanCronogramaService` para obtener años disponibles en las ejecuciones.
+- El método `CargarAñosDisponiblesAsync()` en `HistorialEjecucionesViewModel` carga los años de forma asíncrona en el constructor y maneja fallbacks en caso de error o ausencia de datos.
 
 ---
 

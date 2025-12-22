@@ -62,8 +62,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
     }
 
     public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel, IDisposable
-    {
-        private readonly IPlanCronogramaService _planService;
+    {        private readonly IPlanCronogramaService _planService;
         private readonly IEquipoInformaticoService _equipoService;        
         public HistorialEjecucionesViewModel(
             IPlanCronogramaService planService, 
@@ -74,8 +73,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             _planService = planService;
             _equipoService = equipoService;
-            Years = new ObservableCollection<int>(Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x=>x));
-            SelectedYear = DateTime.Now.Year;            
+            Years = new ObservableCollection<int>();
+            SelectedYear = DateTime.Now.Year;
+            // Cargar años disponibles de forma asíncrona
+            _ = CargarAñosDisponiblesAsync();
             // Suscribirse a mensajes de actualización para refresh automático
             WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
             {
@@ -235,6 +236,48 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private void CerrarDetalle()
         {
             MostrarDetalle = false;
+        }
+
+        private async Task CargarAñosDisponiblesAsync()
+        {
+            try
+            {
+                var anosDisponibles = await _planService.GetAvailableYearsAsync();
+                
+                // Si no hay años en la BD, usar años por defecto
+                if (anosDisponibles.Count == 0)
+                {
+                    anosDisponibles = Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x => x).ToList();
+                }
+                
+                Years.Clear();
+                foreach (var ano in anosDisponibles)
+                {
+                    Years.Add(ano);
+                }
+                
+                // Si el año actual está disponible, seleccionarlo; si no, seleccionar el primero
+                if (anosDisponibles.Contains(DateTime.Now.Year))
+                {
+                    SelectedYear = DateTime.Now.Year;
+                }
+                else if (anosDisponibles.Count > 0)
+                {
+                    SelectedYear = anosDisponibles.First();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error al cargar años disponibles");
+                // Fallback: usar años por defecto si hay error
+                Years.Clear();
+                var anosDefault = Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x => x);
+                foreach (var ano in anosDefault)
+                {
+                    Years.Add(ano);
+                }
+                SelectedYear = DateTime.Now.Year;
+            }
         }
 
         public async Task LoadAsync()

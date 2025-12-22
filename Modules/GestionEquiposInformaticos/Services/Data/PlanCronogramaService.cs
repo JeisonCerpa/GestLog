@@ -233,6 +233,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 #pragma warning restore CS8602
         }
 
+        public async Task<List<int>> GetAvailableYearsAsync()
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            return await context.EjecucionesSemanales
+                .Select(e => (int)e.AnioISO)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync();
+        }
+
         private void ValidarPlan(PlanCronogramaEquipo plan)
         {
             if (string.IsNullOrWhiteSpace(plan.CodigoEquipo))
