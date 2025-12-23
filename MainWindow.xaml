@@ -1,10 +1,9 @@
 ﻿<Window x:Class="GestLog.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        xmlns:local="clr-namespace:GestLog"
         mc:Ignorable="d"
-        Title="GestLog - Sistema de Gestión v1.0.40" Height="600" Width="1000"
+        Title="GestLog - Sistema de Gestión v1.0.41" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">

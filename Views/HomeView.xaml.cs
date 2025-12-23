@@ -23,7 +23,7 @@ namespace GestLog.Views
         }        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.40\n\n" +
+                "GestLog v1.0.41\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
@@ -31,12 +31,14 @@ namespace GestLog.Views
                 "• Gestión de Cartera - Estados de cuenta PDF\n" +
                 "• Envío de Catálogo - Envío masivo de catálogo\n" +
                 "• Gestión de Equipos Informáticos - Administración de periféricos\n\n" +
-                "Cambios principales en v1.0.40:\n" +
-                "• Exportación de Periféricos: nuevo servicio de exportación a Excel con estilos avanzados.\n" +
-                "• Interfaz mejorada: botón de exportación integrado en la vista de periféricos.\n" +
-                "• Estilos visuales: headers personalizados, colores por estado y formato de moneda.\n" +
-                "• Mejoras de rendimiento y estabilidad.\n" +
-                "• Actualización de dependencias.\n\n" +
+                "Cambios principales en v1.0.41:\n" +
+                "• Historial de Ejecuciones: nuevo servicio de exportación a Excel con diseño profesional.\n" +
+                "• Portada personalizada: con estadísticas clave (equipos, mantenimientos, ítems).\n" +
+                "• Hojas por equipo: detalles semanales de actividades completadas.\n" +
+                "• Combobox dinámico: años se cargan desde BD, no hardcodeados.\n" +
+                "• Exportaciones mejoradas: filtros automáticos en todos los encabezados.\n" +
+                "• Formateo avanzado: estados y sedes con textos legibles y colores.\n" +
+                "• Mejoras de rendimiento y estabilidad.\n\n" +
                 "Estado: ✅ Operativo\n" +
                 "Actualizaciones: ✅ Sistema Velopack 100% funcional\n\n" +
                 "Nota: Para obtener el changelog completo, consulte la documentación.",
