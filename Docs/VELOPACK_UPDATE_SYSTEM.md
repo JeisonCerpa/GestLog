@@ -49,8 +49,7 @@ cd "E:\Softwares\GestLog" `
 ; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false `
 ; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe" `
 ; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" `
-; dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0"
-
+; $deployPath = "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"; $files = Get-ChildItem $deployPath -Filter "GestLog-1.0.*-*.nupkg" | Sort-Object -Property {[version]($_.BaseName -replace 'GestLog-|-(full|delta)', '')} -Descending; $toDelete = $files | Select-Object -Skip 10; if ($toDelete.Count -gt 0) { $toDelete | Remove-Item -Force -Verbose; Write-Host "`n✅ Eliminados: $($toDelete.Count) archivos" -ForegroundColor Green; Write-Host "✔️ Mantienen: $($files.Count - $toDelete.Count) archivos (últimas 5 versiones)" -ForegroundColor Green } else { Write-Host "`n✅ Sin archivos para eliminar - Versiones OK" -ForegroundColor Green }
 ```
 
 ### **Paso 1: Actualizar Versión**
