@@ -134,6 +134,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
 
                 // Cargar equipo actualizado con todas las relaciones
                 var equipoActualizado = await context.EquiposInformaticos
+                    // Evitar productorio cartesiano usando split queries
+                    .AsSplitQuery()
                     .Include(e => e.SlotsRam)
                     .Include(e => e.Discos)
                     .Include(e => e.Conexiones)

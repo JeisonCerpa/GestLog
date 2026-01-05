@@ -428,6 +428,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     }                    
                     // Cargar la entidad desde el mismo DbContext (incluyendo colecciones)
                     var equipo = dbContext.EquiposInformaticos
+                        // Evitar productorio cartesiano usando split queries cuando se incluyen múltiples colecciones
+                        .AsSplitQuery()
                         .Include(e => e.SlotsRam)
                         .Include(e => e.Discos)
                         .Include(e => e.Conexiones)
@@ -497,6 +499,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                             }                            
                             // Volver a cargar la entidad ya con el nuevo código
                             var equipoRecargado = dbContext.EquiposInformaticos
+                                .AsSplitQuery()
                                 .Include(e => e.SlotsRam)
                                 .Include(e => e.Discos)
                                 .Include(e => e.Conexiones)
@@ -602,6 +605,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                                         foreach (var entry in dbContext.ChangeTracker.Entries().ToList())
                                             entry.State = EntityState.Detached;                                        
                                         equipoRecargado = dbContext.EquiposInformaticos
+                                            .AsSplitQuery()
                                             .Include(e => e.SlotsRam)
                                             .Include(e => e.Discos)
                                             .Include(e => e.Conexiones)
@@ -940,7 +944,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                             DireccionMAC = conexion.DireccionMAC,
                             DireccionIPv4 = conexion.DireccionIPv4,
                             MascaraSubred = conexion.MascaraSubred,
-                            PuertoEnlace = conexion.PuertoEnlace                        };
+                            PuertoEnlace = conexion.PuertoEnlace
+                        };
                         dbContext.Conexiones.Add(nuevaConexion);
                     }
 

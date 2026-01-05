@@ -19,6 +19,7 @@ using System.Windows;
 using ClosedXML.Excel;
 using System.ComponentModel;
 using System.Windows.Data;
+using System.Threading;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
 {
@@ -62,8 +63,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
     }
 
     public partial class HistorialEjecucionesViewModel : DatabaseAwareViewModel, IDisposable
-    {        private readonly IPlanCronogramaService _planService;
+    {        
+        private readonly IPlanCronogramaService _planService;
         private readonly IEquipoInformaticoService _equipoService;        
+        // Evitar ejecuciones concurrentes de LoadAsync que causen duplicados
+        private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1);
         public HistorialEjecucionesViewModel(
             IPlanCronogramaService planService, 
             IEquipoInformaticoService equipoService,
@@ -141,7 +145,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         partial void OnFiltroNombreChanged(string? value) => RefreshFilter();
         partial void OnFiltroUsuarioChanged(string? value) => RefreshFilter();
         partial void OnFiltroSemanaChanged(string? value) => RefreshFilter();
-        partial void OnSelectedYearChanged(int value) => RefreshFilter();
+        // Al cambiar año, recargar los items del año seleccionado (para que se consulten desde BD)
+        partial void OnSelectedYearChanged(int value) => _ = LoadAsync();
 
         // Propiedades compatibles con PlanDetalleModalWindow (para reusar la ventana de detalle)
         [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle;
@@ -243,20 +248,33 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             try
             {
                 var anosDisponibles = await _planService.GetAvailableYearsAsync();
-                
+
+                _logger.LogDebug("[HistorialEjecucionesViewModel] Años disponibles desde DB: {anos}", string.Join(", ", anosDisponibles));
+
                 // Si no hay años en la BD, usar años por defecto
                 if (anosDisponibles.Count == 0)
                 {
                     anosDisponibles = Enumerable.Range(DateTime.Now.Year - 3, 4).OrderByDescending(x => x).ToList();
                 }
-                
+                else
+                {
+                    // Garantizar que el año actual esté presente en la lista para permitir seleccionar 2026 aunque no tenga ejecuciones
+                    if (!anosDisponibles.Contains(DateTime.Now.Year))
+                    {
+                        anosDisponibles = anosDisponibles.Union(new[] { DateTime.Now.Year }).OrderByDescending(x => x).ToList();
+                        _logger.LogDebug("[HistorialEjecucionesViewModel] Año actual añadido a años disponibles: {year}", DateTime.Now.Year);
+                    }
+                }
+
                 Years.Clear();
                 foreach (var ano in anosDisponibles)
                 {
                     Years.Add(ano);
                 }
-                
-                // Si el año actual está disponible, seleccionarlo; si no, seleccionar el primero
+
+                _logger.LogDebug("[HistorialEjecucionesViewModel] Años finales en la vista: {anos}", string.Join(", ", Years));
+
+                // Seleccionar el año actual si está disponible; si no, seleccionar el primero
                 if (anosDisponibles.Contains(DateTime.Now.Year))
                 {
                     SelectedYear = DateTime.Now.Year;
@@ -277,134 +295,172 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     Years.Add(ano);
                 }
                 SelectedYear = DateTime.Now.Year;
+                // Intentar cargar datos del año actual aunque haya ocurrido un error al obtener años desde la BD
+                try { await LoadAsync(); } catch { /* silenciar */ }
             }
         }
 
         public async Task LoadAsync()
         {
+            // Serializar llamadas para evitar repetidas cargas concurrentes que provoquen duplicados
+            await _loadSemaphore.WaitAsync();
             try
             {
-                IsBusy = true;
-                StatusMessage = "Cargando...";
-                Items.Clear();
-                // asegurarse de que la vista filtrada está inicializada antes de añadir
-                SetupCollectionView();
-                var ejecuciones = await _planService.GetEjecucionesByAnioAsync(SelectedYear);
-                var query = ejecuciones.AsQueryable();
-                if (!string.IsNullOrWhiteSpace(FiltroCodigo))
-                    query = query.Where(e => e.Plan != null && e.Plan.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrWhiteSpace(FiltroDescripcion))
-                    query = query.Where(e => e.Plan != null && e.Plan.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase));
+                _logger.LogDebug("[HistorialEjecucionesViewModel] Iniciando LoadAsync para año {year}", SelectedYear);
+                try
+                {
+                    IsBusy = true;
+                    StatusMessage = "Cargando...";
+                    Items.Clear();
+                    // asegurarse de que la vista filtrada está inicializada antes de añadir
+                    SetupCollectionView();
+                    var ejecuciones = await _planService.GetEjecucionesByAnioAsync(SelectedYear);
+                    var query = ejecuciones.AsQueryable();
+                    if (!string.IsNullOrWhiteSpace(FiltroCodigo))
+                        query = query.Where(e => e.Plan != null && e.Plan.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase));
+                    if (!string.IsNullOrWhiteSpace(FiltroDescripcion))
+                        query = query.Where(e => e.Plan != null && e.Plan.Descripcion.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase));
                 
-                var codigosPendientes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                // Ordenar: atrasados primero (derivado), luego semana/año desc
-                var materialized = query.ToList();
-                foreach (var e in materialized
-                             .OrderByDescending(x => x.FechaObjetivo.Date < DateTime.Today && x.FechaEjecucion == null && x.Estado != 2) // atrasados primero
-                             .ThenByDescending(x => x.AnioISO)
-                             .ThenByDescending(x => x.SemanaISO)
-                             .Take(MaxRows))
-                {
-                    string? resumen = null;
-                    var detalleItems = new ObservableCollection<EjecucionDetalleItem>();
-                    int total = 0; int comp = 0; int observados = 0; int pendientes = 0;
-                    string toolTip = string.Empty;
-                    if (!string.IsNullOrWhiteSpace(e.ResultadoJson))
+                    var codigosPendientes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    // Ordenar: atrasados primero (derivado), luego semana/año desc
+                    var materialized = query.ToList();
+                    foreach (var e in materialized
+                                 .OrderByDescending(x => x.FechaObjetivo.Date < DateTime.Today && x.FechaEjecucion == null && x.Estado != 2) // atrasados primero
+                                 .ThenByDescending(x => x.AnioISO)
+                                 .ThenByDescending(x => x.SemanaISO)
+                                 .Take(MaxRows))
                     {
-                        try
+                        string? resumen = null;
+                        var detalleItems = new ObservableCollection<EjecucionDetalleItem>();
+                        int total = 0; int comp = 0; int observados = 0; int pendientes = 0;
+                        string toolTip = string.Empty;
+                        if (!string.IsNullOrWhiteSpace(e.ResultadoJson))
                         {
-                            var doc = System.Text.Json.JsonDocument.Parse(e.ResultadoJson);
-                            if (doc.RootElement.TryGetProperty("items", out var arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            try
                             {
-                                total = arr.GetArrayLength();
-                                foreach (var it in arr.EnumerateArray())
+                                var doc = System.Text.Json.JsonDocument.Parse(e.ResultadoJson);
+                                if (doc.RootElement.TryGetProperty("items", out var arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
                                 {
-                                    bool completado = it.TryGetProperty("Completado", out var cEl) && cEl.ValueKind == System.Text.Json.JsonValueKind.True;
-                                    string desc = it.TryGetProperty("Descripcion", out var dEl) ? (dEl.GetString() ?? string.Empty) :
-                                                  it.TryGetProperty("descripcion", out var d2El) ? (d2El.GetString() ?? string.Empty) : string.Empty;
-                                    string? obs = it.TryGetProperty("Observacion", out var oEl) ? oEl.GetString() :
-                                                  it.TryGetProperty("observacion", out var o2El) ? o2El.GetString() : null;
-                                    int? id = it.TryGetProperty("Id", out var idEl) ? idEl.GetInt32() :
-                                               it.TryGetProperty("id", out var id2El) ? id2El.GetInt32() : (int?)null;
-                                    var det = new EjecucionDetalleItem { Id = id, Descripcion = desc, Completado = completado, Observacion = obs };
-                                    detalleItems.Add(det);
-                                    if (completado) comp++; else if (!string.IsNullOrWhiteSpace(obs)) observados++; else pendientes++;
-                                }
-                                resumen = $"{comp}/{total} ítems OK";
-                                var okList = detalleItems.Where(x=>x.Completado).Select(x=>x.Descripcion).Take(5).ToList();
-                                var obsList = detalleItems.Where(x=>!x.Completado && !string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
-                                var penList = detalleItems.Where(x=>!x.Completado && string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
-                                toolTip = $"OK ({comp}): {string.Join(", ", okList)}";
-                                if (obsList.Any()) toolTip += $"\nObservados ({observados}): {string.Join(", ", obsList)}";
-                                if (penList.Any()) toolTip += $"\nPendientes ({pendientes}): {string.Join(", ", penList)}";
-                                if (okList.Count < comp || obsList.Count < observados || penList.Count < pendientes)
-                                    toolTip += "\n...";
-                            }
-                        }
-                        catch { }
-                    }
-                    var nombreEquipo = e.Plan?.Equipo?.NombreEquipo;
-                    var codigoEquipo = e.Plan?.CodigoEquipo ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(nombreEquipo) && !string.IsNullOrWhiteSpace(codigoEquipo))
-                    {
-                        nombreEquipo = "(cargando...)"; // placeholder
-                        codigosPendientes.Add(codigoEquipo);
-                    }
-                    var itemVm = new EjecucionHistorialItem
-                    {
-                        EjecucionId = e.EjecucionId,
-                        PlanId = e.PlanId,
-                        CodigoEquipo = codigoEquipo,
-                        NombreEquipo = nombreEquipo ?? string.Empty,
-                        AnioISO = e.AnioISO,
-                        SemanaISO = e.SemanaISO,
-                        FechaObjetivo = e.FechaObjetivo,
-                        FechaEjecucion = e.FechaEjecucion,
-                        Estado = e.Estado,
-                        UsuarioEjecuta = e.UsuarioEjecuta ?? string.Empty,
-                        Resumen = resumen,
-                        UsuarioAsignadoEquipo = e.Plan?.Equipo?.UsuarioAsignado ?? string.Empty,
-                        DetalleItems = detalleItems,
-                        ToolTipResumen = toolTip
-                    };
-                    if (itemVm.EsAtrasado && !string.IsNullOrEmpty(itemVm.ToolTipResumen))
-                        itemVm.ToolTipResumen = "(Atrasado) " + itemVm.ToolTipResumen;
-                    Items.Add(itemVm);
-                }
-                // Enriquecer nombres faltantes consultando servicio
-                if (codigosPendientes.Count > 0)
-                {
-                    foreach (var codigo in codigosPendientes)
-                    {
-                        try
-                        {
-                            var equipo = await _equipoService.GetByCodigoAsync(codigo);
-                            if (equipo != null && !string.IsNullOrWhiteSpace(equipo.NombreEquipo))
-                            {
-                                foreach (var item in Items.Where(i => i.CodigoEquipo.Equals(codigo, StringComparison.OrdinalIgnoreCase)))
-                                {
-                                    item.NombreEquipo = equipo.NombreEquipo!; // notifica cambio
-                                    if (string.IsNullOrWhiteSpace(item.UsuarioAsignadoEquipo) && !string.IsNullOrWhiteSpace(equipo.UsuarioAsignado))
-                                        item.UsuarioAsignadoEquipo = equipo.UsuarioAsignado!;
+                                    total = arr.GetArrayLength();
+                                    foreach (var it in arr.EnumerateArray())
+                                    {
+                                        bool completado = it.TryGetProperty("Completado", out var cEl) && cEl.ValueKind == System.Text.Json.JsonValueKind.True;
+                                        string desc = it.TryGetProperty("Descripcion", out var dEl) ? (dEl.GetString() ?? string.Empty) :
+                                                      it.TryGetProperty("descripcion", out var d2El) ? (d2El.GetString() ?? string.Empty) : string.Empty;
+                                        string? obs = it.TryGetProperty("Observacion", out var oEl) ? oEl.GetString() :
+                                                      it.TryGetProperty("observacion", out var o2El) ? o2El.GetString() : null;
+                                        int? id = it.TryGetProperty("Id", out var idEl) ? idEl.GetInt32() :
+                                                   it.TryGetProperty("id", out var id2El) ? id2El.GetInt32() : (int?)null;
+                                        var det = new EjecucionDetalleItem { Id = id, Descripcion = desc, Completado = completado, Observacion = obs };
+                                        detalleItems.Add(det);
+                                        if (completado) comp++; else if (!string.IsNullOrWhiteSpace(obs)) observados++; else pendientes++;
+                                    }
+                                    resumen = $"{comp}/{total} ítems OK";
+                                    var okList = detalleItems.Where(x=>x.Completado).Select(x=>x.Descripcion).Take(5).ToList();
+                                    var obsList = detalleItems.Where(x=>!x.Completado && !string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
+                                    var penList = detalleItems.Where(x=>!x.Completado && string.IsNullOrWhiteSpace(x.Observacion)).Select(x=>x.Descripcion).Take(5).ToList();
+                                    toolTip = $"OK ({comp}): {string.Join(", ", okList)}";
+                                    if (obsList.Any()) toolTip += $"\nObservados ({observados}): {string.Join(", ", obsList)}";
+                                    if (penList.Any()) toolTip += $"\nPendientes ({pendientes}): {string.Join(", ", penList)}";
+                                    if (okList.Count < comp || obsList.Count < observados || penList.Count < pendientes)
+                                        toolTip += "\n...";
                                 }
                             }
+                            catch { }
                         }
-                        catch { /* silenciar errores individuales */ }
-                    }                
+                        var nombreEquipo = e.Plan?.Equipo?.NombreEquipo;
+                        var codigoEquipo = e.Plan?.CodigoEquipo ?? string.Empty;
+                        if (string.IsNullOrWhiteSpace(nombreEquipo) && !string.IsNullOrWhiteSpace(codigoEquipo))
+                        {
+                            nombreEquipo = "(cargando...)"; // placeholder
+                            codigosPendientes.Add(codigoEquipo);
+                        }
+                        var itemVm = new EjecucionHistorialItem
+                        {
+                            EjecucionId = e.EjecucionId,
+                            PlanId = e.PlanId,
+                            CodigoEquipo = codigoEquipo,
+                            NombreEquipo = nombreEquipo ?? string.Empty,
+                            AnioISO = e.AnioISO,
+                            SemanaISO = e.SemanaISO,
+                            FechaObjetivo = e.FechaObjetivo,
+                            FechaEjecucion = e.FechaEjecucion,
+                            Estado = e.Estado,
+                            UsuarioEjecuta = e.UsuarioEjecuta ?? string.Empty,
+                            Resumen = resumen,
+                            UsuarioAsignadoEquipo = e.Plan?.Equipo?.UsuarioAsignado ?? string.Empty,
+                            DetalleItems = detalleItems,
+                            ToolTipResumen = toolTip
+                        };
+                        if (itemVm.EsAtrasado && !string.IsNullOrEmpty(itemVm.ToolTipResumen))
+                            itemVm.ToolTipResumen = "(Atrasado) " + itemVm.ToolTipResumen;
+
+                        // Evitar duplicados por EjecucionId (por seguridad ante cargas múltiples o datos duplicados)
+                        if (Items.Any(i => i.EjecucionId == itemVm.EjecucionId))
+                        {
+                            _logger.LogWarning("[HistorialEjecucionesViewModel] Duplicado detectado: EjecucionId {id} para año {year} - se omite", itemVm.EjecucionId, SelectedYear);
+                            continue;
+                        }
+
+                        Items.Add(itemVm);
+                    }
+
+                    // Dedupe final por si quedó algún duplicado (seguridad adicional)
+                    try
+                    {
+                        var unique = Items.GroupBy(i => i.EjecucionId).Select(g => g.First()).ToList();
+                        if (unique.Count != Items.Count)
+                        {
+                            _logger.LogWarning("[HistorialEjecucionesViewModel] Se detectaron y eliminaron {dup} duplicados en Items", Items.Count - unique.Count);
+                            Items.Clear();
+                            foreach (var u in unique) Items.Add(u);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error deduplicando Items");
+                    }
+
+                    // Enriquecer nombres faltantes consultando servicio
+                    if (codigosPendientes.Count > 0)
+                    {
+                        foreach (var codigo in codigosPendientes)
+                        {
+                            try
+                            {
+                                var equipo = await _equipoService.GetByCodigoAsync(codigo);
+                                if (equipo != null && !string.IsNullOrWhiteSpace(equipo.NombreEquipo))
+                                {
+                                    foreach (var item in Items.Where(i => i.CodigoEquipo.Equals(codigo, StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        item.NombreEquipo = equipo.NombreEquipo!; // notifica cambio
+                                        if (string.IsNullOrWhiteSpace(item.UsuarioAsignadoEquipo) && !string.IsNullOrWhiteSpace(equipo.UsuarioAsignado))
+                                            item.UsuarioAsignadoEquipo = equipo.UsuarioAsignado!;
+                                    }
+                                }
+                            }
+                            catch { /* silenciar errores individuales */ }
+                        }                
+                    }
+                    StatusMessage = $"{Items.Count} ejecuciones";
+                    RecalcularEstadisticas();
+                    // después de cargar recalcar filtro en la vista
+                    RefreshFilter();
                 }
-                StatusMessage = $"{Items.Count} ejecuciones";
-                RecalcularEstadisticas();
-                // después de cargar recalcar filtro en la vista
-                RefreshFilter();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = "Error al cargar";
-                System.Diagnostics.Debug.WriteLine(ex);
+                catch (Exception ex)
+                {
+                    StatusMessage = "Error al cargar";
+                    System.Diagnostics.Debug.WriteLine(ex);
+                }
+                finally
+                {
+                    IsBusy = false;
+                }
+                _logger.LogDebug("[HistorialEjecucionesViewModel] LoadAsync finalizado para año {year} - total {count}", SelectedYear, Items.Count);
             }
             finally
             {
-                IsBusy = false;
+                _loadSemaphore.Release();
             }
         }        
         /// <summary>
@@ -515,6 +571,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             WeakReferenceMessenger.Default.Unregister<EjecucionesPlanesActualizadasMessage>(this);
             WeakReferenceMessenger.Default.Unregister<SeguimientosActualizadosMessage>(this);
             
+            try { _loadSemaphore?.Dispose(); } catch { }
             base.Dispose();
         }
 

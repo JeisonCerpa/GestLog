@@ -307,6 +307,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     .Include(e => e.SlotsRam)
                     .Include(e => e.Discos)
                     .Include(e => e.Conexiones)
+                    .AsSplitQuery()
                     .FirstOrDefaultAsync(e => e.Codigo == equipo.Codigo);
 
                 if (detalle == null)
@@ -413,6 +414,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                     .Include(e => e.SlotsRam)
                     .Include(e => e.Discos)
                     .Include(e => e.Conexiones)
+                    // Evitar productorio cartesiano usando split queries
+                    .AsSplitQuery()
                     .Where(e => codigos.Contains(e.Codigo))
                     .ToListAsync();
 

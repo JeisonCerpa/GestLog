@@ -5,6 +5,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Services;
 using GestLog.Services.Core;
 using System;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace GestLog
 {    public static class Startup
@@ -28,7 +29,22 @@ namespace GestLog
                     sqlOptions.CommandTimeout(15);
                 })
                 .EnableSensitiveDataLogging(false) // Para producción
-                .EnableDetailedErrors(false); // Para producción
+                .EnableDetailedErrors(false)
+                // Configurar comportamiento de advertencias según entorno
+                .ConfigureWarnings(w =>
+                {
+                    var env = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? string.Empty;
+                    if (env.Equals("Development", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // En desarrollo, convertir la advertencia en excepción para identificar la consulta exacta
+                        w.Throw(RelationalEventId.MultipleCollectionIncludeWarning);
+                    }
+                    else
+                    {
+                        // En otros entornos, ignorar para evitar ruido en logs (comportamiento previo)
+                        w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning);
+                    }
+                });
             });
 
             // Registrar servicio de migraciones para aplicar automáticamente en startup
