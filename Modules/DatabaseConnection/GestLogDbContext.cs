@@ -229,23 +229,39 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.RepuestoUsado).HasMaxLength(200);
                 entity.HasIndex(e => e.SeguimientoMantenimientoId);
-            });
-
-            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal>(entity =>
             {
                 entity.ToTable("EjecucionSemanal");
-                entity.HasIndex(e => new { e.PlanId, e.AnioISO, e.SemanaISO }).IsUnique();
+                
+                // ✅ ÍNDICE PRINCIPAL: por equipo + año + semana (para consultas rápidas)
+                entity.HasIndex(e => new { e.CodigoEquipo, e.AnioISO, e.SemanaISO });
+                
+                // Índice para búsquedas por plan (opcional, para migración)
+                entity.HasIndex(e => e.PlanId);
+                
                 entity.Property(e => e.Estado).IsRequired();
-            });            
+                
+                // ✅ FK a Equipo: REQUIRED, ON DELETE NO ACTION (evitar conflictos en migración)
+                // NO ACTION permite que el historial persista aunque el equipo se elimine
+                entity.HasOne(e => e.Equipo)
+                      .WithMany()
+                      .HasForeignKey(e => e.CodigoEquipo)
+                      .OnDelete(DeleteBehavior.NoAction)
+                      .IsRequired();
+                
+                // ✅ FK a Plan: OPTIONAL, ON DELETE SET NULL (permitir eliminar planes sin perder historial)
+                entity.HasOne(e => e.Plan)
+                      .WithMany(p => p.Ejecuciones)
+                      .HasForeignKey(e => e.PlanId)
+                      .OnDelete(DeleteBehavior.SetNull)
+                      .IsRequired(false);
+            });
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo>(entity =>
             {
                 entity.ToTable("PlanCronogramaEquipo");
                 entity.Property(p => p.DiaProgramado).IsRequired();
-                entity.HasMany(p => p.Ejecuciones)
-                      .WithOne(e => e.Plan!)
-                      .HasForeignKey(e => e.PlanId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });            
+                // Ejecuciones ahora se configuran desde EjecucionSemanal
+            });
             // Configuración para ConexionEntity
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(entity =>
             {

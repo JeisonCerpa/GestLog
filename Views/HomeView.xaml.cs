@@ -23,7 +23,7 @@ namespace GestLog.Views
         }        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.41\n\n" +
+                "GestLog v1.0.42\n\n" +
                 "Sistema modular de gestión integrada\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
                 "Módulos integrados:\n" +
@@ -31,13 +31,14 @@ namespace GestLog.Views
                 "• Gestión de Cartera - Estados de cuenta PDF\n" +
                 "• Envío de Catálogo - Envío masivo de catálogo\n" +
                 "• Gestión de Equipos Informáticos - Administración de periféricos\n\n" +
-                "Cambios principales en v1.0.41:\n" +
-                "• Historial de Ejecuciones: nuevo servicio de exportación a Excel con diseño profesional.\n" +
-                "• Portada personalizada: con estadísticas clave (equipos, mantenimientos, ítems).\n" +
-                "• Hojas por equipo: detalles semanales de actividades completadas.\n" +
-                "• Combobox dinámico: años se cargan desde BD, no hardcodeados.\n" +
-                "• Exportaciones mejoradas: filtros automáticos en todos los encabezados.\n" +
-                "• Formateo avanzado: estados y sedes con textos legibles y colores.\n" +
+                "Cambios principales en v1.0.42:\n" +
+                "• Corrección de duplicados: eliminados registros duplicados en Historial de Ejecuciones.\n" +
+                "• Mayor estabilidad: serialización de cargas y deduplicación por EjecucionId.\n" +
+                "• Refactorización crítica: desacoplamiento de EjecucionSemanal de PlanCronogramaEquipo.\n" +
+                "• Historial preservado: eliminación de planes no afecta el registro de ejecuciones.\n" +
+                "• Nuevas snapshots: preservación de descripción y responsable de planes históricos.\n" +
+                "• Optimización de queries: uso de AsSplitQuery() para evitar productos cartesianos.\n" +
+                "• Exportaciones mejoradas: corrección de saltos de línea en CSV.\n" +
                 "• Mejoras de rendimiento y estabilidad.\n\n" +
                 "Estado: ✅ Operativo\n" +
                 "Actualizaciones: ✅ Sistema Velopack 100% funcional\n\n" +

@@ -111,9 +111,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 _logger.LogError(ex, "Error al actualizar plan de cronograma: {PlanId}", plan.PlanId);
                 throw;
             }
-        }
-
-        public async Task DeleteAsync(Guid planId)
+        }        public async Task DeleteAsync(Guid planId)
         {
             try
             {
@@ -125,16 +123,32 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 if (plan == null)
                     throw new ArgumentException($"No se encontró el plan con ID: {planId}");
 
+                // ✅ Las ejecuciones se desvincularán automáticamente (PlanId = NULL)
+                // El historial se preserva gracias a CodigoEquipo y snapshots
                 context.PlanesCronogramaEquipos.Remove(plan);
                 await context.SaveChangesAsync();
                 
-                _logger.LogInformation("Plan de cronograma eliminado: {PlanId}", planId);
+                _logger.LogInformation("Plan eliminado (historial preservado): {PlanId}", planId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar plan de cronograma: {PlanId}", planId);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// ✅ NUEVO: Consultar ejecuciones por equipo (no por plan)
+        /// Permite acceder al historial aunque el plan haya sido eliminado
+        /// </summary>
+        public async Task<List<EjecucionSemanal>> GetEjecucionesByEquipoAsync(string codigoEquipo, int anio)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            return await context.EjecucionesSemanales
+                .Where(e => e.CodigoEquipo == codigoEquipo && e.AnioISO == anio)
+                .OrderByDescending(e => e.AnioISO)
+                .ThenByDescending(e => e.SemanaISO)
+                .ToListAsync();
         }
 
         public async Task<List<EjecucionSemanal>> GetEjecucionesByPlanAsync(Guid planId, int anio)
@@ -168,10 +182,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     ejecucion = new EjecucionSemanal
                     {
                         PlanId = planId,
+                        CodigoEquipo = plan.CodigoEquipo,  // ✅ Guardar código del equipo
                         AnioISO = (short)anioISO,
                         SemanaISO = (byte)semanaISO,
                         FechaObjetivo = fechaObjetivo,
-                        Estado = 2 // Completada
+                        Estado = 2, // Completada
+                        DescripcionPlanSnapshot = plan.Descripcion,  // ✅ Snapshot
+                        ResponsablePlanSnapshot = plan.Responsable    // ✅ Snapshot
                     };
                     context.EjecucionesSemanales.Add(ejecucion);
                 }
@@ -186,8 +203,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 
                 await context.SaveChangesAsync();
                 
-                _logger.LogInformation("Ejecución registrada para plan: {PlanId}, Semana: {Semana}/{Anio}", 
-                    planId, semanaISO, anioISO);
+                _logger.LogInformation("Ejecución registrada para plan: {PlanId}, Equipo: {Equipo}, Semana: {Semana}/{Anio}", 
+                    planId, plan.CodigoEquipo, semanaISO, anioISO);
                 
                 return ejecucion;
             }
@@ -220,17 +237,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 }
             }
             return planesParaSemana;
-        }
-
-        public async Task<List<EjecucionSemanal>> GetEjecucionesByAnioAsync(int anioISO)
+        }        public async Task<List<EjecucionSemanal>> GetEjecucionesByAnioAsync(int anioISO)
         {
             using var context = _dbContextFactory.CreateDbContext();
-#pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL
             return await context.EjecucionesSemanales
-                .Include(e => e.Plan).ThenInclude(p => p.Equipo)
+                .Include(e => e.Plan)
+                .Include(e => e.Equipo)  // ✅ NUEVO: Incluir equipo para trazabilidad
                 .Where(e => e.AnioISO == anioISO)
+                .OrderByDescending(e => e.AnioISO)
+                .ThenByDescending(e => e.SemanaISO)
                 .ToListAsync();
-#pragma warning restore CS8602
         }
 
         public async Task<List<int>> GetAvailableYearsAsync()

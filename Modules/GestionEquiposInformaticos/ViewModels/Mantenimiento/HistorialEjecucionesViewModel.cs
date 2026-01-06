@@ -22,11 +22,10 @@ using System.Windows.Data;
 using System.Threading;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
-{
-    public class EjecucionHistorialItem : ObservableObject
+{    public class EjecucionHistorialItem : ObservableObject
     {
         public Guid EjecucionId { get; set; }
-        public Guid PlanId { get; set; }
+        public Guid? PlanId { get; set; }  // ✅ REFACTOR: Ahora puede ser null (desacoplado del plan)
         public string CodigoEquipo { get; set; } = string.Empty;
         public string NombreEquipo { get; set; } = string.Empty;
         [Obsolete("DescripcionPlan is obsolete for the current view.")]
@@ -367,9 +366,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                                 }
                             }
                             catch { }
-                        }
-                        var nombreEquipo = e.Plan?.Equipo?.NombreEquipo;
-                        var codigoEquipo = e.Plan?.CodigoEquipo ?? string.Empty;
+                        }                        var nombreEquipo = e.Plan?.Equipo?.NombreEquipo;
+                        // ✅ REFACTOR: Usar CodigoEquipo directamente de la ejecución (desacoplado del plan)
+                        var codigoEquipo = e.CodigoEquipo ?? e.Plan?.CodigoEquipo ?? string.Empty;
                         if (string.IsNullOrWhiteSpace(nombreEquipo) && !string.IsNullOrWhiteSpace(codigoEquipo))
                         {
                             nombreEquipo = "(cargando...)"; // placeholder
@@ -378,7 +377,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                         var itemVm = new EjecucionHistorialItem
                         {
                             EjecucionId = e.EjecucionId,
-                            PlanId = e.PlanId,
+                            PlanId = e.PlanId,  // ✅ Ahora puede ser null
                             CodigoEquipo = codigoEquipo,
                             NombreEquipo = nombreEquipo ?? string.Empty,
                             AnioISO = e.AnioISO,

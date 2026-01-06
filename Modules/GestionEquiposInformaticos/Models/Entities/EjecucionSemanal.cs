@@ -1,19 +1,32 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
 {
     /// <summary>
-    /// Ejecución (o estado) de un mantenimiento semanal para un plan y una semana ISO.
-    /// Solo se crea registro cuando se completa o se marca no realizada (o si deseas materializar pendientes).
+    /// Ejecución (o estado) de un mantenimiento semanal para un equipo.
+    /// ✅ DESACOPLADA de PlanCronogramaEquipo - persiste aunque el plan se elimine.
+    /// ✅ Almacena snapshot de datos del plan para trazabilidad histórica.
+    /// Solo se crea registro cuando se completa o se marca no realizada.
     /// </summary>
     public class EjecucionSemanal
     {
         [Key]
         public Guid EjecucionId { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// ✅ NUEVO: Referencia al equipo (no al plan) - REQUERIDA
+        /// </summary>
         [Required]
-        public Guid PlanId { get; set; }
+        [MaxLength(20)]
+        public string CodigoEquipo { get; set; } = string.Empty;
+
+        /// <summary>
+        /// ⚠️ OPCIONAL: Referencia al plan (para recuperar metadatos si existe)
+        /// Puede ser NULL si el plan fue eliminado - permite historial independiente
+        /// </summary>
+        public Guid? PlanId { get; set; }
 
         public short AnioISO { get; set; }
         public byte SemanaISO { get; set; }
@@ -41,7 +54,25 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         /// </summary>
         public string? ResultadoJson { get; set; }
 
-        // Navegación
+        /// <summary>
+        /// ✅ SNAPSHOT: Guardar descripción del plan al momento de ejecución (para historial)
+        /// Permite consultar qué se ejecutaba aunque el plan se haya eliminado
+        /// </summary>
+        [MaxLength(200)]
+        public string? DescripcionPlanSnapshot { get; set; }
+
+        /// <summary>
+        /// ✅ SNAPSHOT: Guardar responsable del plan al momento de ejecución
+        /// </summary>
+        [MaxLength(100)]
+        public string? ResponsablePlanSnapshot { get; set; }
+
+        // Navegación: OPCIONAL (puede ser NULL)
+        [ForeignKey(nameof(PlanId))]
         public virtual PlanCronogramaEquipo? Plan { get; set; }
+
+        // ✅ NUEVO: Navegación al equipo (para consultas sin depender del plan)
+        [ForeignKey(nameof(CodigoEquipo))]
+        public virtual EquipoInformaticoEntity? Equipo { get; set; }
     }
 }
