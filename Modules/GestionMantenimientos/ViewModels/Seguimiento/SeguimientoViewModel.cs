@@ -290,9 +290,8 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 var estadoCalculado = CalcularEstadoSeguimiento(s, semanaActual, anioActual, hoy);
                 if (s.Estado != estadoCalculado)
                 {
-                    s.Estado = estadoCalculado;
-                    if (string.IsNullOrWhiteSpace(s.Responsable))
-                        s.Responsable = "AutomÃ¡tico";
+                    s.Estado = estadoCalculado;                if (string.IsNullOrWhiteSpace(s.Responsable))
+                        s.Responsable = "Automático";
                     await _seguimientoService.UpdateAsync(s);
                 }
                 s.RefrescarCacheFiltro(); // Refresca la cachÃ© de campos normalizados
