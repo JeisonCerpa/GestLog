@@ -31,16 +31,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             _logger = logger;
             _dbContextFactory = dbContextFactory;
             _cronogramaService = cronogramaService;
-        }
-
-        public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
+        }        public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
             var seguimientos = await dbContext.Seguimientos.ToListAsync();
+            var equipos = await dbContext.Equipos.ToDictionaryAsync(e => e.Codigo, e => e.Sede);
+            
             return seguimientos.Select(s => new SeguimientoMantenimientoDto
             {
                 Codigo = s.Codigo,
                 Nombre = s.Nombre,
+                Sede = equipos.ContainsKey(s.Codigo) ? equipos[s.Codigo] : null,
                 TipoMtno = s.TipoMtno,
                 Descripcion = s.Descripcion,
                 Responsable = s.Responsable,
@@ -53,17 +54,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 Estado = s.Estado,
                 Frecuencia = s.Frecuencia
             });
-        }
-
-        public async Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo)
+        }        public async Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
             var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == codigo);
             if (entity == null) return null;
+            
+            var equipo = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
+            
             return new SeguimientoMantenimientoDto
             {
                 Codigo = entity.Codigo,
                 Nombre = entity.Nombre,
+                Sede = equipo?.Sede,
                 TipoMtno = entity.TipoMtno,
                 Descripcion = entity.Descripcion,
                 Responsable = entity.Responsable,

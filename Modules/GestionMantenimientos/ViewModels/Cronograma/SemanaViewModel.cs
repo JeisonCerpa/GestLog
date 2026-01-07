@@ -73,8 +73,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 s.Anio == _anio &&
                 s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo
             ).ToList();
-            
-            // Agregar TODOS los correctivos encontrados, sin importar duplicados
+              // Agregar TODOS los correctivos encontrados, sin importar duplicados
             // Los correctivos deben coexistir con los preventivos en la misma semana
             foreach (var correctivo in correctivosEnSemana)
             {
@@ -82,6 +81,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 {
                     CodigoEquipo = correctivo.Codigo ?? "",
                     NombreEquipo = correctivo.Nombre ?? "",
+                    Sede = correctivo.Sede,
                     Semana = NumeroSemana,
                     Anio = _anio,
                     Frecuencia = correctivo.Frecuencia,

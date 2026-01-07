@@ -8,6 +8,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }
         public string? Nombre { get; set; }
+        public Sede? Sede { get; set; }
         [Required(ErrorMessage = "La fecha de registro es obligatoria.")]
         public DateTime? FechaRegistro { get; set; } // Usar solo esta como fecha oficial de realización y registro
         [Required(ErrorMessage = "El tipo de mantenimiento es obligatorio.")]

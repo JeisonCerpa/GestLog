@@ -328,14 +328,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         {
             GestLog.Services.Core.UI.DispatcherService.InvokeOnUIThread(() =>
             {
-                EstadosMantenimientos.Clear();
-                foreach (var estado in nuevosEstados)
+                EstadosMantenimientos.Clear();                foreach (var estado in nuevosEstados)
                 {
                     // Clonar el DTO para forzar refresco de la UI
                     var clon = new MantenimientoSemanaEstadoDto
                     {
                         CodigoEquipo = estado.CodigoEquipo,
                         NombreEquipo = estado.NombreEquipo,
+                        Sede = estado.Sede,
                         Semana = estado.Semana,
                         Anio = estado.Anio,
                         Frecuencia = estado.Frecuencia,

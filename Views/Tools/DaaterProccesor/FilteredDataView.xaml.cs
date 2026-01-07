@@ -311,9 +311,7 @@ namespace GestLog.Views.Tools.DaaterProccesor
                 _logger.LogError(ex, "❌ Error exportando ACEROS ESPECIALES");
                 System.Windows.MessageBox.Show($"Error al exportar ACEROS ESPECIALES: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Exporta datos de ACEROS ESPECIALES a Excel con formato específico
         /// </summary>
         private async Task ExportAcerosEspecialesToExcelAsync(DataTable acerosEspeciales)
@@ -341,38 +339,7 @@ namespace GestLog.Views.Tools.DaaterProccesor
                         {
                             var worksheet = workbook.Worksheets.Add("ACEROS ESPECIALES");
                             
-                            _logger.LogDebug("📝 Agregando encabezados...");
-                            // Agregar encabezados con formato
-                            for (int col = 0; col < acerosEspeciales.Columns.Count; col++)
-                            {
-                                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-                                var cell = worksheet.Cell(1, col + 1);
-                                cell.Value = acerosEspeciales.Columns[col].ColumnName;
-                                cell.Style.Font.Bold = true;
-                                cell.Style.Fill.BackgroundColor = XLColor.DarkGreen;
-                                cell.Style.Font.FontColor = XLColor.White;
-                                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            }
-
-                            _logger.LogDebug("📋 Agregando {RowCount} filas de datos...", acerosEspeciales.Rows.Count);
-                            // Agregar datos
-                            for (int row = 0; row < acerosEspeciales.Rows.Count; row++)
-                            {
-                                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-                                for (int col = 0; col < acerosEspeciales.Columns.Count; col++)
-                                {
-                                    worksheet.Cell(row + 2, col + 1).Value = acerosEspeciales.Rows[row][col]?.ToString() ?? "";
-                                }
-                            }
-
-                            // Aplicar formato
-                            _logger.LogDebug("🎨 Aplicando formato...");
-                            worksheet.ColumnsUsed().AdjustToContents();
-                              // Aplicar filtros automáticos
-                            var range = worksheet.Range(1, 1, acerosEspeciales.Rows.Count + 1, acerosEspeciales.Columns.Count);
-                            range.SetAutoFilter();
-
-                            // Agregar título en la hoja (insertar filas al principio)
+                            // ✅ PASO 1: Agregar título y fecha PRIMERO (insertar filas al principio)
                             worksheet.Row(1).InsertRowsAbove(2);
                             
                             var titleCell = worksheet.Cell(1, 1);
@@ -386,6 +353,38 @@ namespace GestLog.Views.Tools.DaaterProccesor
                             dateCell.Value = $"Generado: {DateTime.Now:dd/MM/yyyy HH:mm:ss}";
                             dateCell.Style.Font.Italic = true;
                             worksheet.Range(2, 1, 2, acerosEspeciales.Columns.Count).Merge();
+                            
+                            // ✅ PASO 2: Agregar encabezados (ahora en fila 3)
+                            _logger.LogDebug("📝 Agregando encabezados...");
+                            for (int col = 0; col < acerosEspeciales.Columns.Count; col++)
+                            {
+                                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                                var cell = worksheet.Cell(3, col + 1);
+                                cell.Value = acerosEspeciales.Columns[col].ColumnName;
+                                cell.Style.Font.Bold = true;
+                                cell.Style.Fill.BackgroundColor = XLColor.DarkGreen;
+                                cell.Style.Font.FontColor = XLColor.White;
+                                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            }
+
+                            // ✅ PASO 3: Agregar datos (ahora empezando en fila 4)
+                            _logger.LogDebug("📋 Agregando {RowCount} filas de datos...", acerosEspeciales.Rows.Count);
+                            for (int row = 0; row < acerosEspeciales.Rows.Count; row++)
+                            {
+                                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                                for (int col = 0; col < acerosEspeciales.Columns.Count; col++)
+                                {
+                                    worksheet.Cell(row + 4, col + 1).Value = acerosEspeciales.Rows[row][col]?.ToString() ?? "";
+                                }
+                            }
+
+                            // ✅ PASO 4: Aplicar formato
+                            _logger.LogDebug("🎨 Aplicando formato...");
+                            worksheet.ColumnsUsed().AdjustToContents();
+                              
+                            // ✅ PASO 5: Aplicar filtros automáticos (DESPUÉS de insertar filas)
+                            var range = worksheet.Range(3, 1, acerosEspeciales.Rows.Count + 3, acerosEspeciales.Columns.Count);
+                            range.SetAutoFilter();
 
                             _cancellationTokenSource.Token.ThrowIfCancellationRequested();
                             _logger.LogDebug("💾 Guardando archivo...");

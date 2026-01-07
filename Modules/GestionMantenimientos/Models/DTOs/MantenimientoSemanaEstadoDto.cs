@@ -17,6 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         [Range(2000, 2100, ErrorMessage = "El año debe ser válido.")]
         public int Anio { get; set; }
         public FrecuenciaMantenimiento? Frecuencia { get; set; }
+        public Sede? Sede { get; set; }
         public bool Programado { get; set; }
         public bool Realizado { get; set; }
         public bool Atrasado { get; set; }

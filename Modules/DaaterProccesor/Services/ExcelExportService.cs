@@ -99,14 +99,12 @@ public class ExcelExportService : IExcelExportService
                 genDescWorksheet.Column(descriptionColIndex).Width = Math.Max(genDescWorksheet.Column(descriptionColIndex).Width, 40);
 
                 // No forzar alineación a la izquierda: mantener la alineación por defecto (centrada) en GenDesc
-                _logger.LogDebug("No se aplicó alineación Left a la columna de descripción; se mantiene la alineación por defecto de la hoja.");
-
-                // Ajustar altura de filas globalmente (sin cambiar alineaciones)
+                _logger.LogDebug("No se aplicó alineación Left a la columna de descripción; se mantiene la alineación por defecto de la hoja.");                // Ajustar altura de filas globalmente (sin cambiar alineaciones)
                 genDescWorksheet.Rows().AdjustToContents();
 
-                // Agregar filtros automáticos en los encabezados
-                _logger.LogDebug("📊 Agregando filtros automáticos en los encabezados...");
-                genDescWorksheet.Range(1, 1, sortedData.Rows.Count + 1, lastColumn).SetAutoFilter();
+                // Los filtros automáticos ya están incluidos en la tabla (InsertTable los agrega automáticamente)
+                // No es necesario agregar filtros adicionales
+                _logger.LogDebug("📊 Filtros automáticos ya incluidos en la tabla de GenDesc");
 
                 cancellationToken.ThrowIfCancellationRequested();
                   // Configurar hoja SpecProd_Interes

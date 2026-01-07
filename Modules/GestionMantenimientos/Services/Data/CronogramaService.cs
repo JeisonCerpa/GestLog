@@ -597,12 +597,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
                             Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
                             Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
-                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4,
+                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // âœ… 4 MESES EXACTOS
                             Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
                             Models.Enums.FrecuenciaMantenimiento.Anual => 12,
                             _ => 1
                         };
-                          // Calcular prÃ³xima fecha de mantenimiento
+                        
+                        // Calcular prÃ³xima fecha de mantenimiento
                         DateTime fechaProxima;
                         if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
                             fechaProxima = fechaUltimaSemana.Value.AddDays(7);
@@ -610,7 +611,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             fechaProxima = fechaUltimaSemana.Value.AddDays(14);
                         else
                             fechaProxima = fechaUltimaSemana.Value.AddMonths(mesesAsumar);
-                          // Obtener la semana ISO de la prÃ³xima fecha
+                        
+                        // Obtener la semana ISO de la prÃ³xima fecha
                         int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
                         int isoYear = fechaProxima.Year;
                         
@@ -987,8 +989,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 Anio = s.Anio,
                 Estado = s.Estado
             };
-        }
-        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
+        }        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
 
@@ -1004,20 +1005,27 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             var estados = new List<MantenimientoSemanaEstadoDto>();
             var seguimientos = await dbContext.Seguimientos
                 .Where(s => s.Anio == anio && s.Semana == semana)
-                .ToListAsync();            // Calcular fechas de inicio y fin de la semana ISO 8601
+                .ToListAsync();
+            
+            // Cargar datos de equipos para obtener Sede
+            var equiposDict = await dbContext.Equipos
+                .ToDictionaryAsync(e => e.Codigo, e => e.Sede);
+            
+            // Calcular fechas de inicio y fin de la semana ISO 8601
             var fechaInicioSemana = FirstDateOfWeekISO8601(anio, semana);
             var fechaFinSemana = fechaInicioSemana.AddDays(6);
             // Calcular semana y aÃ±o actual
             var hoy = DateTime.Now;
             int semanaActual = ISOWeek.GetWeekOfYear(hoy);
-            int anioActual = hoy.Year;
-            foreach (var c in cronogramasConMantenimiento)
+            int anioActual = hoy.Year;            foreach (var c in cronogramasConMantenimiento)
             {
                 var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);
+                var sede = ParseSede(c.Sede);
                 var estado = new MantenimientoSemanaEstadoDto
                 {
                     CodigoEquipo = c.Codigo,
                     NombreEquipo = c.Nombre,
+                    Sede = sede,
                     Semana = semana,
                     Anio = anio,
                     Frecuencia = c.FrecuenciaMtto,
@@ -1148,19 +1156,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
                     estados.Add(estado);
                     continue;
-                }
-            }
-            // Al final del mÃ©todo, despuÃ©s de procesar los programados:
-            // Agregar estados para seguimientos manuales (no programados) de esa semana/aÃ±o que no estÃ© ya en la lista
-            var codigosProgramados = cronogramasConMantenimiento.Select(c => c.Codigo).ToHashSet();
-            foreach (var seguimiento in seguimientos)
+                }            }
+            // Al final del método, después de procesar los programados:
+            // Agregar estados para seguimientos manuales (no programados) de esa semana/año que no esté ya en la lista
+            var codigosProgramados = cronogramasConMantenimiento.Select(c => c.Codigo).ToHashSet();            foreach (var seguimiento in seguimientos)
             {
                 if (!codigosProgramados.Contains(seguimiento.Codigo))
                 {
+                    var sede = equiposDict.ContainsKey(seguimiento.Codigo) ? equiposDict[seguimiento.Codigo] : null;
                     var estado = new MantenimientoSemanaEstadoDto
                     {
                         CodigoEquipo = seguimiento.Codigo,
                         NombreEquipo = seguimiento.Nombre,
+                        Sede = sede,
                         Semana = semana,
                         Anio = anio,
                         Frecuencia = seguimiento.Frecuencia,
@@ -1174,6 +1182,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             }
 
             return estados;
+        }
+
+        private Sede? ParseSede(string? sedeString)
+        {
+            if (string.IsNullOrWhiteSpace(sedeString))
+                return null;
+            
+            if (Enum.TryParse<Sede>(sedeString, ignoreCase: true, out var sede))
+                return sede;
+            
+            return null;
         }
     }
 }
