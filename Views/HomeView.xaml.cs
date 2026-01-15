@@ -23,26 +23,22 @@ namespace GestLog.Views
         }        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.42\n\n" +
-                "Sistema modular de gestión integrada\n" +
+                "GestLog v1.0.43\n\n" +
+                "Sistema de gestión integrada.\n" +
                 "Desarrollado con .NET 9 y WPF\n\n" +
-                "Módulos integrados:\n" +
-                "• DaaterProccesor - Procesamiento de datos Excel\n" +
-                "• Gestión de Cartera - Estados de cuenta PDF\n" +
-                "• Envío de Catálogo - Envío masivo de catálogo\n" +
-                "• Gestión de Equipos Informáticos - Administración de periféricos\n\n" +
-                "Cambios principales en v1.0.42:\n" +
-                "• Corrección de duplicados: eliminados registros duplicados en Historial de Ejecuciones.\n" +
-                "• Mayor estabilidad: serialización de cargas y deduplicación por EjecucionId.\n" +
-                "• Refactorización crítica: desacoplamiento de EjecucionSemanal de PlanCronogramaEquipo.\n" +
-                "• Historial preservado: eliminación de planes no afecta el registro de ejecuciones.\n" +
-                "• Nuevas snapshots: preservación de descripción y responsable de planes históricos.\n" +
-                "• Optimización de queries: uso de AsSplitQuery() para evitar productos cartesianos.\n" +
-                "• Exportaciones mejoradas: corrección de saltos de línea en CSV.\n" +
-                "• Mejoras de rendimiento y estabilidad.\n\n" +
+                "Cambios principales en v1.0.43 (15-01-2026):\n\n" +
+                "Corregidos:\n" +
+                "• Botones duplicados en vista de Seguimientos\n" +
+                "• Caracteres UTF-8 corruptos en Gestión de Mantenimientos y Equipos\n" +
+                "• Duplicación de mantenimientos correctivos en vista semanal\n" +
+                "• Lógica de KPIs en análisis de cumplimiento por estado\n\n" +
+                "Mejorado:\n" +
+                "• Anchos de columnas en hoja de Seguimientos (automáticos)\n" +
+                "• Colores de badges en vista de Detalle de Semana\n" +
+                "• Ajuste de columnas en DataGrid de Detalle de Semana\n" +
+                "• Nuevo SeguimientosExportService para exportación independiente\n\n" +
                 "Estado: ✅ Operativo\n" +
-                "Actualizaciones: ✅ Sistema Velopack 100% funcional\n\n" +
-                "Nota: Para obtener el changelog completo, consulte la documentación.",
+                "Actualizaciones: ✅ Sistema Velopack completamente funcional",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
