@@ -64,34 +64,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 LastActivity = DateTime.Now,
                 Roles = new List<string>(),
                 Permissions = new List<string>()
-            };            // NUEVA LÃ“GICA: Agregar estados para correctivos que estÃ¡n en esta semana
+            };            // ✅ Los estados ya incluyen correctivos desde GetEstadoMantenimientosSemanaAsync
+            // ✅ NO agregar duplicados - usar directamente la colección retornada
             var estadosConCorrectivos = new ObservableCollection<MantenimientoSemanaEstadoDto>(estados);
-            
-            var todosSeguimientos = await seguimientoService.GetSeguimientosAsync();
-            var correctivosEnSemana = todosSeguimientos.Where(s => 
-                s.Semana == NumeroSemana && 
-                s.Anio == _anio &&
-                s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo
-            ).ToList();
-              // Agregar TODOS los correctivos encontrados, sin importar duplicados
-            // Los correctivos deben coexistir con los preventivos en la misma semana
-            foreach (var correctivo in correctivosEnSemana)
-            {
-                var nuevoEstado = new MantenimientoSemanaEstadoDto
-                {
-                    CodigoEquipo = correctivo.Codigo ?? "",
-                    NombreEquipo = correctivo.Nombre ?? "",
-                    Sede = correctivo.Sede,
-                    Semana = NumeroSemana,
-                    Anio = _anio,
-                    Frecuencia = correctivo.Frecuencia,
-                    Estado = correctivo.Estado,
-                    PuedeRegistrar = true,
-                    Seguimiento = correctivo
-                };
-                estadosConCorrectivos.Add(nuevoEstado);
-            }
-              var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.SemanaDetalleViewModel(
+
+            var vm = new GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.SemanaDetalleViewModel(
                 $"Semana {NumeroSemana}",
                 $"{FechaInicio:dd/MM/yyyy} - {FechaFin:dd/MM/yyyy}",
                 estadosConCorrectivos,

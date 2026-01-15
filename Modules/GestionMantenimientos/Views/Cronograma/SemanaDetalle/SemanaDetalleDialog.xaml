@@ -24,16 +24,18 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="8,4"/>
-        </Style>
-        <Style x:Key="BadgeCorrectivo" TargetType="Border">
-            <Setter Property="Background" Value="#FFF3E0"/>
-            <Setter Property="BorderBrush" Value="#FF9800"/>
+        </Style>        <Style x:Key="BadgeCorrectivo" TargetType="Border">
+            <Setter Property="Background" Value="#F3E5F5"/>
+            <Setter Property="BorderBrush" Value="#7E57C2"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="8,4"/>
         </Style>        <!-- Estilos visuales -->
         <Style x:Key="EquipoCellStyle" TargetType="DataGridCell">
-            <Setter Property="Padding" Value="8,0,0,0"/>
+            <Setter Property="Padding" Value="12,0,8,0"/>
+        </Style>
+        <Style x:Key="DataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="8,0,8,0"/>
         </Style>
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
@@ -93,18 +95,17 @@
                           HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" 
                           MinWidth="750"
                           SnapsToDevicePixels="True" UseLayoutRounding="True">                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="120" Width="*" CellStyle="{StaticResource EquipoCellStyle}"/>
-                        <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="70" Width="80"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" MinWidth="80" Width="90"/>
-                        <DataGridTemplateColumn Header="Tipo" MinWidth="110" Width="120">
+                        <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="140" Width="Auto" CellStyle="{StaticResource EquipoCellStyle}"/>
+                        <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="90" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" MinWidth="100" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
+                        <DataGridTemplateColumn Header="Tipo" MinWidth="130" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <Border x:Name="BadgePreventivo" Style="{StaticResource BadgePreventivo}" Visibility="Collapsed">
                                             <TextBlock Text="🔧 Preventivo" FontSize="12" FontWeight="SemiBold" Foreground="#1976D2"/>
-                                        </Border>
-                                        <Border x:Name="BadgeCorrectivo" Style="{StaticResource BadgeCorrectivo}" Visibility="Collapsed">
-                                            <TextBlock Text="⚠️ Correctivo" FontSize="12" FontWeight="SemiBold" Foreground="#E65100"/>
+                                        </Border>                                        <Border x:Name="BadgeCorrectivo" Style="{StaticResource BadgeCorrectivo}" Visibility="Collapsed">
+                                            <TextBlock Text="⚠️ Correctivo" FontSize="12" FontWeight="SemiBold" Foreground="#7E57C2"/>
                                         </Border>
                                     </StackPanel>
                                     <DataTemplate.Triggers>
@@ -116,9 +117,8 @@
                                         </DataTrigger>                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="90" Width="100"/>
-                        <DataGridTemplateColumn Header="Estado" MinWidth="110" Width="120">
+                        </DataGridTemplateColumn>                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="110" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
+                        <DataGridTemplateColumn Header="Estado" MinWidth="140" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -155,7 +155,7 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Acción" MinWidth="95" Width="100">
+                        <DataGridTemplateColumn Header="Acción" MinWidth="110" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="Registrar"
