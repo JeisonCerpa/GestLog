@@ -185,14 +185,15 @@ public static class LoggingService
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 var exportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.ICronogramaExportService>();
                 return new GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel(cronogramaService, seguimientoService, currentUserService, databaseService, logger, exportService);
-            });            // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+            });            // SeguimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel + ExportService
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel>(sp =>
             {
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                var seguimientosExportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.ISeguimientosExportService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel(seguimientoService, currentUserService, databaseService, logger);
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel(seguimientoService, currentUserService, seguimientosExportService, databaseService, logger);
             });// Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
 

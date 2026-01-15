@@ -6,8 +6,10 @@
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+             d:DesignHeight="600" d:DesignWidth="900">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
         <converters:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
         <converters:EstadoSeguimientoToColorConverter x:Key="EstadoSeguimientoToColorConverter"/>
         <converters:SeguimientoEstadoToColorConverter x:Key="SeguimientoEstadoToColorConverter"/>
@@ -133,10 +135,14 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>        <!-- SecondaryButtonStyle (gris) para botones de acción -->
+        </Style>
+
+        <!-- SecondaryButtonStyle (gris) para botones de acción -->
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
-        </Style>        <!-- Estilo para DatePicker -->
+        </Style>
+
+        <!-- Estilo para DatePicker -->
         <Style x:Key="DatePickerStyle" TargetType="DatePicker">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="13"/>
@@ -158,7 +164,9 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-    </UserControl.Resources><Grid Background="#FAFAFA">
+    </UserControl.Resources>
+
+    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -184,7 +192,7 @@
                         <TextBlock Text="Registro y administración de mantenimientos" Style="{StaticResource SubHeaderTextStyle}"/>
                     </StackPanel>
                 </StackPanel>
-                  <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
+                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
                     <!-- ComboBox de Año -->
                     <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                         <TextBlock Text="Año:" Foreground="White" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0"/>
@@ -199,22 +207,12 @@
                                   Background="White"
                                   Foreground="#504F4E"
                                   FontWeight="SemiBold"/>
-                    </StackPanel>                    <!-- Botón Refrescar circular -->
-                    <Button Content="&#xE72C;" Command="{Binding LoadSeguimientosCommand}" ToolTip="Actualizar lista de seguimientos"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-
-                    <!-- Botón Importar circular -->
-                    <Button Content="⭲" Command="{Binding ImportarSeguimientosAntiguosCommand}" ToolTip="Importar seguimientos antiguos desde Excel"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"/>
-
-                    <!-- Botón Exportar circular -->
-                    <Button Content="⭱" Command="{Binding ExportarCommand}" ToolTip="Exportar seguimientos (filtrados o todos)"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
-                            IsEnabled="{Binding CanExportSeguimiento}"
-                            Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    </StackPanel>
                 </StackPanel>
             </DockPanel>
-        </Border>        <!-- Estadísticas -->
+        </Border>
+
+        <!-- Estadísticas -->
         <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -225,7 +223,9 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions><StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding SeguimientosTotal}" Style="{StaticResource StatsTextStyle}" Foreground="#118938"/>
                     <TextBlock Text="Total" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
@@ -243,7 +243,9 @@
                 <StackPanel Grid.Column="3" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding SeguimientosRetrasados}" Style="{StaticResource StatsTextStyle}" Foreground="#FFB300"/>
                     <TextBlock Text="Retrasados" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
                     <TextBlock Text="{Binding SeguimientosRealizadosFueraDeTiempo}" Style="{StaticResource StatsTextStyle}" Foreground="#FF9800"/>
                     <TextBlock Text="Fuera de Tiempo" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
@@ -253,12 +255,19 @@
                     <TextBlock Text="No Realizados" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="6" HorizontalAlignment="Right" Orientation="Horizontal">
+                <!-- Botones en Grid.Column="6" -->
+                <StackPanel Grid.Column="6" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                    <!-- Botón Refrescar circular -->
                     <Button Content="&#xE72C;" Command="{Binding LoadSeguimientosCommand}" ToolTip="Actualizar lista de seguimientos"
                             Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
 
+                    <!-- Botón Importar circular -->
+                    <Button Content="⭲" Command="{Binding ImportarSeguimientosAntiguosCommand}" ToolTip="Importar seguimientos antiguos desde Excel"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"/>
+
+                    <!-- Botón Exportar circular -->
                     <Button Content="⭱" Command="{Binding ExportarCommand}" ToolTip="Exportar seguimientos (filtrados o todos)"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
                             IsEnabled="{Binding CanExportSeguimiento}"
                             Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
                 </StackPanel>
@@ -271,12 +280,17 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>                </Grid.RowDefinitions>                <!-- Filtros: left = filtro + fechas + botón, right = limpiar -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Filtros: left = filtro + fechas + botón, right = limpiar -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
                         <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
                         <TextBox Width="300" Height="36" Padding="8" VerticalAlignment="Center"
                                  Text="{Binding FiltroSeguimiento, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"
@@ -327,7 +341,8 @@
                         <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
+                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="12" Padding="6,2"
@@ -338,7 +353,8 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                    </DataGrid.Columns>                </DataGrid>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Grid>
         </Border>
     </Grid>
