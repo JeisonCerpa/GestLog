@@ -108,11 +108,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     var box2 = ws.Cell(infoStartRow, 2);
                     box2.Value = realizadoPor ?? "-";
                     box2.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-
-                    ws.Range(infoStartRow, 3, infoEndRow, 3).Merge();
+                    box2.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;                    ws.Range(infoStartRow, 3, infoEndRow, 3).Merge();
                     var box3 = ws.Cell(infoStartRow, 3);
-                    box3.Value = $"AO: {anio}";
+                    box3.Value = $"AÑO: {anio}";
                     box3.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     box3.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
@@ -266,11 +264,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     ws.Column(2).Width = colBWidth + 2;
                     ws.Column(3).Width = colCWidth + 1.5;
                     ws.Column(4).Width = colDWidth + 1.5;
-                    ws.Column(5).Width = colEWidth + 1.5;
-
-                    currentRowCron += 2;
+                    ws.Column(5).Width = colEWidth + 1.5;                    currentRowCron += 2;
                     var footerCellCron = ws.Cell(currentRowCron, 1);
-                    footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Ao {anio}  Sistema GestLog Â© SIMICS Group SAS";
+                    footerCellCron.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Año {anio}  Sistema GestLog © SIMICS Group SAS";
                     footerCellCron.Style.Font.Italic = true;
                     footerCellCron.Style.Font.FontSize = 9;
                     footerCellCron.Style.Font.FontColor = XLColor.Gray;
@@ -325,11 +321,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     titleCellSeg.Style.Font.FontColor = XLColor.Black;
                     titleCellSeg.Style.Fill.BackgroundColor = XLColor.White;
                     titleCellSeg.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    titleCellSeg.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                    titleCellSeg.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;                    int currentRowSeg = 3;
 
-                    int currentRowSeg = 3;
-
-                    var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripcin", "Responsable", "Estado", "Fecha Registro", "Fecha Realizacin", "Costo", "Observaciones" };
+                    var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
                     for (int col = 1; col <= headersSeg.Length; col++)
                     {
                         var headerCell = wsSeguimientos.Cell(currentRowSeg, col);
@@ -427,10 +421,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                         var totalMtto = seguimientosList.Count;
                         var pctCumplimiento = totalMtto > 0 ? (realizadosEnTiempo + realizadosFueraTiempo) / (decimal)totalMtto * 100 : 0;
                         var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
-                        var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;
-
-                        var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
-                        kpiTitle.Value = "INDICADORES DE DESEMPEO - AO " + anio;
+                        var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;                        var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                        kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + anio;
                         kpiTitle.Style.Font.Bold = true;
                         kpiTitle.Style.Font.FontSize = 14;
                         kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
@@ -548,11 +540,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                             pctCostoCell.Style.Fill.BackgroundColor = data.tipo == "TOTAL" ? XLColor.FromArgb(0xE8E8E8) : XLColor.White;
 
                             currentRowSeg++;
-                        }
-
-                        currentRowSeg += 1;
+                        }                        currentRowSeg += 1;
                         var estadoTitle = wsSeguimientos.Cell(currentRowSeg, 1);
-                        estadoTitle.Value = "ANLISIS DE CUMPLIMIENTO POR ESTADO";
+                        estadoTitle.Value = "ANÁLISIS DE CUMPLIMIENTO POR ESTADO";
                         estadoTitle.Style.Font.Bold = true;
                         estadoTitle.Style.Font.FontSize = 12;
                         estadoTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x2B8E3F);
@@ -611,11 +601,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                             currentRowSeg++;
                         }
-                    }
-
-                    currentRowSeg += 2;
+                    }                    currentRowSeg += 2;
                     var footerCellSeg = wsSeguimientos.Cell(currentRowSeg, 1);
-                    footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Sistema GestLog Â© SIMICS Group SAS";
+                    footerCellSeg.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss}  Sistema GestLog © SIMICS Group SAS";
                     footerCellSeg.Style.Font.Italic = true;
                     footerCellSeg.Style.Font.FontSize = 9;
                     footerCellSeg.Style.Font.FontColor = XLColor.Gray;
@@ -639,10 +627,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                 {
                     _logger.LogInformation("[CronogramaExportService] Export cancelado por el usuario");
                     throw;
-                }
-                catch (Exception ex)
+                }                catch (Exception ex)
                 {
-                    _logger.LogError(ex, "[CronogramaExportService] Error durante la generaciÃ³n del Excel");
+                    _logger.LogError(ex, "[CronogramaExportService] Error durante la generación del Excel");
                     throw;
                 }
             }, ct);
@@ -663,10 +650,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
             }
 
             // Si no hay seguimiento, intentar ver si el cronograma marca programado
-            var cron = cronogramas.FirstOrDefault(c => c.Codigo == codigo);
-            if (cron != null)
+            var cron = cronogramas.FirstOrDefault(c => c.Codigo == codigo);            if (cron != null)
             {
-                // ImplementaciÃ³n conservadora: marcar pendiente cuando el cronograma existe
+                // Implementación conservadora: marcar pendiente cuando el cronograma existe
                 estado.Seguimiento = null;
                 estado.Estado = EstadoSeguimientoMantenimiento.Pendiente;
                 estado.CodigoEquipo = codigo ?? string.Empty;
