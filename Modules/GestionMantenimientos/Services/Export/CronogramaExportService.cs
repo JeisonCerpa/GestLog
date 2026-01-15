@@ -277,22 +277,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     ws.PageSetup.Margins.Top = 0.5;
                     ws.PageSetup.Margins.Bottom = 0.5;
                     ws.PageSetup.Margins.Left = 0.5;
-                    ws.PageSetup.Margins.Right = 0.5;
-
-                    // ========== HOJA 2: SEGUIMIENTOS ==========
+                    ws.PageSetup.Margins.Right = 0.5;                    // ========== HOJA 2: SEGUIMIENTOS ==========
                     var wsSeguimientos = workbook.Worksheets.Add($"Seguimientos {anio}");
-
-                    wsSeguimientos.Column("A").Width = 12;
-                    wsSeguimientos.Column("B").Width = 16;
-                    wsSeguimientos.Column("C").Width = 12;
-                    wsSeguimientos.Column("D").Width = 15;
-                    wsSeguimientos.Column("E").Width = 35;
-                    wsSeguimientos.Column("F").Width = 20;
-                    wsSeguimientos.Column("G").Width = 15;
-                    wsSeguimientos.Column("H").Width = 18;
-                    wsSeguimientos.Column("I").Width = 18;
-                    wsSeguimientos.Column("J").Width = 15;
-                    wsSeguimientos.Column("K").Width = 35;
 
                     wsSeguimientos.ShowGridLines = false;
 
@@ -406,22 +392,23 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     if (seguimientosList.Count > 0)
                     {
-                        currentRowSeg += 2;
-
-                        var preventivos = seguimientosList.Count(s => s.TipoMtno == TipoMantenimiento.Preventivo);
+                        currentRowSeg += 2;                        var preventivos = seguimientosList.Count(s => s.TipoMtno == TipoMantenimiento.Preventivo);
                         var correctivos = seguimientosList.Count(s => s.TipoMtno == TipoMantenimiento.Correctivo);
-                        var realizadosEnTiempo = seguimientosList.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
-                        var realizadosFueraTiempo = seguimientosList.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
-                        var noRealizados = seguimientosList.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
-                        var pendientes = seguimientosList.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
+                        
+                        // Excluir correctivos del conteo de estados (ya que no tienen tiempo estipulado)
+                        var preventivosConEstado = seguimientosList.Where(s => s.TipoMtno == TipoMantenimiento.Preventivo).ToList();
+                        var realizadosEnTiempo = preventivosConEstado.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo);
+                        var realizadosFueraTiempo = preventivosConEstado.Count(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado);
+                        var noRealizados = preventivosConEstado.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado);
+                        var pendientes = preventivosConEstado.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
                         var totalCosto = seguimientosList.Sum(s => s.Costo ?? 0);
-                        var costoPreventivoTotal = seguimientosList.Where(s => s.TipoMtno == TipoMantenimiento.Preventivo).Sum(s => s.Costo ?? 0);
-                        var costoCorrectivo = totalCosto - costoPreventivoTotal;
+                        var costoPreventivoTotal = seguimientosList.Where(s => s.TipoMtno == TipoMantenimiento.Preventivo).Sum(s => s.Costo ?? 0);                        var costoCorrectivo = totalCosto - costoPreventivoTotal;
 
                         var totalMtto = seguimientosList.Count;
-                        var pctCumplimiento = totalMtto > 0 ? (realizadosEnTiempo + realizadosFueraTiempo) / (decimal)totalMtto * 100 : 0;
+                        var totalPreventivos = preventivos; // Solo preventivos para calcular cumplimiento
+                        var pctCumplimiento = totalPreventivos > 0 ? (realizadosEnTiempo + realizadosFueraTiempo) / (decimal)totalPreventivos * 100 : 0;
                         var pctCorrectivos = totalMtto > 0 ? correctivos / (decimal)totalMtto * 100 : 0;
-                        var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;                        var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
+                        var pctPreventivos = totalMtto > 0 ? preventivos / (decimal)totalMtto * 100 : 0;var kpiTitle = wsSeguimientos.Cell(currentRowSeg, 1);
                         kpiTitle.Value = "INDICADORES DE DESEMPEÑO - AÑO " + anio;
                         kpiTitle.Style.Font.Bold = true;
                         kpiTitle.Style.Font.FontSize = 14;
@@ -562,14 +549,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                             headerCell.Style.Font.FontColor = XLColor.White;
                             headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                         }
-                        currentRowSeg++;
-
-                        var estadoData = new (string estado, int cantidad, decimal costo, string colorHex)[]
+                        currentRowSeg++;                        var estadoData = new (string estado, int cantidad, decimal costo, string colorHex)[]
                         {
-                            ("Realizado en Tiempo", realizadosEnTiempo, seguimientosList.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo).Sum(s => s.Costo ?? 0), "388E3C"),
-                            ("Realizado Fuera de Tiempo", realizadosFueraTiempo, seguimientosList.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado).Sum(s => s.Costo ?? 0), "FFB300"),
-                            ("No Realizado", noRealizados, seguimientosList.Where(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado).Sum(s => s.Costo ?? 0), "C80000"),
-                            ("Pendiente", pendientes, seguimientosList.Where(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente).Sum(s => s.Costo ?? 0), "B3E5FC")
+                            ("Realizado en Tiempo", realizadosEnTiempo, preventivosConEstado.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoEnTiempo).Sum(s => s.Costo ?? 0), "388E3C"),
+                            ("Realizado Fuera de Tiempo", realizadosFueraTiempo, preventivosConEstado.Where(s => s.Estado == EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo || s.Estado == EstadoSeguimientoMantenimiento.Atrasado).Sum(s => s.Costo ?? 0), "FFB300"),
+                            ("No Realizado", noRealizados, preventivosConEstado.Where(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado).Sum(s => s.Costo ?? 0), "C80000"),
+                            ("Pendiente", pendientes, preventivosConEstado.Where(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente).Sum(s => s.Costo ?? 0), "B3E5FC"),
+                            ("Correctivo", correctivos, seguimientosList.Where(s => s.TipoMtno == TipoMantenimiento.Correctivo).Sum(s => s.Costo ?? 0), "7E57C2")
                         };
 
                         foreach (var data in estadoData)
@@ -607,9 +593,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     footerCellSeg.Style.Font.Italic = true;
                     footerCellSeg.Style.Font.FontSize = 9;
                     footerCellSeg.Style.Font.FontColor = XLColor.Gray;
-                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
+                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();                    wsSeguimientos.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 
-                    wsSeguimientos.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
+                    // Ajustar automáticamente el ancho de las columnas según su contenido
+                    try
+                    {
+                        wsSeguimientos.Columns("A", "K").AdjustToContents();
+                    }
+                    catch { }
 
                     wsSeguimientos.PageSetup.PageOrientation = XLPageOrientation.Landscape;
                     wsSeguimientos.PageSetup.AdjustTo(100);
