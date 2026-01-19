@@ -23,6 +23,7 @@ using GestLog.Modules.GestionMantenimientos.ViewModels;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
+using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
 
 namespace GestLog
@@ -111,14 +112,16 @@ namespace GestLog
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel(
                     cronogramaService, planService, equipoService, usuarioService, seguimientoService, 
                     currentUserService, databaseService, logger, registroDialogService, registroEjecucionService);
-            });            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel  
+            });            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel y ExportService
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel>(sp =>
             {
                 var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
                 var equipoService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IEquipoInformaticoService>();
+                var exportService = sp.GetRequiredService<IHistorialEjecucionesExportService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, databaseService, logger);            });
+                return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, exportService, databaseService, logger);
+            });
               // PerifericosViewModel- ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos.PerifericosViewModel>(sp =>
             {

@@ -29,10 +29,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services
             services.AddScoped<IPlanCronogramaService, PlanCronogramaService>();
             services.AddScoped<IMantenimientoCorrectivoService, MantenimientoCorrectivoService>();            // Autocomplete Services - Servicios de autocompletado
             services.AddScoped<IDispositivoAutocompletadoService, DispositivoAutocompletadoService>();
-            services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();
-
-            // Export Services - Servicios de exportación a Excel
+            services.AddScoped<IMarcaAutocompletadoService, MarcaAutocompletadoService>();            // Export Services - Servicios de exportación a Excel
             services.AddTransient<IPerifericoExportService, PerifericoExportService>();
+            services.AddTransient<IHistorialEjecucionesExportService, HistorialEjecucionesExportService>();
 
             // Dialog Services - Servicios de presentación (diálogos)
             services.AddTransient<IRegistroEjecucionPlanDialogService, RegistroEjecucionPlanDialogService>();
