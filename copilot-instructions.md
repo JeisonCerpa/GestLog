@@ -4,12 +4,12 @@
 WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estricto
 
 ## 🎨 **Tema Visual**
-- **Paleta**: Verde principal `#118938`, verde secundario `#2B8E3F`, grises `#504F4E`, `#706F6F`, `#C0392B`
-- **Fondo**: Off-white `#FAFAFA` para contenido, cartas blancas `#FFFFFF`
+- **Paleta Corporativa**: Verde `#118938`, Verde Secundario `#37AB4E`, Grises `#9D9D9C` (claro), `#706F6F` (medio), `#504F4E` (oscuro), Negro `#1D1D1B`, Blanco `#FFFFFF`
+- **Colores de Apoyo**: Rojo `#C0392B` (alertas), Ámbar `#F59E0B` (advertencias), Verde Éxito `#10B981`, Azul `#3B82F6` (info), Off-white `#FAFAFA`
 - **Efectos**: `DropShadowEffect` en navbar, cartas y botones con `CornerRadius="8"`
-- **Navbar**: Gradiente verde con logo en esquina inferior derecha
-- **Botones**: Hover states con colores más oscuros y sombras dinámicas
-- **Barra de Progreso**: Control `SimpleProgressBar` con fondo blanco `#FFFFFF`, barra verde `#118938`, bordes redondeados, títulos en gris oscuro `#504F4E`, porcentajes en verde y mensajes de estado personalizables
+- **Navbar**: Gradiente verde `#118938` → `#37AB4E` con logo en esquina inferior derecha
+- **Botones**: Primarios en `#118938`, Hover en `#37AB4E` con sombras dinámicas
+- **Barra de Progreso**: Control `SimpleProgressBar` con fondo blanco `#FFFFFF`, barra verde `#118938`, bordes redondeados, títulos en gris oscuro `#504F4E`, porcentajes en verde
 
 ## ⚡ **Reglas Fundamentales**
 1. **SRP**: Una responsabilidad por clase → **Si viola SRP → Refactorizar inmediatamente**

@@ -34,10 +34,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         public int SemanaISO { get; set; }
         public DateTime FechaObjetivo { get; set; }
         public DateTime? FechaEjecucion { get; set; }
-        public byte Estado { get; set; }
-        public string UsuarioEjecuta { get; set; } = string.Empty;
+        public byte Estado { get; set; }        public string UsuarioEjecuta { get; set; } = string.Empty;
         public string? Resumen { get; set; }
         public string UsuarioAsignadoEquipo { get; set; } = string.Empty; // Nuevo: usuario asignado al equipo
+        public string Sede { get; set; } = string.Empty; // Nuevo: sede del equipo
         // NUEVO: estado derivado atrasado (no ejecutado y fecha objetivo pasada)
         public bool EsAtrasado => FechaEjecucion == null && FechaObjetivo.Date < DateTime.Today && Estado != 2; // 2=Ejecutado
         public string EstadoDescripcion => EsAtrasado ? "Atrasado" : Estado switch // Mapeo simple de estados
@@ -374,8 +374,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                         {
                             nombreEquipo = "(cargando...)"; // placeholder
                             codigosPendientes.Add(codigoEquipo);
-                        }
-                        var itemVm = new EjecucionHistorialItem
+                        }                        var itemVm = new EjecucionHistorialItem
                         {
                             EjecucionId = e.EjecucionId,
                             PlanId = e.PlanId,  // ✅ Ahora puede ser null
@@ -389,6 +388,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                             UsuarioEjecuta = e.UsuarioEjecuta ?? string.Empty,
                             Resumen = resumen,
                             UsuarioAsignadoEquipo = e.Plan?.Equipo?.UsuarioAsignado ?? string.Empty,
+                            Sede = e.Plan?.Equipo?.Sede ?? string.Empty,
                             DetalleItems = detalleItems,
                             ToolTipResumen = toolTip
                         };
@@ -419,9 +419,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error deduplicando Items");
-                    }
-
-                    // Enriquecer nombres faltantes consultando servicio
+                    }                    // Enriquecer nombres faltantes consultando servicio
                     if (codigosPendientes.Count > 0)
                     {
                         foreach (var codigo in codigosPendientes)
@@ -436,6 +434,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                                         item.NombreEquipo = equipo.NombreEquipo!; // notifica cambio
                                         if (string.IsNullOrWhiteSpace(item.UsuarioAsignadoEquipo) && !string.IsNullOrWhiteSpace(equipo.UsuarioAsignado))
                                             item.UsuarioAsignadoEquipo = equipo.UsuarioAsignado!;
+                                        if (string.IsNullOrWhiteSpace(item.Sede) && !string.IsNullOrWhiteSpace(equipo.Sede))
+                                            item.Sede = equipo.Sede!;
                                     }
                                 }
                             }
