@@ -233,9 +233,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma
 
                             usuarioNameCache[usuarioAsignadoKey] = usuarioResolved ?? usuarioAsignadoKey;
                         }
-                    }
-
-                    // Crear un DTO temporal para mostrar en la vista
+                    }                    // Crear un DTO temporal para mostrar en la vista
                     var planDto = new CronogramaMantenimientoDto
                     {
                         Codigo = plan.CodigoEquipo,
@@ -247,7 +245,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma
                         PlanEjecutadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true, // completado
                         // Es atrasado solo si la fecha objetivo ya pasó (fecha objetivo < hoy) y no ejecutado
                         EsAtrasadoSemana = DateTimeWeekHelper.IsPlanAtrasado(SelectedYear, SelectedWeek, plan.DiaProgramado, 
-                                                plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true)
+                                                plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 2) == true),
+                        // Es No Realizado si existe una ejecución con Estado = 3 (No Realizado)
+                        EsNoRealizadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 3) == true
                     };
 
                     int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index

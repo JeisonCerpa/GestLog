@@ -252,11 +252,179 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
         public async Task<List<int>> GetAvailableYearsAsync()
         {
             using var context = _dbContextFactory.CreateDbContext();
-            return await context.EjecucionesSemanales
+            
+            var anosEjecuciones = await context.EjecucionesSemanales
                 .Select(e => (int)e.AnioISO)
                 .Distinct()
-                .OrderByDescending(y => y)
                 .ToListAsync();
+
+            var anosFechaObjetivo = await context.EjecucionesSemanales
+                .Select(e => e.FechaObjetivo.Year)
+                .Distinct()
+                .ToListAsync();
+
+            var anosPlanesActivos = await context.PlanesCronogramaEquipos
+                .Where(p => p.Activo)
+                .Select(p => p.FechaCreacion.Year)
+                .Distinct()
+                .ToListAsync();
+
+            var anoMinimoPlan = anosPlanesActivos.Any() ? anosPlanesActivos.Min() : (int?)null;
+
+            var todosLosAnos = anosEjecuciones
+                .Concat(anosFechaObjetivo)
+                .Concat(anosPlanesActivos)
+                .Distinct()
+                .ToList();
+
+            if (anoMinimoPlan.HasValue)
+            {
+                todosLosAnos = todosLosAnos
+                    .Where(y => y >= anoMinimoPlan.Value)
+                    .ToList();
+            }
+
+            return todosLosAnos
+                .OrderByDescending(y => y)
+                .ToList();
+        }        /// <summary>
+        /// ✅ Genera y obtiene ejecuciones CON TRAZABILIDAD COMPLETA para un año.
+        /// Crea registros "No Realizado" para semanas completamente pasadas sin ejecución.
+        /// </summary>
+        public async Task<List<EjecucionSemanal>> GenerarYObtenerEjecucionesConTrazabilidadAsync(int anioISO)
+        {
+            var timestampInicio = DateTime.UtcNow;
+            _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] ⏰ ENTRADA: GenerarYObtenerEjecucionesConTrazabilidadAsync para año {anio} - ThreadId: {threadId}", anioISO, System.Threading.Thread.CurrentThread.ManagedThreadId);
+            
+            try
+            {
+                using var context = _dbContextFactory.CreateDbContext();
+
+                // 1. Validar que el año es válido
+                var anoMinimoPlan = await context.PlanesCronogramaEquipos
+                    .Where(p => p.Activo)
+                    .Select(p => p.FechaCreacion.Year)
+                    .ToListAsync();
+                
+                var anoMin = anoMinimoPlan.DefaultIfEmpty(int.MaxValue).Min();
+                if (anioISO < anoMin)
+                {
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] Año {anio} anterior al año mínimo de planes ({anoMinimo}), retornando lista vacía", anioISO, anoMin);
+                    return new List<EjecucionSemanal>();
+                }
+
+                // 2. Obtener todos los planes activos
+                var planesActivos = await context.PlanesCronogramaEquipos
+                    .Where(p => p.Activo)
+                    .Include(p => p.Equipo)
+                    .Include(p => p.Ejecuciones.Where(e => e.AnioISO == anioISO))
+                    .ToListAsync();
+
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] Planes activos cargados: {count}", planesActivos.Count);
+
+                if (planesActivos.Count == 0)
+                {
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] No hay planes activos, retornando lista vacía");
+                    return new List<EjecucionSemanal>();
+                }
+
+                // 3. Para cada plan, generar registros faltantes
+                int registrosGenerados = 0;
+                var hoy = DateTime.Today;
+                var (anioHoy, semanaHoy) = DateTimeWeekHelper.GetIsoYearWeek(hoy);
+
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] Hoy es {hoy} (Año ISO: {anioHoy}, Semana ISO: {semanaHoy})", hoy, anioHoy, semanaHoy);
+
+                foreach (var plan in planesActivos)
+                {
+                    var fechaInicioTrazabilidad = plan.FechaCreacion;
+                    var (anioCreacion, semanaCreacion) = DateTimeWeekHelper.GetIsoYearWeek(fechaInicioTrazabilidad);
+
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] Plan {planId} ({codigo}): FechaCreación={fecha} (Año ISO: {anioCreacion}, Semana: {semanaCreacion})", 
+                        plan.PlanId, plan.CodigoEquipo, fechaInicioTrazabilidad, anioCreacion, semanaCreacion);
+
+                    // Solo procesar si el plan se creó en el año solicitado o anterior
+                    if (anioCreacion > anioISO)
+                    {
+                        _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS]   → Saltando: Plan creado en año {anioCreacion} > {anioISO}", anioCreacion, anioISO);
+                        continue;
+                    }
+
+                    int semanaInicio = anioCreacion == anioISO ? semanaCreacion : 1;
+                    int semanaFin = anioHoy == anioISO ? semanaHoy : 52;
+
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS]   → Semanas a procesar: {semanaInicio} a {semanaFin}", semanaInicio, semanaFin);
+
+                    // Obtener semanas ya registradas en BD para este plan (CRÍTICO PARA DEDUPLICACIÓN)
+                    var semanasEnBd = await context.EjecucionesSemanales
+                        .Where(e => e.PlanId == plan.PlanId && e.AnioISO == anioISO)
+                        .Select(e => e.SemanaISO)
+                        .ToListAsync();
+
+                    var semanasRegistradas = new HashSet<byte>(semanasEnBd);
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS]   → Semanas YA EN BD: {semanas}", semanasEnBd.Count > 0 ? string.Join(", ", semanasEnBd) : "ninguna");                    // Procesar cada semana
+                    int registrosEsteplan = 0;
+                    for (int semana = semanaInicio; semana <= semanaFin; semana++)
+                    {
+                        // Verificar si ya existe
+                        if (semanasRegistradas.Contains((byte)semana))
+                        {
+                            continue;
+                        }
+
+                        // Verificar que la semana ya pasó completamente
+                        var domingoDelaSemana = DateTimeWeekHelper.GetFechaObjetivoSemana(anioISO, semana, 7);
+                        
+                        if (domingoDelaSemana >= hoy)
+                        {
+                            continue;
+                        }
+
+                        // Generar registro "No Realizado"
+                        var fechaObjetivo = DateTimeWeekHelper.GetFechaObjetivoSemana(anioISO, semana, plan.DiaProgramado);
+                        
+                        var ejecucionFaltante = new EjecucionSemanal
+                        {
+                            PlanId = plan.PlanId,
+                            CodigoEquipo = plan.CodigoEquipo,
+                            AnioISO = (short)anioISO,
+                            SemanaISO = (byte)semana,
+                            FechaObjetivo = fechaObjetivo,
+                            Estado = 3, // NoRealizada
+                            DescripcionPlanSnapshot = plan.Descripcion,
+                            ResponsablePlanSnapshot = plan.Responsable,
+                            UsuarioEjecuta = null,
+                            FechaEjecucion = null
+                        };
+
+                        context.EjecucionesSemanales.Add(ejecucionFaltante);
+                        semanasRegistradas.Add((byte)semana);
+                        registrosGenerados++;
+                        registrosEsteplan++;
+                    }_logger.LogInformation("[TRAZABILIDAD_DUPLICADOS]   → Subtotal para este plan: {registros} registros generados", registrosEsteplan);
+                }                // 4. Guardar cambios
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] Total registros a guardar: {total}", registrosGenerados);
+                if (registrosGenerados > 0)
+                {
+                    await context.SaveChangesAsync();
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] ✅ SaveChangesAsync() completado - {registros} registros guardados", registrosGenerados);
+                }
+                else
+                {
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] No había registros para generar");
+                }
+
+                // 5. Retornar todas las ejecuciones
+                var result = await GetEjecucionesByAnioAsync(anioISO);
+                var timestampFinal = DateTime.UtcNow;
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS] ⏰ SALIDA: Retornando {count} ejecuciones - Tiempo total: {ms}ms", result.Count, (timestampFinal - timestampInicio).TotalMilliseconds);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[TRAZABILIDAD_DUPLICADOS] ❌ ERROR en GenerarYObtenerEjecucionesConTrazabilidadAsync para año {anio}", anioISO);
+                throw;
+            }
         }
 
         private void ValidarPlan(PlanCronogramaEquipo plan)

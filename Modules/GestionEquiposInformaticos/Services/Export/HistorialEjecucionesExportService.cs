@@ -95,20 +95,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
         /// Incluye logo, colores corporativos y estructura visual moderna.
         /// </summary>
         private void ExportarHojaResumenEjecutivo(XLWorkbook workbook, List<EjecucionHistorialItem> items)        {
-            var ws = workbook.Worksheets.Add("Resumen Ejecutivo");
-
-            // Colores corporativos reales
+            var ws = workbook.Worksheets.Add("Resumen Ejecutivo");            // Colores corporativos reales
             string colorVerdePrimario = "#118938";      // Verde principal (encabezados)
-            string colorVerdeSecundario = "#2B8E3F";    // Verde secundario (acentos)
             string colorGrisOscuro = "#504F4E";         // Gris oscuro (textos)
             string colorGrisClaro = "#9D9D9C";          // Gris claro (borde)
-            string colorSurface = "#F8F9FA";            // Gris muy claro (fondos)            // Configurar ancho de columnas
+            string colorSurface = "#F8F9FA";            // Gris muy claro (fondos)// Configurar ancho de columnas
             ws.Column(1).Width = 18;  // Código equipo (parte del logo A1-B1)
             ws.Column(2).Width = 18;  // Nombre Equipo (parte del logo A1-B1)
             ws.Column(3).Width = 25;  // Usuario (ajustable al contenido)
             ws.Column(4).Width = 25;  // Sede (ajustable al contenido)
             ws.Column(5).Width = 20;  // Última Ejecución
-            ws.Column(6).Width = 16;  // Cumplimiento
 
             // ===== ENCABEZADO CON LOGO Y TÍTULO =====
             // Insertar logo
@@ -156,35 +152,53 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             ws.Cell(1, 3).Style.Font.FontSize = 18;
             ws.Cell(1, 3).Style.Font.FontColor = XLColor.FromHtml(colorVerdePrimario);
             ws.Cell(1, 3).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Range(1, 3, 1, 6).Merge();
-            ws.Range(1, 3, 1, 6).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Range(1, 3, 1, 4).Merge();
+            ws.Range(1, 3, 1, 4).Style.Fill.BackgroundColor = XLColor.White;
             ws.Cell(1, 3).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-            ws.Cell(1, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            ws.Cell(1, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);            // Subtítulo
-            ws.Cell(2, 3).Value = "Historial de Ejecuciones y Cumplimiento de Mantenimiento";
+            
+            // Código de formulario en E1
+            ws.Cell(1, 5).Value = "SST-F-83";
+            ws.Cell(1, 5).Style.Font.Bold = true;
+            ws.Cell(1, 5).Style.Font.FontSize = 10;
+            ws.Cell(1, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(1, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(1, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(1, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(1, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);            // Subtítulo
+            ws.Cell(2, 3).Value = "Historial de Ejecuciones de Mantenimiento";
             ws.Cell(2, 3).Style.Font.Italic = true;
             ws.Cell(2, 3).Style.Font.FontSize = 11;
             ws.Cell(2, 3).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
             ws.Cell(2, 3).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Range(2, 3, 2, 6).Merge();
-            ws.Range(2, 3, 2, 6).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Cell(2, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            ws.Cell(2, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);            // Metadata
+            ws.Range(2, 3, 2, 4).Merge();
+            ws.Range(2, 3, 2, 4).Style.Fill.BackgroundColor = XLColor.White;            ws.Cell(2, 5).Value = "Versión 4";
+            ws.Cell(2, 5).Style.Font.FontSize = 9;
+            ws.Cell(2, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(2, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(2, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(2, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(2, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(2, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+
+            // Metadata
             ws.Cell(3, 3).Value = $"Reporte generado: {DateTime.Now:dd/MM/yyyy HH:mm}";
             ws.Cell(3, 3).Style.Font.FontSize = 9;
             ws.Cell(3, 3).Style.Font.FontColor = XLColor.FromHtml(colorGrisClaro);
             ws.Cell(3, 3).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Range(3, 3, 3, 6).Merge();
-            ws.Range(3, 3, 3, 6).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Cell(3, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            ws.Cell(3, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);// ===== ENCABEZADOS DE TABLA =====
+            ws.Range(3, 3, 3, 4).Merge();
+            ws.Range(3, 3, 3, 4).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(3, 5).Value = string.Empty;
+            ws.Cell(3, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(3, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(3, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);// ===== ENCABEZADOS DE TABLA =====
             int headerRow = 4;
             ws.Cell(headerRow, 1).Value = "Código";
             ws.Cell(headerRow, 2).Value = "Nombre Equipo";
             ws.Cell(headerRow, 3).Value = "Usuario Asignado";
             ws.Cell(headerRow, 4).Value = "Sede";
             ws.Cell(headerRow, 5).Value = "Última Ejecución";
-            ws.Cell(headerRow, 6).Value = "Cumplimiento";            var headerRange = ws.Range(headerRow, 1, headerRow, 6);
+            var headerRange = ws.Range(headerRow, 1, headerRow, 5);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Font.FontSize = 11;
             headerRange.Style.Font.FontColor = XLColor.White;
@@ -195,8 +209,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             headerRange.Style.Border.BottomBorder = XLBorderStyleValues.None;
             headerRange.Style.Border.LeftBorder = XLBorderStyleValues.None;
             headerRange.Style.Border.RightBorder = XLBorderStyleValues.None;
-            ws.Cell(headerRow, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            ws.Cell(headerRow, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(headerRow, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(headerRow, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
             ws.Row(headerRow).Height = 24;
 
@@ -216,9 +230,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
                     .OrderByDescending(x => x.FechaEjecucion)
                     .FirstOrDefault();
 
-                var totalItems = grupoEquipo.SelectMany(x => x.DetalleItems ?? new()).Count();
-                var completados = grupoEquipo.SelectMany(x => x.DetalleItems ?? new()).Count(x => x.Completado);
-                double cumplimiento = totalItems > 0 ? (double)completados / totalItems * 100 : 0;                // Color de fila alternado para legibilidad
+                // Color de fila alternado para legibilidad
                 string colorFilaFondo = esFilaPar ? XLColor.White.ToString() : colorSurface;                // Código
                 ws.Cell(dataRow, 1).Value = grupoEquipo.First().CodigoEquipo;
                 ws.Cell(dataRow, 1).Style.Fill.BackgroundColor = XLColor.White;
@@ -244,49 +256,38 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
                 ws.Cell(dataRow, 5).Style.Fill.BackgroundColor = XLColor.White;
                 ws.Cell(dataRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 ws.Cell(dataRow, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
-
-                // Cumplimiento (%) - CON COLORES CORPORATIVOS
-                ws.Cell(dataRow, 6).Value = cumplimiento / 100;
-                ws.Cell(dataRow, 6).Style.NumberFormat.Format = "0.00%";
-                ws.Cell(dataRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                ws.Cell(dataRow, 6).Style.Font.Bold = true;
-                ws.Cell(dataRow, 6).Style.Font.FontSize = 10;                // Color según cumplimiento - Escala con verde corporativo
-                if (cumplimiento >= 90)
-                {
-                    ws.Cell(dataRow, 6).Style.Fill.BackgroundColor = XLColor.FromHtml(colorVerdeSecundario);
-                    ws.Cell(dataRow, 6).Style.Font.FontColor = XLColor.White;
-                }
-                else if (cumplimiento >= 70)
-                {
-                    ws.Cell(dataRow, 6).Style.Fill.BackgroundColor = XLColor.FromHtml("#F4C430"); // Dorado/Amarillo
-                    ws.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
-                }
-                else
-                {
-                    ws.Cell(dataRow, 6).Style.Fill.BackgroundColor = XLColor.FromHtml("#E74C3C"); // Rojo suave
-                    ws.Cell(dataRow, 6).Style.Font.FontColor = XLColor.White;
-                }
-                ws.Cell(dataRow, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-                ws.Cell(dataRow, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+                // Borde derecho en la columna "Última Ejecución"
+                ws.Cell(dataRow, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                ws.Cell(dataRow, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
                 dataRow++;
                 esFilaPar = !esFilaPar;
-            }            // ===== PIE DE PÁGINA =====
+            }
+
+            // Asegurar borde derecho en toda la columna 'Última Ejecución' para filas de datos
+            int lastDataRow = dataRow - 1;
+            if (lastDataRow >= headerRow + 1)
+            {
+                ws.Range(headerRow + 1, 5, lastDataRow, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                ws.Range(headerRow + 1, 5, lastDataRow, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            }
+
+            // ===== PIE DE PÁGINA =====
             ws.Cell(dataRow, 1).Value = $"Total de equipos: {equiposAgrupados.Count}";
             ws.Cell(dataRow, 1).Style.Font.Bold = true;
             ws.Cell(dataRow, 1).Style.Font.FontSize = 10;
             ws.Cell(dataRow, 1).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Cell(dataRow, 1).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);            ws.Range(dataRow, 1, dataRow, 6).Merge();
-            ws.Range(dataRow, 1, dataRow, 6).Style.Fill.BackgroundColor = XLColor.White;
-            ws.Range(dataRow, 1, dataRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            ws.Range(dataRow, 1, dataRow, 6).Style.Font.Bold = true;
-            ws.Range(dataRow, 1, dataRow, 6).Style.Font.FontSize = 10;
-            ws.Range(dataRow, 1, dataRow, 6).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(dataRow, 1).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);            ws.Range(dataRow, 1, dataRow, 5).Merge();
+            ws.Range(dataRow, 1, dataRow, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Range(dataRow, 1, dataRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Range(dataRow, 1, dataRow, 5).Style.Font.Bold = true;
+            ws.Range(dataRow, 1, dataRow, 5).Style.Font.FontSize = 10;
+            ws.Range(dataRow, 1, dataRow, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
             
             // Bordes en la última fila (pie de página)
-            ws.Range(dataRow, 1, dataRow, 6).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-            ws.Range(dataRow, 1, dataRow, 6).Style.Border.BottomBorderColor = XLColor.FromHtml(colorGrisOscuro);            ws.Cell(dataRow, 6).Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            ws.Cell(dataRow, 6).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Range(dataRow, 1, dataRow, 5).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            ws.Range(dataRow, 1, dataRow, 5).Style.Border.BottomBorderColor = XLColor.FromHtml(colorGrisOscuro);            ws.Cell(dataRow, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(dataRow, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
             // Ajustar columnas C y D al contenido (sin mínimo restrictivo)
             ws.Column(3).AdjustToContents();  // Usuario - ajusta al contenido
@@ -294,54 +295,136 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
 
             // Congelar encabezados
             ws.SheetView.FreezeRows(4);
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Crea una hoja por equipo con matriz semanal: Filas = Semanas, Columnas = Items del checklist.
+        /// Diseño idéntico a la hoja Resumen Ejecutivo: Logo + Título + Subtítulo + Metadata.
         /// </summary>
         private void ExportarHojaEquipo(XLWorkbook workbook, string nombreEquipo, List<EjecucionHistorialItem> ejecucionesEquipo)
         {
             // Validar y sanitizar nombre de hoja (máximo 31 caracteres)
             string nombreHoja = $"Equipo_{nombreEquipo}";
             if (nombreHoja.Length > 31)
-                nombreHoja = nombreHoja.Substring(0, 31);
+                nombreHoja = nombreHoja.Substring(0, 31);            var ws = workbook.Worksheets.Add(nombreHoja);            // Colores corporativos
+            string colorVerdePrimario = "#118938";      // Verde principal
+            string colorVerdeSecundario = "#5FBB7D";    // Verde suave secundario ([OK] items)
+            string colorGrisOscuro = "#504F4E";         // Gris oscuro (textos)
+            string colorGrisClaro = "#9D9D9C";          // Gris claro (bordes)
 
-            var ws = workbook.Worksheets.Add(nombreHoja);
+            // Configurar ancho de columnas
+            ws.Column(1).Width = 18;
+            ws.Column(2).Width = 18;
+            ws.Column(3).Width = 25;
+            ws.Column(4).Width = 25;
 
-            // Encabezado
-            ws.Cell(1, 1).Value = $"EQUIPO: {nombreEquipo}";
-            ws.Cell(1, 1).Style.Font.Bold = true;
-            ws.Cell(1, 1).Style.Font.FontSize = 14;
-            ws.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#1F4E78");
-            ws.Cell(1, 1).Style.Font.FontColor = XLColor.White;
-            ws.Range(1, 1, 1, 12).Merge();
+            // ===== ENCABEZADO CON LOGO Y TÍTULO =====
+            // Insertar logo
+            try
+            {
+                string? assemblyLocation = System.IO.Path.GetDirectoryName(typeof(HistorialEjecucionesExportService).Assembly.Location);
+                if (!string.IsNullOrEmpty(assemblyLocation))
+                {
+                    var logoPath = System.IO.Path.Combine(assemblyLocation, "..", "..", "..", "Assets", "logo.png");
+                    logoPath = System.IO.Path.GetFullPath(logoPath);
 
-            // Métricas del equipo
-            int row = 3;
+                    if (System.IO.File.Exists(logoPath))
+                    {
+                        var picture = ws.AddPicture(logoPath);
+                        picture.MoveTo(ws.Cell(1, 1));
+                        picture.Height = 60;
+                        picture.Width = 232;
+                        ws.Range(1, 1, 1, 2).Merge();
+                    }
+                }
+            }            catch
+            {
+                // Ignorar si no se puede cargar el logo
+            }
+
+            // Pintar fondo blanco en el área del logo (A1-B4)
+            for (int logoRow = 1; logoRow <= 4; logoRow++)
+            {
+                for (int logoCol = 1; logoCol <= 2; logoCol++)
+                {
+                    ws.Cell(logoRow, logoCol).Style.Fill.BackgroundColor = XLColor.White;
+                }
+            }
+
+            ws.Row(1).Height = 60;
+            ws.Row(2).Height = 20;
+            ws.Row(3).Height = 18;
+
+            // Obtener información del equipo
             var ejecucionesOrdenadas = ejecucionesEquipo.OrderBy(x => x.SemanaISO).ToList();
-            var primeraEjecucion = ejecucionesOrdenadas.FirstOrDefault();
             var ultimaEjecucion = ejecucionesOrdenadas
                 .Where(x => x.FechaEjecucion.HasValue)
                 .OrderByDescending(x => x.FechaEjecucion)
                 .FirstOrDefault();
 
-            ws.Cell(row, 1).Value = "Última Ejecución:";
-            ws.Cell(row, 2).Value = ultimaEjecucion?.FechaEjecucion?.ToString("dd/MM/yyyy") ?? "Nunca";
-            row++;
+            // Si no hay ejecuciones para este equipo, mostrar mensaje y salir
+            if (ejecucionesOrdenadas.Count == 0)
+            {
+                ws.Cell(4, 1).Value = "No hay ejecuciones registradas para este equipo.";
+                ws.Cell(4, 1).Style.Font.Italic = true;
+                ws.Cell(4, 1).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+                ws.Range(4, 1, 4, 5).Merge();
+                ws.Range(4, 1, 4, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Range(4, 1, 4, 5).Style.Fill.BackgroundColor = XLColor.White;
+                ws.Columns().AdjustToContents();
+                return;
+            }            // Título principal (comienza en columna C)
+            ws.Cell(1, 3).Value = $"EQUIPO: {nombreEquipo}";
+            ws.Cell(1, 3).Style.Font.Bold = true;
+            ws.Cell(1, 3).Style.Font.FontSize = 18;
+            ws.Cell(1, 3).Style.Font.FontColor = XLColor.FromHtml(colorVerdePrimario);
+            ws.Cell(1, 3).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Range(1, 3, 1, 4).Merge();
+            ws.Range(1, 3, 1, 4).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(1, 3).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            
+            // Código de formulario en E1
+            ws.Cell(1, 5).Value = "SST-F-83";
+            ws.Cell(1, 5).Style.Font.Bold = true;
+            ws.Cell(1, 5).Style.Font.FontSize = 10;
+            ws.Cell(1, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(1, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(1, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(1, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(1, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);            // Subtítulo con información del equipo
+            string subtitulo = $"Código: {ejecucionesEquipo.First().CodigoEquipo} | Usuario: {ejecucionesEquipo.First().UsuarioAsignadoEquipo ?? "—"} | Sede: {ejecucionesEquipo.First().Sede ?? "—"}";
+            ws.Cell(2, 3).Value = subtitulo;
+            ws.Cell(2, 3).Style.Font.Italic = true;
+            ws.Cell(2, 3).Style.Font.FontSize = 11;
+            ws.Cell(2, 3).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(2, 3).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Range(2, 3, 2, 4).Merge();
+            ws.Range(2, 3, 2, 4).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(2, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(2, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            
+            // Versión en E2
+            ws.Cell(2, 5).Value = "Versión 4";
+            ws.Cell(2, 5).Style.Font.FontSize = 9;
+            ws.Cell(2, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(2, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(2, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(2, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(2, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(2, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
-            var totalItems = ejecucionesEquipo.SelectMany(x => x.DetalleItems ?? new()).Count();
-            var completados = ejecucionesEquipo.SelectMany(x => x.DetalleItems ?? new()).Count(x => x.Completado);
-            double cumplimientoGlobal = totalItems > 0 ? (double)completados / totalItems * 100 : 0;
+            // Metadata
+            ws.Cell(3, 3).Value = $"Reporte generado: {DateTime.Now:dd/MM/yyyy HH:mm}";
+            ws.Cell(3, 3).Style.Font.FontSize = 9;
+            ws.Cell(3, 3).Style.Font.FontColor = XLColor.FromHtml(colorGrisClaro);
+            ws.Cell(3, 3).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Range(3, 3, 3, 5).Merge();
+            ws.Range(3, 3, 3, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(3, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(3, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);            // ===== ENCABEZADOS DE TABLA MATRICIAL =====
+            int headerRow = 4;
+            ws.Cell(headerRow, 1).Value = "Semana ISO / Fecha";
 
-            ws.Cell(row, 1).Value = "Cumplimiento Global:";
-            ws.Cell(row, 2).Value = cumplimientoGlobal / 100;
-            ws.Cell(row, 2).Style.NumberFormat.Format = "0.00%";
-            row += 2;
-
-            // Encabezado de tabla matricial
-            ws.Cell(row, 1).Value = "Semana ISO";
-
-            // Obtener todos los items únicos del equipo para usarlos como encabezados de columna
+            // Obtener todos los items únicos del equipo
             var itemsUnicos = ejecucionesEquipo
                 .SelectMany(x => x.DetalleItems ?? new())
                 .DistinctBy(x => x.Descripcion)
@@ -352,114 +435,109 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             int col = 2;
             foreach (var item in itemsUnicos)
             {
-                ws.Cell(row, col).Value = item.Descripcion;
+                ws.Cell(headerRow, col).Value = item.Descripcion;
                 col++;
             }
-            ws.Cell(row, col).Value = "% Cumplimiento";
+            int lastCol = col - 1;
 
             // Formatear encabezado de tabla
-            var headerRange = ws.Range(row, 1, row, col);
+            var headerRange = ws.Range(headerRow, 1, headerRow, lastCol);
             headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#000000");
+            headerRange.Style.Font.FontSize = 11;
             headerRange.Style.Font.FontColor = XLColor.White;
+            headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml(colorVerdePrimario);
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            headerRange.Style.Border.TopBorder = XLBorderStyleValues.None;
+            headerRange.Style.Border.BottomBorder = XLBorderStyleValues.None;
+            headerRange.Style.Border.LeftBorder = XLBorderStyleValues.None;
+            headerRange.Style.Border.RightBorder = XLBorderStyleValues.None;
+            ws.Cell(headerRow, lastCol).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(headerRow, lastCol).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Row(headerRow).Height = 24;
 
-            // Datos de matriz semanal
-            row++;
+            // Agregar borde superior en el header para el rango solicitado (Limpieza de monitor .. Respaldo de Archivos Digitalos)
+            int inicioIndex = itemsUnicos.FindIndex(x => x.Descripcion == "Limpieza de monitor");
+            int finIndex = itemsUnicos.FindIndex(x => x.Descripcion == "Respaldo de Archivos Digitales");
+            if (inicioIndex >= 0 && finIndex >= 0 && finIndex >= inicioIndex)
+            {
+                int inicioCol = 2 + inicioIndex;
+                int finCol = 2 + finIndex;
+                ws.Range(headerRow, inicioCol, headerRow, finCol).Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                ws.Range(headerRow, inicioCol, headerRow, finCol).Style.Border.TopBorderColor = XLColor.FromHtml(colorGrisOscuro);
+            }            // ===== DATOS DE MATRIZ SEMANAL =====
+            int dataRow = headerRow + 1;
+            string colorNoRealizado = "#FFF3CD";  // Amarillo claro para semanas no realizadas
+            
             foreach (var ejecucion in ejecucionesOrdenadas)
             {
-                ws.Cell(row, 1).Value = $"{ejecucion.AnioISO}-{ejecucion.SemanaISO:D2}";
+                // Detectar si esta semana es "No Realizado" (Estado = 3)
+                bool esNoRealizado = ejecucion.Estado == 3;
+                string colorFondoFila = esNoRealizado ? colorNoRealizado : XLColor.White.ToString();
+                
+                ws.Cell(dataRow, 1).Value = $"{ejecucion.AnioISO}-{ejecucion.SemanaISO:D2} / {ejecucion.FechaObjetivo:dd/MM/yyyy}";
+                ws.Cell(dataRow, 1).Style.Fill.BackgroundColor = XLColor.FromHtml(colorFondoFila);
+                ws.Cell(dataRow, 1).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
 
                 col = 2;
                 int itemsCompletados = 0;
-
+                
                 foreach (var itemUnico in itemsUnicos)
                 {
                     var itemEnEjecucion = ejecucion.DetalleItems?
                         .FirstOrDefault(x => x.Descripcion == itemUnico.Descripcion);
-
-                    if (itemEnEjecucion != null)
+                    
+                    if (itemEnEjecucion != null && itemEnEjecucion.Completado)
                     {
-                        // Asignar símbolo según estado
-                        string simbolo = itemEnEjecucion.Completado ? "✅"
-                            : (!string.IsNullOrWhiteSpace(itemEnEjecucion.Observacion) ? "⚠️" : "❌");
-                        ws.Cell(row, col).Value = simbolo;
-
-                        // Colorear celda
-                        if (itemEnEjecucion.Completado)
-                            ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#2B8E3F");
-                        else if (!string.IsNullOrWhiteSpace(itemEnEjecucion.Observacion))
-                            ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#F9B233");
-                        else
-                            ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#C0392B");
-
-                        ws.Cell(row, col).Style.Font.FontColor = itemEnEjecucion.Completado || !string.IsNullOrWhiteSpace(itemEnEjecucion.Observacion)
-                            ? XLColor.Black : XLColor.White;
-
-                        if (itemEnEjecucion.Completado)
-                            itemsCompletados++;
+                        // Solo mostrar [OK] para items completados
+                        ws.Cell(dataRow, col).Value = "[OK]";
+                        ws.Cell(dataRow, col).Style.Fill.BackgroundColor = XLColor.FromHtml(colorVerdeSecundario);
+                        ws.Cell(dataRow, col).Style.Font.FontColor = XLColor.White;
+                        ws.Cell(dataRow, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Cell(dataRow, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        itemsCompletados++;
                     }
                     else
                     {
-                        ws.Cell(row, col).Value = "—";
-                        ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#9E9E9E");
-                        ws.Cell(row, col).Style.Font.FontColor = XLColor.White;
+                        // Para no completados y no disponibles: mostrar solo "-"
+                        ws.Cell(dataRow, col).Value = "-";
+                        ws.Cell(dataRow, col).Style.Fill.BackgroundColor = XLColor.FromHtml(colorFondoFila);
+                        ws.Cell(dataRow, col).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+                        ws.Cell(dataRow, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        ws.Cell(dataRow, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                     }
 
                     col++;
                 }
 
-                // Calcular % de cumplimiento de la semana
-                double cumplimientoSemana = itemsUnicos.Count > 0 ? (double)itemsCompletados / itemsUnicos.Count * 100 : 0;
-                ws.Cell(row, col).Value = cumplimientoSemana / 100;
-                ws.Cell(row, col).Style.NumberFormat.Format = "0.00%";
-
-                // Color para % de cumplimiento
-                if (cumplimientoSemana >= 90)
-                    ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#2B8E3F");
-                else if (cumplimientoSemana >= 70)
-                    ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#F9B233");
-                else
-                    ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromHtml("#C0392B");
-
-                ws.Cell(row, col).Style.Font.FontColor = cumplimientoSemana >= 70 ? XLColor.Black : XLColor.White;
-                ws.Cell(row, col).Style.Font.Bold = true;
-
-                row++;
+                dataRow++;
             }
 
-            // Fila de totales por item
-            ws.Cell(row, 1).Value = "Total (%)";
-            ws.Cell(row, 1).Style.Font.Bold = true;
-            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#F2F2F2");
-
-            int colTotal = 2;
-            foreach (var itemUnico in itemsUnicos)
+            // Aplicar bordes específicos en la hoja de equipo
+            int lastDataRowEquipo = dataRow - 1;
+            if (lastDataRowEquipo >= headerRow + 1)
             {
-                var completadosItem = ejecucionesEquipo
-                    .SelectMany(x => x.DetalleItems ?? new())
-                    .Where(x => x.Descripcion == itemUnico.Descripcion && x.Completado)
-                    .Count();
+                // Buscar columna del item "Respaldo de Archivos Digitales"
+                int respaldoIndex = itemsUnicos.FindIndex(x => x.Descripcion == "Respaldo de Archivos Digitales");
+                if (respaldoIndex >= 0)
+                {
+                    int respaldoCol = 2 + respaldoIndex;
+                    // Borde derecho en la columna de Respaldo para todas las filas de datos
+                    ws.Range(headerRow + 1, respaldoCol, lastDataRowEquipo, respaldoCol).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                    ws.Range(headerRow + 1, respaldoCol, lastDataRowEquipo, respaldoCol).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
+                }
 
-                var totalItem = ejecucionesEquipo
-                    .SelectMany(x => x.DetalleItems ?? new())
-                    .Where(x => x.Descripcion == itemUnico.Descripcion)
-                    .Count();
-
-                double porcentajeItem = totalItem > 0 ? (double)completadosItem / totalItem * 100 : 0;
-                ws.Cell(row, colTotal).Value = porcentajeItem / 100;
-                ws.Cell(row, colTotal).Style.NumberFormat.Format = "0.00%";
-                ws.Cell(row, colTotal).Style.Font.Bold = true;
-                ws.Cell(row, colTotal).Style.Fill.BackgroundColor = XLColor.FromHtml("#F2F2F2");
-
-                colTotal++;
+                // Borde inferior en la última fila de datos (toda la fila hasta la última columna)
+                ws.Range(lastDataRowEquipo, 1, lastDataRowEquipo, lastCol).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                ws.Range(lastDataRowEquipo, 1, lastDataRowEquipo, lastCol).Style.Border.BottomBorderColor = XLColor.FromHtml(colorGrisOscuro);
             }
 
-            // Ajustar columnas y congelar encabezados
+            // Ajustar columnas
             ws.Columns().AdjustToContents();
-            ws.SheetView.FreezeRows(1);
-        }
 
-        /// <summary>
+            // Congelar encabezados
+            ws.SheetView.FreezeRows(4);
+        }        /// <summary>
         /// Crea la hoja "Ayuda" con leyenda de símbolos y definiciones con diseño corporativo.
         /// </summary>
         private void ExportarHojaAyuda(XLWorkbook workbook)
@@ -467,11 +545,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             var ws = workbook.Worksheets.Add("Ayuda");
 
             // Colores corporativos
-            string colorVerdePrimario = "#118938";
+            string colorVerdePrimario = "#118938";            string colorGrisOscuro = "#504F4E";
             string colorSurface = "#F8F9FA";
 
             ws.Column(1).Width = 15;
             ws.Column(2).Width = 50;
+            ws.Column(5).Width = 15;
 
             // ===== ENCABEZADO =====
             ws.Cell(1, 1).Value = "GUÍA DE USO";
@@ -479,55 +558,65 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             ws.Cell(1, 1).Style.Font.FontSize = 16;
             ws.Cell(1, 1).Style.Font.FontColor = XLColor.FromHtml(colorVerdePrimario);
             ws.Range(1, 1, 1, 2).Merge();
+            
+            // Código de formulario en E1
+            ws.Cell(1, 5).Value = "SST-F-83";
+            ws.Cell(1, 5).Style.Font.Bold = true;
+            ws.Cell(1, 5).Style.Font.FontSize = 10;
+            ws.Cell(1, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(1, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(1, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(1, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(1, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
             ws.Cell(2, 1).Value = "Historial de Ejecuciones";
             ws.Cell(2, 1).Style.Font.Italic = true;
             ws.Cell(2, 1).Style.Font.FontSize = 11;
             ws.Cell(2, 1).Style.Font.FontColor = XLColor.FromHtml("#666666");
             ws.Range(2, 1, 2, 2).Merge();
+            
+            // Versión en E2
+            ws.Cell(2, 5).Value = "Versión 4";
+            ws.Cell(2, 5).Style.Font.FontSize = 9;
+            ws.Cell(2, 5).Style.Font.FontColor = XLColor.FromHtml(colorGrisOscuro);
+            ws.Cell(2, 5).Style.Fill.BackgroundColor = XLColor.White;
+            ws.Cell(2, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(2, 5).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell(2, 5).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+            ws.Cell(2, 5).Style.Border.RightBorderColor = XLColor.FromHtml(colorGrisOscuro);
 
-            int row = 4;
-
-            // ===== LEYENDA DE SÍMBOLOS =====
-            ws.Cell(row, 1).Value = "LEYENDA DE SÍMBOLOS";
+            int row = 4;            // ===== LEYENDA DE ETIQUETAS Y COLORES =====
+            ws.Cell(row, 1).Value = "LEYENDA DE ESTADOS";
             ws.Cell(row, 1).Style.Font.Bold = true;
             ws.Cell(row, 1).Style.Font.FontSize = 12;
             ws.Cell(row, 1).Style.Font.FontColor = XLColor.White;
             ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml(colorVerdePrimario);
             ws.Range(row, 1, row, 2).Merge();
             ws.Row(row).Height = 20;
-            row += 2;
-
-            ws.Cell(row, 1).Value = "✅";
+            row += 2;            ws.Cell(row, 1).Value = "[OK]";
             ws.Cell(row, 2).Value = "Completado - Item fue ejecutado correctamente";
-            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#E8F5E9");
+            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#5FBB7D");
             ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#E8F5E9");
             ws.Cell(row, 1).Style.Font.Bold = true;
-            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#1B5E20");
-            row++;
-
-            ws.Cell(row, 1).Value = "⚠️";
-            ws.Cell(row, 2).Value = "Observado - Item completado pero con observaciones";
-            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFF8E1");
-            ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFF8E1");
-            ws.Cell(row, 1).Style.Font.Bold = true;
-            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#F57F17");
-            row++;
-
-            ws.Cell(row, 1).Value = "❌";
-            ws.Cell(row, 2).Value = "No Completado - Item no fue ejecutado";
-            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFEBEE");
-            ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFEBEE");
-            ws.Cell(row, 1).Style.Font.Bold = true;
-            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#C62828");
-            row++;
-
-            ws.Cell(row, 1).Value = "—";
-            ws.Cell(row, 2).Value = "No Disponible - No hay registro para esa semana";
-            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#F5F5F5");
+            ws.Cell(row, 1).Style.Font.FontColor = XLColor.White;
+            ws.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            row++;            ws.Cell(row, 1).Value = "-";
+            ws.Cell(row, 2).Value = "No Completado - Item no fue ejecutado o sin registro";
+            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.White;
             ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#F5F5F5");
             ws.Cell(row, 1).Style.Font.Bold = true;
-            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#616161");
+            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#504F4E");
+            ws.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            row++;
+
+            ws.Cell(row, 1).Value = "(Fila Completa Amarilla)";
+            ws.Cell(row, 2).Value = "No Realizado - Mantenimiento no ejecutado (generado automáticamente)";
+            ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFF3CD");
+            ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFBEA");
+            ws.Cell(row, 1).Style.Font.Bold = true;
+            ws.Cell(row, 1).Style.Font.FontColor = XLColor.FromHtml("#856404");
+            ws.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             row += 3;
 
             // ===== ESTRUCTURA DEL REPORTE =====
@@ -541,7 +630,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             row += 2;
 
             ws.Cell(row, 1).Value = "Resumen Ejecutivo";
-            ws.Cell(row, 2).Value = "Vistazo general de todos los equipos con información de contacto, sede y cumplimiento general";
+            ws.Cell(row, 2).Value = "Vistazo general de todos los equipos con información de contacto y sede";
             ws.Cell(row, 1).Style.Font.Bold = true;
             ws.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml(colorSurface);
             ws.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml(colorSurface);
@@ -571,9 +660,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Export
             ws.Row(row).Height = 20;
             row += 2;
 
-            ws.Cell(row, 1).Value = "Cumplimiento (%)";
-            ws.Cell(row, 2).Value = "Porcentaje de items completados correctamente (sin observaciones)";
-            ws.Cell(row, 1).Style.Font.Bold = true;
+            // (Se removió la definición de "Cumplimiento (%)" según configuración solicitada)
+            
             row++;
 
             ws.Cell(row, 1).Value = "Semana ISO";

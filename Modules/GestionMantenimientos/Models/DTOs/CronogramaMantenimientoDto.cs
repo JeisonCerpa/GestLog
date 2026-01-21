@@ -28,6 +28,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public bool PlanEjecutadoSemana { get; set; } = false; // NUEVO
         // NUEVO: derivado para color atrasado
         public bool EsAtrasadoSemana { get; set; } = false;
+        // NUEVO: derivado para color no realizado (Estado = 3)
+        public bool EsNoRealizadoSemana { get; set; } = false;
 
         public CronogramaMantenimientoDto() { }
 
@@ -45,6 +47,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             IsCodigoEnabled = false;
             EsPlanSemanal = other.EsPlanSemanal; // copiar
             PlanEjecutadoSemana = other.PlanEjecutadoSemana; // copiar
+            EsAtrasadoSemana = other.EsAtrasadoSemana; // copiar
+            EsNoRealizadoSemana = other.EsNoRealizadoSemana; // copiar
         }
     }
 }

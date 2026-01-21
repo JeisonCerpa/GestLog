@@ -37,16 +37,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         public byte Estado { get; set; }        public string UsuarioEjecuta { get; set; } = string.Empty;
         public string? Resumen { get; set; }
         public string UsuarioAsignadoEquipo { get; set; } = string.Empty; // Nuevo: usuario asignado al equipo
-        public string Sede { get; set; } = string.Empty; // Nuevo: sede del equipo
-        // NUEVO: estado derivado atrasado (no ejecutado y fecha objetivo pasada)
-        public bool EsAtrasado => FechaEjecucion == null && FechaObjetivo.Date < DateTime.Today && Estado != 2; // 2=Ejecutado
-        public string EstadoDescripcion => EsAtrasado ? "Atrasado" : Estado switch // Mapeo simple de estados
+        public string Sede { get; set; } = string.Empty; // Nuevo: sede del equipo        // ✅ Estado derivado: solo es "Atrasado" si fue GENERADO automáticamente y pasó la fecha
+        // Estado 3 = NoRealizada (generada automáticamente) → No es "Atrasado", es "No Realizado"
+        public bool EsAtrasado => FechaEjecucion == null && FechaObjetivo.Date < DateTime.Today && Estado != 2 && Estado != 3;
+        
+        public string EstadoDescripcion => Estado switch // Mapeo de estados según el valor en BD
         {
             0 => "Pendiente",
             1 => "En Proceso",
             2 => "Ejecutado",
-            3 => "Observado",
-            _ => "Desconocido"
+            3 => "No Realizado",  // ✅ Registros generados automáticamente
+            _ => EsAtrasado ? "Atrasado" : "Desconocido"
         };
         public ObservableCollection<EjecucionDetalleItem> DetalleItems { get; set; } = new(); // Lista detallada
         public string ToolTipResumen { get; set; } = string.Empty; // Tooltip enriquecido
@@ -66,6 +67,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private readonly IHistorialEjecucionesExportService _exportService;        
         // Evitar ejecuciones concurrentes de LoadAsync que causen duplicados
         private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1);
+        // Flag para prevenir llamada doble a LoadAsync desde CargarAñosDisponiblesAsync
+        private bool _isInitializing = true;
         public HistorialEjecucionesViewModel(
             IPlanCronogramaService planService, 
             IEquipoInformaticoService equipoService,
@@ -73,14 +76,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             IDatabaseConnectionService databaseService,
             IGestLogLogger logger)
             : base(databaseService, logger)
-        {
-            _planService = planService;
+        {            _planService = planService;
             _equipoService = equipoService;
             _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
             Years = new ObservableCollection<int>();
             SelectedYear = DateTime.Now.Year;
-            // Cargar años disponibles de forma asíncrona
-            _ = CargarAñosDisponiblesAsync();
+            // Cargar años disponibles de forma asíncrona (sin dispara OnSelectedYearChanged)
+            _ = CargarAñosDisponiblesAsync().ContinueWith(_ => { _isInitializing = false; }, TaskScheduler.FromCurrentSynchronizationContext());
             // Suscribirse a mensajes de actualización para refresh automático
             WeakReferenceMessenger.Default.Register<EjecucionesPlanesActualizadasMessage>(this, async (r, m) => 
             {
@@ -144,9 +146,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         partial void OnFiltroDescripcionChanged(string? value) => RefreshFilter();
         partial void OnFiltroNombreChanged(string? value) => RefreshFilter();
         partial void OnFiltroUsuarioChanged(string? value) => RefreshFilter();
-        partial void OnFiltroSemanaChanged(string? value) => RefreshFilter();
-        // Al cambiar año, recargar los items del año seleccionado (para que se consulten desde BD)
-        partial void OnSelectedYearChanged(int value) => _ = LoadAsync();
+        partial void OnFiltroSemanaChanged(string? value) => RefreshFilter();        // Al cambiar año, recargar los items del año seleccionado (para que se consulten desde BD)
+        partial void OnSelectedYearChanged(int value)
+        {
+            // ✅ CRÍTICO: Prevenir LoadAsync durante inicialización
+            if (!_isInitializing)
+                _ = LoadAsync();
+        }
 
         // Propiedades compatibles con PlanDetalleModalWindow (para reusar la ventana de detalle)
         [ObservableProperty] private CronogramaMantenimientoDto? selectedPlanDetalle;
@@ -272,16 +278,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     Years.Add(ano);
                 }
 
-                _logger.LogDebug("[HistorialEjecucionesViewModel] Años finales en la vista: {anos}", string.Join(", ", Years));
-
-                // Seleccionar el año actual si está disponible; si no, seleccionar el primero
+                _logger.LogDebug("[HistorialEjecucionesViewModel] Años finales en la vista: {anos}", string.Join(", ", Years));                // Seleccionar el año actual si está disponible; si no, seleccionar el primero
                 if (anosDisponibles.Contains(DateTime.Now.Year))
                 {
                     SelectedYear = DateTime.Now.Year;
+                    _logger.LogDebug("[CargarAñosDisponiblesAsync] SelectedYear asignado a {year}", DateTime.Now.Year);
                 }
                 else if (anosDisponibles.Count > 0)
                 {
                     SelectedYear = anosDisponibles.First();
+                    _logger.LogDebug("[CargarAñosDisponiblesAsync] SelectedYear asignado a {year}", anosDisponibles.First());
                 }
             }
             catch (Exception ex)
@@ -298,23 +304,22 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 // Intentar cargar datos del año actual aunque haya ocurrido un error al obtener años desde la BD
                 try { await LoadAsync(); } catch { /* silenciar */ }
             }
-        }
-
-        public async Task LoadAsync()
+        }        public async Task LoadAsync()
         {
             // Serializar llamadas para evitar repetidas cargas concurrentes que provoquen duplicados
+            _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ⏱️ LoadAsync() esperando semáforo para año {year} - _isInitializing={init} - ThreadId: {threadId}", SelectedYear, _isInitializing, System.Threading.Thread.CurrentThread.ManagedThreadId);
             await _loadSemaphore.WaitAsync();
             try
             {
-                _logger.LogDebug("[HistorialEjecucionesViewModel] Iniciando LoadAsync para año {year}", SelectedYear);
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ✓ Semáforo adquirido - Iniciando LoadAsync para año {year}", SelectedYear);
                 try
-                {
-                    IsBusy = true;
+                {                    IsBusy = true;
                     StatusMessage = "Cargando...";
                     Items.Clear();
                     // asegurarse de que la vista filtrada está inicializada antes de añadir
-                    SetupCollectionView();
-                    var ejecuciones = await _planService.GetEjecucionesByAnioAsync(SelectedYear);
+                    SetupCollectionView();                    // ✅ Usar método con trazabilidad completa: genera registros para semanas faltantes
+                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] Llamando GenerarYObtenerEjecucionesConTrazabilidadAsync para año {year}", SelectedYear);
+                    var ejecuciones = await _planService.GenerarYObtenerEjecucionesConTrazabilidadAsync(SelectedYear);                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] GenerarYObtenerEjecucionesConTrazabilidadAsync retornó {count} ejecuciones", ejecuciones.Count);
                     var query = ejecuciones.AsQueryable();
                     if (!string.IsNullOrWhiteSpace(FiltroCodigo))
                         query = query.Where(e => e.Plan != null && e.Plan.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase));
@@ -393,9 +398,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                             ToolTipResumen = toolTip
                         };
                         if (itemVm.EsAtrasado && !string.IsNullOrEmpty(itemVm.ToolTipResumen))
-                            itemVm.ToolTipResumen = "(Atrasado) " + itemVm.ToolTipResumen;
-
-                        // Evitar duplicados por EjecucionId (por seguridad ante cargas múltiples o datos duplicados)
+                            itemVm.ToolTipResumen = "(Atrasado) " + itemVm.ToolTipResumen;                        // Evitar duplicados por EjecucionId (por seguridad ante cargas múltiples o datos duplicados)
                         if (Items.Any(i => i.EjecucionId == itemVm.EjecucionId))
                         {
                             _logger.LogWarning("[HistorialEjecucionesViewModel] Duplicado detectado: EjecucionId {id} para año {year} - se omite", itemVm.EjecucionId, SelectedYear);
@@ -403,9 +406,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                         }
 
                         Items.Add(itemVm);
-                    }
-
-                    // Dedupe final por si quedó algún duplicado (seguridad adicional)
+                    }                    // Dedupe final por si quedó algún duplicado (seguridad adicional)
                     try
                     {
                         var unique = Items.GroupBy(i => i.EjecucionId).Select(g => g.First()).ToList();
@@ -419,7 +420,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "[HistorialEjecucionesViewModel] Error deduplicando Items");
-                    }                    // Enriquecer nombres faltantes consultando servicio
+                    }// Enriquecer nombres faltantes consultando servicio
                     if (codigosPendientes.Count > 0)
                     {
                         foreach (var codigo in codigosPendientes)
@@ -440,8 +441,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                                 }
                             }
                             catch { /* silenciar errores individuales */ }
-                        }                
-                    }
+                        }                    }
+                    
                     StatusMessage = $"{Items.Count} ejecuciones";
                     RecalcularEstadisticas();
                     // después de cargar recalcar filtro en la vista
@@ -456,11 +457,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 {
                     IsBusy = false;
                 }
-                _logger.LogDebug("[HistorialEjecucionesViewModel] LoadAsync finalizado para año {year} - total {count}", SelectedYear, Items.Count);
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ✓ LoadAsync finalizado para año {year} - total {count} items en la vista", SelectedYear, Items.Count);
             }
             finally
             {
                 _loadSemaphore.Release();
+                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ↩️ Semáforo liberado - ThreadId: {threadId}", System.Threading.Thread.CurrentThread.ManagedThreadId);
             }
         }        
         /// <summary>

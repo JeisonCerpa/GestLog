@@ -556,12 +556,14 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Ejecutado">
+                                                    <Style.Triggers>                                                        <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Ejecutado">
                                                             <Setter Property="Background" Value="#27AE60"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Atrasado">
+                                                        <DataTrigger Binding="{Binding EstadoDescripcion}" Value="No Realizado">
                                                             <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Atrasado">
+                                                            <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding EstadoDescripcion}" Value="Pendiente">
                                                             <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
