@@ -79,9 +79,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
         {
             this.DialogResult = false;
             this.Close();
-        }
-
-        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
+        }        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {
@@ -107,10 +105,13 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     {
                         await viewModel.CargarCodigosExistentesAsync(equipoService, IsEditMode);
                     }
+
+                    // Cargar opciones disponibles inicialmente en los combobox autocomplete
+                    await viewModel.CargarOpcionesInicialesAsync();
                 }
                 catch (System.Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error al cargar códigos: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error al cargar datos: {ex.Message}");
                 }
             }
         }
@@ -582,19 +583,17 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     });
                 }
                 catch { }
-            }
-
-            private Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
+            }            private async Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {
                     var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(MarcaAutocompletadoService)) as MarcaAutocompletadoService;
-                    if (svc == null) return Task.CompletedTask;
+                    if (svc == null) return;
                     var filtroActual = FiltroMarca ?? string.Empty;
                     
-                    var items = Task.Run(() => svc.BuscarAsync(filtroActual)).GetAwaiter().GetResult();
+                    var items = await svc.BuscarAsync(filtroActual);
                     
-                    if (cancellationToken.IsCancellationRequested) return Task.CompletedTask;
+                    if (cancellationToken.IsCancellationRequested) return;
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -612,13 +611,9 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                         }
                         catch { }
                     });
-                    return Task.CompletedTask;
                 }
                 catch { }
-                return Task.CompletedTask;
-            }
-
-            private void ValidarCodigoDuplicado()
+            }            private void ValidarCodigoDuplicado()
             {
                 if (string.IsNullOrWhiteSpace(Codigo))
                 {
@@ -635,6 +630,32 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 
                 bool isDuplicate = _codigosExistentes.Contains(Codigo);
                 IsCodigoDuplicado = isDuplicate;
+            }
+
+            /// <summary>
+            /// Carga las opciones disponibles inicialmente para los 3 combobox autocomplete.
+            /// Esto permite que al abrir el diálogo, los combobox muestren todos los registros existentes.
+            /// </summary>
+            public async Task CargarOpcionesInicialesAsync()
+            {
+                try
+                {
+                    var cts = new System.Threading.CancellationTokenSource();
+                    var token = cts.Token;
+
+                    // Cargar Marcas
+                    await FiltrarMarcasAsync(token);
+
+                    // Cargar Clasificaciones
+                    await FiltrarClasificacionesAsync(token);
+
+                    // Cargar CompradoA
+                    await FiltrarCompradoAAsync(token);
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error al cargar opciones iniciales: {ex.Message}");
+                }
             }
 
             public async Task CargarCodigosExistentesAsync(GestLog.Modules.GestionMantenimientos.Interfaces.Data.IEquipoService equipoService, bool isEditMode)
