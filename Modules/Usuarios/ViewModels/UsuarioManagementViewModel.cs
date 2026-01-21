@@ -26,8 +26,7 @@ using GestLog.Modules.DatabaseConnection; // ✅ NUEVO: IDbContextFactory
 using System.Threading;                  // ✅ NUEVO: CancellationTokenSource
 
 namespace Modules.Usuarios.ViewModels
-{
-    public class UsuarioManagementViewModel : DatabaseAwareViewModel
+{    public class UsuarioManagementViewModel : DatabaseAwareViewModel
     {
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         private readonly IUsuarioService _usuarioService;
@@ -37,6 +36,8 @@ namespace Modules.Usuarios.ViewModels
         private readonly IAuditoriaService _auditoriaService;
         private readonly IPersonaService _personaService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IPasswordManagementService _passwordManagementService;
+        private readonly IPasswordResetEmailService _passwordResetEmailService;
         private CurrentUserInfo _currentUser;
 
         public ObservableCollection<Usuario> Usuarios { get; set; } = new();
@@ -235,9 +236,7 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _personasDisponibles;
             set { _personasDisponibles = value; OnPropertyChanged(); OnPropertyChanged(nameof(NombreCompletoPersonaSeleccionada)); }
-        }
-
-        public UsuarioManagementViewModel(
+        }        public UsuarioManagementViewModel(
             IDbContextFactory<GestLogDbContext> dbContextFactory,
             IUsuarioService usuarioService,
             ICargoService cargoService,
@@ -246,6 +245,8 @@ namespace Modules.Usuarios.ViewModels
             IAuditoriaService auditoriaService,
             IPersonaService personaService,
             ICurrentUserService currentUserService,
+            IPasswordManagementService passwordManagementService,
+            IPasswordResetEmailService passwordResetEmailService,
             IDatabaseConnectionService databaseService,
             IGestLogLogger logger)
             : base(databaseService, logger)
@@ -258,6 +259,8 @@ namespace Modules.Usuarios.ViewModels
             _auditoriaService = auditoriaService;
             _personaService = personaService;
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+            _passwordManagementService = passwordManagementService ?? throw new ArgumentNullException(nameof(passwordManagementService));
+            _passwordResetEmailService = passwordResetEmailService ?? throw new ArgumentNullException(nameof(passwordResetEmailService));
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
 
             // Configurar permisos reactivos
@@ -576,24 +579,20 @@ namespace Modules.Usuarios.ViewModels
             });
         }
         
-        private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }
-
-        private void LimpiarCamposNuevoUsuario()
+        private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }        private void LimpiarCamposNuevoUsuario()
         {
             NuevoUsuarioNombre = string.Empty;
-            NuevoUsuarioPassword = string.Empty;
+            // 📝 NuevoUsuarioPassword ya no se usa (se genera automáticamente)
             RolesSeleccionados.Clear();
+            PersonaIdSeleccionada = Guid.Empty;
         }
-        
-        private bool PuedeRegistrarNuevoUsuario()
+          private bool PuedeRegistrarNuevoUsuario()
         {
-            var canRegister = !string.IsNullOrWhiteSpace(NuevoUsuarioNombre) &&
-                   !string.IsNullOrWhiteSpace(NuevoUsuarioPassword);
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] PuedeRegistrarNuevoUsuario: {canRegister} (Nombre: '{NuevoUsuarioNombre}', Password: '{NuevoUsuarioPassword}')");
+            // 📝 CAMBIO: Solo validar nombre de usuario (contraseña se genera automáticamente)
+            var canRegister = !string.IsNullOrWhiteSpace(NuevoUsuarioNombre);
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] PuedeRegistrarNuevoUsuario: {canRegister} (Nombre: '{NuevoUsuarioNombre}')");
             return canRegister;
-        }
-
-        private async Task RegistrarNuevoUsuarioAsync()
+        }private async Task RegistrarNuevoUsuarioAsync()
         {
             if (!PuedeRegistrarNuevoUsuario() || PersonaIdSeleccionada == Guid.Empty)
             {
@@ -610,16 +609,21 @@ namespace Modules.Usuarios.ViewModels
 
             try
             {
-                // Generar salt y hash seguro
-                var salt = PasswordHelper.GenerateSalt();
-                var hash = PasswordHelper.HashPassword(NuevoUsuarioPassword, salt);
+                // 📝 CAMBIO: Generar contraseña temporal en lugar de usar la proporcionada
+                var temporaryPassword = _passwordManagementService.GenerateTemporaryPassword();
+                var (tempHash, tempSalt) = GeneratePasswordHashAndSalt(temporaryPassword);
+
                 var nuevoUsuario = new Usuario
                 {
                     IdUsuario = Guid.NewGuid(),
                     PersonaId = PersonaIdSeleccionada,
                     NombreUsuario = NuevoUsuarioNombre,
-                    HashContrasena = hash,
-                    Salt = salt,
+                    HashContrasena = tempHash,                           // 🔐 Hash temporal
+                    Salt = tempSalt,                                     // 🔐 Salt temporal
+                    TemporaryPasswordHash = tempHash,                    // 🔐 Guardar en campo temporal
+                    TemporaryPasswordSalt = tempSalt,                    // 🔐 Guardar en campo temporal
+                    TemporaryPasswordExpiration = DateTime.UtcNow.AddHours(24), // ⏰ Válida 24 horas
+                    IsFirstLogin = true,                                 // 🔄 Forzar cambio en primer acceso
                     Activo = true,
                     Desactivado = false,
                     FechaCreacion = DateTime.Now,
@@ -631,10 +635,60 @@ namespace Modules.Usuarios.ViewModels
 
                 // Asignar los roles seleccionados directamente
                 var rolesIds = RolesSeleccionados.Select(r => r.IdRol).ToArray();
-                await _usuarioService.AsignarRolesAsync(nuevoUsuario.IdUsuario, rolesIds);
+                await _usuarioService.AsignarRolesAsync(nuevoUsuario.IdUsuario, rolesIds);                // 📧 Obtener email y nombre completo de la persona
+                var personas = await _personaService.BuscarPersonasAsync("");
+                var persona = personas.FirstOrDefault(p => p.IdPersona == PersonaIdSeleccionada);
+                var emailAddress = persona?.Correo ?? string.Empty;
+                var fullName = persona != null ? $"{persona.Nombres} {persona.Apellidos}".Trim() : NuevoUsuarioNombre;
 
-                // Mostrar mensaje de éxito
-                System.Windows.MessageBox.Show($"Usuario '{nuevoUsuario.NombreUsuario}' registrado exitosamente con {RolesSeleccionados.Count} rol(es).", "Registro Exitoso", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                // 📧 Obtener nombres de roles asignados
+                var roleNames = RolesSeleccionados.Select(r => r.Nombre).ToArray();
+
+                // 📧 Enviar email de bienvenida con nuevo template
+                if (!string.IsNullOrEmpty(emailAddress))
+                {
+                    var emailSent = await _passwordResetEmailService.SendNewUserEmailAsync(
+                        emailAddress,
+                        NuevoUsuarioNombre,
+                        fullName,
+                        temporaryPassword,
+                        roleNames,
+                        CancellationToken.None);
+
+                    if (emailSent)
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"✅ Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
+                            $"📧 Email de bienvenida enviado a {emailAddress} con:\n" +
+                            $"   • Usuario: {NuevoUsuarioNombre}\n" +
+                            $"   • Contraseña temporal: {temporaryPassword}\n" +
+                            $"   • Roles asignados: {string.Join(", ", roleNames)}\n\n" +
+                            $"⏰ La contraseña temporal vence en 24 horas.",
+                            "Registro Exitoso", 
+                            System.Windows.MessageBoxButton.OK, 
+                            System.Windows.MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"⚠️ Usuario '{nuevoUsuario.NombreUsuario}' creado, pero hubo un error al enviar el email.\n\n" +
+                            $"Contraseña temporal: {temporaryPassword}\n\n" +
+                            $"Puede intentar enviar el email manualmente o el usuario puede usar 'Recuperar contraseña'.",
+                            "Aviso", 
+                            System.Windows.MessageBoxButton.OK, 
+                            System.Windows.MessageBoxImage.Warning);
+                    }
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                        $"✅ Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
+                        $"⚠️ No se encontró email para enviar contraseña temporal.\n" +
+                        $"Contraseña temporal: {temporaryPassword}",
+                        "Registro Parcial", 
+                        System.Windows.MessageBoxButton.OK, 
+                        System.Windows.MessageBoxImage.Warning);
+                }
                 
                 // Cerrar ventana de registro
                 if (global::System.Windows.Application.Current.Windows.OfType<global::System.Windows.Window>().FirstOrDefault(w => w is GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow && w.DataContext == this) is global::System.Windows.Window win)
@@ -646,8 +700,19 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error al registrar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _logger.LogError(ex, "Error al registrar usuario: {Username}", NuevoUsuarioNombre);
+                System.Windows.MessageBox.Show($"❌ Error al registrar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
+        }
+
+        /// <summary>
+        /// Genera hash y salt para una contraseña (reutiliza la lógica existente)
+        /// </summary>
+        private (string Hash, string Salt) GeneratePasswordHashAndSalt(string password)
+        {
+            var salt = PasswordHelper.GenerateSalt();
+            var hash = PasswordHelper.HashPassword(password, salt);
+            return (hash, salt);
         }
 
         private void AbrirRegistroUsuarioWindow()

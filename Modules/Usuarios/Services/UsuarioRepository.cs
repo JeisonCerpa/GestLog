@@ -93,31 +93,35 @@ namespace Modules.Usuarios.Services
         {
             using var db = _dbContextFactory.CreateDbContext();
             return await db.Usuarios.AnyAsync(u => u.NombreUsuario == nombreUsuario);
-        }
-
-        public async Task EliminarAsync(Guid idUsuario)
+        }        public async Task EliminarAsync(Guid idUsuario)
         {
             using var db = _dbContextFactory.CreateDbContext();
-            using var transaction = await db.Database.BeginTransactionAsync();
-            try
+            var strategy = db.Database.CreateExecutionStrategy();
+            
+            await strategy.ExecuteAsync(async () =>
             {
-                // Eliminar relaciones UsuarioRol
-                var roles = db.UsuarioRoles.Where(ur => ur.IdUsuario == idUsuario);
-                db.UsuarioRoles.RemoveRange(roles);
-                // Eliminar relaciones UsuarioPermiso
-                var permisos = db.UsuarioPermisos.Where(up => up.IdUsuario == idUsuario);
-                db.UsuarioPermisos.RemoveRange(permisos);
-                // Eliminar usuario
-                var usuario = await db.Usuarios.FindAsync(idUsuario);
-                if (usuario != null)
-                    db.Usuarios.Remove(usuario);
-                await db.SaveChangesAsync();
-                await transaction.CommitAsync();
-            }
-            catch
-            {                await transaction.RollbackAsync();
-                throw;
-            }
+                using var transaction = await db.Database.BeginTransactionAsync();
+                try
+                {
+                    // Eliminar relaciones UsuarioRol
+                    var roles = db.UsuarioRoles.Where(ur => ur.IdUsuario == idUsuario);
+                    db.UsuarioRoles.RemoveRange(roles);
+                    // Eliminar relaciones UsuarioPermiso
+                    var permisos = db.UsuarioPermisos.Where(up => up.IdUsuario == idUsuario);
+                    db.UsuarioPermisos.RemoveRange(permisos);
+                    // Eliminar usuario
+                    var usuario = await db.Usuarios.FindAsync(idUsuario);
+                    if (usuario != null)
+                        db.Usuarios.Remove(usuario);
+                    await db.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task RestablecerContrasenaAsync(Guid idUsuario, string nuevoHash, string nuevoSalt)

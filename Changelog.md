@@ -10,11 +10,13 @@ Fecha: 21 de enero de 2026
 
 - Trazabilidad añadida para mantenimientos "No Realizado": los mantenimientos no ejecutados quedan registrados y claramente identificados tanto en la exportación como en el historial de ejecuciones.
 - Visual: las filas correspondientes a mantenimientos "No Realizado" se muestran en rojo claro para facilitar su identificación.
+- Nuevo: al crear un usuario, el sistema genera automáticamente una contraseña temporal y envía un correo de bienvenida con las credenciales e instrucciones. El usuario deberá cambiar esa contraseña en su primer acceso.
 
 ## Arreglos
 
 - Evitado duplicado de registros automáticos "No Realizado" al iniciar el sistema.
 - Corrección visual: los items "No Realizado" ahora se distinguen claramente de los atrasados.
+- Corregido: fallo que provocaba errores al eliminar usuarios en algunas condiciones; la operación ahora se realiza de forma segura y confiable.
 
 ## Notas
 

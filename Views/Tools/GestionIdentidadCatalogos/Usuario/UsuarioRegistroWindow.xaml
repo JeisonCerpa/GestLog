@@ -31,8 +31,7 @@
                                       Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToInverseVisibilityConverter}}"
                                       Height="32"/>
                         </StackPanel>
-                    </StackPanel>
-                    <!-- Usuario -->
+                    </StackPanel>                    <!-- Usuario -->
                     <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
                         <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}" 
@@ -41,16 +40,17 @@
                         <TextBlock Text="El nombre de usuario es obligatorio." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
                                    Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
                     </StackPanel>
-                    <!-- Contraseña -->
-                    <StackPanel Margin="0,0,0,16">
-                        <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
-                        <val:BindablePasswordBox
-                            Password="{Binding NuevoUsuarioPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8" Height="32"
-                            ToolTip="Ingrese la contraseña"/>
-                        <TextBlock Text="La contraseña es obligatoria." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
-                                   Visibility="{Binding NuevoUsuarioPassword, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
-                    </StackPanel>
+                    <!-- Información de Contraseña Temporal -->
+                    <Border Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="#4CAF50" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="🔐 Contraseña Temporal" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,8"/>
+                            <TextBlock Text="Se generará automáticamente una contraseña temporal y se enviará por correo al usuario." 
+                                       TextWrapping="Wrap" Foreground="#1B5E20" FontSize="12" LineHeight="18"/>
+                            <TextBlock Text="• El usuario recibirá el usuario y contraseña por email" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11" Margin="0,6,0,0"/>
+                            <TextBlock Text="• Deberá cambiar la contraseña al primer inicio de sesión" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11"/>
+                            <TextBlock Text="• La contraseña temporal es válida por 24 horas" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
                     <!-- Roles -->
                     <StackPanel Margin="0,0,0,0">
                         <TextBlock Text="Roles asignados" FontWeight="SemiBold" Margin="0,0,0,8"/>
