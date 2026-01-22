@@ -3,6 +3,7 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
     /// Servicio para exportar la "Hoja de Vida" completa de un equipo a Excel.
     /// Incluye información general del equipo e historial de mantenimientos realizados.
     /// </summary>
-    public class HojaVidaExportService
+    public class HojaVidaExportService : IHojaVidaExportService
     {
         private readonly string _logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "logo.png");
 

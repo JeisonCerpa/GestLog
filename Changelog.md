@@ -5,6 +5,7 @@ Fecha: 21 de enero de 2026
 ## Mejoras
 
 - Mejora en la exportación de mantenimientos: formato y diseño actualizados (SST-F-83 — Versión 4) para facilitar la lectura y el intercambio.
+- Se corrigió y mejoró la exportación: formato más consistente y se añadieron servicios específicos para exportar la Hoja de Vida y los listados de Equipos.
 
 ## Implementación
 

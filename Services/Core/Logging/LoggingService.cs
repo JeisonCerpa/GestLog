@@ -173,8 +173,20 @@ public static class LoggingService
                 var cronogramaService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ICronogramaService>();
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+                var hojaVidaExportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.IHojaVidaExportService>();
+                var equiposExportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.IEquiposExportService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel(equipoService, logger, cronogramaService, seguimientoService, currentUserService, databaseService);
+
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Equipos.EquiposViewModel(
+                    equipoService,
+                    logger,
+                    cronogramaService,
+                    seguimientoService,
+                    currentUserService,
+                    hojaVidaExportService,
+                    equiposExportService,
+                    databaseService
+                );
             });
 
             services.AddSingleton<GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma.CronogramaViewModel>(sp =>

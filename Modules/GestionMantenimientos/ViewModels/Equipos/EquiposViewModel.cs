@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Services.Export;
 using GestLog.Services.Core.Logging;
@@ -29,7 +30,7 @@ using GestLog.Services.Interfaces;
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Equipos;
 
 /// <summary>
-/// ViewModel para la gestiÃ³n de equipos.
+/// ViewModel para la gestión de equipos.
 /// </summary>
 public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 {    
@@ -37,12 +38,14 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private readonly ICronogramaService _cronogramaService;
     private readonly ISeguimientoService _seguimientoService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IHojaVidaExportService _hojaVidaExportService;
+    private readonly IEquiposExportService _equiposExportService;
     private CurrentUserInfo _currentUser;    
 
     [ObservableProperty]
     private ObservableCollection<EquipoDto> equipos = new();
 
-    // ColecciÃ³n completa sin filtrar - usada para calcular estadÃ­sticas correctas
+    // Colección completa sin filtrar - usada para calcular estadísticas correctas
     private ObservableCollection<EquipoDto> _allEquipos = new();
 
     [ObservableProperty]
@@ -63,7 +66,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     [ObservableProperty]
     private ICollectionView? equiposView;
 
-    // Contadores de estadÃ­sticas para la vista (compatibles con la plantilla)
+    // Contadores de estadísticas para la vista (compatibles con la plantilla)
     [ObservableProperty]
     private int equiposActivos;
 
@@ -116,7 +119,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
     private void RecalcularEstadisticas()
     {
-        // Usar _allEquipos (colecciÃ³n completa sin filtros) para obtener estadÃ­sticas totales reales
+        // Usar _allEquipos (colección completa sin filtros) para obtener estadísticas totales reales
         var list = _allEquipos ?? new ObservableCollection<EquipoDto>();
         EquiposActivos = list.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));
         EquiposEnMantenimiento = list.Count(e => EsEstado(e.Estado, "enmantenimiento"));
@@ -131,10 +134,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         if (value == null)
             return;
 
-        // Cargar los mantenimientos realizados de forma asÃ­ncrona
+        // Cargar los mantenimientos realizados de forma asíncrona
         _ = CargarMantenimientosRealizadosAsync(value);
         
-        // Resetear paginaciÃ³n
+        // Resetear paginación
         HistorialPaginaActual = 1;
         ActualizarHistorialVisible();
     }
@@ -153,15 +156,15 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             // Obtener todos los seguimientos
             var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
 
-            // Filtrar solo los del equipo actual y que no estÃ©n pendientes
+            // Filtrar solo los del equipo actual y que no estén pendientes
             var mantenimientosRealizados = todosSeguimientos
                 .Where(s => s.Codigo == equipo.Codigo && 
                            s.Estado != EstadoSeguimientoMantenimiento.Pendiente &&
                            s.Estado != EstadoSeguimientoMantenimiento.Atrasado)
-                .OrderByDescending(s => s.FechaRegistro) // Ordenar por fecha mÃ¡s reciente primero
+                .OrderByDescending(s => s.FechaRegistro) // Ordenar por fecha más reciente primero
                 .ToList();
 
-            // Limpiar y actualizar la colecciÃ³n de mantenimientos realizados
+            // Limpiar y actualizar la colección de mantenimientos realizados
             equipo.MantenimientosRealizados.Clear();
             foreach (var m in mantenimientosRealizados)
             {
@@ -177,7 +180,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     }
 
     /// <summary>
-    /// Actualiza el historial visible segÃºn la pÃ¡gina actual.
+    /// Actualiza el historial visible según la página actual.
     /// </summary>
     private void ActualizarHistorialVisible()
     {
@@ -188,19 +191,19 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             return;
         }
 
-        // Ordenar de mÃ¡s recientes a mÃ¡s antiguos
+        // Ordenar de más recientes a más antiguos
         var mantenimientosOrdenados = SelectedEquipo.MantenimientosRealizados
             .OrderByDescending(m => m.FechaRegistro)
             .ToList();
 
-        // Calcular total de pÃ¡ginas
+        // Calcular total de páginas
         HistorialTotalPaginas = (int)Math.Ceiling((double)mantenimientosOrdenados.Count / HistorialRegistrosPorPagina);
 
-        // Validar pÃ¡gina actual
+        // Validar página actual
         if (HistorialPaginaActual > HistorialTotalPaginas)
             HistorialPaginaActual = Math.Max(1, HistorialTotalPaginas);
 
-        // Obtener registros de la pÃ¡gina actual
+        // Obtener registros de la página actual
         var registrosPagina = mantenimientosOrdenados
             .Skip((HistorialPaginaActual - 1) * HistorialRegistrosPorPagina)
             .Take(HistorialRegistrosPorPagina)
@@ -212,12 +215,12 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             HistorialMantenimientosVisibles.Add(registro);
         }
 
-        // Actualizar estado de los botones de paginaciÃ³n
+        // Actualizar estado de los botones de paginación
         HistorialPuedeIrSiguiente = HistorialPaginaActual < HistorialTotalPaginas;
     }
 
     /// <summary>
-    /// Ir a la pÃ¡gina anterior del historial.
+    /// Ir a la página anterior del historial.
     /// </summary>
     [RelayCommand]
     private void HistorialPaginaAnterior()
@@ -230,7 +233,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     }
 
     /// <summary>
-    /// Ir a la pÃ¡gina siguiente del historial.
+    /// Ir a la página siguiente del historial.
     /// </summary>
     [RelayCommand]
     private void HistorialPaginaSiguiente()
@@ -258,9 +261,6 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
             IsLoading = true;
             StatusMessage = "Generando hoja de vida...";
-
-            // Crear servicio de exportaciÃ³n
-            var exportService = new HojaVidaExportService();
             
             // Obtener todos los mantenimientos realizados (no paginados)
             var todosSeguimientos = await _seguimientoService.GetSeguimientosAsync();
@@ -271,7 +271,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 .OrderByDescending(s => s.FechaRegistro)
                 .ToList();
 
-            // Abrir diÃ¡logo para guardar archivo
+            // Abrir diálogo para guardar archivo
             var dlg = new VistaSaveFileDialog
             {
                 Filter = "Excel Files (*.xlsx)|*.xlsx",
@@ -280,14 +280,14 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
             if (dlg.ShowDialog() == true)
             {
-                await exportService.ExportarHojaVidaAsync(
+                await _hojaVidaExportService.ExportarHojaVidaAsync(
                     SelectedEquipo,
                     mantenimientosRealizados,
                     dlg.FileName
                 );
 
                 StatusMessage = $"Hoja de vida exportada correctamente a {Path.GetFileName(dlg.FileName)}";
-                System.Windows.MessageBox.Show("Â¡Hoja de vida exportada correctamente!", "Ã‰xito", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("¡Hoja de vida exportada correctamente!", "Éxito", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
@@ -302,11 +302,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         }
     }
 
-    // OptimizaciÃ³n: Control de carga para evitar recargas innecesarias
+    // Optimización: Control de carga para evitar recargas innecesarias
     private CancellationTokenSource? _loadCancellationToken;
     private DateTime _lastLoadTime = DateTime.MinValue;
     private const int DEBOUNCE_DELAY_MS = 500; // 500ms de debounce
-    private const int MIN_RELOAD_INTERVAL_MS = 2000; // MÃ­nimo 2 segundos entre cargas
+    private const int MIN_RELOAD_INTERVAL_MS = 2000; // Mínimo 2 segundos entre cargas
 
     [ObservableProperty]
     private bool canRegistrarEquipo;
@@ -328,6 +328,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         ICronogramaService cronogramaService,
         ISeguimientoService seguimientoService,
         ICurrentUserService currentUserService,
+        IHojaVidaExportService hojaVidaExportService,
+        IEquiposExportService equiposExportService,
         IDatabaseConnectionService databaseService)
         : base(databaseService, logger)
     {        
@@ -337,16 +339,18 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             _cronogramaService = cronogramaService;
             _seguimientoService = seguimientoService;
             _currentUserService = currentUserService;
+            _hojaVidaExportService = hojaVidaExportService;
+            _equiposExportService = equiposExportService;
             _currentUser = _currentUserService.Current ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
             RecalcularPermisos();
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
-              // Suscribirse a mensajes de actualizaciÃ³n de cronogramas y seguimientos
-            // OPTIMIZACIÃ“N: Solo recargar cuando sea realmente necesario
+              // Suscribirse a mensajes de actualización de cronogramas y seguimientos
+            // OPTIMIZACIÓN: Solo recargar cuando sea realmente necesario
             WeakReferenceMessenger.Default.Register<CronogramasActualizadosMessage>(this, async (r, m) => 
             {
                 try
                 {
-                    // Solo recargar si han pasado al menos 2 segundos desde la Ãºltima carga
+                    // Solo recargar si han pasado al menos 2 segundos desde la última carga
                     await LoadEquiposAsync(forceReload: false);
                 }
                 catch (Exception ex)
@@ -355,13 +359,13 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 }
             });
             
-            // Para seguimientos, ser mÃ¡s selectivo - solo recargar si afecta equipos directamente
+            // Para seguimientos, ser más selectivo - solo recargar si afecta equipos directamente
             WeakReferenceMessenger.Default.Register<SeguimientosActualizadosMessage>(this, async (r, m) => 
             {
                 try
                 {
                     // Los cambios en seguimientos normalmente no afectan la lista de equipos
-                    // Solo recargar si han pasado mÃ¡s de 5 segundos desde la Ãºltima carga
+                    // Solo recargar si han pasado más de 5 segundos desde la última carga
                     if ((DateTime.Now - _lastLoadTime).TotalSeconds > 5)
                     {
                         await LoadEquiposAsync(forceReload: false);
@@ -393,7 +397,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         }
         catch (Exception ex)
         {            
-            logger?.LogError(ex, "[EquiposViewModel] Error crÃ­tico en constructor");
+            logger?.LogError(ex, "[EquiposViewModel] Error crítico en constructor");
             throw; // Re-lanzar para que se capture en el nivel superior
         }
     }    
@@ -406,13 +410,13 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
     public async Task LoadEquiposAsync(bool forceReload = true)
     {
-        // OPTIMIZACIÃ“N: Evitar cargas duplicadas innecesarias
+        // OPTIMIZACIÓN: Evitar cargas duplicadas innecesarias
         if (!forceReload)
         {
             var timeSinceLastLoad = DateTime.Now - _lastLoadTime;
             if (timeSinceLastLoad.TotalMilliseconds < MIN_RELOAD_INTERVAL_MS && !IsLoading)
             {
-                return; // Muy pronto desde la Ãºltima carga, omitir
+                return; // Muy pronto desde la última carga, omitir
             }
         }
 
@@ -430,7 +434,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             }
             catch (OperationCanceledException)
             {
-                return; // Cancelado, otra carga estÃ¡ en progreso
+                return; // Cancelado, otra carga está en progreso
             }
         }
 
@@ -444,13 +448,13 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Mantener copia completa para calcular estadÃ­sticas correctas
+            // Mantener copia completa para calcular estadísticas correctas
             _allEquipos = new ObservableCollection<EquipoDto>(lista);
 
-            // Filtrar segÃºn MostrarDadosDeBaja para la vista
+            // Filtrar según MostrarDadosDeBaja para la vista
             var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
             Equipos = new ObservableCollection<EquipoDto>(filtrados);
-            // Suscribirse a cambios para recalcular estadÃ­sticas cuando la colecciÃ³n cambie
+            // Suscribirse a cambios para recalcular estadísticas cuando la colección cambie
             Equipos.CollectionChanged += Equipos_CollectionChanged;
             EquiposView = CollectionViewSource.GetDefaultView(Equipos);
             if (EquiposView != null)
@@ -492,7 +496,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var result = dialog.ShowDialog();            
             if (result == true)
             {
-                // ðŸ”§ Ejecutar la adiciÃ³n en un thread background para no bloquear la UI
+                // 🔧 Ejecutar la adición en un thread background para no bloquear la UI
                 IsLoading = true;
                 StatusMessage = "Guardando equipo...";
                 
@@ -501,7 +505,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                     await _equipoService.AddAsync(dialog.Equipo);
                 });
                 
-                // Recargar en thread background tambiÃ©n
+                // Recargar en thread background también
                 await Task.Run(async () =>
                 {
                     await LoadEquiposAsync(forceReload: true);
@@ -535,11 +539,11 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var result = dialog.ShowDialog();
             if (result == true)
             {
-                // Si el usuario cambiÃ³ el estado a Activo, limpiar la FechaBaja
+                // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
                 if (dialog.Equipo.Estado == EstadoEquipo.Activo)
                     dialog.Equipo.FechaBaja = null;
                 
-                // ðŸ”§ Ejecutar la actualizaciÃ³n en un thread background para no bloquear la UI
+                // 🔧 Ejecutar la actualización en un thread background para no bloquear la UI
                 IsLoading = true;
                 StatusMessage = "Guardando cambios...";
                 
@@ -548,7 +552,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                     await _equipoService.UpdateAsync(dialog.Equipo);
                 });
                 
-                // Recargar en thread background tambiÃ©n
+                // Recargar en thread background también
                 await Task.Run(async () =>
                 {
                     await LoadEquiposAsync(forceReload: true);
@@ -576,30 +580,30 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     {
         if (SelectedEquipo == null || string.IsNullOrWhiteSpace(SelectedEquipo.Codigo))
         {
-            StatusMessage = "Debe seleccionar un equipo vÃ¡lido para dar de baja.";
+            StatusMessage = "Debe seleccionar un equipo válido para dar de baja.";
             return;
         }
 
-        // ConfirmaciÃ³n previa
+        // Confirmación previa
         var confirm = System.Windows.MessageBox.Show(
-            $"Â¿EstÃ¡ seguro que desea dar de baja el equipo '{SelectedEquipo.Codigo}'?",
+            $"¿Está seguro que desea dar de baja el equipo '{SelectedEquipo.Codigo}'?",
             "Confirmar baja de equipo",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Warning);
         if (confirm != System.Windows.MessageBoxResult.Yes)
         {
-            StatusMessage = "OperaciÃ³n cancelada por el usuario.";
+            StatusMessage = "Operación cancelada por el usuario.";
             return;
         }
 
-        // Pedir observaciÃ³n obligatoria
+        // Pedir observación obligatoria
         var obsDialog = new GestLog.Views.Shared.ObservacionDialog(SelectedEquipo.Observaciones);
         var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
         if (owner != null) obsDialog.Owner = owner;
         var dialogResult = obsDialog.ShowDialog();
         if (dialogResult != true)
         {
-            StatusMessage = "OperaciÃ³n cancelada por el usuario.";
+            StatusMessage = "Operación cancelada por el usuario.";
             return;
         }
 
@@ -607,7 +611,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         {
             SelectedEquipo.Observaciones = obsDialog.Observacion;
             SelectedEquipo.FechaBaja = DateTime.Now;
-            SelectedEquipo.Estado = EstadoEquipo.DadoDeBaja; // Actualiza el estado explÃ­citamente
+            SelectedEquipo.Estado = EstadoEquipo.DadoDeBaja; // Actualiza el estado explícitamente
             await _equipoService.UpdateAsync(SelectedEquipo);
 
             // Eliminar cronogramas y seguimientos pendientes
@@ -640,200 +644,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 IsLoading = true;
                 StatusMessage = "Exportando equipos...";
 
-                await Task.Run(() =>
-                {
-                    using var workbook = new XLWorkbook();
-                    var ws = workbook.Worksheets.Add("Equipos");
+                var equiposExportar = Equipos.OrderBy(e => e.Codigo).ToList();
+                await _equiposExportService.ExportarEquiposAsync(equiposExportar, dialog.FileName);
 
-                    // ===== FILAS 1-2: LOGO (izquierda) + TÃTULO (derecha) =====
-                    ws.Row(1).Height = 35;
-                    ws.Row(2).Height = 35;
-                    ws.ShowGridLines = false;
-
-                    // Combinar celdas A1:B2 para el logo
-                    ws.Range(1, 1, 2, 2).Merge();
-
-                    // Agregar logo
-                    var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
-                    try
-                    {
-                        if (System.IO.File.Exists(logoPath))
-                        {
-                            var picture = ws.AddPicture(logoPath);
-                            picture.MoveTo(ws.Cell(1, 1), 10, 10);
-                            picture.Scale(0.15);
-                        }
-                    }
-                    catch { }
-
-                    // Agregar tÃ­tulo en C1:J2
-                    var titleRange = ws.Range(1, 3, 2, 10);
-                    titleRange.Merge();
-                    var titleCell = titleRange.FirstCell();
-                    titleCell.Value = "INVENTARIO DE EQUIPOS";
-                    titleCell.Style.Font.Bold = true;
-                    titleCell.Style.Font.FontSize = 18;
-                    titleCell.Style.Font.FontColor = XLColor.Black;
-                    titleCell.Style.Fill.BackgroundColor = XLColor.White;
-                    titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-
-                    // ===== ENCABEZADOS DE TABLA =====
-                    int currentRow = 3;
-                    var headers = new[] { "CÃ³digo", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "ClasificaciÃ³n", "Comprado a" };
-                    for (int col = 1; col <= headers.Length; col++)
-                    {
-                        var headerCell = ws.Cell(currentRow, col);
-                        headerCell.Value = headers[col - 1];
-                        headerCell.Style.Font.Bold = true;
-                        headerCell.Style.Font.FontColor = XLColor.White;
-                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
-                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                    }
-                    ws.Row(currentRow).Height = 22;
-                    currentRow++;
-
-                    // ===== FILAS DE DATOS =====
-                    int rowCount = 0;
-                    var equiposExportar = Equipos.OrderBy(e => e.Codigo).ToList();
-                    foreach (var eq in equiposExportar)
-                    {
-                        ws.Cell(currentRow, 1).Value = eq.Codigo ?? "";
-                        ws.Cell(currentRow, 2).Value = eq.Nombre ?? "";
-                        ws.Cell(currentRow, 3).Value = eq.Marca ?? "";
-                        ws.Cell(currentRow, 4).Value = eq.Estado?.ToString() ?? "";
-                        ws.Cell(currentRow, 5).Value = eq.Sede?.ToString() ?? "";
-                        ws.Cell(currentRow, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
-
-                        // Precio formateado
-                        var precioCell = ws.Cell(currentRow, 7);
-                        precioCell.Value = eq.Precio ?? 0;
-                        precioCell.Style.NumberFormat.Format = "$#,##0";
-
-                        ws.Cell(currentRow, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(currentRow, 9).Value = eq.Clasificacion ?? "";
-                        ws.Cell(currentRow, 10).Value = eq.CompradoA ?? "";
-
-                        // Filas alternas con color gris claro
-                        if (rowCount % 2 == 0)
-                        {
-                            for (int col = 1; col <= 10; col++)
-                            {
-                                ws.Cell(currentRow, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
-                            }
-                        }
-
-                        ws.Row(currentRow).Height = 20;
-                        currentRow++;
-                        rowCount++;
-                    }
-
-                    // Agregar filtros automÃ¡ticos
-                    if (equiposExportar.Count > 0)
-                    {
-                        int headerRow = currentRow - equiposExportar.Count - 1;
-                        ws.Range(headerRow, 1, currentRow - 1, 10).SetAutoFilter();
-                    }
-
-                    // ===== PANEL DE KPIs (INDICADORES BÃSICOS) =====
-                    if (equiposExportar.Count > 0)
-                    {
-                        currentRow += 2;
-
-                        // Calcular estadÃ­sticas
-                        var totalEquipos = equiposExportar.Count;
-                        var equiposActPor = equiposExportar.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));                        var equiposInactivosPor = equiposExportar.Count(e => EsEstado(e.Estado, "inactivo"));
-                        var equiposSinPrecio = equiposExportar.Count(e => (e.Precio ?? 0) == 0);
-                        var precioTotal = equiposExportar.Sum(e => e.Precio ?? 0);
-
-                        // TÃ­tulo KPIs
-                        var kpiTitle = ws.Cell(currentRow, 1);
-                        kpiTitle.Value = "INDICADORES DE INVENTARIO";
-                        kpiTitle.Style.Font.Bold = true;
-                        kpiTitle.Style.Font.FontSize = 12;
-                        kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
-                        kpiTitle.Style.Font.FontColor = XLColor.White;
-                        kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        ws.Range(currentRow, 1, currentRow, 11).Merge();
-                        ws.Row(currentRow).Height = 20;
-                        currentRow++;
-
-                        // KPI Row
-                        var kpiLabels = new[] { "Total Equipos", "Activos", "Inactivos", "Sin Precio", "Valor Total Inventario" };
-                        var kpiValues = new object[] 
-                        { 
-                            totalEquipos,
-                            equiposActPor,
-                            equiposInactivosPor,
-                            equiposSinPrecio,
-                            precioTotal                        };for (int col = 0; col < kpiLabels.Length; col++)
-                        {
-                            // Etiqueta
-                            var labelCell = ws.Cell(currentRow, col + 1);
-                            labelCell.Value = kpiLabels[col];
-                            labelCell.Style.Font.Bold = true;
-                            labelCell.Style.Font.FontSize = 10;
-                            labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
-                            labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-
-                            // Valor
-                            var valueCell = ws.Cell(currentRow + 1, col + 1);
-                            if (col == 4) // Valor Total Inventario
-                            {
-                                valueCell.Value = (decimal)kpiValues[col];
-                                valueCell.Style.NumberFormat.Format = "$#,##0";
-                            }
-                            else
-                            {
-                                valueCell.Value = (int)kpiValues[col];
-                            }
-
-                            valueCell.Style.Font.Bold = true;
-                            valueCell.Style.Font.FontSize = 12;
-                            valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
-                            valueCell.Style.Font.FontColor = XLColor.White;
-                            valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        }
-                        currentRow += 2;
-                    }
-
-                    // ===== AJUSTAR ANCHO DE COLUMNAS =====
-                    ws.Column(1).Width = 12;
-                    ws.Column(2).Width = 20;
-                    ws.Column(3).Width = 15;
-                    ws.Column(4).Width = 15;
-                    ws.Column(5).Width = 12;
-                    ws.Column(6).Width = 15;
-                    ws.Column(7).Width = 14;
-                    ws.Column(8).Width = 14;
-                    ws.Column(9).Width = 16;
-                    ws.Column(10).Width = 18;
-
-                    // ===== PIE DE PÃGINA =====
-                    currentRow += 1;
-                    var footerCell = ws.Cell(currentRow, 1);
-                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} â€¢ {equiposExportar.Count} equipos â€¢ Sistema GestLog Â© SIMICS Group SAS";
-                    footerCell.Style.Font.Italic = true;
-                    footerCell.Style.Font.FontSize = 9;
-                    footerCell.Style.Font.FontColor = XLColor.Gray;
-                    ws.Range(currentRow, 1, currentRow, 10).Merge();
-
-                    // Configurar pÃ¡gina para exportaciÃ³n
-                    ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-                    ws.PageSetup.Scale = 90;
-                    ws.PageSetup.Margins.Top = 0.5;
-                    ws.PageSetup.Margins.Bottom = 0.5;
-                    ws.PageSetup.Margins.Left = 0.5;
-                    ws.PageSetup.Margins.Right = 0.5;
-
-                    workbook.SaveAs(dialog.FileName);
-                });
-
-                StatusMessage = $"ExportaciÃ³n completada: {dialog.FileName} ({Equipos.Count} equipos)";
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({Equipos.Count} equipos)";
             }
         }
         catch (System.Exception ex)
@@ -850,10 +664,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     private TEnum? ParseEnumFlexible<TEnum>(string? value) where TEnum : struct
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
-        var normalized = value.Trim().Replace("Ã¡", "a").Replace("Ã©", "e").Replace("Ã­", "i").Replace("Ã³", "o").Replace("Ãº", "u").Replace("Ã¼", "u").Replace("Ã±", "n").Replace(" ", "").ToLowerInvariant();
+        var normalized = value.Trim().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n").Replace(" ", "").ToLowerInvariant();
         foreach (var name in Enum.GetNames(typeof(TEnum)))
         {
-            var normName = name.Trim().Replace("Ã¡", "a").Replace("Ã©", "e").Replace("Ã­", "i").Replace("Ã³", "o").Replace("Ãº", "u").Replace("Ã¼", "u").Replace("Ã±", "n").Replace(" ", "").ToLowerInvariant();
+            var normName = name.Trim().Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ü", "u").Replace("ñ", "n").Replace(" ", "").ToLowerInvariant();
             if (normalized == normName)
             {
                 if (Enum.TryParse<TEnum>(name, out var result))
@@ -872,21 +686,21 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
     partial void OnMostrarDadosDeBajaChanged(bool value)
     {
-        // Aplicar filtro a la colecciÃ³n existente sin recargar del servicio
+        // Aplicar filtro a la colección existente sin recargar
         if (_allEquipos == null || _allEquipos.Count == 0)
         {
-            // Si aÃºn no hay datos, recargar
+            // Si aún no hay datos, recargar
             _ = LoadEquiposAsync(forceReload: true);
             return;
         }
 
-        // Filtrar segÃºn MostrarDadosDeBaja y crear nueva ObservableCollection
+        // Filtrar según MostrarDadosDeBaja y crear nueva ObservableCollection
         var filtrados = value 
             ? _allEquipos.ToList() 
             : _allEquipos.Where(e => e.FechaBaja == null).ToList();
         Equipos = new ObservableCollection<EquipoDto>(filtrados);
         
-        // Actualizar vista y estadÃ­sticas
+        // Actualizar vista y estadísticas
         EquiposView = CollectionViewSource.GetDefaultView(Equipos);
         if (EquiposView != null)
         {
@@ -926,13 +740,13 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     {
         if (obj is not EquipoDto eq) return false;
         if (string.IsNullOrWhiteSpace(FiltroEquipo)) return true;
-        // Permitir mÃºltiples tÃ©rminos separados por punto y coma
+        // Permitir múltiples términos separados por punto y coma
         var terminos = FiltroEquipo.Split(';')
             .Select(t => RemoverTildes(t.Trim()).ToLowerInvariant())
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .ToArray();
         // Campos relevantes para filtrar
-        var campos = new[]
+        var campos = new[] 
         {
             RemoverTildes(eq.Codigo ?? "").ToLowerInvariant(),
             RemoverTildes(eq.Nombre ?? "").ToLowerInvariant(),
@@ -942,18 +756,18 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             RemoverTildes(eq.FrecuenciaMtto?.ToString() ?? "").ToLowerInvariant(),
             eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? ""
         };
-        // Todos los tÃ©rminos deben estar presentes en algÃºn campo
+        // Todos los términos deben estar presentes en algún campo
         return terminos.All(term => campos.Any(campo => campo.Contains(term)));
     }
 
     private string RemoverTildes(string texto)
     {
         return texto
-            .Replace("Ã¡", "a").Replace("Ã©", "e").Replace("Ã­", "i")
-            .Replace("Ã³", "o").Replace("Ãº", "u").Replace("Ã¼", "u")
-            .Replace("Ã", "A").Replace("Ã‰", "E").Replace("Ã", "I")
-            .Replace("Ã“", "O").Replace("Ãš", "U").Replace("Ãœ", "U")
-            .Replace("Ã±", "n").Replace("Ã‘", "N");
+            .Replace("á", "a").Replace("é", "e").Replace("í", "i")
+            .Replace("ó", "o").Replace("ú", "u").Replace("ü", "u")
+            .Replace("Á", "A").Replace("É", "E").Replace("Í", "I")
+            .Replace("Ó", "O").Replace("Ú", "U").Replace("Ü", "U")
+            .Replace("ñ", "n").Replace("Ñ", "N");
     }    [RelayCommand]
     public async Task ExportarEquiposFiltradosAsync()
     {
@@ -971,199 +785,10 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 IsLoading = true;
                 StatusMessage = "Exportando equipos filtrados...";
 
-                await Task.Run(() =>
-                {
-                    var filtrados = EquiposView?.Cast<EquipoDto>().ToList() ?? new List<EquipoDto>();
+                var filtrados = EquiposView?.Cast<EquipoDto>().ToList() ?? new List<EquipoDto>();
+                await _equiposExportService.ExportarEquiposFiltradosAsync(filtrados, dialog.FileName);
 
-                    using var workbook = new XLWorkbook();
-                    var ws = workbook.Worksheets.Add("Equipos");
-
-                    // ===== FILAS 1-2: LOGO (izquierda) + TÃTULO (derecha) =====
-                    ws.Row(1).Height = 35;
-                    ws.Row(2).Height = 35;
-                    ws.ShowGridLines = false;
-
-                    // Combinar celdas A1:B2 para el logo
-                    ws.Range(1, 1, 2, 2).Merge();
-
-                    // Agregar logo
-                    var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Simics.png");
-                    try
-                    {
-                        if (System.IO.File.Exists(logoPath))
-                        {
-                            var picture = ws.AddPicture(logoPath);
-                            picture.MoveTo(ws.Cell(1, 1), 10, 10);
-                            picture.Scale(0.15);
-                        }
-                    }
-                    catch { }
-
-                    // Agregar tÃ­tulo en C1:J2
-                    var titleRange = ws.Range(1, 3, 2, 10);
-                    titleRange.Merge();
-                    var titleCell = titleRange.FirstCell();
-                    titleCell.Value = "INVENTARIO DE EQUIPOS (FILTRADOS)";
-                    titleCell.Style.Font.Bold = true;
-                    titleCell.Style.Font.FontSize = 18;
-                    titleCell.Style.Font.FontColor = XLColor.Black;
-                    titleCell.Style.Fill.BackgroundColor = XLColor.White;
-                    titleCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    titleCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-
-                    // ===== ENCABEZADOS DE TABLA =====
-                    int currentRow = 3;
-                    var headers = new[] { "CÃ³digo", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "ClasificaciÃ³n", "Comprado a" };
-                    for (int col = 1; col <= headers.Length; col++)
-                    {
-                        var headerCell = ws.Cell(currentRow, col);
-                        headerCell.Value = headers[col - 1];
-                        headerCell.Style.Font.Bold = true;
-                        headerCell.Style.Font.FontColor = XLColor.White;
-                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938); // Verde oscuro
-                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                    }
-                    ws.Row(currentRow).Height = 22;
-                    currentRow++;
-
-                    // ===== FILAS DE DATOS =====
-                    int rowCount = 0;
-                    foreach (var eq in filtrados)
-                    {
-                        ws.Cell(currentRow, 1).Value = eq.Codigo ?? "";
-                        ws.Cell(currentRow, 2).Value = eq.Nombre ?? "";
-                        ws.Cell(currentRow, 3).Value = eq.Marca ?? "";
-                        ws.Cell(currentRow, 4).Value = eq.Estado?.ToString() ?? "";
-                        ws.Cell(currentRow, 5).Value = eq.Sede?.ToString() ?? "";
-                        ws.Cell(currentRow, 6).Value = eq.FrecuenciaMtto?.ToString() ?? "";
-
-                        // Precio formateado
-                        var precioCell = ws.Cell(currentRow, 7);
-                        precioCell.Value = eq.Precio ?? 0;
-                        precioCell.Style.NumberFormat.Format = "$#,##0";
-
-                        ws.Cell(currentRow, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
-                        ws.Cell(currentRow, 9).Value = eq.Clasificacion ?? "";
-                        ws.Cell(currentRow, 10).Value = eq.CompradoA ?? "";
-
-                        // Filas alternas con color gris claro
-                        if (rowCount % 2 == 0)
-                        {
-                            for (int col = 1; col <= 10; col++)
-                            {
-                                ws.Cell(currentRow, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
-                            }
-                        }
-
-                        ws.Row(currentRow).Height = 20;
-                        currentRow++;
-                        rowCount++;
-                    }
-
-                    // Agregar filtros automÃ¡ticos
-                    if (filtrados.Count > 0)
-                    {
-                        int headerRow = currentRow - filtrados.Count - 1;
-                        ws.Range(headerRow, 1, currentRow - 1, 10).SetAutoFilter();
-                    }
-
-                    // ===== PANEL DE KPIs (INDICADORES BÃSICOS) =====
-                    if (filtrados.Count > 0)
-                    {
-                        currentRow += 2;                        // Calcular estadÃ­sticas
-                        var totalEquipos = filtrados.Count;
-                        var equiposActPor = filtrados.Count(e => EsEstado(e.Estado, "activo") || EsEstado(e.Estado, "enuso"));
-                        var equiposInactivosPor = filtrados.Count(e => EsEstado(e.Estado, "inactivo"));
-                        var equiposSinPrecio = filtrados.Count(e => (e.Precio ?? 0) == 0);
-                        var precioTotal = filtrados.Sum(e => e.Precio ?? 0);
-
-                        // TÃ­tulo KPIs
-                        var kpiTitle = ws.Cell(currentRow, 1);
-                        kpiTitle.Value = "INDICADORES DE INVENTARIO";
-                        kpiTitle.Style.Font.Bold = true;
-                        kpiTitle.Style.Font.FontSize = 12;
-                        kpiTitle.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
-                        kpiTitle.Style.Font.FontColor = XLColor.White;
-                        kpiTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        ws.Range(currentRow, 1, currentRow, 11).Merge();
-                        ws.Row(currentRow).Height = 20;
-                        currentRow++;                        // KPI Row
-                        var kpiLabels = new[] { "Total Equipos", "Activos", "Inactivos", "Sin Precio", "Valor Total Inventario" };
-                        var kpiValues = new object[] 
-                        { 
-                            totalEquipos,
-                            equiposActPor,
-                            equiposInactivosPor,
-                            equiposSinPrecio,
-                            precioTotal
-                        };                        for (int col = 0; col < kpiLabels.Length; col++)
-                        {
-                            // Etiqueta
-                            var labelCell = ws.Cell(currentRow, col + 1);
-                            labelCell.Value = kpiLabels[col];
-                            labelCell.Style.Font.Bold = true;
-                            labelCell.Style.Font.FontSize = 10;
-                            labelCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0xF0F0F0);
-                            labelCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            labelCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-
-                            // Valor
-                            var valueCell = ws.Cell(currentRow + 1, col + 1);
-                            if (col == 4) // Valor Total Inventario
-                            {
-                                valueCell.Value = (decimal)kpiValues[col];
-                                valueCell.Style.NumberFormat.Format = "$#,##0";
-                            }
-                            else
-                            {
-                                valueCell.Value = (int)kpiValues[col];
-                            }
-
-                            valueCell.Style.Font.Bold = true;
-                            valueCell.Style.Font.FontSize = 12;
-                            valueCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
-                            valueCell.Style.Font.FontColor = XLColor.White;
-                            valueCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            valueCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        }
-                        currentRow += 2;
-                    }
-
-                    // ===== AJUSTAR ANCHO DE COLUMNAS =====
-                    ws.Column(1).Width = 12;
-                    ws.Column(2).Width = 20;
-                    ws.Column(3).Width = 15;
-                    ws.Column(4).Width = 15;
-                    ws.Column(5).Width = 12;
-                    ws.Column(6).Width = 15;
-                    ws.Column(7).Width = 14;
-                    ws.Column(8).Width = 14;
-                    ws.Column(9).Width = 16;
-                    ws.Column(10).Width = 18;
-
-                    // ===== PIE DE PÃGINA =====
-                    currentRow += 1;
-                    var footerCell = ws.Cell(currentRow, 1);
-                    footerCell.Value = $"Generado el {DateTime.Now:dd/MM/yyyy HH:mm:ss} â€¢ {filtrados.Count} equipos â€¢ Sistema GestLog Â© SIMICS Group SAS";
-                    footerCell.Style.Font.Italic = true;
-                    footerCell.Style.Font.FontSize = 9;
-                    footerCell.Style.Font.FontColor = XLColor.Gray;
-                    ws.Range(currentRow, 1, currentRow, 10).Merge();
-
-                    // Configurar pÃ¡gina para exportaciÃ³n
-                    ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-                    ws.PageSetup.Scale = 90;
-                    ws.PageSetup.Margins.Top = 0.5;
-                    ws.PageSetup.Margins.Bottom = 0.5;
-                    ws.PageSetup.Margins.Left = 0.5;
-                    ws.PageSetup.Margins.Right = 0.5;
-
-                    workbook.SaveAs(dialog.FileName);
-                });
-
-                StatusMessage = $"ExportaciÃ³n completada: {dialog.FileName} ({(EquiposView?.Cast<EquipoDto>().Count() ?? 0)} equipos filtrados)";
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({filtrados.Count} equipos filtrados)";
             }
         }
         catch (Exception ex)
@@ -1214,7 +839,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
     public bool CanRegistrarMantenimiento(EquipoDto? equipo)
     {
-        // Solo permite registrar mantenimiento si el equipo estÃ¡ ACTIVO
+        // Solo permite registrar mantenimiento si el equipo está ACTIVO
         return CanRegistrarMantenimientoPermiso && equipo != null && (equipo.Estado == EstadoEquipo.Activo);
     }
 
@@ -1240,9 +865,9 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 Anio = anioActual,
                 FechaRegistro = now,
                 TipoMtno = TipoMantenimiento.Correctivo // Preseleccionado
-                // Los campos TipoMtno y Frecuencia se llenan en el diÃ¡logo y al guardar
+                // Los campos TipoMtno y Frecuencia se llenan en el diálogo y al guardar
             };
-            // Asignar la frecuencia por defecto para el flujo de Equipos (Correctivo) y abrir el diÃ¡logo en modo restringido
+            // Asignar la frecuencia por defecto para el flujo de Equipos (Correctivo) y abrir el diálogo en modo restringido
             seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
             var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(seguimiento, true);
             var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
@@ -1250,7 +875,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var result = dialog.ShowDialog();
             if (result == true)            
             {
-                // Asignar la frecuencia automÃ¡ticamente segÃºn el tipo
+                // Asignar la frecuencia automáticamente según el tipo
                 if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
                     dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Correctivo;
                 else if (dialog.Seguimiento.TipoMtno == TipoMantenimiento.Predictivo)
@@ -1287,7 +912,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         OnPropertyChanged(nameof(CanExportEquipo));    
     }
 
-    // âœ… IMPLEMENTACIÃ“N REQUERIDA: DatabaseAwareViewModel
+    // ✅ IMPLEMENTACIÓN REQUERIDA: DatabaseAwareViewModel
     protected override async Task RefreshDataAsync()
     {
         await LoadEquiposAsync(forceReload: true);
@@ -1295,7 +920,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
 
     protected override void OnConnectionLost()
     {
-        StatusMessage = "Sin conexiÃ³n - MÃ³dulo no disponible";
+        StatusMessage = "Sin conexión - Módulo no disponible";
     }
 
     // Implementar IDisposable para limpieza de recursos
@@ -1318,33 +943,50 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     }    [RelayCommand]
     public async Task ExportarInteligenteAsync()
     {
-        // Detectar si realmente hay un filtro activo
         try
         {
-            // 1. Verificar si hay filtro de texto
+            var dialog = new VistaSaveFileDialog
+            {
+                Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                DefaultExt = ".xlsx",
+                Title = "Exportar equipos a Excel",
+                FileName = $"EQUIPOS_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            IsLoading = true;
+            StatusMessage = "Exportando equipos...";
+
+            // Detectar si hay filtro activo
             var hayFiltroTexto = !string.IsNullOrWhiteSpace(FiltroEquipo);
-            if (hayFiltroTexto)
-            {
-                await ExportarEquiposFiltradosAsync();
-                return;
-            }
-
-            // 2. Verificar si Equipos (visible) es diferente de _allEquipos (total)
-            // Esto indica que hay un filtro activo como "MostrarDadosDeBaja"
             var hayFiltroEstado = Equipos.Count != _allEquipos.Count;
-            if (hayFiltroEstado)
-            {
-                await ExportarEquiposFiltradosAsync();
-                return;
-            }
+            var hayFiltro = hayFiltroTexto || hayFiltroEstado;
 
-            // Si no hay filtro alguno, exportar todo (sin cambios temporales)
-            await ExportarEquiposAsync();
+            if (hayFiltro)
+            {
+                // Exportar equipos filtrados (visible)
+                var equiposFiltrados = (EquiposView?.Cast<EquipoDto>().ToList() ?? Equipos.ToList()).OrderBy(e => e.Codigo).ToList();
+                await _equiposExportService.ExportarEquiposFiltradosAsync(equiposFiltrados, dialog.FileName);
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({equiposFiltrados.Count} equipos filtrados)";
+            }
+            else
+            {
+                // Exportar todos los equipos
+                var equiposExportar = Equipos.OrderBy(e => e.Codigo).ToList();
+                await _equiposExportService.ExportarEquiposAsync(equiposExportar, dialog.FileName);
+                StatusMessage = $"Exportación completada: {dialog.FileName} ({Equipos.Count} equipos)";
+            }
         }
         catch (System.Exception ex)
         {
             _logger.LogError(ex, "Error en ExportarInteligente");
             StatusMessage = "Error al exportar equipos.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 }

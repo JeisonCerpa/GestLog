@@ -38,7 +38,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services
             services.AddScoped<IMantenimientoService, MaintenanceService>();            // ===== Export Services =====
             services.AddTransient<ICronogramaExportService, CronogramaExportService>();
             services.AddTransient<ISeguimientosExportService, SeguimientosExportService>();
-            services.AddTransient<HojaVidaExportService>();
+            services.AddTransient<IHojaVidaExportService, HojaVidaExportService>();
+            services.AddTransient<IEquiposExportService, EquiposExportService>();
 
             // ===== Autocomplete Services =====
             services.AddScoped<ClasificacionAutocompletadoService>();
