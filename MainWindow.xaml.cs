@@ -41,7 +41,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public MainWindow()
     {
         InitializeComponent();
-        try        {
+        // Actualizar Title automáticamente desde BuildVersion
+        Title = $"GestLog - Sistema de Gestión {BuildVersion.VersionLabel}";
+        try
+        {
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
             var loginViewModel = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.ViewModels.LoginViewModel)) as GestLog.Modules.Usuarios.ViewModels.LoginViewModel;
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();

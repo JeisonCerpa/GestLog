@@ -54,42 +54,23 @@ cd "E:\Softwares\GestLog" `
 
 ### **Paso 1: Actualizar Versión**
 
-#### **1.1 Actualizar GestLog.csproj**
-```xml
-<PropertyGroup>
-    <AssemblyVersion>1.0.X.0</AssemblyVersion>
-    <FileVersion>1.0.X.0</FileVersion>
-    <Version>1.0.X</Version>
-    <AssemblyInformationalVersion>1.0.X</AssemblyInformationalVersion>
-    <AssemblyMetadata Include="ProductVersion" Value="1.0.X" />
-</PropertyGroup>
-```
+Resumen rápido — qué cambiar antes de publicar:
 
-#### **1.2 Actualizar MainWindow.xaml**
-```xml
-Title="GestLog - Sistema de Gestión v1.0.X"
-```
+**Cambios REQUERIDOS (antes de compilar):**
+- `version.txt`: cambiar el número de versión (p.ej. `1.0.44` → `1.0.45`). Solo este archivo.
+- `Changelog.md`: actualizar con las mejoras, implementaciones y arreglos de la nueva versión (para que usuarios finales vean el resumen en el diálogo de información).
+- `Views/HomeView.xaml.cs` (método `btnInfo_Click`): actualizar el resumen del changelog en el MessageBox para reflejar los cambios principales (debe coincidir con Changelog.md, solo versión resumida, debe tocar todos los puntos del changelog).
 
-#### **1.3 Actualizar Vista de Información (HomeView.xaml.cs)**
-```csharp
-private void btnInfo_Click(object sender, RoutedEventArgs e)
-{
-    System.Windows.MessageBox.Show(
-        "GestLog v1.0.X\n\n" +
-        "Sistema de gestión integrada.\n" +
-        "Desarrollado con .NET 9 y WPF\n\n" +
-        "Cambios principales desde la versión anterior:\n" +
-        "• (Resumen) - Incluir aquí las correcciones, mejoras y nuevas funcionalidades.\n" +
-        "• Ejemplo: corrección de bloqueo en splash, mejoras en actualizaciones, actualización de dependencias.\n\n" +
-        "Estado: ✅ Operativo\n" +
-        "Actualizaciones: ✅ Sistema Velopack completamente funcional\n\n" +
-        "Nota: Reemplace este resumen por el changelog real antes de publicar.",
-        "Información del Sistema",
-        MessageBoxButton.OK,
-        MessageBoxImage.Information
-    );
-}
-```
+**Cambios AUTOMÁTICOS (generados al compilar):**
+- `GestLog.csproj`: todas las propiedades de versión se actualizan automáticamente desde `version.txt` mediante el Target `ReadVersionFromFile`.
+- `MainWindow.xaml` Title: se actualiza automáticamente en `MainWindow.xaml.cs` mediante `BuildVersion.VersionLabel`.
+- `Views/HomeView.xaml` y `Views/HomeView.xaml.cs`: usan `x:Static app:BuildVersion.VersionLabel`, que se regenera desde `version.txt` en tiempo de compilación.
+- `Properties/BuildVersion.g.cs`: se regenera automáticamente mediante el Target `GenerateBuildVersion`.
+
+**Flujo simplificado:**
+1. Editar: `version.txt` (versión), `Changelog.md` (detalles), `HomeView.xaml.cs` (resumen).
+2. Compilar: `dotnet build` o `dotnet publish`.
+3. TODO lo demás se actualiza automáticamente — sin ediciones adicionales necesarias.
 
 ### **Paso 2: Compilar en Release**
 ```powershell
@@ -330,7 +311,7 @@ Remove-Item "$env:LOCALAPPDATA\GestLog" -Recurse -Force -ErrorAction SilentlyCon
 #### **Versión 1.0.5 → 1.0.6**
 ```powershell
 # 1. Actualizar versión en código
-# Edit: GestLog.csproj y MainWindow.xaml
+# Edit: version.txt
 
 # 2. Compilar
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false

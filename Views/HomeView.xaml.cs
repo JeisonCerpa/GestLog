@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using GestLog;
 using GestLog.Views.Tools;
 
 namespace GestLog.Views
@@ -20,25 +21,18 @@ namespace GestLog.Views
         {
             var herramientasView = new HerramientasView();
             _mainWindow?.NavigateToView(herramientasView, "Herramientas");
-        }        private void btnInfo_Click(object sender, RoutedEventArgs e)
+        }
+
+        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
-                "GestLog v1.0.43\n\n" +
-                "Sistema de gestión integrada.\n" +
-                "Desarrollado con .NET 9 y WPF\n\n" +
-                "Cambios principales en v1.0.43 (15-01-2026):\n\n" +
-                "Corregidos:\n" +
-                "• Botones duplicados en vista de Seguimientos\n" +
-                "• Caracteres UTF-8 corruptos en Gestión de Mantenimientos y Equipos\n" +
-                "• Duplicación de mantenimientos correctivos en vista semanal\n" +
-                "• Lógica de KPIs en análisis de cumplimiento por estado\n\n" +
-                "Mejorado:\n" +
-                "• Anchos de columnas en hoja de Seguimientos (automáticos)\n" +
-                "• Colores de badges en vista de Detalle de Semana\n" +
-                "• Ajuste de columnas en DataGrid de Detalle de Semana\n" +
-                "• Nuevo SeguimientosExportService para exportación independiente\n\n" +
-                "Estado: ✅ Operativo\n" +
-                "Actualizaciones: ✅ Sistema Velopack completamente funcional",
+                $"GestLog {BuildVersion.VersionLabel}\n\n" +
+                "• Exportación: formato actualizado (SST-F-83 v4).\n" +
+                "• Normalización: campos clave y Responsable en MAYÚSCULAS.\n" +
+                "• Límites: Descripción y Observaciones hasta 1000 caracteres.\n" +
+                "• Trazabilidad: 'No Realizado' registrados e identificados en rojo.\n" +
+                "• Usuarios: contraseña temporal auto-generada.\n" +
+                "• UI: desplegables mejorados, diálogo Datos del Equipo rediseñado.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

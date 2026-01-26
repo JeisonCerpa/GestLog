@@ -6,17 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>    
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>    <!-- Información de versión de la aplicación -->
-    <AssemblyVersion>1.0.43.0</AssemblyVersion>
-    <FileVersion>1.0.43.0</FileVersion>
-    <Version>1.0.43</Version>
-    <AssemblyInformationalVersion>1.0.43</AssemblyInformationalVersion>
+    <AssemblyVersion>1.0.44.0</AssemblyVersion>
+    <FileVersion>1.0.44.0</FileVersion>
+    <Version>1.0.44</Version>
+    <AssemblyInformationalVersion>1.0.44</AssemblyInformationalVersion>
     <Product>GestLog</Product>
     <Company>SIMICS Group SAS</Company>
     <Copyright>© 2025 SIMICS Group SAS. Todos los derechos reservados.</Copyright>
     <AssemblyTitle>GestLog - Sistema de Gestión</AssemblyTitle>
     <Description>Sistema integral de gestión empresarial</Description>
     <AssemblyMetadata>
-      <AssemblyMetadata Include="ProductVersion" Value="1.0.43" />
+      <AssemblyMetadata Include="ProductVersion" Value="1.0.44" />
     </AssemblyMetadata>
     <!-- Configuración del icono de la aplicación -->
     <ApplicationIcon>Assets\image001.ico</ApplicationIcon>
@@ -26,6 +26,19 @@
     <NoWarn>$(NoWarn);CA1416</NoWarn>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
+
+  <!-- Target para leer la versión desde version.txt -->
+  <Target Name="ReadVersionFromFile" BeforeTargets="Build">
+    <ReadLinesFromFile File="$(MSBuildProjectDirectory)\version.txt">
+      <Output TaskParameter="Lines" ItemName="VersionLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <FileVersion>@(VersionLines).0</FileVersion>
+      <AssemblyVersion>@(VersionLines).0</AssemblyVersion>
+      <Version>@(VersionLines)</Version>
+      <AssemblyInformationalVersion>@(VersionLines)</AssemblyInformationalVersion>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <!-- Include Assets and Data files -->
@@ -101,4 +114,19 @@
     <PackageReference Include="System.Management" Version="9.0.8" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
+
+  <Target Name="GenerateBuildVersion" BeforeTargets="BeforeCompile">
+    <ItemGroup>
+      <_BuildVersionLines Include="namespace GestLog" />
+      <_BuildVersionLines Include="{" />
+      <_BuildVersionLines Include="    public static class BuildVersion" />
+      <_BuildVersionLines Include="    {" />
+      <_BuildVersionLines Include="        public const string Version = &quot;$(Version)&quot;%3B" />
+      <_BuildVersionLines Include="        public const string VersionLabel = &quot;v$(Version)&quot;%3B" />
+      <_BuildVersionLines Include="    }" />
+      <_BuildVersionLines Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="Properties\BuildVersion.g.cs" Lines="@(_BuildVersionLines)" Overwrite="true" Encoding="UTF-8" />
+  </Target>
+
 </Project>
