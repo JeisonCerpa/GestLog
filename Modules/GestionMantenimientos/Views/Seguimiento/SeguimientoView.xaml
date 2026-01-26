@@ -68,6 +68,13 @@
             <Setter Property="TextWrapping" Value="NoWrap"/>
         </Style>
 
+        <!-- Estilo para TextBlocks que permiten ajuste de múltiples líneas dentro de columnas con ancho limitado -->
+        <Style x:Key="DataGridWrapTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource DataGridTextBlockStyle}">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="MaxHeight" Value="120"/>
+        </Style>
+
         <!-- RowStyle para ajustar opacidad según estado -->
         <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
             <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
@@ -354,14 +361,14 @@
                         <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha Realizada" Binding="{Binding FechaRealizacion, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Tipo Mtto" Binding="{Binding TipoMtno}" MinWidth="110" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" MinWidth="160" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" MinWidth="160" Width="300" ElementStyle="{StaticResource DataGridWrapTextBlockStyle}"/>
                         <DataGridTextColumn Header="Responsable" Binding="{Binding Responsable}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Costo" MinWidth="110" ElementStyle="{StaticResource DataGridTextBlockStyle}">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="Costo" Converter="{StaticResource DecimalToCopCurrencyConverter}"/>
                             </DataGridTextColumn.Binding>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
+                        <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" Width="300" ElementStyle="{StaticResource DataGridWrapTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>

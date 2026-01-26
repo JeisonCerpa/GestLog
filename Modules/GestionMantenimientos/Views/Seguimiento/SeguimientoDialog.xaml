@@ -118,7 +118,7 @@
 
                             <!-- Fila 4: Responsable -->
                             <TextBlock Text="Responsable:" Style="{StaticResource LabelTextStyle}" Grid.Row="4" Grid.Column="0"/>
-                            <TextBox Text="{Binding Responsable, UpdateSourceTrigger=PropertyChanged}" Grid.Row="4" Grid.Column="1" 
+                            <TextBox Text="{Binding Responsable, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Grid.Row="4" Grid.Column="1" 
                                      Style="{StaticResource InputStyle}" CharacterCasing="Upper"/>
 
                             <!-- Fila 5: Costo -->

@@ -23,6 +23,11 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             Seguimiento = seguimiento != null ? new SeguimientoMantenimientoDto(seguimiento) : new SeguimientoMantenimientoDto();
             ModoRestringido = modoRestringido;
             _esDesdeCronograma = esDesdeCronograma;
+            // Si se abre desde el cronograma y no hay tipo asignado, preseleccionar Preventivo
+            if (_esDesdeCronograma && Seguimiento.TipoMtno == null)
+            {
+                Seguimiento.TipoMtno = TipoMantenimiento.Preventivo;
+            }
             // Si es registro nuevo y no tiene fecha, prellenar con la fecha actual
             if (seguimiento == null || Seguimiento.FechaRealizacion == null)
                 Seguimiento.FechaRealizacion = System.DateTime.Now;
@@ -223,11 +228,11 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             // Tipo de mantenimiento obligatorio
             if (Seguimiento.TipoMtno == null)
                 errores.Add("Debe seleccionar el tipo de mantenimiento.");
-            // Descripción obligatoria y máximo 200 caracteres
+            // Descripción obligatoria y máximo 1000 caracteres
             if (string.IsNullOrWhiteSpace(Seguimiento.Descripcion))
                 errores.Add("La descripción es obligatoria.");
-            else if (Seguimiento.Descripcion.Length > 200)
-                errores.Add("La descripción no puede superar los 200 caracteres.");
+            else if (Seguimiento.Descripcion.Length > 1000)
+                errores.Add("La descripción no puede superar los 1000 caracteres.");
             // Responsable obligatorio
             if (string.IsNullOrWhiteSpace(Seguimiento.Responsable))
                 errores.Add("El responsable es obligatorio.");
