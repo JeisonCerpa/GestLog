@@ -9,6 +9,8 @@ using GestLog.Modules.GestionMantenimientos.Interfaces.Cache;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Import;
+using GestLog.Modules.GestionMantenimientos.Services.Import;
 
 namespace GestLog.Modules.GestionMantenimientos.Services
 {
@@ -33,7 +35,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services
                 var cronogramaService = sp.GetRequiredService<ICronogramaService>();
                 return new SeguimientoService(logger, dbContextFactory, cronogramaService);
             });
-            
+
+            // Nuevo: servicio de importación
+            services.AddScoped<ISeguimientoImportService, SeguimientoImportService>();
+
             services.AddScoped<IEquipoService, EquipoService>();
             services.AddScoped<IMantenimientoService, MaintenanceService>();            // ===== Export Services =====
             services.AddTransient<ICronogramaExportService, CronogramaExportService>();

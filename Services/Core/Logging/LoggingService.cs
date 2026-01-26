@@ -13,6 +13,7 @@ using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Interfaces;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
 using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Import;
 
 namespace GestLog.Services.Core.Logging;
 
@@ -203,10 +204,12 @@ public static class LoggingService
                 var seguimientoService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Data.ISeguimientoService>();
                 var currentUserService = sp.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
                 var seguimientosExportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Export.ISeguimientosExportService>();
+                var seguimientosImportService = sp.GetRequiredService<GestLog.Modules.GestionMantenimientos.Interfaces.Import.ISeguimientoImportService>();
                 var databaseService = sp.GetRequiredService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
                 var logger = sp.GetRequiredService<IGestLogLogger>();
-                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel(seguimientoService, currentUserService, seguimientosExportService, databaseService, logger);
-            });// Configuración de base de datos EF Core
+                return new GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.SeguimientoViewModel(seguimientoService, currentUserService, seguimientosExportService, seguimientosImportService, databaseService, logger);
+            });
+// Configuración de base de datos EF Core
             GestLog.Startup.ConfigureDatabase(services, configuration);
 
             // --- REGISTRO DE SERVICIOS DE USUARIOS Y PERSONAS ---
