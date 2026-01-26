@@ -27,6 +27,7 @@
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter" />
             <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
+            <!-- UppercaseConverter no usado directamente: conservar archivo en Converters si es reutilizable -->
         </ResourceDictionary>
     </Window.Resources>    <!-- Grid overlay con fondo semi-transparente -->
     <Grid x:Name="RootGrid" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">        <!-- Border con la ventana modal centrada -->
@@ -118,7 +119,7 @@
                             <!-- Fila 4: Responsable -->
                             <TextBlock Text="Responsable:" Style="{StaticResource LabelTextStyle}" Grid.Row="4" Grid.Column="0"/>
                             <TextBox Text="{Binding Responsable, UpdateSourceTrigger=PropertyChanged}" Grid.Row="4" Grid.Column="1" 
-                                     Style="{StaticResource InputStyle}"/>
+                                     Style="{StaticResource InputStyle}" CharacterCasing="Upper"/>
 
                             <!-- Fila 5: Costo -->
                             <TextBlock Text="Costo (COP):" Style="{StaticResource LabelTextStyle}" Grid.Row="5" Grid.Column="0"/>
@@ -136,12 +137,12 @@
                             <!-- Fila 7: Descripción grande -->
                             <TextBlock Text="Descripción:" Style="{StaticResource LabelTextStyle}" Grid.Row="7" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
                             <TextBox x:Name="DescripcionTextBox" Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
-                                     Grid.Row="7" Grid.Column="1" Style="{StaticResource InputStyle}" MinHeight="140" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                     Grid.Row="7" Grid.Column="1" Style="{StaticResource InputStyle}" MinHeight="140" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>
 
                             <!-- Fila 8: Observaciones -->
                             <TextBlock Text="Observaciones:" Style="{StaticResource LabelTextStyle}" Grid.Row="8" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
                             <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Grid.Row="8" Grid.Column="1" 
-                                     Style="{StaticResource InputStyle}" MinHeight="50" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                     Style="{StaticResource InputStyle}" MinHeight="50" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>
 
                             <!-- Fila 9: Frecuencia -->
                             <TextBlock Text="Frecuencia:" Style="{StaticResource LabelTextStyle}" Grid.Row="9" Grid.Column="0" 

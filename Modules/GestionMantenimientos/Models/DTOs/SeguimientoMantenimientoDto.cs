@@ -3,7 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
-{public class SeguimientoMantenimientoDto
+{
+    public class SeguimientoMantenimientoDto
     {
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }
@@ -14,7 +15,21 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         [Required(ErrorMessage = "El tipo de mantenimiento es obligatorio.")]
         public TipoMantenimiento? TipoMtno { get; set; }
         public string? Descripcion { get; set; }
-        public string? Responsable { get; set; }
+        private string? _responsable;
+        public string? Responsable
+        {
+            get => _responsable;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_responsable != normalized)
+                {
+                    _responsable = normalized;
+                    // Mantener cache de filtros consistente
+                    RefrescarCacheFiltro();
+                }
+            }
+        }
         [Range(0, double.MaxValue, ErrorMessage = "El costo no puede ser negativo.")]
         public decimal? Costo { get; set; }
         public string? Observaciones { get; set; }

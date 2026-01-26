@@ -12,14 +12,13 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         [Required(ErrorMessage = "El nombre del equipo es obligatorio.")]
         public string Nombre { get; set; } = null!;
         [Required(ErrorMessage = "El tipo de mantenimiento es obligatorio.")]
-        public TipoMantenimiento TipoMtno { get; set; }
-        [Required(ErrorMessage = "La descripción es obligatoria.")]
-        [StringLength(200, ErrorMessage = "La descripción no puede superar los 200 caracteres.")]
+        public TipoMantenimiento TipoMtno { get; set; }        [Required(ErrorMessage = "La descripción es obligatoria.")]
+        [StringLength(1000, ErrorMessage = "La descripción no puede superar los 1000 caracteres.")]
         public string? Descripcion { get; set; }
         [Required(ErrorMessage = "El responsable es obligatorio.")]
         public string? Responsable { get; set; }
-        [Range(0, double.MaxValue, ErrorMessage = "El costo no puede ser negativo.")]
-        public decimal? Costo { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "El costo no puede ser negativo.")]        public decimal? Costo { get; set; }
+        [StringLength(1000, ErrorMessage = "Las observaciones no pueden superar los 1000 caracteres.")]
         public string? Observaciones { get; set; }
         [Required(ErrorMessage = "La fecha de registro es obligatoria.")]
         public DateTime? FechaRegistro { get; set; } // Usar solo esta como fecha oficial de realización y registro

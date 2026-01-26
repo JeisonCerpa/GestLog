@@ -10,9 +10,50 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
     public class EquipoDto : INotifyPropertyChanged, IDataErrorInfo
     {
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
-        public string? Codigo { get; set; }
-        public string? Nombre { get; set; } // Nombre ahora puede ser null
-        public string? Marca { get; set; }
+        private string? _codigo;
+        public string? Codigo
+        {
+            get => _codigo;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_codigo != normalized)
+                {
+                    _codigo = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string? _nombre;
+        public string? Nombre
+        {
+            get => _nombre;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_nombre != normalized)
+                {
+                    _nombre = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        } // Nombre ahora puede ser null
+
+        private string? _marca;
+        public string? Marca
+        {
+            get => _marca;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_marca != normalized)
+                {
+                    _marca = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        }
         public EstadoEquipo? Estado { get; set; }
         public Sede? Sede { get; set; }        
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
@@ -23,8 +64,35 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public string? Observaciones { get; set; }
         public DateTime? FechaBaja { get; set; }
         // Nuevas propiedades
-        public string? Clasificacion { get; set; }
-        public string? CompradoA { get; set; }
+        private string? _clasificacion;
+        public string? Clasificacion
+        {
+            get => _clasificacion;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_clasificacion != normalized)
+                {
+                    _clasificacion = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string? _compradoA;
+        public string? CompradoA
+        {
+            get => _compradoA;
+            set
+            {
+                var normalized = value?.ToUpperInvariant().Trim();
+                if (_compradoA != normalized)
+                {
+                    _compradoA = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        }
         
         // Colección de seguimientos (historial de mantenimientos realizados)
         public ObservableCollection<SeguimientoMantenimientoDto> MantenimientosRealizados { get; set; } = new();

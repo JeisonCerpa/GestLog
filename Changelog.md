@@ -6,6 +6,9 @@ Fecha: 21 de enero de 2026
 
 - Mejora en la exportación de mantenimientos: formato y diseño actualizados (SST-F-83 — Versión 4) para facilitar la lectura y el intercambio.
 - Se corrigió y mejoró la exportación: formato más consistente y se añadieron servicios específicos para exportar la Hoja de Vida y los listados de Equipos.
+- Los campos Código, Nombre, Marca, Clasificación y "Comprado a" ahora se muestran en MAYÚSCULAS para mayor consistencia visual.
+- El campo "Responsable" en los registros de mantenimientos ahora se muestra en MAYÚSCULAS al registrarse para mejorar la consistencia en listados e informes.
+- Los campos "Descripción" y "Observaciones" en formularios y reportes ahora aceptan hasta **1000 caracteres**, permitiendo descripciones y notas más completas.
 
 ## Implementación
 
@@ -20,6 +23,7 @@ Fecha: 21 de enero de 2026
 - Corrección visual: los items "No Realizado" ahora se distinguen claramente de los atrasados.
 - Corregido: fallo que provocaba errores al eliminar usuarios en algunas condiciones; la operación ahora se realiza de forma segura y confiable.
 - Corregido: en el diálogo de equipos los desplegables de Marca, Clasificación y "Comprado a" ahora muestran inmediatamente las opciones al abrirse y permiten buscar o añadir rápidamente nuevas entradas.
+- Mejorado: los desplegables editables convierten automáticamente el texto a MAYÚSCULAS mientras se escribe, facilitando la búsqueda y estandarización de los registros.
 - **Rediseño visual completo del diálogo "Datos del Equipo":** 
   - ✨ Interfaz modernizada y más intuitiva
   - 📋 Secciones claramente organizadas con iconos: Información Básica, Información de Compra, Clasificación y Proveedor, Observaciones
@@ -34,3 +38,4 @@ Fecha: 21 de enero de 2026
 
 - Se recomienda ejecutar una exportación de prueba y una compilación completa para validar colores, merges y trazabilidad end-to-end.
 - Pendiente: pruebas de rendimiento con hojas grandes y verificación final de que los registros marcados coincidan con la base de datos.
+- Se sugiere informar a los usuarios que los campos "Descripción" y "Observaciones" permiten ahora hasta 1000 caracteres, para aprovechar la mayor capacidad al documentar mantenimientos.

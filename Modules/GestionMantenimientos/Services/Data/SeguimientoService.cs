@@ -85,6 +85,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         {
             try
             {
+                // Normalización defensiva: Responsable en mayúsculas
+                if (seguimiento == null)
+                    throw new GestionMantenimientosDomainException("El seguimiento no puede ser nulo.");
+
+                seguimiento.Responsable = (seguimiento.Responsable ?? string.Empty).ToUpperInvariant().Trim();
+
                 ValidarSeguimiento(seguimiento);
                 var hoy = DateTime.Now;
                 var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
@@ -175,6 +181,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         {
             try
             {
+                // Normalización defensiva: Responsable en mayúsculas
+                if (seguimiento == null)
+                    throw new GestionMantenimientosDomainException("El seguimiento no puede ser nulo.");
+
+                seguimiento.Responsable = (seguimiento.Responsable ?? string.Empty).ToUpperInvariant().Trim();
+
                 ValidarSeguimiento(seguimiento);
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 // Buscar por clave compuesta: Codigo, Semana, Anio

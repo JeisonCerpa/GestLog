@@ -93,6 +93,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         {
             try
             {
+                // Validación y normalización defensiva
+                if (equipo == null)
+                    throw new GestionMantenimientosDomainException("El equipo no puede ser nulo.");
+
+                equipo.Codigo = equipo.Codigo?.ToUpperInvariant().Trim();
+                equipo.Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? null : equipo.Nombre.ToUpperInvariant().Trim();
+                equipo.Marca = string.IsNullOrWhiteSpace(equipo.Marca) ? null : equipo.Marca.ToUpperInvariant().Trim();
+                equipo.Clasificacion = string.IsNullOrWhiteSpace(equipo.Clasificacion) ? null : equipo.Clasificacion.ToUpperInvariant().Trim();
+                equipo.CompradoA = string.IsNullOrWhiteSpace(equipo.CompradoA) ? null : equipo.CompradoA.ToUpperInvariant().Trim();
+
                 ValidarEquipo(equipo);
                 using var dbContext = _dbContextFactory.CreateDbContext();                if (await dbContext.Equipos.AnyAsync(e => e.Codigo == equipo.Codigo))
                     throw new GestionMantenimientosDomainException($"Ya existe un equipo con el cÃ³digo '{equipo.Codigo}'.");
@@ -310,6 +320,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         {
             try
             {
+                // Validación y normalización defensiva
+                if (equipo == null)
+                    throw new GestionMantenimientosDomainException("El equipo no puede ser nulo.");
+
+                equipo.Codigo = equipo.Codigo?.ToUpperInvariant().Trim();
+                equipo.Nombre = string.IsNullOrWhiteSpace(equipo.Nombre) ? null : equipo.Nombre.ToUpperInvariant().Trim();
+                equipo.Marca = string.IsNullOrWhiteSpace(equipo.Marca) ? null : equipo.Marca.ToUpperInvariant().Trim();
+                equipo.Clasificacion = string.IsNullOrWhiteSpace(equipo.Clasificacion) ? null : equipo.Clasificacion.ToUpperInvariant().Trim();
+                equipo.CompradoA = string.IsNullOrWhiteSpace(equipo.CompradoA) ? null : equipo.CompradoA.ToUpperInvariant().Trim();
+
                 ValidarEquipo(equipo);
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 var entity = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == equipo.Codigo);

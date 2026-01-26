@@ -79,13 +79,17 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
         {
             this.DialogResult = false;
             this.Close();
-        }        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
+        }
+
+        private async void EquipoDialog_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {
                 FechaCompraPicker.DisplayDateEnd = DateTime.Today;
             }
             catch { }
+
+            // CharacterCasing para ComboBox editables ahora se aplica mediante el Behavior ComboBoxEditableUpperBehavior
 
             if (this.Owner != null)
             {
@@ -141,9 +145,13 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             var viewModel = DataContext as EquipoDialogViewModel;
             if (viewModel != null)
             {
-                Equipo.Marca = viewModel.FiltroMarca ?? string.Empty;
-                Equipo.Clasificacion = viewModel.FiltroClasificacion ?? string.Empty;
-                Equipo.CompradoA = viewModel.FiltroCompradoA ?? string.Empty;
+                // Tomar valores del ViewModel y normalizarlos a MAYÚSCULAS para garantizar consistencia
+                Equipo.Marca = (viewModel.FiltroMarca ?? string.Empty).ToUpperInvariant().Trim();
+                Equipo.Clasificacion = (viewModel.FiltroClasificacion ?? string.Empty).ToUpperInvariant().Trim();
+                Equipo.CompradoA = (viewModel.FiltroCompradoA ?? string.Empty).ToUpperInvariant().Trim();
+                // Asegurar Código y Nombre también normalizados (por si vienen de UI directa)
+                Equipo.Codigo = (Equipo.Codigo ?? string.Empty).ToUpperInvariant().Trim();
+                Equipo.Nombre = (Equipo.Nombre ?? string.Empty).ToUpperInvariant().Trim();
                 viewModel.ShowValidationErrors = true;
             }
 
@@ -159,6 +167,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
 
             if (Equipo.Precio != null && Equipo.Precio < 0)
                 errores.Add("El precio no puede ser negativo.");
+
+            // Validar longitud de Observaciones (UI tiene MaxLength=1000)
+            if (!string.IsNullOrEmpty(Equipo.Observaciones) && Equipo.Observaciones.Length > 1000)
+                errores.Add("Las observaciones no pueden superar los 1000 caracteres.");
 
             if (Equipo.Estado == GestLog.Modules.GestionMantenimientos.Models.Enums.EstadoEquipo.DadoDeBaja && !Equipo.FechaBaja.HasValue)
                 errores.Add("Debe indicar la fecha de baja si el equipo está dado de baja.");
@@ -250,12 +262,19 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             
             private string? _codigoOriginal;
 
+            // Guardar términos originales para búsquedas (preservar comportamiento del servicio)
+            private string _lastMarcaSearchTerm = string.Empty;
+            private string _lastClasificacionSearchTerm = string.Empty;
+            private string _lastCompradoASearchTerm = string.Empty;
+
             public string? Codigo 
             { 
                 get => Equipo.Codigo; 
                 set 
                 { 
-                    Equipo.Codigo = value;
+                    // Forzar mayúsculas y trim
+                    var newVal = value?.ToUpperInvariant().Trim();
+                    Equipo.Codigo = newVal;
                     ValidarCodigoDuplicado();
                     RaisePropertyChanged(nameof(Codigo));
                     RaisePropertyChanged(nameof(IsCodigoDuplicado));
@@ -269,7 +288,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 get => Equipo.Nombre; 
                 set 
                 { 
-                    Equipo.Nombre = value;
+                    // Forzar mayúsculas y trim
+                    Equipo.Nombre = value?.ToUpperInvariant().Trim();
                     RaisePropertyChanged(nameof(Nombre));
                     RaisePropertyChanged(nameof(IsNombreVacio));
                     RaisePropertyChanged(nameof(IsFormularioValido));
@@ -281,8 +301,17 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 get => Equipo.Marca; 
                 set
                 {
-                    Equipo.Marca = value;
-                    FiltroMarca = value ?? string.Empty;
+                    // Forzar mayúsculas y mantener término de búsqueda original
+                    var original = value ?? string.Empty;
+                    Equipo.Marca = original.ToUpperInvariant().Trim();
+                    // Actualizar filtro mostrado en mayúsculas
+                    _suppressFiltroMarcaChanged = true;
+                    filtroMarca = Equipo.Marca ?? string.Empty;
+                    RaisePropertyChanged(nameof(FiltroMarca));
+                    _suppressFiltroMarcaChanged = false;
+
+                    // Guardar término original para consultas al servicio
+                    _lastMarcaSearchTerm = original;
                 }
             }
 
@@ -314,8 +343,15 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 get => Equipo.Clasificacion;
                 set
                 {
-                    Equipo.Clasificacion = value;
-                    FiltroClasificacion = value ?? string.Empty;
+                    var original = value ?? string.Empty;
+                    Equipo.Clasificacion = original.ToUpperInvariant().Trim();
+
+                    _suppressFiltroClasificacionChanged = true;
+                    filtroClasificacion = Equipo.Clasificacion ?? string.Empty;
+                    RaisePropertyChanged(nameof(FiltroClasificacion));
+                    _suppressFiltroClasificacionChanged = false;
+
+                    _lastClasificacionSearchTerm = original;
                 }
             }
 
@@ -324,8 +360,15 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 get => Equipo.CompradoA;
                 set
                 {
-                    Equipo.CompradoA = value;
-                    FiltroCompradoA = value ?? string.Empty;
+                    var original = value ?? string.Empty;
+                    Equipo.CompradoA = original.ToUpperInvariant().Trim();
+
+                    _suppressFiltroCompradoAChanged = true;
+                    filtroCompradoA = Equipo.CompradoA ?? string.Empty;
+                    RaisePropertyChanged(nameof(FiltroCompradoA));
+                    _suppressFiltroCompradoAChanged = false;
+
+                    _lastCompradoASearchTerm = original;
                 }
             }
 
@@ -388,7 +431,12 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                         return;
                     }
 
-                    filtroClasificacion = value ?? string.Empty;
+                    // Guardar término original para la búsqueda
+                    var original = value ?? string.Empty;
+                    _lastClasificacionSearchTerm = original;
+
+                    // Mostrar en mayúsculas
+                    filtroClasificacion = original.ToUpperInvariant();
                     RaisePropertyChanged(nameof(FiltroClasificacion));
 
                     _clasificacionFilterCts?.Cancel();
@@ -413,7 +461,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                         return;
                     }
 
-                    filtroCompradoA = value ?? string.Empty;
+                    var original = value ?? string.Empty;
+                    _lastCompradoASearchTerm = original;
+
+                    filtroCompradoA = original.ToUpperInvariant();
                     RaisePropertyChanged(nameof(FiltroCompradoA));
 
                     _compradoAFilterCts?.Cancel();
@@ -438,7 +489,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                         return;
                     }
 
-                    filtroMarca = value ?? string.Empty;
+                    var original = value ?? string.Empty;
+                    _lastMarcaSearchTerm = original;
+
+                    filtroMarca = original.ToUpperInvariant();
                     RaisePropertyChanged(nameof(FiltroMarca));
 
                     _marcaFilterCts?.Cancel();
@@ -460,31 +514,31 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 MarcasDisponibles = new System.Collections.ObjectModel.ObservableCollection<string>();
                 MarcasFiltradas = new System.Collections.ObjectModel.ObservableCollection<string>();
                 
-                if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesDisponibles.Contains(Equipo.Clasificacion))
-                    ClasificacionesDisponibles.Add(Equipo.Clasificacion);
-                if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesFiltradas.Contains(Equipo.Clasificacion))
-                    ClasificacionesFiltradas.Add(Equipo.Clasificacion);
-                if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoADisponibles.Contains(Equipo.CompradoA))
-                    CompradoADisponibles.Add(Equipo.CompradoA);
-                if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoAFiltrados.Contains(Equipo.CompradoA))
-                    CompradoAFiltrados.Add(Equipo.CompradoA);
-                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasDisponibles.Contains(Equipo.Marca))
-                    MarcasDisponibles.Add(Equipo.Marca);
-                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasFiltradas.Contains(Equipo.Marca))
-                    MarcasFiltradas.Add(Equipo.Marca);
+                if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesDisponibles.Contains(Equipo.Clasificacion.ToUpperInvariant()))
+                    ClasificacionesDisponibles.Add(Equipo.Clasificacion.ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(Equipo.Clasificacion) && !ClasificacionesFiltradas.Contains(Equipo.Clasificacion.ToUpperInvariant()))
+                    ClasificacionesFiltradas.Add(Equipo.Clasificacion.ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoADisponibles.Contains(Equipo.CompradoA.ToUpperInvariant()))
+                    CompradoADisponibles.Add(Equipo.CompradoA.ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(Equipo.CompradoA) && !CompradoAFiltrados.Contains(Equipo.CompradoA.ToUpperInvariant()))
+                    CompradoAFiltrados.Add(Equipo.CompradoA.ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasDisponibles.Contains(Equipo.Marca.ToUpperInvariant()))
+                    MarcasDisponibles.Add(Equipo.Marca.ToUpperInvariant());
+                if (!string.IsNullOrWhiteSpace(Equipo.Marca) && !MarcasFiltradas.Contains(Equipo.Marca.ToUpperInvariant()))
+                    MarcasFiltradas.Add(Equipo.Marca.ToUpperInvariant());
 
                 _suppressFiltroMarcaChanged = true;
-                filtroMarca = Equipo.Marca ?? string.Empty;
+                filtroMarca = (Equipo.Marca ?? string.Empty).ToUpperInvariant();
                 RaisePropertyChanged(nameof(FiltroMarca));
                 _suppressFiltroMarcaChanged = false;
 
                 _suppressFiltroClasificacionChanged = true;
-                filtroClasificacion = Equipo.Clasificacion ?? string.Empty;
+                filtroClasificacion = (Equipo.Clasificacion ?? string.Empty).ToUpperInvariant();
                 RaisePropertyChanged(nameof(FiltroClasificacion));
                 _suppressFiltroClasificacionChanged = false;
 
                 _suppressFiltroCompradoAChanged = true;
-                filtroCompradoA = Equipo.CompradoA ?? string.Empty;
+                filtroCompradoA = (Equipo.CompradoA ?? string.Empty).ToUpperInvariant();
                 RaisePropertyChanged(nameof(FiltroCompradoA));
                 _suppressFiltroCompradoAChanged = false;
             }
@@ -531,7 +585,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 {
                     var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(ClasificacionAutocompletadoService)) as ClasificacionAutocompletadoService;
                     if (svc == null) return;
-                    var filtroActual = FiltroClasificacion ?? string.Empty;
+                    // Usar término original para la consulta
+                    var filtroActual = _lastClasificacionSearchTerm ?? string.Empty;
                     var items = await svc.BuscarAsync(filtroActual);
                     if (cancellationToken.IsCancellationRequested) return;
 
@@ -542,7 +597,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             var textoPreservado = filtroClasificacion;
                             ClasificacionesFiltradas.Clear();
                             foreach (var it in items)
-                                ClasificacionesFiltradas.Add(it);
+                                ClasificacionesFiltradas.Add((it ?? string.Empty).ToUpperInvariant());
 
                             _suppressFiltroClasificacionChanged = true;
                             filtroClasificacion = textoPreservado;
@@ -561,7 +616,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 {
                     var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(CompradoAAutocompletadoService)) as CompradoAAutocompletadoService;
                     if (svc == null) return;
-                    var filtroActual = FiltroCompradoA ?? string.Empty;
+                    var filtroActual = _lastCompradoASearchTerm ?? string.Empty;
                     var items = await svc.BuscarAsync(filtroActual);
                     if (cancellationToken.IsCancellationRequested) return;
 
@@ -572,7 +627,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             var textoPreservado = filtroCompradoA;
                             CompradoAFiltrados.Clear();
                             foreach (var it in items)
-                                CompradoAFiltrados.Add(it);
+                                CompradoAFiltrados.Add((it ?? string.Empty).ToUpperInvariant());
 
                             _suppressFiltroCompradoAChanged = true;
                             filtroCompradoA = textoPreservado;
@@ -583,13 +638,16 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     });
                 }
                 catch { }
-            }            private async Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
+            }
+
+            private async Task FiltrarMarcasAsync(System.Threading.CancellationToken cancellationToken)
             {
                 try
                 {
                     var svc = ((App)System.Windows.Application.Current).ServiceProvider?.GetService(typeof(MarcaAutocompletadoService)) as MarcaAutocompletadoService;
                     if (svc == null) return;
-                    var filtroActual = FiltroMarca ?? string.Empty;
+                    // Usar término original para buscar
+                    var filtroActual = _lastMarcaSearchTerm ?? string.Empty;
                     
                     var items = await svc.BuscarAsync(filtroActual);
                     
@@ -602,7 +660,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                             var textoPreservado = filtroMarca;
                             MarcasFiltradas.Clear();
                             foreach (var it in items)
-                                MarcasFiltradas.Add(it);
+                                MarcasFiltradas.Add((it ?? string.Empty).ToUpperInvariant());
 
                             _suppressFiltroMarcaChanged = true;
                             filtroMarca = textoPreservado;
@@ -613,7 +671,9 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                     });
                 }
                 catch { }
-            }            private void ValidarCodigoDuplicado()
+            }
+
+            private void ValidarCodigoDuplicado()
             {
                 if (string.IsNullOrWhiteSpace(Codigo))
                 {

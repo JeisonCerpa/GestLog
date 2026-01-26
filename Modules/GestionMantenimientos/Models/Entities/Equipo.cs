@@ -16,8 +16,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public Sede? Sede { get; set; }
         public DateTime? FechaRegistro { get; set; } // Usar como fecha de alta y referencia
         public DateTime? FechaCompra { get; set; }
-        [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
-        public decimal? Precio { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]        public decimal? Precio { get; set; }
+        [StringLength(1000, ErrorMessage = "Las observaciones no pueden superar los 1000 caracteres.")]
         public string? Observaciones { get; set; }
         // Nuevos campos: Clasificación y Comprado a
         public string? Clasificacion { get; set; }
