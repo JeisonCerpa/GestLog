@@ -13,8 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using AutoUpdaterDotNET;
 using static AutoUpdaterDotNET.Mode;
 using System.Reflection;
-using Velopack;
 using System.Diagnostics;
+using Velopack;
 
 namespace GestLog;
 
@@ -26,7 +26,13 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
-        // ✅ PRIMERO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
+        // ✅ PRIMERO: Inicializar Velopack ANTES de cualquier otra cosa
+        // Esto maneja actualizaciones automáticas en segundo plano
+#if !DEBUG
+        VelopackApp.Build().Run();
+#endif
+
+        // ✅ SEGUNDO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
         var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
         if (string.IsNullOrEmpty(environment))
         {
@@ -70,12 +76,7 @@ public partial class App : System.Windows.Application
             Environment.SetEnvironmentVariable("GESTLOG_DB_USER", dbSection.GetProperty("Username").GetString() ?? "");
             Environment.SetEnvironmentVariable("GESTLOG_DB_PASSWORD", dbSection.GetProperty("Password").GetString() ?? "");
             Environment.SetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY", dbSection.GetProperty("UseIntegratedSecurity").GetBoolean().ToString());
-        }
-
-        // ✅ SEGUNDO: Inicializar Velopack ANTES de cualquier otra operación
-#if !DEBUG
-        VelopackApp.Build().Run();
-#endif        // Configurar manejo global de excepciones ANTES de cualquier otra lógica
+        }        // ✅ Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
         
         // Configurar tooltip delay a 150ms (SOLO UNA VEZ en toda la aplicación)
