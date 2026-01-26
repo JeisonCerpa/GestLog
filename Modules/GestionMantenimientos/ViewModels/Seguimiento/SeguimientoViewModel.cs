@@ -17,6 +17,7 @@ using Microsoft.Win32;
 using GestLog.Modules.GestionMantenimientos.Utilities;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Import;
+using ClosedXML.Excel;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento;
 
@@ -593,6 +594,69 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             _importCancellationTokenSource?.Dispose();
             _importCancellationTokenSource = null;
             ProgressValue = 0;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanImportSeguimiento))]
+    public async Task DescargarPlantillaAsync()
+    {
+        var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+            FileName = $"PLANTILLA_SEGUIMIENTOS_{DateTime.Now:yyyyMMdd}.xlsx",
+            Title = "Guardar plantilla de importación"
+        };
+
+        if (saveFileDialog.ShowDialog() != true)
+            return;
+
+        IsLoading = true;
+        StatusMessage = "Generando plantilla...";
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Plantilla");
+
+                var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRealizacion" };
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    ws.Cell(1, i + 1).Value = headers[i];
+                }
+
+                // Ejemplo de fila
+                ws.Cell(2, 1).Value = "EQP-0001";
+                ws.Cell(2, 2).Value = "Equipo ejemplo";
+                ws.Cell(2, 3).Value = "Preventivo";
+                ws.Cell(2, 4).Value = "Descripción de ejemplo";
+                ws.Cell(2, 5).Value = "Técnico Ejemplo";
+                ws.Cell(2, 6).Value = 0;
+                ws.Cell(2, 7).Value = "Sin observaciones";
+                ws.Cell(2, 8).Value = DateTime.Now.ToString("dd/MM/yyyy");
+
+                // Formato de encabezado
+                ws.Row(1).Style.Font.Bold = true;
+                ws.Columns().AdjustToContents();
+
+                wb.SaveAs(saveFileDialog.FileName);
+            });
+
+            StatusMessage = $"Plantilla guardada: {saveFileDialog.FileName}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Generación de plantilla cancelada.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al generar plantilla de importación");
+            StatusMessage = "Error al generar la plantilla. Ver logs para detalles.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 

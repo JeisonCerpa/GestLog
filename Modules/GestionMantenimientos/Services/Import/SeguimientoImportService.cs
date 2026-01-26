@@ -155,78 +155,85 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                 // Persistir importados en transacción
                 if (result.ImportedItems.Any())
                 {
-                    using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-                    try
+                    // Usar la estrategia de ejecución para que la transacción sea reintentable
+                    var strategy = _dbContextFactory.CreateDbContext().Database.CreateExecutionStrategy();
+
+                    await strategy.ExecuteAsync(async () =>
                     {
-                        int updated = 0;
-                        int added = 0;
-                        foreach (var seg in result.ImportedItems)
+                        using var dbContextTx = _dbContextFactory.CreateDbContext();
+                        using var transaction = await dbContextTx.Database.BeginTransactionAsync(cancellationToken);
+                        try
                         {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            var existente = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seg.Codigo && s.Semana == seg.Semana && s.Anio == seg.Anio && s.TipoMtno == seg.TipoMtno, cancellationToken);
-                            if (existente == null)
+                            int updated = 0;
+                            int added = 0;
+                            foreach (var seg in result.ImportedItems)
                             {
-                                var nuevo = new GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimiento
+                                cancellationToken.ThrowIfCancellationRequested();
+                                var existente = await dbContextTx.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seg.Codigo && s.Semana == seg.Semana && s.Anio == seg.Anio && s.TipoMtno == seg.TipoMtno, cancellationToken);
+                                if (existente == null)
                                 {
-                                    Codigo = seg.Codigo ?? string.Empty,
-                                    Nombre = seg.Nombre ?? string.Empty,
-                                    TipoMtno = seg.TipoMtno ?? TipoMantenimiento.Preventivo,
-                                    Descripcion = seg.Descripcion ?? string.Empty,
-                                    Responsable = seg.Responsable ?? string.Empty,
-                                    Costo = seg.Costo ?? 0m,
-                                    Observaciones = seg.Observaciones ?? string.Empty,
-                                    FechaRegistro = seg.FechaRegistro ?? DateTime.Now,
-                                    FechaRealizacion = seg.FechaRealizacion,
-                                    Semana = seg.Semana,
-                                    Anio = seg.Anio,
-                                    Estado = seg.Estado,
-                                    Frecuencia = seg.Frecuencia
-                                };
-                                dbContext.Seguimientos.Add(nuevo);
-                                added++;
+                                    var nuevo = new GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimiento
+                                    {
+                                        Codigo = seg.Codigo ?? string.Empty,
+                                        Nombre = seg.Nombre ?? string.Empty,
+                                        TipoMtno = seg.TipoMtno ?? TipoMantenimiento.Preventivo,
+                                        Descripcion = seg.Descripcion ?? string.Empty,
+                                        Responsable = seg.Responsable ?? string.Empty,
+                                        Costo = seg.Costo ?? 0m,
+                                        Observaciones = seg.Observaciones ?? string.Empty,
+                                        FechaRegistro = seg.FechaRegistro ?? DateTime.Now,
+                                        FechaRealizacion = seg.FechaRealizacion,
+                                        Semana = seg.Semana,
+                                        Anio = seg.Anio,
+                                        Estado = seg.Estado,
+                                        Frecuencia = seg.Frecuencia
+                                    };
+                                    dbContextTx.Seguimientos.Add(nuevo);
+                                    added++;
+                                }
+                                else if (existente.TipoMtno == TipoMantenimiento.Preventivo && seg.TipoMtno == TipoMantenimiento.Preventivo)
+                                {
+                                    existente.Nombre = seg.Nombre ?? existente.Nombre;
+                                    existente.Descripcion = seg.Descripcion ?? existente.Descripcion;
+                                    existente.Responsable = seg.Responsable ?? existente.Responsable;
+                                    existente.Costo = seg.Costo ?? existente.Costo;
+                                    existente.Observaciones = seg.Observaciones ?? existente.Observaciones;
+                                    existente.FechaRegistro = seg.FechaRegistro ?? existente.FechaRegistro;
+                                    existente.FechaRealizacion = seg.FechaRealizacion ?? existente.FechaRealizacion;
+                                    existente.Estado = seg.Estado;
+                                    dbContextTx.Seguimientos.Update(existente);
+                                    updated++;
+                                }
+                                else
+                                {
+                                    // Correctivos no se actualizan
+                                    _logger.LogWarning("[SeguimientoImportService] Ignorado correctivo existente: {Codigo} Semana {Semana}", seg.Codigo ?? string.Empty, seg.Semana);
+                                    result.IgnoredRows.Add((-1, $"Correctivo existente ignorado: {seg.Codigo} Semana {seg.Semana}"));
+                                    result.IgnoredCount++;
+                                }
                             }
-                            else if (existente.TipoMtno == TipoMantenimiento.Preventivo && seg.TipoMtno == TipoMantenimiento.Preventivo)
-                            {
-                                existente.Nombre = seg.Nombre ?? existente.Nombre;
-                                existente.Descripcion = seg.Descripcion ?? existente.Descripcion;
-                                existente.Responsable = seg.Responsable ?? existente.Responsable;
-                                existente.Costo = seg.Costo ?? existente.Costo;
-                                existente.Observaciones = seg.Observaciones ?? existente.Observaciones;
-                                existente.FechaRegistro = seg.FechaRegistro ?? existente.FechaRegistro;
-                                existente.FechaRealizacion = seg.FechaRealizacion ?? existente.FechaRealizacion;
-                                existente.Estado = seg.Estado;
-                                dbContext.Seguimientos.Update(existente);
-                                updated++;
-                            }
-                            else
-                            {
-                                // Correctivos no se actualizan
-                                _logger.LogWarning("[SeguimientoImportService] Ignorado correctivo existente: {Codigo} Semana {Semana}", seg.Codigo ?? string.Empty, seg.Semana);
-                                result.IgnoredRows.Add((-1, $"Correctivo existente ignorado: {seg.Codigo} Semana {seg.Semana}"));
-                                result.IgnoredCount++;
-                            }
+
+                            await dbContextTx.SaveChangesAsync(cancellationToken);
+                            await transaction.CommitAsync(cancellationToken);
+
+                            result.ImportedCount = added;
+                            result.UpdatedCount = updated;
+
+                            _logger.LogInformation("[SeguimientoImportService] Persistencia completada: Added={Added} Updated={Updated}", added, updated);
                         }
-
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        await transaction.CommitAsync(cancellationToken);
-
-                        result.ImportedCount = added;
-                        result.UpdatedCount = updated;
-
-                        _logger.LogInformation("[SeguimientoImportService] Persistencia completada: Added={Added} Updated={Updated}", added, updated);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        await transaction.RollbackAsync(cancellationToken);
-                        _logger.LogInformation("[SeguimientoImportService] Persistencia cancelada por token");
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        await transaction.RollbackAsync(cancellationToken);
-                        _logger.LogError(ex, "[SeguimientoImportService] Error al persistir importación");
-                        throw new GestionMantenimientosDomainException("Error al persistir importación", ex);
-                    }
+                        catch (OperationCanceledException)
+                        {
+                            await transaction.RollbackAsync(cancellationToken);
+                            _logger.LogInformation("[SeguimientoImportService] Persistencia cancelada por token");
+                            throw;
+                        }
+                        catch (Exception ex)
+                        {
+                            await transaction.RollbackAsync(cancellationToken);
+                            _logger.LogError(ex, "[SeguimientoImportService] Error al persistir importación");
+                            throw new GestionMantenimientosDomainException("Error al persistir importación", ex);
+                        }
+                    });
                 }
 
                 // Crear cronogramas

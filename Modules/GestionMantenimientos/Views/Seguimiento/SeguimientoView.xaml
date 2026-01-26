@@ -265,7 +265,15 @@
                     <Button Content="⭲" Command="{Binding ImportarSeguimientosAntiguosCommand}" ToolTip="Importar seguimientos antiguos desde Excel"
                             Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
                             IsEnabled="{Binding CanImportSeguimiento}"
-                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <!-- Botón Descargar Plantilla -->
+                    <Button Content="📥" Command="{Binding DescargarPlantillaCommand}" ToolTip="Descargar plantilla de importación (.xlsx)"
+                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
+                            IsEnabled="{Binding CanImportSeguimiento}"
+                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     <!-- Barra de progreso compacta -->
                     <controls:SimpleProgressBar Width="220" Height="48" Margin="8,0,0,0"
