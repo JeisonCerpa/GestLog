@@ -509,8 +509,16 @@ namespace GestLog.Modules.GestionCartera.Services
                 if (!alreadyInBcc)
                 {
                     message.Bcc.Add(config.BccEmail);
-                    _logger.LogInformation("BCC automático agregado desde configuración: {BccEmail}", config.BccEmail);
+                    _logger.LogInformation("📧 BCC automático agregado desde configuración SMTP: {BccEmail}", config.BccEmail);
                 }
+                else
+                {
+                    _logger.LogDebug("BCC ya está incluido en la lista: {BccEmail}", config.BccEmail);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("⚠️ BccEmail vacío en configuración SMTP - No se agregará BCC automático");
             }
 
             if (!string.IsNullOrWhiteSpace(config.CcEmail))
@@ -522,27 +530,42 @@ namespace GestLog.Modules.GestionCartera.Services
                 if (!alreadyInCc)
                 {
                     message.CC.Add(config.CcEmail);
-                    _logger.LogInformation("CC automático agregado desde configuración: {CcEmail}", config.CcEmail);
+                    _logger.LogInformation("📧 CC automático agregado desde configuración SMTP: {CcEmail}", config.CcEmail);
+                }
+                else
+                {
+                    _logger.LogDebug("CC ya está incluido en la lista: {CcEmail}", config.CcEmail);
                 }
             }
+            else
+            {
+                _logger.LogDebug("⚠️ CcEmail vacío en configuración SMTP - No se agregará CC automático");
+            }
+
+            // Logging de resumen del mensaje
+            _logger.LogInformation("📨 Mensaje de correo creado - De: {From}, Para: {To}, CC: {Cc}, BCC: {Bcc}, Asunto: {Subject}",
+                message.From?.Address ?? "DESCONOCIDO",
+                string.Join(",", message.To.Select(x => x.Address)),
+                message.CC.Count > 0 ? string.Join(",", message.CC.Select(x => x.Address)) : "(ninguno)",
+                message.Bcc.Count > 0 ? string.Join(",", message.Bcc.Select(x => x.Address)) : "(ninguno)",
+                emailInfo.Subject);
 
             return message;
         }
 
-        private SmtpClient CreateSmtpClient()
+                private SmtpClient CreateSmtpClient()
         {
             var config = CurrentConfiguration!;
             // Si la contraseña está vacía, intentar recuperarla del Credential Manager
             if (string.IsNullOrWhiteSpace(config.Password) && !string.IsNullOrWhiteSpace(config.Username))
             {
-                var credentialTarget = $"SMTP_{config.SmtpServer}_{config.Username}";
+                var credentialTarget = $"GestionCartera_SMTP_{config.SmtpServer}_{config.Username}";
                 var credentials = _credentialService.GetCredentials(credentialTarget);
                 if (!string.IsNullOrEmpty(credentials.password))
                 {
                     config.Password = credentials.password;
                 }
-            }
-            return new SmtpClient(config.SmtpServer)
+            }            return new SmtpClient(config.SmtpServer)
             {
                 Port = config.Port,
                 Credentials = new NetworkCredential(config.Username, config.Password),

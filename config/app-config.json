@@ -33,7 +33,20 @@
     "gestionCartera": {
       "enabled": true,
       "outputFolder": "Output",
-      "templatePath": "Assets/PlantillaSIMICS.png"
+      "templatePath": "Assets/PlantillaSIMICS.png",
+      "smtp": {
+        "server": "smtp.gmail.com",
+        "port": 587,
+        "useSSL": true,
+        "useAuthentication": true,
+        "username": "test@gmail.com",
+        "fromEmail": "test@gmail.com",
+        "fromName": "SIMICS GROUP",
+        "timeout": 30000,
+        "isConfigured": true,
+        "bccEmail": "backup@simicsgroup.com",
+        "ccEmail": "admin@simicsgroup.com"
+      }
     },
     "envioCatalogo": {
       "smtp": {
@@ -47,9 +60,10 @@
         "timeout": 30000,
         "isConfigured": false,
         "bccEmail": "",
-        "ccEmail": ""      }
+        "ccEmail": ""
+      }
     }
-  },  "updater": {
+  },"updater": {
     "enabled": true,
     "updateServerPath": "\\\\SIMICSGROUPWKS1\\Hackerland\\Programas\\GestLogUpdater",
     "checkInterval": "00:30:00",

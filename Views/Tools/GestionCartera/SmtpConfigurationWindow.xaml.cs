@@ -36,7 +36,7 @@ namespace GestLog.Views.Tools.GestionCartera
             {
                 InitializeComponent();
                 
-                _currentSettings = _configurationService.Current.Smtp ?? new SmtpSettings();
+                _currentSettings = _configurationService.Current.Modules.GestionCartera.Smtp ?? new SmtpSettings();
                 
                 // Suscribirse al evento Loaded SOLO para cargar la configuración cuando la ventana esté completamente inicializada
                 this.Loaded += (sender, e) => {                LoadConfigurationToUI();
@@ -180,8 +180,7 @@ namespace GestLog.Views.Tools.GestionCartera
         private bool _isLoadingConfiguration = false;
         
         private void LoadConfigurationToUI()
-        {
-            try
+        {            try
             {
             // Protección contra múltiples ejecuciones simultáneas
             if (_isLoadingConfiguration)
@@ -192,13 +191,13 @@ namespace GestLog.Views.Tools.GestionCartera
             _isLoadingConfiguration = true;
 
                 // Obtener la configuración más actualizada desde el servicio
-                var latestConfig = _configurationService?.Current?.Smtp;
+                var latestConfig = _configurationService?.Current?.Modules?.GestionCartera?.Smtp;
                 if (latestConfig != null)
                 {
                     _currentSettings = latestConfig;
                 }
                     
-                if (_currentSettings == null) 
+                if (_currentSettings == null)
                 {
                     _logger?.LogWarning("⚠️ SALIENDO: CurrentSettings es null");
                     return;
@@ -428,10 +427,8 @@ namespace GestLog.Views.Tools.GestionCartera
                 _currentSettings.FromEmail = email;    // Mismo email (REQUERIDO para validación)
                 _currentSettings.FromName = email;     // Nombre del remitente
                 _currentSettings.BccEmail = bccEmail;  // Email para copia oculta                _currentSettings.CcEmail = ccEmail;    // Email para copia
-                _currentSettings.IsConfigured = true;  // Marcar como configurado
-
-                // Actualizar la configuración del servicio de configuración
-                var serviceSmtpConfig = _configurationService.Current.Smtp;
+                _currentSettings.IsConfigured = true;  // Marcar como configurado                // Actualizar la configuración del servicio de configuración
+                var serviceSmtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;
                 serviceSmtpConfig.Server = _currentSettings.Server;
                 serviceSmtpConfig.Port = _currentSettings.Port;
                 serviceSmtpConfig.UseSSL = _currentSettings.UseSSL;
@@ -444,7 +441,7 @@ namespace GestLog.Views.Tools.GestionCartera
                 // Guardar credenciales si se solicita
                 if (shouldSaveCredentials && !string.IsNullOrEmpty(email))
                 {
-                    var credentialTarget = $"SMTP_{_currentSettings.Server}_{email}";
+                    var credentialTarget = $"GestionCartera_SMTP_{_currentSettings.Server}_{email}";
 
                     // Eliminar cualquier credencial previa para este target antes de guardar la nueva
                     // Esto previene duplicados en el Windows Credential Manager

@@ -181,9 +181,7 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     private bool CanConfigureSmtp() => !IsConfiguring && 
         !string.IsNullOrWhiteSpace(SmtpServer) && 
         !string.IsNullOrWhiteSpace(SmtpUsername) && 
-        !string.IsNullOrWhiteSpace(SmtpPassword);
-
-    /// <summary>
+        !string.IsNullOrWhiteSpace(SmtpPassword);    /// <summary>
     /// Carga configuración SMTP con nueva estrategia: Windows Credential Manager primero, JSON como fallback
     /// </summary>
     public void LoadSmtpConfiguration()
@@ -197,9 +195,8 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             {
                 _warnedMissingPassword = false;
                 return;
-            }
-            // Cargar el resto de la configuración desde JSON (sin contraseña)
-            var smtpConfig = _configurationService.Current.Smtp;
+            }            // Cargar el resto de la configuración desde JSON (sin contraseña)
+            var smtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;
             if (smtpConfig != null)
             {
                 SmtpServer = smtpConfig.Server ?? string.Empty;
@@ -208,6 +205,11 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 EnableSsl = smtpConfig.UseSSL;
                 BccEmail = smtpConfig.BccEmail ?? string.Empty;
                 CcEmail = smtpConfig.CcEmail ?? string.Empty;
+                
+                _logger.LogInformation("✅ Configuración SMTP cargada desde JSON - Server: {Server}, BCC: {BccEmail}, CC: {CcEmail}", 
+                    SmtpServer, 
+                    string.IsNullOrWhiteSpace(BccEmail) ? "(vacío)" : BccEmail,
+                    string.IsNullOrWhiteSpace(CcEmail) ? "(vacío)" : CcEmail);
                 if (!smtpConfig.UseAuthentication)
                 {
                     IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.FromEmail);
@@ -233,21 +235,34 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             _logger.LogError(ex, "Error al cargar la configuración SMTP");
             SetDefaultValues();
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Intenta cargar configuración desde Windows Credential Manager
     /// </summary>
     private bool TryLoadFromCredentials()
     {
         try
         {
+            // PRIMERO: Intentar nuevo target específico del módulo
+            string newTarget = $"GestionCartera_SMTP_{SmtpServer}_{SmtpUsername}";
+            
+            if (_credentialService.CredentialsExist(newTarget))
+            {
+                var (username, password) = _credentialService.GetCredentials(newTarget);
+                if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+                {
+                    SmtpPassword = password;
+                    _logger.LogInformation("✅ Credenciales SMTP de GestionCartera cargadas desde nuevo target");
+                    return true;
+                }
+            }
+            
+            // FALLBACK: Intentar target antiguo (para migración automática)
             var knownCredentialTargets = new[]
             {
                 $"SMTP_{SmtpServer}_{SmtpUsername}",
-                "SMTP_smtppro.zoho.com_prueba@gmail.com",
                 "SMTP_smtppro.zoho.com_cartera@simicsgroup.com"
             };
+            
             foreach (var target in knownCredentialTargets)
             {
                 if (_credentialService.CredentialsExist(target))
@@ -255,16 +270,13 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                     var (username, password) = _credentialService.GetCredentials(target);
                     if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
                     {
-                        string server = ExtractServerFromTarget("GestLog_SMTP_" + target);
-                        SmtpServer = server;
-                        SmtpUsername = username;
                         SmtpPassword = password;
-                        SmtpPort = 587;
-                        EnableSsl = true;
-                        IsEmailConfigured = true;
-                        var jsonConfig = _configurationService.Current.Smtp;
-                        BccEmail = jsonConfig?.BccEmail ?? string.Empty;
-                        CcEmail = jsonConfig?.CcEmail ?? string.Empty;
+                        
+                        // Migrar automáticamente al nuevo target
+                        _credentialService.SaveCredentials(newTarget, username, password);
+                        _logger.LogWarning("⚠️ Credenciales SMTP de GestionCartera migradas de target antiguo a nuevo: {OldTarget} → {NewTarget}", 
+                            target, newTarget);
+                        
                         return true;
                     }
                 }
@@ -329,13 +341,11 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             _logger.LogError(ex, "Error recargando configuración SMTP manualmente");
         }
-    }
-
-    private async Task SaveSmtpConfigurationAsync()
-    {
+    }    private async Task SaveSmtpConfigurationAsync()
+        {
         try
         {
-            var smtpConfig = _configurationService.Current.Smtp;
+            var smtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;
             // Actualizar configuración básica en JSON (sin contraseña)
             smtpConfig.Server = SmtpServer;
             smtpConfig.Port = SmtpPort;
@@ -344,11 +354,19 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             smtpConfig.FromName = SmtpUsername;
             smtpConfig.UseSSL = EnableSsl;
             smtpConfig.UseAuthentication = !string.IsNullOrWhiteSpace(SmtpUsername);
+            smtpConfig.BccEmail = BccEmail ?? string.Empty;
+            smtpConfig.CcEmail = CcEmail ?? string.Empty;
             smtpConfig.IsConfigured = true;
+            
+            _logger.LogInformation("✅ Configuración SMTP guardada en JSON - Server: {Server}, BCC: {BccEmail}, CC: {CcEmail}", 
+                SmtpServer, 
+                string.IsNullOrWhiteSpace(BccEmail) ? "(vacío)" : BccEmail,
+                string.IsNullOrWhiteSpace(CcEmail) ? "(vacío)" : CcEmail);
+            
             // Guardar contraseña de forma segura en Windows Credential Manager
             if (!string.IsNullOrWhiteSpace(SmtpUsername) && !string.IsNullOrWhiteSpace(SmtpPassword))
             {
-                var credentialTarget = $"SMTP_{SmtpServer}_{SmtpUsername}";
+                var credentialTarget = $"GestionCartera_SMTP_{SmtpServer}_{SmtpUsername}";
                 _logger.LogInformation($"[TRACE] Intentando guardar credenciales SMTP en Credential Manager. Target: {credentialTarget}, Usuario: {SmtpUsername}");
                 var saved = _credentialService.SaveCredentials(credentialTarget, SmtpUsername, SmtpPassword);
                 if (saved)
