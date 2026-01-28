@@ -1182,9 +1182,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             }
 
             return estados;
-        }
-
-        private Sede? ParseSede(string? sedeString)
+        }        private Sede? ParseSede(string? sedeString)
         {
             if (string.IsNullOrWhiteSpace(sedeString))
                 return null;
@@ -1193,6 +1191,92 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 return sede;
             
             return null;
+        }
+
+        /// <summary>
+        /// Sincroniza los datos desnormalizados (Nombre, Marca, Sede) del equipo con todos sus cronogramas.
+        /// Se ejecuta cuando se edita un equipo para reflejar los cambios en los cronogramas existentes.
+        /// </summary>
+        public async Task SyncEquipoCronogramasAsync(string codigoEquipo)
+        {
+            try
+            {
+                _logger.LogInformation($"[CRONOGRAMA] Sincronizando datos del equipo {codigoEquipo} con sus cronogramas...");
+
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                
+                // Obtener el equipo actualizado
+                var equipo = await dbContext.Equipos
+                    .FirstOrDefaultAsync(e => e.Codigo == codigoEquipo);
+                
+                if (equipo == null)
+                {
+                    _logger.LogWarning($"[CRONOGRAMA] Equipo {codigoEquipo} no encontrado para sincronizar cronogramas");
+                    return;
+                }
+
+                // Obtener todos los cronogramas del equipo
+                var cronogramas = await dbContext.Cronogramas
+                    .Where(c => c.Codigo == codigoEquipo)
+                    .ToListAsync();
+
+                if (!cronogramas.Any())
+                {
+                    _logger.LogDebug($"[CRONOGRAMA] No hay cronogramas para el equipo {codigoEquipo}");
+                    return;
+                }
+
+                // Actualizar los datos desnormalizados en cada cronograma
+                int actualizados = 0;
+                foreach (var cronograma in cronogramas)
+                {
+                    bool cambio = false;
+
+                    // Actualizar Nombre (Equipo.Nombre es string?)
+                    if (cronograma.Nombre != equipo.Nombre)
+                    {
+                        cronograma.Nombre = equipo.Nombre ?? "";
+                        cambio = true;
+                    }
+
+                    // Actualizar Marca
+                    if (cronograma.Marca != equipo.Marca)
+                    {
+                        cronograma.Marca = equipo.Marca;
+                        cambio = true;
+                    }
+
+                    // Actualizar Sede (convertir enum a string)
+                    string? sedeCronograma = equipo.Sede.HasValue ? equipo.Sede.ToString() : null;
+                    if (cronograma.Sede != sedeCronograma)
+                    {
+                        cronograma.Sede = sedeCronograma;
+                        cambio = true;
+                    }
+
+                    if (cambio)
+                    {
+                        actualizados++;
+                        _logger.LogDebug($"[CRONOGRAMA] Actualizado cronograma {cronograma.Codigo} año {cronograma.Anio}");
+                    }
+                }
+
+                // Guardar cambios solo si hubo actualizaciones
+                if (actualizados > 0)
+                {
+                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation($"[CRONOGRAMA] ✓ Sincronización completada: {actualizados} cronogramas actualizados para equipo {codigoEquipo}");
+                }
+                else
+                {
+                    _logger.LogDebug($"[CRONOGRAMA] No había cambios para sincronizar en el equipo {codigoEquipo}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"[CRONOGRAMA] Error sincronizando cronogramas del equipo {codigoEquipo}");
+                throw;
+            }
         }
     }
 }

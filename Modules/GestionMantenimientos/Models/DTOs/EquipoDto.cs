@@ -53,9 +53,18 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
                     OnPropertyChanged();
                 }
             }
+        }        public EstadoEquipo? Estado { get; set; }
+        
+        /// <summary>
+        /// Propiedad auxiliar para ordenamiento del DataGrid por Estado.
+        /// Convierte el enum a un número para permitir sorting.
+        /// </summary>
+        public int EstadoOrden 
+        { 
+            get => Estado.HasValue ? (int)Estado.Value : int.MaxValue;
         }
-        public EstadoEquipo? Estado { get; set; }
-        public Sede? Sede { get; set; }        
+        
+        public Sede? Sede { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
         public DateTime? FechaRegistro { get; set; } // Fecha de alta del equipo
         public DateTime? FechaCompra { get; set; }   // Fecha de compra - usada como referencia para generar cronogramas

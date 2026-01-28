@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
+using System.Windows.Data;
+using System.ComponentModel;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
 {    
@@ -27,9 +29,49 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         
         [ObservableProperty]
         private ObservableCollection<MantenimientoSemanaEstadoDto> estadosMantenimientos = new();
+          [ObservableProperty]
+        private ICollectionView? estadosMantenimientosView;
+          [ObservableProperty]
+        private bool sedeOrdenTallerPrimero = true; // true = Taller primero (Ascending), false = Bayunca primero (Descending)
+        
+        partial void OnSedeOrdenTallerPrimeroChanged(bool value)
+        {
+            ConfigurarVistaConAgrupacion();
+        }
+        
         partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
         {
             ActualizarPuedeRegistrarMantenimientos();
+            ConfigurarVistaConAgrupacion();
+        }
+          private void ConfigurarVistaConAgrupacion()
+        {
+            if (EstadosMantenimientos == null)
+                return;
+
+            var view = CollectionViewSource.GetDefaultView(EstadosMantenimientos);
+            if (view != null)
+            {
+                view.GroupDescriptions.Clear();
+                view.GroupDescriptions.Add(new PropertyGroupDescription("Sede"));
+                
+                // Aplicar ordenamiento de grupos
+                if (view.SortDescriptions.Count == 0)
+                {
+                    // Agregar ordenamiento por Sede
+                    var sedeOrder = SedeOrdenTallerPrimero ? ListSortDirection.Ascending : ListSortDirection.Descending;
+                    view.SortDescriptions.Add(new SortDescription("Sede", sedeOrder));
+                }
+                else
+                {
+                    // Actualizar el ordenamiento existente
+                    view.SortDescriptions[0] = new SortDescription("Sede", SedeOrdenTallerPrimero ? ListSortDirection.Ascending : ListSortDirection.Descending);
+                }
+                
+                view.Refresh();
+            }
+            
+            EstadosMantenimientosView = view;
         }
         
         [ObservableProperty]
@@ -223,26 +265,45 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     Semana = estado.Semana,
                     Anio = estado.Anio
                 };                var dialog = new GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoDialog(seguimientoDto, true, esDesdeCronograma: true); // modoRestringido: true, esDesdeCronograma: true
-                dialog.Owner = System.Windows.Application.Current.MainWindow;
-                if (dialog.ShowDialog() == true)
+                dialog.Owner = System.Windows.Application.Current.MainWindow;                if (dialog.ShowDialog() == true)
                 {
                     var seguimiento = dialog.Seguimiento;
                     seguimiento.FechaRegistro = DateTime.Now;
                     seguimiento.Semana = estado.Semana;
                     seguimiento.Anio = estado.Anio;
-                    // Si el usuario marca como NoRealizado, guardar la fecha de registro
-                    if (seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+                    
+                    // Calcular y asignar el estado automáticamente basado en fechas
+                    // Si el usuario marcó una fecha de realización, determinar si fue en tiempo o fuera de tiempo
+                    if (seguimiento.FechaRealizacion.HasValue && seguimiento.FechaRealizacion.Value != default(DateTime))
                     {
-                        seguimiento.FechaRegistro = DateTime.Now;
+                        // Calcular estado según la fecha de realización
+                        seguimiento.Estado = CalcularEstadoRegistro(estado.Semana, estado.Anio);
+                    }
+                    else if (seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado)
+                    {
+                        // Si es NoRealizado, mantener ese estado
                         seguimiento.FechaRealizacion = null;
                     }
+                    else
+                    {
+                        // Por defecto, si se registra ahora, marcar como RealizadoEnTiempo
+                        seguimiento.Estado = CalcularEstadoRegistro(estado.Semana, estado.Anio);
+                    }
+                    
                     await _seguimientoService.AddAsync(seguimiento);
-                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    
+                    // Actualizar el estado in-place sin recargar toda la colección
+                    // Esto evita que el DataGrid se limpie y se reinicie
                     estado.Realizado = seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo || seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
                     estado.Atrasado = seguimiento.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
                     estado.Seguimiento = seguimiento;
                     estado.Estado = seguimiento.Estado;
-                    RefrescarEstados(EstadosMantenimientos);
+                    
+                    // Forzar refresco de permisos
+                    ActualizarPuedeRegistrarMantenimientos();
+                    
+                    // No enviar mensaje de actualización para evitar recarga completa de datos
+                    // Los datos ya están actualizados en la UI de forma suave
                     MensajeUsuario = "Mantenimiento registrado exitosamente.";
                 }
             }
@@ -271,8 +332,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             catch (Exception ex)
             {
                 MensajeUsuario = $"Error al abrir el seguimiento: {ex.Message}";
-            }
-        }        
+            }        }        
         public async Task MarcarAtrasadoAsync(MantenimientoSemanaEstadoDto? estado)
         {
             try
@@ -283,23 +343,26 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     MensajeUsuario = "No se ha seleccionado un estado de mantenimiento.";
                     return;
                 }
+                
+                // Actualizar in-place sin recargar toda la colección
                 estado.Atrasado = true;
+                
                 if (_seguimientoService == null)
                 {
-                    MensajeUsuario = "El servicio de seguimiento no estÃ¡ disponible.";
-                    RefrescarEstados(EstadosMantenimientos);
+                    MensajeUsuario = "El servicio de seguimiento no está disponible.";
                     ActualizarPuedeRegistrarMantenimientos();
                     return;
                 }
+                
                 // Si existe seguimiento, actualizarlo en la base de datos
                 if (estado.Seguimiento != null)
                 {
                     estado.Seguimiento.Observaciones += " [Marcado como atrasado]";
                     await _seguimientoService.UpdateAsync(estado.Seguimiento);
-                    // Notificar a otros ViewModels
-                    WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
+                    // No enviar mensaje global, actualizar solo localmente
                 }
-                RefrescarEstados(EstadosMantenimientos);
+                
+                // Actualizar permisos localmente sin recargar toda la colección
                 ActualizarPuedeRegistrarMantenimientos();
                 MensajeUsuario = "Mantenimiento marcado como atrasado.";
             }

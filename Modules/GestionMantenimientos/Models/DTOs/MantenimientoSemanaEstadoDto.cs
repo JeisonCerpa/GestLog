@@ -5,8 +5,7 @@ using System.Runtime.CompilerServices;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
-{
-    public class MantenimientoSemanaEstadoDto : INotifyPropertyChanged
+{    public class MantenimientoSemanaEstadoDto : INotifyPropertyChanged
     {
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string CodigoEquipo { get; set; } = "";
@@ -19,10 +18,62 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public FrecuenciaMantenimiento? Frecuencia { get; set; }
         public Sede? Sede { get; set; }
         public bool Programado { get; set; }
-        public bool Realizado { get; set; }
-        public bool Atrasado { get; set; }
-        public SeguimientoMantenimientoDto? Seguimiento { get; set; }
-        public EstadoSeguimientoMantenimiento Estado { get; set; }
+
+        private bool _realizado;
+        public bool Realizado
+        {
+            get => _realizado;
+            set
+            {
+                if (_realizado != value)
+                {
+                    _realizado = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _atrasado;
+        public bool Atrasado
+        {
+            get => _atrasado;
+            set
+            {
+                if (_atrasado != value)
+                {
+                    _atrasado = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private SeguimientoMantenimientoDto? _seguimiento;
+        public SeguimientoMantenimientoDto? Seguimiento
+        {
+            get => _seguimiento;
+            set
+            {
+                if (_seguimiento != value)
+                {
+                    _seguimiento = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private EstadoSeguimientoMantenimiento _estado;
+        public EstadoSeguimientoMantenimiento Estado
+        {
+            get => _estado;
+            set
+            {
+                if (_estado != value)
+                {
+                    _estado = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         private bool _puedeRegistrar;
         public bool PuedeRegistrar

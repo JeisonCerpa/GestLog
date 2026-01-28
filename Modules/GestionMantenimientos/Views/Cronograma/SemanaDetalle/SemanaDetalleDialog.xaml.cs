@@ -2,6 +2,7 @@ using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma;
 using System.Collections.ObjectModel;
+using System.Windows.Controls;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
 {
@@ -79,14 +80,24 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
         private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             e.Handled = true;
-        }
-
-        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        }        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == System.Windows.Input.Key.Escape)
             {
                 DialogResult = false;
                 Close();
+            }
+        }
+
+        private void ScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            // Permitir que la rueda del mouse scroll el ScrollViewer
+            var scrollViewer = sender as System.Windows.Controls.ScrollViewer;
+            if (scrollViewer != null)
+            {
+                // Scroll vertical
+                scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta);
+                e.Handled = true;
             }
         }
     }

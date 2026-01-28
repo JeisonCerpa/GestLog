@@ -446,19 +446,53 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             var lista = await _equipoService.GetAllAsync();
             
             if (cancellationToken.IsCancellationRequested)
-                return;
-
-            // Mantener copia completa para calcular estadísticas correctas
+                return;            // Mantener copia completa para calcular estadísticas correctas
             _allEquipos = new ObservableCollection<EquipoDto>(lista);
 
             // Filtrar según MostrarDadosDeBaja para la vista
             var filtrados = MostrarDadosDeBaja ? lista : lista.Where(e => e.FechaBaja == null).ToList();
-            Equipos = new ObservableCollection<EquipoDto>(filtrados);
-            // Suscribirse a cambios para recalcular estadísticas cuando la colección cambie
-            Equipos.CollectionChanged += Equipos_CollectionChanged;
-            EquiposView = CollectionViewSource.GetDefaultView(Equipos);
-            if (EquiposView != null)
-                EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+            
+            // Si la colección ya existe, actualizar in-place para mantener ordenamiento y referencias
+            if (Equipos != null && Equipos.Count > 0)
+            {
+                // Limpiar y agregar nuevos elementos para mantener la misma ObservableCollection
+                Equipos.Clear();
+                foreach (var equipo in filtrados)
+                {
+                    Equipos.Add(equipo);
+                }
+            }
+            else
+            {
+                // Primera carga: crear nueva colección
+                Equipos = new ObservableCollection<EquipoDto>(filtrados);
+                // Suscribirse a cambios para recalcular estadísticas cuando la colección cambie
+                Equipos.CollectionChanged += Equipos_CollectionChanged;
+            }
+              // Obtener o crear el CollectionView
+            if (EquiposView == null)
+            {
+                EquiposView = CollectionViewSource.GetDefaultView(Equipos);
+                if (EquiposView != null)
+                {
+                    EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+                    // Configurar ordenamiento por defecto: Código ascendente
+                    EquiposView.SortDescriptions.Add(new SortDescription("Codigo", ListSortDirection.Ascending));
+                }
+            }
+            else
+            {
+                // Si el CollectionView ya existe, refrescar y mantener el ordenamiento por defecto
+                EquiposView.Refresh();
+                
+                // Asegurar que el ordenamiento por Código ascendente persista después de refresh
+                if (EquiposView.SortDescriptions.Count == 0 || 
+                    !EquiposView.SortDescriptions.Any(s => s.PropertyName == "Codigo" && s.Direction == ListSortDirection.Ascending))
+                {
+                    EquiposView.SortDescriptions.Clear();
+                    EquiposView.SortDescriptions.Add(new SortDescription("Codigo", ListSortDirection.Ascending));
+                }
+            }
 
             // Actualizar contadores (ahora usa _allEquipos para totales correctos)
             RecalcularEstadisticas();
@@ -512,6 +546,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 });
                 
                 StatusMessage = "Equipo agregado exitosamente.";
+                WeakReferenceMessenger.Default.Send(new EquiposActualizadosMessage());
             }
         }
         catch (System.Exception ex)
@@ -542,15 +577,33 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 // Si el usuario cambió el estado a Activo, limpiar la FechaBaja
                 if (dialog.Equipo.Estado == EstadoEquipo.Activo)
                     dialog.Equipo.FechaBaja = null;
-                
-                // 🔧 Ejecutar la actualización en un thread background para no bloquear la UI
+                  // 🔧 Ejecutar la actualización en un thread background para no bloquear la UI
                 IsLoading = true;
                 StatusMessage = "Guardando cambios...";
+                  string? codigoEquipo = dialog.Equipo.Codigo;
                 
                 await Task.Run(async () =>
                 {
                     await _equipoService.UpdateAsync(dialog.Equipo);
                 });
+                
+                // Sincronizar datos del equipo con sus cronogramas existentes
+                // Esto asegura que cambios en Nombre, Marca, Sede se reflejen en el cronograma
+                if (!string.IsNullOrWhiteSpace(codigoEquipo))
+                {
+                    await Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _cronogramaService.SyncEquipoCronogramasAsync(codigoEquipo);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Advertencia: No se pudieron sincronizar los cronogramas del equipo");
+                            // No lanzar error, solo advertencia
+                        }
+                    });
+                }
                 
                 // Recargar en thread background también
                 await Task.Run(async () =>
@@ -692,19 +745,23 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             // Si aún no hay datos, recargar
             _ = LoadEquiposAsync(forceReload: true);
             return;
-        }
-
-        // Filtrar según MostrarDadosDeBaja y crear nueva ObservableCollection
+        }        // Filtrar según MostrarDadosDeBaja y crear nueva ObservableCollection
         var filtrados = value 
             ? _allEquipos.ToList() 
             : _allEquipos.Where(e => e.FechaBaja == null).ToList();
         Equipos = new ObservableCollection<EquipoDto>(filtrados);
         
-        // Actualizar vista y estadísticas
+        // Actualizar vista y estadísticas MANTENIENDO EL ORDENAMIENTO
         EquiposView = CollectionViewSource.GetDefaultView(Equipos);
         if (EquiposView != null)
         {
             EquiposView.Filter = new Predicate<object>(FiltrarEquipo);
+            
+            // Configurar ordenamiento por defecto: Código ascendente
+            // Limpiar ordenamientos previos y establecer el nuevo
+            EquiposView.SortDescriptions.Clear();
+            EquiposView.SortDescriptions.Add(new SortDescription("Codigo", ListSortDirection.Ascending));
+            
             EquiposView.Refresh();
         }
 

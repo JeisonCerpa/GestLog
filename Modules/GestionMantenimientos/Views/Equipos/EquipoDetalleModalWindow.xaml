@@ -577,8 +577,7 @@
                 <!-- Footer con acciones sticky -->
                 <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,8,8" Padding="18" 
                         Effect="{StaticResource SectionShadow}" BorderThickness="1,0,1,1" BorderBrush="{StaticResource BorderLightBrush}">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button x:Name="RegistrarMantenimientoActionButton" Content="🔧 Registrar Mantenimiento" Margin="0,0,12,0"
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">                        <Button x:Name="RegistrarMantenimientoActionButton" Content="🔧 Registrar Mantenimiento Correctivo" Margin="0,0,12,0"
                                 Command="{Binding RegistrarMantenimientoCommand}"
                                 CommandParameter="{Binding SelectedEquipo}">
                             <Button.Style>
