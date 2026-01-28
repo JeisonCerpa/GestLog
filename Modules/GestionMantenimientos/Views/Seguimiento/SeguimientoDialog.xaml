@@ -137,11 +137,9 @@
                             <!-- Fila 7: Descripción grande -->
                             <TextBlock Text="Descripción:" Style="{StaticResource LabelTextStyle}" Grid.Row="7" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
                             <TextBox x:Name="DescripcionTextBox" Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
-                                     Grid.Row="7" Grid.Column="1" Style="{StaticResource InputStyle}" MinHeight="140" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>
-
-                            <!-- Fila 8: Observaciones -->
+                                     Grid.Row="7" Grid.Column="1" Style="{StaticResource InputStyle}" MinHeight="140" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>                            <!-- Fila 8: Observaciones -->
                             <TextBlock Text="Observaciones:" Style="{StaticResource LabelTextStyle}" Grid.Row="8" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
-                            <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}" Grid.Row="8" Grid.Column="1" 
+                            <TextBox Text="{Binding Observaciones, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="8" Grid.Column="1" 
                                      Style="{StaticResource InputStyle}" MinHeight="50" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>
 
                             <!-- Fila 9: Frecuencia -->

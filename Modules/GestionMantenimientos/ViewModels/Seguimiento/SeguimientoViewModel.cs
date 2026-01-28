@@ -178,12 +178,13 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
     partial void OnAnioSeleccionadoChanged(int value)
     {
         FiltrarPorAnio();
-    }
-
-    private void FiltrarPorAnio()
+    }    private void FiltrarPorAnio()
     {
         if (Seguimientos == null) return;
-        var filtrados = Seguimientos.Where(s => s.Anio == AnioSeleccionado).ToList();
+        // Ordenar de más nuevos a más antiguos incluso al filtrar
+        var filtrados = Seguimientos.Where(s => s.Anio == AnioSeleccionado)
+                                   .OrderByDescending(s => s.FechaRegistro)
+                                   .ToList();
         SeguimientosFiltrados = new ObservableCollection<SeguimientoMantenimientoDto>(filtrados);
         
         System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -300,9 +301,9 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     await _seguimientoService.UpdateAsync(s);
                 }
                 s.RefrescarCacheFiltro();
-            }
-
-            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(lista);
+            }            // Ordenar de más nuevos a más antiguos (descendente por FechaRegistro)
+            var listOrdenada = lista.OrderByDescending(s => s.FechaRegistro).ToList();
+            Seguimientos = new ObservableCollection<SeguimientoMantenimientoDto>(listOrdenada);
             
             var anios = lista.Select(s => s.Anio).Distinct().OrderByDescending(a => a).ToList();
             AniosDisponibles = new ObservableCollection<int>(anios);
