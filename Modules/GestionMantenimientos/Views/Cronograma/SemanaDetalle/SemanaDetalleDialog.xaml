@@ -110,7 +110,64 @@
                     </Setter>
                 </Trigger>
             </Style.Triggers>
-        </Style>        <!-- Modern Toggle Switch Style para orden de sedes -->
+        </Style>        <!-- Estilos para botones de acción en DataGrid -->
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Padding" Value="3,0"/>
+            <Setter Property="Width" Value="70"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#2B8E3F" BlurRadius="4" ShadowDepth="1" Opacity="0.15"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="#0F6B2F" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="10"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#0F6B2F"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#118938" BlurRadius="6" ShadowDepth="1" Opacity="0.25"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+          <!-- Estilo para botón secundario (gris) -->
+        <Style x:Key="SecondaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Background" Value="#707070"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="#555555" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextBlock.FontSize="11"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#555555"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="1" Opacity="0.25"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style><!-- Modern Toggle Switch Style para orden de sedes -->
         <Style x:Key="SedeOrderToggleSwitchStyle" TargetType="ToggleButton">
             <Setter Property="Width" Value="200"/>
             <Setter Property="Height" Value="36"/>
@@ -237,13 +294,13 @@
                 <ScrollViewer x:Name="ContentScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
                     <StackPanel>
                         <TextBlock Text="Estados de Mantenimiento" FontSize="15" FontWeight="SemiBold" Foreground="#2B8E3F" Margin="0,10,0,6"/>
-                  <!-- DataGrid que se adapta dinámicamente al espacio disponible en la pantalla -->
-                <DataGrid x:Name="MantenimientosDataGrid" ItemsSource="{Binding EstadosMantenimientosView}" AutoGenerateColumns="False" IsReadOnly="True" Background="#FAFAFA" HeadersVisibility="Column" GridLinesVisibility="None" 
+                  <!-- DataGrid que se adapta dinámicamente al espacio disponible en la pantalla -->                <DataGrid x:Name="MantenimientosDataGrid" ItemsSource="{Binding EstadosMantenimientosView}" AutoGenerateColumns="False" IsReadOnly="True" Background="#FAFAFA" HeadersVisibility="Column" GridLinesVisibility="None" 
                           CanUserResizeColumns="True" CanUserResizeRows="False" CanUserSortColumns="True" 
                           HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled" 
                           MinWidth="750" Margin="0,0,0,6"
                           BorderBrush="#DDD" BorderThickness="1"
                           SnapsToDevicePixels="True" UseLayoutRounding="True"
+                          RowHeight="30"
                           RowStyle="{StaticResource SedeRowStyle}">
                     
                     <!-- GroupStyle para mostrar encabezados de sede -->
@@ -258,27 +315,28 @@
                     </DataGrid.GroupStyle><DataGrid.Columns>
                         <DataGridTextColumn Header="Equipo" Binding="{Binding NombreEquipo}" MinWidth="140" Width="Auto" CellStyle="{StaticResource EquipoCellStyle}"/>
                         <DataGridTextColumn Header="Código" Binding="{Binding CodigoEquipo}" MinWidth="90" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
-                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" MinWidth="100" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
-                        <DataGridTemplateColumn Header="Tipo" MinWidth="130" Width="Auto">
+                        <DataGridTextColumn Header="Sede" Binding="{Binding Sede, Converter={StaticResource EnumToDescriptionConverter}}" MinWidth="100" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>                        <DataGridTemplateColumn Header="Tipo" MinWidth="130" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <Border x:Name="BadgePreventivo" Style="{StaticResource BadgePreventivo}" Visibility="Collapsed">
                                             <TextBlock Text="🔧 Preventivo" FontSize="12" FontWeight="SemiBold" Foreground="#1976D2"/>
-                                        </Border>                                        <Border x:Name="BadgeCorrectivo" Style="{StaticResource BadgeCorrectivo}" Visibility="Collapsed">
+                                        </Border>
+                                        <Border x:Name="BadgeCorrectivo" Style="{StaticResource BadgeCorrectivo}" Visibility="Collapsed">
                                             <TextBlock Text="⚠️ Correctivo" FontSize="12" FontWeight="SemiBold" Foreground="#7E57C2"/>
                                         </Border>
                                     </StackPanel>
                                     <DataTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno}" Value="Preventivo">
+                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno, Converter={StaticResource EnumToDescriptionConverter}}" Value="Preventivo">
                                             <Setter TargetName="BadgePreventivo" Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno}" Value="Correctivo">
+                                        <DataTrigger Binding="{Binding Seguimiento.TipoMtno, Converter={StaticResource EnumToDescriptionConverter}}" Value="Correctivo">
                                             <Setter TargetName="BadgeCorrectivo" Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>                                    </DataTemplate.Triggers>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="110" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
+                        </DataGridTemplateColumn><DataGridTextColumn Header="Frecuencia" Binding="{Binding Frecuencia}" MinWidth="110" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}"/>
                         <DataGridTemplateColumn Header="Estado" MinWidth="140" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -315,19 +373,32 @@
                                         </TextBlock>
                                     </StackPanel>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Acción" MinWidth="110" Width="Auto" CellStyle="{StaticResource DataGridCellStyle}">
+                            </DataGridTemplateColumn.CellTemplate>                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" MinWidth="100" Width="100">
+                            <DataGridTemplateColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                </Style>
+                            </DataGridTemplateColumn.CellStyle>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Registrar"
-                                            Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            Style="{StaticResource PrimaryButtonStyle}"
-                                            Padding="6,2"
-                                            FontSize="12"
-                                            Visibility="{Binding PuedeRegistrar, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0">
+                                        <Button Content="Registrar"
+                                                Command="{Binding DataContext.RegistrarMantenimientoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource ActionButtonStyle}"
+                                                Visibility="{Binding PuedeRegistrar, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        <Button Content="Ver Detalles"
+                                                Click="VerDetalles_Click"
+                                                Tag="{Binding}"
+                                                Style="{StaticResource SecondaryActionButtonStyle}"
+                                                Visibility="{Binding PuedeVerDetalles, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>                        </DataGridTemplateColumn>                    </DataGrid.Columns>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn></DataGrid.Columns>
                 </DataGrid>
                   <TextBlock Text="No hay estados de mantenimiento para esta semana."
                            Foreground="#C0392B" FontWeight="SemiBold" FontSize="12" 

@@ -1,8 +1,12 @@
 using System.Windows;
 using GestLog.Modules.GestionMantenimientos.Models;
+using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma;
+using GestLog.Modules.GestionMantenimientos.Views.Seguimiento;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
 {
@@ -98,6 +102,48 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Cronograma.SemanaDetalle
                 // Scroll vertical
                 scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta);
                 e.Handled = true;
+            }
+        }        /// <summary>
+        /// Abre el modal de detalles del seguimiento cuando el usuario hace clic en "Ver Detalles"
+        /// </summary>
+        private async void VerDetalles_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Obtener el botón que fue clickeado
+                var button = sender as System.Windows.Controls.Button;                if (button?.Tag is MantenimientoSemanaEstadoDto estadoMtno && estadoMtno.Seguimiento != null)
+                {
+                    // Asignar la Sede del MantenimientoSemanaEstadoDto al Seguimiento si no la tiene
+                    if (estadoMtno.Seguimiento.Sede == null && estadoMtno.Sede.HasValue)
+                    {
+                        estadoMtno.Seguimiento.Sede = estadoMtno.Sede;
+                    }                    // Obtener el servicio desde DI
+                    var serviceProvider = (System.Windows.Application.Current as App)?.ServiceProvider;
+                    var seguimientoService = serviceProvider?.GetRequiredService<ISeguimientoService>();
+                    
+                    if (seguimientoService == null)
+                    {
+                        System.Windows.MessageBox.Show("Error: No se pudo obtener el servicio de seguimientos.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        return;
+                    }                    // Crear y mostrar el modal de detalles
+                    var detalleDialog = new SeguimientoDetalleDialog(estadoMtno.Seguimiento, seguimientoService);
+                    detalleDialog.Owner = this;
+                    var resultado = detalleDialog.ShowDialog();
+                    
+                    // Si el resultado es true (guardado o eliminación), recargar los estados
+                    if (resultado == true)
+                    {
+                        var viewModel = DataContext as SemanaDetalleViewModel;
+                        if (viewModel != null)
+                        {
+                            await viewModel.RecargarEstadosAsync();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error al abrir detalles del seguimiento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
     }

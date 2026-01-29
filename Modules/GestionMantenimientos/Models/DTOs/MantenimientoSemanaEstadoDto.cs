@@ -87,6 +87,44 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
                     OnPropertyChanged();
                 }
             }
+        }        private bool _puedeVerDetalles;
+        public bool PuedeVerDetalles
+        {
+            get => _puedeVerDetalles;
+            set
+            {
+                if (_puedeVerDetalles != value)
+                {
+                    _puedeVerDetalles = value;
+                    OnPropertyChanged();
+                }
+            }
+        }        /// <summary>
+        /// Propiedad calculada para ordenamiento personalizado en el DataGrid.
+        /// Orden: 1=Pendiente/Atrasado/NoRealizado (no registrados o sin finalizar), 
+        ///        2=Preventivos registrados, 3=Correctivos registrados
+        /// </summary>
+        public int PrioridadOrdenamiento
+        {
+            get
+            {
+                // Estados no registrados o sin finalizar (prioridad alta)
+                if (Estado == EstadoSeguimientoMantenimiento.Pendiente ||
+                    Estado == EstadoSeguimientoMantenimiento.Atrasado ||
+                    Estado == EstadoSeguimientoMantenimiento.NoRealizado)
+                    return 1;
+
+                // Preventivos registrados (prioridad media)
+                if (Seguimiento?.TipoMtno == Models.Enums.TipoMantenimiento.Preventivo)
+                    return 2;
+
+                // Correctivos registrados (prioridad baja)
+                if (Seguimiento?.TipoMtno == Models.Enums.TipoMantenimiento.Correctivo)
+                    return 3;
+
+                // Por defecto (casos raros)
+                return 4;
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

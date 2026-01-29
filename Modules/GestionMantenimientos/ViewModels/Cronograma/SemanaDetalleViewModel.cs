@@ -43,8 +43,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         {
             ActualizarPuedeRegistrarMantenimientos();
             ConfigurarVistaConAgrupacion();
-        }
-          private void ConfigurarVistaConAgrupacion()
+        }        private void ConfigurarVistaConAgrupacion()
         {
             if (EstadosMantenimientos == null)
                 return;
@@ -55,18 +54,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 view.GroupDescriptions.Clear();
                 view.GroupDescriptions.Add(new PropertyGroupDescription("Sede"));
                 
-                // Aplicar ordenamiento de grupos
-                if (view.SortDescriptions.Count == 0)
-                {
-                    // Agregar ordenamiento por Sede
-                    var sedeOrder = SedeOrdenTallerPrimero ? ListSortDirection.Ascending : ListSortDirection.Descending;
-                    view.SortDescriptions.Add(new SortDescription("Sede", sedeOrder));
-                }
-                else
-                {
-                    // Actualizar el ordenamiento existente
-                    view.SortDescriptions[0] = new SortDescription("Sede", SedeOrdenTallerPrimero ? ListSortDirection.Ascending : ListSortDirection.Descending);
-                }
+                // Aplicar ordenamiento: primero por estado (Pendiente, Preventivo, Correctivo), luego por Sede
+                view.SortDescriptions.Clear();
+                
+                // Ordenamiento personalizado: Pendiente → Preventivo → Correctivo
+                view.SortDescriptions.Add(new SortDescription("PrioridadOrdenamiento", ListSortDirection.Ascending));
+                
+                // Ordenamiento secundario por Sede
+                var sedeOrder = SedeOrdenTallerPrimero ? ListSortDirection.Ascending : ListSortDirection.Descending;
+                view.SortDescriptions.Add(new SortDescription("Sede", sedeOrder));
                 
                 view.Refresh();
             }
@@ -156,7 +152,14 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
                                          estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado ||
                                          estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado;
-                var nuevoValor = esEstadoRegistrable && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
+                
+                // Si hay un seguimiento correctivo ejecutado, no permitir nuevo registro
+                var esCorrectivoPrevioEjecutado = estado.Seguimiento != null &&
+                                                 estado.Seguimiento.TipoMtno == Models.Enums.TipoMantenimiento.Correctivo &&
+                                                 (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo ||
+                                                  estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo);
+                
+                var nuevoValor = esEstadoRegistrable && !esCorrectivoPrevioEjecutado && PuedeRegistrarMantenimiento(estado.Semana, estado.Anio);
                 if (estado.PuedeRegistrar != nuevoValor)
                 {
                     estado.PuedeRegistrar = nuevoValor;
@@ -166,8 +169,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     estado.PuedeRegistrar = !nuevoValor;
                     estado.PuedeRegistrar = nuevoValor;
                 }
+
+                // Permitir ver detalles para seguimientos ejecutados (RealizadoEnTiempo, RealizadoFueraDeTiempo, NoRealizado)
+                var puedeVerDetalles = (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo ||
+                                        estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo ||
+                                        estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado) &&
+                                       estado.Seguimiento != null;
+                estado.PuedeVerDetalles = puedeVerDetalles;
             }
-        }        
+        }
         public SemanaDetalleViewModel(string titulo, string rangoFechas, ObservableCollection<MantenimientoSemanaEstadoDto> estados, ObservableCollection<CronogramaMantenimientoDto> mantenimientos, ISeguimientoService seguimientoService, ICurrentUserService currentUserService)
         {
             Titulo = titulo;
@@ -385,13 +395,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     RefrescarEstados(nuevosEstados);
                 }
             }
-        }
-
-        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
+        }        public void RefrescarEstados(IList<MantenimientoSemanaEstadoDto> nuevosEstados)
         {
             GestLog.Services.Core.UI.DispatcherService.InvokeOnUIThread(() =>
             {
-                EstadosMantenimientos.Clear();                foreach (var estado in nuevosEstados)
+                EstadosMantenimientos.Clear();
+                foreach (var estado in nuevosEstados)
                 {
                     // Clonar el DTO para forzar refresco de la UI
                     var clon = new MantenimientoSemanaEstadoDto
@@ -407,7 +416,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                         Atrasado = estado.Atrasado,
                         Seguimiento = estado.Seguimiento,
                         Estado = estado.Estado,
-                        PuedeRegistrar = estado.PuedeRegistrar
+                        PuedeRegistrar = estado.PuedeRegistrar,
+                        PuedeVerDetalles = estado.PuedeVerDetalles
                     };
                     EstadosMantenimientos.Add(clon);
                 }

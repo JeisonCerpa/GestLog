@@ -371,8 +371,7 @@
                         <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" Width="300" ElementStyle="{StaticResource DataGridWrapTextBlockStyle}"/>
                         <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
                         <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
+                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border CornerRadius="12" Padding="6,2"
@@ -380,6 +379,26 @@
                                         <TextBlock Text="{Binding ., Converter={StaticResource SeguimientoEstadoToTextConverter}}"
                                                    Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12"/>
                                     </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" MinWidth="110">
+                            <DataGridTemplateColumn.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                </Style>
+                            </DataGridTemplateColumn.CellStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Ver Detalles"
+                                            Click="VerDetalles_Click"
+                                            Tag="{Binding}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Padding="6,2"
+                                            FontSize="12"
+                                            HorizontalAlignment="Center"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

@@ -1002,8 +1002,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                            c.Semanas.Length >= semana &&
                            c.Semanas[semana - 1])
                 .ToList();
-            var estados = new List<MantenimientoSemanaEstadoDto>();
-            var seguimientos = await dbContext.Seguimientos
+            var estados = new List<MantenimientoSemanaEstadoDto>();            var seguimientos = await dbContext.Seguimientos
                 .Where(s => s.Anio == anio && s.Semana == semana)
                 .ToListAsync();
             
