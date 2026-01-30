@@ -5,27 +5,70 @@ using System.Collections.Generic;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
 {
-    public class PerifericoDetalleViewModel : ObservableObject
+    public partial class PerifericoDetalleViewModel : ObservableObject
     {
+        [ObservableProperty]
+        private string codigo = string.Empty;
+
+        [ObservableProperty]
+        private string nombre = string.Empty;
+
+        [ObservableProperty]
+        private string tipo = string.Empty;
+
+        [ObservableProperty]
+        private string sede = string.Empty;
+
+        [ObservableProperty]
+        private string asignacion = string.Empty;
+
+        [ObservableProperty]
+        private string estado = string.Empty;
+
+        [ObservableProperty]
+        private string marca = string.Empty;
+
+        [ObservableProperty]
+        private string modelo = string.Empty;
+
+        [ObservableProperty]
+        private string serialNumber = string.Empty;
+
+        [ObservableProperty]
+        private DateTime? fechaAdquisicion;
+
+        [ObservableProperty]
+        private string observaciones = string.Empty;
+
+        [ObservableProperty]
+        private string? usuarioAsignadoAnterior;
+
+        [ObservableProperty]
+        private string? codigoEquipoAsignadoAnterior;
+
+        [ObservableProperty]
+        private IEnumerable<string> detallesAdicionales = new List<string>();
+
+        [ObservableProperty]
+        private bool canEditar;
+
         public PerifericoDetalleViewModel(PerifericoEquipoInformaticoDto dto, bool canEdit = false)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
             Codigo = dto.Codigo ?? string.Empty;
             Nombre = dto.Dispositivo ?? string.Empty;
-            // Mantener Tipo vacío (no hay campo explícito en el DTO)
             Tipo = string.Empty;
-            // Mostrar la sede en una propiedad dedicada
             Sede = ToFriendlyName(dto.Sede.ToString());
-            // Mostrar la asignación (usuario/equipo) en el campo de detalle
             Asignacion = dto.TextoAsignacion ?? string.Empty;
-            // Usar la descripción legible del estado
             Estado = dto.EstadoDescripcion ?? dto.Estado.ToString();
             Marca = dto.Marca ?? string.Empty;
             Modelo = dto.Modelo ?? string.Empty;
             SerialNumber = dto.Serial ?? string.Empty;
             FechaAdquisicion = dto.FechaCompra;
             Observaciones = dto.Observaciones ?? string.Empty;
+            UsuarioAsignadoAnterior = dto.UsuarioAsignadoAnterior;
+            CodigoEquipoAsignadoAnterior = dto.CodigoEquipoAsignadoAnterior;
             CanEditar = canEdit;
 
             // Detalles adicionales útiles para mostrar en la sección de lista
@@ -52,19 +95,5 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
             }
             return sb.ToString();
         }
-
-        public string Codigo { get; }
-        public string Nombre { get; }
-        public string Tipo { get; }
-        public string Sede { get; }
-        public string Asignacion { get; }
-        public string Estado { get; }
-        public string Marca { get; }
-        public string Modelo { get; }
-        public string SerialNumber { get; }
-        public DateTime? FechaAdquisicion { get; }
-        public string Observaciones { get; }
-        public IEnumerable<string> DetallesAdicionales { get; }
-        public bool CanEditar { get; }
     }
 }

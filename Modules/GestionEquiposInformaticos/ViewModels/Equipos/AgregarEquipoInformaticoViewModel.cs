@@ -736,9 +736,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                         catch (Exception ex)
                         {
                             _logger.LogWarning(ex, "No se pudo limpiar ChangeTracker antes de actualizar (no crítico)");
+                        }                        // Actualizar campos escalares
+                        // ✅ AUDITORÍA: Guardar usuario anterior si cambió
+                        if (!string.Equals(equipo.UsuarioAsignado, PersonaAsignada?.NombreCompleto, StringComparison.OrdinalIgnoreCase))
+                        {
+                            equipo.UsuarioAsignadoAnterior = equipo.UsuarioAsignado;
+                            _logger.LogInformation("[AgregarEquipoInformaticoViewModel] Auditoria: Usuario anterior={Anterior} para equipo {Codigo}", 
+                                equipo.UsuarioAsignado ?? "(ninguno)", equipo.Codigo);
                         }
 
-                        // Actualizar campos escalares
                         equipo.UsuarioAsignado = PersonaAsignada?.NombreCompleto ?? string.Empty;
                         equipo.NombreEquipo = NombreEquipo;
                         equipo.Sede = Sede;

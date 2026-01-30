@@ -63,10 +63,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         public string PerifericosHeader => $"Periféricos Asignados ({Perifericos?.Count ?? 0})";
         #endregion
 
-        #region Propiedades de Conveniencia (Passthrough del Equipo)
-        public string Codigo => Equipo.Codigo;
+        #region Propiedades de Conveniencia (Passthrough del Equipo)        public string Codigo => Equipo.Codigo;
         public string? NombreEquipo => Equipo.NombreEquipo;
         public string? UsuarioAsignado => Equipo.UsuarioAsignado;
+        public string? UsuarioAsignadoAnterior => Equipo.UsuarioAsignadoAnterior;
         public string? Marca => Equipo.Marca;
         public string? Modelo => Equipo.Modelo;
         public string? SO => Equipo.SO;
@@ -180,10 +180,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         /// Actualiza las propiedades del equipo principal manteniendo la referencia original
         /// </summary>
         private void ActualizarEquipoPrincipal(EquipoInformaticoEntity equipoActualizado)
-        {
-            // Actualizar propiedades escalares sin cambiar la referencia del objeto
+        {            // Actualizar propiedades escalares sin cambiar la referencia del objeto
             Equipo.NombreEquipo = equipoActualizado.NombreEquipo;
             Equipo.UsuarioAsignado = equipoActualizado.UsuarioAsignado;
+            Equipo.UsuarioAsignadoAnterior = equipoActualizado.UsuarioAsignadoAnterior;
             Equipo.Marca = equipoActualizado.Marca;
             Equipo.Modelo = equipoActualizado.Modelo;
             Equipo.SO = equipoActualizado.SO;
@@ -201,6 +201,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             // Notificar cambios en propiedades calculadas
             OnPropertyChanged(nameof(NombreEquipo));
             OnPropertyChanged(nameof(UsuarioAsignado));
+            OnPropertyChanged(nameof(UsuarioAsignadoAnterior));
             OnPropertyChanged(nameof(Marca));
             OnPropertyChanged(nameof(Modelo));
             OnPropertyChanged(nameof(SO));

@@ -660,14 +660,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                 // Si el código (PK) cambió, EF no permite marcar la PK como modificada en una entidad trackeada.
                 // Hacemos un UPDATE directo en la BD y recargamos la entidad.
                 var didPkChange = !esNuevo && !string.IsNullOrWhiteSpace(originalNonNull) &&
-                                  !string.Equals(originalNonNull, actualCodigoNonNull, StringComparison.OrdinalIgnoreCase);
-
-                if (didPkChange)
+                                  !string.Equals(originalNonNull, actualCodigoNonNull, StringComparison.OrdinalIgnoreCase);                if (didPkChange)
                 {
 #pragma warning disable CS8600 // Evitar advertencia de conversión nullable en expresiones EF locales
 #pragma warning disable CS8602
                     _logger.LogInformation("[PerifericosViewModel] Detectado cambio de PK: {Original} -> {Nuevo}. Ejecutando UPDATE directo.", originalNonNull, actualCodigoNonNull);
 
+                    // ✅ AUDITORÍA: Antes del UPDATE, capturar valores anteriores
+                    var usuarioAnterior = entity.UsuarioAsignado;
+                    var equipoAnterior = entity.CodigoEquipoAsignado;
+                    
+                    // Detectar cambios en asignaciones
+                    bool usuarioCambio = !string.Equals(usuarioAnterior, dto?.UsuarioAsignado, StringComparison.OrdinalIgnoreCase);
+                    bool equipoCambio = !string.Equals(equipoAnterior, dto?.CodigoEquipoAsignado, StringComparison.OrdinalIgnoreCase);
+                    
                     // Ejecutar UPDATE directo para cambiar PK y demás campos en una sola operación atómica
                     await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
                         UPDATE PerifericosEquiposInformaticos
@@ -680,11 +686,43 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                             SerialNumber = {dto.Serial ?? string.Empty},
                             CodigoEquipoAsignado = {(string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
                             UsuarioAsignado = {(string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
+                            UsuarioAsignadoAnterior = {(usuarioCambio && !string.IsNullOrWhiteSpace(usuarioAnterior) ? usuarioAnterior : null)},
+                            CodigoEquipoAsignadoAnterior = {(equipoCambio && !string.IsNullOrWhiteSpace(equipoAnterior) ? equipoAnterior : null)},
                             Sede = {dto.Sede},
                             Estado = {dto.Estado},
                             Observaciones = {dto.Observaciones ?? string.Empty},
                             FechaModificacion = {DateTime.Now}
                         WHERE Codigo = {originalNonNull}");
+
+                    if (usuarioCambio)
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Usuario anterior={Anterior} para periférico {Codigo}", usuarioAnterior ?? "(ninguno)", codigo);
+                    if (equipoCambio)
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", equipoAnterior ?? "(ninguno)", codigo);
+                    
+                    // Ejecutar UPDATE directo para cambiar PK y demás campos en una sola operación atómica
+                    await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
+                        UPDATE PerifericosEquiposInformaticos
+                        SET Codigo = {actualCodigoNonNull},
+                            Dispositivo = {dto.Dispositivo ?? string.Empty},
+                            FechaCompra = {dto.FechaCompra},
+                            Costo = {dto.Costo},
+                            Marca = {dto.Marca ?? string.Empty},
+                            Modelo = {dto.Modelo ?? string.Empty},
+                            SerialNumber = {dto.Serial ?? string.Empty},
+                            CodigoEquipoAsignado = {(string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
+                            UsuarioAsignado = {(string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
+                            UsuarioAsignadoAnterior = {(usuarioCambio && !string.IsNullOrWhiteSpace(usuarioAnterior) ? usuarioAnterior : null)},
+                            CodigoEquipoAsignadoAnterior = {(equipoCambio && !string.IsNullOrWhiteSpace(equipoAnterior) ? equipoAnterior : null)},
+                            Sede = {dto.Sede},
+                            Estado = {dto.Estado},
+                            Observaciones = {dto.Observaciones ?? string.Empty},
+                            FechaModificacion = {DateTime.Now}
+                        WHERE Codigo = {originalNonNull}");
+
+                    if (usuarioCambio)
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Usuario anterior={Anterior} para periférico {Codigo}", usuarioAnterior ?? "(ninguno)", codigo);
+                    if (equipoCambio)
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", equipoAnterior ?? "(ninguno)", codigo);;
 
                     // Recargar la entidad actualizada
                     var reloadKey = actualCodigoNonNull;
@@ -697,9 +735,25 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     }
 #pragma warning restore CS8602
 #pragma warning restore CS8600
-                }
-                else
+                }                else
                 {
+                    // ✅ AUDITORÍA: Guardar valores anteriores ANTES de actualizar
+                    // Si cambió el usuario asignado, guardar el anterior
+                    if (!string.Equals(entity.UsuarioAsignado, dto?.UsuarioAsignado, StringComparison.OrdinalIgnoreCase))
+                    {
+                        entity.UsuarioAsignadoAnterior = entity.UsuarioAsignado;
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Usuario anterior={Anterior} para periférico {Codigo}", 
+                            entity.UsuarioAsignado ?? "(ninguno)", codigo);
+                    }
+
+                    // Si cambió el equipo asignado, guardar el anterior
+                    if (!string.Equals(entity.CodigoEquipoAsignado, dto?.CodigoEquipoAsignado, StringComparison.OrdinalIgnoreCase))
+                    {
+                        entity.CodigoEquipoAsignadoAnterior = entity.CodigoEquipoAsignado;
+                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", 
+                            entity.CodigoEquipoAsignado ?? "(ninguno)", codigo);
+                    }
+
                     // Mapear campos cuando no hay cambio de PK
                     entity.Dispositivo = dto?.Dispositivo ?? string.Empty;
                     entity.FechaCompra = dto?.FechaCompra ?? default;
@@ -813,12 +867,26 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
 
             if (string.IsNullOrWhiteSpace(Filtro)) return true;
 
-            var q = Filtro.Trim();
-            return (p.Codigo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (p.Dispositivo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (p.Marca?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (p.TextoAsignacion?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (p.NombreEquipoAsignado?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false);
+            // ✅ Soportar filtro múltiple: separados por ';' (ej: "mouse; logitech; admin")
+            // Todos los términos deben coincidir (AND lógico)
+            var terminos = Filtro.Split(';')
+                .Select(t => t.Trim().ToLowerInvariant())
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToArray();            // Campos a buscar
+            var campos = new[]
+            {
+                (p.Codigo ?? "").ToLowerInvariant(),
+                (p.Dispositivo ?? "").ToLowerInvariant(),
+                (p.Marca ?? "").ToLowerInvariant(),
+                (p.Modelo ?? "").ToLowerInvariant(),
+                (p.TextoAsignacion ?? "").ToLowerInvariant(),
+                (p.NombreEquipoAsignado ?? "").ToLowerInvariant(),
+                (p.Serial ?? "").ToLowerInvariant(),
+                p.Sede.ToString().ToLowerInvariant(),  // Agregar búsqueda por Sede (enum)
+            };
+
+            // Todos los términos deben encontrarse en al menos un campo
+            return terminos.All(term => campos.Any(campo => campo.Contains(term)));
         }
 
         // Refrescar vista cuando cambian filtros

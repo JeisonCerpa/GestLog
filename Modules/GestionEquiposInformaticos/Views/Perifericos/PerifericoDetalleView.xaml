@@ -89,10 +89,14 @@
                                 <TextBlock Text="{Binding Nombre}" Style="{StaticResource ValueTextStyle}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
                                 <TextBlock Text="Sede" Style="{StaticResource LabelTextStyle}" Margin="0,12,0,8" />
-                                <TextBlock Text="{Binding Sede}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
-
-                                <TextBlock Text="Asignación" Style="{StaticResource LabelTextStyle}" Margin="0,12,0,8" />
+                                <TextBlock Text="{Binding Sede}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>                                <TextBlock Text="Asignación" Style="{StaticResource LabelTextStyle}" Margin="0,12,0,8" />
                                 <TextBlock Text="{Binding Asignacion}" Style="{StaticResource ValueTextStyle}" Margin="0,0,0,8"/>
+
+                                <TextBlock Text="Usuario Anterior" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,8" />
+                                <TextBlock Text="{Binding UsuarioAsignadoAnterior, StringFormat='(vacío)'}" Style="{StaticResource ValueTextStyle}" Foreground="#9CA3AF" Margin="0,0,0,8"/>
+
+                                <TextBlock Text="Equipo Anterior" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,8" />
+                                <TextBlock Text="{Binding CodigoEquipoAsignadoAnterior, StringFormat='(vacío)'}" Style="{StaticResource ValueTextStyle}" Foreground="#9CA3AF" Margin="0,0,0,8"/>
 
                                 <TextBlock Text="Estado" Style="{StaticResource LabelTextStyle}" Margin="0,12,0,0" />
                                 <!-- Usar StatusBadge si aplica -->

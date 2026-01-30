@@ -148,44 +148,50 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
         {
             try
             {
-                if (!(this.DataContext is DetallesEquipoInformaticoViewModel detallesVm))
+                if (!(this.DataContext is GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.DetallesEquipoInformaticoViewModel detallesVm))
                 {
                     System.Windows.MessageBox.Show("No se pudo obtener la información del equipo.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }                // Abrir la ventana de edición
                 var editarWindow = new AgregarEquipoInformaticoView();
                 
-                // Precargar datos en el ViewModel de edición
+                // El ViewModel de edición se carga automáticamente en el code-behind del AgregarEquipoInformaticoView
+                // Los datos se cargarán cuando sea necesario
                 if (editarWindow.DataContext is GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos.AgregarEquipoInformaticoViewModel editVm)
                 {
-                    // Copiar datos principales
-                    editVm.Codigo = detallesVm.Codigo;
-                    editVm.NombreEquipo = detallesVm.NombreEquipo ?? string.Empty;
-                    editVm.Marca = detallesVm.Marca ?? string.Empty;
-                    editVm.Modelo = detallesVm.Modelo ?? string.Empty;
-                    editVm.Procesador = detallesVm.Procesador ?? string.Empty;
-                    editVm.So = detallesVm.SO ?? string.Empty;
-                    editVm.SerialNumber = detallesVm.SerialNumber ?? string.Empty;
-                    editVm.CodigoAnydesk = detallesVm.CodigoAnydesk ?? string.Empty;
-                    editVm.Observaciones = detallesVm.Observaciones ?? string.Empty;                    editVm.Costo = detallesVm.Costo;
-                    editVm.FechaCompra = detallesVm.FechaCompra;
-                    editVm.Estado = detallesVm.Estado ?? string.Empty;
-                    editVm.Sede = detallesVm.Sede ?? string.Empty;
-                    
-                    // Copiar listas
-                    editVm.ListaRam = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(
-                        detallesVm.SlotsRam?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>());
-                    editVm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(
-                        detallesVm.Discos?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>());
-                    editVm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(
-                        detallesVm.Conexiones?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>());
+                    // Nota: La copia de datos se realiza de forma segura con el Equipo entity
+                    // Obtener la entidad del equipo desde el ViewModel de detalles para cargarla en el editor
+                    if (detallesVm.Equipo != null)
+                    {
+                        // Copiar datos principales desde la entidad
+                        editVm.Codigo = detallesVm.Equipo.Codigo ?? string.Empty;
+                        editVm.NombreEquipo = detallesVm.Equipo.NombreEquipo ?? string.Empty;
+                        editVm.Marca = detallesVm.Equipo.Marca ?? string.Empty;
+                        editVm.Modelo = detallesVm.Equipo.Modelo ?? string.Empty;
+                        editVm.Procesador = detallesVm.Equipo.Procesador ?? string.Empty;
+                        editVm.So = detallesVm.Equipo.SO ?? string.Empty;
+                        editVm.SerialNumber = detallesVm.Equipo.SerialNumber ?? string.Empty;
+                        editVm.CodigoAnydesk = detallesVm.Equipo.CodigoAnydesk ?? string.Empty;
+                        editVm.Observaciones = detallesVm.Equipo.Observaciones ?? string.Empty;
+                        editVm.Costo = detallesVm.Equipo.Costo;
+                        editVm.FechaCompra = detallesVm.Equipo.FechaCompra;
+                        editVm.Estado = detallesVm.Equipo.Estado ?? string.Empty;
+                        editVm.Sede = detallesVm.Equipo.Sede ?? string.Empty;
+                    }
+                      // Copiar listas
+                        editVm.ListaRam = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>(
+                            detallesVm.SlotsRam?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>());
+                        editVm.ListaDiscos = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>(
+                            detallesVm.Discos?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>());
+                        editVm.ListaConexiones = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(
+                            detallesVm.Conexiones?.ToList() ?? new System.Collections.Generic.List<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>());
 
-                    // Marcar modo edición
-                    editVm.IsEditing = true;
-                    editVm.OriginalCodigo = detallesVm.Codigo;
+                        // Marcar modo edición
+                        editVm.IsEditing = true;
+                        editVm.OriginalCodigo = detallesVm.Equipo?.Codigo ?? string.Empty;
 
-                    // Guardar usuario asignado original
-                    string usuarioAsignado = detallesVm.UsuarioAsignado ?? string.Empty;
+                        // Guardar usuario asignado original
+                        string usuarioAsignado = detallesVm.Equipo?.UsuarioAsignado ?? string.Empty;
 
                     // Inicializar ViewModel (carga de personas)
                     try 
@@ -279,15 +285,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Equipos
                 {
                     System.Windows.MessageBox.Show("No se pudo obtener la información del equipo.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }
-
-                if (string.IsNullOrWhiteSpace(vm.Codigo))
+                }                if (string.IsNullOrWhiteSpace(vm.Equipo?.Codigo))
                 {
                     System.Windows.MessageBox.Show("Código de equipo inválido.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                var result = System.Windows.MessageBox.Show($"¿Está seguro que desea dar de baja el equipo '{vm.NombreEquipo}' (código: {vm.Codigo})? Esta acción marcará la fecha de baja.", "Confirmar baja de equipo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var result = System.Windows.MessageBox.Show($"¿Está seguro que desea dar de baja el equipo '{vm.Equipo?.NombreEquipo}' (código: {vm.Equipo?.Codigo})? Esta acción marcará la fecha de baja.", "Confirmar baja de equipo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (result != MessageBoxResult.Yes)
                     return;
 

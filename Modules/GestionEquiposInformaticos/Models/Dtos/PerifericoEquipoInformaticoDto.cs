@@ -39,6 +39,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         private string? _usuarioAsignado;
 
         [ObservableProperty]
+        private string? _usuarioAsignadoAnterior;
+
+        [ObservableProperty]
+        private string? _codigoEquipoAsignadoAnterior;
+
+        [ObservableProperty]
         private SedePeriferico _sede = SedePeriferico.AdministrativaBarranquilla;
 
         [ObservableProperty]
@@ -164,9 +170,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
         /// <summary>
         /// Constructor por defecto
         /// </summary>
-        public PerifericoEquipoInformaticoDto() { }
-
-        /// <summary>
+        public PerifericoEquipoInformaticoDto() { }        /// <summary>
         /// Constructor de copia
         /// </summary>
         public PerifericoEquipoInformaticoDto(PerifericoEquipoInformaticoDto other)
@@ -181,6 +185,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
             Serial = other.Serial;
             CodigoEquipoAsignado = other.CodigoEquipoAsignado;
             UsuarioAsignado = other.UsuarioAsignado;
+            UsuarioAsignadoAnterior = other.UsuarioAsignadoAnterior;
+            CodigoEquipoAsignadoAnterior = other.CodigoEquipoAsignadoAnterior;
             Sede = other.Sede;
             Estado = other.Estado;
             Observaciones = other.Observaciones;
@@ -202,6 +208,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Dtos
             Serial = entity.SerialNumber; // Entity usa SerialNumber
             CodigoEquipoAsignado = entity.CodigoEquipoAsignado;
             UsuarioAsignado = entity.UsuarioAsignado;
+            UsuarioAsignadoAnterior = entity.UsuarioAsignadoAnterior;
+            CodigoEquipoAsignadoAnterior = entity.CodigoEquipoAsignadoAnterior;
             Sede = entity.Sede;
             Estado = entity.Estado;
             Observaciones = entity.Observaciones;

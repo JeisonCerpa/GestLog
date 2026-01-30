@@ -36,13 +36,23 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         /// Código del equipo al que está asignado (puede ser null si no está asignado)
         /// </summary>
         [StringLength(20)]
-        public string? CodigoEquipoAsignado { get; set; }
-
-        /// <summary>
+        public string? CodigoEquipoAsignado { get; set; }        /// <summary>
         /// Usuario al que está asignado (puede ser null si está asignado a un equipo o no asignado)
         /// </summary>
         [StringLength(100)]
         public string? UsuarioAsignado { get; set; }
+
+        /// <summary>
+        /// Usuario que tenía asignado el periférico antes del cambio actual
+        /// </summary>
+        [StringLength(100)]
+        public string? UsuarioAsignadoAnterior { get; set; }
+
+        /// <summary>
+        /// Código del equipo al que estaba asignado antes del cambio actual
+        /// </summary>
+        [StringLength(20)]
+        public string? CodigoEquipoAsignadoAnterior { get; set; }
 
         [Required]
         public SedePeriferico Sede { get; set; }

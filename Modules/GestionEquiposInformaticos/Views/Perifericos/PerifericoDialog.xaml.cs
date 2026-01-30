@@ -608,10 +608,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
 
                 FiltroUsuarioAsignado = (usuarioAsignado ?? string.Empty).Trim();
             }
-        }
-
-        private void FiltrarPersonasConEquipo()
+        }        private void FiltrarPersonasConEquipo()
         {
+            // PASO 1: Guardar el texto ANTES de cambiar ItemsSource
+            var textoPreservado = FiltroUsuarioAsignado ?? string.Empty;
+
             PersonasConEquipoFiltradas.Clear();
 
             if (string.IsNullOrWhiteSpace(FiltroUsuarioAsignado))
@@ -620,6 +621,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 {
                     PersonasConEquipoFiltradas.Add(persona);
                 }
+                
+                // PASO 2: Restaurar el texto sin disparar el handler
+                _suppressFiltroUsuarioChanged = true;
+                FiltroUsuarioAsignado = textoPreservado;
+                _suppressFiltroUsuarioChanged = false;
                 return;
             }
 
@@ -632,6 +638,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
             {
                 PersonasConEquipoFiltradas.Add(persona);
             }
+            
+            // PASO 3: Restaurar el texto sin disparar el handler (CRÍTICO)
+            _suppressFiltroUsuarioChanged = true;
+            FiltroUsuarioAsignado = textoPreservado;
+            _suppressFiltroUsuarioChanged = false;
         }
 
         private static string NormalizeString(string? input)

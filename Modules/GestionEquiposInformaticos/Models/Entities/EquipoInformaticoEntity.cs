@@ -12,9 +12,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Models.Entities
         [Required]
         [MaxLength(20)]
         public string Codigo { get; set; } = string.Empty;
-        
-        [MaxLength(100)]
+          [MaxLength(100)]
         public string? UsuarioAsignado { get; set; }
+
+        /// <summary>
+        /// Usuario que tenía asignado el equipo antes del cambio actual
+        /// </summary>
+        [MaxLength(100)]
+        public string? UsuarioAsignadoAnterior { get; set; }
         
         [MaxLength(100)]
         public string? NombreEquipo { get; set; }
