@@ -79,14 +79,14 @@ namespace GestLog.Views.Tools.GestionCartera
                     UseAuthentication = !string.IsNullOrEmpty(viewModel?.SmtpUsername),
                     FromEmail = viewModel?.SmtpUsername ?? string.Empty,
                     IsConfigured = viewModel?.IsEmailConfigured ?? false
-                };
-
-                // Abrir ventana de configuración
+                };                // Abrir ventana de configuración
+                var smtpPersistenceService = LoggingService.GetService<ISmtpPersistenceService>();
                 var configWindow = new SmtpConfigurationWindow(
                     currentSettings, 
                     emailService, 
                     credentialService, 
                     configurationService,
+                    smtpPersistenceService,
                     logger)
                 {
                     Owner = Window.GetWindow(this)

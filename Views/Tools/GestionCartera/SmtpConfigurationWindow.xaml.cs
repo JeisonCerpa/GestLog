@@ -11,14 +11,14 @@ using GestLog.Services.Configuration;
 using GestLog.Models.Configuration;
 
 namespace GestLog.Views.Tools.GestionCartera
-{
-    /// <summary>
+{    /// <summary>
     /// Ventana de configuración SMTP - Versión corregida
     /// </summary>
     public partial class SmtpConfigurationWindow : Window
     {        private readonly IEmailService _emailService;
         private readonly ICredentialService _credentialService;
         private readonly IConfigurationService _configurationService;
+        private readonly ISmtpPersistenceService _smtpPersistenceService;
         private readonly IGestLogLogger _logger = null!;
         private SmtpSettings _currentSettings;
         private bool _isTestSuccessful = false;
@@ -27,12 +27,14 @@ namespace GestLog.Views.Tools.GestionCartera
             IEmailService emailService, 
             ICredentialService credentialService, 
             IConfigurationService configurationService,
+            ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
         {
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));            try
+            _smtpPersistenceService = smtpPersistenceService ?? throw new ArgumentNullException(nameof(smtpPersistenceService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));try
             {
                 InitializeComponent();
                 
@@ -50,15 +52,14 @@ namespace GestLog.Views.Tools.GestionCartera
                 _logger?.LogError(ex, "Error inicializando SmtpConfigurationWindow");
                 throw;
             }
-        }
-
-        public SmtpConfigurationWindow(
+        }        public SmtpConfigurationWindow(
             SmtpSettings settings, 
             IEmailService emailService, 
             ICredentialService credentialService, 
             IConfigurationService configurationService,
+            ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
-            : this(emailService, credentialService, configurationService, logger)
+            : this(emailService, credentialService, configurationService, smtpPersistenceService, logger)
         {
             _currentSettings = settings ?? new SmtpSettings();
             LoadConfigurationToUI();
@@ -406,72 +407,77 @@ namespace GestLog.Views.Tools.GestionCartera
 
                 var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
                 var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-                var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
+                var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
+                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
                 var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
-                var saveCredentialsCheckBox = this.FindName("SaveCredentialsCheckBox") as System.Windows.Controls.CheckBox;                var bccEmailTextBox = this.FindName("BccEmailTextBox") as System.Windows.Controls.TextBox;
+                var saveCredentialsCheckBox = this.FindName("SaveCredentialsCheckBox") as System.Windows.Controls.CheckBox;
+                var bccEmailTextBox = this.FindName("BccEmailTextBox") as System.Windows.Controls.TextBox;
                 var ccEmailTextBox = this.FindName("CcEmailTextBox") as System.Windows.Controls.TextBox;
 
-                // Obtener email una vez
                 var email = emailTextBox?.Text?.Trim() ?? string.Empty;
                 var password = passwordBox?.Password ?? string.Empty;
                 var shouldSaveCredentials = saveCredentialsCheckBox?.IsChecked ?? false;
                 var bccEmail = bccEmailTextBox?.Text?.Trim() ?? string.Empty;
-                var ccEmail = ccEmailTextBox?.Text?.Trim() ?? string.Empty;// Actualizar configuración persistente
-                var oldServer = _currentSettings.Server;
-                var oldUsername = _currentSettings.Username;
-                
-                _currentSettings.Server = hostTextBox?.Text?.Trim() ?? string.Empty;
-                _currentSettings.Port = int.TryParse(portTextBox?.Text?.Trim(), out int port) ? port : 587;
-                _currentSettings.UseSSL = sslCheckBox?.IsChecked ?? true;
-                _currentSettings.UseAuthentication = !string.IsNullOrEmpty(email);                _currentSettings.Username = email;     // Email principal
-                _currentSettings.FromEmail = email;    // Mismo email (REQUERIDO para validación)
-                _currentSettings.FromName = email;     // Nombre del remitente
-                _currentSettings.BccEmail = bccEmail;  // Email para copia oculta                _currentSettings.CcEmail = ccEmail;    // Email para copia
-                _currentSettings.IsConfigured = true;  // Marcar como configurado                // Actualizar la configuración del servicio de configuración
-                var serviceSmtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;
-                serviceSmtpConfig.Server = _currentSettings.Server;
-                serviceSmtpConfig.Port = _currentSettings.Port;
-                serviceSmtpConfig.UseSSL = _currentSettings.UseSSL;
-                serviceSmtpConfig.UseAuthentication = _currentSettings.UseAuthentication;                serviceSmtpConfig.Username = _currentSettings.Username;
-                serviceSmtpConfig.FromEmail = _currentSettings.FromEmail;
-                serviceSmtpConfig.FromName = _currentSettings.FromName;
-                serviceSmtpConfig.BccEmail = _currentSettings.BccEmail;                serviceSmtpConfig.CcEmail = _currentSettings.CcEmail;
-                serviceSmtpConfig.IsConfigured = _currentSettings.IsConfigured;
+                var ccEmail = ccEmailTextBox?.Text?.Trim() ?? string.Empty;                _logger?.LogInformation("💾 [SmtpConfigurationWindow] Iniciando guardado de configuración SMTP");
+                _logger?.LogInformation("   📌 Servidor: {Server}", hostTextBox?.Text?.Trim() ?? "(vacío)");
+                _logger?.LogInformation("   📧 Usuario: {Email}", email);
+                _logger?.LogInformation("   📨 BCC: {BccEmail}", string.IsNullOrWhiteSpace(bccEmail) ? "(vacío)" : bccEmail);
+                _logger?.LogInformation("   📋 CC: {CcEmail}", string.IsNullOrWhiteSpace(ccEmail) ? "(vacío)" : ccEmail);                var smtpConfiguration = new SmtpSettings
+                {
+                    Server = hostTextBox?.Text?.Trim() ?? string.Empty,
+                    Port = int.TryParse(portTextBox?.Text?.Trim(), out int port) ? port : 587,
+                    Username = email,
+                    FromEmail = email,
+                    FromName = email,
+                    BccEmail = bccEmail,
+                    CcEmail = ccEmail,
+                    UseSSL = sslCheckBox?.IsChecked ?? true,
+                    Timeout = 120000,
+                    IsConfigured = true
+                };
 
-                // Guardar credenciales si se solicita
+                bool saved = await _smtpPersistenceService.SaveSmtpConfigurationAsync(
+                    smtpConfiguration,
+                    operationSource: "SmtpConfigurationWindow.SaveConfigurationAsync");
+
+                if (!saved)
+                {
+                    _logger?.LogError(new InvalidOperationException(), "❌ [SmtpConfigurationWindow] Error guardando configuración SMTP");
+                    UpdateStatus("Error al guardar la configuración", System.Windows.Media.Colors.Red);
+                    System.Windows.MessageBox.Show("Error al guardar la configuración SMTP", 
+                                  "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    return;
+                }                _logger?.LogInformation("✅ [SmtpConfigurationWindow] Configuración SMTP guardada exitosamente");
+
                 if (shouldSaveCredentials && !string.IsNullOrEmpty(email))
                 {
-                    var credentialTarget = $"GestionCartera_SMTP_{_currentSettings.Server}_{email}";
-
-                    // Eliminar cualquier credencial previa para este target antes de guardar la nueva
-                    // Esto previene duplicados en el Windows Credential Manager
+                    var credentialTarget = $"GestionCartera_SMTP_{smtpConfiguration.Server}_{email}";
                     _credentialService?.DeleteCredentials(credentialTarget);
 
-                    var saved = _credentialService?.SaveCredentials(
+                    var savedCreds = _credentialService?.SaveCredentials(
                         credentialTarget,
                         email,
                         password) ?? false;
-                    if (saved)
+                    if (savedCreds)
                     {
-                        // Asignar la contraseña guardada al objeto de configuración
-                        _currentSettings.Password = password;
+                        _logger?.LogInformation("🔐 [SmtpConfigurationWindow] Credenciales guardadas en Windows Credential Manager");
                     }
                     else
                     {
-                        _logger?.LogWarning("No se pudieron guardar las credenciales SMTP");
+                        _logger?.LogWarning("⚠️ [SmtpConfigurationWindow] Error guardando credenciales");
                         System.Windows.MessageBox.Show("Error al guardar las credenciales de forma segura. Inténtelo nuevamente.", 
                                       "Error de Credenciales", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     }
-                }                // Guardar configuración
-                await _configurationService.SaveAsync();
+                }
 
+                UpdateStatus("Configuración guardada exitosamente", System.Windows.Media.Colors.Green);
                 this.DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error en SaveConfigurationAsync: {ErrorMessage}", ex.Message);
-                UpdateStatus($"Error al guardar: {ex.Message}", Colors.Red);
+                _logger?.LogError(ex, "❌ [SmtpConfigurationWindow] Error en SaveConfigurationAsync: {ErrorMessage}", ex.Message);
+                UpdateStatus($"Error al guardar: {ex.Message}", System.Windows.Media.Colors.Red);
                 System.Windows.MessageBox.Show($"Error al guardar la configuración: {ex.Message}", 
                               "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }

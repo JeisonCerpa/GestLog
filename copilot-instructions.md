@@ -21,6 +21,7 @@ WPF + .NET 9.0 | **Código**: inglés | **UI**: español (es-CO) | **MVVM** estr
 7. **Errores**: Específicos del dominio + mensajes claros en español
 8. **Ubicación de módulos**: Todas las implementaciones o nuevos módulos deben ir dentro de la carpeta `Modules/` siguiendo la estructura recomendada. Sus vistas XAML van dentro de la carpeta `/Views` de cada módulo, no en `Views/Tools/` del nivel superior.
 9. **Archivos vacíos**: No crear archivos vacíos como `.keep` para mantener carpetas en el repositorio; la gestión de carpetas vacías la maneja el `.gitignore` y las reglas del repositorio.
+10. **Creación de Documentos, Resúmenes**: No crear documentos o resúmenes automáticos sin aprobación previa.
 
 ## 🏗️ **Arquitectura Base**
 

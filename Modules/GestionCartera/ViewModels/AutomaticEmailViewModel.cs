@@ -674,10 +674,18 @@ public partial class AutomaticEmailViewModel : ObservableObject
             OnPropertyChanged(nameof(HasDocumentsGenerated));
         }
     }
-    
-    private async Task ConfigureSmtpFromConfigAsync(SmtpConfigurationViewModel config)
+      private async Task ConfigureSmtpFromConfigAsync(SmtpConfigurationViewModel config)
     {
         if (_emailService == null) return;
+
+        // 🔐 Asegurar que la contraseña esté cargada desde Credential Manager antes de usarla
+        _logger.LogInformation("🔍 [AutomaticEmailViewModel.ConfigureSmtpFromConfigAsync] Verificando contraseña SMTP antes de configurar...");
+        config.EnsurePasswordLoaded();
+        
+        if (string.IsNullOrWhiteSpace(config.SmtpPassword))
+        {
+            _logger.LogWarning("⚠️ La contraseña SMTP sigue vacía después de intentar recargar desde Credential Manager. Esto causará un error de validación.");
+        }
 
         var smtpConfig = new SmtpConfiguration
         {
@@ -686,10 +694,13 @@ public partial class AutomaticEmailViewModel : ObservableObject
             Username = config.SmtpUsername,
             Password = config.SmtpPassword,
             EnableSsl = config.EnableSsl,
-            BccEmail = config.BccEmail,     // ✅ CORRECCIÓN: Agregar BCC
-            CcEmail = config.CcEmail        // ✅ CORRECCIÓN: Agregar CC
+            BccEmail = config.BccEmail,
+            CcEmail = config.CcEmail
         };
 
+        _logger.LogInformation("✅ Configurando SMTP para envío automático - Servidor: {Server}, Usuario: {User}, Password presente: {HasPassword}", 
+            smtpConfig.SmtpServer, smtpConfig.Username, !string.IsNullOrWhiteSpace(smtpConfig.Password));
+        
         await _emailService.ConfigureSmtpAsync(smtpConfig);
     }
     
@@ -731,10 +742,7 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 var progressPercentage = (double)processedDocuments / totalEmails * 100;
                 _smoothProgress.Report(progressPercentage);
                 EmailStatusMessage = $"Procesando {document.NombreEmpresa} ({processedDocuments}/{totalEmails})";
-                
-                LogText += $"\n  📄 Procesando: {document.NombreArchivo} ({document.NombreEmpresa})";
-
-                var emails = await _excelEmailService.GetEmailsForCompanyAsync(
+                  var emails = await _excelEmailService.GetEmailsForCompanyAsync(
                     SelectedEmailExcelFilePath, 
                     document.NombreEmpresa, 
                     document.Nit, 
@@ -742,9 +750,7 @@ public partial class AutomaticEmailViewModel : ObservableObject
 
                 if (!emails.Any())
                 {
-                    // Documento huérfano - agregar a la lista para envío consolidado
                     orphanDocuments.Add(document);
-                    LogText += $" 📋 Sin correo → consolidar en BCC";
                     continue;
                 }
 
@@ -758,40 +764,30 @@ public partial class AutomaticEmailViewModel : ObservableObject
                     Subject = "Estado Cartera - SIMICS GROUP S.A.S",
                     Body = GetCompleteEmailBodyWithSignature(),
                     IsBodyHtml = true
-                };
-
-                var result = await _emailService.SendEmailWithAttachmentAsync(emailInfo, document.RutaArchivo, cancellationToken);
+                };                var result = await _emailService.SendEmailWithAttachmentAsync(emailInfo, document.RutaArchivo, cancellationToken);
                 
                 if (result.IsSuccess)
                 {
                     emailsSent++;
-                    LogText += $" ✅ Enviado a {emails.Count} destinatario(s)";
                 }
                 else
                 {
                     emailsFailed++;
-                    LogText += $" ❌ Error: {result.Message}";
+                    _logger.LogWarning("Error enviando email a {Company}: {Message}", document.NombreEmpresa, result.Message);
                 }
             }
             catch (Exception ex)
             {
                 emailsFailed++;
-                LogText += $" ❌ Error: {ex.Message}";
+                _logger.LogWarning(ex, "Error procesando documento: {FileName}", document.NombreArchivo);
             }
-        }
-        
+        }        
         // Enviar documentos huérfanos consolidados al BCC
         if (orphanDocuments.Any() && !string.IsNullOrWhiteSpace(bccEmail))
         {
             try
             {
-                EmailStatusMessage = $"Enviando {orphanDocuments.Count} documentos sin destinatario...";
-                LogText += $"\n📤 Enviando {orphanDocuments.Count} documento(s) huérfano(s) consolidados al BCC...";
-
-                // Crear lista de rutas de archivos
                 var orphanAttachments = orphanDocuments.Select(d => d.RutaArchivo).ToList();
-
-                // Generar cuerpo del email consolidado
                 var consolidatedBody = GetConsolidatedOrphanEmailBody(orphanDocuments);
 
                 var orphanEmailInfo = new EmailInfo
@@ -807,37 +803,32 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 if (orphanResult.IsSuccess)
                 {
                     orphansSent = orphanDocuments.Count;
-                    LogText += $" ✅ {orphanDocuments.Count} documento(s) enviado(s) consolidados al BCC";
                 }
                 else
                 {
                     emailsFailed += orphanDocuments.Count;
-                    LogText += $" ❌ Error enviando consolidado al BCC: {orphanResult.Message}";
+                    _logger.LogWarning("Error enviando documentos huérfanos: {Message}", orphanResult.Message);
                 }
             }
             catch (Exception ex)
             {
                 emailsFailed += orphanDocuments.Count;
-                LogText += $" ❌ Error enviando consolidado al BCC: {ex.Message}";
+                _logger.LogWarning(ex, "Error en consolidado de huérfanos");
             }
         }
         else if (orphanDocuments.Any())
         {
-            LogText += $"\n⚠️ {orphanDocuments.Count} documento(s) sin correo y sin BCC configurado";
             emailsFailed += orphanDocuments.Count;
+            _logger.LogWarning("No hay BCC configurado para {Count} documentos huérfanos", orphanDocuments.Count);
         }
-        
-        // Completar progreso with animación suave
         _smoothProgress.Report(100);
-        await Task.Delay(200); // Pausa visual para mostrar completado
-        EmailStatusMessage = $"Completado: {emailsSent + orphansSent} emails enviados";
+        await Task.Delay(200);
 
-        LogText += $"\n📊 Resumen final: {emailsSent}/{totalEmails} emails enviados exitosamente";
-        if (orphansSent > 0)
-        {
-            LogText += $", {orphansSent} documento(s) huérfano(s) enviado(s) consolidados al BCC";
-        }
+        LogText += $"\n✅ Envío completado: {emailsSent + orphansSent} emails enviados";
         if (emailsFailed > 0)
+        {
+            LogText += $" | ❌ {emailsFailed} fallidos";
+        }
         {
             LogText += $", {emailsFailed} fallos";
         }

@@ -16,11 +16,12 @@ namespace GestLog.Modules.GestionCartera.ViewModels;
 /// ViewModel para gestión de configuración SMTP
 /// </summary>
 public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
-{
+{    
     private readonly IEmailService? _emailService;
     private readonly IConfigurationService _configurationService;
     private readonly ICredentialService _credentialService;
     private readonly IGestLogLogger _logger;
+    private readonly ISmtpPersistenceService _smtpPersistenceService;
 
     // Propiedades SMTP
     [ObservableProperty] private string _smtpServer = string.Empty;
@@ -39,18 +40,20 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     // Campo privado para controlar el ciclo de advertencia
-    private bool _warnedMissingPassword = false;
-
+    private bool _warnedMissingPassword = false;    
+    
     public SmtpConfigurationViewModel(
         IEmailService? emailService, 
         IConfigurationService configurationService,
         ICredentialService credentialService,
-        IGestLogLogger logger)
+        IGestLogLogger logger,
+        ISmtpPersistenceService smtpPersistenceService)
     {
         _emailService = emailService;
         _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
         _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _smtpPersistenceService = smtpPersistenceService ?? throw new ArgumentNullException(nameof(smtpPersistenceService));
 
         // Suscribirse a cambios de configuración
         _configurationService.ConfigurationChanged += OnConfigurationChanged;
@@ -176,26 +179,21 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
     public async Task LoadSmtpConfigurationAsync()
     {
         await Task.Run(() => LoadSmtpConfiguration());
-    }
-
+    }    
+    
     private bool CanConfigureSmtp() => !IsConfiguring && 
         !string.IsNullOrWhiteSpace(SmtpServer) && 
         !string.IsNullOrWhiteSpace(SmtpUsername) && 
-        !string.IsNullOrWhiteSpace(SmtpPassword);    /// <summary>
-    /// Carga configuración SMTP con nueva estrategia: Windows Credential Manager primero, JSON como fallback
+        !string.IsNullOrWhiteSpace(SmtpPassword);
+
+    /// <summary>
+    /// Carga configuración SMTP con nueva estrategia: primero JSON, luego contraseña desde Credential Manager
     /// </summary>
     public void LoadSmtpConfiguration()
     {
         try
         {
-            // PRIMERO: Intentar cargar desde Windows Credential Manager
-            bool loadedFromCredentials = TryLoadFromCredentials();
-            // Si la contraseña fue cargada correctamente desde credenciales, no mostrar advertencia
-            if (!string.IsNullOrWhiteSpace(SmtpPassword))
-            {
-                _warnedMissingPassword = false;
-                return;
-            }            // Cargar el resto de la configuración desde JSON (sin contraseña)
+            // PRIMERO: Cargar datos básicos desde JSON (Server, Username, Port, BCC, CC, etc.)
             var smtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;
             if (smtpConfig != null)
             {
@@ -206,10 +204,33 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
                 BccEmail = smtpConfig.BccEmail ?? string.Empty;
                 CcEmail = smtpConfig.CcEmail ?? string.Empty;
                 
-                _logger.LogInformation("✅ Configuración SMTP cargada desde JSON - Server: {Server}, BCC: {BccEmail}, CC: {CcEmail}", 
-                    SmtpServer, 
+                _logger.LogInformation("✅ Configuración SMTP básica cargada desde JSON - Server: {Server}, User: {User}, BCC: {BccEmail}, CC: {CcEmail}", 
+                    SmtpServer, SmtpUsername, 
                     string.IsNullOrWhiteSpace(BccEmail) ? "(vacío)" : BccEmail,
                     string.IsNullOrWhiteSpace(CcEmail) ? "(vacío)" : CcEmail);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No se encontró configuración SMTP en JSON, usando valores por defecto");
+                SetDefaultValues();
+                return;
+            }
+
+            // SEGUNDO: Ahora SÍ intentar cargar contraseña desde Windows Credential Manager (con valores correctos)
+            bool loadedFromCredentials = TryLoadFromCredentials();
+            if (loadedFromCredentials && !string.IsNullOrWhiteSpace(SmtpPassword))
+            {
+                _warnedMissingPassword = false;
+                _logger.LogInformation("✅ Contraseña cargada desde Credential Manager");
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ Contraseña no encontrada en Credential Manager");
+            }            
+            
+            // Validar estado de configuración
+            if (smtpConfig != null)
+            {
                 if (!smtpConfig.UseAuthentication)
                 {
                     IsEmailConfigured = !string.IsNullOrWhiteSpace(smtpConfig.Server) && smtpConfig.Port > 0 && !string.IsNullOrWhiteSpace(smtpConfig.FromEmail);
@@ -235,7 +256,9 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
             _logger.LogError(ex, "Error al cargar la configuración SMTP");
             SetDefaultValues();
         }
-    }    /// <summary>
+    }    
+    
+    /// <summary>
     /// Intenta cargar configuración desde Windows Credential Manager
     /// </summary>
     private bool TryLoadFromCredentials()
@@ -341,8 +364,40 @@ public partial class SmtpConfigurationViewModel : ObservableObject, IDisposable
         {
             _logger.LogError(ex, "Error recargando configuración SMTP manualmente");
         }
-    }    private async Task SaveSmtpConfigurationAsync()
+    }
+
+    /// <summary>
+    /// Recarga explícitamente la contraseña desde Credential Manager.
+    /// Útil cuando se intenta usar la configuración después de un período de tiempo o en un contexto diferente.
+    /// </summary>
+    public void EnsurePasswordLoaded()
+    {
+        try
         {
+            if (string.IsNullOrWhiteSpace(SmtpPassword) && !string.IsNullOrWhiteSpace(SmtpServer) && !string.IsNullOrWhiteSpace(SmtpUsername))
+            {
+                _logger.LogInformation("🔐 [SmtpConfigurationViewModel.EnsurePasswordLoaded] Contraseña vacía detectada. Intentando recargar desde Credential Manager...");
+                _logger.LogInformation("   📌 Server: {Server}, Username: {Username}", SmtpServer, SmtpUsername);
+                
+                bool loaded = TryLoadFromCredentials();
+                if (loaded && !string.IsNullOrWhiteSpace(SmtpPassword))
+                {
+                    _logger.LogInformation("✅ Contraseña recargada exitosamente desde Credential Manager");
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ No se pudo recargar la contraseña desde Credential Manager");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recargando contraseña desde Credential Manager");
+        }
+    }
+
+    private async Task SaveSmtpConfigurationAsync()
+    {
         try
         {
             var smtpConfig = _configurationService.Current.Modules.GestionCartera.Smtp;

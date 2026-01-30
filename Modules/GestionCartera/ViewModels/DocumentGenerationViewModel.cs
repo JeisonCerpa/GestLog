@@ -243,6 +243,18 @@ public partial class DocumentGenerationViewModel : ObservableObject
         set => _mainViewModel.SmtpConfiguration.IsEmailConfigured = value; 
     }
 
+    public string BccEmail 
+    { 
+        get => _mainViewModel.SmtpConfiguration.BccEmail; 
+        set => _mainViewModel.SmtpConfiguration.BccEmail = value; 
+    }
+
+    public string CcEmail 
+    { 
+        get => _mainViewModel.SmtpConfiguration.CcEmail; 
+        set => _mainViewModel.SmtpConfiguration.CcEmail = value; 
+    }
+
     // Propiedades de email automático
     public string SelectedEmailExcelFilePath 
     { 

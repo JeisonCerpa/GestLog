@@ -76,14 +76,10 @@ namespace GestLog.Modules.GestionCartera.Services
                 _logger.LogError(ex, "Error al configurar servicio SMTP");
                 throw new SmtpConfigurationException("No se pudo configurar el servicio SMTP", ex);
             }
-        }
-
-        public async Task<EmailResult> SendEmailWithAttachmentAsync(EmailInfo emailInfo, string attachmentPath, CancellationToken cancellationToken = default)
+        }        public async Task<EmailResult> SendEmailWithAttachmentAsync(EmailInfo emailInfo, string attachmentPath, CancellationToken cancellationToken = default)
         {
             try
             {
-                _logger.LogInformation($"Enviando correo con adjunto a: {string.Join(", ", emailInfo.Recipients)}");
-
                 EnsureConfigured();
                 ValidateEmailInfo(emailInfo);
 
@@ -96,7 +92,7 @@ namespace GestLog.Modules.GestionCartera.Services
                 var fileInfo = new FileInfo(attachmentPath);
                 var fileSizeKb = fileInfo.Length / 1024;
 
-                _logger.LogInformation($"Archivo adjunto: {Path.GetFileName(attachmentPath)}, tamaño: {fileSizeKb} KB");
+                _logger.LogDebug("Adjunto: {FileName}, {SizeKb}KB", Path.GetFileName(attachmentPath), fileSizeKb);
 
                 using var message = CreateMailMessage(emailInfo);
                 
@@ -182,11 +178,8 @@ namespace GestLog.Modules.GestionCartera.Services
                 {
                     var attachment = new Attachment(path);
                     message.Attachments.Add(attachment);
-                }
-
-                using var client = CreateSmtpClient();
+                }                using var client = CreateSmtpClient();
                 
-                _logger.LogInformation("Enviando mensaje con múltiples adjuntos...");
                 await client.SendMailAsync(message);
                 
                 var result = EmailResult.Success(
@@ -194,7 +187,7 @@ namespace GestLog.Modules.GestionCartera.Services
                     message.To.Count + message.CC.Count + message.Bcc.Count,
                     totalSizeKb);
 
-                _logger.LogInformation($"Correo enviado con éxito a {result.ProcessedRecipients} destinatarios");
+                _logger.LogDebug("Correo enviado a {Count} destinatarios", result.ProcessedRecipients);
                 return result;
             }            catch (SmtpException ex) when (ex.StatusCode == SmtpStatusCode.MailboxBusy || ex.StatusCode == SmtpStatusCode.TransactionFailed)
             {
@@ -477,18 +470,23 @@ namespace GestLog.Modules.GestionCartera.Services
         }        private MailMessage CreateMailMessage(EmailInfo emailInfo)
         {
             var config = CurrentConfiguration!;
-            var message = new MailMessage
+            
+            // Debug: Logging de configuración (solo en modo debug)
+            _logger.LogDebug("[EmailService.CreateMailMessage] Leyendo configuración SMTP - Usuario: {Username}, BCC: {BccEmail}, CC: {CcEmail}", 
+                config.Username ?? "(vacío)", 
+                string.IsNullOrWhiteSpace(config.BccEmail) ? "(vacío)" : config.BccEmail,
+                string.IsNullOrWhiteSpace(config.CcEmail) ? "(vacío)" : config.CcEmail);
+              var message = new MailMessage
             {
-                From = new MailAddress(config.Username),
+                From = new MailAddress(config.Username ?? string.Empty),
                 Subject = emailInfo.Subject,
                 Body = emailInfo.Body,
                 IsBodyHtml = emailInfo.IsBodyHtml
-            };
-
-            // Agregar destinatarios
+            };// Agregar destinatarios
             foreach (var recipient in emailInfo.Recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
             {
-                message.To.Add(recipient);
+                if (!string.IsNullOrWhiteSpace(recipient))
+                    message.To.Add(recipient);
             }
 
             // Agregar CC desde EmailInfo (opcional, específico por correo)
@@ -497,58 +495,30 @@ namespace GestLog.Modules.GestionCartera.Services
 
             // Agregar BCC desde EmailInfo (opcional, específico por correo)
             if (!string.IsNullOrWhiteSpace(emailInfo.BccRecipient))
-                message.Bcc.Add(emailInfo.BccRecipient);
-
-            // ✅ NUEVO: Agregar BCC y CC automáticamente desde la configuración SMTP
+                message.Bcc.Add(emailInfo.BccRecipient);            // Agregar BCC y CC automáticamente desde la configuración SMTP
             if (!string.IsNullOrWhiteSpace(config.BccEmail))
             {
-                // Solo agregar si no está ya incluido
                 bool alreadyInBcc = message.Bcc.Cast<MailAddress>().Any(addr => 
                     addr.Address.Equals(config.BccEmail, StringComparison.OrdinalIgnoreCase));
                     
                 if (!alreadyInBcc)
                 {
                     message.Bcc.Add(config.BccEmail);
-                    _logger.LogInformation("📧 BCC automático agregado desde configuración SMTP: {BccEmail}", config.BccEmail);
+                    _logger.LogDebug("BCC agregado: {BccEmail}", config.BccEmail);
                 }
-                else
-                {
-                    _logger.LogDebug("BCC ya está incluido en la lista: {BccEmail}", config.BccEmail);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("⚠️ BccEmail vacío en configuración SMTP - No se agregará BCC automático");
             }
 
             if (!string.IsNullOrWhiteSpace(config.CcEmail))
             {
-                // Solo agregar si no está ya incluido
                 bool alreadyInCc = message.CC.Cast<MailAddress>().Any(addr => 
                     addr.Address.Equals(config.CcEmail, StringComparison.OrdinalIgnoreCase));
                     
                 if (!alreadyInCc)
                 {
                     message.CC.Add(config.CcEmail);
-                    _logger.LogInformation("📧 CC automático agregado desde configuración SMTP: {CcEmail}", config.CcEmail);
-                }
-                else
-                {
-                    _logger.LogDebug("CC ya está incluido en la lista: {CcEmail}", config.CcEmail);
+                    _logger.LogDebug("CC agregado: {CcEmail}", config.CcEmail);
                 }
             }
-            else
-            {
-                _logger.LogDebug("⚠️ CcEmail vacío en configuración SMTP - No se agregará CC automático");
-            }
-
-            // Logging de resumen del mensaje
-            _logger.LogInformation("📨 Mensaje de correo creado - De: {From}, Para: {To}, CC: {Cc}, BCC: {Bcc}, Asunto: {Subject}",
-                message.From?.Address ?? "DESCONOCIDO",
-                string.Join(",", message.To.Select(x => x.Address)),
-                message.CC.Count > 0 ? string.Join(",", message.CC.Select(x => x.Address)) : "(ninguno)",
-                message.Bcc.Count > 0 ? string.Join(",", message.Bcc.Select(x => x.Address)) : "(ninguno)",
-                emailInfo.Subject);
 
             return message;
         }

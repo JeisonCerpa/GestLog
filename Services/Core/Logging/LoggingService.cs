@@ -72,11 +72,14 @@ public static class LoggingService
             {
                 builder.ClearProviders();
                 builder.AddSerilog(Log.Logger);
-            });              // Servicios custom
+            });            // Servicios custom
             services.AddSingleton<IGestLogLogger, GestLogLogger>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
             services.AddSingleton<Configuration.IConfigurationService, Configuration.ConfigurationService>();
             services.AddSingleton<Security.ICredentialService, Security.WindowsCredentialService>();
+            
+            // 📬 SERVICIO DE PERSISTENCIA SMTP CON AUDITORÍA
+            services.AddSingleton<Configuration.ISmtpPersistenceService, Configuration.SmtpPersistenceService>();
             
             // 📬 SERVICIO DE MENSAJERÍA (MVVM Toolkit)
             services.AddSingleton<IMessenger>(WeakReferenceMessenger.Default);
