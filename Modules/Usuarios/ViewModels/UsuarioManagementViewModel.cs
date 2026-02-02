@@ -177,14 +177,18 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _rolesDisponibles;
             set { _rolesDisponibles = value; OnPropertyChanged(); }
-        }
-
-        // Lista de roles seleccionados al registrar o editar usuario
+        }        // Lista de roles seleccionados al registrar o editar usuario
         private ObservableCollection<Rol> _rolesSeleccionados = new();
         public ObservableCollection<Rol> RolesSeleccionados
         {
             get => _rolesSeleccionados;
             set { _rolesSeleccionados = value; OnPropertyChanged(); }
+        }
+
+        // Propiedad para contar roles seleccionados
+        public int RolesSeleccionadosCount
+        {
+            get => RolesSeleccionados.Count;
         }
 
         // Propiedad computada para mostrar el nombre completo de la persona seleccionada
@@ -210,9 +214,7 @@ namespace Modules.Usuarios.ViewModels
                     _ = BuscarUsuariosAsync();
                 }
             }
-        }
-
-        // Propiedad para mostrar los roles del usuario seleccionado
+        }        // Propiedad para mostrar los roles del usuario seleccionado
         private ObservableCollection<Rol> _rolesDeUsuario = new();
         public ObservableCollection<Rol> RolesDeUsuario
         {
@@ -512,24 +514,58 @@ namespace Modules.Usuarios.ViewModels
             {
                 _logger.LogError(ex, "[UsuarioManagementViewModel] Error al actualizar información de persona");
             }
-        }
-
-        private async Task RegistrarUsuarioAsync() { await Task.CompletedTask; }
+        }        private async Task RegistrarUsuarioAsync() { await Task.CompletedTask; }
         private async Task EditarUsuarioAsync()
         {
             if (UsuarioSeleccionado == null)
                 return;
+            
             try
             {
-                await _usuarioService.EditarUsuarioAsync(UsuarioSeleccionado);
-                System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' editado correctamente.", "Edición exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                await BuscarUsuariosAsync();
+                // Cargar los roles actuales del usuario en RolesSeleccionados
+                await CargarRolesDeUsuarioAsync();
+                
+                // Sincronizar RolesDeUsuario con RolesSeleccionados para la ventana
+                RolesSeleccionados.Clear();
+                foreach (var rol in RolesDeUsuario)
+                {
+                    RolesSeleccionados.Add(rol);
+                }
+                
+                // Abrir ventana de edición
+                var window = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioEdicionWindow
+                {
+                    DataContext = this,
+                    Owner = System.Windows.Application.Current.MainWindow
+                };
+                
+                if (window.ShowDialog() == true)
+                {
+                    // Guardar cambios del usuario (nombre, estado)
+                    await _usuarioService.EditarUsuarioAsync(UsuarioSeleccionado);
+                    
+                    // Guardar cambios de roles
+                    var rolesIds = RolesSeleccionados.Select(r => r.IdRol).ToArray();
+                    await _usuarioService.AsignarRolesAsync(UsuarioSeleccionado.IdUsuario, rolesIds);
+                    
+                    System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' editado correctamente.", "Edición exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    
+                    // Recargar la lista y los roles
+                    await BuscarUsuariosAsync();
+                    await CargarRolesDeUsuarioAsync();
+                }
+                else
+                {
+                    // Usuario canceló - limpiar RolesSeleccionados
+                    RolesSeleccionados.Clear();
+                }
             }
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Error al editar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _logger.LogError(ex, "[UsuarioManagementViewModel] Error al editar usuario");
             }
-        }        private async Task RestablecerContrasenaAsync()
+        }private async Task RestablecerContrasenaAsync()
         {
             if (UsuarioSeleccionado == null)
                 return;
@@ -749,11 +785,11 @@ namespace Modules.Usuarios.ViewModels
                     System.Windows.MessageBox.Show($"Error al eliminar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
-        }
-
-        private void RolesSeleccionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        }        private void RolesSeleccionados_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
+            OnPropertyChanged(nameof(RolesSeleccionadosCount));
             (RegistrarNuevoUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         #region Métodos de Permisos

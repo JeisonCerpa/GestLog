@@ -67,47 +67,7 @@ namespace Modules.Usuarios.Services
         }        public async Task<IEnumerable<Rol>> ObtenerTodosAsync()
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
-            System.Diagnostics.Debug.WriteLine("RolRepository.ObtenerTodosAsync: Iniciando consulta");
-            
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"RolRepository: Connection string: {dbContext.Database.GetConnectionString()}");
-                
-                // Probar conectividad antes de la consulta
-                await dbContext.Database.OpenConnectionAsync();
-                System.Diagnostics.Debug.WriteLine("RolRepository: Conexión a BD establecida correctamente");
-                
-                // Verificar si la tabla existe
-                var canConnect = await dbContext.Database.CanConnectAsync();
-                System.Diagnostics.Debug.WriteLine($"RolRepository: CanConnect = {canConnect}");
-                
-                // Prueba directa con SQL crudo para verificar conectividad
-                try
-                {
-                    var countResult = await dbContext.Database.ExecuteSqlRawAsync("SELECT COUNT(*) FROM Roles");
-                    System.Diagnostics.Debug.WriteLine($"RolRepository: Count directo SQL = {countResult}");
-                }
-                catch (Exception sqlEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"RolRepository: Error en SQL directo: {sqlEx.Message}");
-                }
-                
-                var roles = await dbContext.Roles.ToListAsync();
-                System.Diagnostics.Debug.WriteLine($"RolRepository.ObtenerTodosAsync: Consulta ejecutada, roles encontrados: {roles.Count}");
-                
-                foreach (var rol in roles)
-                {
-                    System.Diagnostics.Debug.WriteLine($"RolRepository - Rol: ID={rol.IdRol}, Nombre='{rol.Nombre}', Descripcion='{rol.Descripcion}'");
-                }
-                
-                return roles;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ERROR en RolRepository.ObtenerTodosAsync: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-                throw;
-            }
+            return await dbContext.Roles.ToListAsync();
         }
 
         public async Task<bool> ExisteNombreAsync(string nombre)

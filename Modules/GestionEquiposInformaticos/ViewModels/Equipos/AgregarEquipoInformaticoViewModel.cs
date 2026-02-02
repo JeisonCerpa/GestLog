@@ -33,8 +33,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
-{
-    /// <summary>
+{    /// <summary>
     /// ViewModel para agregar/editar equipos informáticos.
     /// ✅ MIGRADO: Hereda de DatabaseAwareViewModel para auto-refresh automático con timeout ultrarrápido.
     /// </summary>
@@ -43,6 +42,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         #region ✅ NUEVAS DEPENDENCIAS - AUTO-REFRESH
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         #endregion
+
+        #region ✅ CONSTANTES - NOMBRES DE TABLAS Y CONSTRAINTS
+        // ⚠️ IMPORTANTE: Nombres ACTUALES de tablas (se cambiarán después con migración)
+        private const string TABLE_EQUIPOS = "EquiposInformaticos";
+        private const string TABLE_SLOTS_RAM = "SlotsRam";
+        private const string TABLE_DISCOS = "Discos";
+        private const string TABLE_CONEXIONES = "ConexionesEquiposInformaticos";
+        private const string FK_SLOTS_RAM = "FK_SlotsRam_EquipoInformatico";
+        private const string FK_DISCOS = "FK_Discos_EquipoInformatico";
+        private const string FK_CONEXIONES = "FK_ConexionesEquiposInformaticos_EquipoInformatico";
+        #endregion
+
         [ObservableProperty]
         private bool isLoadingRam;
 
@@ -449,30 +460,25 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                         try
                         {
                             _logger.LogInformation("💾 Iniciando actualización de PK con deshabilitar constraints: {Original} -> {Nuevo}", OriginalCodigo, Codigo);                            
-                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK
-                            _logger.LogInformation("🔓 Deshabilitando constraints FK temporalmente...");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam NOCHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos NOCHECK CONSTRAINT FK_Discos_EquipoInformatico");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos NOCHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
-
-                            // 1. Actualizar la Primary Key en EquiposInformaticos
-                            var rowsEquipo = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE EquiposInformaticos SET Codigo = {Codigo} WHERE Codigo = {OriginalCodigo}");
+                            // SOLUCIÓN ROBUSTA: Deshabilitar temporalmente las constraints FK para permitir la actualización de PK                            _logger.LogInformation("🔓 Deshabilitando constraints FK temporalmente...");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_SLOTS_RAM} NOCHECK CONSTRAINT {FK_SLOTS_RAM}");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_DISCOS} NOCHECK CONSTRAINT {FK_DISCOS}");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_CONEXIONES} NOCHECK CONSTRAINT {FK_CONEXIONES}");                            // 1. Actualizar la Primary Key en EquiposInformaticos
+                            var rowsEquipo = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE {TABLE_EQUIPOS} SET Codigo = {Codigo} WHERE Codigo = {OriginalCodigo}");
                             _logger.LogInformation("📋 Equipo actualizado: {RowsAffected} filas", rowsEquipo);                            
                             // 2. Actualizar las Foreign Keys en tablas relacionadas
-                            var rowsSlots = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE SlotsRam SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            var rowsSlots = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE {TABLE_SLOTS_RAM} SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
                             _logger.LogInformation("💾 SlotsRam actualizados: {RowsAffected} filas", rowsSlots);
 
-                            var rowsDiscos = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE Discos SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            var rowsDiscos = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE {TABLE_DISCOS} SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
                             _logger.LogInformation("💿 Discos actualizados: {RowsAffected} filas", rowsDiscos);
 
-                            var rowsConexiones = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE ConexionesEquiposInformaticos SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
-                            _logger.LogInformation("🌐 Conexiones actualizadas: {RowsAffected} filas", rowsConexiones);
-
-                            // 3. Rehabilitar las constraints FK
+                            var rowsConexiones = await dbContext.Database.ExecuteSqlInterpolatedAsync($"UPDATE {TABLE_CONEXIONES} SET CodigoEquipo = {Codigo} WHERE CodigoEquipo = {OriginalCodigo}");
+                            _logger.LogInformation("🌐 Conexiones actualizadas: {RowsAffected} filas", rowsConexiones);                            // 3. Rehabilitar las constraints FK
                             _logger.LogInformation("🔒 Rehabilitando constraints FK...");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
-                            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_SLOTS_RAM} WITH CHECK CHECK CONSTRAINT {FK_SLOTS_RAM}");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_DISCOS} WITH CHECK CHECK CONSTRAINT {FK_DISCOS}");
+                            await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_CONEXIONES} WITH CHECK CHECK CONSTRAINT {FK_CONEXIONES}");
 
                             // Invalidar cualquier entidad rastreada para evitar conflictos de ChangeTracker
                             try
@@ -699,14 +705,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
                         catch (Exception ex)
                         {
                             _logger.LogError(ex, "❌ Error en flujo de actualización de PK al cambiar {Original} -> {Nuevo}", OriginalCodigo, Codigo);
-                            
-                            // CRÍTICO: Rehabilitar constraints FK incluso si hay error
+                              // CRÍTICO: Rehabilitar constraints FK incluso si hay error
                             try
                             {                                
                                 _logger.LogInformation("🔒 Rehabilitando constraints FK tras error...");
-                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE SlotsRam WITH CHECK CHECK CONSTRAINT FK_SlotsRam_EquipoInformatico");
-                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Discos WITH CHECK CHECK CONSTRAINT FK_Discos_EquipoInformatico");
-                                await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE ConexionesEquiposInformaticos WITH CHECK CHECK CONSTRAINT FK_ConexionesEquiposInformaticos_EquipoInformatico_EquipoInformatico");
+                                await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_SLOTS_RAM} WITH CHECK CHECK CONSTRAINT {FK_SLOTS_RAM}");
+                                await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_DISCOS} WITH CHECK CHECK CONSTRAINT {FK_DISCOS}");
+                                await dbContext.Database.ExecuteSqlRawAsync($"ALTER TABLE {TABLE_CONEXIONES} WITH CHECK CHECK CONSTRAINT {FK_CONEXIONES}");
                             }
                             catch (Exception constraintEx)
                             {

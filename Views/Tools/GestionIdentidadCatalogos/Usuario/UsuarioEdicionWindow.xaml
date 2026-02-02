@@ -1,0 +1,90 @@
+<Window x:Class="GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioEdicionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario"
+        Title="Editar Usuario" Height="600" Width="540" MinWidth="480" MinHeight="540" WindowStartupLocation="CenterOwner" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
+    <Border Background="White" CornerRadius="12" Padding="32" BorderBrush="#E0E0E0" BorderThickness="1" Margin="16">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Editar Usuario" FontSize="24" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,24" HorizontalAlignment="Center" Grid.Row="0"/>
+                <StackPanel Grid.Row="1" Margin="0,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                    <!-- Nombre de Usuario -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding UsuarioSeleccionado.NombreUsuario, UpdateSourceTrigger=PropertyChanged}" 
+                                 Margin="0,2,0,0" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
+                                 ToolTip="Nombre de usuario" Height="32"/>
+                    </StackPanel>
+
+                    <!-- Persona Asociada (Lectura) -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Persona asociada" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding UsuarioSeleccionado.NombrePersona}" 
+                                   FontWeight="Bold" FontSize="14" Foreground="#118938" Margin="0,2,0,0"/>
+                        <TextBlock Text="{Binding UsuarioSeleccionado.Correo}" 
+                                   Foreground="#666666" FontSize="12" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- Estado -->
+                    <StackPanel Margin="0,0,0,16" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Estado:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" Width="100"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="12" Height="12" Margin="0,0,8,0"
+                                     Fill="{Binding UsuarioSeleccionado.Activo, Converter={StaticResource BooleanToColorConverter}}"/>
+                            <CheckBox IsChecked="{Binding UsuarioSeleccionado.Activo, Mode=TwoWay}" 
+                                      Content="Activo" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Información de Roles -->
+                    <Border Background="#FFF3E0" CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="#FF9800" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="👥 Roles del Usuario" FontWeight="Bold" Foreground="#E65100" Margin="0,0,0,8"/>
+                            <TextBlock Text="Seleccione los roles que desea asignar a este usuario." 
+                                       TextWrapping="Wrap" Foreground="#BF360C" FontSize="12" LineHeight="18"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Roles disponibles para editar -->
+                    <StackPanel Margin="0,0,0,0">
+                        <TextBlock Text="Roles disponibles" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding RolesDisponibles}" Name="RolesItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Nombre}"
+                                              Margin="0,4"
+                                              Foreground="#118938"
+                                              FontWeight="SemiBold"
+                                              Checked="CheckBox_Checked_Edit"
+                                              Unchecked="CheckBox_Unchecked_Edit">
+                                        <CheckBox.IsChecked>
+                                            <MultiBinding Converter="{StaticResource RoleCheckedConverter}" Mode="OneWay">
+                                                <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                <Binding Path="." />
+                                            </MultiBinding>
+                                        </CheckBox.IsChecked>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Debe seleccionar al menos un rol."
+                                   Foreground="#D32F2F"
+                                   FontSize="12"
+                                   Margin="2,2,0,0"
+                                   Visibility="{Binding RolesSeleccionadosCount, Converter={StaticResource CountToVisibilityConverter}}"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0" Grid.Row="2">
+                    <Button Content="Cancelar" Margin="0,0,10,0" Width="110" Height="36" Click="CancelarButton_Click"/>
+                    <Button Content="Guardar cambios" Width="140" Height="36" Background="#118938" Foreground="White" FontWeight="Bold"
+                            Click="GuardarButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Border>
+</Window>
