@@ -294,7 +294,7 @@ namespace Modules.Usuarios.ViewModels
         {
             try
             {
-                _logger.LogInformation("[UsuarioManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[UsuarioManagementViewModel] Refrescando datos automáticamente");
                 
                 // Recargar todas las listas principales sin mostrar UI
                 await CargarUsuariosAsync();
@@ -307,7 +307,7 @@ namespace Modules.Usuarios.ViewModels
                     await CargarRolesDeUsuarioAsync();
                 }
                 
-                _logger.LogInformation("[UsuarioManagementViewModel] Datos refrescados exitosamente");
+                _logger.LogDebug("[UsuarioManagementViewModel] Datos refrescados exitosamente");
             }
             catch (Exception ex)
             {

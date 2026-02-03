@@ -26,6 +26,32 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         private CancellationTokenSource? _debounceCts;
         private const int DebounceDelayMs = 300;
 
+        /// <summary>
+        /// Cancela y dispone de forma segura un CancellationTokenSource compartido evitando ObjectDisposedException
+        /// y condiciones de carrera al intercambiar la referencia.
+        /// </summary>
+        private static void SafeCancelDispose(ref CancellationTokenSource? cts)
+        {
+            var previous = System.Threading.Interlocked.Exchange(ref cts, null);
+            if (previous == null) return;
+            try
+            {
+                previous.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Si ya fue disposed, ignorar
+            }
+            catch
+            {
+                // Ignorar otras excepciones de cancelación
+            }
+            finally
+            {
+                try { previous.Dispose(); } catch { }
+            }
+        }
+
         // Lista maestra con todos los mantenimientos cargados (sin filtrar)
         private List<MantenimientoCorrectivoDto> _allMantenimientos = new();
 
@@ -78,8 +104,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                _debounceCts?.Cancel();
-                _debounceCts?.Dispose();
+                SafeCancelDispose(ref _debounceCts);
                 _debounceCts = new CancellationTokenSource();
                 var token = _debounceCts.Token;
 
@@ -191,16 +216,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                _cancellationTokenSource?.Cancel();
+                // Cancelar y disponer de forma segura la CTS anterior antes de crear una nueva
+                SafeCancelDispose(ref _cancellationTokenSource);
                 _cancellationTokenSource = new CancellationTokenSource();
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellationTokenSource.Token);
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellationTokenSource.Token);
+                var ctsToken = linkedCts.Token;
 
                 IsLoading = true;
                 ErrorMessage = string.Empty;
 
                 _logger.LogDebug("Iniciando carga de mantenimientos correctivos");
 
-                var mantenimientos = await _mantenimientoService.ObtenerTodosAsync(IncluirDadosDeBaja, cts.Token);
+                var mantenimientos = await _mantenimientoService.ObtenerTodosAsync(IncluirDadosDeBaja, ctsToken);
 
                 // Guardar lista maestra y aplicar filtros locales
                 _allMantenimientos = mantenimientos.ToList();
@@ -523,10 +550,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         /// </summary>
         public void Cleanup()
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
-            _debounceCts?.Cancel();
-            _debounceCts?.Dispose();
+            SafeCancelDispose(ref _cancellationTokenSource);
+            SafeCancelDispose(ref _debounceCts);
         }
     }
 }

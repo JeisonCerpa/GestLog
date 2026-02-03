@@ -75,13 +75,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 {
                     _logger.LogWarning("[EquipoInformaticoService] No se encontró equipo con código {codigo}", codigo);
                     return false;
-                }
-
-                equipo.Estado = nuevoEstado.ToString();
+                }                equipo.Estado = nuevoEstado.ToString();
                 context.EquiposInformaticos.Update(equipo);
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("[EquipoInformaticoService] Estado del equipo {codigo} cambiado a {nuevoEstado}", codigo, nuevoEstado);
+                _logger.LogDebug("[EquipoInformaticoService] Estado del equipo {codigo} cambiado a {nuevoEstado}", codigo, nuevoEstado);
                 return true;
             }
             catch (Exception ex)

@@ -89,7 +89,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     return;
                 }
 
-                _logger.LogInformation("Iniciando proceso de login para usuario: {Username}", Username);
+                // Reducir ruido: degradar a Debug para evitar spam en entornos normales
+                _logger.LogDebug("Iniciando proceso de login para usuario: {Username}", Username);
                 var loginRequest = new LoginRequest
                 {
                     Username = Username.Trim(),
@@ -99,7 +100,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 var result = await _authenticationService.LoginAsync(loginRequest, cancellationToken);
                 if (result.Success)
                 {
-                    _logger.LogInformation("Login exitoso para usuario: {Username}", Username);
+                    // Login exitoso no crítico para logs por defecto
+                    _logger.LogDebug("Login exitoso para usuario: {Username}", Username);
                     StatusMessage = "¡Bienvenido! Redirigiendo...";
                     if (result.CurrentUserInfo != null)
                     {
@@ -109,13 +111,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
                         IsFirstLogin = result.CurrentUserInfo.IsFirstLogin;
                         if (IsFirstLogin)
                         {
-                            _logger.LogInformation("Primer login detectado para usuario: {Username}. Mostrando modal de cambio de contraseña obligatorio.", Username);
+                            // Mantener información, pero como Debug para reducir ruido
+                            _logger.LogDebug("Primer login detectado para usuario: {Username}. Mostrando modal de cambio de contraseña obligatorio.", Username);
                             // Mostrar modal de cambio de contraseña obligatorio
                             ShowPasswordChangeModal?.Invoke();
                         }
                         else
                         {
-                            _logger.LogInformation("Acceso normal para usuario: {Username}", Username);
+                            _logger.LogDebug("Acceso normal para usuario: {Username}", Username);
                             // Enviar mensaje de login exitoso con el usuario autenticado
                             WeakReferenceMessenger.Default.Send(new UserLoggedInMessage(result.CurrentUserInfo));
                             // ✅ Solo disparar LoginSuccessful en caso de login normal (sin modal)
@@ -132,7 +135,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Login cancelado por el usuario: {Username}", Username);
+                _logger.LogDebug("Login cancelado por el usuario: {Username}", Username);
                 StatusMessage = "Login cancelado";
             }
             catch (Exception ex)
@@ -173,7 +176,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [RelayCommand]
         private void ForgotPassword()
         {
-            _logger.LogInformation("Solicitud de recuperación de contraseña. Mostrando modal de recuperación.");
+            // Menos ruido: Debug por ser una acción de UI sin impacto crítico en el sistema
+            _logger.LogDebug("Solicitud de recuperación de contraseña. Mostrando modal de recuperación.");
             ShowForgotPasswordModal?.Invoke();
         }
 

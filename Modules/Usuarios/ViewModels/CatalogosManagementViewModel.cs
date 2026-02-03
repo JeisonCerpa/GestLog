@@ -323,9 +323,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             try
             {
-                _logger.LogInformation("[CatalogosManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[CatalogosManagementViewModel] Refrescando datos automáticamente");
                 await InitializeAsync();
-                _logger.LogInformation("[CatalogosManagementViewModel] Datos refrescados exitosamente");
+                _logger.LogDebug("[CatalogosManagementViewModel] Datos refrescados exitosamente");
             }
             catch (Exception ex)
             {

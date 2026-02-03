@@ -46,11 +46,10 @@ namespace GestLog.Modules.Usuarios.Services
                 return AuthResult.FailureResult("El nombre de usuario es obligatorio", "EMPTY_USERNAME");
 
             if (string.IsNullOrWhiteSpace(loginRequest.Password))
-                return AuthResult.FailureResult("La contraseña es obligatoria", "EMPTY_PASSWORD");
-
-            try
+                return AuthResult.FailureResult("La contraseña es obligatoria", "EMPTY_PASSWORD");            try
             {
-                _logger.LogInformation("Intento de login para usuario: {Username}", loginRequest.Username);
+                // Reducir ruido: degradar a Debug para evitar spam en logs normales
+                _logger.LogDebug("Intento de login para usuario: {Username}", loginRequest.Username);
 
                 // Buscar usuario por nombre de usuario
                 var usuarios = await _usuarioRepository.BuscarAsync(loginRequest.Username);

@@ -92,7 +92,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                _logger.LogInformation("🔵 [INICIO] CompletarMantenimientoAsync");
+                // Inicio de operación - DEBUG para reducir ruido en logs de entorno normal
+                _logger.LogDebug("🔵 [INICIO] CompletarMantenimientoAsync");
 
                 // Validar datos básicos
                 if (Mantenimiento?.Id == null)
@@ -100,12 +101,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     ErrorMessage = "Datos del mantenimiento inválidos";
                     _logger.LogWarning("⚠️ Validación fallida: Mantenimiento ID nulo");
                     return;
-                }
-
-                IsLoading = true;
+                }                IsLoading = true;
                 ErrorMessage = null;
 
-                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id}, Costo={CostoReparacion:C}");
+                // Llamadas y datos no críticos se registran en DEBUG para evitar spam
+                _logger.LogDebug($"📤 Llamando servicio: ID={Mantenimiento.Id}, Costo={CostoReparacion:C}");
 
                 // Acumular observaciones: observaciones previas + nuevas observaciones
                 var observacionesPrevias = Mantenimiento.Observaciones ?? string.Empty;
@@ -121,7 +121,13 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     {
                         observacionesAcumuladas = "• " + Observaciones;
                     }
-                }                _logger.LogInformation($"📝 Observaciones acumuladas: {observacionesAcumuladas}");
+                }
+
+                // Solo loggear observaciones si no están vacías y en DEBUG
+                if (!string.IsNullOrWhiteSpace(observacionesAcumuladas))
+                {
+                    _logger.LogDebug("📝 Observaciones acumuladas: {Observaciones}", observacionesAcumuladas);
+                }
 
                 // Llamar al servicio para completar el mantenimiento
                 var resultado = await _mantenimientoService.CompletarAsync(
@@ -129,16 +135,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     CostoReparacion,
                     observacionesAcumuladas,
                     PeriodoGarantia,
-                    cancellationToken);
-
-                _logger.LogInformation($"📋 Servicio retornó: resultado={resultado}");
-
-                if (resultado)
+                    cancellationToken);                // Resultado del servicio no crítico: Debug. Mantener manejo de error si false.
+                _logger.LogDebug($"📋 Servicio retornó: resultado={resultado}");                if (resultado)
                 {
-                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} completado");
-                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    // Exito: registrar en DEBUG para reducir log spam de operaciones exitosas frecuentes
+                    _logger.LogDebug($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} completado");
+                    _logger.LogDebug("🔔 Disparando evento OnExito (silencioso)");
                     OnExito?.Invoke(this, EventArgs.Empty);
-                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
+                    _logger.LogDebug("✅ [FIN] Evento OnExito disparado");
                 }
                 else
                 {
@@ -159,7 +163,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             finally
             {
                 IsLoading = false;
-                _logger.LogInformation("🔴 [FIN] CompletarMantenimientoAsync - IsLoading=false");
+                _logger.LogDebug("🔴 [FIN] CompletarMantenimientoAsync - IsLoading=false");
             }
         }
 

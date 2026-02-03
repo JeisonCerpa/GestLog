@@ -167,7 +167,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                _logger.LogInformation("🔵 [INICIO] EnviarAReparacionAsync");
+                // Inicio de operación - DEBUG para reducir ruido en logs de entorno normal
+                _logger.LogDebug("🔵 [INICIO] EnviarAReparacionAsync");
                 
                 // Validar que el proveedor esté informado
                 if (string.IsNullOrWhiteSpace(ProveedorAsignado))
@@ -185,16 +186,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 }
 
                 IsLoading = true;
-                ErrorMessage = null;                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id}, Proveedor='{ProveedorAsignado}'");
+                ErrorMessage = null;
 
-                // Formatear observaciones con viñeta si existen
+                // Llamadas y datos no críticos se registran en DEBUG para evitar spam
+                _logger.LogDebug("📤 Llamando servicio: ID={MantenimientoId}, Proveedor='{Proveedor}'", Mantenimiento.Id, ProveedorAsignado);
+
+                // Formatear observaciones sólo si existen y loggearlas en Debug
                 var observacionesFormateadas = Observaciones;
                 if (!string.IsNullOrWhiteSpace(Observaciones))
                 {
                     observacionesFormateadas = "• " + Observaciones;
+                    _logger.LogDebug("📝 Observaciones formateadas: {Observaciones}", observacionesFormateadas);
                 }
-
-                _logger.LogInformation($"📝 Observaciones formateadas: {observacionesFormateadas}");
 
                 // Llamar al servicio para actualizar el mantenimiento
                 var resultado = await _mantenimientoService.EnviarAReparacionAsync(
@@ -204,15 +207,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     observacionesFormateadas,
                     cancellationToken);
 
-                _logger.LogInformation($"📋 Servicio retornó: resultado={resultado}");
+                // Resultado del servicio no crítico: Debug. Mantener manejo de error si false.
+                _logger.LogDebug("📋 Servicio retornó: resultado={Resultado}", resultado);
 
                 if (resultado)
                 {
-                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} enviado a reparación");
-                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    // Exito: registrar en DEBUG para reducir log spam de operaciones exitosas frecuentes
+                    _logger.LogDebug("✅ [EXITO] Mantenimiento {MantenimientoId} enviado a reparación", Mantenimiento.Id);
+                    _logger.LogDebug("🔔 Disparando evento OnExito (silencioso)");
                     OnExito?.Invoke(this, EventArgs.Empty);
-                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
-                }                else
+                    _logger.LogDebug("✅ [FIN] Evento OnExito disparado");
+                }
+                else
                 {
                     ErrorMessage = "No fue posible enviar el mantenimiento a reparación. Intente nuevamente.";
                     _logger.LogWarning("❌ El servicio retornó false");
@@ -231,7 +237,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             finally
             {
                 IsLoading = false;
-                _logger.LogInformation("🔴 [FIN] EnviarAReparacionAsync - IsLoading=false");
+                _logger.LogDebug("🔴 [FIN] EnviarAReparacionAsync - IsLoading=false");
             }
         }
 
@@ -243,7 +249,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                _logger.LogInformation("🔵 [INICIO] DarDeBajaAsync");
+                _logger.LogDebug("🔵 [INICIO] DarDeBajaAsync");
 
                 if (Mantenimiento?.Id == null)
                 {
@@ -255,7 +261,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 IsLoading = true;
                 ErrorMessage = null;
 
-                _logger.LogInformation($"📤 Llamando servicio: ID={Mantenimiento.Id} - Dar de Baja");
+                _logger.LogDebug("📤 Llamando servicio: ID={MantenimientoId} - Dar de Baja", Mantenimiento.Id);
 
                 // Formatear razón de baja
                 var razonBaja = "⚠️ NO REPARABLE - Equipo/Periférico dado de baja al enviar a reparación";
@@ -264,7 +270,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     razonBaja += " | " + Observaciones;
                 }
 
-                _logger.LogInformation($"📝 Razón de baja: {razonBaja}");
+                _logger.LogDebug("📝 Razón de baja: {Razon}", razonBaja);
 
                 // Llamar al servicio para dar de baja
                 var resultado = await _mantenimientoService.CancelarAsync(
@@ -272,14 +278,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     razonBaja,
                     cancellationToken);
 
-                _logger.LogInformation($"📋 Servicio retornó: resultado={resultado}");
+                _logger.LogDebug("📋 Servicio retornó: resultado={Resultado}", resultado);
 
                 if (resultado)
                 {
-                    _logger.LogInformation($"✅ [EXITO] Mantenimiento {Mantenimiento.Id} dado de baja");
-                    _logger.LogInformation("🔔 Disparando evento OnExito");
+                    _logger.LogDebug("✅ [EXITO] Mantenimiento {MantenimientoId} dado de baja", Mantenimiento.Id);
+                    _logger.LogDebug("🔔 Disparando evento OnExito (silencioso)");
                     OnExito?.Invoke(this, EventArgs.Empty);
-                    _logger.LogInformation("✅ [FIN] Evento OnExito disparado");
+                    _logger.LogDebug("✅ [FIN] Evento OnExito disparado");
                 }
                 else
                 {
@@ -300,7 +306,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
             finally
             {
                 IsLoading = false;
-                _logger.LogInformation("🔴 [FIN] DarDeBajaAsync - IsLoading=false");
+                _logger.LogDebug("🔴 [FIN] DarDeBajaAsync - IsLoading=false");
             }
         }
     }

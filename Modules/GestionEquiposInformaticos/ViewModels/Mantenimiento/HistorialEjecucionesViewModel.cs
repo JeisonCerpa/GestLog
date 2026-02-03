@@ -307,19 +307,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         }        public async Task LoadAsync()
         {
             // Serializar llamadas para evitar repetidas cargas concurrentes que provoquen duplicados
-            _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ⏱️ LoadAsync() esperando semáforo para año {year} - _isInitializing={init} - ThreadId: {threadId}", SelectedYear, _isInitializing, System.Threading.Thread.CurrentThread.ManagedThreadId);
             await _loadSemaphore.WaitAsync();
             try
             {
-                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ✓ Semáforo adquirido - Iniciando LoadAsync para año {year}", SelectedYear);
                 try
-                {                    IsBusy = true;
+                {
+                    IsBusy = true;
                     StatusMessage = "Cargando...";
                     Items.Clear();
                     // asegurarse de que la vista filtrada está inicializada antes de añadir
-                    SetupCollectionView();                    // ✅ Usar método con trazabilidad completa: genera registros para semanas faltantes
-                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] Llamando GenerarYObtenerEjecucionesConTrazabilidadAsync para año {year}", SelectedYear);
-                    var ejecuciones = await _planService.GenerarYObtenerEjecucionesConTrazabilidadAsync(SelectedYear);                    _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] GenerarYObtenerEjecucionesConTrazabilidadAsync retornó {count} ejecuciones", ejecuciones.Count);
+                    SetupCollectionView();
+                    // Llamada al servicio para obtener ejecuciones (se mantiene la funcionalidad, se eliminó logging de trazabilidad detallada)
+                    var ejecuciones = await _planService.GenerarYObtenerEjecucionesConTrazabilidadAsync(SelectedYear);
                     var query = ejecuciones.AsQueryable();
                     if (!string.IsNullOrWhiteSpace(FiltroCodigo))
                         query = query.Where(e => e.Plan != null && e.Plan.CodigoEquipo.Contains(FiltroCodigo, StringComparison.OrdinalIgnoreCase));
@@ -457,12 +456,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 {
                     IsBusy = false;
                 }
-                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ✓ LoadAsync finalizado para año {year} - total {count} items en la vista", SelectedYear, Items.Count);
             }
             finally
             {
                 _loadSemaphore.Release();
-                _logger.LogInformation("[TRAZABILIDAD_DUPLICADOS_VM] ↩️ Semáforo liberado - ThreadId: {threadId}", System.Threading.Thread.CurrentThread.ManagedThreadId);
             }
         }        
         /// <summary>

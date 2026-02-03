@@ -423,9 +423,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             try
             {
-                _logger.LogInformation("[PersonaManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[PersonaManagementViewModel] Refrescando datos automáticamente");
                 await InicializarAsync();
-                _logger.LogInformation("[PersonaManagementViewModel] Datos refrescados exitosamente");
+                _logger.LogDebug("[PersonaManagementViewModel] Datos refrescados exitosamente");
             }
             catch (Exception ex)
             {

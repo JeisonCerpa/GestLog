@@ -27,10 +27,9 @@ namespace GestLog.Modules.Usuarios.Services
         public event EventHandler<CurrentUserInfo?>? CurrentUserChanged;        public void SetCurrentUser(CurrentUserInfo userInfo, bool rememberMe = false)
         {
             if (userInfo == null)
-                throw new ArgumentNullException(nameof(userInfo));
-
-            _currentUser = userInfo;
-            _logger.LogInformation("Usuario establecido en sesión: {Username} ({UserId})", 
+                throw new ArgumentNullException(nameof(userInfo));            _currentUser = userInfo;
+            // Reducir ruido: degradar a Debug para evitar spam en logs normales
+            _logger.LogDebug("Usuario establecido en sesión: {Username} ({UserId})", 
                 userInfo.Username, userInfo.UserId);
             if (rememberMe)
                 UserSessionPersistence.SaveSession(userInfo);

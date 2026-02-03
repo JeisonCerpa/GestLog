@@ -79,7 +79,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                 context.PerifericosEquiposInformaticos.Update(periferico);
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("[PerifericoService] Estado del periférico {codigo} cambiado a {nuevoEstado}", codigo, nuevoEstado);
+                // Cambio de estado no crítico para logs de nivel Information: registrar como Debug para reducir ruido
+                _logger.LogDebug("[PerifericoService] Estado del periférico {codigo} cambiado a {nuevoEstado}", codigo, nuevoEstado);
                 return true;
             }
             catch (Exception ex)

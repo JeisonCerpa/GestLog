@@ -181,12 +181,10 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                         CostoReparacion = null,
                         FechaRegistro = DateTime.UtcNow,
                         FechaActualizacion = DateTime.UtcNow
-                    };
-
-                    context.MantenimientosCorrectivos.Add(mantenimiento);
+                    };                    context.MantenimientosCorrectivos.Add(mantenimiento);
                     await context.SaveChangesAsync(cancellationToken);
 
-                    _logger.LogInformation("Mantenimiento correctivo creado. ID: {Id}", mantenimiento.Id);
+                    _logger.LogDebug("Mantenimiento correctivo creado. ID: {Id}", mantenimiento.Id);
                     return mantenimiento.Id;
                 }
             }
@@ -265,11 +263,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                         bool estadoCambiado = await ActualizarEstadoEquipoOPeriferico(
                             mantenimiento.TipoEntidad,
                             mantenimiento.Codigo,
-                            cancellationToken);
-
-                        if (estadoCambiado)
+                            cancellationToken);                        if (estadoCambiado)
                         {
-                            _logger.LogInformation("Mantenimiento correctivo enviado a reparación. ID: {Id}, Proveedor: {Proveedor}, Estado de {TipoEntidad} actualizado", 
+                            _logger.LogDebug("Mantenimiento correctivo enviado a reparación. ID: {Id}, Proveedor: {Proveedor}, Estado de {TipoEntidad} actualizado", 
                                 id, proveedorAsignado, mantenimiento.TipoEntidad);
                             
                             // Enviar mensaje para notificar cambio de estado a otras vistas
@@ -327,11 +323,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                         bool estadoRestaurado = await RestaurarEstadoEquipoOPeriferico(
                             mantenimiento.TipoEntidad,
                             mantenimiento.Codigo,
-                            cancellationToken);
-
-                        if (estadoRestaurado)
+                            cancellationToken);                        if (estadoRestaurado)
                         {
-                            _logger.LogInformation("Mantenimiento correctivo completado. ID: {Id}, Costo: {Costo}, Garantía: {Periodo} días, Estado de {TipoEntidad} restaurado",
+                            _logger.LogDebug("Mantenimiento correctivo completado. ID: {Id}, Costo: {Costo}, Garantía: {Periodo} días, Estado de {TipoEntidad} restaurado",
                                 id, costoReparacion ?? 0, periodoGarantia ?? 0, mantenimiento.TipoEntidad);
                             
                             // Enviar mensaje para notificar cambio de estado a otras vistas

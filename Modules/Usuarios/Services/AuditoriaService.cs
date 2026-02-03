@@ -19,11 +19,11 @@ namespace Modules.Usuarios.Services
         }
 
         public async Task RegistrarEventoAsync(Auditoria auditoria)
-        {
-            try
+        {            try
             {
                 await _auditoriaRepository.RegistrarAsync(auditoria);
-                _logger.LogInformation($"Audit event registered: {auditoria.IdAuditoria}");
+                // Reducir ruido: degradar a Debug para evitar spam en logs normales
+                _logger.LogDebug($"Audit event registered: {auditoria.IdAuditoria}");
             }
             catch (Exception ex)
             {

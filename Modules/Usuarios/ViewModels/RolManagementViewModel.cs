@@ -479,9 +479,9 @@ namespace Modules.Usuarios.ViewModels
         {
             try
             {
-                _logger.LogInformation("[RolManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[RolManagementViewModel] Refrescando datos automáticamente");
                 await BuscarRolesAsync();
-                _logger.LogInformation("[RolManagementViewModel] Datos refrescados exitosamente");
+                _logger.LogDebug("[RolManagementViewModel] Datos refrescados exitosamente");
             }
             catch (Exception ex)
             {
