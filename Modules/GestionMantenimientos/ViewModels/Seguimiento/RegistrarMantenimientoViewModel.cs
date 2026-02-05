@@ -11,15 +11,12 @@ using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
 using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
-{
-    public partial class RegistrarMantenimientoViewModel : DatabaseAwareViewModel
+{    public partial class RegistrarMantenimientoViewModel : DatabaseAwareViewModel
     {
         private readonly IMantenimientoService _mantenimientoService;
 
         [ObservableProperty]
         private SeguimientoMantenimiento _seguimiento = new SeguimientoMantenimiento();
-
-        public ObservableCollection<SeguimientoMantenimientoTarea> Tareas { get; } = new ObservableCollection<SeguimientoMantenimientoTarea>();
 
         public Action? RequestClose { get; set; }
 
@@ -30,33 +27,19 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
             : base(databaseService, logger)
         {
             _mantenimientoService = mantenimientoService;
-        }
-
-        [RelayCommand]
+        }        [RelayCommand]
         public async Task SaveAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 Seguimiento.FechaRealizacion = DateTime.Now;
-                await _mantenimientoService.AddLogAsync(Seguimiento, Tareas, cancellationToken);
+                await _mantenimientoService.AddLogAsync(Seguimiento, cancellationToken);
                 RequestClose?.Invoke();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error guardando mantenimiento");
             }
-        }
-
-        [RelayCommand]
-        public void AddTarea()
-        {
-            Tareas.Add(new SeguimientoMantenimientoTarea { NombreTarea = "Nueva tarea", Completada = false });
-        }
-
-        [RelayCommand]
-        public void RemoveTarea(SeguimientoMantenimientoTarea tarea)
-        {
-            Tareas.Remove(tarea);
         }
 
         // Nuevo: comando para cancelar / cerrar el modal desde la vista (genera CancelCommand)

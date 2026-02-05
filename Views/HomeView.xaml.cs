@@ -25,9 +25,9 @@ namespace GestLog.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Equipos y Periféricos: historial de usuario anterior asignado.\n" +
-                "• Periféricos: filtro múltiple para búsquedas avanzadas.\n" +
-                "• Arreglos: correcciones de bugs y mejoras de estabilidad.",
+                "• Base de datos reorganizada con prefijos de módulos.\n" +
+                "• Migraciones aplicadas exitosamente a producción.\n" +
+                "• Mejoras de mantenibilidad y escalabilidad.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

@@ -22,33 +22,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         {
             _logger = logger;
             _dbFactory = dbFactory;
-        }
-
-        public async Task AddPlantillaAsync(MantenimientoPlantillaTarea plantilla, CancellationToken cancellationToken = default)
-        {
-            using var db = _dbFactory.CreateDbContext();
-            db.MantenimientoPlantillas.Add(plantilla);
-            await db.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("[MaintenanceService] Plantilla agregada: {Id}", plantilla.Id);
-            WeakReferenceMessenger.Default.Send(new CronogramasActualizadosMessage());
-        }
-
-        public async Task<IEnumerable<MantenimientoPlantillaTarea>> GetPlantillasAsync(CancellationToken cancellationToken = default)
-        {
-            using var db = _dbFactory.CreateDbContext();
-            return await db.MantenimientoPlantillas.OrderBy(p => p.Orden).ToListAsync(cancellationToken);
-        }
-
-        public async Task<IEnumerable<SeguimientoMantenimiento>> GetPlannedForDateAsync(DateTime date, CancellationToken cancellationToken = default)
+        }        public async Task<IEnumerable<SeguimientoMantenimiento>> GetPlannedForDateAsync(DateTime date, CancellationToken cancellationToken = default)
         {
             using var db = _dbFactory.CreateDbContext();
             int semana = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
             int anio = date.Year;
             var seguimientos = await db.Seguimientos.Where(s => s.Anio == anio && s.Semana == semana).ToListAsync(cancellationToken);
             return seguimientos;
-        }
-
-        public async Task AddLogAsync(SeguimientoMantenimiento seguimiento, IEnumerable<SeguimientoMantenimientoTarea>? tareas = null, CancellationToken cancellationToken = default)
+        }        public async Task AddLogAsync(SeguimientoMantenimiento seguimiento, CancellationToken cancellationToken = default)
         {
             using var db = _dbFactory.CreateDbContext();
             // Si existe el seguimiento pendiente: actualizarlo; sino insertarlo
@@ -64,15 +45,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             else
             {
                 db.Seguimientos.Add(seguimiento);
-            }
-
-            if (tareas != null && tareas.Any())
-            {
-                foreach (var t in tareas)
-                {
-                    t.SeguimientoMantenimientoId = seguimiento.Id;
-                    db.SeguimientoTareas.Add(t);
-                }
             }
 
             await db.SaveChangesAsync(cancellationToken);

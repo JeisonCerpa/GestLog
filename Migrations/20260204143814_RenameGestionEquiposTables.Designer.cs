@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    partial class GestLogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260204143814_RenameGestionEquiposTables")]
+    partial class RenameGestionEquiposTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,7 +100,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("CodigoEquipo");
 
-                    b.ToTable("GestionEquiposInformaticos_Discos", (string)null);
+                    b.ToTable("Discos");
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal", b =>
@@ -150,7 +153,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("CodigoEquipo", "AnioISO", "SemanaISO");
 
-                    b.ToTable("GestionEquiposInformaticos_EjecucionSemanal", (string)null);
+                    b.ToTable("EjecucionSemanal", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity", b =>
@@ -280,7 +283,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GestionEquiposInformaticos_MantenimientosCorrectivos", (string)null);
+                    b.ToTable("EquiposInformaticos_MantenimientosCorrectivos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity", b =>
@@ -392,7 +395,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("EquipoCodigo");
 
-                    b.ToTable("GestionEquiposInformaticos_PlanCronogramaEquipo", (string)null);
+                    b.ToTable("PlanCronogramaEquipo", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity", b =>
@@ -437,7 +440,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("CodigoEquipo");
 
-                    b.ToTable("GestionEquiposInformaticos_SlotsRam", (string)null);
+                    b.ToTable("SlotsRam");
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionMantenimientos.Models.Entities.CronogramaMantenimiento", b =>
@@ -474,7 +477,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GestionMantenimientos_Cronogramas", (string)null);
+                    b.ToTable("Cronogramas", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionMantenimientos.Models.Entities.Equipo", b =>
@@ -530,7 +533,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GestionMantenimientos_Equipos", (string)null);
+                    b.ToTable("Equipos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimiento", b =>
@@ -589,7 +592,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GestionMantenimientos_Seguimientos", (string)null);
+                    b.ToTable("Seguimientos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Personas.Models.Persona", b =>
@@ -642,7 +645,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("TipoDocumentoId");
 
-                    b.ToTable("GestionPersonas_Personas", (string)null);
+                    b.ToTable("Personas", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.Auditoria", b =>
@@ -678,7 +681,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("IdAuditoria");
 
-                    b.ToTable("GestionUsuarios_Auditorias", (string)null);
+                    b.ToTable("Auditoria", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.Cargo", b =>
@@ -693,12 +696,11 @@ namespace GestLog.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdCargo");
 
-                    b.ToTable("GestionUsuarios_Cargos", (string)null);
+                    b.ToTable("Cargos");
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.Permiso", b =>
@@ -731,7 +733,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("RolIdRol");
 
-                    b.ToTable("GestionUsuarios_Permisos", (string)null);
+                    b.ToTable("Permisos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.Rol", b =>
@@ -750,7 +752,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("IdRol");
 
-                    b.ToTable("GestionUsuarios_Roles", (string)null);
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.RolPermiso", b =>
@@ -765,7 +767,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("IdPermiso");
 
-                    b.ToTable("GestionUsuarios_RolPermisos", (string)null);
+                    b.ToTable("RolPermisos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.TipoDocumento", b =>
@@ -794,7 +796,7 @@ namespace GestLog.Migrations
                     b.HasIndex("Codigo")
                         .IsUnique();
 
-                    b.ToTable("GestionUsuarios_TiposDocumento", (string)null);
+                    b.ToTable("TipoDocumento", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.Usuario", b =>
@@ -853,7 +855,7 @@ namespace GestLog.Migrations
 
                     b.HasKey("IdUsuario");
 
-                    b.ToTable("GestionUsuarios_Usuarios", (string)null);
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.UsuarioPermiso", b =>
@@ -868,7 +870,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("IdPermiso");
 
-                    b.ToTable("GestionUsuarios_UsuarioPermisos", (string)null);
+                    b.ToTable("UsuarioPermisos", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.Usuarios.Models.UsuarioRol", b =>
@@ -883,7 +885,7 @@ namespace GestLog.Migrations
 
                     b.HasIndex("IdRol");
 
-                    b.ToTable("GestionUsuarios_UsuarioRoles", (string)null);
+                    b.ToTable("UsuarioRoles", (string)null);
                 });
 
             modelBuilder.Entity("GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity", b =>

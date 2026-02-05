@@ -1,5 +1,24 @@
 # Gestión de Equipos Informáticos - Cambios para usuarios
 
+## 📦 Versión 1.0.46
+
+Fecha: 4 de febrero de 2026
+
+### Implementación
+
+- **Actualización de esquema de base de datos**: Reorganización de tablas con prefijos de módulos (GestionEquiposInformaticos_*, GestionMantenimientos_*, GestionPersonas_*, GestionUsuarios_*) para mejor mantenibilidad y escalabilidad
+- Las migraciones de base de datos se han aplicado exitosamente a producción sin afectar la funcionalidad de la aplicación
+
+### Cambios de Base de Datos
+
+- 21 tablas renombradas con prefijos específicos por módulo funcional
+- Todas las relaciones y constrains actualizados automáticamente
+- Índices y claves primarias adaptadas a nuevos nombres
+
+---
+
+## Versión 1.0.45
+
 Fecha: 21 de enero de 2026
 
 ## Mejoras

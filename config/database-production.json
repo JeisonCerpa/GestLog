@@ -15,11 +15,10 @@
     "CheckInterval": "00:30:00",
     "AutoInstall": true,
     "BackupBeforeUpdate": true
-  },
-  "Metadata": {
-    "Environment": "Development",
+  },  "Metadata": {
+    "Environment": "Production",
     "Version": "1.0",
-    "LastUpdated": "2025-08-12",
-    "Description": "Configuración de desarrollo/pruebas para SIMICS Group"
+    "LastUpdated": "2026-02-04",
+    "Description": "Configuración de PRODUCCIÓN para SIMICS Group - Migraciones de renombrado aplicadas exitosamente"
   }
 }

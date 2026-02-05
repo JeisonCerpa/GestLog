@@ -33,11 +33,7 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }        
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }
-        public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
-        
-        public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea> MantenimientoPlantillas { get; set; }
-        public DbSet<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea> SeguimientoTareas { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }        public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }
 
@@ -53,14 +49,13 @@ namespace GestLog.Modules.DatabaseConnection
                 (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
                 a => a == null ? 0 : a.Aggregate(0, (hash, b) => hash * 31 + (b ? 1 : 0)),
                 a => a == null ? Array.Empty<bool>() : a.ToArray()
-            );
-            modelBuilder.Entity<CronogramaMantenimiento>()
+            );            modelBuilder.Entity<CronogramaMantenimiento>()
+                .ToTable("GestionMantenimientos_Cronogramas")
                 .Property(c => c.Semanas)
                 .HasConversion(boolArrayToStringConverter)
-                .Metadata.SetValueComparer(boolArrayComparer);
-
-            // Configuración explícita para enums y decimales en Equipo
+                .Metadata.SetValueComparer(boolArrayComparer);            // Configuración explícita para enums y decimales en Equipo
             modelBuilder.Entity<Equipo>()
+                .ToTable("GestionMantenimientos_Equipos")
                 .Property(e => e.Estado)
                 .HasConversion<int>();
             modelBuilder.Entity<Equipo>()
@@ -71,31 +66,26 @@ namespace GestLog.Modules.DatabaseConnection
                 .HasConversion<int?>();
             modelBuilder.Entity<Equipo>()
                 .Property(e => e.Precio)
-                .HasPrecision(18, 2);
-
-            // Configuración explícita para decimales en SeguimientoMantenimiento
+                .HasPrecision(18, 2);            // Configuración explícita para decimales en SeguimientoMantenimiento
             modelBuilder.Entity<SeguimientoMantenimiento>()
+                .ToTable("GestionMantenimientos_Seguimientos")
                 .Property(s => s.Costo)
-                .HasPrecision(18, 2);            
-            // Configuración para precision en Costo de EquipoInformaticoEntity (evita warning EF Core)
+                .HasPrecision(18, 2);              // Configuración para precision en Costo de EquipoInformaticoEntity (evita warning EF Core)
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EquipoInformaticoEntity>()
+                .ToTable("GestionEquiposInformaticos_Equipos")
                 .Property(e => e.Costo)
-                .HasPrecision(18, 2);
-
-            // Configuración para PerifericoEquipoInformaticoEntity
+                .HasPrecision(18, 2);            // Configuración para PerifericoEquipoInformaticoEntity
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
+                .ToTable("GestionEquiposInformaticos_Perifericos")
                 .Property(p => p.Costo)
                 .HasPrecision(18, 2);
             
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
                 .Property(p => p.Estado)
                 .HasConversion<int>();
-            
-            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity>()
-                .Property(p => p.Sede)
-                .HasConversion<int>();            // Configuración para MantenimientoCorrectivoEntity - mapeo de tabla
+              // Configuración para MantenimientoCorrectivoEntity - mapeo de tabla
             modelBuilder.Entity<MantenimientoCorrectivoEntity>()
-                .ToTable("EquiposInformaticos_MantenimientosCorrectivos");
+                .ToTable("GestionEquiposInformaticos_MantenimientosCorrectivos");
             
             modelBuilder.Entity<MantenimientoCorrectivoEntity>()
                 .Property(m => m.Estado)
@@ -104,20 +94,17 @@ namespace GestLog.Modules.DatabaseConnection
             modelBuilder.Entity<MantenimientoCorrectivoEntity>()
                 .Property(m => m.CostoReparacion)
                 .HasPrecision(18, 2)
-                .IsRequired(false);
-
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
+                .IsRequired(false);            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.TipoDocumento>(entity =>
             {
-                entity.ToTable("TipoDocumento");
+                entity.ToTable("GestionUsuarios_TiposDocumento");
                 entity.HasKey(e => e.IdTipoDocumento);
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Codigo).IsRequired().HasMaxLength(10);
                 entity.Property(e => e.Descripcion).HasMaxLength(100);
                 entity.HasIndex(e => e.Codigo).IsUnique();
-            });
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Auditoria>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Auditoria>(entity =>
             {
-                entity.ToTable("Auditoria");
+                entity.ToTable("GestionUsuarios_Auditorias");
                 entity.HasKey(e => e.IdAuditoria);
                 entity.Property(e => e.EntidadAfectada).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Accion).IsRequired().HasMaxLength(50);
@@ -125,10 +112,9 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.Property(e => e.Detalle).IsRequired();
                 entity.Property(e => e.FechaHora).IsRequired();
                 entity.Property(e => e.IdEntidad).IsRequired();
-            });
-            modelBuilder.Entity<GestLog.Modules.Personas.Models.Persona>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Personas.Models.Persona>(entity =>
             {
-                entity.ToTable("Personas");
+                entity.ToTable("GestionPersonas_Personas");
                 entity.HasKey(e => e.IdPersona);
                 entity.Property(e => e.Nombres).IsRequired();
                 entity.Property(e => e.Apellidos).IsRequired();
@@ -148,19 +134,16 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany()
                     .HasForeignKey(e => e.TipoDocumentoId)
                     .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // --- RELACIONES USUARIOS, ROLES Y PERMISOS ---
+            });            // --- RELACIONES USUARIOS, ROLES Y PERMISOS ---
             modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Rol>(entity =>
             {
-                entity.ToTable("Roles");
+                entity.ToTable("GestionUsuarios_Roles");
                 entity.HasKey(e => e.IdRol);
                 entity.Property(e => e.Nombre).IsRequired();
                 entity.Property(e => e.Descripcion).IsRequired();
-            });
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Permiso>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Permiso>(entity =>
             {
-                entity.ToTable("Permisos");
+                entity.ToTable("GestionUsuarios_Permisos");
                 entity.HasKey(e => e.IdPermiso);
                 entity.Property(e => e.Nombre).IsRequired();
                 entity.Property(e => e.Descripcion).IsRequired();
@@ -168,10 +151,9 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany(p => p.SubPermisos)
                     .HasForeignKey(p => p.PermisoPadreId)
                     .OnDelete(DeleteBehavior.Restrict);
-            });
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioRol>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioRol>(entity =>
             {
-                entity.ToTable("UsuarioRoles");
+                entity.ToTable("GestionUsuarios_UsuarioRoles");
                 entity.HasKey(e => new { e.IdUsuario, e.IdRol });
                 entity.HasOne<GestLog.Modules.Usuarios.Models.Usuario>()
                     .WithMany()
@@ -181,10 +163,9 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany()
                     .HasForeignKey(e => e.IdRol)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.RolPermiso>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.RolPermiso>(entity =>
             {
-                entity.ToTable("RolPermisos");
+                entity.ToTable("GestionUsuarios_RolPermisos");
                 entity.HasKey(e => new { e.IdRol, e.IdPermiso });
                 entity.HasOne<GestLog.Modules.Usuarios.Models.Rol>()
                     .WithMany()
@@ -194,10 +175,9 @@ namespace GestLog.Modules.DatabaseConnection
                     .WithMany()
                     .HasForeignKey(e => e.IdPermiso)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioPermiso>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.UsuarioPermiso>(entity =>
             {
-                entity.ToTable("UsuarioPermisos");
+                entity.ToTable("GestionUsuarios_UsuarioPermisos");
                 entity.HasKey(e => new { e.IdUsuario, e.IdPermiso });
                 entity.HasOne<GestLog.Modules.Usuarios.Models.Usuario>()
                     .WithMany()
@@ -205,33 +185,25 @@ namespace GestLog.Modules.DatabaseConnection
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne<GestLog.Modules.Usuarios.Models.Permiso>()
                     .WithMany()
-                    .HasForeignKey(e => e.IdPermiso)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .HasForeignKey(e => e.IdPermiso)                    .OnDelete(DeleteBehavior.Cascade);            });
+            // Mapear Usuario y Cargo al nuevo esquema de nombres
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Usuario>(entity =>
+            {
+                entity.ToTable("GestionUsuarios_Usuarios");
+                entity.HasKey(e => e.IdUsuario);
+                // otras configuraciones por convención
             });
 
-            // Configuración para MantenimientoPlantillaTarea
-            modelBuilder.Entity<GestLog.Modules.GestionMantenimientos.Models.Entities.MantenimientoPlantillaTarea>(entity =>
+            modelBuilder.Entity<GestLog.Modules.Usuarios.Models.Cargo>(entity =>
             {
-                entity.ToTable("MantenimientoPlantillaTarea");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
-                entity.Property(e => e.Descripcion).HasMaxLength(500);
-                entity.Property(e => e.Orden).IsRequired();
-                entity.Property(e => e.Predeterminada).IsRequired();
+                entity.ToTable("GestionUsuarios_Cargos");
+                entity.HasKey(e => e.IdCargo);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
             });
 
-            // Configuración para SeguimientoMantenimientoTarea
-            modelBuilder.Entity<GestLog.Modules.GestionMantenimientos.Models.Entities.SeguimientoMantenimientoTarea>(entity =>
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal>(entity =>
             {
-                entity.ToTable("SeguimientoMantenimientoTarea");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.NombreTarea).IsRequired().HasMaxLength(300);
-                entity.Property(e => e.Observaciones).HasMaxLength(1000);
-                entity.Property(e => e.RepuestoUsado).HasMaxLength(200);
-                entity.HasIndex(e => e.SeguimientoMantenimientoId);
-            });            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal>(entity =>
-            {
-                entity.ToTable("EjecucionSemanal");
+                entity.ToTable("GestionEquiposInformaticos_EjecucionSemanal");
                 
                 // ✅ ÍNDICE PRINCIPAL: por equipo + año + semana (para consultas rápidas)
                 entity.HasIndex(e => new { e.CodigoEquipo, e.AnioISO, e.SemanaISO });
@@ -255,17 +227,15 @@ namespace GestLog.Modules.DatabaseConnection
                       .HasForeignKey(e => e.PlanId)
                       .OnDelete(DeleteBehavior.SetNull)
                       .IsRequired(false);
-            });
-            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo>(entity =>
+            });            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo>(entity =>
             {
-                entity.ToTable("PlanCronogramaEquipo");
+                entity.ToTable("GestionEquiposInformaticos_PlanCronogramaEquipo");
                 entity.Property(p => p.DiaProgramado).IsRequired();
                 // Ejecuciones ahora se configuran desde EjecucionSemanal
-            });
-            // Configuración para ConexionEntity
+            });            // Configuración para ConexionEntity
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity>(entity =>
             {
-                entity.ToTable("ConexionesEquiposInformaticos");
+                entity.ToTable("GestionEquiposInformaticos_ConexionesEquipos");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.CodigoEquipo).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.Adaptador).HasMaxLength(255);
@@ -280,6 +250,15 @@ namespace GestLog.Modules.DatabaseConnection
                       .HasForeignKey(c => c.CodigoEquipo)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // Mapear tablas restantes de GestionEquiposInformaticos
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity>()
+                .ToTable("GestionEquiposInformaticos_Discos")
+                .HasKey(d => d.Id);
+
+            modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>()
+                .ToTable("GestionEquiposInformaticos_SlotsRam")
+                .HasKey(s => s.Id);
         }
 
         public void SeedAdminRole()
