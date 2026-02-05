@@ -1,0 +1,27 @@
+using Microsoft.Extensions.DependencyInjection;
+using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using GestLog.Modules.GestionVehiculos.Services.Data;
+using GestLog.Modules.GestionVehiculos.Views.Vehicles;
+
+namespace GestLog.Modules.GestionVehiculos.Services
+{
+    public static class ServiceCollectionExtensions
+    {
+        public static IServiceCollection AddGestionVehiculosModule(this IServiceCollection services)
+        {
+            // ✅ Data Services
+            services.AddScoped<IVehicleService, VehicleService>();
+
+            // ✅ Views
+            services.AddTransient<GestionVehiculosHomeView>();
+            services.AddTransient<VehicleFormDialog>();
+
+            // ✅ ViewModels
+            services.AddTransient<GestionVehiculosHomeViewModel>();
+            services.AddTransient<VehicleFormViewModel>();
+
+            return services;
+        }
+    }
+}

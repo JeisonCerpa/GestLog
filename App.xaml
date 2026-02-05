@@ -17,6 +17,7 @@
             <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
             <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>            
             <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
@@ -27,6 +28,7 @@
             <converters:PersonaIdToNombreCompletoConverter x:Key="PersonaIdToNombreCompletoConverter"/>
             <converters:RoleCheckedConverter x:Key="RoleCheckedConverter"/>
             <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+            <DropShadowEffect x:Key="DropShadowEffect" Color="#000000" Opacity="0.18" BlurRadius="8" ShadowDepth="2"/>
             <Style x:Key="WatermarkTextBoxStyle" TargetType="TextBox">
                 <Setter Property="Template">
                     <Setter.Value>

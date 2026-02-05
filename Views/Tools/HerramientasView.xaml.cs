@@ -243,6 +243,26 @@ namespace GestLog.Views.Tools
                 var errorHandler = LoggingService.GetErrorHandler();
                 errorHandler.HandleException(ex, "Mostrar Equipos Informáticos desde herramientas");
             }
+        }        private void BtnGestionVehiculos_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
+            if (viewModel != null && !viewModel.CanAccessGestionVehiculos)
+            {
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Vehículos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            try
+            {
+                // ✅ Resolver la vista desde DI
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var gestionVehiculosView = serviceProvider.GetRequiredService<GestLog.Modules.GestionVehiculos.Views.Vehicles.GestionVehiculosHomeView>();
+                _mainWindow?.NavigateToView(gestionVehiculosView, "Gestión de Vehículos");
+            }
+            catch (System.Exception ex)
+            {
+                var errorHandler = LoggingService.GetErrorHandler();
+                errorHandler.HandleException(ex, "Mostrar gestión de vehículos desde herramientas");
+            }
         }
     }
 }

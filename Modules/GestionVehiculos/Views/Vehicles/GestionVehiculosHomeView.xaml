@@ -1,0 +1,109 @@
+<UserControl x:Class="GestLog.Modules.GestionVehiculos.Views.Vehicles.GestionVehiculosHomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:GestLog.Modules.GestionVehiculos.ViewModels.Vehicles"
+             xmlns:vehicles="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Vehicles"
+             mc:Ignorable="d"
+             d:DesignWidth="1000" d:DesignHeight="800"
+             d:DataContext="{d:DesignInstance Type=local:GestionVehiculosHomeViewModel}"
+             Background="#FAFAFA"
+             Loaded="UserControl_Loaded">    <UserControl.Resources>
+        <!-- Circular button style - círculo perfecto 100% -->
+        <Style x:Key="CircularButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Background" Value="#118938"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#118938"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="{TemplateBinding BorderThickness}"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2B8E3F"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D5A2A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Contenido Principal -->
+        <Grid Grid.Row="0" Margin="40,30">
+            <StackPanel>
+                <!-- Header con Botón Agregar -->
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>                    <TextBlock Text="Gestión de Vehículos" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" Foreground="#118938"/>
+                    <!-- Botón circular consistente con otras vistas -->
+                    <Button Grid.Column="1" Command="{Binding AgregarVehiculoAsyncCommand}" ToolTip="Agregar vehículo"
+                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Margin="8,0,0,0"/>
+                </Grid>
+                
+                <!-- Grid de vehículos -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <UniformGrid Columns="3" HorizontalAlignment="Left">
+                        <ItemsControl ItemsSource="{Binding Vehicles}" 
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Card para cada vehículo -->
+                                    <Border Style="{StaticResource ModernCardStyle}" Width="320" Height="auto" HorizontalAlignment="Left" Margin="0,0,12,12">
+                                        <StackPanel>
+                                            <!-- Foto del vehículo -->
+                                            <Image Source="{Binding PhotoPath}" Width="160" Height="100" Stretch="UniformToFill" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                                            
+                                            <!-- Título vehículo -->
+                                            <TextBlock Text="{Binding VehicleName}" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
+                                            
+                                            <!-- Kilometraje -->
+                                            <TextBlock Text="{Binding MileageText}" FontFamily="Segoe UI" FontSize="13" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                                            
+                                            <!-- Badge estado -->
+                                            <Border Background="{Binding BadgeBackground}" CornerRadius="6" Padding="6,2" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                                <TextBlock Text="{Binding BadgeText}" Foreground="{Binding BadgeForeground}" FontWeight="SemiBold" FontSize="11"/>
+                                            </Border>
+                                            
+                                            <!-- Documentos resumen -->
+                                            <TextBlock Text="{Binding DocumentSummary}" FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,14"/>
+                                            
+                                            <!-- Botón Ver detalles -->
+                                            <Button Content="Ver detalles" Command="{Binding VerDetallesCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </UniformGrid>
+                </ScrollViewer>
+            </StackPanel>
+        </Grid>        
+        <!-- Overlay/modal inline eliminado: el Window VehicleFormDialog no puede ser instanciado dentro del UserControl. -->
+    </Grid>
+</UserControl>

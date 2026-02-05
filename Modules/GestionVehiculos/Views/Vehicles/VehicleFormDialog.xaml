@@ -1,0 +1,264 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Vehicles.VehicleFormDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:GestLog.Converters"
+        mc:Ignorable="d"
+        Title="{Binding TituloDialog}" 
+        Height="700" Width="900"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed"
+        RenderOptions.BitmapScalingMode="HighQuality"
+        RenderOptions.ClearTypeHint="Enabled">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+        </ResourceDictionary>    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <!-- Panel centrado modal -->
+        <Border x:Name="Card" Width="900" MaxHeight="700" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Header Modal -->
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,16" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                    <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" 
+                                    CornerRadius="8" 
+                                    Padding="8" 
+                                    Margin="0,0,12,0"
+                                    Width="42" 
+                                    Height="42"
+                                    Effect="{StaticResource SectionShadow}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <!-- Icono de vehículo -->
+                                <TextBlock Text="🚗" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="{Binding TituloDialog}" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Gestiona información detallada del vehículo" Style="{StaticResource SubHeaderTextStyle}" Foreground="White"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="BtnCerrarHeader" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="6">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Contenido -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
+                        <!-- Sección: Información Básica del Vehículo -->
+                        <Border Background="{StaticResource SurfaceBrush}" 
+                                CornerRadius="8" 
+                                BorderBrush="{StaticResource BorderBrush}" 
+                                BorderThickness="1"
+                                Effect="{StaticResource CardShadow}"
+                                Padding="24">
+                            <StackPanel>
+                                <TextBlock Text="📋 Información Básica" Style="{StaticResource SectionHeaderStyle}"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- Fila 1: Placa y VIN -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock Text="Placa *" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtPlaca" 
+                                                 Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <TextBlock Text="VIN *" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtVin" 
+                                                 Text="{Binding Vin, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Fila 2: Marca y Modelo -->
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <TextBlock Text="Marca *" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtMarca" 
+                                                 Text="{Binding Brand, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="2">
+                                        <TextBlock Text="Modelo *" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtModelo" 
+                                                 Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Fila 3: Versión y Año -->
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <TextBlock Text="Versión" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtVersion" 
+                                                 Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="2">
+                                        <TextBlock Text="Año" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtAno" 
+                                                 Text="{Binding Year, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Fila 4: Color y Kilometraje -->
+                                    <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <TextBlock Text="Color" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtColor" 
+                                                 Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="2">
+                                        <TextBlock Text="Kilometraje (KM)" Style="{StaticResource LabelTextStyle}"/>
+                                        <TextBox x:Name="TxtKilometraje" 
+                                                 Text="{Binding Mileage, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}"
+                                                 Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sección: Tipo y Estado -->
+                        <Border Background="{StaticResource SurfaceBrush}" 
+                                CornerRadius="8" 
+                                BorderBrush="{StaticResource BorderBrush}" 
+                                BorderThickness="1"
+                                Effect="{StaticResource CardShadow}"
+                                Padding="24"
+                                Margin="0,20,0,0">
+                            <StackPanel>
+                                <TextBlock Text="⚙️ Clasificación" Style="{StaticResource SectionHeaderStyle}"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Tipo de Vehículo *" Style="{StaticResource LabelTextStyle}"/>
+                                        <ComboBox x:Name="CmbTipo" 
+                                                  ItemsSource="{Binding VehicleTypes}"
+                                                  SelectedItem="{Binding SelectedType}"
+                                                  Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Estado *" Style="{StaticResource LabelTextStyle}"/>
+                                        <ComboBox x:Name="CmbEstado" 
+                                                  ItemsSource="{Binding VehicleStates}"
+                                                  SelectedItem="{Binding SelectedState}"
+                                                  Style="{StaticResource InputStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Mensajes de error -->
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                   Foreground="#C0392B" 
+                                   Style="{StaticResource SectionHeaderStyle}"
+                                   TextWrapping="Wrap" 
+                                   Margin="0,20,0,0"
+                                   Visibility="{Binding ErrorMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
+
+                        <!-- Mensajes de éxito -->
+                        <TextBlock Text="{Binding SuccessMessage}" 
+                                   Foreground="#10B981" 
+                                   Style="{StaticResource SectionHeaderStyle}"
+                                   TextWrapping="Wrap" 
+                                   Margin="0,20,0,0"
+                                   Visibility="{Binding SuccessMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer con botones -->
+                <Border Grid.Row="2" Background="#F8F8F8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Botón Cancelar -->
+                        <Button Grid.Column="1" 
+                                Content="Cancelar" 
+                                Click="BtnCancelar_Click"
+                                Padding="20,10" 
+                                FontFamily="Segoe UI" 
+                                FontSize="13" 
+                                FontWeight="SemiBold" 
+                                Foreground="#706F6F" 
+                                Background="#F0F0F0" 
+                                BorderThickness="1"
+                                BorderBrush="#E0E0E0"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource ButtonStyle}"/>
+
+                        <!-- Botón Guardar -->
+                        <Button Grid.Column="2" 
+                                Content="Guardar" 
+                                Command="{Binding SaveCommand}"
+                                Padding="20,10" 
+                                FontFamily="Segoe UI" 
+                                FontSize="13" 
+                                FontWeight="SemiBold" 
+                                Foreground="White" 
+                                Background="{StaticResource PrimaryBrush}" 
+                                BorderThickness="0"
+                                IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
+                                Style="{StaticResource ButtonStyle}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

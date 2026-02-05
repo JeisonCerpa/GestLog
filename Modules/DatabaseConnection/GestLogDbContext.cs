@@ -5,6 +5,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using GestLog.Modules.GestionVehiculos.Models.Entities;
 
 namespace GestLog.Modules.DatabaseConnection
 {
@@ -33,9 +34,11 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity> SlotsRam { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.DiscoEntity> Discos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }        
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }        public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }        
+        public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -259,6 +262,83 @@ namespace GestLog.Modules.DatabaseConnection
             modelBuilder.Entity<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.SlotRamEntity>()
                 .ToTable("GestionEquiposInformaticos_SlotsRam")
                 .HasKey(s => s.Id);
+
+            // ✅ CONFIGURACIÓN PARA GESTIÓN DE VEHÍCULOS
+            modelBuilder.Entity<Vehicle>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_Vehicles");
+                entity.HasKey(e => e.Id);
+                
+                // Campos requeridos
+                entity.Property(e => e.Plate)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnName("Plate");
+                
+                entity.Property(e => e.Vin)
+                    .IsRequired()
+                    .HasMaxLength(17)
+                    .HasColumnName("VIN");
+                
+                entity.Property(e => e.Brand)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                
+                entity.Property(e => e.Model)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                
+                // Campos opcionales
+                entity.Property(e => e.Version)
+                    .HasMaxLength(100)
+                    .IsRequired(false);
+                
+                entity.Property(e => e.Color)
+                    .HasMaxLength(50)
+                    .IsRequired(false);
+                
+                entity.Property(e => e.PhotoPath)
+                    .HasMaxLength(400)
+                    .IsRequired(false);
+                
+                entity.Property(e => e.PhotoThumbPath)
+                    .HasMaxLength(400)
+                    .IsRequired(false);
+                
+                // Enum conversions
+                entity.Property(e => e.Type)
+                    .HasConversion<int>();
+                
+                entity.Property(e => e.State)
+                    .HasConversion<int>();
+                
+                // Campos de auditoría
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetimeoffset");
+                
+                // Soft delete
+                entity.Property(e => e.IsDeleted)
+                    .HasDefaultValue(false);
+                
+                // Índices
+                entity.HasIndex(e => e.Plate)
+                    .IsUnique()
+                    .HasDatabaseName("IX_Vehicles_Plate");
+                
+                entity.HasIndex(e => e.Vin)
+                    .IsUnique()
+                    .HasDatabaseName("IX_Vehicles_VIN");
+                
+                entity.HasIndex(e => e.State)
+                    .HasDatabaseName("IX_Vehicles_State");
+                
+                entity.HasIndex(e => e.Type)
+                    .HasDatabaseName("IX_Vehicles_Type");
+            });
         }
 
         public void SeedAdminRole()

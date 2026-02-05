@@ -25,6 +25,7 @@ using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Autocomplete;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Dialog;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export;
 using GestLog.Modules.GestionEquiposInformaticos.Services;
+using GestLog.Modules.GestionVehiculos.Services;
 
 namespace GestLog
 {    public static class StartupUsuariosPersonas
@@ -91,6 +92,9 @@ namespace GestLog
 
             // ✅ Servicios para Gestión de Equipos Informáticos (Data, Autocomplete, Dialog)
             services.AddGestionEquiposInformaticosServices();
+            
+            // ✅ Servicios para Gestión de Vehículos
+            services.AddGestionVehiculosModule();
             
             // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
             services.AddScoped<GestLog.Modules.GestionMantenimientos.Services.Autocomplete.ClasificacionAutocompletadoService>();

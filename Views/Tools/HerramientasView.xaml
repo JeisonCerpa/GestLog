@@ -63,6 +63,18 @@
                                 Click="BtnGestionMantenimientos_Click"/>
                     </StackPanel>
                 </Border>
+
+                <!-- Gestión de Vehículos Card (nuevo) -->
+                <Border Style="{StaticResource ModernCardStyle}" Margin="12"
+                        Visibility="{Binding CanAccessGestionVehiculos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="🚗" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Gestión de Vehículos" FontFamily="Segoe UI" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,10"/>
+                        <TextBlock Text="Administra el parque vehicular: identificación, documentos, fotos y mantenimiento." FontFamily="Segoe UI" FontSize="14" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                        <Button Name="btnGestionVehiculos" Content="Abrir Gestión de Vehículos" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGestionVehiculos_Click"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Gestión de Cartera Card -->
                 <Border Style="{StaticResource ModernCardStyle}" Margin="12"
                         Visibility="{Binding CanAccessGestionCartera, Converter={StaticResource BooleanToVisibilityConverter}}">

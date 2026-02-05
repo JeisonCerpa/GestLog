@@ -26,6 +26,8 @@ namespace GestLog.ViewModels.Tools
         private bool canAccessGestionEquipos;
         [ObservableProperty]
         private bool canAccessEquiposInformaticos;
+        [ObservableProperty]
+        private bool canAccessGestionVehiculos;
 
         public HerramientasViewModel(ICurrentUserService currentUserService)
         {
@@ -50,6 +52,7 @@ namespace GestLog.ViewModels.Tools
             CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
             CanAccessGestionIdentidadCatalogos = _currentUser.HasPermission("Herramientas.AccederGestionIdentidadCatalogos");
             CanAccessGestionEquipos = _currentUser.HasPermission("Herramientas.AccederGestionEquipos");
+            CanAccessGestionVehiculos = _currentUser.HasPermission("Herramientas.AccederGestionVehiculos");
             CanAccessEquiposInformaticos = _currentUser.HasPermission("Herramientas.AccederEquiposInformaticos");
         }
     }
