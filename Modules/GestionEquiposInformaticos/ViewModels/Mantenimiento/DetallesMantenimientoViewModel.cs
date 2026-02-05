@@ -28,9 +28,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
 
             return (int)(Mantenimiento.FechaCompletado.Value - Mantenimiento.FechaInicio.Value).TotalDays;
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Fecha de vencimiento de la garantía (calculada)
     /// </summary>
     public DateTime? FechaVencimientoGarantia
@@ -41,6 +39,64 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 return null;
 
             return Mantenimiento.FechaCompletado.Value.AddDays(Mantenimiento.PeriodoGarantia.Value);
+        }
+    }
+
+    /// <summary>
+    /// Estado de la garantía: "Vigente", "Vencida" o "Sin garantía" (calculada)
+    /// </summary>
+    public string EstadoGarantia
+    {
+        get
+        {
+            // Si no hay fecha de completado, no hay garantía
+            if (Mantenimiento?.FechaCompletado == null)
+                return "Sin garantía";
+
+            // Si no hay período de garantía, no hay garantía
+            if (!Mantenimiento.PeriodoGarantia.HasValue || Mantenimiento.PeriodoGarantia.Value <= 0)
+                return "Sin garantía";
+
+            // Calcular vencimiento
+            DateTime fechaVencimiento = Mantenimiento.FechaCompletado.Value.AddDays(Mantenimiento.PeriodoGarantia.Value);
+            DateTime hoy = DateTime.Today;
+
+            if (hoy <= fechaVencimiento)
+                return "Vigente";
+            else
+                return "Vencida";
+        }
+    }
+
+    /// <summary>
+    /// Color del indicador de estado de garantía (calculada)
+    /// </summary>
+    public string ColorGarantia
+    {
+        get
+        {
+            return EstadoGarantia switch
+            {
+                "Vigente" => "#059669",   // Verde
+                "Vencida" => "#C0392B",   // Rojo
+                _ => "#9D9D9C"            // Gris - Sin garantía
+            };
+        }
+    }
+
+    /// <summary>
+    /// Emoji del estado de garantía (calculada)
+    /// </summary>
+    public string EmojiGarantia
+    {
+        get
+        {
+            return EstadoGarantia switch
+            {
+                "Vigente" => "🟢",
+                "Vencida" => "🔴",
+                _ => "⚪"
+            };
         }
     }
 

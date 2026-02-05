@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Messages;
+using GestLog.Modules.GestionEquiposInformaticos.Services.Utilities;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Interfaces;
 using System;
@@ -250,9 +251,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
         {
             try
             {
-                CanSave = false;                
-                // Preferir la sugerencia seleccionada (si existe) para obtener el código exacto
-                var codigoSeleccionado = SelectedCodigoSuggestion?.Code ?? CodigoEntidad?.Trim();            var dto = new MantenimientoCorrectivoDto
+                CanSave = false;                  // Preferir la sugerencia seleccionada (si existe) para obtener el código exacto
+                var codigoSeleccionado = SelectedCodigoSuggestion?.Code ?? CodigoEntidad?.Trim();
+
+                // Crear observación inicial con timestamp
+                var observacionInicial = ObservacionesConTimestampService.AgregarObservacionRegistro(
+                    null,
+                    DescripcionFalla);
+
+                var dto = new MantenimientoCorrectivoDto
                 {
                     TipoEntidad = TipoEntidad,
                     Codigo = codigoSeleccionado,
@@ -260,7 +267,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     FechaFalla = FechaFalla,
                     CostoReparacion = null,
                     DescripcionFalla = DescripcionFalla,
-                    Observaciones = null
+                    Observaciones = observacionInicial
                 };
 
                 // Intentar obtener el ID numérico del usuario que registra (si está disponible)

@@ -179,14 +179,14 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                            <TextBlock Text="Estado de Garantía" Style="{StaticResource DetailLabelStyle}"/>
-                                            <TextBlock Style="{StaticResource DetailValueStyle}" FontSize="12">
-                                                <Run Text="🟢 Vigente" Foreground="#059669"/>
-                                            </TextBlock>
-                                        </StackPanel>
+                                        </Grid.ColumnDefinitions>                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                    <TextBlock Text="Estado de Garantía" Style="{StaticResource DetailLabelStyle}"/>
+                                    <TextBlock Style="{StaticResource DetailValueStyle}" FontSize="12">
+                                        <Run Text="{Binding EmojiGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}"/>
+                                        <Run Text=" " />
+                                        <Run Text="{Binding EstadoGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </StackPanel>
 
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Fecha de Vencimiento" Style="{StaticResource DetailLabelStyle}"/>

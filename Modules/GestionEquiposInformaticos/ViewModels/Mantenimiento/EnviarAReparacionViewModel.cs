@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Enums;
+using GestLog.Modules.GestionEquiposInformaticos.Services.Utilities;
 using GestLog.Services.Core.Logging;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -183,21 +184,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     ErrorMessage = "Datos del mantenimiento inválidos";
                     _logger.LogWarning("⚠️ Validación fallida: Mantenimiento ID nulo");
                     return;
-                }
-
-                IsLoading = true;
+                }                IsLoading = true;
                 ErrorMessage = null;
 
                 // Llamadas y datos no críticos se registran en DEBUG para evitar spam
                 _logger.LogDebug("📤 Llamando servicio: ID={MantenimientoId}, Proveedor='{Proveedor}'", Mantenimiento.Id, ProveedorAsignado);
 
-                // Formatear observaciones sólo si existen y loggearlas en Debug
-                var observacionesFormateadas = Observaciones;
-                if (!string.IsNullOrWhiteSpace(Observaciones))
-                {
-                    observacionesFormateadas = "• " + Observaciones;
-                    _logger.LogDebug("📝 Observaciones formateadas: {Observaciones}", observacionesFormateadas);
-                }
+                // Formatear observaciones agregando timestamp
+                var observacionesFormateadas = Mantenimiento.Observaciones;
+                observacionesFormateadas = ObservacionesConTimestampService.AgregarObservacionEnviado(
+                    observacionesFormateadas,
+                    ProveedorAsignado,
+                    Observaciones);
+
+                _logger.LogDebug("📝 Observaciones con timestamp: {Observaciones}", observacionesFormateadas);
 
                 // Llamar al servicio para actualizar el mantenimiento
                 var resultado = await _mantenimientoService.EnviarAReparacionAsync(

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Dtos;
+using GestLog.Modules.GestionEquiposInformaticos.Services.Utilities;
 using GestLog.Services.Core.Logging;
 using System;
 using System.Threading;
@@ -107,26 +108,18 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                 // Llamadas y datos no críticos se registran en DEBUG para evitar spam
                 _logger.LogDebug($"📤 Llamando servicio: ID={Mantenimiento.Id}, Costo={CostoReparacion:C}");
 
-                // Acumular observaciones: observaciones previas + nuevas observaciones
+                // Acumular observaciones con timestamp
                 var observacionesPrevias = Mantenimiento.Observaciones ?? string.Empty;
-                var observacionesAcumuladas = observacionesPrevias;
-                
-                if (!string.IsNullOrWhiteSpace(Observaciones))
-                {
-                    if (!string.IsNullOrWhiteSpace(observacionesPrevias))
-                    {
-                        observacionesAcumuladas = observacionesPrevias + Environment.NewLine + "• " + Observaciones;
-                    }
-                    else
-                    {
-                        observacionesAcumuladas = "• " + Observaciones;
-                    }
-                }
+                var observacionesAcumuladas = ObservacionesConTimestampService.AgregarObservacionCompletado(
+                    observacionesPrevias,
+                    CostoReparacion,
+                    PeriodoGarantia,
+                    Observaciones);
 
                 // Solo loggear observaciones si no están vacías y en DEBUG
                 if (!string.IsNullOrWhiteSpace(observacionesAcumuladas))
                 {
-                    _logger.LogDebug("📝 Observaciones acumuladas: {Observaciones}", observacionesAcumuladas);
+                    _logger.LogDebug("📝 Observaciones con timestamp: {Observaciones}", observacionesAcumuladas);
                 }
 
                 // Llamar al servicio para completar el mantenimiento
@@ -135,7 +128,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento
                     CostoReparacion,
                     observacionesAcumuladas,
                     PeriodoGarantia,
-                    cancellationToken);                // Resultado del servicio no crítico: Debug. Mantener manejo de error si false.
+                    cancellationToken);// Resultado del servicio no crítico: Debug. Mantener manejo de error si false.
                 _logger.LogDebug($"📋 Servicio retornó: resultado={resultado}");                if (resultado)
                 {
                     // Exito: registrar en DEBUG para reducir log spam de operaciones exitosas frecuentes

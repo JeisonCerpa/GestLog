@@ -9,6 +9,7 @@ using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Utilities;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 {
@@ -50,10 +51,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
 
                 // Solo considerar seguimientos que estén en estado PENDIENTE (no ejecutados)
                 var pendientes = context.Seguimientos
-                    .Where(s => s.Codigo == codigoEquipo && s.Estado == EstadoSeguimientoMantenimiento.Pendiente);
-
-                // Calcular semana ISO actual y filtrar pendientes FUTUROS (FechaRealizacion == null y semana/anio > actual)
-                var (anioActual, semanaActual) = Utilities.DateTimeWeekHelper.GetIsoYearWeek(now);
+                    .Where(s => s.Codigo == codigoEquipo && s.Estado == EstadoSeguimientoMantenimiento.Pendiente);                // Calcular semana ISO actual y filtrar pendientes FUTUROS (FechaRealizacion == null y semana/anio > actual)
+                var (anioActual, semanaActual) = DateTimeWeekHelper.GetIsoYearWeek(now);
 
                 var pendientesFuturas = pendientes
                     .Where(s => s.FechaRealizacion == null && (s.Anio > anioActual || (s.Anio == anioActual && s.Semana > semanaActual)));

@@ -9,48 +9,76 @@ namespace GestLog.Converters;
 /// Retorna: "Vigente" si la garantía aún está activa, "Vencida" si expiró, "Sin garantía" si no aplica
 /// </summary>
 public class GarantiaStatusConverter : IMultiValueConverter
-{    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         try
         {
-            if (values.Length >= 2)
+            // Validar que recibimos exactamente 2 valores
+            if (values == null || values.Length < 2)
             {
-                var fechaCompletado = values[0];
-                var periodoGarantia = values[1];
+                return "Sin garantía";
+            }
 
-                // Si no hay fecha de completado o período de garantía, no hay garantía
-                if (fechaCompletado == null || periodoGarantia == null)
-                {
-                    return "Sin garantía";
-                }
+            var fechaCompletadoObj = values[0];
+            var periodoGarantiaObj = values[1];
 
-                if (fechaCompletado is not DateTime completado || periodoGarantia is not int diasGarantia)
-                {
-                    return "Sin garantía";
-                }
+            // Extraer valores de forma defensiva
+            DateTime? fechaCompletado = null;
+            int? periodoGarantia = null;
 
-                if (completado == DateTime.MinValue || diasGarantia <= 0)
+            // Procesar FechaCompletado
+            if (fechaCompletadoObj != System.Windows.Data.Binding.DoNothing && 
+                fechaCompletadoObj != null && 
+                fechaCompletadoObj is DateTime dt)
+            {
+                // Solo aceptar si es una fecha válida y no es MinValue o default
+                if (dt != DateTime.MinValue && dt != default(DateTime) && dt.Year > 1900)
                 {
-                    return "Sin garantía";
-                }
-
-                DateTime fechaVencimiento = completado.AddDays(diasGarantia);
-                DateTime hoy = DateTime.Today;
-
-                if (hoy <= fechaVencimiento)
-                {
-                    return "Vigente";
-                }
-                else
-                {
-                    return "Vencida";
+                    fechaCompletado = dt;
                 }
             }
 
-            return "Sin garantía";
+            // Procesar PeriodoGarantia
+            if (periodoGarantiaObj != System.Windows.Data.Binding.DoNothing && 
+                periodoGarantiaObj != null && 
+                periodoGarantiaObj is int dias)
+            {
+                if (dias > 0)
+                {
+                    periodoGarantia = dias;
+                }
+            }
+
+            // Si falta FechaCompletado, no hay garantía
+            if (!fechaCompletado.HasValue)
+            {
+                return "Sin garantía";
+            }
+
+            // Si falta PeriodoGarantia, no hay garantía
+            if (!periodoGarantia.HasValue)
+            {
+                return "Sin garantía";
+            }
+
+            // En este punto, tenemos ambos valores válidos
+            DateTime fechaVencimiento = fechaCompletado.Value.AddDays(periodoGarantia.Value);
+            DateTime hoy = DateTime.Today;
+
+            if (hoy <= fechaVencimiento)
+            {
+                return "Vigente";
+            }
+            else
+            {
+                return "Vencida";
+            }
         }
-        catch
+        catch (Exception ex)
         {
+            // Log silencioso del error para debugging
+            System.Diagnostics.Debug.WriteLine($"Error en GarantiaStatusConverter: {ex.Message}");
             return "Sin garantía";
         }
     }
