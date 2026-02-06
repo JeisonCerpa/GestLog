@@ -28,11 +28,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             // Crear ViewModel para nuevo vehículo
             var vehicleService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IVehicleService>();
             var logger = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IGestLogLogger>();
+            var photoStorage = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<GestLog.Modules.GestionVehiculos.Interfaces.IPhotoStorageService>();
 
-            if (vehicleService == null || logger == null)
-                throw new InvalidOperationException("VehicleService o Logger no están registrados en DI");
+            if (vehicleService == null || logger == null || photoStorage == null)
+                throw new InvalidOperationException("VehicleService, Logger o PhotoStorageService no están registrados en DI");
 
-            ViewModel = new VehicleFormViewModel(vehicleService, logger);
+            ViewModel = new VehicleFormViewModel(vehicleService, logger, photoStorage);
             ViewModel.ConfigureForNew();
             DataContext = ViewModel;
 

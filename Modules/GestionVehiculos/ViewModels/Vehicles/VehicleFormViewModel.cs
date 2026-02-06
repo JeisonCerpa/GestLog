@@ -11,6 +11,10 @@ using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Models.Enums;
 using GestLog.Modules.GestionVehiculos.Views.Vehicles;
 using GestLog.Services.Core.Logging;
+using GestLog.Modules.GestionVehiculos.Interfaces;
+using Microsoft.Win32;
+using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -19,8 +23,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
     /// </summary>
     public partial class VehicleFormViewModel : ObservableObject
     {
-    private readonly IVehicleService _vehicleService;
+        private readonly IVehicleService _vehicleService;
         private readonly IGestLogLogger _logger;
+        private readonly IPhotoStorageService _photoStorageService;
 
         [ObservableProperty]
         private string tituloDialog = "Agregar Vehículo";
@@ -79,10 +84,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public ObservableCollection<VehicleType> VehicleTypes { get; }
         public ObservableCollection<VehicleState> VehicleStates { get; }
 
-        public VehicleFormViewModel(IVehicleService vehicleService, IGestLogLogger logger)
+        public VehicleFormViewModel(IVehicleService vehicleService, IGestLogLogger logger, IPhotoStorageService photoStorageService)
         {
             _vehicleService = vehicleService;
             _logger = logger;
+            _photoStorageService = photoStorageService;
 
             // Cargar tipos de vehículos y estados
             VehicleTypes = new ObservableCollection<VehicleType>(
@@ -186,6 +192,118 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             finally
             {
                 IsProcessing = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task SelectPhotoAsync()
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog();
+                dlg.Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp";
+                dlg.Multiselect = false;
+
+                var result = dlg.ShowDialog();
+                if (result != true) return;
+
+                var file = dlg.FileName;
+                var ext = Path.GetExtension(file)?.ToLowerInvariant();
+                var allowed = new[] { ".jpg", ".jpeg", ".png", ".bmp" };
+                if (!allowed.Contains(ext))
+                {
+                    ErrorMessage = "Formato de imagen no permitido. Use JPG o PNG.";
+                    return;
+                }
+
+                var fileInfo = new FileInfo(file);
+                const long maxBytes = 5 * 1024 * 1024; // 5 MB
+                if (fileInfo.Length > maxBytes)
+                {
+                    ErrorMessage = "La imagen excede el tamaño máximo (5 MB).";
+                    return;
+                }
+
+                // Generar nombres seguros
+                var guid = Guid.NewGuid().ToString("N");
+                var originalFileName = guid + ext;
+                var thumbFileName = guid + "_thumb.jpg";
+
+                // Guardar original al storage
+                using (var fs = File.OpenRead(file))
+                {
+                    var savedPath = await _photoStorageService.SaveOriginalAsync(fs, originalFileName);
+                    PhotoPath = savedPath;
+                }
+
+                // Generar thumbnail en memoria y guardar
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(file);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                // Target thumbnail size and aspect (5:4)
+                int targetThumbWidth = 320;
+                int targetThumbHeight = 256; // 320 * 4/5
+                double targetAspect = 5.0 / 4.0;
+
+                int srcW = bitmap.PixelWidth;
+                int srcH = bitmap.PixelHeight;
+
+                // Calcular region de recorte centrada para mantener 5:4
+                int cropW, cropH, cropX, cropY;
+                double srcAspect = (double)srcW / srcH;
+                if (srcAspect > targetAspect)
+                {
+                    // Imagen más ancha -> recortar los lados
+                    cropH = srcH;
+                    cropW = (int)Math.Round(srcH * targetAspect);
+                    cropX = (srcW - cropW) / 2;
+                    cropY = 0;
+                }
+                else
+                {
+                    // Imagen más alta -> recortar arriba/abajo
+                    cropW = srcW;
+                    cropH = (int)Math.Round(srcW / targetAspect);
+                    cropX = 0;
+                    cropY = (srcH - cropH) / 2;
+                }
+
+                // Asegurar valores válidos
+                cropW = Math.Max(1, Math.Min(cropW, srcW));
+                cropH = Math.Max(1, Math.Min(cropH, srcH));
+                cropX = Math.Max(0, Math.Min(cropX, srcW - cropW));
+                cropY = Math.Max(0, Math.Min(cropY, srcH - cropH));
+
+                var cropped = new CroppedBitmap(bitmap, new System.Windows.Int32Rect(cropX, cropY, cropW, cropH));
+
+                // Escalar al tamaño objetivo
+                double scaleX = (double)targetThumbWidth / cropW;
+                double scaleY = (double)targetThumbHeight / cropH;
+                var transform = new System.Windows.Media.ScaleTransform(scaleX, scaleY);
+                var resized = new TransformedBitmap(cropped, transform);
+
+                var encoder = new JpegBitmapEncoder();
+                encoder.QualityLevel = 85;
+                encoder.Frames.Add(BitmapFrame.Create(resized));
+
+                using (var ms = new MemoryStream())
+                {
+                    encoder.Save(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    var thumbSaved = await _photoStorageService.SaveThumbnailAsync(ms, thumbFileName);
+                    PhotoThumbPath = thumbSaved;
+                }
+
+                ErrorMessage = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error selecting photo");
+                ErrorMessage = "Error al procesar la imagen. Intente con otra imagen.";
             }
         }
 

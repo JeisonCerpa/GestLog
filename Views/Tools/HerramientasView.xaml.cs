@@ -253,9 +253,10 @@ namespace GestLog.Views.Tools
             }
             try
             {
-                // ✅ Resolver la vista desde DI
+                // ✅ Resolver vista y ViewModel desde DI explícitamente
                 var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-                var gestionVehiculosView = serviceProvider.GetRequiredService<GestLog.Modules.GestionVehiculos.Views.Vehicles.GestionVehiculosHomeView>();
+                var gestionVehiculosViewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionVehiculos.ViewModels.Vehicles.GestionVehiculosHomeViewModel>();
+                var gestionVehiculosView = new GestLog.Modules.GestionVehiculos.Views.Vehicles.GestionVehiculosHomeView(gestionVehiculosViewModel);
                 _mainWindow?.NavigateToView(gestionVehiculosView, "Gestión de Vehículos");
             }
             catch (System.Exception ex)

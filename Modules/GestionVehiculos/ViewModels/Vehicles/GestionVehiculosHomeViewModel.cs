@@ -24,12 +24,14 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public string MileageText { get; set; } = string.Empty;
         public string DocumentSummary { get; set; } = string.Empty;
         public string BadgeText { get; set; } = string.Empty;
-        public System.Windows.Media.Brush? BadgeBackground { get; set; }        public System.Windows.Media.Brush? BadgeForeground { get; set; }
+        public System.Windows.Media.Brush? BadgeBackground { get; set; }
+        public System.Windows.Media.Brush? BadgeForeground { get; set; }
         public ICommand? VerDetallesCommand { get; set; }
     }
 
     /// <summary>
-    /// ViewModel principal para la vista de Gestión de Vehículos    /// </summary>
+    /// ViewModel principal para la vista de Gestión de Vehículos
+    /// </summary>
     public partial class GestionVehiculosHomeViewModel : ObservableObject
     {
         private readonly IVehicleService _vehicleService;
@@ -79,13 +81,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 ErrorMessage = "Error al cargar vehículos. Intente nuevamente.";
                 _logger.LogError(ex, "Error loading vehicles");
-            }            finally
+            }
+            finally
             {
                 IsLoading = false;
             }
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Abre el formulario para agregar un nuevo vehículo
-        /// </summary>        
+        /// </summary>
         [RelayCommand]
         public async Task AgregarVehiculoAsync()
         {
@@ -99,23 +104,37 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     throw new InvalidOperationException("IDbContextFactory no está registrado en DI");
 
                 var dialog = new Views.Vehicles.VehicleFormDialog(dbContextFactory);
-                var ownerWindow = System.Windows.Application.Current?.MainWindow;
 
+                var ownerWindow = System.Windows.Application.Current?.MainWindow;
                 if (ownerWindow != null)
                 {
                     dialog.Owner = ownerWindow;
                 }
 
-                if (dialog.ShowDialog() == true)
+                // Mostrar el diálogo en el hilo de UI para evitar bloqueos si el comando se ejecuta desde otro contexto
+                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                if (dispatcher == null)
                 {
-                    // Recargar la lista de vehículos después de guardar
-                    await LoadVehiclesAsync();
+                    // Fallback: mostrar directamente
+                    if (dialog.ShowDialog() == true)
+                    {
+                        await LoadVehiclesAsync();
+                    }
+                }
+                else
+                {
+                    var showResult = await dispatcher.InvokeAsync(() => dialog.ShowDialog());
+                    if (showResult == true)
+                    {
+                        // Recargar la lista de vehículos después de guardar
+                        await LoadVehiclesAsync();
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ErrorMessage = "Error al abrir el formulario.";
-                _logger.LogError(ex, "Error opening vehicle form");
+                // Logging intentionally removed as requested
             }
         }
 
@@ -141,14 +160,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         /// Mapea un DTO de vehículo a ViewModel de tarjeta
         /// </summary>
         private VehicleCardViewModel MapToCardViewModel(VehicleDto vehicle)
-        {            var cardVm = new VehicleCardViewModel
+        {
+            var cardVm = new VehicleCardViewModel
             {
                 VehicleId = vehicle.Id,
                 VehicleName = $"{vehicle.Brand} {vehicle.Model} {vehicle.Year}",
-                PhotoPath = vehicle.PhotoPath ?? "/Assets/PlantillaSIMICS.png",
+                PhotoPath = vehicle.PhotoThumbPath ?? vehicle.PhotoPath ?? "/Assets/PlantillaSIMICS.png",
                 MileageText = $"KM: {vehicle.Mileage:N0}",
                 DocumentSummary = GetDocumentSummary(vehicle),
-                VerDetallesCommand = new RelayCommand(() => VerDetallesSync(vehicle.Id))
+                VerDetallesCommand = new RelayCommand(async () => await VerDetallesAsync(vehicle.Id))
             };
 
             // Establecer badge y colores según estado
@@ -161,18 +181,50 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         /// Obtiene el resumen de documentos (placeholder)
         /// </summary>
         private string GetDocumentSummary(VehicleDto vehicle)
-        {            // TODO: Obtener estado real de documentos desde BD
+        {
+            // TODO: Obtener estado real de documentos desde BD
             return "SOAT: ✓ Vigente\nTecno-Mec.: ✓ Vigente";
         }
 
         /// <summary>
-        /// Ver detalles de un vehículo (versión sincrónica)
+        /// Navega a la vista de detalles del vehículo dentro de la aplicación
         /// </summary>
-        private void VerDetallesSync(Guid vehicleId)
+        private async System.Threading.Tasks.Task VerDetallesAsync(Guid vehicleId)
         {
             try
             {
-                _logger.LogInformation($"Viendo detalles del vehículo: {vehicleId}");
+                _logger.LogInformation($"Navegando a detalles del vehículo: {vehicleId}");
+
+                // Resolver ViewModel desde DI
+                var sp = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var detailsVm = sp.GetService(typeof(VehicleDetailsViewModel)) as VehicleDetailsViewModel;
+                if (detailsVm == null)
+                {
+                    _logger.LogWarning("VehicleDetailsViewModel no registrado en DI");
+                    ErrorMessage = "No se pudo abrir detalles del vehículo.";
+                    return;
+                }
+
+                // Cargar datos en background para no bloquear UI
+                await System.Threading.Tasks.Task.Run(async () => await detailsVm.LoadAsync(vehicleId));
+
+                // Crear la vista y navegar en hilo UI
+                var detailsView = new Views.Vehicles.VehicleDetailsView(detailsVm);
+                var mainWindow = System.Windows.Application.Current?.MainWindow as GestLog.MainWindow;
+                var app = System.Windows.Application.Current;
+                if (mainWindow != null && app != null)
+                {
+                    app.Dispatcher.Invoke(() =>
+                    {
+                        dynamic mw = mainWindow;
+                        dynamic dv = detailsView;
+                        mw.NavigateToView(dv, $"Vehículo - {detailsVm.Plate}");
+                    });
+                }
+                else
+                {
+                    ErrorMessage = "No se pudo abrir la vista de detalles (MainWindow no disponible).";
+                }
             }
             catch (Exception ex)
             {

@@ -161,6 +161,20 @@
                                                  Style="{StaticResource InputStyle}"/>
                                     </StackPanel>
                                 </Grid>
+
+                                <!-- Nueva fila: Foto del vehículo -->
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
+                                    <!-- Preview 5:4 -->
+                                    <Border Width="320" Height="256" Background="#FFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" HorizontalAlignment="Left" VerticalAlignment="Center" ClipToBounds="True">
+                                        <Image Source="{Binding PhotoThumbPath}" Stretch="UniformToFill" Width="320" Height="256" />
+                                    </Border>
+
+                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <Button Content="Seleccionar foto" Command="{Binding SelectPhotoCommand}" Style="{StaticResource ButtonStyle}" Padding="12,8" />
+                                        <TextBlock Text="Formatos: JPG, PNG. Máx 5MB" Foreground="#706F6F" FontSize="12" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
                             </StackPanel>
                         </Border>
 

@@ -20,6 +20,10 @@ namespace GestLog.Modules.GestionVehiculos.Services
             // ✅ ViewModels
             services.AddTransient<GestionVehiculosHomeViewModel>();
             services.AddTransient<VehicleFormViewModel>();
+            services.AddTransient<VehicleDetailsViewModel>();
+
+            // Photo storage
+            services.AddSingleton<Interfaces.IPhotoStorageService, NetworkFileStorageService>();
 
             return services;
         }

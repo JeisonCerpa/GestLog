@@ -1,0 +1,79 @@
+<UserControl x:Class="GestLog.Modules.GestionVehiculos.Views.Vehicles.VehicleDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignWidth="800" d:DesignHeight="600">
+    <Grid Background="#FAFAFA">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Panel izquierdo: foto y datos principales -->
+        <StackPanel Grid.Column="0" Margin="24">
+            <Border Width="320" Height="256" Background="#FFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                <Image Source="{Binding PhotoThumbPath}" Stretch="UniformToFill" Width="320" Height="256" />
+            </Border>
+
+            <TextBlock Text="Datos" FontSize="18" FontWeight="SemiBold" Margin="0,12,0,8" />
+            <StackPanel>
+                <TextBlock Text="Placa:" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Plate}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Marca:" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Brand}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Modelo:" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Model}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Año:" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Year}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="Kilometraje:" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Mileage}" Margin="0,0,0,8"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Contenido derecho: pestañas -->
+        <TabControl Grid.Column="2" Margin="24">
+            <TabItem Header="General">
+                <!-- Padding en ScrollViewer reemplazado por StackPanel con Margin -->
+                <ScrollViewer>
+                    <StackPanel Margin="12">
+                        <TextBlock Text="VIN:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Vin}" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Color:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Color}" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Tipo:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Type}" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Estado:" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding State}" Margin="0,0,0,8"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Documentos">
+                <ScrollViewer>
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Documentos relacionados (SOAT, Tecno-Mecánica, Facturas, etc.)"/>
+                        <!-- Placeholder: implementar lista real más adelante -->
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Historial">
+                <ScrollViewer>
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Historial de operaciones y mantenimientos"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
