@@ -64,6 +64,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private VehicleState selectedState = VehicleState.Activo;
 
         [ObservableProperty]
+        private string? fuelType;
+
+        public System.Collections.ObjectModel.ObservableCollection<string> FuelTypes { get; }
+
+        [ObservableProperty]
         private string? photoPath;
 
         [ObservableProperty]
@@ -96,6 +101,17 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
             VehicleStates = new ObservableCollection<VehicleState>(
                 Enum.GetValues(typeof(VehicleState)) as VehicleState[] ?? Array.Empty<VehicleState>());
+
+            // Fuel types: no incluir 'Hibrido' según requerimiento
+            FuelTypes = new System.Collections.ObjectModel.ObservableCollection<string>(new[]
+            {
+                "No especificado",
+                "Gasolina",
+                "Diésel",
+                "Eléctrico",
+                "GNC",
+                "GLP"
+            });
         }
 
         [RelayCommand]
@@ -159,6 +175,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     State = SelectedState,
                     PhotoPath = PhotoPath,
                     PhotoThumbPath = PhotoThumbPath,
+                    FuelType = FuelType?.Trim(),
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow,
                     IsDeleted = false
@@ -335,6 +352,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             SelectedState = vehicle.State;
             PhotoPath = vehicle.PhotoPath;
             PhotoThumbPath = vehicle.PhotoThumbPath;
+            FuelType = vehicle.FuelType;
 
             TituloDialog = "Editar Vehículo";
             TextoBotonPrincipal = "Actualizar";
@@ -355,6 +373,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             SelectedState = VehicleState.Activo;
             PhotoPath = null;
             PhotoThumbPath = null;
+            FuelType = null;
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
         }

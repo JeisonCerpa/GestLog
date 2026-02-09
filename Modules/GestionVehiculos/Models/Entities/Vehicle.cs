@@ -72,6 +72,11 @@ namespace GestLog.Modules.GestionVehiculos.Models.Entities
         public string? PhotoThumbPath { get; set; }
 
         /// <summary>
+        /// Tipo de combustible (Gasolina, Diésel, Eléctrico, Híbrido) - opcional
+        /// </summary>
+        public string? FuelType { get; set; }
+
+        /// <summary>
         /// Fecha de creación del registro (UTC)
         /// </summary>
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

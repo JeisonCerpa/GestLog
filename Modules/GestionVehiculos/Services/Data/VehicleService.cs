@@ -109,6 +109,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     State = vehicleDto.State,
                     PhotoPath = vehicleDto.PhotoPath,
                     PhotoThumbPath = vehicleDto.PhotoThumbPath,
+                    FuelType = vehicleDto.FuelType,
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow,
                     IsDeleted = false
@@ -162,6 +163,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 vehicle.State = vehicleDto.State;
                 vehicle.PhotoPath = vehicleDto.PhotoPath;
                 vehicle.PhotoThumbPath = vehicleDto.PhotoThumbPath;
+                vehicle.FuelType = vehicleDto.FuelType;
                 vehicle.UpdatedAt = DateTimeOffset.UtcNow;
 
                 context.Vehicles.Update(vehicle);
@@ -258,6 +260,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 State = vehicle.State,
                 PhotoPath = vehicle.PhotoPath,
                 PhotoThumbPath = vehicle.PhotoThumbPath,
+                FuelType = vehicle.FuelType,
                 CreatedAt = vehicle.CreatedAt,
                 UpdatedAt = vehicle.UpdatedAt,
                 IsDeleted = vehicle.IsDeleted

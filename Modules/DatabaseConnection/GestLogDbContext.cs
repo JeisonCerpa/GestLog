@@ -305,6 +305,10 @@ namespace GestLog.Modules.DatabaseConnection
                     .HasMaxLength(400)
                     .IsRequired(false);
                 
+                entity.Property(e => e.FuelType)
+                    .HasMaxLength(50)
+                    .IsRequired(false);
+                
                 // Enum conversions
                 entity.Property(e => e.Type)
                     .HasConversion<int>();

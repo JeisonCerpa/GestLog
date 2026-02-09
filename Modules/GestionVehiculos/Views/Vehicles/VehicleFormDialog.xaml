@@ -212,6 +212,18 @@
                                                   Style="{StaticResource InputStyle}"/>
                                     </StackPanel>
                                 </Grid>
+                                
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Tipo de Combustible" Style="{StaticResource LabelTextStyle}"/>
+                                        <ComboBox ItemsSource="{Binding FuelTypes}" SelectedItem="{Binding FuelType}" Style="{StaticResource InputStyle}" IsEditable="False"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
 

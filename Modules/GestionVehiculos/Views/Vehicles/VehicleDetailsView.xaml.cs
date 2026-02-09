@@ -3,11 +3,10 @@ using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System;
-using UserControl = System.Windows.Controls.UserControl;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 {
-    public partial class VehicleDetailsView : UserControl
+    public partial class VehicleDetailsView : System.Windows.Controls.UserControl
     {
         public VehicleDetailsView()
         {

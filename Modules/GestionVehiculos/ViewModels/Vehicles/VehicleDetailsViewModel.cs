@@ -53,6 +53,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         [ObservableProperty]
         private string? photoThumbPath;
 
+        [ObservableProperty]
+        private string? fuelType;
+
+        // Propiedades calculadas para bindings en UI
+        public string VehicleTitle => $"{Brand} {Model} {Year}".Trim();
+        public string PlateDisplay => $"Placa: {Plate}";
+        public string BrandModelDisplay => $"{Brand} {Model}".Trim();
+        public string YearDisplay => $"Año: {Year}";
+
         public VehicleDetailsViewModel(IVehicleService vehicleService, IGestLogLogger logger)
         {
             _vehicleService = vehicleService ?? throw new ArgumentNullException(nameof(vehicleService));
@@ -83,6 +92,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 State = dto.State;
                 PhotoPath = dto.PhotoPath;
                 PhotoThumbPath = dto.PhotoThumbPath;
+
+                // FuelType aún no está en la DTO/BD; dejar vacío por defecto (se muestra 'No especificado' en UI)
+                FuelType = string.Empty;
+
+                // Notificar que las propiedades calculadas han cambiado
+                OnPropertyChanged(nameof(VehicleTitle));
+                OnPropertyChanged(nameof(PlateDisplay));
+                OnPropertyChanged(nameof(BrandModelDisplay));
+                OnPropertyChanged(nameof(YearDisplay));
             }
             catch (Exception ex)
             {

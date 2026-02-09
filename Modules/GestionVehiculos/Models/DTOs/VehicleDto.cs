@@ -12,7 +12,8 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         public string Plate { get; set; } = string.Empty;
         public string Vin { get; set; } = string.Empty;
         public string Brand { get; set; } = string.Empty;
-        public string Model { get; set; } = string.Empty;        public string? Version { get; set; }
+        public string Model { get; set; } = string.Empty;
+        public string? Version { get; set; }
         public int Year { get; set; }
         public string? Color { get; set; }
         public long Mileage { get; set; } = 0;
@@ -20,6 +21,7 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         public VehicleState State { get; set; } = VehicleState.Activo;
         public string? PhotoPath { get; set; }
         public string? PhotoThumbPath { get; set; }
+        public string? FuelType { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
