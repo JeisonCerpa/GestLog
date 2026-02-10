@@ -118,7 +118,6 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 context.Vehicles.Add(vehicle);
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Vehículo creado exitosamente: {Plate}", vehicle.Plate);
                 return MapToDto(vehicle);
             }
             catch (Exception ex)
@@ -169,7 +168,6 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 context.Vehicles.Update(vehicle);
                 await context.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("Vehículo actualizado exitosamente: {Plate}", vehicle.Plate);
                 return MapToDto(vehicle);
             }
             catch (Exception ex)
@@ -199,8 +197,6 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
                 context.Vehicles.Update(vehicle);
                 await context.SaveChangesAsync(cancellationToken);
-
-                _logger.LogInformation("Vehículo eliminado exitosamente: {Plate}", vehicle.Plate);
             }
             catch (Exception ex)
             {

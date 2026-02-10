@@ -33,12 +33,15 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         {
             try
             {
+                // _logger.LogInformation($"VehicleDocumentService: Iniciando GetByVehicleIdAsync para VehicleId={vehicleId}");
                 using var context = await _dbContextFactory.CreateDbContextAsync();
                 var documents = await context.VehicleDocuments
                     .AsNoTracking()
                     .Where(d => d.VehicleId == vehicleId && d.IsActive)
                     .OrderByDescending(d => d.ExpirationDate)
                     .ToListAsync();
+
+                // _logger.LogInformation($"VehicleDocumentService: {documents.Count} documentos encontrados para VehicleId={vehicleId}");
 
                 return documents.Select(MapToDto).ToList();
             }

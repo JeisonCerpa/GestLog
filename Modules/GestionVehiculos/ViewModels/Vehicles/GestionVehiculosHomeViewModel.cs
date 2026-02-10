@@ -75,7 +75,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     Vehicles.Add(cardVm);
                 }
 
-                _logger.LogInformation($"Vehículos cargados: {Vehicles.Count}");
+                // _logger.LogInformation($"Vehículos cargados: {Vehicles.Count}");
             }
             catch (Exception ex)
             {
@@ -193,7 +193,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         {
             try
             {
-                _logger.LogInformation($"Navegando a detalles del vehículo: {vehicleId}");
+                // _logger.LogInformation($"Navegando a detalles del vehículo: {vehicleId}");
 
                 // Resolver ViewModel desde DI
                 var sp = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
@@ -203,22 +203,23 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     _logger.LogWarning("VehicleDetailsViewModel no registrado en DI");
                     ErrorMessage = "No se pudo abrir detalles del vehículo.";
                     return;
-                }
-
-                // Cargar datos en background para no bloquear UI
+                }                // Cargar datos en background para no bloquear UI
                 await System.Threading.Tasks.Task.Run(async () => await detailsVm.LoadAsync(vehicleId));
 
                 // Crear la vista y navegar en hilo UI
-                var detailsView = new Views.Vehicles.VehicleDetailsView(detailsVm);
-                var mainWindow = System.Windows.Application.Current?.MainWindow as GestLog.MainWindow;
+                var detailsView = new Views.Vehicles.VehicleDetailsView(detailsVm);                var mainWindow = System.Windows.Application.Current?.MainWindow as GestLog.MainWindow;
                 var app = System.Windows.Application.Current;
                 if (mainWindow != null && app != null)
                 {
-                    app.Dispatcher.Invoke(() =>
+                    await app.Dispatcher.InvokeAsync(async () =>
                     {
                         dynamic mw = mainWindow;
                         dynamic dv = detailsView;
                         mw.NavigateToView(dv, $"Vehículo - {detailsVm.Plate}");
+                        
+                        // ✅ Llamar a LoadVehicleAsync DESPUÉS de mostrar la vista para cargar documentos
+                        // await detailsView.LoadVehicleAsync(vehicleId);
+                        await detailsView.LoadVehicleAsync(vehicleId);
                     });
                 }
                 else

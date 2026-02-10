@@ -185,7 +185,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 var savedVehicle = await _vehicleService.CreateAsync(vehicleDto, cancellationToken);
 
                 SuccessMessage = $"Vehículo '{savedVehicle.Brand} {savedVehicle.Model}' registrado exitosamente";
-                _logger.LogInformation($"Vehículo creado: {savedVehicle.Plate} - {savedVehicle.Brand} {savedVehicle.Model} | Kilometraje: {savedVehicle.Mileage}");
+                _logger.LogDebug($"Vehículo creado: {savedVehicle.Plate} - {savedVehicle.Brand} {savedVehicle.Model} | Kilometraje: {savedVehicle.Mileage}");
 
                 // Mostrar mensaje de éxito y cerrar
                 await Task.Delay(1500);

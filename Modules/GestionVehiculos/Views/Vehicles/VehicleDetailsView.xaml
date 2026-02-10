@@ -260,6 +260,7 @@
 
                 <TabItem Header="Documentos">
                     <!-- Insertar la vista de documentos como UserControl para mantener separación MVVM -->
+                    <!-- El DataContext se asignará desde code-behind en LoadVehicleAsync -->
                     <views:VehicleDocumentsView x:Name="DocumentsView" />
                 </TabItem>
 

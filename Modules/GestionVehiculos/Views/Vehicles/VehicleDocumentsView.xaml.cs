@@ -17,6 +17,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         public VehicleDocumentsView()
         {
             InitializeComponent();
+            // Cuando la vista se vuelve a mostrar, re-inicializar para asegurar que la lista esté actualizada
+            this.Loaded += VehicleDocumentsView_Loaded;
         }
 
         private VehicleDocumentsViewModel? Vm => this.DataContext as VehicleDocumentsViewModel;
@@ -37,6 +39,31 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             if (this.DataContext is VehicleDocumentsViewModel v)
             {
                 await v.InitializeAsync(vehicleId);
+            }
+        }
+
+        private async void VehicleDocumentsView_Loaded(object? sender, System.Windows.RoutedEventArgs e)
+        {
+            try
+            {
+                // Si conocíamos el vehicleId, forzar re-inicialización para refrescar lista al volver a la vista
+                if (_vehicleId != Guid.Empty)
+                {
+                    if (this.DataContext is VehicleDocumentsViewModel vm)
+                    {
+                        await vm.InitializeAsync(_vehicleId);
+                    }
+                    else
+                    {
+                        // Intentar resolver desde DI si el DataContext no es un VM
+                        await LoadAsync(_vehicleId);
+                    }
+                }
+            }
+            catch { }
+            finally
+            {
+                // No desuscribir: queremos que la vista recargue cada vez que se vuelva visible.
             }
         }
 

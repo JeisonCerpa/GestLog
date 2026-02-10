@@ -8,6 +8,8 @@ using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Services.Core.Logging;
 using GestLog.Utilities;
 using Microsoft.Win32;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionVehiculos.Messages.Documents;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -107,13 +109,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public double UploadProgress
         {
             get => _uploadProgress;
-            private set => SetProperty(ref _uploadProgress, value);
+            private set
+            {
+                SetProperty(ref _uploadProgress, value);
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, value, true)); } catch { }
+            }
         }
 
         public bool IsUploading
         {
             get => _isUploading;
-            private set => SetProperty(ref _isUploading, value);
+            private set
+            {
+                SetProperty(ref _isUploading, value);
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, UploadProgress, value)); } catch { }
+            }
         }
 
         public ICommand SelectFileCommand { get; }
@@ -146,7 +156,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             ErrorMessage = string.Empty;
 
             // Log de inicio
-            _logger.LogInformation("SaveAsync iniciado");
+            _logger.LogDebug("SaveAsync iniciado");
 
             if (VehicleId == Guid.Empty)
             {
@@ -155,7 +165,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogInformation($"SaveAsync: VehicleId = {VehicleId}");
+            _logger.LogDebug($"SaveAsync: VehicleId = {VehicleId}");
 
             if (string.IsNullOrWhiteSpace(DocumentType))
             {
@@ -164,7 +174,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogInformation($"SaveAsync: DocumentType = {DocumentType}");
+            _logger.LogDebug($"SaveAsync: DocumentType = {DocumentType}");
 
             if (SelectedFilePath == null || !File.Exists(SelectedFilePath))
             {
@@ -173,7 +183,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogInformation($"SaveAsync: SelectedFilePath = {SelectedFilePath}");
+            _logger.LogDebug($"SaveAsync: SelectedFilePath = {SelectedFilePath}");
 
             // Validaciones básicas
             var allowed = new[] { ".pdf", ".png", ".jpg", ".jpeg" };
@@ -194,7 +204,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogInformation($"SaveAsync: Archivo válido. Iniciando subida...");
+            _logger.LogDebug("SaveAsync: Archivo válido. Iniciando subida...");
 
             try
             {
@@ -206,12 +216,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 var progress = new Progress<double>(p => {
                     UploadProgress = p;
+                    try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, p, true)); } catch { }
                 });
 
                 using var fs = File.OpenRead(SelectedFilePath);
                 var storagePath = await _photoStorage.SaveOriginalAsync(fs, SelectedFileName ?? fi.Name, progress, token);
 
-                _logger.LogInformation($"SaveAsync: Archivo subido a {storagePath}");
+                _logger.LogDebug($"SaveAsync: Archivo subido a {storagePath}");
+
+                // Notify completion to subscribers
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
 
                 var dto = new VehicleDocumentDto
                 {
@@ -227,12 +241,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 var createdId = await _documentService.AddAsync(dto);
                 
-                _logger.LogInformation($"SaveAsync: Documento creado con ID: {createdId}");
+                _logger.LogDebug($"SaveAsync: Documento creado con ID: {createdId}");
+
+                // Enviar mensaje para notificar creación y permitir refrescar listados
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, createdId)); } catch { }
 
                 // cerrar diálogo con resultado OK usando Owner si está disponible
                 if (Owner != null)
                 {
-                    _logger.LogInformation("SaveAsync: Cerrando diálogo con DialogResult=true");
+                    _logger.LogDebug("SaveAsync: Cerrando diálogo con DialogResult=true");
                     Owner.DialogResult = true;
                     Owner.Close();
                 }
@@ -253,6 +270,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 {
                     ErrorMessage = "Operación cancelada por el usuario.";
                     _logger.LogWarning("SaveAsync: Upload cancelado por usuario");
+                    try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, UploadProgress, false)); } catch { }
                 }
                 else
                 {
@@ -266,6 +284,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 UploadProgress = 0;
                 _uploadCts?.Dispose();
                 _uploadCts = null;
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 0, false)); } catch { }
             }
         }
     }

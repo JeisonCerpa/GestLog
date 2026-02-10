@@ -9,6 +9,8 @@ using System.Linq;
 using GestLog.Utilities;
 using System.Threading;
 using System.Windows;
+using CommunityToolkit.Mvvm.Messaging;
+using GestLog.Modules.GestionVehiculos.Messages.Documents;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -41,6 +43,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             LoadDocumentsCommand = new AsyncRelayCommand(LoadDocumentsAsync);
             DeleteDocumentCommand = new AsyncRelayCommand<VehicleDocumentDto>(DeleteDocumentAsync);
             RefreshCommand = new AsyncRelayCommand(LoadDocumentsAsync);
+
+            // Registrar listener de progreso
+            RegisterUploadProgressListener();
+            
+            // Registrar listener para creación de documentos y forzar recarga
+            try
+            {
+                WeakReferenceMessenger.Default.Register<VehicleDocumentCreatedMessage>(this, async (r, m) =>
+                {
+                    if (m == null) return;
+                    if (m.VehicleId != _vehicleId) return;
+                    await LoadDocumentsAsync();
+                });
+            }
+            catch { }
         }
 
         #region Propiedades
@@ -130,6 +147,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public async Task InitializeAsync(Guid vehicleId)
         {
             _vehicleId = vehicleId;
+            _logger.LogDebug($"🔍 VehicleDocumentsViewModel.InitializeAsync: vehicleId={vehicleId}");
             await LoadDocumentsAsync();
         }
 
@@ -153,24 +171,32 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         /// </summary>
         private async Task LoadDocumentsAsync()
         {
-            if (_vehicleId == Guid.Empty) return;
+            if (_vehicleId == Guid.Empty)
+            {
+                _logger.LogWarning("🚫 LoadDocumentsAsync: VehicleId vacío, abortando");
+                return;
+            }
 
             try
             {
+                _logger.LogDebug($"⏳ LoadDocumentsAsync: Iniciando para VehicleId={_vehicleId}");
                 IsLoading = true;
                 var documents = await _documentService.GetByVehicleIdAsync(_vehicleId);
+                
+                _logger.LogDebug($"✅ LoadDocumentsAsync: {documents.Count} documentos obtenidos de BD");
                 
                 Documents.Clear();
                 foreach (var doc in documents.OrderByDescending(d => d.ExpirationDate))
                 {
                     Documents.Add(doc);
+                    _logger.LogDebug($"   📄 Documento añadido: {doc.DocumentType} - {doc.FileName}");
                 }
 
                 await RefreshStatistics();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al cargar documentos del vehículo");
+                _logger.LogError(ex, $"❌ LoadDocumentsAsync: Error al cargar documentos para VehicleId={_vehicleId}");
             }
             finally
             {
@@ -297,6 +323,35 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 try { await Task.Delay(300); } catch { }
                 try { System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() => LoadingProgress = 0)); } catch { }
             });
+        }
+
+        /// <summary>
+        /// Suscribirse a mensajes de progreso de upload
+        /// </summary>
+        private void RegisterUploadProgressListener()
+        {
+            try
+            {
+                WeakReferenceMessenger.Default.Register<VehicleDocumentUploadProgressMessage>(this, (r, m) =>
+                {
+                    if (m == null) return;
+                    if (m.VehicleId != _vehicleId) return; // sólo interesan los del vehículo actual
+
+                    // Si isUploading == true, mostrar y asignar LoadingProgress; si false, asegurar que se oculte después
+                    if (m.IsUploading)
+                    {
+                        IsLoading = true;
+                        LoadingProgress = m.Progress;
+                    }
+                    else
+                    {
+                        // completar al 100% visualmente y luego ocultar
+                        LoadingProgress = m.Progress >= 100 ? 100 : m.Progress;
+                        IsLoading = false;
+                    }
+                });
+            }
+            catch { }
         }
 
         #endregion
