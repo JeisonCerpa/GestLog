@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GestLog.Modules.GestionVehiculos.Models.Enums;
 
 namespace GestLog.Modules.GestionVehiculos.Models.Entities
@@ -69,12 +70,15 @@ namespace GestLog.Modules.GestionVehiculos.Models.Entities
         /// <summary>
         /// Ruta al thumbnail de la foto - opcional
         /// </summary>
-        public string? PhotoThumbPath { get; set; }
-
-        /// <summary>
+        public string? PhotoThumbPath { get; set; }        /// <summary>
         /// Tipo de combustible (Gasolina, Diésel, Eléctrico, Híbrido) - opcional
         /// </summary>
         public string? FuelType { get; set; }
+
+        /// <summary>
+        /// Colección de documentos asociados al vehículo
+        /// </summary>
+        public ICollection<VehicleDocument> Documents { get; set; } = new List<VehicleDocument>();
 
         /// <summary>
         /// Fecha de creación del registro (UTC)

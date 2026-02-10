@@ -3,8 +3,86 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Vehicles"
              mc:Ignorable="d"
              d:DesignWidth="1000" d:DesignHeight="700">
+    <UserControl.Resources>
+        <!-- Estilos locales para tabs, coherentes con ModalWindowsStandard / EquiposInformaticos -->
+        <Style x:Key="DetailTabItemStyle" TargetType="TabItem">
+            <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <!-- Forzar HeaderTemplate para evitar TextBlock automático que puede recibir UnsetValue en Foreground -->
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=(TextElement.Foreground), FallbackValue={StaticResource TextPrimaryBrush}}"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid>
+                            <Border x:Name="Bd"
+                                    Background="Transparent"
+                                    CornerRadius="8,8,0,0"
+                                    Padding="8,6"
+                                    Margin="0,0,8,0"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                <Setter Property="TextElement.Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter Property="Panel.ZIndex" Value="10"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F3F9F3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DetailTabControlStyle" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Cabecera de pestañas: fondo blanco con borde, esquinas superiores redondeadas -->
+                            <!-- Nota: margen superior interno cambiado a 0 para alinear con la imagen (evita suma doble de márgenes) -->
+                            <Border Grid.Row="0" Margin="24,0,24,0" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                                    <TabPanel IsItemsHost="True" Background="Transparent" />
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- Contenido de la pestaña con borde y fondo más contrastado, conectado a la cabecera -->
+                            <Border Grid.Row="1" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="0,0,8,8" Margin="24,0,24,24" Padding="8">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
+                                </Border.Effect>
+                                <ContentPresenter ContentSource="SelectedContent" Margin="12"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DetailTabItemStyle}"/>
+        </Style>
+    </UserControl.Resources>
     <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -110,7 +188,7 @@
                     </StackPanel>
                 </Border>
             </StackPanel>            <!-- Pestañas en la derecha -->
-            <TabControl Grid.Column="2" Margin="0,24,24,24">
+            <TabControl Grid.Column="2" Margin="0,24,24,24" Style="{StaticResource DetailTabControlStyle}">
                 <TabItem Header="General">
                     <ScrollViewer>
                         <StackPanel Margin="16">
@@ -181,13 +259,8 @@
                 </TabItem>
 
                 <TabItem Header="Documentos">
-                    <ScrollViewer>
-                        <StackPanel Margin="16">
-                            <TextBlock Text="Documentos del Vehículo" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,12" />
-                            <TextBlock Text="Documentos relacionados (SOAT, Tecno-Mecánica, Facturas, etc.)" Foreground="#706F6F" />
-                            <!-- Placeholder: implementar lista real más adelante -->
-                        </StackPanel>
-                    </ScrollViewer>
+                    <!-- Insertar la vista de documentos como UserControl para mantener separación MVVM -->
+                    <views:VehicleDocumentsView x:Name="DocumentsView" />
                 </TabItem>
 
                 <TabItem Header="Mantenimientos">

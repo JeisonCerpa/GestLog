@@ -39,6 +39,20 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                     throw new InvalidOperationException("No se pudo resolver VehicleDetailsViewModel desde DI");
                 }
             }
+
+            // Disparar carga de documentos si el control existe
+            try
+            {
+                var dv = this.FindName("DocumentsView") as VehicleDocumentsView;
+                if (dv != null)
+                {
+                    await dv.LoadAsync(vehicleId);
+                }
+            }
+            catch
+            {
+                // No bloquear la carga principal si falla la carga de documentos
+            }
         }
     }
 }

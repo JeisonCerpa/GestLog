@@ -36,9 +36,9 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }        
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }        
         public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<VehicleDocument> VehicleDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -339,9 +339,66 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.HasIndex(e => e.State)
                     .HasDatabaseName("IX_Vehicles_State");
-                
-                entity.HasIndex(e => e.Type)
+                  entity.HasIndex(e => e.Type)
                     .HasDatabaseName("IX_Vehicles_Type");
+                
+                // Relación con VehicleDocuments
+                entity.HasMany(v => v.Documents)
+                    .WithOne(d => d.Vehicle)
+                    .HasForeignKey(d => d.VehicleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración para VehicleDocument
+            modelBuilder.Entity<VehicleDocument>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_VehicleDocuments");
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.VehicleId)
+                    .IsRequired();
+                
+                entity.Property(e => e.DocumentType)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                
+                entity.Property(e => e.DocumentNumber)
+                    .HasMaxLength(100);
+                
+                entity.Property(e => e.IssuedDate)
+                    .IsRequired();
+                
+                entity.Property(e => e.ExpirationDate)
+                    .IsRequired();
+                
+                entity.Property(e => e.FileName)
+                    .HasMaxLength(255);
+                
+                entity.Property(e => e.FilePath)
+                    .HasMaxLength(500);
+                
+                entity.Property(e => e.Notes)
+                    .HasMaxLength(500);
+                
+                entity.Property(e => e.IsActive)
+                    .HasDefaultValue(true);
+                
+                // Campos de auditoría
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                // Índices
+                entity.HasIndex(e => e.VehicleId)
+                    .HasDatabaseName("IX_VehicleDocuments_VehicleId");
+                
+                entity.HasIndex(e => e.DocumentType)
+                    .HasDatabaseName("IX_VehicleDocuments_DocumentType");
+                
+                entity.HasIndex(e => e.ExpirationDate)
+                    .HasDatabaseName("IX_VehicleDocuments_ExpirationDate");
+                  entity.HasIndex(e => new { e.VehicleId, e.ExpirationDate })
+                    .HasDatabaseName("IX_VehicleDocuments_VehicleId_ExpirationDate");
             });
         }
 
