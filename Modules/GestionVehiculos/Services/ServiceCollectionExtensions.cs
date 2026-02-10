@@ -20,6 +20,12 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddTransient<VehicleFormDialog>();
             services.AddTransient<VehicleDocumentsView>();
             services.AddTransient<VehicleDocumentDialog>();
+            // Dialog service para abrir VehicleDocumentDialog desde ViewModels sin usar code-behind
+            services.AddTransient<Interfaces.Dialog.IVehicleDocumentDialogService, Services.Dialog.VehicleDocumentDialogService>();
+            // Servicio de diálogos (reemplaza MessageBox en VMs)
+            services.AddSingleton<Interfaces.Dialog.IAppDialogService, Services.Dialog.AppDialogService>();
+            
+            // Registrar ViewModel del diálogo se realiza en la sección de ViewModels más abajo (evitar duplicado)
 
             // ✅ ViewModels
             services.AddTransient<GestionVehiculosHomeViewModel>();

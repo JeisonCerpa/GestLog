@@ -151,7 +151,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         }
 
         /// <summary>
-        /// Elimina un documento (borrado lógico)
+        /// Elimina un documento (borrado físico)
         /// </summary>
         public async Task<bool> DeleteAsync(Guid documentId)
         {
@@ -165,10 +165,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 if (document == null)
                 {
                     return false;
-                }                document.IsActive = false;
-                document.UpdatedAt = DateTimeOffset.UtcNow;
+                }
 
-                context.VehicleDocuments.Update(document);
+                // Eliminar físicamente la entidad de la base de datos
+                context.VehicleDocuments.Remove(document);
+
                 await context.SaveChangesAsync();
 
                 return true;

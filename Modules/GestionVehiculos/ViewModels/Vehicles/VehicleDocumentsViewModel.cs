@@ -21,6 +21,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
     {
         private readonly IVehicleDocumentService _documentService;
         private readonly IGestLogLogger _logger;
+        private readonly IPhotoStorageService? _photoStorage;
+        private readonly GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService? _dialogService;
         private ObservableCollection<VehicleDocumentDto> _documents;
         private VehicleDocumentDto? _selectedDocument;
         private bool _isLoading;
@@ -30,10 +32,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private double _loadingProgress;
         private CancellationTokenSource? _loadingCts;
 
-        public VehicleDocumentsViewModel(IVehicleDocumentService documentService, IGestLogLogger logger)
+        public VehicleDocumentsViewModel(IVehicleDocumentService documentService, IGestLogLogger logger, IPhotoStorageService? photoStorage = null, GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService? dialogService = null)
         {
             _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _photoStorage = photoStorage;
+            _dialogService = dialogService;
             _documents = new ObservableCollection<VehicleDocumentDto>();
             _statistics = new DocumentStatisticsDto();
             _filterText = string.Empty;
@@ -43,6 +47,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             LoadDocumentsCommand = new AsyncRelayCommand(LoadDocumentsAsync);
             DeleteDocumentCommand = new AsyncRelayCommand<VehicleDocumentDto>(DeleteDocumentAsync);
             RefreshCommand = new AsyncRelayCommand(LoadDocumentsAsync);
+
+            PreviewCommand = new AsyncRelayCommand<VehicleDocumentDto>(PreviewDocumentAsync);
+            DownloadCommand = new AsyncRelayCommand<VehicleDocumentDto>(DownloadDocumentAsync);
 
             // Registrar listener de progreso
             RegisterUploadProgressListener();
@@ -136,6 +143,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public IAsyncRelayCommand LoadDocumentsCommand { get; }
         public IAsyncRelayCommand<VehicleDocumentDto> DeleteDocumentCommand { get; }
         public IAsyncRelayCommand RefreshCommand { get; }
+        public IAsyncRelayCommand<VehicleDocumentDto> PreviewCommand { get; private set; }
+        public IAsyncRelayCommand<VehicleDocumentDto> DownloadCommand { get; private set; }
 
         #endregion
 
@@ -188,6 +197,23 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 Documents.Clear();
                 foreach (var doc in documents.OrderByDescending(d => d.ExpirationDate))
                 {
+                    // Si el storage service está disponible y el documento es imagen, solicitar URI para thumbnail/previsualización
+                    try
+                    {
+                        if (_photoStorage != null && doc.IsImage && !string.IsNullOrWhiteSpace(doc.FilePath))
+                        {
+                            try
+                            {
+                                doc.PreviewUri = await _photoStorage.GetUriAsync(doc.FilePath);
+                            }
+                            catch (Exception exUri)
+                            {
+                                _logger.LogWarning(exUri, "No se pudo obtener PreviewUri para documento {DocumentId}", doc.Id);
+                            }
+                        }
+                    }
+                    catch { }
+
                     Documents.Add(doc);
                     _logger.LogDebug($"   📄 Documento añadido: {doc.DocumentType} - {doc.FileName}");
                 }
@@ -213,6 +239,98 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
             try
             {
+                // Confirmaciones via DialogService
+                if (_dialogService == null)
+                {
+                    _logger.LogWarning("DialogService no disponible: operación de eliminación cancelada");
+                    return;
+                }
+
+                if (!_dialogService.Confirm($"¿Desea eliminar el documento '{document.DocumentType} - {document.DocumentNumber}'?", "Confirmar eliminación"))
+                    return;
+
+                if (!_dialogService.ConfirmWarning("Esta acción también borrará el archivo físico del storage. ¿Desea continuar?", "Eliminar archivo físico"))
+                    return;
+
+                if (_photoStorage == null)
+                {
+                    _dialogService?.ShowError("Servicio de almacenamiento no disponible. No se puede eliminar el archivo físico.");
+                    _logger.LogWarning("IPhotoStorageService no disponible al intentar eliminar documento");
+                    return;
+                }
+
+                // Si no hay FilePath, preguntar si se desea marcar como eliminado en BD
+                if (string.IsNullOrWhiteSpace(document.FilePath))
+                {
+                    var proceed = _dialogService != null ? _dialogService.Confirm("No se encontró la ruta del archivo en el registro. ¿Desea marcar el documento como eliminado en la base de datos de todas formas?", "Eliminar sin archivo") : false;
+                    if (!proceed) return;
+
+                    var dbResult = await _documentService.DeleteAsync(document.Id);
+                    if (dbResult)
+                    {
+                        Documents.Remove(document);
+                        await RefreshStatistics();
+                    }
+
+                    return;
+                }
+
+                // Intentar borrar el archivo físico con reintentos y backoff exponencial
+                bool fileDeleted = false;
+                int attempts = 0;
+                const int maxAttempts = 3;
+                var delay = TimeSpan.FromSeconds(1);
+
+                while (attempts < maxAttempts && !fileDeleted)
+                {
+                    attempts++;
+                    try
+                    {
+                        _logger.LogDebug($"Intentando eliminar archivo físico (intento {attempts}) para documento {document.Id} -> {document.FilePath}");
+                        var deleted = await _photoStorage.DeleteAsync(document.FilePath!);
+                        if (deleted)
+                        {
+                            fileDeleted = true;
+                            break;
+                        }
+
+                        _logger.LogWarning("IPhotoStorageService.DeleteAsync devolvió false para ruta {FilePath}", document.FilePath);
+                        // si devolvió false consideramos fallo y reintentos
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Excepción al intentar eliminar archivo físico para documento {DocumentId}", document.Id);
+                    }
+
+                    if (!fileDeleted && attempts < maxAttempts)
+                    {
+                        try { await Task.Delay(delay); } catch { }
+                        delay = TimeSpan.FromSeconds(delay.TotalSeconds * 2); // backoff
+                    }
+                }
+
+                if (!fileDeleted)
+                {
+                    // Preguntar si se desea forzar borrado lógico
+                    var force = _dialogService != null ? _dialogService.ConfirmWarning("No se pudo eliminar el archivo físico tras varios intentos. ¿Desea marcar el documento como eliminado en la base de datos de todas formas? (Esto puede dejar el archivo en el storage)", "No se pudo eliminar archivo") : false;
+
+                    if (!force)
+                    {
+                        return;
+                    }
+
+                    // Intentar borrado lógico de BD
+                    var dbForceResult = await _documentService.DeleteAsync(document.Id);
+                    if (dbForceResult)
+                    {
+                        Documents.Remove(document);
+                        await RefreshStatistics();
+                    }
+
+                    return;
+                }
+
+                // Si llegamos aquí, el archivo físico fue eliminado correctamente: proceder a borrar en BD
                 var result = await _documentService.DeleteAsync(document.Id);
                 if (result)
                 {
@@ -223,6 +341,56 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar documento");
+                _dialogService?.ShowError($"Error al eliminar documento: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Descarga un documento
+        /// </summary>
+        private async Task DownloadDocumentAsync(VehicleDocumentDto? document)
+        {
+            if (document == null) return;
+
+            try
+            {
+                if (_photoStorage == null)
+                {
+                    _logger.LogWarning("DownloadDocumentAsync: IPhotoStorageService no está disponible");
+                    return;
+                }
+
+                var uri = await _photoStorage.GetUriAsync(document.FilePath ?? string.Empty);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al descargar/abrir documento");
+            }
+        }
+
+        /// <summary>
+        /// Previsualiza un documento
+        /// </summary>
+        private async Task PreviewDocumentAsync(VehicleDocumentDto? document)
+        {
+            if (document == null) return;
+
+            try
+            {
+                if (_photoStorage == null)
+                {
+                    _logger.LogWarning("PreviewDocumentAsync: IPhotoStorageService no está disponible");
+                    return;
+                }
+
+                // Obtener URI y abrir siempre con el handler del SO
+                var uri = await _photoStorage.GetUriAsync(document.FilePath ?? string.Empty);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al previsualizar/abrir documento");
             }
         }
 

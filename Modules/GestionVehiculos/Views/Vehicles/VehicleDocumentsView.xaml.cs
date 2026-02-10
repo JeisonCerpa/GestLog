@@ -76,7 +76,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 var resolved = sp2?.GetService(typeof(VehicleDocumentsViewModel)) as VehicleDocumentsViewModel;
                 if (resolved == null)
                 {
-                    System.Windows.MessageBox.Show("No se pudo resolver VehicleDocumentsViewModel. Revise la configuración de DI.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    var appDialogFallback = sp2?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
+                    appDialogFallback?.ShowError("No se pudo resolver VehicleDocumentsViewModel. Revise la configuración de DI.");
                     return;
                 }                this.DataContext = resolved;
             }
@@ -84,15 +85,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             try
             {
                 var sp = ((App)System.Windows.Application.Current).ServiceProvider;
+                var appDialog = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
 
-                // Resolver las dependencias del ViewModel del diálogo
-                var docService = sp?.GetService(typeof(IVehicleDocumentService)) as IVehicleDocumentService;
-                var photoStorage = sp?.GetService(typeof(IPhotoStorageService)) as IPhotoStorageService;
-                var logger = sp?.GetService(typeof(IGestLogLogger)) as IGestLogLogger;
+                // Resolver solo IVehicleService aquí (se usa para buscar vehicleId por placa si es necesario).
+                var vehicleService = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService)) as GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService;
 
-                if (docService == null || photoStorage == null || logger == null)
+                if (vehicleService == null)
                 {
-                    System.Windows.MessageBox.Show("Servicios requeridos no están disponibles en DI.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    appDialog?.ShowError("Servicio IVehicleService no está disponible en DI.");
                     return;
                 }
 
@@ -124,52 +124,58 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
                     if (!string.IsNullOrWhiteSpace(plate))
                     {
-                        var vehicleService = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService)) as GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService;
-                        if (vehicleService != null)
+                        var vehicleServiceInstance = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService)) as GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService;
+                        if (vehicleServiceInstance != null)
                         {
-                            var vehicle = await vehicleService.GetByPlateAsync(plate);
+                            var vehicle = await vehicleServiceInstance.GetByPlateAsync(plate);
                             if (vehicle != null)
                             {
                                 resolvedVehicleId = vehicle.Id;
                             }
                             else
                             {
-                                System.Windows.MessageBox.Show($"No se encontró vehículo con placa '{plate}'.", "Vehículo no encontrado", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                                appDialog?.ShowError($"No se encontró vehículo con placa '{plate}'.", "Vehículo no encontrado");
                                 return;
                             }
                         }
                         else
                         {
-                            System.Windows.MessageBox.Show($"No se pudo resolver IVehicleService desde DI para buscar placa '{plate}'.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                            appDialog?.ShowError($"No se pudo resolver IVehicleService desde DI para buscar placa '{plate}'.");
                             return;
                         }
                     }
                     else
                     {
-                        System.Windows.MessageBox.Show("No se pudo determinar la placa del vehículo. Asegúrese de abrir Documentos desde la vista de Detalles del vehículo.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        appDialog?.ShowError("No se pudo determinar la placa del vehículo. Asegúrese de abrir Documentos desde la vista de Detalles del vehículo.");
                         return;
                     }
                 }
 
-                var dialogViewModel = new VehicleDocumentDialogModel(docService, photoStorage, logger);
-                dialogViewModel.VehicleId = resolvedVehicleId;
+                // Intentar mostrar diálogo via DialogService (MVVM-friendly) que resolverá el VM desde DI
+                var dialogService = sp?.GetService(typeof(Interfaces.Dialog.IVehicleDocumentDialogService)) as Interfaces.Dialog.IVehicleDocumentDialogService;
+                if (dialogService == null)
+                {
+                    appDialog?.ShowError("Servicio de diálogo no está registrado. Revise la configuración de DI.");
+                    return;
+                }
 
-                // Crear el diálogo y pasarle el ViewModel
-                var dialog = new VehicleDocumentDialog(dialogViewModel);
+                bool? dlgResult = null;
+                var shown = dialogService.TryShowVehicleDocumentDialog(resolvedVehicleId, out dlgResult);
 
-                var result = dialog.ShowDialog();
-                if (result == true)
+                if (shown)
                 {
                     // Refresh documents después de guardar
                     if (Vm != null)
                     {
-                        await Vm.InitializeAsync(dialogViewModel.VehicleId);
+                        await Vm.InitializeAsync(resolvedVehicleId);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error al abrir diálogo de documento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                var spErr = ((App)System.Windows.Application.Current).ServiceProvider;
+                var appDialogErr = spErr?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
+                appDialogErr?.ShowError($"Error al abrir diálogo de documento: {ex.Message}");
             }
         }
 
@@ -188,7 +194,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error al descargar/abrir documento: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                var appDialogErr = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
+                appDialogErr?.ShowError($"Error al descargar/abrir documento: {ex.Message}");
             }
         }
     }

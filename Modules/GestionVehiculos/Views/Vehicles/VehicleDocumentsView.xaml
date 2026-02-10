@@ -56,6 +56,38 @@
             <Setter Property="AlternatingRowBackground" Value="#FAFAFA" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
             <Setter Property="HorizontalGridLinesBrush" Value="#EFEFEF" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="RowBackground" Value="White" />
+            <!-- Asegurar que el contenido de las celdas esté centrado vertical y horizontalmente -->
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="Padding" Value="6,0" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Foreground" Value="#333" />
+                        <Style.Triggers>
+                            <!-- Evitar el fondo azul por defecto en celdas seleccionadas: dejar transparente y delegar el estilo al DataGridRow -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Foreground" Value="#0B3F19" />
+                            </Trigger>
+                            <!-- Mantener apariencia al recibir el foco dentro de la celda -->
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo para centrar TextBlocks dentro de columnas de texto (usado por ElementStyle) -->
+        <Style x:Key="CenteredTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
@@ -65,11 +97,74 @@
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="8,0" />
         </Style>
+
+        <!-- Estilo para botones de acción (icon-buttons) -->
+        <Style x:Key="ActionIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Width="36" Height="36">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3FFF3" />
+                    <Setter Property="BorderBrush" Value="#E6F6E8" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#E8F9E9" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Row style para alinear contenido verticalmente y controlar selección -->
+        <Style x:Key="DocumentsDataGridRowStyle" TargetType="DataGridRow">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#333" />
+            <Style.Triggers>
+                <!-- Selected row: usar verde muy claro y texto oscuro para buen contraste -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EAF9EE" />
+                    <Setter Property="Foreground" Value="#0B3F19" />
+                </Trigger>
+                <!-- Hover visual ligero para filas no seleccionadas -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FBFFFB" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="BadgeTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Estado calculado en DTO / VM: StatusText, StatusBackground, StatusForeground -->
     </UserControl.Resources>
 
     <Grid Background="Transparent" Margin="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -112,45 +207,25 @@
             <!-- Buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
                 <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ Nuevo Documento" Click="BtnNewDocument_Click" />
-                <Border CornerRadius="8" Background="#FFFFFF" BorderBrush="#118938" BorderThickness="1" Margin="8,0,0,0">
-                    <Button Content="Actualizar" Background="Transparent" Foreground="#118938" Padding="10,8" Command="{Binding RefreshCommand}" />
+                <Border CornerRadius="8" Background="#FFFFFF" BorderBrush="#118938" BorderThickness="1" Margin="8,0,0,0" Padding="4,2" Cursor="Hand">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" />
+                    </Border.Effect>
+                    <Button Content="Actualizar" Background="Transparent" Foreground="#118938" Padding="8,6" Command="{Binding RefreshCommand}"
+                            BorderThickness="0" FocusVisualStyle="{x:Null}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Cursor="Hand">
+                        <!-- Plantilla simple para evitar el chrome por defecto y respetar el Border redondeado padre -->
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </Border>
             </StackPanel>
         </Grid>
 
-        <!-- Estadísticas -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,0,12">
-            <Border Style="{StaticResource CardStyle}" Width="180" Margin="0,0,12,0">
-                <StackPanel>
-                    <TextBlock FontSize="12" Foreground="#706F6F" Text="Total" />
-                    <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="#333" Text="{Binding Statistics.TotalDocuments}" />
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource CardStyle}" Width="180" Background="#E8F5E9" Margin="0,0,12,0">
-                <StackPanel>
-                    <TextBlock FontSize="12" Foreground="#37AB4E" Text="Vigentes" />
-                    <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="#37AB4E" Text="{Binding Statistics.ValidDocuments}" />
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource CardStyle}" Width="180" Background="#FFF3E0" Margin="0,0,12,0">
-                <StackPanel>
-                    <TextBlock FontSize="12" Foreground="#FF9800" Text="Por vencer" />
-                    <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="#FF9800" Text="{Binding Statistics.SoonToExpireDocuments}" />
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource CardStyle}" Width="180" Background="#FFEBEE">
-                <StackPanel>
-                    <TextBlock FontSize="12" Foreground="#C0392B" Text="Vencidos" />
-                    <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="#C0392B" Text="{Binding Statistics.ExpiredDocuments}" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-
         <!-- Contenido principal: DataGrid dentro de card -->
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16" Margin="0">
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -164,66 +239,48 @@
 
                 <!-- DataGrid -->
                 <DataGrid Grid.Row="1" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False">
-
-                    <DataGrid.Style>
-                        <Style TargetType="DataGrid" BasedOn="{StaticResource DocumentsDataGridStyle}">
-                            <Setter Property="Visibility" Value="{Binding Documents.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsLoading}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.Style>
+                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                          ColumnWidth="*" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          RowStyle="{StaticResource DocumentsDataGridRowStyle}" Style="{StaticResource DocumentsDataGridStyle}" CanUserResizeColumns="True"
+                          SelectionMode="Single" SelectionUnit="FullRow">
 
                     <DataGrid.Columns>
-                        <!-- Miniatura / Icono -->
-                        <DataGridTemplateColumn Header="" Width="48">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border Width="36" Height="36" Background="#F5F5F5" CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="📄" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Número" Binding="{Binding DocumentNumber}" Width="1.2*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Emisión" Binding="{Binding IssuedDate, StringFormat=dd/MM/yyyy}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Vencimiento" Binding="{Binding ExpirationDate, StringFormat=dd/MM/yyyy}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
 
-                        <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="160" />
-                        <DataGridTextColumn Header="Número" Binding="{Binding DocumentNumber}" Width="140" />
-                        <DataGridTextColumn Header="Emisión" Binding="{Binding IssuedDate, StringFormat=dd/MM/yyyy}" Width="110" />
-                        <DataGridTextColumn Header="Vencimiento" Binding="{Binding ExpirationDate, StringFormat=dd/MM/yyyy}" Width="110" />
-
-                        <DataGridTemplateColumn Header="Estado" Width="140">
+                        <DataGridTemplateColumn Header="Estado" Width="1*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
-                                        <Border Background="#FFEBEE" CornerRadius="6" Padding="6,4" 
-                                                Visibility="{Binding IsExpired, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <TextBlock Text="Vencido" Foreground="#C0392B" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
-                                        </Border>
-
-                                        <Border Background="#E8F5E9" CornerRadius="6" Padding="6,4" 
-                                                Visibility="{Binding IsExpired, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=negate}">
-                                            <TextBlock Text="Vigente" Foreground="#10B981" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" />
+                                        <Border Style="{StaticResource BadgeStyle}" Background="{Binding StatusBackground}">
+                                            <TextBlock Style="{StaticResource BadgeTextStyle}" Text="{Binding StatusText}" Foreground="{Binding StatusForeground}" />
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Header="Acciones" Width="120">
+                        <DataGridTemplateColumn Header="Acciones" Width="1*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Margin="0,0,8,0" Background="Transparent" Foreground="#118938" BorderThickness="0"
-                                                Padding="6" Cursor="Hand" Content="Descargar" FontSize="12"
-                                                ToolTip="Descargar documento" Click="BtnDownload_Click" />
-                                        <Button Background="Transparent" Foreground="#C0392B" BorderThickness="0"
-                                                Padding="6" Cursor="Hand" Content="Eliminar" FontSize="12"
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <!-- Ver -->
+                                        <Button Style="{StaticResource ActionIconButtonStyle}"
+                                                ToolTip="Ver documento"
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=DataContext.PreviewCommand}"
+                                                CommandParameter="{Binding}" Margin="0,0,8,0">
+                                            <TextBlock Text="🔍" FontSize="14" />
+                                        </Button>
+
+                                        <!-- Eliminar -->
+                                        <Button Style="{StaticResource ActionIconButtonStyle}"
                                                 ToolTip="Eliminar documento"
                                                 Command="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=DataContext.DeleteDocumentCommand}"
-                                                CommandParameter="{Binding}" />
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="🗑️" FontSize="14" Foreground="#C0392B" />
+                                        </Button>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

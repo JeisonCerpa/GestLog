@@ -10,6 +10,7 @@ using GestLog.Utilities;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionVehiculos.Messages.Documents;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -21,6 +22,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private readonly IVehicleDocumentService _documentService;
         private readonly IPhotoStorageService _photoStorage;
         private readonly IGestLogLogger _logger;
+        private readonly IVehicleService _vehicleService;
 
         private Guid _vehicleId;
         private string _documentType = string.Empty;
@@ -37,11 +39,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         // Ventana dueña, asignada desde el code-behind para operaciones que necesitan un owner (dialogs)
         public System.Windows.Window? Owner { get; set; }
 
-        public VehicleDocumentDialogModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger)
+        public VehicleDocumentDialogModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger, IVehicleService vehicleService)
         {
             _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
             _photoStorage = photoStorage ?? throw new ArgumentNullException(nameof(photoStorage));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _vehicleService = vehicleService ?? throw new ArgumentNullException(nameof(vehicleService));
 
             DocumentTypes = new ObservableCollection<string>(new[] { "SOAT", "Tecno-Mecánica", "Carta de propiedad", "Otros" });
 
@@ -219,29 +222,65 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, p, true)); } catch { }
                 });
 
-                using var fs = File.OpenRead(SelectedFilePath);
-                var storagePath = await _photoStorage.SaveOriginalAsync(fs, SelectedFileName ?? fi.Name, progress, token);
-
-                _logger.LogDebug($"SaveAsync: Archivo subido a {storagePath}");
-
-                // Notify completion to subscribers
-                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
-
-                var dto = new VehicleDocumentDto
+                // Primero crear el registro en la BD para obtener el documentId y usarlo en el nombre del archivo
+                var initialDto = new VehicleDocumentDto
                 {
                     VehicleId = VehicleId,
                     DocumentType = DocumentType,
                     DocumentNumber = DocumentNumber,
                     IssuedDate = IssuedDate.HasValue ? new DateTimeOffset(IssuedDate.Value) : DateTimeOffset.UtcNow,
                     ExpirationDate = ExpirationDate.HasValue ? new DateTimeOffset(ExpirationDate.Value) : DateTimeOffset.UtcNow.AddYears(1),
-                    FileName = SelectedFileName ?? fi.Name,
+                    FileName = string.Empty,
+                    FilePath = string.Empty,
+                    Notes = Notes
+                };
+
+                var createdId = await _documentService.AddAsync(initialDto);
+                _logger.LogDebug($"SaveAsync: Registro inicial creado con ID: {createdId}");
+
+                // Construir el nombre de archivo usando el documentId en lugar del timestamp
+                string plate = string.Empty;
+                try
+                {
+                    var vehicle = await _vehicleService.GetByIdAsync(VehicleId);
+                    plate = vehicle?.Plate ?? string.Empty;
+                }
+                catch { }
+
+                var parts = new System.Collections.Generic.List<string>();
+                if (!string.IsNullOrWhiteSpace(DocumentType)) parts.Add(SanitizeFilePart(DocumentType));
+                if (!string.IsNullOrWhiteSpace(plate)) parts.Add(SanitizeFilePart(plate));
+                if (!string.IsNullOrWhiteSpace(DocumentNumber)) parts.Add(SanitizeFilePart(DocumentNumber));
+                parts.Add(createdId.ToString());
+                var storageFileName = string.Join("_", parts) + ext;
+
+                using var fs = File.OpenRead(SelectedFilePath);
+                var storagePath = await _photoStorage.SaveOriginalAsync(fs, storageFileName, progress, token);
+
+                _logger.LogDebug($"SaveAsync: Archivo subido a {storagePath}");
+
+                // Notify completion to subscribers
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
+
+                // Actualizar el registro con la información del archivo
+                var updateDto = new VehicleDocumentDto
+                {
+                    Id = createdId,
+                    VehicleId = VehicleId,
+                    DocumentType = DocumentType,
+                    DocumentNumber = DocumentNumber,
+                    IssuedDate = initialDto.IssuedDate,
+                    ExpirationDate = initialDto.ExpirationDate,
+                    FileName = storageFileName,
                     FilePath = storagePath,
                     Notes = Notes
                 };
 
-                var createdId = await _documentService.AddAsync(dto);
-                
-                _logger.LogDebug($"SaveAsync: Documento creado con ID: {createdId}");
+                var updated = await _documentService.UpdateAsync(updateDto);
+                if (!updated)
+                {
+                    _logger.LogWarning($"SaveAsync: No se pudo actualizar el registro del documento {createdId} con la info del archivo");
+                }
 
                 // Enviar mensaje para notificar creación y permitir refrescar listados
                 try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, createdId)); } catch { }
@@ -286,6 +325,28 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 _uploadCts = null;
                 try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 0, false)); } catch { }
             }
+        }
+
+        private static string SanitizeFilePart(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            // Reemplazar espacios por '_' y eliminar caracteres inválidos para nombre de archivo
+            var sanitized = input.Trim().Replace(' ', '_');
+            var invalid = Path.GetInvalidFileNameChars();
+            foreach (var c in invalid)
+            {
+                sanitized = sanitized.Replace(c.ToString(), string.Empty);
+            }
+            // También quitar tildes básicos y caracteres especiales comunes
+            sanitized = sanitized.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder();
+            foreach (var ch in sanitized)
+            {
+                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString();
         }
     }
 
