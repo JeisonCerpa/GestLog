@@ -33,6 +33,10 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     private readonly System.Threading.Timer _healthCheckTimer;
     private readonly SemaphoreSlim _healthCheckSemaphore;
     
+    // Coalescing de health-checks forzados
+    private readonly object _healthCheckLock = new();
+    private Task<bool>? _ongoingHealthCheckTask;
+    
     // Estado y métricas
     private DatabaseConnectionState _currentState;
     private readonly ConnectionMetricsCollector _metricsCollector;
@@ -452,29 +456,123 @@ public class DatabaseConnectionService : IDatabaseConnectionService, IDisposable
     /// </summary>
     public async Task<bool> ForceHealthCheckAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🔍 Forzando health check inmediato");
-        
+        Task<bool>? currentTask = null;
+
+        // Coalesce concurrent forced health-check calls so only one actual check runs
+        lock (_healthCheckLock)
+        {
+            if (_ongoingHealthCheckTask != null && !_ongoingHealthCheckTask.IsCompleted)
+            {
+                // No iniciar nuevo health-check, coalescer y devolver la tarea en curso
+                _logger.LogDebug("🌐 Health check ya en ejecución — coalesciendo llamada");
+                currentTask = _ongoingHealthCheckTask;
+            }
+            else
+            {
+                // Registrar que se inicia un nuevo health-check (solo aqui)
+                _logger.LogInformation("🔍 Forzando health check inmediato");
+
+                // Crear tarea de health-check y asignarla
+                _ongoingHealthCheckTask = RunHealthCheckInternalAsync(cancellationToken);
+
+                // Adjuntar una continuación para registrar la finalización una sola vez
+                _ongoingHealthCheckTask.ContinueWith(t =>
+                {
+                    try
+                    {
+                        if (t.IsCanceled)
+                        {
+                            _logger.LogWarning("⚠️ Health check forzado cancelado");
+                        }
+                        else if (t.IsFaulted)
+                        {
+                            _logger.LogError(t.Exception, "❌ Error durante health check forzado (continuation)");
+                        }
+                        else
+                        {
+                            var res = t.Result;
+                            _logger.LogInformation("🔍 Health check forzado completado: {Result}", res ? "Exitoso" : "Falló");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Error en continuación de health check");
+                    }
+                }, TaskScheduler.Default);
+
+                currentTask = _ongoingHealthCheckTask;
+            }
+        }
+
         try
         {
-            var isHealthy = await TestConnectionInternalAsync(cancellationToken);
+            // Los llamadores esperan el resultado, pero la finalización ya se registra en la continuación
+            var result = await currentTask!;
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("⚠️ Health check forzado cancelado (caller)");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error durante health check forzado (caller)");
+            return false;
+        }
+        finally
+        {
+            // Limpiar referencia de tarea si es la misma
+            lock (_healthCheckLock)
+            {
+                if (_ongoingHealthCheckTask != null && _ongoingHealthCheckTask.IsCompleted)
+                    _ongoingHealthCheckTask = null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Implementación interna del health-check que usa el semáforo para evitar solapamiento con health checks programados
+    /// </summary>
+    private async Task<bool> RunHealthCheckInternalAsync(CancellationToken cancellationToken = default)
+    {
+        // Usar el mismo semáforo que ExecuteHealthCheck para evitar ejecución paralela
+        var acquired = await _healthCheckSemaphore.WaitAsync(0, cancellationToken).ConfigureAwait(false);
+        if (!acquired)
+        {
+            // Si no se pudo adquirir inmediatamente, esperar de forma cooperativa
+            _logger.LogDebug("⏳ Health check en curso por el timer, esperando a que termine...");
+            await _healthCheckSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            // Ejecutar la verificación real
+            var isHealthy = await TestConnectionInternalAsync(cancellationToken).ConfigureAwait(false);
+
+            // Registrar métricas y cambiar estado si aplica
             _metricsCollector.RegisterHealthCheck(isHealthy);
-            
+
             var previousState = _currentState;
             var newState = isHealthy ? DatabaseConnectionState.Connected : DatabaseConnectionState.Error;
-            
+
             if (previousState != newState)
             {
                 ChangeState(newState, "Health check forzado");
             }
-            
-            _logger.LogInformation("🔍 Health check forzado completado: {Result}", isHealthy ? "Exitoso" : "Falló");
+
             return isHealthy;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error en health check forzado");
+            _logger.LogError(ex, "❌ Error interno durante RunHealthCheckInternalAsync");
             _metricsCollector.RegisterHealthCheck(false);
             return false;
+        }
+        finally
+        {
+            // Liberar semáforo
+            try { _healthCheckSemaphore.Release(); } catch { }
         }
     }
 

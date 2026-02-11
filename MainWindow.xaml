@@ -183,15 +183,18 @@
                             CornerRadius="6" 
                             Padding="10,6" 
                             Margin="0,0,12,0"
-                            ToolTip="Estado de conexión a base de datos"
+                            ToolTip="{Binding DatabaseStatusTooltip}"
+                            Background="{Binding DatabaseStatusBackground}"
                             Style="{StaticResource StatusIndicatorStyle}">
-                        <StackPanel Orientation="Horizontal">                            <TextBlock x:Name="DatabaseStatusIcon" 
-                                      Text="❌" 
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="DatabaseStatusIcon" 
+                                      Text="{Binding DatabaseStatusIcon}" 
                                       Foreground="White" 
                                       FontFamily="Segoe UI" FontWeight="Bold" 
                                       Margin="0,0,6,0"
-                                      VerticalAlignment="Center"/><TextBlock x:Name="DatabaseStatusText" 
-                                      Text="Desconectado" 
+                                      VerticalAlignment="Center"/>
+                            <TextBlock x:Name="DatabaseStatusText" 
+                                      Text="{Binding DatabaseStatusText}"
                                       Foreground="White" 
                                       FontFamily="Segoe UI" FontSize="11" 
                                       FontWeight="SemiBold"

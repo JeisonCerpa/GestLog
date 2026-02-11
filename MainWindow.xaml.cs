@@ -106,6 +106,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             IsAuthenticated = true;
             
             _logger.LogUserInteraction("✅", "LoadHomeView", "Vista Home cargada exitosamente", true);
+
+            // Forzar actualización rápida del estado de base de datos para evitar badges desincronizados
+#pragma warning disable CS4014
+            RefreshDatabaseStatusAsync(5);
+#pragma warning restore CS4014
         }
         catch (System.Exception ex)
         {
@@ -313,30 +318,91 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
+            // El ViewModel ahora gestiona la suscripción y health-checks.
+            // Sólo actualizamos el indicador inicial si el servicio no está disponible.
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-            databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
-            
-            // Actualizar estado inicial
-            UpdateDatabaseStatusIndicator(databaseService.CurrentState, "Inicial");
+            if (databaseService == null)
+            {
+                _logger.LogWarning("⚠️ Servicio de base de datos no disponible al suscribirse a estado");
+                if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+                {
+                    vm.UpdateDatabaseStatusFromState(GestLog.Models.Events.DatabaseConnectionState.Unknown, "Servicio no disponible");
+                }
+                return;
+            }
+
+            // Forzar un refresh rápido desde el ViewModel al iniciar
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
+            {
+#pragma warning disable CS4014
+                vm2.InitializeDatabaseStatusAsyncProxy();
+#pragma warning restore CS4014
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al suscribirse a cambios de estado de base de datos");
             // Mostrar estado desconocido si no se puede conectar al servicio
-            UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState.Unknown, "Error de servicio");
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            {
+                vm.UpdateDatabaseStatusFromState(GestLog.Models.Events.DatabaseConnectionState.Unknown, "Error de servicio");
+            }
         }
     }
 
     /// <summary>
-    /// Maneja los cambios de estado de conexión a base de datos
+    /// Forzar un health-check rápido y actualizar el indicador de BD en la UI
     /// </summary>
-    private void OnDatabaseConnectionStateChanged(object? sender, GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs e)
+    private async System.Threading.Tasks.Task RefreshDatabaseStatusAsync(int timeoutSeconds = 5)
     {
-        // Asegurar que la actualización se ejecute en el hilo de UI
-        Dispatcher.BeginInvoke(() =>
+        // Este método se queda por compatibilidad pero delega al ViewModel si existe
+        try
         {
-            UpdateDatabaseStatusIndicator(e.CurrentState, e.Message ?? "");
-        });
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            {
+                await vm.InitializeDatabaseStatusAsyncProxy(timeoutSeconds);
+                return;
+            }
+
+            var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            if (databaseService == null)
+            {
+                var op1 = Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState.Unknown, "Servicio no disponible");
+                }));
+                await op1.Task; // await la operación del dispatcher
+                return;
+            }
+
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            bool healthy = await databaseService.ForceHealthCheckAsync(cts.Token);
+
+            var state = healthy ? GestLog.Models.Events.DatabaseConnectionState.Connected : GestLog.Models.Events.DatabaseConnectionState.Error;
+            var op2 = Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                UpdateDatabaseStatusIndicator(state, healthy ? "Health check OK" : "Health check falló");
+            }));
+            await op2.Task;
+        }
+        catch (OperationCanceledException)
+        {
+            var op3 = Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState.Error, "Health check timeout");
+            }));
+            await op3.Task;
+            _logger.LogWarning("⚠️ Timeout en RefreshDatabaseStatusAsync");
+        }
+        catch (System.Exception ex)
+        {
+            var op4 = Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                UpdateDatabaseStatusIndicator(GestLog.Models.Events.DatabaseConnectionState.Error, $"Health check error: {ex.Message}");
+            }));
+            await op4.Task;
+            _logger.LogWarning(ex, "⚠️ Error en RefreshDatabaseStatusAsync");
+        }
     }
 
     /// <summary>
@@ -346,6 +412,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
+            // Mantener como fallback para llamadas directas internas, pero la UI ahora está ligada al ViewModel
+            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+            {
+                vm.UpdateDatabaseStatusFromState(state, message);
+                return;
+            }
+
             string icon, text, backgroundColor, tooltip;            switch (state)
             {                case GestLog.Models.Events.DatabaseConnectionState.Connected:
                     icon = "✅";
@@ -390,7 +463,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     break;
             }
 
-            // Actualizar los elementos de UI
+            // Actualizar los elementos de UI si el ViewModel no existe
             DatabaseStatusIcon.Text = icon;
             DatabaseStatusText.Text = text;
             DatabaseStatusBorder.Background = new System.Windows.Media.SolidColorBrush(

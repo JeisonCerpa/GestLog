@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.Modules.Usuarios.Models.Authentication;
+using GestLog.Services.Interfaces;
+using GestLog.Models.Events;
+using System.Windows.Media;
 
 namespace GestLog.ViewModels
 {
@@ -45,6 +48,20 @@ namespace GestLog.ViewModels
         [ObservableProperty]
         private bool canAccessErrorLog;
 
+        [ObservableProperty]
+        private string _databaseStatusIcon = "❓";
+
+        [ObservableProperty]
+        private string _databaseStatusText = "Desconocido";
+
+        [ObservableProperty]
+        private SolidColorBrush _databaseStatusBackground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#9D9D9C"));
+
+        [ObservableProperty]
+        private string _databaseStatusTooltip = "Estado desconocido";
+
+        // (OnInitialized removed - no implementación parcial requerida)
+
         public MainWindowViewModel(LoginViewModel loginViewModel, ICurrentUserService currentUserService)
         {
             _loginViewModel = loginViewModel;
@@ -70,6 +87,28 @@ namespace GestLog.ViewModels
             });
             // --- NUEVO: Forzar notificación inicial para refrescar el binding en el primer render ---
             OnPropertyChanged(nameof(NombrePersonaActual));
+
+            // Suscribirse al servicio de BD para alimentar el badge
+            try
+            {
+                var databaseService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                if (databaseService != null)
+                {
+                    databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
+                    databaseService.NetworkConnectivityChanged += OnNetworkConnectivityChanged;
+
+                    // Iniciar con el estado conocido y lanzar health-check inicial en background
+                    UpdateDatabaseStatusFromState(databaseService.CurrentState, "Inicial");
+
+                    _ = InitializeDatabaseStatusAsync(databaseService);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
+                logger.Logger.LogWarning(ex, "⚠️ No se pudo suscribir al servicio de base de datos para estado");
+                UpdateDatabaseStatusFromState(DatabaseConnectionState.Unknown, "Servicio no disponible");
+            }
         }
         [RelayCommand]
         public async Task CerrarSesionAsync()
@@ -111,6 +150,129 @@ namespace GestLog.ViewModels
             CanAccessAdminPanel = _currentUser.HasRole("Administrador");
             CanAccessUserManagement = _currentUser.HasPermission("Herramientas.AccederGestionUsuarios");
             CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
+        }
+
+        public async System.Threading.Tasks.Task InitializeDatabaseStatusAsyncProxy(int timeoutSeconds = 5)
+        {
+            try
+            {
+                var databaseService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+                if (databaseService == null)
+                {
+                    UpdateDatabaseStatusFromState(DatabaseConnectionState.Unknown, "Servicio no disponible");
+                    return;
+                }
+
+                using var cts = new System.Threading.CancellationTokenSource(System.TimeSpan.FromSeconds(timeoutSeconds));
+                var healthy = await databaseService.ForceHealthCheckAsync(cts.Token);
+                var state = healthy ? DatabaseConnectionState.Connected : DatabaseConnectionState.Error;
+                UpdateDatabaseStatusFromState(state, healthy ? "Health check inicial OK" : "Health check inicial falló");
+            }
+            catch (System.OperationCanceledException)
+            {
+                UpdateDatabaseStatusFromState(DatabaseConnectionState.Error, "Health check timeout");
+            }
+            catch (System.Exception ex)
+            {
+                var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
+                logger.Logger.LogWarning(ex, "⚠️ Error en health-check inicial desde ViewModel (proxy)");
+                UpdateDatabaseStatusFromState(DatabaseConnectionState.Error, $"Health check error: {ex.Message}");
+            }
+        }
+
+        public void UpdateDatabaseStatusFromState(DatabaseConnectionState state, string message)
+        {
+            try
+            {
+                switch (state)
+                {
+                    case DatabaseConnectionState.Connected:
+                        DatabaseStatusIcon = "✅";
+                        DatabaseStatusText = "Conectado";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2B8E3F"));
+                        DatabaseStatusTooltip = $"Conectado a base de datos - {message}";
+                        break;
+
+                    case DatabaseConnectionState.Connecting:
+                        DatabaseStatusIcon = "🔄";
+                        DatabaseStatusText = "Conectando...";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E67E22"));
+                        DatabaseStatusTooltip = $"Conectando a base de datos - {message}";
+                        break;
+
+                    case DatabaseConnectionState.Reconnecting:
+                        DatabaseStatusIcon = "🔄";
+                        DatabaseStatusText = "Reconectando...";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#D68910"));
+                        DatabaseStatusTooltip = $"Reconectando a base de datos - {message}";
+                        break;
+
+                    case DatabaseConnectionState.Disconnected:
+                        DatabaseStatusIcon = "⏸️";
+                        DatabaseStatusText = "Desconectado";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#706F6F"));
+                        DatabaseStatusTooltip = $"Desconectado de base de datos - {message}";
+                        break;
+
+                    case DatabaseConnectionState.Error:
+                        DatabaseStatusIcon = "❌";
+                        DatabaseStatusText = "Error";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#C0392B"));
+                        DatabaseStatusTooltip = $"Error de conexión a base de datos - {message}";
+                        break;
+
+                    default:
+                        DatabaseStatusIcon = "❓";
+                        DatabaseStatusText = "Desconocido";
+                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#9D9D9C"));
+                        DatabaseStatusTooltip = $"Estado desconocido de base de datos - {message}";
+                        break;
+                }
+
+                // Notificar cambios
+                OnPropertyChanged(nameof(DatabaseStatusIcon));
+                OnPropertyChanged(nameof(DatabaseStatusText));
+                OnPropertyChanged(nameof(DatabaseStatusBackground));
+                OnPropertyChanged(nameof(DatabaseStatusTooltip));
+            }
+            catch (System.Exception ex)
+            {
+                var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
+                logger.Logger.LogWarning(ex, "⚠️ Error actualizando estado de BD en ViewModel (public)");
+            }
+        }
+
+        private async System.Threading.Tasks.Task InitializeDatabaseStatusAsync(IDatabaseConnectionService databaseService)
+        {
+            try
+            {
+                using var cts = new System.Threading.CancellationTokenSource(System.TimeSpan.FromSeconds(5));
+                var healthy = await databaseService.ForceHealthCheckAsync(cts.Token);
+                var state = healthy ? DatabaseConnectionState.Connected : DatabaseConnectionState.Error;
+                UpdateDatabaseStatusFromState(state, healthy ? "Health check inicial OK" : "Health check inicial falló");
+            }
+            catch (System.OperationCanceledException)
+            {
+                UpdateDatabaseStatusFromState(DatabaseConnectionState.Error, "Health check timeout");
+            }
+            catch (System.Exception ex)
+            {
+                var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
+                logger.Logger.LogWarning(ex, "⚠️ Error en health-check inicial desde ViewModel");
+                UpdateDatabaseStatusFromState(DatabaseConnectionState.Error, $"Health check error: {ex.Message}");
+            }
+        }
+
+        private void OnDatabaseConnectionStateChanged(object? sender, DatabaseConnectionStateChangedEventArgs e)
+        {
+            UpdateDatabaseStatusFromState(e.CurrentState, e.Message ?? string.Empty);
+        }
+
+        private void OnNetworkConnectivityChanged(object? sender, GestLog.Models.Events.NetworkConnectivityChangedEventArgs e)
+        {
+            // Mostrar disponibilidad de red como parte del tooltip
+            var msg = e.IsAvailable ? "Red disponible" : "Red no disponible";
+            UpdateDatabaseStatusFromState(e.IsAvailable ? DatabaseConnectionState.Reconnecting : DatabaseConnectionState.Error, msg);
         }
     }
 }

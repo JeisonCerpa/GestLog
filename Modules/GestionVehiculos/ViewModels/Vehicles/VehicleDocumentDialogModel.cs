@@ -36,6 +36,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         public System.Windows.Window? Owner { get; set; }
 
+        // Evento para notificar éxito y permitir que la vista cierre el diálogo
+        public event EventHandler? OnExito;
+
         public VehicleDocumentDialogModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger, IVehicleService vehicleService)
         {
             _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -321,20 +324,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         private void CloseDialog()
         {
-            if (Owner != null)
+            // Disparar el evento para que la vista cierre el diálogo de forma consistente
+            try
             {
-                Owner.DialogResult = true;
-                Owner.Close();
+                OnExito?.Invoke(this, EventArgs.Empty);
             }
-            else
-            {
-                var wnd = System.Windows.Application.Current.Windows[System.Windows.Application.Current.Windows.Count - 1] as System.Windows.Window;
-                if (wnd != null)
-                {
-                    wnd.DialogResult = true;
-                    wnd.Close();
-                }
-            }
+            catch { }
         }
 
         private static string SanitizeFilePart(string input)

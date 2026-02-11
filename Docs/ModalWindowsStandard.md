@@ -155,6 +155,11 @@ namespace GestLog.Modules.[Modulo].Views.[Carpeta]
                     Close();
                 }
             };
+
+            // Asegura que el overlay cubra toda la pantalla del owner
+            var ownerWindow = Application.Current?.MainWindow;
+            if (ownerWindow != null)
+                ConfigurarParaVentanaPadre(ownerWindow);
         }
 
         private void CancelarButton_Click(object sender, RoutedEventArgs e)
@@ -267,11 +272,28 @@ public async Task AbrirDialogoAsync()
 - **Cierre por Overlay**: Validar que `RootGrid` sea el Name del Grid raíz para evitar cierres accidentales
 - **DI**: El ViewModel se obtiene desde `app.ServiceProvider.GetRequiredService<[VIEWMODEL]>()` - debe estar registrado en `Startup.UsuariosPersonas.cs`
 
-## Recursos Disponibles (desde ModalWindowsStandard.xaml)
+- **Nota añadida (Comportamiento recomendado)**: si el constructor de la ventana obtiene el ViewModel desde el contenedor DI, es recomendable llamar automáticamente a `ConfigurarParaVentanaPadre(Application.Current?.MainWindow)` justo después de asignar el `DataContext`. Esto garantiza que la ventana modal se maximice sobre la ventana padre y que el overlay oscuro (`RootGrid`) cubra toda la pantalla — evita el problema de overlay pequeño centrado.
 
-- **Brushes**: `PrimaryBrush`, `SurfaceBrush`, `LightGrayBrush`, `BorderBrush`, `TextPrimaryBrush`, `ErrorBrush`
-- **Effects**: `WindowShadow`, `SectionShadow`, `HeaderShadow`
-- **Styles**: `HeaderTextStyle`, `SubHeaderTextStyle`, `CloseButton`, `PrimaryButtonStyle`
+  Ejemplo corto en el constructor (C#):
+
+  ```csharp
+  InitializeComponent();
+  var app = (App)Application.Current;
+  var vm = app.ServiceProvider?.GetService<MyDialogViewModel>();
+  if (vm != null)
+  {
+      DataContext = vm;
+      vm.Owner = this;
+
+      // Asegura que el overlay cubra toda la pantalla del owner
+      var ownerWindow = Application.Current?.MainWindow;
+      if (ownerWindow != null)
+          ConfigurarParaVentanaPadre(ownerWindow);
+  }
+  ```
+
+  - Razón: algunos diálogos se abren usando el constructor vacío que resuelve el ViewModel desde DI; al maximizar la ventana desde el código constructor se evita que el Grid overlay quede limitado al tamaño de la tarjeta (card) central.
+  - Alternativa: el llamador puede usar `dialog.ConfigurarParaVentanaPadre(owner)` antes de `ShowDialog()` si prefiere control explícito.
 
 ---
 

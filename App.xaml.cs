@@ -190,27 +190,88 @@ public partial class App : System.Windows.Application
 
             // Aplicar migraciones pendientes automáticamente ANTES de cualquier acceso a la BD
             splash.ShowStatus("Aplicando migraciones de base de datos...");
+            GestLog.Services.Core.IMigrationService? migrationService = LoggingService.GetService<GestLog.Services.Core.IMigrationService>();
             try
             {
-                var migrationService = LoggingService.GetService<GestLog.Services.Core.IMigrationService>();
                 if (migrationService != null)
                 {
-                    using var migrationCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    await migrationService.EnsureDatabaseUpdatedAsync();
-                    splash.ShowStatus("Migraciones aplicadas exitosamente");
-                    await System.Threading.Tasks.Task.Delay(500);
+                    // Ejecutar migraciones en un task de fondo y proteger con timeout para no bloquear la UI
+                    var migrationTask = Task.Run(async () => await migrationService.EnsureDatabaseUpdatedAsync());
+                    var completed = await Task.WhenAny(migrationTask, Task.Delay(TimeSpan.FromSeconds(30)));
+
+                    if (completed != migrationTask)
+                    {
+                        _logger?.Logger.LogWarning("⚠️ Timeout aplicando migraciones (30s). Continuando sin bloquear la UI.");
+                        splash.ShowStatus("Aplicación de migraciones excedió el tiempo. Continuando sin migrar.");
+                        await System.Threading.Tasks.Task.Delay(500);
+                    }
+                    else
+                    {
+                        // Si el task falló, esta await propagará la excepción para manejarla abajo
+                        await migrationTask;
+                        splash.ShowStatus("Migraciones aplicadas exitosamente");
+                        await System.Threading.Tasks.Task.Delay(500);
+                    }
                 }
                 else
                 {
                     _logger?.Logger.LogWarning("⚠️ Servicio de migraciones no disponible");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                _logger?.Logger.LogWarning("⚠️ Migraciones canceladas por token");
+                splash.ShowStatus("Migraciones canceladas. Continuando...");
+                await System.Threading.Tasks.Task.Delay(500);
+            }
             catch (Exception exMigrations)
             {
                 _logger?.Logger.LogError(exMigrations, "❌ Error al aplicar migraciones de base de datos");
-                splash.ShowStatus($"Error en migraciones: {exMigrations.Message}");
-                await System.Threading.Tasks.Task.Delay(1500);
-                throw; // Re-lanzar para que la aplicación no continúe si hay error crítico
+                // Mostrar diálogo con opciones para que el usuario decida sin bloquear indefinidamente
+                var mbResult = System.Windows.MessageBox.Show(
+                    $"Error al aplicar migraciones:\n{exMigrations.Message}\n\nSeleccione Sí para reintentar, No para continuar sin migrar, Cancelar para salir.",
+                    "Error de Migraciones",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Warning);
+
+                if (mbResult == MessageBoxResult.Yes)
+                {
+                    _logger?.Logger.LogInformation("Usuario eligió reintentar migraciones");
+                    try
+                    {
+                        // Reintento (una única vez) en background con timeout
+                        var retryTask = Task.Run(async () => await migrationService!.EnsureDatabaseUpdatedAsync());
+                        var completedRetry = await Task.WhenAny(retryTask, Task.Delay(TimeSpan.FromSeconds(30)));
+                        if (completedRetry != retryTask)
+                        {
+                            _logger?.Logger.LogWarning("⚠️ Timeout en reintento de migraciones");
+                            System.Windows.MessageBox.Show("Reintento de migraciones excedió el tiempo. Se continuará sin aplicar migraciones.", "Reintento Timeout", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            await retryTask; // propagará excepción si falla
+                            splash.ShowStatus("Migraciones aplicadas exitosamente (reintento)");
+                            await System.Threading.Tasks.Task.Delay(500);
+                        }
+                    }
+                    catch (Exception retryEx)
+                    {
+                        _logger?.Logger.LogError(retryEx, "❌ Reintento de migraciones falló");
+                        System.Windows.MessageBox.Show($"Reintento falló: {retryEx.Message}", "Migraciones fallidas", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else if (mbResult == MessageBoxResult.No)
+                {
+                    _logger?.Logger.LogWarning("Usuario eligió continuar sin aplicar migraciones");
+                    // Continuar la aplicación sin migrar
+                }
+                else
+                {
+                    _logger?.Logger.LogCritical("Usuario eligió cerrar la aplicación por error en migraciones");
+                    splash.Close();
+                    System.Windows.Application.Current.Shutdown(1);
+                    return;
+                }
             }
 
             // Crear un CTS con timeout para no bloquear indefinidamente el splash
