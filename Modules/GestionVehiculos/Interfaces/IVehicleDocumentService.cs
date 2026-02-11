@@ -29,7 +29,11 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces
         /// </summary>
         /// <param name="documentDto">DTO con los datos del documento</param>
         /// <returns>ID del documento creado</returns>
-        Task<Guid> AddAsync(VehicleDocumentDto documentDto);
+        Task<Guid> AddAsync(VehicleDocumentDto documentDto);        /// <summary>
+        /// Agrega un nuevo documento y, si existe un documento vigente del mismo tipo para el vehículo,
+        /// marca el anterior como archivado de forma atómica. Retorna información del nuevo documento y del antiguo.
+        /// </summary>
+        Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto);
 
         /// <summary>
         /// Actualiza un documento existente

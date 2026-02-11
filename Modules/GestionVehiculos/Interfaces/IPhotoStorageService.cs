@@ -13,5 +13,10 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces
         /// Retorna una URI pública o ruta adecuada para uso en Image Source
         /// </summary>
         Task<string> GetUriAsync(string path);
+
+        /// <summary>
+        /// Mueve o renombra un archivo dentro del storage. Retorna true si se movió correctamente.
+        /// </summary>
+        Task<bool> MoveAsync(string sourcePath, string destPath);
     }
 }

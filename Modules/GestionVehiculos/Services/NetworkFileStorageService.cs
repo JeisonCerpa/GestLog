@@ -147,5 +147,40 @@ namespace GestLog.Modules.GestionVehiculos.Services
             if (string.IsNullOrWhiteSpace(path)) return Task.FromResult(string.Empty);
             return Task.FromResult(path);
         }
+
+        public async Task<bool> MoveAsync(string sourcePath, string destPath)
+        {
+            if (string.IsNullOrWhiteSpace(sourcePath) || string.IsNullOrWhiteSpace(destPath)) return false;
+
+            try
+            {
+                var destDir = Path.GetDirectoryName(destPath);
+                if (!string.IsNullOrWhiteSpace(destDir)) Directory.CreateDirectory(destDir);
+
+                // Intentar copy+delete con backoff
+                const int maxRetries = 3;
+                int attempt = 0;
+                while (attempt < maxRetries)
+                {
+                    try
+                    {
+                        File.Copy(sourcePath, destPath, true);
+                        File.Delete(sourcePath);
+                        return await Task.FromResult(true);
+                    }
+                    catch (IOException)
+                    {
+                        attempt++;
+                        await Task.Delay(200 * attempt);
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

@@ -112,6 +112,122 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 _logger.LogError(ex, "Error al crear documento de vehículo");
                 throw;
             }
+        }        /// <summary>
+        /// Crea un nuevo documento de vehículo y reemplaza el existente
+        /// </summary>
+        public async Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto)
+        {
+            try
+            {
+                using var context = await _dbContextFactory.CreateDbContextAsync();
+
+                // Use the EF Core execution strategy to run the transactional unit as a retriable operation
+                var strategy = context.Database.CreateExecutionStrategy();
+
+                return await strategy.ExecuteAsync(async () =>
+                {
+                    // All operations that should be retried must be inside this delegate
+                    using var tx = await context.Database.BeginTransactionAsync();
+
+                    // Validar vehículo
+                    var vehicleExists = await context.Vehicles.AnyAsync(v => v.Id == documentDto.VehicleId);
+                    if (!vehicleExists) throw new InvalidOperationException($"El vehículo {documentDto.VehicleId} no existe");
+
+                    // Buscar documento vigente del mismo tipo
+                    var existing = await context.VehicleDocuments
+                        .Where(d => d.VehicleId == documentDto.VehicleId && d.DocumentType == documentDto.DocumentType && d.IsActive)
+                        .OrderByDescending(d => d.ExpirationDate)
+                        .FirstOrDefaultAsync();
+
+                    var result = new ReplaceDocumentResultDto();
+
+                    if (existing != null)
+                    {
+                        result.ArchivedDocumentId = existing.Id;
+                        result.ArchivedFilePath = existing.FilePath;
+
+                        existing.IsActive = false;
+                        existing.Status = GestLog.Modules.GestionVehiculos.Models.Enums.DocumentStatus.Archivado;
+                        existing.ArchivedAt = DateTimeOffset.UtcNow;
+                        existing.UpdatedAt = DateTimeOffset.UtcNow;
+                        context.VehicleDocuments.Update(existing);
+                    }
+
+                    VehicleDocument newDoc;
+                    // If caller provided an Id and a placeholder exists, reuse it by updating
+                    if (documentDto.Id != Guid.Empty)
+                    {
+                        var placeholder = await context.VehicleDocuments.FirstOrDefaultAsync(d => d.Id == documentDto.Id);
+                        if (placeholder != null)
+                        {
+                            // Update placeholder to be the active document
+                            placeholder.VehicleId = documentDto.VehicleId;
+                            placeholder.DocumentType = documentDto.DocumentType;
+                            placeholder.DocumentNumber = documentDto.DocumentNumber;
+                            placeholder.IssuedDate = documentDto.IssuedDate;
+                            placeholder.ExpirationDate = documentDto.ExpirationDate;
+                            placeholder.FileName = documentDto.FileName;
+                            placeholder.FilePath = documentDto.FilePath;
+                            placeholder.Notes = documentDto.Notes;
+                            placeholder.IsActive = true;
+                            placeholder.Status = GestLog.Modules.GestionVehiculos.Models.Enums.DocumentStatus.Vigente;
+                            placeholder.UpdatedAt = DateTimeOffset.UtcNow;
+
+                            context.VehicleDocuments.Update(placeholder);
+                            newDoc = placeholder;
+                        }
+                        else
+                        {
+                            newDoc = new VehicleDocument
+                            {
+                                Id = documentDto.Id,
+                                VehicleId = documentDto.VehicleId,
+                                DocumentType = documentDto.DocumentType,
+                                DocumentNumber = documentDto.DocumentNumber,
+                                IssuedDate = documentDto.IssuedDate,
+                                ExpirationDate = documentDto.ExpirationDate,
+                                FileName = documentDto.FileName,
+                                FilePath = documentDto.FilePath,
+                                Notes = documentDto.Notes,
+                                IsActive = true,
+                                Status = GestLog.Modules.GestionVehiculos.Models.Enums.DocumentStatus.Vigente,
+                                CreatedAt = DateTimeOffset.UtcNow
+                            };
+                            context.VehicleDocuments.Add(newDoc);
+                        }
+                    }
+                    else
+                    {
+                        newDoc = new VehicleDocument
+                        {
+                            Id = Guid.NewGuid(),
+                            VehicleId = documentDto.VehicleId,
+                            DocumentType = documentDto.DocumentType,
+                            DocumentNumber = documentDto.DocumentNumber,
+                            IssuedDate = documentDto.IssuedDate,
+                            ExpirationDate = documentDto.ExpirationDate,
+                            FileName = documentDto.FileName,
+                            FilePath = documentDto.FilePath,
+                            Notes = documentDto.Notes,
+                            IsActive = true,
+                            Status = GestLog.Modules.GestionVehiculos.Models.Enums.DocumentStatus.Vigente,
+                            CreatedAt = DateTimeOffset.UtcNow
+                        };
+                        context.VehicleDocuments.Add(newDoc);
+                    }
+
+                    await context.SaveChangesAsync();
+                    await tx.CommitAsync();
+
+                    result.NewDocumentId = newDoc.Id;
+                    return result;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en AddWithReplaceAsync");
+                throw;
+            }
         }
 
         /// <summary>

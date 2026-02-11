@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using GestLog.Modules.GestionVehiculos.Models.Entities;
+using GestLog.Modules.GestionVehiculos.Models.Enums;
 
 namespace GestLog.Modules.DatabaseConnection
 {
@@ -370,6 +371,17 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.Property(e => e.ExpirationDate)
                     .IsRequired();
+
+                // Nuevas columnas: Status y ArchivedAt
+                // Mapear enum DocumentStatus como int en la BD y definir valor por defecto
+                entity.Property(e => e.Status)
+                    .HasColumnName("Status")
+                    .HasConversion<int>()
+                    .HasDefaultValue(DocumentStatus.Vigente);
+
+                entity.Property(e => e.ArchivedAt)
+                    .HasColumnType("datetimeoffset")
+                    .IsRequired(false);
                 
                 entity.Property(e => e.FileName)
                     .HasMaxLength(255);
@@ -397,7 +409,13 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.HasIndex(e => e.ExpirationDate)
                     .HasDatabaseName("IX_VehicleDocuments_ExpirationDate");
-                  entity.HasIndex(e => new { e.VehicleId, e.ExpirationDate })
+                
+                entity.HasIndex(e => new { e.VehicleId, e.DocumentType })
+                    .HasDatabaseName("IX_VehicleDocuments_VehicleId_DocumentType_Active")
+                    .IsUnique()
+                    .HasFilter("[IsActive] = 1");
+                
+                entity.HasIndex(e => new { e.VehicleId, e.ExpirationDate })
                     .HasDatabaseName("IX_VehicleDocuments_VehicleId_ExpirationDate");
             });
         }

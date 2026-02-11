@@ -14,9 +14,6 @@ using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
-    /// <summary>
-    /// ViewModel para el diálogo de creación/edición de documentos de vehículo
-    /// </summary>
     public class VehicleDocumentDialogModel : ViewModelBase
     {
         private readonly IVehicleDocumentService _documentService;
@@ -36,7 +33,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private double _uploadProgress;
         private bool _isUploading;
         private System.Threading.CancellationTokenSource? _uploadCts;
-        // Ventana dueña, asignada desde el code-behind para operaciones que necesitan un owner (dialogs)
+
         public System.Windows.Window? Owner { get; set; }
 
         public VehicleDocumentDialogModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger, IVehicleService vehicleService)
@@ -131,9 +128,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         public ICommand SelectFileCommand { get; }
         public IAsyncRelayCommand SaveCommand { get; }
-        public ICommand CancelUploadCommand { get; }
-
-        private void SelectFile()
+        public ICommand CancelUploadCommand { get; }        private void SelectFile()
         {
             var ofd = new Microsoft.Win32.OpenFileDialog();
             ofd.Filter = "PDF Files|*.pdf|Images|*.png;*.jpg;*.jpeg|All files|*.*";
@@ -157,10 +152,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private async Task SaveAsync()
         {
             ErrorMessage = string.Empty;
-
-            // Log de inicio
             _logger.LogDebug("SaveAsync iniciado");
 
+            // Validar VehicleId
             if (VehicleId == Guid.Empty)
             {
                 ErrorMessage = "⚠️ VehicleId inválido.";
@@ -168,8 +162,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogDebug($"SaveAsync: VehicleId = {VehicleId}");
-
+            // Validar DocumentType
             if (string.IsNullOrWhiteSpace(DocumentType))
             {
                 ErrorMessage = "⚠️ Seleccione el tipo de documento.";
@@ -177,8 +170,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogDebug($"SaveAsync: DocumentType = {DocumentType}");
-
+            // Validar SelectedFilePath
             if (SelectedFilePath == null || !File.Exists(SelectedFilePath))
             {
                 ErrorMessage = "⚠️ Seleccione un archivo válido.";
@@ -186,20 +178,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogDebug($"SaveAsync: SelectedFilePath = {SelectedFilePath}");
-
-            // Validaciones básicas
+            // Validar extensión
             var allowed = new[] { ".pdf", ".png", ".jpg", ".jpeg" };
             var ext = Path.GetExtension(SelectedFilePath).ToLowerInvariant();
             if (Array.IndexOf(allowed, ext) < 0)
             {
-                ErrorMessage = $"⚠️ Extensión no permitida: {ext}. Permitidas: .pdf, .png, .jpg, .jpeg";
+                ErrorMessage = $"⚠️ Extensión no permitida: {ext}";
                 _logger.LogWarning($"SaveAsync: Extensión no permitida: {ext}");
                 return;
             }
 
+            // Validar tamaño
             var fi = new FileInfo(SelectedFilePath);
-            const long maxBytes = 10 * 1024 * 1024; // 10 MB
+            const long maxBytes = 10 * 1024 * 1024;
             if (fi.Length > maxBytes)
             {
                 ErrorMessage = $"⚠️ Archivo muy grande: {(fi.Length / 1024 / 1024)}MB. Máximo: 10MB";
@@ -207,115 +198,117 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            _logger.LogDebug("SaveAsync: Archivo válido. Iniciando subida...");
-
             try
             {
-                // Subir archivo al storage con reporte de progreso
                 IsUploading = true;
                 UploadProgress = 0;
                 _uploadCts = new System.Threading.CancellationTokenSource();
                 var token = _uploadCts.Token;
 
-                var progress = new Progress<double>(p => {
-                    UploadProgress = p;
-                    try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, p, true)); } catch { }
-                });
+                var progress = new Progress<double>(p => UploadProgress = p);
 
-                // Primero crear el registro en la BD para obtener el documentId y usarlo en el nombre del archivo
-                var initialDto = new VehicleDocumentDto
+                // Verificar si existe documento vigente del mismo tipo (para SOAT/Tecno)
+                var isSoatOrTecno = DocumentType.Equals("SOAT", StringComparison.OrdinalIgnoreCase) || 
+                                   DocumentType.Equals("Tecno-Mecánica", StringComparison.OrdinalIgnoreCase);
+                
+                var existingActive = (await _documentService.GetByVehicleIdAsync(VehicleId))
+                    .FirstOrDefault(d => d.DocumentType.Equals(DocumentType, StringComparison.OrdinalIgnoreCase) && d.IsActive);
+
+                if (existingActive != null && isSoatOrTecno)
                 {
+                    var confirmMsg = $"Ya existe un {DocumentType} vigente. ¿Desea reemplazarlo?";
+                    var ok = System.Windows.MessageBox.Show(Owner, confirmMsg, "Reemplazar documento", 
+                        System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
+                    
+                    if (!ok)
+                    {
+                        IsUploading = false;
+                        return;
+                    }
+                }
+
+                // Generar Id localmente (sin tocar BD aún)
+                var documentId = Guid.NewGuid();
+                var fileExt = Path.GetExtension(SelectedFileName) ?? string.Empty;
+                var storageFileName = SanitizeFilePart($"{DocumentType}_{VehicleId}_{documentId}{fileExt}");
+
+                // Subir archivo
+                using var fileStream = File.OpenRead(SelectedFilePath);
+                var storagePath = await _photoStorage.SaveOriginalAsync(fileStream, storageFileName, progress, token);
+
+                // Crear DTO con información completa
+                var dto = new VehicleDocumentDto
+                {
+                    Id = documentId,
                     VehicleId = VehicleId,
                     DocumentType = DocumentType,
                     DocumentNumber = DocumentNumber,
                     IssuedDate = IssuedDate.HasValue ? new DateTimeOffset(IssuedDate.Value) : DateTimeOffset.UtcNow,
                     ExpirationDate = ExpirationDate.HasValue ? new DateTimeOffset(ExpirationDate.Value) : DateTimeOffset.UtcNow.AddYears(1),
-                    FileName = string.Empty,
-                    FilePath = string.Empty,
-                    Notes = Notes
-                };
-
-                var createdId = await _documentService.AddAsync(initialDto);
-                _logger.LogDebug($"SaveAsync: Registro inicial creado con ID: {createdId}");
-
-                // Construir el nombre de archivo usando el documentId en lugar del timestamp
-                string plate = string.Empty;
-                try
-                {
-                    var vehicle = await _vehicleService.GetByIdAsync(VehicleId);
-                    plate = vehicle?.Plate ?? string.Empty;
-                }
-                catch { }
-
-                var parts = new System.Collections.Generic.List<string>();
-                if (!string.IsNullOrWhiteSpace(DocumentType)) parts.Add(SanitizeFilePart(DocumentType));
-                if (!string.IsNullOrWhiteSpace(plate)) parts.Add(SanitizeFilePart(plate));
-                if (!string.IsNullOrWhiteSpace(DocumentNumber)) parts.Add(SanitizeFilePart(DocumentNumber));
-                parts.Add(createdId.ToString());
-                var storageFileName = string.Join("_", parts) + ext;
-
-                using var fs = File.OpenRead(SelectedFilePath);
-                var storagePath = await _photoStorage.SaveOriginalAsync(fs, storageFileName, progress, token);
-
-                _logger.LogDebug($"SaveAsync: Archivo subido a {storagePath}");
-
-                // Notify completion to subscribers
-                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
-
-                // Actualizar el registro con la información del archivo
-                var updateDto = new VehicleDocumentDto
-                {
-                    Id = createdId,
-                    VehicleId = VehicleId,
-                    DocumentType = DocumentType,
-                    DocumentNumber = DocumentNumber,
-                    IssuedDate = initialDto.IssuedDate,
-                    ExpirationDate = initialDto.ExpirationDate,
                     FileName = storageFileName,
                     FilePath = storagePath,
                     Notes = Notes
-                };
-
-                var updated = await _documentService.UpdateAsync(updateDto);
-                if (!updated)
+                };                // Para SOAT/Tecno: usar AddWithReplaceAsync (operación atómica)
+                if (isSoatOrTecno)
                 {
-                    _logger.LogWarning($"SaveAsync: No se pudo actualizar el registro del documento {createdId} con la info del archivo");
-                }
+                    var replaceResult = await _documentService.AddWithReplaceAsync(dto);
+                    var newDocId = replaceResult.NewDocumentId;
 
-                // Enviar mensaje para notificar creación y permitir refrescar listados
-                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, createdId)); } catch { }
-
-                // cerrar diálogo con resultado OK usando Owner si está disponible
-                if (Owner != null)
-                {
-                    _logger.LogDebug("SaveAsync: Cerrando diálogo con DialogResult=true");
-                    Owner.DialogResult = true;
-                    Owner.Close();
+                    // Intentar mover archivo antiguo a carpeta 'archivo'
+                    if (replaceResult.ArchivedDocumentId.HasValue && !string.IsNullOrWhiteSpace(replaceResult.ArchivedFilePath))
+                    {
+                        try
+                        {
+                            var archivedFolder = Path.Combine(Path.GetDirectoryName(replaceResult.ArchivedFilePath) ?? string.Empty, "archivo");
+                            var archivedFileName = Path.GetFileName(replaceResult.ArchivedFilePath);
+                            var archivedPath = Path.Combine(archivedFolder, archivedFileName);
+                            
+                            var moved = await _photoStorage.MoveAsync(replaceResult.ArchivedFilePath, archivedPath);
+                            
+                            if (moved)
+                            {
+                                // Crear DTO para actualizar la ruta del archivo archivado
+                                var archivedDoc = await _documentService.GetByIdAsync(replaceResult.ArchivedDocumentId.Value);
+                                if (archivedDoc != null)
+                                {
+                                    archivedDoc.FilePath = archivedPath;
+                                    archivedDoc.UpdatedAt = DateTimeOffset.UtcNow;
+                                    await _documentService.UpdateAsync(archivedDoc);
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogWarning("No se pudo mover archivo antiguo a carpeta archivo para documento {DocumentId}", replaceResult.ArchivedDocumentId);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error moviendo archivo antiguo para documento {DocumentId}", replaceResult.ArchivedDocumentId);
+                        }
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("SaveAsync: Owner es null, intentando cerrar última ventana");
-                    var wnd = System.Windows.Application.Current.Windows[System.Windows.Application.Current.Windows.Count - 1] as System.Windows.Window;
-                    if (wnd != null)
-                    {
-                        wnd.DialogResult = true;
-                        wnd.Close();
-                    }
+                    // Para otros tipos: crear nuevo registro
+                    await _documentService.AddAsync(dto);
                 }
+
+                // Cerrar diálogo
+                CloseDialog();
+
+                // Enviar mensajes
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, documentId)); } catch { }
+            }
+            catch (OperationCanceledException)
+            {
+                ErrorMessage = "Operación cancelada por el usuario.";
+                _logger.LogWarning("SaveAsync: Upload cancelado");
             }
             catch (Exception ex)
             {
-                if (ex is OperationCanceledException)
-                {
-                    ErrorMessage = "Operación cancelada por el usuario.";
-                    _logger.LogWarning("SaveAsync: Upload cancelado por usuario");
-                    try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, UploadProgress, false)); } catch { }
-                }
-                else
-                {
-                    _logger.LogError(ex, "SaveAsync: Error al guardar documento");
-                    ErrorMessage = $"❌ Error al guardar: {ex.Message}";
-                }
+                _logger.LogError(ex, "SaveAsync: Error al guardar documento");
+                ErrorMessage = $"❌ Error: {ex.Message}";
             }
             finally
             {
@@ -323,39 +316,55 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 UploadProgress = 0;
                 _uploadCts?.Dispose();
                 _uploadCts = null;
-                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 0, false)); } catch { }
+            }
+        }
+
+        private void CloseDialog()
+        {
+            if (Owner != null)
+            {
+                Owner.DialogResult = true;
+                Owner.Close();
+            }
+            else
+            {
+                var wnd = System.Windows.Application.Current.Windows[System.Windows.Application.Current.Windows.Count - 1] as System.Windows.Window;
+                if (wnd != null)
+                {
+                    wnd.DialogResult = true;
+                    wnd.Close();
+                }
             }
         }
 
         private static string SanitizeFilePart(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-            // Reemplazar espacios por '_' y eliminar caracteres inválidos para nombre de archivo
+            
             var sanitized = input.Trim().Replace(' ', '_');
             var invalid = Path.GetInvalidFileNameChars();
+            
             foreach (var c in invalid)
-            {
                 sanitized = sanitized.Replace(c.ToString(), string.Empty);
-            }
-            // También quitar tildes básicos y caracteres especiales comunes
+            
             sanitized = sanitized.Normalize(System.Text.NormalizationForm.FormD);
             var sb = new System.Text.StringBuilder();
+            
             foreach (var ch in sanitized)
             {
                 var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
                 if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
                     sb.Append(ch);
             }
+            
             return sb.ToString();
         }
-    }
-
-    // RelayCommand simple
-    public class RelayCommand : System.Windows.Input.ICommand
+    }    public class RelayCommand : ICommand
     {
         private readonly Action _action;
         public RelayCommand(Action action) => _action = action ?? throw new ArgumentNullException(nameof(action));
-#pragma warning disable CS0067 // El evento CanExecuteChanged puede no usarse en esta implementación simplificada
+        
+#pragma warning disable CS0067 // El evento nunca se usa
         public event EventHandler? CanExecuteChanged;
 #pragma warning restore CS0067
         public bool CanExecute(object? parameter) => true;

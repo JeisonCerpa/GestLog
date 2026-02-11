@@ -1,4 +1,5 @@
 using System;
+using GestLog.Modules.GestionVehiculos.Models.Enums;
 
 namespace GestLog.Modules.GestionVehiculos.Models.Entities
 {
@@ -30,7 +31,9 @@ namespace GestLog.Modules.GestionVehiculos.Models.Entities
         /// <summary>
         /// Número del documento (ej: número de póliza SOAT, número de certificado, etc.)
         /// </summary>
-        public string? DocumentNumber { get; set; }        /// <summary>
+        public string? DocumentNumber { get; set; }
+
+        /// <summary>
         /// Fecha de emisión del documento
         /// </summary>
         public DateTimeOffset IssuedDate { get; set; }
@@ -58,7 +61,19 @@ namespace GestLog.Modules.GestionVehiculos.Models.Entities
         /// <summary>
         /// Indica si el documento está activo/vigente
         /// </summary>
-        public bool IsActive { get; set; } = true;        /// <summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Indica el estado semántico del documento (vigente, archivado, etc.)
+        /// </summary>
+        public DocumentStatus Status { get; set; } = DocumentStatus.Vigente;
+
+        /// <summary>
+        /// Fecha en que el documento fue archivado (si aplica)
+        /// </summary>
+        public DateTimeOffset? ArchivedAt { get; set; }
+
+        /// <summary>
         /// Fecha de creación del registro en el sistema
         /// </summary>
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
