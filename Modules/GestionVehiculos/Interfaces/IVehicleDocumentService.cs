@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using System.Threading;
 
 namespace GestLog.Modules.GestionVehiculos.Interfaces
 {
@@ -33,7 +34,7 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces
         /// Agrega un nuevo documento y, si existe un documento vigente del mismo tipo para el vehículo,
         /// marca el anterior como archivado de forma atómica. Retorna información del nuevo documento y del antiguo.
         /// </summary>
-        Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto);
+        Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto, string uploadedStoragePath, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Actualiza un documento existente

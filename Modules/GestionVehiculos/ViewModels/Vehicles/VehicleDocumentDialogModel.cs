@@ -11,6 +11,9 @@ using Microsoft.Win32;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionVehiculos.Messages.Documents;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using System.Diagnostics;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -28,7 +31,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private DateTime? _expirationDate = DateTime.Now.AddYears(1);
         private string? _notes;
         private string? _selectedFilePath;
-        private string? _selectedFileName;
+        private string _selectedFileName = string.Empty;
+        private string _selectedFileSize = string.Empty;
+        private string _selectedFileMimeType = string.Empty;
+        private ImageSource? _selectedFilePreview;
         private string _errorMessage = string.Empty;
         private double _uploadProgress;
         private bool _isUploading;
@@ -51,6 +57,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             SelectFileCommand = new RelayCommand(SelectFile);
             SaveCommand = new AsyncRelayCommand(SaveAsync);
             CancelUploadCommand = new RelayCommand(() => _uploadCts?.Cancel());
+
+            OpenSelectedFileCommand = new RelayCommand(OpenSelectedFile);
         }
 
         public ObservableCollection<string> DocumentTypes { get; }
@@ -100,7 +108,25 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public string? SelectedFileName
         {
             get => _selectedFileName;
-            set => SetProperty(ref _selectedFileName, value);
+            set => SetProperty(ref _selectedFileName, value ?? string.Empty);
+        }
+
+        public string? SelectedFileSize
+        {
+            get => _selectedFileSize;
+            set => SetProperty(ref _selectedFileSize, value ?? string.Empty);
+        }
+
+        public string? SelectedFileMimeType
+        {
+            get => _selectedFileMimeType;
+            set => SetProperty(ref _selectedFileMimeType, value ?? string.Empty);
+        }
+
+        public ImageSource? SelectedFilePreview
+        {
+            get => _selectedFilePreview;
+            set => SetProperty(ref _selectedFilePreview, value);
         }
 
         public string ErrorMessage
@@ -131,7 +157,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         public ICommand SelectFileCommand { get; }
         public IAsyncRelayCommand SaveCommand { get; }
-        public ICommand CancelUploadCommand { get; }        private void SelectFile()
+        public ICommand CancelUploadCommand { get; }
+        public ICommand OpenSelectedFileCommand { get; }
+
+        private void SelectFile()
         {
             var ofd = new Microsoft.Win32.OpenFileDialog();
             ofd.Filter = "PDF Files|*.pdf|Images|*.png;*.jpg;*.jpeg|All files|*.*";
@@ -147,8 +176,84 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
             if (result == true)
             {
-                SelectedFilePath = ofd.FileName;
-                SelectedFileName = Path.GetFileName(SelectedFilePath);
+                try
+                {
+                    SelectedFilePath = ofd.FileName;
+                    SelectedFileName = Path.GetFileName(SelectedFilePath);
+
+                    var fi = new FileInfo(SelectedFilePath);
+                    SelectedFileSize = FormatFileSize(fi.Length);
+
+                    var ext = Path.GetExtension(SelectedFilePath).ToLowerInvariant();
+                    SelectedFileMimeType = ext switch
+                    {
+                        ".png" => "image/png",
+                        ".jpg" => "image/jpeg",
+                        ".jpeg" => "image/jpeg",
+                        ".pdf" => "application/pdf",
+                        _ => "application/octet-stream"
+                    };
+
+                    // Preview for images
+                    if (SelectedFileMimeType.StartsWith("image/"))
+                    {
+                        try
+                        {
+                            var img = new BitmapImage();
+                            img.BeginInit();
+                            img.CacheOption = BitmapCacheOption.OnLoad;
+                            img.UriSource = new Uri(SelectedFilePath);
+                            img.EndInit();
+                            img.Freeze();
+                            SelectedFilePreview = img;
+
+                            // Log info with [DEBUG] tag
+                            try { _logger.LogInformation("[DEBUG] SelectFile: preview creado para {File}", SelectedFileName); } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            SelectedFilePreview = null;
+                            try { _logger.LogInformation("[DEBUG] SelectFile: fallo preview para {File}: {Message}", SelectedFileName, ex.Message); } catch { }
+                        }
+                    }
+                    else
+                    {
+                        SelectedFilePreview = null;
+                    }
+
+                    // Log selection metadata at Information level with [DEBUG] tag
+                    try
+                    {
+                        _logger.LogInformation("[DEBUG] SelectFile: seleccionado {FilePath} Name={Name} Size={Size} Mime={Mime}", SelectedFilePath, SelectedFileName, SelectedFileSize, SelectedFileMimeType);
+                    }
+                    catch { }
+                }
+                catch (Exception ex)
+                {
+                    SelectedFileSize = null; SelectedFileMimeType = null; SelectedFilePreview = null;
+                    try { _logger.LogInformation("[DEBUG] SelectFile: error leyendo archivo {FilePath}: {Message}", ofd.FileName, ex.Message); } catch { }
+                }
+            }
+        }
+
+        private static string FormatFileSize(long bytes)
+        {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024.0).ToString("0.0") + " KB";
+            return (bytes / (1024.0 * 1024.0)).ToString("0.0") + " MB";
+        }
+
+        private void OpenSelectedFile()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedFilePath) || !File.Exists(SelectedFilePath)) return;
+            try
+            {
+                var psi = new ProcessStartInfo(SelectedFilePath) { UseShellExecute = true };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OpenSelectedFile: no se pudo abrir archivo {File}", SelectedFilePath);
             }
         }
 
@@ -251,49 +356,31 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     FileName = storageFileName,
                     FilePath = storagePath,
                     Notes = Notes
-                };                // Para SOAT/Tecno: usar AddWithReplaceAsync (operación atómica)
+                };
+
+                // Variable para almacenar el Id real del documento creado
+                Guid createdDocumentId = Guid.Empty;
+
+                // Para SOAT/Tecno: usar AddWithReplaceAsync (operación atómica)
                 if (isSoatOrTecno)
                 {
-                    var replaceResult = await _documentService.AddWithReplaceAsync(dto);
-                    var newDocId = replaceResult.NewDocumentId;
+                    // Llamar a la nueva firma que acepta uploadedStoragePath y CancellationToken
+                    var replaceResult = await _documentService.AddWithReplaceAsync(dto, storagePath, token);
 
-                    // Intentar mover archivo antiguo a carpeta 'archivo'
-                    if (replaceResult.ArchivedDocumentId.HasValue && !string.IsNullOrWhiteSpace(replaceResult.ArchivedFilePath))
+                    if (replaceResult == null || replaceResult.NewDocumentId == Guid.Empty)
                     {
-                        try
-                        {
-                            var archivedFolder = Path.Combine(Path.GetDirectoryName(replaceResult.ArchivedFilePath) ?? string.Empty, "archivo");
-                            var archivedFileName = Path.GetFileName(replaceResult.ArchivedFilePath);
-                            var archivedPath = Path.Combine(archivedFolder, archivedFileName);
-                            
-                            var moved = await _photoStorage.MoveAsync(replaceResult.ArchivedFilePath, archivedPath);
-                            
-                            if (moved)
-                            {
-                                // Crear DTO para actualizar la ruta del archivo archivado
-                                var archivedDoc = await _documentService.GetByIdAsync(replaceResult.ArchivedDocumentId.Value);
-                                if (archivedDoc != null)
-                                {
-                                    archivedDoc.FilePath = archivedPath;
-                                    archivedDoc.UpdatedAt = DateTimeOffset.UtcNow;
-                                    await _documentService.UpdateAsync(archivedDoc);
-                                }
-                            }
-                            else
-                            {
-                                _logger.LogWarning("No se pudo mover archivo antiguo a carpeta archivo para documento {DocumentId}", replaceResult.ArchivedDocumentId);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error moviendo archivo antiguo para documento {DocumentId}", replaceResult.ArchivedDocumentId);
-                        }
+                        // Si el servicio devolvió un resultado inválido, informar al usuario y no cerrar el diálogo
+                        ErrorMessage = "❌ No se pudo reemplazar el documento. Operación revertida.";
+                        _logger.LogWarning("SaveAsync: AddWithReplaceAsync falló para VehicleId={VehicleId}", VehicleId);
+                        return;
                     }
+
+                    createdDocumentId = replaceResult.NewDocumentId;
                 }
                 else
                 {
-                    // Para otros tipos: crear nuevo registro
-                    await _documentService.AddAsync(dto);
+                    // Para otros tipos: crear nuevo registro y capturar el Id devuelto
+                    createdDocumentId = await _documentService.AddAsync(dto);
                 }
 
                 // Cerrar diálogo
@@ -301,7 +388,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 // Enviar mensajes
                 try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
-                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, documentId)); } catch { }
+                try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, createdDocumentId)); } catch { }
             }
             catch (OperationCanceledException)
             {
@@ -354,7 +441,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             
             return sb.ToString();
         }
-    }    public class RelayCommand : ICommand
+    }
+
+    public class RelayCommand : ICommand
     {
         private readonly Action _action;
         public RelayCommand(Action action) => _action = action ?? throw new ArgumentNullException(nameof(action));

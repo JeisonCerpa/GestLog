@@ -14,5 +14,10 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Dialog
         /// Crea el ViewModel vía DI, inicializa VehicleId y muestra el diálogo. Simplifica la llamada desde VMs.
         /// </summary>
         bool TryShowVehicleDocumentDialog(Guid vehicleId, out bool? dialogResult);
+
+        /// <summary>
+        /// Versión asíncrona que abre el diálogo en un thread separado para no bloquear la UI.
+        /// </summary>
+        Task<bool?> TryShowVehicleDocumentDialogAsync(Guid vehicleId, CancellationToken cancellationToken = default);
     }
 }

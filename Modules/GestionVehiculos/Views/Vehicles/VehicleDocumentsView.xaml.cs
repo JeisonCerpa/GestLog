@@ -65,27 +65,37 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             {
                 // No desuscribir: queremos que la vista recargue cada vez que se vuelva visible.
             }
-        }
-
-        private async void BtnNewDocument_Click(object sender, System.Windows.RoutedEventArgs e)
+        }        private async void BtnNewDocument_Click(object sender, System.Windows.RoutedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] ========== INICIO DEL EVENTO ==========");
+            
             // Asegurar ViewModel (resolver desde DI si la vista heredó el DataContext y no se inicializó)
             if (Vm == null)
             {
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Vm es null, resolviendo desde DI...");
                 var sp2 = ((App)System.Windows.Application.Current).ServiceProvider;
                 var resolved = sp2?.GetService(typeof(VehicleDocumentsViewModel)) as VehicleDocumentsViewModel;
                 if (resolved == null)
                 {
+                    System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] ERROR: No se pudo resolver VehicleDocumentsViewModel");
                     var appDialogFallback = sp2?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
                     appDialogFallback?.ShowError("No se pudo resolver VehicleDocumentsViewModel. Revise la configuración de DI.");
                     return;
-                }                this.DataContext = resolved;
+                }
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] VehicleDocumentsViewModel resuelto correctamente");
+                this.DataContext = resolved;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Vm ya está establecido");
             }
 
             try
             {
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Obteniendo ServiceProvider y AppDialog...");
                 var sp = ((App)System.Windows.Application.Current).ServiceProvider;
                 var appDialog = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] ServiceProvider y AppDialog obtenidos");
 
                 // Resolver solo IVehicleService aquí (se usa para buscar vehicleId por placa si es necesario).
                 var vehicleService = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService)) as GestLog.Modules.GestionVehiculos.Interfaces.Data.IVehicleService;
@@ -149,30 +159,46 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                         appDialog?.ShowError("No se pudo determinar la placa del vehículo. Asegúrese de abrir Documentos desde la vista de Detalles del vehículo.");
                         return;
                     }
-                }
-
-                // Intentar mostrar diálogo via DialogService (MVVM-friendly) que resolverá el VM desde DI
+                }                // Intentar mostrar diálogo via DialogService (MVVM-friendly) que resolverá el VM desde DI
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Resolviendo IVehicleDocumentDialogService desde DI...");
                 var dialogService = sp?.GetService(typeof(Interfaces.Dialog.IVehicleDocumentDialogService)) as Interfaces.Dialog.IVehicleDocumentDialogService;
                 if (dialogService == null)
                 {
+                    System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] ERROR: IVehicleDocumentDialogService no está registrado");
                     appDialog?.ShowError("Servicio de diálogo no está registrado. Revise la configuración de DI.");
                     return;
                 }
+                System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] IVehicleDocumentDialogService obtenido correctamente");                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] ========== LLAMANDO A TryShowVehicleDocumentDialogAsync con vehicleId: {resolvedVehicleId} ==========");
+                var dlgResult = await dialogService.TryShowVehicleDocumentDialogAsync(resolvedVehicleId);
+                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] ========== TryShowVehicleDocumentDialogAsync RETORNÓ: dlgResult={dlgResult} ==========");
 
-                bool? dlgResult = null;
-                var shown = dialogService.TryShowVehicleDocumentDialog(resolvedVehicleId, out dlgResult);
-
+                var shown = dlgResult == true;
                 if (shown)
                 {
+                    System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Diálogo mostró resultado=true, refrescando lista de documentos...");
                     // Refresh documents después de guardar
                     if (Vm != null)
                     {
+                        System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Llamando a Vm.InitializeAsync...");
                         await Vm.InitializeAsync(resolvedVehicleId);
+                        System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Vm.InitializeAsync completado");
                     }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Vm es null, no se puede refrescar");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[BtnNewDocument_Click] Diálogo fue cancelado o cerrado sin guardar");
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] ========== EXCEPCIÓN ==========");
+                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] Mensaje: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] Stack trace: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"[BtnNewDocument_Click] ========== FIN EXCEPCIÓN ==========");
                 var spErr = ((App)System.Windows.Application.Current).ServiceProvider;
                 var appDialogErr = spErr?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
                 appDialogErr?.ShowError($"Error al abrir diálogo de documento: {ex.Message}");

@@ -9,110 +9,163 @@
         AllowsTransparency="True"
         Background="Transparent"
         SizeToContent="Manual"
+        Width="1200"
+        Height="700"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
-        WindowState="Maximized">
-
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:LoadingIndicatorVisibilityConverter x:Key="LoadingIndicatorVisibilityConverter" />
-            <conv:UploadIndeterminateConverter x:Key="UploadIndeterminateConverter" />
-        </ResourceDictionary>
-    </Window.Resources>
-
-    <!-- OVERLAY MODAL -->
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Border x:Name="Card" Width="720" MaxHeight="760"
-                Background="{StaticResource SurfaceBrush}"
-                CornerRadius="8" Padding="0"
+        Style="{StaticResource ModalWindowBase}">    <!-- OVERLAY MODAL -->    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border x:Name="Card" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="1200" Height="700"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+                BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                Style="{StaticResource ModalCardStyle}">
 
-            <!-- Contenido de la tarjeta: reutiliza el layout existente -->
-            <Grid Margin="12">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Vertical" Grid.Row="0" Margin="0,0,0,8">
-                    <TextBlock Text="Nuevo documento" FontSize="16" FontWeight="Bold" />
-                    <TextBlock Text="Complete los campos y seleccione el archivo." FontSize="12" Foreground="Gray" />
-                </StackPanel>
+                <!-- HEADER -->
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,20" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="📄" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModalTextBlockBase}"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Nuevo documento" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Adjunte SOAT, Tecno-Mecánica u otros documentos" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="BtnCloseHeader" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>                </Border>                <!-- CONTENIDO - LAYOUT HORIZONTAL (Izquierda: Datos | Derecha: Archivo) -->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*" />
-                        <ColumnDefinition Width="1*" />
-                    </Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />                    </Grid.ColumnDefinitions>
+                      <!-- COLUMNA IZQUIERDA: DATOS DEL DOCUMENTO Y OBSERVACIONES -->
+                    <Grid Grid.Column="0" Margin="24,24,16,24" VerticalAlignment="Stretch">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="Tipo de documento" />
-                        <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource InputStyle}" />
+                        <!-- CARD 1: DATOS DEL DOCUMENTO -->
+                        <Border Grid.Row="0" Style="{StaticResource CardSectionStyle}" Margin="0,0,0,10">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="📋 Datos del Documento" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10"/>
+                                <TextBlock Text="Tipo de documento" Style="{StaticResource LabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Número" Style="{StaticResource LabelTextStyle}" />
+                                <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Fecha de emisión" Style="{StaticResource LabelTextStyle}" />
+                                <DatePicker SelectedDate="{Binding IssuedDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Fecha de vencimiento" Style="{StaticResource LabelTextStyle}" />
+                                <DatePicker SelectedDate="{Binding ExpirationDate}" Style="{StaticResource ModernDatePickerStyle}" />
+                            </StackPanel>
+                        </Border>
 
-                        <TextBlock Text="Número" Margin="0,8,0,0" />
-                        <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource InputStyle}" />
+                        <!-- CARD OBSERVACIONES: ocupa todo el espacio restante y se estira -->
+                        <Border Grid.Row="1" Style="{StaticResource CardSectionStyle}" Margin="0" VerticalAlignment="Stretch">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
 
-                        <TextBlock Text="Fecha de emisión" Margin="0,8,0,0" />
-                        <DatePicker SelectedDate="{Binding IssuedDate}" />
+                                <TextBlock Grid.Row="0" Text="📝 Observaciones" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6"/>
 
-                        <TextBlock Text="Fecha de vencimiento" Margin="0,8,0,0" />
-                        <DatePicker SelectedDate="{Binding ExpirationDate}" />
+                                <!-- TextBox estirable: quitar MinHeight fijo, usar Stretch para llenar la fila '*' -->
+                                <TextBox Grid.Row="1"
+                                         Text="{Binding Notes}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto"
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         Padding="10,6"
+                                         Margin="0"
+                                         VerticalAlignment="Stretch"
+                                         VerticalContentAlignment="Top"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                      <!-- COLUMNA DERECHA: ARCHIVO ADJUNTO (PROMINENTE) -->
+                    <Border Grid.Column="1" Style="{StaticResource CardSectionStyle}" Margin="0,24,24,24" Background="#FFFFFF" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="2" VerticalAlignment="Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,0,0,0" VerticalAlignment="Top">
+                            <TextBlock Text="📎 ARCHIVO ADJUNTO" Style="{StaticResource SectionHeaderStyle}" Foreground="{StaticResource PrimaryBrush}" FontSize="16"/>
+                              <!-- Botón seleccionar -->
+                            <Button x:Name="BtnSelectFile" Content="📁 Seleccionar archivo..." Click="BtnSelectFile_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Margin="0,0,0,16" HorizontalAlignment="Stretch" Padding="12,12" Height="44"/>
+                            
+                            <!-- Info archivo seleccionado - PROMINENTE -->
+                            <TextBlock Text="Archivo seleccionado:" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" Foreground="{StaticResource TextDarkBrush}"/>                            <TextBlock x:Name="TxtSelectedFile" Text="{Binding SelectedFileName, TargetNullValue='(ninguno seleccionado)'}" 
+                                       Foreground="{StaticResource PrimaryBrush}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                              <!-- Línea separadora -->
+                            <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,12"/>
+                              <!-- Preview y metadata -->
+                            <Border Height="100" Width="100" CornerRadius="8" Background="#F5F5F5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
+                                <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform">
+                                    <Image.Visibility>
+                                        <Binding Path="HasSelectedFile" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                                    </Image.Visibility>
+                                </Image>
+                            </Border>
+                              <!-- Metadatos -->
+                            <StackPanel Orientation="Vertical">
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Tamaño:" FontWeight="SemiBold" Foreground="#504F4E" Width="70"/>
+                                    <TextBlock x:Name="TxtSelectedFileSize" Grid.Column="1" Text="{Binding SelectedFileSize, TargetNullValue='---'}" Foreground="#706F6F"/>
+                                </Grid>
+                                
+                                <Grid Margin="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Tipo:" FontWeight="SemiBold" Foreground="#504F4E" Width="70"/>
+                                    <TextBlock x:Name="TxtSelectedFileMime" Grid.Column="1" Text="{Binding SelectedFileMimeType, TargetNullValue='---'}" Foreground="#706F6F"/>
+                                </Grid>
+                            </StackPanel>                              <!-- Botones de acciones -->
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Center">
+                                <Button Content="👁️ Ver" Command="{Binding OpenSelectedFileCommand}" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36" Margin="0,0,8,0"/>
+                                <Button Content="✕ Remover" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36"/>
+                            </StackPanel>
+                              <!-- Progreso carga -->
+                            <StackPanel Orientation="Vertical" Margin="0,12,0,0">
+                                <controls:SimpleProgressBar Width="Auto" BarHeight="8" ProgressValue="{Binding UploadProgress, Mode=OneWay}" ShowHeader="False" ShowMessage="False" ShowPercentage="True">
+                                    <controls:SimpleProgressBar.Visibility>
+                                        <MultiBinding Converter="{StaticResource LoadingIndicatorVisibilityConverter}">
+                                            <Binding Path="IsUploading" />
+                                            <Binding Path="UploadProgress" />
+                                        </MultiBinding>
+                                    </controls:SimpleProgressBar.Visibility>
+                                </controls:SimpleProgressBar>
+                            </StackPanel></StackPanel>
+                    </Border>                </Grid>
+
+                <!-- FOOTER -->
+                <Border Grid.Row="2" Padding="24,12" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Content="Cancelar" Click="BtnCancel_Click" Width="110" Height="40" Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnSave" Content="Guardar" Width="110" Height="40" Command="{Binding SaveCommand}" IsDefault="True" IsEnabled="{Binding IsUploading, Converter={StaticResource InverseBooleanConverter}}" Style="{StaticResource PrimaryButtonStyle}"/>
                     </StackPanel>
-
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="Notas" />
-                        <TextBox Text="{Binding Notes}" AcceptsReturn="True" Height="120" TextWrapping="Wrap" Style="{StaticResource InputStyle}" />
-
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <Button x:Name="BtnSelectFile" Content="Seleccionar archivo..." Click="BtnSelectFile_Click" Style="{StaticResource ButtonStyle}" />
-                            <TextBlock Text="{Binding SelectedFileName}" Margin="8,4,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-
-                        <TextBlock Text="Extensiones permitidas: .pdf, .png, .jpg" FontSize="11" Foreground="Gray" Margin="0,6,0,0" />
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" Margin="0,6,0,0" TextWrapping="Wrap" />
-
-                        <!-- Área de progreso y control de subida -->
-                        <StackPanel Orientation="Vertical" Margin="0,8,0,0">
-                            <controls:SimpleProgressBar Width="Auto" BarHeight="10" ProgressValue="{Binding UploadProgress, Mode=OneWay}" ShowHeader="False" ShowMessage="False" ShowPercentage="True">
-                                <controls:SimpleProgressBar.Visibility>
-                                    <MultiBinding Converter="{StaticResource LoadingIndicatorVisibilityConverter}">
-                                        <Binding Path="IsUploading" />
-                                        <Binding Path="UploadProgress" />
-                                    </MultiBinding>
-                                </controls:SimpleProgressBar.Visibility>
-                            </controls:SimpleProgressBar>
-
-                            <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding UploadProgress, Mode=OneWay}" Margin="0,6,0,0">
-                                <ProgressBar.IsIndeterminate>
-                                    <MultiBinding Converter="{StaticResource UploadIndeterminateConverter}">
-                                        <Binding Path="IsUploading" />
-                                        <Binding Path="UploadProgress" />
-                                    </MultiBinding>
-                                </ProgressBar.IsIndeterminate>
-                                <ProgressBar.Visibility>
-                                    <Binding Path="IsUploading" Converter="{StaticResource BooleanToVisibilityConverter}" />
-                                </ProgressBar.Visibility>
-                            </ProgressBar>
-
-                            <Button Content="Cancelar subida" Command="{Binding CancelUploadCommand}" Width="120" Margin="0,8,0,0" HorizontalAlignment="Left" Visibility="{Binding IsUploading, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </StackPanel>
-
-                    </StackPanel>
-                </Grid>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,12,0,0">
-                    <Button Content="Cancelar" Width="90" Margin="0,0,8,0" Click="BtnCancel_Click" Style="{StaticResource ButtonStyle}" />
-                    <Button x:Name="BtnSave" Content="Guardar" Width="90" IsDefault="True" Click="BtnSave_Click" IsEnabled="{Binding IsUploading, Converter={StaticResource InverseBooleanConverter}}" Style="{StaticResource ButtonStyle}" />
-                </StackPanel>
-
+                </Border>
             </Grid>
         </Border>
     </Grid>

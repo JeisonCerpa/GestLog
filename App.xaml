@@ -6,6 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/ModalWindowsStandard.xaml"/>
                 <ResourceDictionary Source="Resources/ModernStyles.xaml"/>
                 <ResourceDictionary Source="Controls/Validation/ValidationStyles.xaml"/>
                 <ResourceDictionary Source="/Controls/Validation/BindablePasswordBox.xaml" />
@@ -28,6 +29,9 @@
             <converters:PersonaIdToNombreCompletoConverter x:Key="PersonaIdToNombreCompletoConverter"/>
             <converters:RoleCheckedConverter x:Key="RoleCheckedConverter"/>
             <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+            <!-- Convertidores usados por diálogos modales moved to App resources to ensure early resolution -->
+            <converters:LoadingIndicatorVisibilityConverter x:Key="LoadingIndicatorVisibilityConverter" />
+            <converters:UploadIndeterminateConverter x:Key="UploadIndeterminateConverter" />
             <DropShadowEffect x:Key="DropShadowEffect" Color="#000000" Opacity="0.18" BlurRadius="8" ShadowDepth="2"/>
             <Style x:Key="WatermarkTextBoxStyle" TargetType="TextBox">
                 <Setter Property="Template">

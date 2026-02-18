@@ -11,6 +11,7 @@ using System.Threading;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionVehiculos.Messages.Documents;
+using System.Runtime.CompilerServices;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
@@ -616,7 +617,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
     /// </summary>
     public abstract class ViewModelBase
     {
-        protected bool SetProperty<T>(ref T field, T value, string? propertyName = null)
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (Equals(field, value))
                 return false;

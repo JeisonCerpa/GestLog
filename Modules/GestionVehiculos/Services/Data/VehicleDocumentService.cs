@@ -8,6 +8,8 @@ using GestLog.Modules.GestionVehiculos.Interfaces;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Models.Entities;
 using GestLog.Services.Core.Logging;
+using System.Threading;
+using System.IO;
 
 namespace GestLog.Modules.GestionVehiculos.Services.Data
 {
@@ -19,11 +21,13 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
     {
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         private readonly IGestLogLogger _logger;
+        private readonly IPhotoStorageService _photoStorage;
 
-        public VehicleDocumentService(IDbContextFactory<GestLogDbContext> dbContextFactory, IGestLogLogger logger)
+        public VehicleDocumentService(IDbContextFactory<GestLogDbContext> dbContextFactory, IGestLogLogger logger, IPhotoStorageService photoStorage)
         {
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _photoStorage = photoStorage ?? throw new ArgumentNullException(nameof(photoStorage));
         }
 
         /// <summary>
@@ -115,7 +119,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         }        /// <summary>
         /// Crea un nuevo documento de vehículo y reemplaza el existente
         /// </summary>
-        public async Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto)
+        public async Task<ReplaceDocumentResultDto> AddWithReplaceAsync(VehicleDocumentDto documentDto, string uploadedStoragePath, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -217,6 +221,58 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     }
 
                     await context.SaveChangesAsync();
+
+                    // Intentar mover archivo antiguo al folder 'archivo' dentro del mismo directorio del archivo antiguo (si existe)
+                    if (result.ArchivedDocumentId.HasValue && !string.IsNullOrWhiteSpace(result.ArchivedFilePath))
+                    {
+                        try
+                        {
+                            var archivedFolder = Path.Combine(Path.GetDirectoryName(result.ArchivedFilePath) ?? string.Empty, "archivo");
+                            var archivedFileName = Path.GetFileName(result.ArchivedFilePath);
+                            var archivedPath = Path.Combine(archivedFolder, archivedFileName);
+
+                            // Intentar mover usando IPhotoStorageService con reintentos
+                            var moved = false;
+                            const int maxAttempts = 3;
+                            var attempt = 0;
+                            while (attempt < maxAttempts && !moved)
+                            {
+                                attempt++;
+                                cancellationToken.ThrowIfCancellationRequested();
+                                moved = await _photoStorage.MoveAsync(result.ArchivedFilePath, archivedPath);
+                                if (!moved) await Task.Delay(200 * attempt, cancellationToken);
+                            }
+
+                            if (moved)
+                            {
+                                // actualizar ruta en entidad archivada
+                                var archivedDoc = await context.VehicleDocuments.FirstOrDefaultAsync(d => d.Id == result.ArchivedDocumentId.Value);
+                                if (archivedDoc != null)
+                                {
+                                    archivedDoc.FilePath = archivedPath;
+                                    archivedDoc.UpdatedAt = DateTimeOffset.UtcNow;
+                                    context.VehicleDocuments.Update(archivedDoc);
+                                    await context.SaveChangesAsync();
+                                }
+                            }
+                            else
+                            {
+                                // Si no se pudo mover, registrar advertencia y rollback de la transacción para evitar inconsistencia
+                                _logger.LogWarning("AddWithReplaceAsync: no se pudo mover archivo antiguo {Path}", result.ArchivedFilePath);
+                                await tx.RollbackAsync();
+                                result.ArchivedFilePath = null; // indicar que no fue movido
+                                return result;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error moviendo archivo antiguo para documento {DocumentId}", result.ArchivedDocumentId);
+                            await tx.RollbackAsync();
+                            result.ArchivedFilePath = null;
+                            return result;
+                        }
+                    }
+
                     await tx.CommitAsync();
 
                     result.NewDocumentId = newDoc.Id;

@@ -2,8 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
+using System.Windows.Data;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
-using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 {
@@ -12,40 +13,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
     /// </summary>
     public partial class VehicleDocumentDialog : Window
     {
+        private readonly ILogger _logger = Log.ForContext<VehicleDocumentDialog>();
+
         public VehicleDocumentDialog()
         {
             InitializeComponent();
-
-            // Obtener ViewModel desde DI
-            var app = (App)System.Windows.Application.Current;
-            var vm = app.ServiceProvider?.GetService<VehicleDocumentDialogModel>();
-            if (vm == null)
-                return; // caller puede usar constructor con parámetro
-
-            this.DataContext = vm;
-            vm.Owner = this;
-
-            // Asegurar que el modal ocupe toda la pantalla del owner por defecto
-            try
-            {
-                var ownerWindow = System.Windows.Application.Current?.MainWindow;
-                if (ownerWindow != null)
-                {
-                    ConfigurarParaVentanaPadre(ownerWindow);
-                }
-            }
-            catch { }
-
-            // Suscribirse al evento OnExito si está disponible
-            if (vm.GetType().GetEvent("OnExito") != null)
-            {
-                // Usamos reflexión para ser flexibles
-                vm.GetType().GetEvent("OnExito")?.AddEventHandler(vm, new EventHandler((s, e) =>
-                {
-                    this.DialogResult = true;
-                    this.Close();
-                }));
-            }
 
             // Manejar Escape para cerrar
             this.KeyDown += (s, e) =>
@@ -65,6 +37,29 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             {
                 this.DataContext = viewModel;
                 viewModel.Owner = this;
+
+                // [DEBUG] Verify ViewModel and properties are accessible
+                try
+                {
+                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: DataContext type = {Type}", this.DataContext?.GetType().Name);
+                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: SelectedFileName = '{FileName}'", viewModel.SelectedFileName);
+                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: SelectedFilePath = '{FilePath}'", viewModel.SelectedFilePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information("[DEBUG] Error verificando ViewModel: {Message}", ex.Message);
+                }
+
+                // Configurar modal para ocupar toda la pantalla
+                try
+                {
+                    var ownerWindow = System.Windows.Application.Current?.MainWindow;
+                    if (ownerWindow != null)
+                    {
+                        ConfigurarParaVentanaPadre(ownerWindow);
+                    }
+                }
+                catch { }
             }
         }
 
@@ -80,7 +75,63 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         {
             if (this.DataContext is VehicleDocumentDialogModel vm && vm.SelectFileCommand != null && vm.SelectFileCommand.CanExecute(null))
             {
+                _logger.Information("[DEBUG] BtnSelectFile_Click ANTES - SelectedFileName = '{FileName}'", vm.SelectedFileName);
+
                 vm.SelectFileCommand.Execute(null);
+
+                _logger.Information("[DEBUG] BtnSelectFile_Click DESPUES - SelectedFileName = '{FileName}', SelectedFilePath = '{FilePath}'", vm.SelectedFileName, vm.SelectedFilePath);
+
+                // Ejecutar forzado de UpdateTarget en el hilo UI tras una breve cola para asegurar que bindings estén listos
+                try
+                {
+                    System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                    {
+                        try
+                        {
+                            tryUpdateBinding("TxtSelectedFile", TextBlock.TextProperty);
+                            tryUpdateBinding("TxtSelectedFileBold", TextBlock.TextProperty);
+                            tryUpdateBinding("TxtSelectedFileSize", TextBlock.TextProperty);
+                            tryUpdateBinding("TxtSelectedFileMime", TextBlock.TextProperty);
+                            tryUpdateBinding("ImgPreview", System.Windows.Controls.Image.SourceProperty);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Information("[DEBUG] BtnSelectFile_Click: error forzando UpdateTarget bindings (Dispatcher): {Message}", ex.Message);
+                        }
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information("[DEBUG] BtnSelectFile_Click: error al encolar Dispatcher para UpdateTarget: {Message}", ex.Message);
+                }
+            }
+        }
+
+        private void tryUpdateBinding(string elementName, System.Windows.DependencyProperty dp)
+        {
+            try
+            {
+                var element = this.FindName(elementName) as System.Windows.FrameworkElement;
+                if (element == null)
+                {
+                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' no encontrado.", elementName);
+                    return;
+                }
+
+                var be = BindingOperations.GetBindingExpression(element, dp);
+                if (be != null)
+                {
+                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' binding path = '{Path}' - actualizando target.", elementName, be.ParentBinding.Path?.Path);
+                    be.UpdateTarget();
+                }
+                else
+                {
+                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' no tiene BindingExpression.", elementName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Information("[DEBUG] tryUpdateBinding: excepción para '{Name}': {Message}", elementName, ex.Message);
             }
         }
 

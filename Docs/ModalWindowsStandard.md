@@ -263,6 +263,26 @@ public async Task AbrirDialogoAsync()
 - ✅ Evento: `OnExito` en ViewModel que dispare `DialogResult = true`
 - ✅ Comando: `GuardarCommand` en ViewModel que dispare `OnExito`
 
+## Nota: Icono del header (cuadrado blanco)
+
+Para conseguir la apariencia consistente del sistema (ícono dentro de un cuadrado blanco redondeado) use siempre un `Border` con fondo blanco, `CornerRadius` y sin borde visible. Importante: fijar `BorderThickness="0"` y `BorderBrush="Transparent"` evita que en algunas configuraciones de DPI o subpixel aparezca un borde blanco fino alrededor del card.
+
+Recomendación XAML (copiar en el header de los modales):
+
+```xaml
+<Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0"
+        Width="44" Height="44" BorderThickness="0" BorderBrush="Transparent"
+        Effect="{StaticResource SectionShadow}">
+    <TextBlock Text="📄" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+</Border>
+```
+
+Notas adicionales:
+
+- Use `{StaticResource SectionShadow}` o la key de sombra definida en `ModalWindowsStandard.xaml` para mantener la consistencia; los convertidores y sombras deben definirse en un ResourceDictionary cargado desde `App.xaml` para poder usar `{StaticResource ...}` de forma segura.
+- Si desea que el icono tenga fondo del color primario en algunos modales, reemplace `Background="White"` por `Background="{StaticResource PrimaryBrush}"` y ajuste `TextBlock.Foreground` en consecuencia.
+- No confunda este `Border` del icono con el `Border` principal del `Card`. El `Card` debe tener `BorderThickness="0"` y `BorderBrush="Transparent"` si no desea líneas alrededor de la tarjeta.
+
 ## Notas Importantes
 
 - **Window.Resources**: Siempre mergear `ModalWindowsStandard.xaml`
