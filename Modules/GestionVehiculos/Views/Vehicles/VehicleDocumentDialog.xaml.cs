@@ -38,16 +38,31 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 this.DataContext = viewModel;
                 viewModel.Owner = this;
 
-                // [DEBUG] Verify ViewModel and properties are accessible
+                // Cerrar la ventana cuando el ViewModel indique éxito (Save completado)
+                viewModel.OnExito += (s, e) =>
+                {
+                    try
+                    {
+                        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                        {
+                            try
+                            {
+                                this.DialogResult = true;
+                            }
+                            catch { }
+                            try { this.Close(); } catch { }
+                        }));
+                    }
+                    catch { }
+                };
+
                 try
                 {
-                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: DataContext type = {Type}", this.DataContext?.GetType().Name);
-                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: SelectedFileName = '{FileName}'", viewModel.SelectedFileName);
-                    _logger.Information("[DEBUG] VehicleDocumentDialog constructor: SelectedFilePath = '{FilePath}'", viewModel.SelectedFilePath);
+                    // Removed debug logs to reduce noise in production logs
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    _logger.Information("[DEBUG] Error verificando ViewModel: {Message}", ex.Message);
+                    // Silently ignore verification errors
                 }
 
                 // Configurar modal para ocupar toda la pantalla
@@ -75,34 +90,33 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         {
             if (this.DataContext is VehicleDocumentDialogModel vm && vm.SelectFileCommand != null && vm.SelectFileCommand.CanExecute(null))
             {
-                _logger.Information("[DEBUG] BtnSelectFile_Click ANTES - SelectedFileName = '{FileName}'", vm.SelectedFileName);
-
                 vm.SelectFileCommand.Execute(null);
-
-                _logger.Information("[DEBUG] BtnSelectFile_Click DESPUES - SelectedFileName = '{FileName}', SelectedFilePath = '{FilePath}'", vm.SelectedFileName, vm.SelectedFilePath);
 
                 // Ejecutar forzado de UpdateTarget en el hilo UI tras una breve cola para asegurar que bindings estén listos
                 try
-                {
-                    System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                {                    System.Windows.Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
                     {
                         try
                         {
                             tryUpdateBinding("TxtSelectedFile", TextBlock.TextProperty);
-                            tryUpdateBinding("TxtSelectedFileBold", TextBlock.TextProperty);
                             tryUpdateBinding("TxtSelectedFileSize", TextBlock.TextProperty);
                             tryUpdateBinding("TxtSelectedFileMime", TextBlock.TextProperty);
                             tryUpdateBinding("ImgPreview", System.Windows.Controls.Image.SourceProperty);
+                            // Force update binding for Visibility property to ensure IsImagePreview is evaluated
+                            tryUpdateBinding("ImgPreview", System.Windows.UIElement.VisibilityProperty);
+
+                            // Force update binding for PDF icon visibility
+                            tryUpdateBinding("PdfIconContainer", System.Windows.UIElement.VisibilityProperty);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            _logger.Information("[DEBUG] BtnSelectFile_Click: error forzando UpdateTarget bindings (Dispatcher): {Message}", ex.Message);
+                            // Ignorar errores menores al forzar actualizaciones de binding
                         }
                     }));
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    _logger.Information("[DEBUG] BtnSelectFile_Click: error al encolar Dispatcher para UpdateTarget: {Message}", ex.Message);
+                    // Ignorar errores al encolar Dispatcher
                 }
             }
         }
@@ -114,24 +128,23 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 var element = this.FindName(elementName) as System.Windows.FrameworkElement;
                 if (element == null)
                 {
-                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' no encontrado.", elementName);
+                    // Control no encontrado, salir silenciosamente
                     return;
                 }
 
                 var be = BindingOperations.GetBindingExpression(element, dp);
                 if (be != null)
                 {
-                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' binding path = '{Path}' - actualizando target.", elementName, be.ParentBinding.Path?.Path);
                     be.UpdateTarget();
                 }
                 else
                 {
-                    _logger.Information("[DEBUG] tryUpdateBinding: control '{Name}' no tiene BindingExpression.", elementName);
+                    // No tiene binding, nothing to update
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.Information("[DEBUG] tryUpdateBinding: excepción para '{Name}': {Message}", elementName, ex.Message);
+                // Ignorar excepciones al actualizar bindings
             }
         }
 
@@ -144,8 +157,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         }
 
         private void BtnRemoveFile_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.DataContext is VehicleDocumentDialogModel vm && vm.RemoveSelectedFileCommand != null && vm.RemoveSelectedFileCommand.CanExecute(null))
+        {            if (this.DataContext is VehicleDocumentDialogModel vm && vm.RemoveSelectedFileCommand != null && vm.RemoveSelectedFileCommand.CanExecute(null))
             {
                 vm.RemoveSelectedFileCommand.Execute(null);
 
@@ -160,16 +172,20 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                             tryUpdateBinding("TxtSelectedFileSize", TextBlock.TextProperty);
                             tryUpdateBinding("TxtSelectedFileMime", TextBlock.TextProperty);
                             tryUpdateBinding("ImgPreview", System.Windows.Controls.Image.SourceProperty);
+                            // Force update binding for Visibility property to ensure IsImagePreview is evaluated
+                            tryUpdateBinding("ImgPreview", System.Windows.UIElement.VisibilityProperty);
+                            // Force update binding for PDF icon visibility
+                            tryUpdateBinding("PdfIconContainer", System.Windows.UIElement.VisibilityProperty);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            _logger.Information("[DEBUG] BtnRemoveFile_Click: error forzando UpdateTarget bindings: {Message}", ex.Message);
+                            // Ignorar errores al forzar update de bindings
                         }
                     }));
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    _logger.Information("[DEBUG] BtnRemoveFile_Click: error al invocar Dispatcher para UpdateTarget: {Message}", ex.Message);
+                    // Ignorar errores del Dispatcher
                 }
             }
         }

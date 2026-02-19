@@ -22,9 +22,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private readonly IVehicleDocumentService _documentService;
         private readonly IPhotoStorageService _photoStorage;
         private readonly IGestLogLogger _logger;
-        private readonly IVehicleService _vehicleService;
-
-        private Guid _vehicleId;
+        private readonly IVehicleService _vehicleService;        private Guid _vehicleId;
         private string _documentType = string.Empty;
         private string? _documentNumber;
         private DateTime? _issuedDate = DateTime.Now;
@@ -35,6 +33,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private string? _selectedFileSize = null;
         private string? _selectedFileMimeType = null;
         private ImageSource? _selectedFilePreview;
+        private bool _isImagePreview;
         private string _errorMessage = string.Empty;
         private double _uploadProgress;
         private bool _isUploading;
@@ -158,24 +157,27 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     _removeSelectedFileCommand?.RaiseCanExecuteChanged();
                 }
             }
-        }
-
-        public ImageSource? SelectedFilePreview
+        }        public ImageSource? SelectedFilePreview
         {
             get => _selectedFilePreview;
             set
             {
                 if (SetProperty(ref _selectedFilePreview, value))
                 {
+                    // Actualizar IsImagePreview cuando cambia SelectedFilePreview
+                    IsImagePreview = value != null;
                     OnPropertyChanged(nameof(HasSelectedFile));
-                    OnPropertyChanged(nameof(IsImagePreview));
                     _removeSelectedFileCommand?.RaiseCanExecuteChanged();
                 }
             }
         }
 
-        // Propiedades auxiliares para la vista
-        public bool IsImagePreview => SelectedFilePreview != null;
+        public bool IsImagePreview
+        {
+            get => _isImagePreview;
+            private set => SetProperty(ref _isImagePreview, value);
+        }
+
         public bool IsPdfSelected => string.Equals(SelectedFileMimeType, "application/pdf", StringComparison.OrdinalIgnoreCase);
 
         // Propiedad calculada para determinar si hay archivo seleccionado
@@ -246,26 +248,46 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                         _ => "application/octet-stream"
                     };
 
-                    // Preview for images
-                    if (SelectedFileMimeType.StartsWith("image/"))
+                    // Preview for images: cargar desde FileStream con OnLoad para evitar locks y problemas de acceso
+                    if (SelectedFileMimeType != null && SelectedFileMimeType.StartsWith("image/"))
                     {
                         try
                         {
-                            var img = new BitmapImage();
-                            img.BeginInit();
-                            img.CacheOption = BitmapCacheOption.OnLoad;
-                            img.UriSource = new Uri(SelectedFilePath);
-                            img.EndInit();
-                            img.Freeze();
-                            SelectedFilePreview = img;
-
-                            // Log info with [DEBUG] tag
-                            try { _logger.LogInformation("[DEBUG] SelectFile: preview creado para {File}", SelectedFileName); } catch { }
+                            using (var fs = File.OpenRead(SelectedFilePath))
+                            {
+                                var img = new BitmapImage();
+                                img.BeginInit();
+                                img.CacheOption = BitmapCacheOption.OnLoad;
+                                img.StreamSource = fs;
+                                img.EndInit();
+                                img.Freeze();
+                                SelectedFilePreview = img;
+                            }
                         }
                         catch (Exception ex)
                         {
                             SelectedFilePreview = null;
-                            try { _logger.LogInformation("[DEBUG] SelectFile: fallo preview para {File}: {Message}", SelectedFileName, ex.Message); } catch { }
+                            try { _logger.LogWarning(ex, "SelectFile: fallo preview para {File}", SelectedFileName ?? "(null)"); } catch { }
+                        }
+
+                        // Si por alguna razón la carga con StreamSource produjo null o la imagen no se muestra, intentar un fallback usando UriSource
+                        if (SelectedFilePreview == null)
+                        {
+                            try
+                            {
+                                var img2 = new BitmapImage();
+                                img2.BeginInit();
+                                img2.CacheOption = BitmapCacheOption.OnLoad;
+                                img2.UriSource = new Uri(SelectedFilePath);
+                                img2.EndInit();
+                                img2.Freeze();
+                                SelectedFilePreview = img2;
+                            }
+                            catch (Exception ex)
+                            {
+                                SelectedFilePreview = null;
+                                try { _logger.LogWarning(ex, "SelectFile: fallback UriSource fallo para {File}", SelectedFileName ?? "(null)"); } catch { }
+                            }
                         }
                     }
                     else
@@ -276,14 +298,18 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     // Log selection metadata at Information level with [DEBUG] tag
                     try
                     {
-                        _logger.LogInformation("[DEBUG] SelectFile: seleccionado {FilePath} Name={Name} Size={Size} Mime={Mime}", SelectedFilePath, SelectedFileName, SelectedFileSize, SelectedFileMimeType);
+                        _logger.LogInformation("[DEBUG] SelectFile: seleccionado {FilePath} Name={Name} Size={Size} Mime={Mime}",
+                            SelectedFilePath ?? "(null)",
+                            SelectedFileName ?? "(null)",
+                            SelectedFileSize ?? "(null)",
+                            SelectedFileMimeType ?? "(null)");
                     }
                     catch { }
                 }
                 catch (Exception ex)
                 {
                     SelectedFileSize = null; SelectedFileMimeType = null; SelectedFilePreview = null;
-                    try { _logger.LogInformation("[DEBUG] SelectFile: error leyendo archivo {FilePath}: {Message}", ofd.FileName, ex.Message); } catch { }
+                    try { _logger.LogWarning(ex, "SelectFile: error leyendo archivo {FilePath}", ofd.FileName ?? "(null)"); } catch { }
                 }
             }
         }
@@ -292,7 +318,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         {
             try
             {
-                _logger.LogInformation("[DEBUG] RemoveSelectedFile: valores ANTES -> Path='{Path}', Name='{Name}', Size='{Size}', Mime:'{Mime}', PreviewNotNull={PreviewNotNull}", SelectedFilePath ?? "(null)", SelectedFileName ?? "(null)", SelectedFileSize ?? "(null)", SelectedFileMimeType ?? "(null)", SelectedFilePreview != null);
                 // Limpiar todos los metadatos del archivo seleccionado
                 SelectedFilePath = null;
                 SelectedFileName = null;
@@ -302,8 +327,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 // Limpiar mensajes de error relacionados
                 ErrorMessage = string.Empty;
-
-                _logger.LogInformation("[DEBUG] RemoveSelectedFile: archivo removido -> Path='{Path}', Name='{Name}', Size='{Size}', Mime:'{Mime}', PreviewNotNull={PreviewNotNull}", SelectedFilePath ?? "(null)", SelectedFileName ?? "(null)", SelectedFileSize ?? "(null)", SelectedFileMimeType ?? "(null)", SelectedFilePreview != null);
             }
             catch (Exception ex)
             {
@@ -339,7 +362,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "OpenSelectedFile: no se pudo abrir archivo {File}", SelectedFilePath);
+                _logger.LogWarning(ex, "OpenSelectedFile: no se pudo abrir archivo {File}", SelectedFilePath ?? "(null)");
             }
         }
 
@@ -368,7 +391,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             if (SelectedFilePath == null || !File.Exists(SelectedFilePath))
             {
                 ErrorMessage = "⚠️ Seleccione un archivo válido.";
-                _logger.LogWarning($"SaveAsync: SelectedFilePath no válido: {SelectedFilePath}");
+                _logger.LogWarning($"SaveAsync: SelectedFilePath no válido: {SelectedFilePath ?? "(null)"}");
                 return;
             }
 

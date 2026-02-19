@@ -118,11 +118,8 @@
                             <Border Height="100" Width="100" CornerRadius="8" Background="#F5F5F5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
                                 <Grid x:Name="PreviewContainer">
                                     <!-- Imagen real (cuando exista preview de imagen) -->
-                                    <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image.Visibility>
-                                            <Binding Path="IsImagePreview" Converter="{StaticResource BooleanToVisibilityConverter}" />
-                                        </Image.Visibility>
-                                    </Image>
+                                    <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding IsImagePreview, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                     <!-- Icono para PDF: emoji centrado, ocupa todo el área -->
                                     <Grid x:Name="PdfIconContainer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
