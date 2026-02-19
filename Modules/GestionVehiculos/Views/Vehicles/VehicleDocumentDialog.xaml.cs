@@ -143,6 +143,37 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             }
         }
 
+        private void BtnRemoveFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.DataContext is VehicleDocumentDialogModel vm && vm.RemoveSelectedFileCommand != null && vm.RemoveSelectedFileCommand.CanExecute(null))
+            {
+                vm.RemoveSelectedFileCommand.Execute(null);
+
+                // Forzar actualización inmediata en el hilo UI y actualizar bindings
+                try
+                {
+                    System.Windows.Application.Current?.Dispatcher?.Invoke(new Action(() =>
+                    {
+                        try
+                        {
+                            tryUpdateBinding("TxtSelectedFile", TextBlock.TextProperty);
+                            tryUpdateBinding("TxtSelectedFileSize", TextBlock.TextProperty);
+                            tryUpdateBinding("TxtSelectedFileMime", TextBlock.TextProperty);
+                            tryUpdateBinding("ImgPreview", System.Windows.Controls.Image.SourceProperty);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Information("[DEBUG] BtnRemoveFile_Click: error forzando UpdateTarget bindings: {Message}", ex.Message);
+                        }
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information("[DEBUG] BtnRemoveFile_Click: error al invocar Dispatcher para UpdateTarget: {Message}", ex.Message);
+                }
+            }
+        }
+
         private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is Grid grid && grid.Name == "RootGrid")

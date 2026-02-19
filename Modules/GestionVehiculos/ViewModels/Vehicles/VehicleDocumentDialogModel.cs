@@ -31,14 +31,18 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private DateTime? _expirationDate = DateTime.Now.AddYears(1);
         private string? _notes;
         private string? _selectedFilePath;
-        private string _selectedFileName = string.Empty;
-        private string _selectedFileSize = string.Empty;
-        private string _selectedFileMimeType = string.Empty;
+        private string? _selectedFileName = null;
+        private string? _selectedFileSize = null;
+        private string? _selectedFileMimeType = null;
         private ImageSource? _selectedFilePreview;
         private string _errorMessage = string.Empty;
         private double _uploadProgress;
         private bool _isUploading;
         private System.Threading.CancellationTokenSource? _uploadCts;
+
+        // Comando para remover archivo seleccionado
+        private RelayCommand? _removeSelectedFileCommand;
+        public ICommand? RemoveSelectedFileCommand => _removeSelectedFileCommand;
 
         public System.Windows.Window? Owner { get; set; }
 
@@ -55,6 +59,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             DocumentTypes = new ObservableCollection<string>(new[] { "SOAT", "Tecno-Mecánica", "Carta de propiedad", "Otros" });
 
             SelectFileCommand = new RelayCommand(SelectFile);
+            // Inicializar comando Remove y exponerlo
+            _removeSelectedFileCommand = new RelayCommand(RemoveSelectedFile, () => HasSelectedFile);
             SaveCommand = new AsyncRelayCommand(SaveAsync);
             CancelUploadCommand = new RelayCommand(() => _uploadCts?.Cancel());
 
@@ -102,32 +108,78 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public string? SelectedFilePath
         {
             get => _selectedFilePath;
-            set => SetProperty(ref _selectedFilePath, value);
+            set
+            {
+                if (SetProperty(ref _selectedFilePath, value))
+                {
+                    OnPropertyChanged(nameof(HasSelectedFile));
+                    _removeSelectedFileCommand?.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public string? SelectedFileName
         {
             get => _selectedFileName;
-            set => SetProperty(ref _selectedFileName, value ?? string.Empty);
+            set
+            {
+                if (SetProperty(ref _selectedFileName, value))
+                {
+                    OnPropertyChanged(nameof(HasSelectedFile));
+                    _removeSelectedFileCommand?.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public string? SelectedFileSize
         {
             get => _selectedFileSize;
-            set => SetProperty(ref _selectedFileSize, value ?? string.Empty);
+            set
+            {
+                if (SetProperty(ref _selectedFileSize, value))
+                {
+                    // tamaño no afecta a HasSelectedFile, pero mantener coherencia
+                    OnPropertyChanged(nameof(SelectedFileSize));
+                }
+            }
         }
 
         public string? SelectedFileMimeType
         {
             get => _selectedFileMimeType;
-            set => SetProperty(ref _selectedFileMimeType, value ?? string.Empty);
+            set
+            {
+                if (SetProperty(ref _selectedFileMimeType, value))
+                {
+                    // MIME no afecta directamente a HasSelectedFile
+                    OnPropertyChanged(nameof(SelectedFileMimeType));
+                    // Notificar propiedad auxiliar para mostrar icono PDF
+                    OnPropertyChanged(nameof(IsPdfSelected));
+                    _removeSelectedFileCommand?.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public ImageSource? SelectedFilePreview
         {
             get => _selectedFilePreview;
-            set => SetProperty(ref _selectedFilePreview, value);
+            set
+            {
+                if (SetProperty(ref _selectedFilePreview, value))
+                {
+                    OnPropertyChanged(nameof(HasSelectedFile));
+                    OnPropertyChanged(nameof(IsImagePreview));
+                    _removeSelectedFileCommand?.RaiseCanExecuteChanged();
+                }
+            }
         }
+
+        // Propiedades auxiliares para la vista
+        public bool IsImagePreview => SelectedFilePreview != null;
+        public bool IsPdfSelected => string.Equals(SelectedFileMimeType, "application/pdf", StringComparison.OrdinalIgnoreCase);
+
+        // Propiedad calculada para determinar si hay archivo seleccionado
+        public bool HasSelectedFile => !string.IsNullOrWhiteSpace(SelectedFilePath) || !string.IsNullOrWhiteSpace(SelectedFileName) || SelectedFilePreview != null;
 
         public string ErrorMessage
         {
@@ -233,6 +285,40 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     SelectedFileSize = null; SelectedFileMimeType = null; SelectedFilePreview = null;
                     try { _logger.LogInformation("[DEBUG] SelectFile: error leyendo archivo {FilePath}: {Message}", ofd.FileName, ex.Message); } catch { }
                 }
+            }
+        }
+
+        private void RemoveSelectedFile()
+        {
+            try
+            {
+                _logger.LogInformation("[DEBUG] RemoveSelectedFile: valores ANTES -> Path='{Path}', Name='{Name}', Size='{Size}', Mime:'{Mime}', PreviewNotNull={PreviewNotNull}", SelectedFilePath ?? "(null)", SelectedFileName ?? "(null)", SelectedFileSize ?? "(null)", SelectedFileMimeType ?? "(null)", SelectedFilePreview != null);
+                // Limpiar todos los metadatos del archivo seleccionado
+                SelectedFilePath = null;
+                SelectedFileName = null;
+                SelectedFileSize = null;
+                SelectedFileMimeType = null;
+                SelectedFilePreview = null;
+
+                // Limpiar mensajes de error relacionados
+                ErrorMessage = string.Empty;
+
+                _logger.LogInformation("[DEBUG] RemoveSelectedFile: archivo removido -> Path='{Path}', Name='{Name}', Size='{Size}', Mime:'{Mime}', PreviewNotNull={PreviewNotNull}", SelectedFilePath ?? "(null)", SelectedFileName ?? "(null)", SelectedFileSize ?? "(null)", SelectedFileMimeType ?? "(null)", SelectedFilePreview != null);
+            }
+            catch (Exception ex)
+            {
+                try { _logger.LogWarning(ex, "RemoveSelectedFile: error al remover archivo"); } catch { }
+            }
+            finally
+            {
+                // Notificar explícitamente propiedades por si algún binding quedó en caché
+                OnPropertyChanged(nameof(SelectedFilePath));
+                OnPropertyChanged(nameof(SelectedFileName));
+                OnPropertyChanged(nameof(SelectedFileSize));
+                OnPropertyChanged(nameof(SelectedFileMimeType));
+                OnPropertyChanged(nameof(SelectedFilePreview));
+                OnPropertyChanged(nameof(HasSelectedFile));
+                _removeSelectedFileCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -446,12 +532,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
     public class RelayCommand : ICommand
     {
         private readonly Action _action;
-        public RelayCommand(Action action) => _action = action ?? throw new ArgumentNullException(nameof(action));
-        
-#pragma warning disable CS0067 // El evento nunca se usa
+        private readonly Func<bool>? _canExecute;
+
+        public RelayCommand(Action action) : this(action, null) { }
+        public RelayCommand(Action action, Func<bool>? canExecute)
+        {
+            _action = action ?? throw new ArgumentNullException(nameof(action));
+            _canExecute = canExecute;
+        }
+
         public event EventHandler? CanExecuteChanged;
-#pragma warning restore CS0067
-        public bool CanExecute(object? parameter) => true;
+
+        public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
+
         public void Execute(object? parameter) => _action();
+
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }

@@ -116,11 +116,24 @@
                             <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,12"/>
                               <!-- Preview y metadata -->
                             <Border Height="100" Width="100" CornerRadius="8" Background="#F5F5F5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
-                                <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform">
-                                    <Image.Visibility>
-                                        <Binding Path="HasSelectedFile" Converter="{StaticResource BooleanToVisibilityConverter}" />
-                                    </Image.Visibility>
-                                </Image>
+                                <Grid x:Name="PreviewContainer">
+                                    <!-- Imagen real (cuando exista preview de imagen) -->
+                                    <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image.Visibility>
+                                            <Binding Path="IsImagePreview" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                                        </Image.Visibility>
+                                    </Image>
+
+                                    <!-- Icono para PDF: emoji centrado, ocupa todo el área -->
+                                    <Grid x:Name="PdfIconContainer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Grid.Visibility>
+                                            <Binding Path="IsPdfSelected" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                                        </Grid.Visibility>
+                                        <Viewbox Stretch="Uniform">
+                                            <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                                        </Viewbox>
+                                    </Grid>
+                                </Grid>
                             </Border>
                               <!-- Metadatos -->
                             <StackPanel Orientation="Vertical">
@@ -144,7 +157,7 @@
                             </StackPanel>                              <!-- Botones de acciones -->
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Center">
                                 <Button Content="👁️ Ver" Command="{Binding OpenSelectedFileCommand}" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36" Margin="0,0,8,0"/>
-                                <Button Content="✕ Remover" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36"/>
+                                <Button x:Name="BtnRemoveFile" Content="✕ Remover" Command="{Binding RemoveSelectedFileCommand}" Click="BtnRemoveFile_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36"/>
                             </StackPanel>
                               <!-- Progreso carga -->
                             <StackPanel Orientation="Vertical" Margin="0,12,0,0">
