@@ -174,44 +174,309 @@
                 <Setter Property="Cursor" Value="No"/>
             </Trigger>
         </Style.Triggers>
-    </Style>
-
-    <!-- Estilo para ComboBox moderno -->
+    </Style>    <!-- Estilo base para ComboBox moderno: limpio, blanco, borde sutil redondeado -->
+    <!-- El TextBox interno (IsEditable) es OPCIONAL: controla la propiedad IsEditable del ComboBox -->
     <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
-        <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="Foreground" Value="#1D1D1B"/>
-        <Setter Property="Margin" Value="0,0,0,16"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
+        <!-- Colores y tipografía: alineados con TextBox y otros inputs -->
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1D1D1B" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+        <!-- Por defecto NO editable (dropdown only) -->
+        <Setter Property="IsEditable" Value="False" />
+        
+        <!-- Template personalizado: redondeado, limpio, flexible editable/no-editable -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Border redondeado: fondo blanco + borde sutil gris -->
+                        <Border x:Name="MainBorder"
+                                Grid.ColumnSpan="2"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <!-- TextBox interno para edición (solo si IsEditable=True) -->
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Grid.Column="0"
+                                         Margin="0"
+                                         Padding="{TemplateBinding Padding}"
+                                         VerticalContentAlignment="Center"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Visibility="Collapsed"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         Text="{Binding Path=Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <!-- ContentPresenter: item seleccionado (visible si NO es editable) -->
+                                <ContentPresenter x:Name="ContentSite"
+                                                  Grid.Column="0"
+                                                  IsHitTestVisible="False"
+                                                  Content="{TemplateBinding SelectedItem}"
+                                                  ContentTemplate="{TemplateBinding ItemTemplate}"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Stretch"
+                                                  Margin="{TemplateBinding Padding}" />
+
+                            </Grid>
+                        </Border>
+
+                        <!-- ToggleButton con flecha dropdown (siempre visible) -->
+                        <ToggleButton x:Name="ToggleButton"
+                                      Grid.Column="1"
+                                      Focusable="False"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Width="30" Height="36"
+                                      Cursor="Hand">
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Path Data="M 0 0 L 6 6 L 12 0 Z"
+                                      Fill="#666666"
+                                      Stretch="Uniform"
+                                      Width="12" Height="8"/>
+                            </Grid>
+                        </ToggleButton>                        <!-- Popup: dropdown con ancho igual al ComboBox (no personalizado, usa template default) -->
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade"
+                               Width="{Binding ElementName=MainBorder, Path=ActualWidth}">
+                            <ScrollViewer SnapsToDevicePixels="True" MaxHeight="300">
+                                <ItemsPresenter SnapsToDevicePixels="True" />
+                            </ScrollViewer>
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <!-- Mostrar TextBox interno SOLO si IsEditable=True -->
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <!-- Ocultar popup si no hay items -->
+                        <Trigger Property="HasItems" Value="false">
+                            <Setter TargetName="PART_Popup" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <!-- Deshabilitar cuando no está activo -->
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="#D0D0D0"/>
+                        </Trigger>
+
+                        <!-- Estado de foco (opcional: mejorar visual) -->
+                        <Trigger Property="IsFocused" Value="true">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <!-- ItemContainerStyle: estilo para items en el dropdown -->
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background" Value="#FFFFFF" />
+                    <Setter Property="Foreground" Value="{StaticResource TextDarkBrush}" />
+                    <Setter Property="Padding" Value="12,8" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="ItemBorder" 
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#F0F0F0" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#E6F2FF" />
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>    <!-- Estilo base para TextBox moderno: consistente con ComboBox -->
+    <!-- Propiedades: fondo blanco, borde redondeado (CornerRadius=6), borde sutil gris -->
+    <!-- Feedback visual: borde azul al enfoque, fondo gris suave en lectura -->
+    <Style x:Key="ModernInputTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1D1D1B" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+          <!-- Template personalizado: redondeado, limpio, con feedback visual -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">                        <ScrollViewer x:Name="PART_ContentHost"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Stretch"
+                                      Padding="{TemplateBinding Padding}"
+                                      Focusable="False"
+                                      SnapsToDevicePixels="True" />
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <!-- Borde azul cuando tiene foco -->
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                        </Trigger>
+
+                        <!-- Borde gris oscuro cuando está deshabilitado -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Border" Property="Background" Value="#F5F5F5" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#D0D0D0" />
+                            <Setter Property="Foreground" Value="#999999" />
+                        </Trigger>
+
+                        <!-- Borde rojo si tiene error (si existe propiedad de validación) -->
+                        <Trigger Property="Validation.HasError" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource ErrorBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
-    <!-- Estilo para TextBox moderno -->
-    <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
-        <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="Foreground" Value="#1D1D1B"/>
-        <Setter Property="Margin" Value="0,0,0,16"/>
-    </Style>
-
-    <!-- Estilo para DatePicker moderno -->
+    <!-- Estilo para TextBox moderno (alias del nuevo estilo base para compatibilidad) -->
+    <Style x:Key="ModernTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ModernInputTextBoxStyle}">
+    </Style>    <!-- Estilo para DatePicker moderno: consistente con ComboBox y TextBox -->
+    <!-- Propiedades: fondo blanco, borde redondeado (CornerRadius=6), borde sutil gris -->
+    <!-- Feedback visual: borde azul al enfoque, fondo gris suave en lectura -->
     <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
-        <Setter Property="FontFamily" Value="Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="Foreground" Value="#1D1D1B"/>
-        <Setter Property="Margin" Value="0,0,0,16"/>
-    </Style>    <!-- Estilo para botón primario moderno -->
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1D1D1B" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />        <Setter Property="Padding" Value="12,9" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" MinWidth="30" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Border redondeado: fondo blanco + borde sutil gris -->
+                        <Border x:Name="MainBorder"
+                                Grid.Column="0"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6,0,0,6"
+                                SnapsToDevicePixels="True"
+                                Padding="{TemplateBinding Padding}">
+                            <TextBlock x:Name="PART_TextBlock"
+                                       VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       Text="{TemplateBinding Text}" />
+                        </Border>                        <!-- ToggleButton con icono calendario y esquinas redondeadas -->
+                        <ToggleButton x:Name="PART_Button"
+                                      Grid.Column="1"
+                                      Focusable="False"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="{TemplateBinding Background}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      BorderThickness="0,1,1,1"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Cursor="Hand">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="ButtonBorder"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="0,6,6,0"
+                                            SnapsToDevicePixels="True">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="📅" FontSize="16" />
+                                        </Grid>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <!-- Popup con calendario -->
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade">
+                            <Calendar x:Name="PART_Calendar"
+                                      DisplayDate="{TemplateBinding DisplayDate}"
+                                      SelectedDate="{TemplateBinding SelectedDate}"
+                                      Background="White"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      BorderThickness="1" />
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <!-- Borde azul cuando tiene foco -->
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                        </Trigger>
+
+                        <!-- Borde gris oscuro cuando está deshabilitado -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="MainBorder" Property="Background" Value="#F5F5F5" />
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="#D0D0D0" />
+                            <Setter Property="Foreground" Value="#999999" />
+                        </Trigger>
+
+                        <!-- Borde rojo si tiene error (si existe propiedad de validación) -->
+                        <Trigger Property="Validation.HasError" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource ErrorBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style><!-- Estilo para botón primario moderno -->
     <Style x:Key="ModernPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
         <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
         <Setter Property="Foreground" Value="White"/>

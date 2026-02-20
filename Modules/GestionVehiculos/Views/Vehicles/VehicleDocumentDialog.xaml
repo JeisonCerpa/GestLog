@@ -70,20 +70,50 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!-- CARD 1: DATOS DEL DOCUMENTO -->
+                        </Grid.RowDefinitions>                        <!-- CARD 1: DATOS DEL DOCUMENTO -->
                         <Border Grid.Row="0" Style="{StaticResource CardSectionStyle}" Margin="0,0,0,10">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock Text="📋 Datos del Documento" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Text="Tipo de documento" Style="{StaticResource LabelTextStyle}" />
-                                <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,0,8"/>
-                                <TextBlock Text="Número" Style="{StaticResource LabelTextStyle}" />
-                                <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,8"/>
-                                <TextBlock Text="Fecha de emisión" Style="{StaticResource LabelTextStyle}" />
-                                <DatePicker SelectedDate="{Binding IssuedDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0,0,0,8"/>
-                                <TextBlock Text="Fecha de vencimiento" Style="{StaticResource LabelTextStyle}" />
-                                <DatePicker SelectedDate="{Binding ExpirationDate}" Style="{StaticResource ModernDatePickerStyle}" />
+                                
+                                <!-- Fila 1: Tipo de documento y Número (lado a lado, 50% cada uno) -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Tipo de documento -->
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,8,0">
+                                        <TextBlock Text="Tipo de documento" Style="{StaticResource LabelTextStyle}" />
+                                        <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource ModernComboBoxStyle}" Margin="0" Height="36"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Número -->
+                                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                                        <TextBlock Text="Número" Style="{StaticResource LabelTextStyle}" />
+                                        <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource ModernInputTextBoxStyle}" Margin="0" Height="36"/>
+                                    </StackPanel>
+                                </Grid>
+                                
+                                <!-- Fila 2: Fecha de emisión y Fecha de vencimiento (lado a lado, 50% cada uno) -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Fecha de emisión -->
+                                    <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,8,0">
+                                        <TextBlock Text="Fecha de emisión" Style="{StaticResource LabelTextStyle}" />
+                                        <DatePicker SelectedDate="{Binding IssuedDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0" Height="36"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Fecha de vencimiento -->
+                                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                                        <TextBlock Text="Fecha de vencimiento" Style="{StaticResource LabelTextStyle}" />
+                                        <DatePicker SelectedDate="{Binding ExpirationDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0" Height="36"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
@@ -95,15 +125,13 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Text="📝 Observaciones" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6"/>
-
-                                <!-- TextBox estirable: quitar MinHeight fijo, usar Stretch para llenar la fila '*' -->
+                                <TextBlock Grid.Row="0" Text="📝 Observaciones" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6"/>                                <!-- TextBox estirable: quitar MinHeight fijo, usar Stretch para llenar la fila '*' -->
                                 <TextBox Grid.Row="1"
                                          Text="{Binding Notes}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalScrollBarVisibility="Auto"
-                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         Style="{StaticResource ModernInputTextBoxStyle}"
                                          Padding="10,6"
                                          Margin="0"
                                          VerticalAlignment="Stretch"
