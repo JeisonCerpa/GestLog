@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 
 namespace GestLog.Converters
 {

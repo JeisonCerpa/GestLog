@@ -7,6 +7,7 @@ using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Services;
 using Microsoft.Extensions.DependencyInjection;

@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
@@ -112,14 +113,12 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
                 if (Estado == EstadoSeguimientoMantenimiento.Pendiente ||
                     Estado == EstadoSeguimientoMantenimiento.Atrasado ||
                     Estado == EstadoSeguimientoMantenimiento.NoRealizado)
-                    return 1;
-
-                // Preventivos registrados (prioridad media)
-                if (Seguimiento?.TipoMtno == Models.Enums.TipoMantenimiento.Preventivo)
+                    return 1;                // Preventivos registrados (prioridad media)
+                if (Seguimiento?.TipoMtno == TipoMantenimiento.Preventivo)
                     return 2;
 
                 // Correctivos registrados (prioridad baja)
-                if (Seguimiento?.TipoMtno == Models.Enums.TipoMantenimiento.Correctivo)
+                if (Seguimiento?.TipoMtno == TipoMantenimiento.Correctivo)
                     return 3;
 
                 // Por defecto (casos raros)

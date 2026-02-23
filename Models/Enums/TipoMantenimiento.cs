@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace GestLog.Modules.GestionMantenimientos.Models.Enums
+namespace GestLog.Models.Enums
 {
     public enum TipoMantenimiento
     {

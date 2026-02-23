@@ -1,11 +1,13 @@
 using System.Windows;
 using System.Windows.Input;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using CommunityToolkit.Mvvm.Messaging;
 using MessageBox = System.Windows.MessageBox;
+// using GestLog.Modules.GestionMantenimientos.Models.Enums; // TipoMantenimiento ahora está en GestLog.Models.Enums
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
 {
@@ -174,9 +176,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
                     {
                         throw new InvalidOperationException("El código del seguimiento no puede estar vacío.");
                     }
-                    
-                    // Verificar si es preventivo o correctivo
-                    bool esPreventivo = viewModel.Seguimiento.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Preventivo;
+                      // Verificar si es preventivo o correctivo
+                    bool esPreventivo = viewModel.Seguimiento.TipoMtno == TipoMantenimiento.Preventivo;
                     
                     if (esPreventivo)
                     {

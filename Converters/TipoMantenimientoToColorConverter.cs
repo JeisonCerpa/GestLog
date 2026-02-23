@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 using MediaColor = System.Windows.Media.Color;
 
 namespace GestLog.Converters

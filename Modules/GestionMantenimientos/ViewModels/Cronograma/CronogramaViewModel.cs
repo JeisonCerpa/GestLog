@@ -5,6 +5,7 @@ using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using GestLog.Modules.GestionMantenimientos.Messages.Equipos;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using GestLog.Services.Core.Logging;
@@ -16,7 +17,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
 {    /// <summary>
@@ -357,12 +358,10 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     var codigosProgramados = CronogramasFiltrados
                         .Where(c => c.Semanas != null && c.Semanas.Length >= i && c.Semanas[i - 1])
                         .Select(c => c.Codigo)
-                        .ToHashSet();
-
-                    var seguimientosSemana = seguimientos.Where(s =>
+                        .ToHashSet();                    var seguimientosSemana = seguimientos.Where(s =>
                         s.Semana == i && 
                         (!codigosProgramados.Contains(s.Codigo) || 
-                         s.TipoMtno == GestLog.Modules.GestionMantenimientos.Models.Enums.TipoMantenimiento.Correctivo)
+                         s.TipoMtno == TipoMantenimiento.Correctivo)
                     ).ToList();
                     
                     foreach (var s in seguimientosSemana)

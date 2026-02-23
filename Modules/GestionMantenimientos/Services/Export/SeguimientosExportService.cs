@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ClosedXML.Excel;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Utilities;
