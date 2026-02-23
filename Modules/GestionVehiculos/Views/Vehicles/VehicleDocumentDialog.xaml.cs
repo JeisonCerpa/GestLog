@@ -28,9 +28,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                     this.Close();
                 }
             };
-        }
-
-        public VehicleDocumentDialog(VehicleDocumentDialogModel viewModel) : this()
+        }        public VehicleDocumentDialog(VehicleDocumentDialogViewModel viewModel) : this()
         {
             // Si se pasó explícitamente el ViewModel, usarlo
             if (viewModel != null)
@@ -75,20 +73,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                     }
                 }
                 catch { }
-            }
-        }
+            }        }
 
-        public VehicleDocumentDialogModel? ViewModel => this.DataContext as VehicleDocumentDialogModel;
+        public VehicleDocumentDialogViewModel? ViewModel => this.DataContext as VehicleDocumentDialogViewModel;
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
             this.Close();
-        }
-
-        private void BtnSelectFile_Click(object sender, RoutedEventArgs e)
+        }        private void BtnSelectFile_Click(object sender, RoutedEventArgs e)
         {
-            if (this.DataContext is VehicleDocumentDialogModel vm && vm.SelectFileCommand != null && vm.SelectFileCommand.CanExecute(null))
+            if (this.DataContext is VehicleDocumentDialogViewModel vm && vm.SelectFileCommand != null && vm.SelectFileCommand.CanExecute(null))
             {
                 vm.SelectFileCommand.Execute(null);
 
@@ -150,14 +145,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            if (this.DataContext is VehicleDocumentDialogModel vm && vm.SaveCommand != null && vm.SaveCommand.CanExecute(null))
+            if (this.DataContext is VehicleDocumentDialogViewModel vm && vm.SaveCommand != null && vm.SaveCommand.CanExecute(null))
             {
                 vm.SaveCommand.Execute(null);
             }
-        }
-
-        private void BtnRemoveFile_Click(object sender, RoutedEventArgs e)
-        {            if (this.DataContext is VehicleDocumentDialogModel vm && vm.RemoveSelectedFileCommand != null && vm.RemoveSelectedFileCommand.CanExecute(null))
+        }        private void BtnRemoveFile_Click(object sender, RoutedEventArgs e)
+        {            if (this.DataContext is VehicleDocumentDialogViewModel vm && vm.RemoveSelectedFileCommand != null && vm.RemoveSelectedFileCommand.CanExecute(null))
             {
                 vm.RemoveSelectedFileCommand.Execute(null);
 

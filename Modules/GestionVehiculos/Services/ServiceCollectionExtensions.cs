@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
-using GestLog.Modules.GestionVehiculos.Interfaces;
+using GestLog.Modules.GestionVehiculos.Interfaces.Dialog;
+using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using GestLog.Modules.GestionVehiculos.Services.Data;
+using GestLog.Modules.GestionVehiculos.Services.Dialog;
 using GestLog.Modules.GestionVehiculos.Views.Vehicles;
 
 namespace GestLog.Modules.GestionVehiculos.Services
@@ -15,27 +17,25 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddScoped<IVehicleService, VehicleService>();
             services.AddScoped<IVehicleDocumentService, VehicleDocumentService>();
 
+            // ✅ Dialog Services
+            services.AddTransient<IVehicleDocumentDialogService, VehicleDocumentDialogService>();
+            services.AddSingleton<IAppDialogService, AppDialogService>();
+
+            // ✅ Storage Services
+            services.AddSingleton<IPhotoStorageService, NetworkFileStorageService>();
+
             // ✅ Views
             services.AddTransient<GestionVehiculosHomeView>();
             services.AddTransient<VehicleFormDialog>();
             services.AddTransient<VehicleDocumentsView>();
             services.AddTransient<VehicleDocumentDialog>();
-            // Dialog service para abrir VehicleDocumentDialog desde ViewModels sin usar code-behind
-            services.AddTransient<Interfaces.Dialog.IVehicleDocumentDialogService, Services.Dialog.VehicleDocumentDialogService>();
-            // Servicio de diálogos (reemplaza MessageBox en VMs)
-            services.AddSingleton<Interfaces.Dialog.IAppDialogService, Services.Dialog.AppDialogService>();
-            
-            // Registrar ViewModel del diálogo se realiza en la sección de ViewModels más abajo (evitar duplicado)
 
             // ✅ ViewModels
             services.AddTransient<GestionVehiculosHomeViewModel>();
             services.AddTransient<VehicleFormViewModel>();
             services.AddTransient<VehicleDetailsViewModel>();
             services.AddTransient<VehicleDocumentsViewModel>();
-            services.AddTransient<VehicleDocumentDialogModel>();
-
-            // Photo storage
-            services.AddSingleton<Interfaces.IPhotoStorageService, NetworkFileStorageService>();
+            services.AddTransient<VehicleDocumentDialogViewModel>();
 
             return services;
         }

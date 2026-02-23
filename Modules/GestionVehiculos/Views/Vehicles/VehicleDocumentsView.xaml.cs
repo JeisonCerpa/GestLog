@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
-using GestLog.Modules.GestionVehiculos.Interfaces;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using GestLog.Services.Core.Logging;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Vehicles

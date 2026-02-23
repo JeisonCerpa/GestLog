@@ -1,4 +1,7 @@
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GestLog.Modules.GestionVehiculos.Interfaces.Dialog
 {
@@ -8,7 +11,7 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Dialog
         /// Muestra el diálogo de documento de vehículo con el ViewModel proporcionado.
         /// Retorna en out el resultado de ShowDialog() (true = aceptado, false/null = cancelado).
         /// </summary>
-        bool TryShowVehicleDocumentDialog(VehicleDocumentDialogModel dialogModel, out bool? dialogResult);
+        bool TryShowVehicleDocumentDialog(VehicleDocumentDialogViewModel dialogModel, out bool? dialogResult);
 
         /// <summary>
         /// Crea el ViewModel vía DI, inicializa VehicleId y muestra el diálogo. Simplifica la llamada desde VMs.

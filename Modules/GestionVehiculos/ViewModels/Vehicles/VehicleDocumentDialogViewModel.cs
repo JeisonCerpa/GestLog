@@ -3,14 +3,14 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using GestLog.Modules.GestionVehiculos.Interfaces;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Services.Core.Logging;
 using GestLog.Utilities;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionVehiculos.Messages.Documents;
-using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using System.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -20,7 +20,7 @@ using System.Linq;
 
 namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 {
-    public class VehicleDocumentDialogModel : ViewModelBase, INotifyDataErrorInfo
+    public class VehicleDocumentDialogViewModel : ViewModelBase, INotifyDataErrorInfo
     {
         private readonly IVehicleDocumentService _documentService;
         private readonly IPhotoStorageService _photoStorage;
@@ -52,7 +52,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public System.Windows.Window? Owner { get; set; }
 
         // Evento para notificar éxito y permitir que la vista cierre el diálogo
-        public event EventHandler? OnExito;        public VehicleDocumentDialogModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger, IVehicleService vehicleService)
+        public event EventHandler? OnExito;
+
+        public VehicleDocumentDialogViewModel(IVehicleDocumentService documentService, IPhotoStorageService photoStorage, IGestLogLogger logger, IVehicleService vehicleService)
         {
             _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
             _photoStorage = photoStorage ?? throw new ArgumentNullException(nameof(photoStorage));
@@ -70,8 +72,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             openCmd.SetDebugLogger(logger);
             OpenSelectedFileCommand = openCmd;
             
-            _logger.LogInformation("[DEBUG-CTOR] VehicleDocumentDialogModel inicializado. RemoveSelectedFileCommand creado con canExecute predicate. HasSelectedFile={HasSelectedFile}", HasSelectedFile);
+            _logger.LogInformation("[DEBUG-CTOR] VehicleDocumentDialogViewModel inicializado. RemoveSelectedFileCommand creado con canExecute predicate. HasSelectedFile={HasSelectedFile}", HasSelectedFile);
         }
+
+        // ...existing code... (resto del contenido del archivo anterior, pero con nombre de clase actualizado)
 
         public ObservableCollection<string> DocumentTypes { get; }
 
@@ -172,7 +176,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 if (SetProperty(ref _selectedFileSize, value))
                 {
-                    // tamaño no afecta a HasSelectedFile, pero mantener coherencia
                     OnPropertyChanged(nameof(SelectedFileSize));
                 }
             }
@@ -185,9 +188,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 if (SetProperty(ref _selectedFileMimeType, value))
                 {
-                    // MIME no afecta directamente a HasSelectedFile
                     OnPropertyChanged(nameof(SelectedFileMimeType));
-                    // Notificar propiedad auxiliar para mostrar icono PDF
                     OnPropertyChanged(nameof(IsPdfSelected));
                     _removeSelectedFileCommand?.RaiseCanExecuteChanged();
                     NotifyCanSaveChanged();
@@ -201,7 +202,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 {
                     try
                     {
-                        // Actualizar IsImagePreview cuando cambia SelectedFilePreview
                         IsImagePreview = value != null;
                         OnPropertyChanged(nameof(HasSelectedFile));
                         _removeSelectedFileCommand?.RaiseCanExecuteChanged();
@@ -226,7 +226,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         public bool IsPdfSelected => string.Equals(SelectedFileMimeType, "application/pdf", StringComparison.OrdinalIgnoreCase);
 
-        // Propiedad calculada para determinar si hay archivo seleccionado
         public bool HasSelectedFile => !string.IsNullOrWhiteSpace(SelectedFilePath) || !string.IsNullOrWhiteSpace(SelectedFileName) || SelectedFilePreview != null;
 
         public string ErrorMessage
@@ -262,13 +261,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public ICommand CancelUploadCommand { get; }
         public ICommand OpenSelectedFileCommand { get; }
 
-        // Nueva propiedad para exponer error específico del archivo seleccionado (inline)
         public string? SelectedFileError => GetFirstErrorForProperty(nameof(SelectedFilePath));
 
-        // Propiedad calculada para habilitar guardar
         public bool CanSave => !HasErrors && !IsUploading && !string.IsNullOrWhiteSpace(DocumentType) && HasSelectedFile;
 
-        // Texto explicativo cuando Guardar está deshabilitado
         public string DisabledReason
         {
             get
@@ -281,7 +277,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             }
         }
 
-        // Implementación INotifyDataErrorInfo
         public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
         public System.Collections.IEnumerable GetErrors(string? propertyName)
@@ -365,7 +360,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                         _ => "application/octet-stream"
                     };
 
-                    // Preview for images: cargar desde FileStream con OnLoad para evitar locks y problemas de acceso
                     if (SelectedFileMimeType != null && SelectedFileMimeType.StartsWith("image/"))
                     {
                         try
@@ -387,7 +381,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                             try { _logger.LogWarning(ex, "SelectFile: fallo preview para {File}", SelectedFileName ?? "(null)"); } catch { }
                         }
 
-                        // Fallback using UriSource
                         if (SelectedFilePreview == null)
                         {
                             try
@@ -412,7 +405,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                         SelectedFilePreview = null;
                     }
 
-                    // Log selection metadata at Information level with [DEBUG] tag
                     try
                     {
                         _logger.LogInformation("[DEBUG] SelectFile: seleccionado {FilePath} Name={Name} Size={Size} Mime={Mime}",
@@ -423,7 +415,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     }
                     catch { }
 
-                    // Start async validation (cancel previous)
                     _validationCts?.Cancel();
                     _validationCts = new System.Threading.CancellationTokenSource();
                     _ = ValidateSelectedFileAsync(_validationCts.Token).ContinueWith(t => {
@@ -443,22 +434,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         {
             try
             {
-                // Limpiar todos los metadatos del archivo seleccionado
                 SelectedFilePath = null;
                 SelectedFileName = null;
                 SelectedFileSize = null;
                 SelectedFileMimeType = null;
                 SelectedFilePreview = null;
-
-                // Limpiar mensajes de error relacionados
                 ErrorMessage = string.Empty;
             }
             catch (Exception ex)
             {
                 try { _logger.LogWarning(ex, "RemoveSelectedFile: error al remover archivo"); } catch { }
             }
-            finally            {
-                // Notificar explícitamente propiedades por si algún binding quedó en caché
+            finally
+            {
                 OnPropertyChanged(nameof(SelectedFilePath));
                 OnPropertyChanged(nameof(SelectedFileName));
                 OnPropertyChanged(nameof(SelectedFileSize));
@@ -495,7 +483,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         private async Task ValidateSelectedFileAsync(System.Threading.CancellationToken cancellationToken)
         {
-            const long maxBytes = 10 * 1024 * 1024; // 10MB
+            const long maxBytes = 10 * 1024 * 1024;
             var prop = nameof(SelectedFilePath);
             ClearErrors(prop);
 
@@ -528,7 +516,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 if (cancellationToken.IsCancellationRequested) return;
 
-                // Content validation
                 if (ext == ".pdf")
                 {
                     try
@@ -551,7 +538,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 }
                 else if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
                 {
-                    // Try to decode image asynchronously to ensure it's not corrupted
                     try
                     {
                         await Task.Run(() =>
@@ -575,7 +561,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             }
             finally
             {
-                // Notificar cambios en propiedades dependientes
                 OnPropertyChanged(nameof(SelectedFileError));
                 OnPropertyChanged(nameof(CanSave));
                 OnPropertyChanged(nameof(DisabledReason));
@@ -588,7 +573,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             ErrorMessage = string.Empty;
             _logger.LogDebug("SaveAsync iniciado");
 
-            // Validar VehicleId
             if (VehicleId == Guid.Empty)
             {
                 ErrorMessage = "⚠️ VehicleId inválido.";
@@ -596,7 +580,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            // Validar DocumentType
             if (string.IsNullOrWhiteSpace(DocumentType))
             {
                 ErrorMessage = "⚠️ Seleccione el tipo de documento.";
@@ -604,7 +587,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            // Validar SelectedFilePath
             if (SelectedFilePath == null || !File.Exists(SelectedFilePath))
             {
                 ErrorMessage = "⚠️ Seleccione un archivo válido.";
@@ -612,7 +594,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            // Antes de continuar, asegurarse de que no haya errores de validación
             if (HasErrors)
             {
                 ErrorMessage = SelectedFileError ?? "Hay errores con el archivo seleccionado.";
@@ -620,7 +601,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            // Validar extensión
             var allowed = new[] { ".pdf", ".png", ".jpg", ".jpeg" };
             var ext = Path.GetExtension(SelectedFilePath).ToLowerInvariant();
             if (Array.IndexOf(allowed, ext) < 0)
@@ -630,7 +610,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 return;
             }
 
-            // Validar tamaño
             var fi = new FileInfo(SelectedFilePath);
             const long maxBytes = 10 * 1024 * 1024;
             if (fi.Length > maxBytes)
@@ -649,7 +628,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 var progress = new Progress<double>(p => UploadProgress = p);
 
-                // Verificar si existe documento vigente del mismo tipo (para SOAT/Tecno)
                 var isSoatOrTecno = DocumentType.Equals("SOAT", StringComparison.OrdinalIgnoreCase) || 
                                    DocumentType.Equals("Tecno-Mecánica", StringComparison.OrdinalIgnoreCase);
                 
@@ -669,16 +647,13 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     }
                 }
 
-                // Generar Id localmente (sin tocar BD aún)
                 var documentId = Guid.NewGuid();
                 var fileExt = Path.GetExtension(SelectedFileName) ?? string.Empty;
                 var storageFileName = SanitizeFilePart($"{DocumentType}_{VehicleId}_{documentId}{fileExt}");
 
-                // Subir archivo
                 using var fileStream = File.OpenRead(SelectedFilePath);
                 var storagePath = await _photoStorage.SaveOriginalAsync(fileStream, storageFileName, progress, token);
 
-                // Crear DTO con información completa
                 var dto = new VehicleDocumentDto
                 {
                     Id = documentId,
@@ -692,18 +667,14 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     Notes = Notes
                 };
 
-                // Variable para almacenar el Id real del documento creado
                 Guid createdDocumentId = Guid.Empty;
 
-                // Para SOAT/Tecno: usar AddWithReplaceAsync (operación atómica)
                 if (isSoatOrTecno)
                 {
-                    // Llamar a la nueva firma que acepta uploadedStoragePath y CancellationToken
                     var replaceResult = await _documentService.AddWithReplaceAsync(dto, storagePath, token);
 
                     if (replaceResult == null || replaceResult.NewDocumentId == Guid.Empty)
                     {
-                        // Si el servicio devolvió un resultado inválido, informar al usuario y no cerrar el diálogo
                         ErrorMessage = "❌ No se pudo reemplazar el documento. Operación revertida.";
                         _logger.LogWarning("SaveAsync: AddWithReplaceAsync falló para VehicleId={VehicleId}", VehicleId);
                         return;
@@ -713,14 +684,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 }
                 else
                 {
-                    // Para otros tipos: crear nuevo registro y capturar el Id devuelto
                     createdDocumentId = await _documentService.AddAsync(dto);
                 }
 
-                // Cerrar diálogo
                 CloseDialog();
 
-                // Enviar mensajes
                 try { WeakReferenceMessenger.Default.Send(new VehicleDocumentUploadProgressMessage(VehicleId, 100, false)); } catch { }
                 try { WeakReferenceMessenger.Default.Send(new VehicleDocumentCreatedMessage(VehicleId, createdDocumentId)); } catch { }
             }
@@ -745,7 +713,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         private void CloseDialog()
         {
-            // Disparar el evento para que la vista cierre el diálogo de forma consistente
             try
             {
                 OnExito?.Invoke(this, EventArgs.Empty);
@@ -774,27 +741,28 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             }
             
             return sb.ToString();
-        }        private void NotifyCanSaveChanged()
+        }
+
+        private void NotifyCanSaveChanged()
         {
             try
             {
-                // Notificar cambio de propiedad CanSave al binding
                 OnPropertyChanged(nameof(CanSave));
                 OnPropertyChanged(nameof(DisabledReason));
                 
-                // Notificar al comando
                 if (SaveCommand is AsyncRelayCommand arc)
                     arc.RaiseCanExecuteChanged();
                 else if (SaveCommand is IAsyncRelayCommand cmd)
                 {
-                    // try reflectively
                     var raise = cmd.GetType().GetMethod("RaiseCanExecuteChanged");
                     raise?.Invoke(cmd, null);
                 }
             }
             catch { }
         }
-    }    public class RelayCommand : ICommand
+    }
+
+    public class RelayCommand : ICommand
     {
         private readonly Action _action;
         private readonly Func<bool>? _canExecute;
@@ -824,7 +792,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        // Setter interno para logging (será seteado desde el ViewModel)
         internal void SetDebugLogger(IGestLogLogger logger) => _debugLogger = logger;
     }
 }
