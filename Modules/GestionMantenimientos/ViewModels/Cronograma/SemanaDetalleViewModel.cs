@@ -13,6 +13,7 @@ using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
 using System.Windows.Data;
 using System.ComponentModel;
+using GestLog.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
 {    
@@ -152,10 +153,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 var esEstadoRegistrable = estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Pendiente || 
                                          estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.Atrasado ||
                                          estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.NoRealizado;
-                
-                // Si hay un seguimiento correctivo ejecutado, no permitir nuevo registro
+                  // Si hay un seguimiento correctivo ejecutado, no permitir nuevo registro
                 var esCorrectivoPrevioEjecutado = estado.Seguimiento != null &&
-                                                 estado.Seguimiento.TipoMtno == Models.Enums.TipoMantenimiento.Correctivo &&
+                                                 estado.Seguimiento.TipoMtno == TipoMantenimiento.Correctivo &&
                                                  (estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo ||
                                                   estado.Estado == Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo);
                 

@@ -1,5 +1,7 @@
 using ClosedXML.Excel;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using TipoMantenimiento = GestLog.Models.Enums.TipoMantenimiento;
 
 namespace GestLog.Modules.GestionMantenimientos.Utilities
 {

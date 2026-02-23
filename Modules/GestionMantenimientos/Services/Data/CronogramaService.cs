@@ -9,9 +9,10 @@ using System.Linq;
 using System.Threading;
 using ClosedXML.Excel;
 using GestLog.Modules.DatabaseConnection;
+using GestLog.Models.Enums;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using CommunityToolkit.Mvvm.Messaging;
@@ -21,8 +22,7 @@ using System.Globalization;
 namespace GestLog.Modules.GestionMantenimientos.Services.Data
 {
     public class CronogramaService : ICronogramaService
-    {
-        private readonly IGestLogLogger _logger;
+    {        private readonly IGestLogLogger _logger;
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
         public CronogramaService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
@@ -79,7 +79,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
 
             // Validaciones de negocio adicionales
             if (string.IsNullOrWhiteSpace(cronograma.Codigo))
-                throw new GestionMantenimientosDomainException("El cÃ³digo es obligatorio.");
+                throw new GestionMantenimientosDomainException("El código es obligatorio.");
             if (string.IsNullOrWhiteSpace(cronograma.Nombre))
                 throw new GestionMantenimientosDomainException("El nombre es obligatorio.");
             if (string.IsNullOrWhiteSpace(cronograma.Marca))
@@ -88,11 +88,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 throw new GestionMantenimientosDomainException("La sede es obligatoria.");
             if (cronograma.FrecuenciaMtto != null && (int)cronograma.FrecuenciaMtto <= 0)
                 throw new GestionMantenimientosDomainException("La frecuencia de mantenimiento debe ser mayor a cero.");
-            // Validar que la longitud de 'Semanas' coincida con el nÃºmero de semanas del aÃ±o correspondiente (ISO)
+            // Validar que la longitud de 'Semanas' coincida con el número de semanas del año correspondiente (ISO)
             int targetYear = cronograma.Anio > 0 ? cronograma.Anio : DateTime.Now.Year;
             int weeksInYear = ISOWeek.GetWeeksInYear(targetYear);
             if (cronograma.Semanas == null || cronograma.Semanas.Length != weeksInYear)
-                throw new GestionMantenimientosDomainException($"El cronograma debe tener {weeksInYear} semanas definidas para el aÃ±o {targetYear}.");
+                throw new GestionMantenimientosDomainException($"El cronograma debe tener {weeksInYear} semanas definidas para el año {targetYear}.");
             // Validar duplicados solo en alta
         }
 
@@ -103,7 +103,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 ValidarCronograma(cronograma);
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 if (await dbContext.Cronogramas.AnyAsync(c => c.Codigo == cronograma.Codigo && c.Anio == cronograma.Anio))
-                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el cÃ³digo '{cronograma.Codigo}' para el aÃ±o {cronograma.Anio}.");
+                    throw new GestionMantenimientosDomainException($"Ya existe un cronograma con el código '{cronograma.Codigo}' para el año {cronograma.Anio}.");
                 var entity = new CronogramaMantenimiento
                 {
                     Codigo = cronograma.Codigo!,
@@ -121,7 +121,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     if (entity.Semanas[i])
                     {
                         int semana = i + 1;
-                        // Verificar si ya existe seguimiento para este equipo, semana y aÃ±o
+                        // Verificar si ya existe seguimiento para este equipo, semana y año
                         bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio);
                         if (!existe)
                         {
@@ -131,7 +131,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 Nombre = entity.Nombre,
                                 Semana = semana,
                                 Anio = entity.Anio,
-                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar segÃºn lÃ³gica
+                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar según lógica
                                 Descripcion = "Mantenimiento programado",
                                 Responsable = string.Empty,
                                 FechaRegistro = DateTime.Now
@@ -150,7 +150,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CronogramaService] Unexpected error on add");
-                throw new GestionMantenimientosDomainException("OcurriÃ³ un error inesperado al agregar el cronograma. Por favor, contacte al administrador.", ex);
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al agregar el cronograma. Por favor, contacte al administrador.", ex);
             }
         }
 
@@ -162,8 +162,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == cronograma.Codigo && c.Anio == cronograma.Anio);
                 if (entity == null)
-                    throw new GestionMantenimientosDomainException("No se encontrÃ³ el cronograma a actualizar.");
-                // No permitir cambiar el cÃ³digo
+                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a actualizar.");
+                // No permitir cambiar el código
                 entity.Nombre = cronograma.Nombre!;
                 entity.Marca = cronograma.Marca;
                 entity.Sede = cronograma.Sede;
@@ -186,7 +186,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 Nombre = entity.Nombre,
                                 Semana = semana,
                                 Anio = entity.Anio,
-                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar segÃºn lÃ³gica
+                                TipoMtno = TipoMantenimiento.Preventivo, // Por defecto, o puedes ajustar según lógica
                                 Descripcion = "Mantenimiento programado",
                                 Responsable = string.Empty,
                                 FechaRegistro = DateTime.Now
@@ -205,7 +205,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CronogramaService] Unexpected error on update");
-                throw new GestionMantenimientosDomainException("OcurriÃ³ un error inesperado al actualizar el cronograma. Por favor, contacte al administrador.", ex);
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al actualizar el cronograma. Por favor, contacte al administrador.", ex);
             }
         }
 
@@ -214,11 +214,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             try
             {
                 if (string.IsNullOrWhiteSpace(codigo))
-                    throw new GestionMantenimientosDomainException("El cÃ³digo del cronograma es obligatorio para eliminar.");
+                    throw new GestionMantenimientosDomainException("El código del cronograma es obligatorio para eliminar.");
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 var entity = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == codigo);
                 if (entity == null)
-                    throw new GestionMantenimientosDomainException("No se encontrÃ³ el cronograma a eliminar.");
+                    throw new GestionMantenimientosDomainException("No se encontró el cronograma a eliminar.");
                 dbContext.Cronogramas.Remove(entity);
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[CronogramaService] Cronograma eliminado correctamente: {Codigo}", codigo ?? "");
@@ -231,14 +231,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CronogramaService] Unexpected error on delete");
-                throw new GestionMantenimientosDomainException("OcurriÃ³ un error inesperado al eliminar el cronograma. Por favor, contacte al administrador.", ex);
+                throw new GestionMantenimientosDomainException("Ocurrió un error inesperado al eliminar el cronograma. Por favor, contacte al administrador.", ex);
             }
         }
 
         public async Task DeleteByEquipoCodigoAsync(string codigoEquipo)
         {
             if (string.IsNullOrWhiteSpace(codigoEquipo))
-                throw new GestionMantenimientosDomainException("El cÃ³digo del equipo es obligatorio para eliminar cronogramas.");
+                throw new GestionMantenimientosDomainException("El código del equipo es obligatorio para eliminar cronogramas.");
             using var dbContext = _dbContextFactory.CreateDbContext();
             var cronogramas = dbContext.Cronogramas.Where(c => c.Codigo == codigoEquipo);
             dbContext.Cronogramas.RemoveRange(cronogramas);
@@ -264,11 +264,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     {
                         var cellValue = worksheet.Cell(1, i + 1).GetString();
                         if (!string.Equals(cellValue, headers[i], StringComparison.OrdinalIgnoreCase))
-                            throw new GestionMantenimientosDomainException($"Columna esperada '{headers[i]}' no encontrada en la posiciÃ³n {i + 1}.");
+                            throw new GestionMantenimientosDomainException($"Columna esperada '{headers[i]}' no encontrada en la posición {i + 1}.");
                     }
-                    // Determinar nÃºmero de semanas en el aÃ±o objetivo (si se provee en el archivo, buscar columna 'Anio' o usar aÃ±o actual)
+                    // Determinar número de semanas en el año objetivo (si se provee en el archivo, buscar columna 'Anio' o usar año actual)
                     int fileYear = DateTime.Now.Year;
-                    // Determinar de forma segura la Ãºltima columna con contenido en la fila de encabezados
+                    // Determinar de forma segura la última columna con contenido en la fila de encabezados
                     int lastColumn = worksheet.Row(1).LastCellUsed()?.Address.ColumnNumber
                                      ?? worksheet.LastColumnUsed()?.ColumnNumber()
                                      ?? (headers.Length + System.Globalization.ISOWeek.GetWeeksInYear(DateTime.Now.Year));
@@ -277,19 +277,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         var h = worksheet.Cell(1, col).GetString();
                         if (string.Equals(h, "Anio", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Tomamos el aÃ±o de la primera fila de datos (si existe)
+                            // Tomamos el año de la primera fila de datos (si existe)
                             var val = worksheet.Cell(2, col).GetValue<int?>();
                             if (val.HasValue) fileYear = val.Value;
                             break;
                         }
                     }
                     int weeksInYear = System.Globalization.ISOWeek.GetWeeksInYear(fileYear);
-                    // Validar encabezados de semanas dinÃ¡micamente
+                    // Validar encabezados de semanas dinámicamente
                     for (int s = 1; s <= weeksInYear; s++)
                     {
                         var cellValue = worksheet.Cell(1, headers.Length + s).GetString();
                         if (!string.Equals(cellValue, $"S{s}", StringComparison.OrdinalIgnoreCase))
-                            throw new GestionMantenimientosDomainException($"Columna esperada 'S{s}' no encontrada en la posiciÃ³n {headers.Length + s}.");
+                            throw new GestionMantenimientosDomainException($"Columna esperada 'S{s}' no encontrada en la posición {headers.Length + s}.");
                     }
                     var cronogramas = new List<CronogramaMantenimientoDto>();
                     int row = 2;
@@ -319,7 +319,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         catch (GestionMantenimientosDomainException ex)
                         {
                             _logger.LogWarning(ex, $"[CronogramaService] Validation error on import at row {row}");
-                            throw new GestionMantenimientosDomainException($"Error de validaciÃ³n en la fila {row}: {ex.Message}");
+                            throw new GestionMantenimientosDomainException($"Error de validación en la fila {row}: {ex.Message}");
                         }
                         catch (Exception ex)
                         {
@@ -328,9 +328,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         }
                         row++;
                     }
-                    // AquÃ­ deberÃ­as guardar los cronogramas importados en la base de datos o colecciÃ³n interna
+                    // Aquí deberías guardar los cronogramas importados en la base de datos o colección interna
                     _logger.LogInformation("[CronogramaService] Cronogramas importados: {Count}", cronogramas.Count);
-                    // Notificar actualizaciÃ³n de seguimientos
+                    // Notificar actualización de seguimientos
                     WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 }
                 catch (GestionMantenimientosDomainException ex)
@@ -368,7 +368,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     worksheet.Cell(1, i + 1).Value = headers[i];
                     worksheet.Cell(1, i + 1).Style.Font.Bold = true;
                 }
-                // Determinar semanas del aÃ±o (por defecto aÃ±o actual aunque la lista puede contener aÃ±os distintos)
+                // Determinar semanas del año (por defecto año actual aunque la lista puede contener años distintos)
                 int exportYear = DateTime.Now.Year;
                 if (cronogramas.Any()) exportYear = cronogramas.First().Anio > 0 ? cronogramas.First().Anio : exportYear;
                 int weeksInYearExport = ISOWeek.GetWeeksInYear(exportYear);
@@ -387,11 +387,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     worksheet.Cell(row, 2).Value = c.Nombre;
                     worksheet.Cell(row, 3).Value = c.Marca;
                     worksheet.Cell(row, 4).Value = c.Sede;
-                    // SemanaInicioMtto eliminado de la exportaciÃ³n
+                    // SemanaInicioMtto eliminado de la exportación
                     worksheet.Cell(row, 6).Value = c.FrecuenciaMtto.HasValue ? (int)c.FrecuenciaMtto.Value : (int?)null;
                     for (int s = 0; s < weeksInYearExport; s++)
                     {
-                        worksheet.Cell(row, headers.Length + 1 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "âœ”" : "";
+                        worksheet.Cell(row, headers.Length + 1 + s).Value = c.Semanas != null && c.Semanas.Length > s && c.Semanas[s] ? "✓" : "";
                     }
                     row++;
                 }
@@ -427,7 +427,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             }).ToList();
         }
 
-        // Genera el array de semanas segÃºn la frecuencia y el aÃ±o (soporta 52 o 53 semanas segÃºn ISO)
+        // Genera el array de semanas según la frecuencia y el año (soporta 52 o 53 semanas según ISO)
         public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia, int year)
         {
             int weeksInYear = ISOWeek.GetWeeksInYear(year);
@@ -435,12 +435,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             if (frecuencia == null) return semanas;
             if (semanaInicio < 1 || semanaInicio > weeksInYear) return semanas;
 
-            // Usar el nuevo mÃ©todo mejorado que calcula basado en fechas reales
+            // Usar el nuevo método mejorado que calcula basado en fechas reales
             return GenerarSemanasBasadoEnFechas(semanaInicio, frecuencia, year);
         }        /// <summary>
-        /// Genera un array de semanas basado en cÃ¡lculos de fechas reales.
-        /// Esto es mÃ¡s preciso que usar saltos fijos de semanas, especialmente para 
-        /// frecuencias como cuatrimestral que dependen de meses especÃ­ficos.
+        /// Genera un array de semanas basado en cálculos de fechas reales.
+        /// Esto es más preciso que usar saltos fijos de semanas, especialmente para 
+        /// frecuencias como cuatrimestral que dependen de meses específicos.
         /// </summary>
         private static bool[] GenerarSemanasBasadoEnFechas(int semanaInicio, FrecuenciaMantenimiento? frecuencia, int year)
         {
@@ -453,7 +453,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             // Calcular la fecha del lunes de la semana de inicio
             var fechaInicio = GetLunesDeISOMeek(year, semanaInicio);
             
-            // Determinar cuÃ¡ntos meses se deben sumar segÃºn la frecuencia
+            // Determinar cuántos meses se deben sumar según la frecuencia
             int mesesAsumar = frecuencia switch
             {
                 FrecuenciaMantenimiento.Semanal => 0, // Especial: 1 semana
@@ -461,46 +461,46 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 FrecuenciaMantenimiento.Mensual => 1,
                 FrecuenciaMantenimiento.Bimestral => 2,
                 FrecuenciaMantenimiento.Trimestral => 3,
-                FrecuenciaMantenimiento.Cuatrimestral => 4, // âœ… AQUÃ ESTÃ LA SOLUCIÃ“N
+                FrecuenciaMantenimiento.Cuatrimestral => 4, // ✅ AQUÍ ESTÁ LA SOLUCIÓN
                 FrecuenciaMantenimiento.Semestral => 6,
                 FrecuenciaMantenimiento.Anual => 12,
                 _ => 1
             };
 
-            // Marcar semanas segÃºn la frecuencia
+            // Marcar semanas según la frecuencia
             var fechaActual = fechaInicio;
             
             while (fechaActual.Year <= year)
             {
-                // Si estamos fuera del aÃ±o, detener
+                // Si estamos fuera del año, detener
                 if (fechaActual.Year > year)
                     break;
 
                 // Obtener la semana ISO de esta fecha
                 int isoWeek = ISOWeek.GetWeekOfYear(fechaActual);
-                int isoYear = fechaActual.Year; // La semana obtenida es del aÃ±o de la fecha
+                int isoYear = fechaActual.Year; // La semana obtenida es del año de la fecha
                 
-                // Nota: ISOWeek.GetWeekOfYear solo retorna el nÃºmero de semana, 
-                // pero la fecha puede estar en una semana que pertenece a otro aÃ±o
+                // Nota: ISOWeek.GetWeekOfYear solo retorna el número de semana, 
+                // pero la fecha puede estar en una semana que pertenece a otro año
                 // Necesitamos verificar esto manualmente
                 if (fechaActual.Month == 1 && isoWeek > 30)
                 {
-                    // Esa semana pertenece al aÃ±o anterior
+                    // Esa semana pertenece al año anterior
                     isoYear = fechaActual.Year - 1;
                 }
                 else if (fechaActual.Month == 12 && isoWeek < 10)
                 {
-                    // Esa semana pertenece al siguiente aÃ±o
+                    // Esa semana pertenece al siguiente año
                     isoYear = fechaActual.Year + 1;
                 }
                 
-                // Si la semana pertenece al aÃ±o actual, marcarla
+                // Si la semana pertenece al año actual, marcarla
                 if (isoYear == year && isoWeek >= 1 && isoWeek <= weeksInYear)
                 {
-                    semanas[isoWeek - 1] = true; // Convertir a Ã­ndice 0-based
+                    semanas[isoWeek - 1] = true; // Convertir a índice 0-based
                 }
 
-                // Calcular prÃ³xima fecha segÃºn frecuencia
+                // Calcular próxima fecha según frecuencia
                 if (frecuencia == FrecuenciaMantenimiento.Semanal)
                 {
                     fechaActual = fechaActual.AddDays(7); // 1 semana
@@ -517,11 +517,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         }
 
         /// <summary>
-        /// Obtiene la fecha del lunes correspondiente a una semana ISO especÃ­fica.
+        /// Obtiene la fecha del lunes correspondiente a una semana ISO específica.
         /// </summary>
         private static DateTime GetLunesDeISOMeek(int year, int week)
         {
-            // El 4 de enero siempre estÃ¡ en la semana 1 ISO
+            // El 4 de enero siempre está en la semana 1 ISO
             var ref4Enero = new DateTime(year, 1, 4);
             
             // Calcular el lunes de la semana 1:
@@ -535,14 +535,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             return lunesSemana1.AddDays(diasDiferencia);
         }
 
-        // Sobrecarga para compatibilidad (usa el aÃ±o actual)
+        // Sobrecarga para compatibilidad (usa el año actual)
         public static bool[] GenerarSemanas(int semanaInicio, FrecuenciaMantenimiento? frecuencia)
         {
             return GenerarSemanas(semanaInicio, frecuencia, DateTime.Now.Year);
         }
 
         /// <summary>
-        /// Genera automÃ¡ticamente los cronogramas del siguiente aÃ±o para todos los equipos activos si faltan 3 meses para acabar el aÃ±o y aÃºn no existen.
+        /// Genera automáticamente los cronogramas del siguiente año para todos los equipos activos si faltan 3 meses para acabar el año y aún no existen.
         /// </summary>
         public async Task GenerateNextYearCronogramasIfNeeded()
         {
@@ -554,22 +554,22 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             int nextYear = now.Year + 1;
             foreach (var equipo in equipos)
             {
-                // Si ya existe cronograma para el siguiente aÃ±o, omitir
+                // Si ya existe cronograma para el siguiente año, omitir
                 bool exists = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == nextYear);
-                if (exists) continue;                // Buscar cronograma del aÃ±o actual
+                if (exists) continue;                // Buscar cronograma del año actual
                 var cronogramaActual = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == now.Year);
                 int semanaInicio = 1;
                 
                 if (cronogramaActual != null)
                 {
-                    // Buscar Ãºltima semana con mantenimiento programado
+                    // Buscar última semana con mantenimiento programado
                     int lastWeek = Array.FindLastIndex(cronogramaActual.Semanas, s => s);                    if (lastWeek >= 0 && equipo.FrecuenciaMtto != null)
                     {
-                        // âœ… NUEVO: Usar el DÃA DEL MES especÃ­fico, no solo el offset de dÃ­a de semana
-                        // Obtener la fecha del lunes de la Ãºltima semana del aÃ±o actual
+                        // ✅ NUEVO: Usar el DÍA DEL MES específico, no solo el offset de día de semana
+                        // Obtener la fecha del lunes de la última semana del año actual
                         var lunesUltimaSemana = GetLunesDeISOMeek(now.Year, lastWeek + 1);
                         
-                        // Buscar el dÃ­a especÃ­fico del mes dentro de la Ãºltima semana
+                        // Buscar el día específico del mes dentro de la última semana
                         int diaDelMes = equipo.FechaCompra!.Value.Day; // Ej: 15
                         DateTime? fechaUltimaSemana = null;
                         
@@ -583,13 +583,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             }
                         }
                         
-                        // Si no existe ese dÃ­a en la Ãºltima semana, usar el domingo de la semana
+                        // Si no existe ese día en la última semana, usar el domingo de la semana
                         if (!fechaUltimaSemana.HasValue)
                         {
                             fechaUltimaSemana = lunesUltimaSemana.AddDays(6);
                         }
                         
-                        // Calcular cuÃ¡ntos meses segÃºn frecuencia
+                        // Calcular cuántos meses según frecuencia
                         int mesesAsumar = equipo.FrecuenciaMtto switch
                         {
                             Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
@@ -597,13 +597,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
                             Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
                             Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
-                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // âœ… 4 MESES EXACTOS
+                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // ✅ 4 MESES EXACTOS
                             Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
                             Models.Enums.FrecuenciaMantenimiento.Anual => 12,
                             _ => 1
                         };
                         
-                        // Calcular prÃ³xima fecha de mantenimiento
+                        // Calcular próxima fecha de mantenimiento
                         DateTime fechaProxima;
                         if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
                             fechaProxima = fechaUltimaSemana.Value.AddDays(7);
@@ -612,11 +612,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         else
                             fechaProxima = fechaUltimaSemana.Value.AddMonths(mesesAsumar);
                         
-                        // Obtener la semana ISO de la prÃ³xima fecha
+                        // Obtener la semana ISO de la próxima fecha
                         int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
                         int isoYear = fechaProxima.Year;
                         
-                        // Ajustar para semanas que cruzan aÃ±os
+                        // Ajustar para semanas que cruzan años
                         if (fechaProxima.Month == 1 && isoWeek > 30)
                         {
                             isoYear = fechaProxima.Year - 1;
@@ -626,7 +626,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             isoYear = fechaProxima.Year + 1;
                         }
                         
-                        // Si cae en el siguiente aÃ±o, usar esa semana
+                        // Si cae en el siguiente año, usar esa semana
                         if (isoYear == nextYear)
                         {
                             semanaInicio = isoWeek;
@@ -645,7 +645,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
 
                 var nuevo = new Models.Entities.CronogramaMantenimiento
                 {
-                    // SemanaInicioMtto eliminado de la generaciÃ³n de cronogramas para el prÃ³ximo aÃ±o
+                    // SemanaInicioMtto eliminado de la generación de cronogramas para el próximo año
                     Codigo = equipo.Codigo!,
                     Nombre = equipo.Nombre!,
                     Marca = equipo.Marca,
@@ -681,12 +681,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             // Calcular el lunes de la semana correspondiente
                             var fechaLunes = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(cronograma.Anio, 1, 1), semana - 1);
                             dbContext.Seguimientos.Add(new Models.Entities.SeguimientoMantenimiento
-                            {
-                                Codigo = cronograma.Codigo,
+                            {                                Codigo = cronograma.Codigo,
                                 Nombre = cronograma.Nombre,
                                 Semana = semana,
                                 Anio = cronograma.Anio,
-                                TipoMtno = Models.Enums.TipoMantenimiento.Preventivo,
+                                TipoMtno = TipoMantenimiento.Preventivo,
                                 Descripcion = "Mantenimiento programado",
                                 Responsable = string.Empty,
                                 FechaRegistro = fechaLunes
@@ -699,25 +698,25 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
 
             await dbContext.SaveChangesAsync();
             _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
-            // Notificar actualizaciÃ³n de seguimientos
+            // Notificar actualización de seguimientos
             WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }        /// <summary>
-        /// Asegura que todos los equipos activos tengan cronogramas completos desde su aÃ±o de registro hasta el actual (y el siguiente si es octubre o mÃ¡s).
+        /// Asegura que todos los equipos activos tengan cronogramas completos desde su año de registro hasta el actual (y el siguiente si es octubre o más).
         /// </summary>
         public async Task EnsureAllCronogramasUpToDateAsync()
         {
-            _logger.LogInformation("[CRONOGRAMA] ðŸ”„ EnsureAllCronogramasUpToDateAsync INICIANDO...");
+            _logger.LogInformation("[CRONOGRAMA] 🔄 EnsureAllCronogramasUpToDateAsync INICIANDO...");
             var now = DateTime.Now;
             int anioActual = now.Year;
             int anioLimite = anioActual;
-            if (now.Month >= 10) // Octubre o mÃ¡s, tambiÃ©n crear el del siguiente aÃ±o
+            if (now.Month >= 10) // Octubre o más, también crear el del siguiente año
                 anioLimite = anioActual + 1;            using var dbContext = _dbContextFactory.CreateDbContext();
             var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaCompra != null && e.FrecuenciaMtto != null).ToListAsync();
             
-            _logger.LogInformation($"[CRONOGRAMA] âœ“ Equipos activos encontrados: {equipos.Count}, AÃ±os a procesar: {anioActual} a {anioLimite}");            
+            _logger.LogInformation($"[CRONOGRAMA] ✓ Equipos activos encontrados: {equipos.Count}, Años a procesar: {anioActual} a {anioLimite}");            
             int totalCronogramasCreados = 0;            foreach (var equipo in equipos)
             {
-                _logger.LogDebug($"[CRONOGRAMA] ðŸ“‹ Procesando equipo: {equipo.Codigo}");
+                _logger.LogDebug($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
                 int anioRegistro = equipo.FechaCompra!.Value.Year;
                 int semanaRegistro = CalcularSemanaISO8601(equipo.FechaCompra.Value);
                 _logger.LogDebug($"[CRONOGRAMA] FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
@@ -726,19 +725,19 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 {
                     bool existe = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);                    if (existe)
                     {
-                        _logger.LogDebug($"[CRONOGRAMA] â­ï¸ Cronograma existe para {equipo.Codigo} aÃ±o {anio}, saltando");
+                        _logger.LogDebug($"[CRONOGRAMA] ↩️ Cronograma existe para {equipo.Codigo} año {anio}, saltando");
                         continue;
-                    }                    _logger.LogDebug($"[CRONOGRAMA] âœ… Creando cronograma para {equipo.Codigo} aÃ±o {anio}");
+                    }                    _logger.LogDebug($"[CRONOGRAMA] ✅ Creando cronograma para {equipo.Codigo} año {anio}");
                     int semanaInicio;
                     if (anio == anioRegistro)
                     {
-                        // âœ… CORREGIDO: Usar cÃ¡lculo basado en fechas reales, NO saltos de semanas fijas
+                        // ✅ CORREGIDO: Usar cálculo basado en fechas reales, NO saltos de semanas fijas
                         int yearsWeeks = ISOWeek.GetWeeksInYear(anio);
                         
                         // Obtener fecha del lunes de la semana de compra
                         var fechaCompra = GetLunesDeISOMeek(anio, semanaRegistro);
                         
-                        // Calcular cuÃ¡ntos meses segÃºn frecuencia
+                        // Calcular cuántos meses según frecuencia
                         int mesesAsumar = equipo.FrecuenciaMtto switch
                         {
                             Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
@@ -746,13 +745,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             Models.Enums.FrecuenciaMantenimiento.Mensual => 1,
                             Models.Enums.FrecuenciaMantenimiento.Bimestral => 2,
                             Models.Enums.FrecuenciaMantenimiento.Trimestral => 3,
-                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // âœ… 4 MESES EXACTOS
+                            Models.Enums.FrecuenciaMantenimiento.Cuatrimestral => 4, // ✅ 4 MESES EXACTOS
                             Models.Enums.FrecuenciaMantenimiento.Semestral => 6,
                             Models.Enums.FrecuenciaMantenimiento.Anual => 12,
                             _ => 1
                         };
                         
-                        // Calcular prÃ³xima fecha de mantenimiento
+                        // Calcular próxima fecha de mantenimiento
                         DateTime fechaProxima;
                         if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
                             fechaProxima = fechaCompra.AddDays(7);
@@ -761,11 +760,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         else
                             fechaProxima = fechaCompra.AddMonths(mesesAsumar);
                         
-                        // Obtener la semana ISO de la prÃ³xima fecha
+                        // Obtener la semana ISO de la próxima fecha
                         int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
                         int isoYear = fechaProxima.Year;
                         
-                        // Ajustar para semanas que cruzan aÃ±os
+                        // Ajustar para semanas que cruzan años
                         if (fechaProxima.Month == 1 && isoWeek > 30)
                         {
                             isoYear = fechaProxima.Year - 1;
@@ -775,28 +774,28 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             isoYear = fechaProxima.Year + 1;
                         }
                         
-                        // Si cae en el siguiente aÃ±o, NO generar cronograma en este aÃ±o
+                        // Si cae en el siguiente año, NO generar cronograma en este año
                         if (isoYear > anio)
                         {
-                            _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, PrÃ³ximo mtto={fechaProxima:yyyy-MM-dd} (semana {isoWeek}), estÃ¡ en aÃ±o {isoYear}, saltando {anio}");
-                            continue;  // Saltar este aÃ±o, el cronograma se crearÃ¡ en el siguiente
+                            _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, Próximo mtto={fechaProxima:yyyy-MM-dd} (semana {isoWeek}), está en año {isoYear}, saltando {anio}");
+                            continue;  // Saltar este año, el cronograma se creará en el siguiente
                         }
                         
                         semanaInicio = isoWeek;
-                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, PrÃ³ximo mtto={fechaProxima:yyyy-MM-dd}, SemanaInicio={semanaInicio}, AÃ±o={anio}");
+                        _logger.LogDebug($"[CRONOGRAMA] Equipo={equipo.Codigo}, FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, Próximo mtto={fechaProxima:yyyy-MM-dd}, SemanaInicio={semanaInicio}, Año={anio}");
                     }                    else
                     {
                         var cronogramaAnterior = await dbContext.Cronogramas.FirstOrDefaultAsync(c => c.Codigo == equipo.Codigo && c.Anio == (anio - 1));
                           if (cronogramaAnterior != null)
                         {
-                            // âœ… CORREGIDO: Usar el DÃA DEL MES especÃ­fico, no solo el offset de dÃ­a de semana
+                            // ✅ CORREGIDO: Usar el DÍA DEL MES específico, no solo el offset de día de semana
                             int lastWeek = Array.FindLastIndex(cronogramaAnterior.Semanas, s => s);
                             if (lastWeek >= 0)
                             {
-                                // Obtener la fecha del lunes de la Ãºltima semana del aÃ±o anterior
+                                // Obtener la fecha del lunes de la última semana del año anterior
                                 var lunesUltimaSemana = GetLunesDeISOMeek(anio - 1, lastWeek + 1);
                                 
-                                // Buscar el dÃ­a especÃ­fico del mes dentro de la Ãºltima semana
+                                // Buscar el día específico del mes dentro de la última semana
                                 int diaDelMes = equipo.FechaCompra!.Value.Day; // Ej: 15
                                 DateTime? fechaUltimaSemana = null;
                                 
@@ -810,13 +809,13 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                     }
                                 }
                                 
-                                // Si no existe ese dÃ­a en la Ãºltima semana, usar el domingo de la semana
+                                // Si no existe ese día en la última semana, usar el domingo de la semana
                                 if (!fechaUltimaSemana.HasValue)
                                 {
                                     fechaUltimaSemana = lunesUltimaSemana.AddDays(6);
                                 }
                                 
-                                // Calcular cuÃ¡ntos meses segÃºn frecuencia
+                                // Calcular cuántos meses según frecuencia
                                 int mesesAsumar = equipo.FrecuenciaMtto switch
                                 {
                                     Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
@@ -829,7 +828,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                     Models.Enums.FrecuenciaMantenimiento.Anual => 12,
                                     _ => 1
                                 };                                
-                                // Calcular prÃ³xima fecha de mantenimiento
+                                // Calcular próxima fecha de mantenimiento
                                 DateTime fechaProxima;
                                 if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
                                     fechaProxima = fechaUltimaSemana.Value.AddDays(7);
@@ -838,11 +837,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 else
                                     fechaProxima = fechaUltimaSemana.Value.AddMonths(mesesAsumar);
                                 
-                                // Obtener la semana ISO de la prÃ³xima fecha
+                                // Obtener la semana ISO de la próxima fecha
                                 int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
                                 int isoYear = fechaProxima.Year;
                                 
-                                // Ajustar para semanas que cruzan aÃ±os
+                                // Ajustar para semanas que cruzan años
                                 if (fechaProxima.Month == 1 && isoWeek > 30)
                                 {
                                     isoYear = fechaProxima.Year - 1;
@@ -852,7 +851,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                     isoYear = fechaProxima.Year + 1;
                                 }
                                 
-                                // Si cae en el aÃ±o actual, usar esa semana
+                                // Si cae en el año actual, usar esa semana
                                 if (isoYear == anio)
                                 {
                                     semanaInicio = isoWeek;
@@ -862,23 +861,23 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                     semanaInicio = 1; // Fallback
                                 }
                                 
-                                _logger.LogInformation($"[CRONOGRAMA] AÃ±o siguiente - Equipo={equipo.Codigo}, UltimaMttoAÃ±oAnterior={fechaUltimaSemana:yyyy-MM-dd} (sem {lastWeek + 1}), ProximoMtto={fechaProxima:yyyy-MM-dd} (sem {isoWeek}/{isoYear}), SemanaInicio={semanaInicio}, AÃ±o={anio}");
+                                _logger.LogInformation($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo}, UltimaMttoAñoAnterior={fechaUltimaSemana:yyyy-MM-dd} (sem {lastWeek + 1}), ProximoMtto={fechaProxima:yyyy-MM-dd} (sem {isoWeek}/{isoYear}), SemanaInicio={semanaInicio}, Año={anio}");
                             }
                             else
                             {
-                                _logger.LogWarning($"[CRONOGRAMA] AÃ±o siguiente - Equipo={equipo.Codigo} NO tiene mantenimientos en {anio - 1}, iniciando en semana 1");
+                                _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene mantenimientos en {anio - 1}, iniciando en semana 1");
                                 semanaInicio = 1;
                             }
                         }
                         else if (anio - 1 == anioRegistro && equipo.FechaCompra.HasValue)
                         {
-                            // âœ… CORREGIDO: Caso especial cuando cronograma del aÃ±o de compra se saltÃ³
+                            // ✅ CORREGIDO: Caso especial cuando cronograma del año de compra se saltó
                             int semanaRegistroEquipo = ISOWeek.GetWeekOfYear(equipo.FechaCompra.Value);
                             
                             // Obtener fecha del lunes de la semana de compra
                             var fechaCompra = GetLunesDeISOMeek(anioRegistro, semanaRegistroEquipo);
                             
-                            // Calcular cuÃ¡ntos meses segÃºn frecuencia
+                            // Calcular cuántos meses según frecuencia
                             int mesesAsumar = equipo.FrecuenciaMtto switch
                             {
                                 Models.Enums.FrecuenciaMantenimiento.Semanal => 0,
@@ -892,7 +891,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 _ => 1
                             };
                             
-                            // Calcular prÃ³xima fecha de mantenimiento
+                            // Calcular próxima fecha de mantenimiento
                             DateTime fechaProxima;
                             if (equipo.FrecuenciaMtto == Models.Enums.FrecuenciaMantenimiento.Semanal)
                                 fechaProxima = fechaCompra.AddDays(7);
@@ -901,11 +900,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             else
                                 fechaProxima = fechaCompra.AddMonths(mesesAsumar);
                             
-                            // Obtener la semana ISO de la prÃ³xima fecha
+                            // Obtener la semana ISO de la próxima fecha
                             int isoWeek = ISOWeek.GetWeekOfYear(fechaProxima);
                             int isoYear = fechaProxima.Year;
                             
-                            // Ajustar para semanas que cruzan aÃ±os
+                            // Ajustar para semanas que cruzan años
                             if (fechaProxima.Month == 1 && isoWeek > 30)
                             {
                                 isoYear = fechaProxima.Year - 1;
@@ -915,7 +914,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 isoYear = fechaProxima.Year + 1;
                             }
                             
-                            // Si cae en el aÃ±o actual, usar esa semana
+                            // Si cae en el año actual, usar esa semana
                             if (isoYear == anio)
                             {
                                 semanaInicio = isoWeek;
@@ -927,7 +926,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         }
                         else
                         {
-                            _logger.LogWarning($"[CRONOGRAMA] AÃ±o siguiente - Equipo={equipo.Codigo} NO tiene cronograma en {anio - 1}, iniciando en semana 1");
+                            _logger.LogWarning($"[CRONOGRAMA] Año siguiente - Equipo={equipo.Codigo} NO tiene cronograma en {anio - 1}, iniciando en semana 1");
                             semanaInicio = 1;
                         }
                     }
@@ -943,21 +942,21 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         Anio = anio
                     };                    dbContext.Cronogramas.Add(nuevo);
 
-                    // Guardar inmediatamente para que estÃ© disponible en la siguiente iteraciÃ³n
+                    // Guardar inmediatamente para que esté disponible en la siguiente iteración
                     await dbContext.SaveChangesAsync();
                     totalCronogramasCreados++;
                 }
             }
             
-            _logger.LogInformation($"[CRONOGRAMA] âœ… EnsureAllCronogramasUpToDateAsync FINALIZADO - Total cronogramas creados: {totalCronogramasCreados}");
+            _logger.LogInformation($"[CRONOGRAMA] ✅ EnsureAllCronogramasUpToDateAsync FINALIZADO - Total cronogramas creados: {totalCronogramasCreados}");
             
-            // Al final del mÃ©todo, notificar actualizaciÃ³n de seguimientos
+            // Al final del método, notificar actualización de seguimientos
             WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }        private int CalcularSemanaISO8601(DateTime fecha)
         {
-            // Usar ISOWeek para cÃ¡lculo verdadero de semanas ISO 8601
+            // Usar ISOWeek para cálculo verdadero de semanas ISO 8601
             return ISOWeek.GetWeekOfYear(fecha);
-        }        // Utilidad para obtener el primer dÃ­a de la semana ISO 8601
+        }        // Utilidad para obtener el primer día de la semana ISO 8601
         private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)
         {
             var jan1 = new DateTime(year, 1, 1);
@@ -1013,7 +1012,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             // Calcular fechas de inicio y fin de la semana ISO 8601
             var fechaInicioSemana = FirstDateOfWeekISO8601(anio, semana);
             var fechaFinSemana = fechaInicioSemana.AddDays(6);
-            // Calcular semana y aÃ±o actual
+            // Calcular semana y año actual
             var hoy = DateTime.Now;
             int semanaActual = ISOWeek.GetWeekOfYear(hoy);
             int anioActual = hoy.Year;            foreach (var c in cronogramasConMantenimiento)
@@ -1033,7 +1032,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 };
                 int diff = semana - semanaActual;
                 bool puedeRegistrar = (anio == anioActual && (diff == 0 || diff == -1));
-                // LÃ³gica reforzada para el estado visual
+                // Lógica reforzada para el estado visual
                 if (anio < anioActual || (anio == anioActual && diff < -1))
                 {
                     // Semanas previas a la anterior
@@ -1060,7 +1059,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         }
                         else
                         {
-                            // Si existe seguimiento pero no tiene fecha vÃ¡lida, se considera no realizado
+                            // Si existe seguimiento pero no tiene fecha válida, se considera no realizado
                             estado.Realizado = false;
                             estado.Atrasado = false;
                             estado.Estado = EstadoSeguimientoMantenimiento.NoRealizado;
@@ -1147,7 +1146,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     continue;
                 }
 
-                // AÃ±os futuros: marcar como pendiente (no registrable todavÃ­a) para que se muestren en la UI
+                // Años futuros: marcar como pendiente (no registrable todavía) para que se muestren en la UI
                 if (anio > anioActual)
                 {
                     estado.Realizado = false;

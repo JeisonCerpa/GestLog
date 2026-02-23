@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;

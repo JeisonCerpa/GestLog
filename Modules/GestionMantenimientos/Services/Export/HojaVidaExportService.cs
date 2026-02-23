@@ -1,7 +1,8 @@
 ﻿using ClosedXML.Excel;
 using GestLog.Modules.GestionMantenimientos.Models;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using System;

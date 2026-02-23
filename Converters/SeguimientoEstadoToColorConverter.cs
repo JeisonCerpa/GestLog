@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Utilities;

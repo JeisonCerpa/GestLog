@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Models.Entities

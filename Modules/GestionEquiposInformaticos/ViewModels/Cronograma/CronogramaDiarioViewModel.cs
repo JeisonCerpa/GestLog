@@ -17,6 +17,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 using GestLog.Modules.Usuarios.Interfaces; // a�adido para ICurrentUserService

@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
 {

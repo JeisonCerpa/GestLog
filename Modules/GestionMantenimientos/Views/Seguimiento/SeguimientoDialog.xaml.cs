@@ -4,7 +4,7 @@ using System.Collections.Generic;
 // se usan tipos WPF fully-qualified para evitar ambigüedad con WinForms
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
 {

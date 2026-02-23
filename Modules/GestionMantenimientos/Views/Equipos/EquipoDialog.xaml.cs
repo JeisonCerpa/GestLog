@@ -5,6 +5,7 @@ using System.Linq;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Enums;
+using GestLog.Models.Enums;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.GestionMantenimientos.Services;
 using GestLog.Modules.GestionMantenimientos.Services.Autocomplete;

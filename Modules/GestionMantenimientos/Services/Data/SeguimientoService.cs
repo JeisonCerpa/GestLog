@@ -4,12 +4,13 @@ using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using System;
 using GestLog.Services.Core.Logging;
+using GestLog.Models.Enums;
+using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Globalization;
 using ClosedXML.Excel;
-using GestLog.Modules.GestionMantenimientos.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Modules.GestionMantenimientos.Models.Exceptions;
 using GestLog.Modules.DatabaseConnection;
@@ -19,8 +20,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Modules.GestionMantenimientos.Messages.Mantenimientos;
 
 namespace GestLog.Modules.GestionMantenimientos.Services.Data
-{
-    public class SeguimientoService : ISeguimientoService
+{    public class SeguimientoService : ISeguimientoService
     {
         private readonly IGestLogLogger _logger;
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
@@ -28,10 +28,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
 
         public SeguimientoService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory, ICronogramaService cronogramaService)
         {
-            _logger = logger;
-            _dbContextFactory = dbContextFactory;
-            _cronogramaService = cronogramaService;
-        }        public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
+            _cronogramaService = cronogramaService ?? throw new ArgumentNullException(nameof(cronogramaService));
+        }public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
             var seguimientos = await dbContext.Seguimientos.ToListAsync();
