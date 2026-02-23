@@ -1,4 +1,4 @@
-using GestLog.Modules.GestionVehiculos.Interfaces;
+using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using System.Threading;
 
-namespace GestLog.Modules.GestionVehiculos.Interfaces
+namespace GestLog.Modules.GestionVehiculos.Interfaces.Data
 {
     /// <summary>
     /// Interfaz para servicios de gestión de documentos de vehículos
@@ -30,7 +30,9 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces
         /// </summary>
         /// <param name="documentDto">DTO con los datos del documento</param>
         /// <returns>ID del documento creado</returns>
-        Task<Guid> AddAsync(VehicleDocumentDto documentDto);        /// <summary>
+        Task<Guid> AddAsync(VehicleDocumentDto documentDto);
+
+        /// <summary>
         /// Agrega un nuevo documento y, si existe un documento vigente del mismo tipo para el vehículo,
         /// marca el anterior como archivado de forma atómica. Retorna información del nuevo documento y del antiguo.
         /// </summary>

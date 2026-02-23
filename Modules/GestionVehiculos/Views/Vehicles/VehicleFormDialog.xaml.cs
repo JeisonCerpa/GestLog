@@ -6,6 +6,7 @@ using GestLog.Modules.DatabaseConnection;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using GestLog.Services.Core.Logging;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
@@ -23,12 +24,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         /// </summary>
         public VehicleFormDialog(IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
-            InitializeComponent();
-
-            // Crear ViewModel para nuevo vehículo
+            InitializeComponent();            // Crear ViewModel para nuevo vehículo
             var vehicleService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IVehicleService>();
             var logger = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IGestLogLogger>();
-            var photoStorage = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<GestLog.Modules.GestionVehiculos.Interfaces.IPhotoStorageService>();
+            var photoStorage = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IPhotoStorageService>();
 
             if (vehicleService == null || logger == null || photoStorage == null)
                 throw new InvalidOperationException("VehicleService, Logger o PhotoStorageService no están registrados en DI");

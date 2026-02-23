@@ -18,7 +18,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Dialog
             _logger = Log.ForContext<VehicleDocumentDialogService>();
         }
 
-        public bool TryShowVehicleDocumentDialog(VehicleDocumentDialogModel dialogModel, out bool? dialogResult)
+        public bool TryShowVehicleDocumentDialog(VehicleDocumentDialogViewModel dialogModel, out bool? dialogResult)
         {
             dialogResult = null;
             try
@@ -55,14 +55,12 @@ namespace GestLog.Modules.GestionVehiculos.Services.Dialog
         public bool TryShowVehicleDocumentDialog(Guid vehicleId, out bool? dialogResult)
         {
             dialogResult = null;
-            _logger.Information("[TryShowVehicleDocumentDialog] Resolviendo ViewModel desde DI para VehicleId: {VehicleId}", vehicleId);
-
-            try
+            _logger.Information("[TryShowVehicleDocumentDialog] Resolviendo ViewModel desde DI para VehicleId: {VehicleId}", vehicleId);            try
             {
-                var dialogModel = _sp.GetService(typeof(VehicleDocumentDialogModel)) as VehicleDocumentDialogModel;
+                var dialogModel = _sp.GetService(typeof(VehicleDocumentDialogViewModel)) as VehicleDocumentDialogViewModel;
                 if (dialogModel == null)
                 {
-                    _logger.Warning("[TryShowVehicleDocumentDialog] No se pudo resolver VehicleDocumentDialogModel desde DI");
+                    _logger.Warning("[TryShowVehicleDocumentDialog] No se pudo resolver VehicleDocumentDialogViewModel desde DI");
                     return false;
                 }
 
@@ -83,13 +81,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Dialog
             try
             {
                 // Yield control al dispatcher para que pueda procesar otros eventos
-                await Task.Delay(0, cancellationToken);
-
-                _logger.Information("[TryShowVehicleDocumentDialogAsync] Resolviendo ViewModel desde DI");
-                var dialogModel = _sp.GetService(typeof(VehicleDocumentDialogModel)) as VehicleDocumentDialogModel;
+                await Task.Delay(0, cancellationToken);                _logger.Information("[TryShowVehicleDocumentDialogAsync] Resolviendo ViewModel desde DI");
+                var dialogModel = _sp.GetService(typeof(VehicleDocumentDialogViewModel)) as VehicleDocumentDialogViewModel;
                 if (dialogModel == null)
                 {
-                    _logger.Warning("[TryShowVehicleDocumentDialogAsync] No se pudo resolver VehicleDocumentDialogModel desde DI");
+                    _logger.Warning("[TryShowVehicleDocumentDialogAsync] No se pudo resolver VehicleDocumentDialogViewModel desde DI");
                     return false;
                 }
 

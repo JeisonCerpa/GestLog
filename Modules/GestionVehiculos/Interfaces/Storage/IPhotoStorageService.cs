@@ -2,7 +2,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GestLog.Modules.GestionVehiculos.Interfaces
+namespace GestLog.Modules.GestionVehiculos.Interfaces.Storage
 {
     public interface IPhotoStorageService
     {
