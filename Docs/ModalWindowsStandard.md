@@ -292,6 +292,8 @@ Notas adicionales:
 - **Cierre por Overlay**: Validar que `RootGrid` sea el Name del Grid raíz para evitar cierres accidentales
 - **DI**: El ViewModel se obtiene desde `app.ServiceProvider.GetRequiredService<[VIEWMODEL]>()` - debe estar registrado en `Startup.UsuariosPersonas.cs`
 
+- **Nota para overlays completos**: si el diálogo se crea con un constructor que recibe el ViewModel (sin resolverlo en el constructor), igual debe llamarse `ConfigurarParaVentanaPadre(Application.Current?.MainWindow)` en ese constructor. Esto fuerza `WindowState = Maximized` y asegura que el overlay (`RootGrid`) cubra toda la pantalla del owner.
+
 - **Nota añadida (Comportamiento recomendado)**: si el constructor de la ventana obtiene el ViewModel desde el contenedor DI, es recomendable llamar automáticamente a `ConfigurarParaVentanaPadre(Application.Current?.MainWindow)` justo después de asignar el `DataContext`. Esto garantiza que la ventana modal se maximice sobre la ventana padre y que el overlay oscuro (`RootGrid`) cubra toda la pantalla — evita el problema de overlay pequeño centrado.
 
   Ejemplo corto en el constructor (C#):

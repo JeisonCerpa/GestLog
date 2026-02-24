@@ -1,0 +1,174 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.PlanMantenimientoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:GestLog.Converters"
+        Title="Configurar plan de mantenimiento"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        Width="980"
+        Height="720"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        Style="{StaticResource ModalWindowBase}">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="980" Height="720"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                Style="{StaticResource ModalCardStyle}">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,20" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="🛠" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModalTextBlockBase}"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Configurar plan preventivo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Define plantilla, intervalos y línea base" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="BtnCloseHeader" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="24">
+                        <Border Style="{StaticResource CardSectionStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Datos del plan" Style="{StaticResource SectionHeaderStyle}" />
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="240" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="240" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Placa:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Text="{Binding FilterPlaca}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+
+                                    <TextBlock Grid.Column="3" Text="Fecha inicio:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <DatePicker Grid.Column="4" SelectedDate="{Binding FechaInicioPlan}" Style="{StaticResource ModernDatePickerStyle}" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="240" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="240" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Plantilla:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <ComboBox Grid.Column="1"
+                                              ItemsSource="{Binding PlantillasDisponibles}"
+                                              SelectedItem="{Binding SelectedPlantilla}"
+                                              DisplayMemberPath="Nombre"
+                                              Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
+
+                                    <Border Grid.Column="3" Grid.ColumnSpan="2" Background="#F5F9F6" BorderBrush="#D8EADC" BorderThickness="1" CornerRadius="6" Padding="10,6">
+                                        <TextBlock Text="{Binding PlantillaSeleccionadaResumen}" Foreground="#2E5E39" FontSize="11" TextWrapping="Wrap" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Intervalo KM:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Text="{Binding IntervaloKMPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+
+                                    <TextBlock Grid.Column="3" Text="Intervalo días:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="4" Text="{Binding IntervaloDiasPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                </Grid>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Último KM:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Text="{Binding UltimoKMRegistradoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+
+                                    <TextBlock Grid.Column="3" Text="Última fecha:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <DatePicker Grid.Column="4" SelectedDate="{Binding UltimaFechaMantenimiento}" Style="{StaticResource ModernDatePickerStyle}" />
+                                </Grid>
+
+                                <Border Background="#FFF8E1" BorderBrush="#F0DFA5" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,4,0,0">
+                                    <TextBlock Foreground="#7A6226" FontSize="11" TextWrapping="Wrap"
+                                               Text="Vehículo usado: ingresa el KM y la fecha del último mantenimiento. Vehículo nuevo: deja KM en 0 y la fecha vacía." />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardSectionStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Estado actual" Style="{StaticResource SectionHeaderStyle}" />
+                                <Border Background="#F8F8F8" CornerRadius="6" Padding="10" BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <TextBlock Text="{Binding PlanActualResumen}" Foreground="#504F4E" FontSize="11" TextWrapping="Wrap" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#FFEBEE" CornerRadius="6" Padding="12" Margin="0,0,0,12"
+                                Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" TextWrapping="Wrap" />
+                        </Border>
+
+                        <Border Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,0,0,12"
+                                Visibility="{Binding SuccessMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding SuccessMessage}" Foreground="#10B981" FontSize="12" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1,1,1,0" Padding="16" CornerRadius="0,0,12,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" />
+                        <Button Content="Guardar plan" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding GuardarPlanVehiculoCommand}"
+                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Models.Enums;
 using GestLog.Services.Core.Logging;
@@ -153,6 +154,54 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error closing vehicle form");
+            }
+        }
+
+        /// <summary>
+        /// Navega a la vista de configuración de plantillas de mantenimiento.
+        /// </summary>
+        [RelayCommand]
+        public async Task AbrirConfiguracionPlantillasAsync()
+        {
+            try
+            {
+                var sp = LoggingService.GetServiceProvider();
+                var plantillasVm = sp.GetService(typeof(PlantillasMantenimientoViewModel)) as PlantillasMantenimientoViewModel;
+                if (plantillasVm == null)
+                {
+                    ErrorMessage = "No se pudo abrir configuración de plantillas.";
+                    _logger.LogWarning("PlantillasMantenimientoViewModel no registrado en DI");
+                    return;
+                }
+
+                await plantillasVm.LoadPlantillasAsync();
+
+                var plantillasView = new Views.Mantenimientos.PlantillasMantenimientoView
+                {
+                    DataContext = plantillasVm
+                };
+
+                var mainWindow = System.Windows.Application.Current?.MainWindow as GestLog.MainWindow;
+                var app = System.Windows.Application.Current;
+
+                if (mainWindow != null && app != null)
+                {
+                    await app.Dispatcher.InvokeAsync(() =>
+                    {
+                        dynamic mw = mainWindow;
+                        dynamic pv = plantillasView;
+                        mw.NavigateToView(pv, "Configuración de Plantillas");
+                    });
+                }
+                else
+                {
+                    ErrorMessage = "No se pudo abrir la vista de plantillas (MainWindow no disponible).";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al abrir configuración de plantillas.";
+                _logger.LogError(ex, "Error opening maintenance templates view");
             }
         }
 

@@ -37,9 +37,13 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.ConexionEntity> Conexiones { get; set; }        
         public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PerifericoEquipoInformaticoEntity> PerifericosEquiposInformaticos { get; set; }        
         public DbSet<MantenimientoCorrectivoEntity> MantenimientosCorrectivos { get; set; }
-        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }
-        public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.PlanCronogramaEquipo> PlanesCronogramaEquipos { get; set; }        public DbSet<GestLog.Modules.GestionEquiposInformaticos.Models.Entities.EjecucionSemanal> EjecucionesSemanales { get; set; }        public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehicleDocument> VehicleDocuments { get; set; }
+        
+        // Mantenimientos de Vehículos
+        public DbSet<PlantillaMantenimiento> PlantillasMantenimiento { get; set; }
+        public DbSet<PlanMantenimientoVehiculo> PlanesMantenimientoVehiculo { get; set; }
+        public DbSet<EjecucionMantenimiento> EjecucionesMantenimiento { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -417,6 +421,118 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.HasIndex(e => new { e.VehicleId, e.ExpirationDate })
                     .HasDatabaseName("IX_VehicleDocuments_VehicleId_ExpirationDate");
+            });
+
+            // ===== CONFIGURACIÓN: Mantenimientos de Vehículos =====
+            
+            // PlantillaMantenimiento
+            modelBuilder.Entity<PlantillaMantenimiento>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_PlantillasMantenimiento");
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(200);
+                
+                entity.Property(e => e.Descripcion)
+                    .HasMaxLength(500);
+                
+                entity.Property(e => e.TipoIntervalo)
+                    .HasConversion<int>();
+                
+                entity.Property(e => e.FechaCreacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.Property(e => e.FechaActualizacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasIndex(e => e.Nombre)
+                    .HasDatabaseName("IX_PlantillasMantenimiento_Nombre");
+            });
+
+            // PlanMantenimientoVehiculo
+            modelBuilder.Entity<PlanMantenimientoVehiculo>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_PlanesMantenimiento");
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.PlacaVehiculo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.UltimoKMRegistrado)
+                    .HasColumnType("bigint");
+
+                entity.Property(e => e.UltimaFechaMantenimiento)
+                    .HasColumnType("datetimeoffset");
+                
+                entity.Property(e => e.FechaCreacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.Property(e => e.FechaActualizacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasIndex(e => e.PlacaVehiculo)
+                    .IsUnique()
+                    .HasDatabaseName("IX_PlanesMantenimiento_PlacaVehiculo");
+                
+                entity.HasIndex(e => e.PlantillaId)
+                    .HasDatabaseName("IX_PlanesMantenimiento_PlantillaId");
+                
+                // Las propiedades calculadas (ProximaFechaEjecucion, ProximoKMEjecucion) no se mapean a BD
+                entity.Ignore(e => e.ProximaFechaEjecucion);
+                entity.Ignore(e => e.ProximoKMEjecucion);
+            });
+
+            // EjecucionMantenimiento
+            modelBuilder.Entity<EjecucionMantenimiento>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_EjecucionesMantenimiento");
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.PlacaVehiculo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+                
+                entity.Property(e => e.ObservacionesTecnico)
+                    .HasMaxLength(1000);
+                
+                entity.Property(e => e.Costo)
+                    .HasPrecision(18, 2);
+                
+                entity.Property(e => e.RutaFactura)
+                    .HasMaxLength(500);
+                
+                entity.Property(e => e.ResponsableEjecucion)
+                    .HasMaxLength(200);
+                
+                entity.Property(e => e.Proveedor)
+                    .HasMaxLength(200);
+                
+                entity.Property(e => e.Estado)
+                    .HasConversion<int>();
+                
+                entity.Property(e => e.FechaRegistro)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.Property(e => e.FechaActualizacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasIndex(e => e.PlacaVehiculo)
+                    .HasDatabaseName("IX_EjecucionesMantenimiento_PlacaVehiculo");
+                
+                entity.HasIndex(e => e.PlanMantenimientoId)
+                    .HasDatabaseName("IX_EjecucionesMantenimiento_PlanMantenimientoId");
+                
+                entity.HasIndex(e => e.FechaEjecucion)
+                    .HasDatabaseName("IX_EjecucionesMantenimiento_FechaEjecucion");
             });
         }
 
