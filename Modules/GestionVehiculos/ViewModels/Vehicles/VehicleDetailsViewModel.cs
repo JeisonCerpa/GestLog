@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,6 +57,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         [ObservableProperty]
         private string? fuelType;
 
+        [ObservableProperty]
+        private string nuevoKilometrajeInput = string.Empty;
+
+        [ObservableProperty]
+        private string mileageUpdateMessage = string.Empty;
+
+        [ObservableProperty]
+        private bool hasMileageUpdateError = false;
+
         // Propiedades calculadas para bindings en UI
         public string VehicleTitle => $"{Brand} {Model} {Year}".Trim();
         public string PlateDisplay => $"Placa: {Plate}";
@@ -88,6 +98,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 Year = dto.Year;
                 Color = dto.Color;
                 Mileage = dto.Mileage;
+                NuevoKilometrajeInput = dto.Mileage.ToString();
                 Type = dto.Type;
                 State = dto.State;
                 PhotoPath = dto.PhotoPath;
@@ -106,6 +117,69 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 _logger.LogError(ex, "Error cargando detalles del vehículo");
                 throw;
+            }
+        }
+
+        [RelayCommand]
+        public async Task ActualizarKilometrajeAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                MileageUpdateMessage = string.Empty;
+                HasMileageUpdateError = false;
+
+                if (Id == Guid.Empty)
+                {
+                    HasMileageUpdateError = true;
+                    MileageUpdateMessage = "No se pudo identificar el vehículo para actualizar kilometraje";
+                    return;
+                }
+
+                if (!long.TryParse(NuevoKilometrajeInput?.Trim(), out var nuevoKilometraje) || nuevoKilometraje < 0)
+                {
+                    HasMileageUpdateError = true;
+                    MileageUpdateMessage = "Ingrese un kilometraje válido (0 o mayor)";
+                    return;
+                }
+
+                if (nuevoKilometraje < Mileage)
+                {
+                    HasMileageUpdateError = true;
+                    MileageUpdateMessage = $"El nuevo kilometraje ({nuevoKilometraje:N0}) no puede ser menor al actual ({Mileage:N0})";
+                    return;
+                }
+
+                if (nuevoKilometraje == Mileage)
+                {
+                    MileageUpdateMessage = "El kilometraje ya está actualizado";
+                    return;
+                }
+
+                var vehicle = await _vehicleService.GetByIdAsync(Id, cancellationToken);
+                if (vehicle == null)
+                {
+                    HasMileageUpdateError = true;
+                    MileageUpdateMessage = "Vehículo no encontrado";
+                    return;
+                }
+
+                vehicle.Mileage = nuevoKilometraje;
+                await _vehicleService.UpdateAsync(Id, vehicle, cancellationToken);
+
+                Mileage = nuevoKilometraje;
+                NuevoKilometrajeInput = nuevoKilometraje.ToString();
+                MileageUpdateMessage = "Kilometraje actualizado correctamente";
+            }
+            catch (OperationCanceledException)
+            {
+                HasMileageUpdateError = true;
+                MileageUpdateMessage = "Operación cancelada";
+            }
+            catch (Exception ex)
+            {
+                HasMileageUpdateError = true;
+                MileageUpdateMessage = "Error al actualizar el kilometraje";
+                _logger.LogError(ex, "Error actualizando kilometraje del vehículo en detalle");
             }
         }
     }

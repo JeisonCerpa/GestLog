@@ -1,5 +1,7 @@
 using System.Windows.Controls;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
+using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Views.Mantenimientos;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System;
@@ -46,6 +48,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 {
                     try
                     {
+                        var currentPlate = (this.DataContext as VehicleDetailsViewModel)?.Plate ?? string.Empty;
+
                         var dv = this.FindName("DocumentsView") as VehicleDocumentsView;
                         if (dv != null)
                         {
@@ -70,6 +74,65 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                         else
                         {
                             logger?.LogWarning("VehicleDetailsView: [Dispatcher] DocumentsView NO encontrada por FindName. Buscando en VisualTree...");
+                        }
+
+                        var planesView = this.FindName("PlanesView") as PlanesMantenimientoView;
+                        if (planesView != null)
+                        {
+                            if (!(planesView.DataContext is PlanesMantenimientoViewModel))
+                            {
+                                var planesVm = sp?.GetService(typeof(PlanesMantenimientoViewModel)) as PlanesMantenimientoViewModel;
+                                if (planesVm != null)
+                                {
+                                    planesView.DataContext = planesVm;
+                                }
+                                else
+                                {
+                                    logger?.LogWarning("VehicleDetailsView: No se pudo resolver PlanesMantenimientoViewModel desde DI");
+                                }
+                            }
+
+                            if (planesView.DataContext is PlanesMantenimientoViewModel planesDataContext)
+                            {
+                                if (string.IsNullOrWhiteSpace(currentPlate))
+                                {
+                                    await planesDataContext.LoadPlanesAsync();
+                                }
+                                else
+                                {
+                                    await planesDataContext.InitializeForVehicleAsync(currentPlate);
+                                }
+                            }
+                        }
+
+                        var ejecucionesView = this.FindName("EjecucionesView") as EjecucionesMantenimientoView;
+                        if (ejecucionesView != null)
+                        {
+                            if (!(ejecucionesView.DataContext is EjecucionesMantenimientoViewModel))
+                            {
+                                var ejecucionesVm = sp?.GetService(typeof(EjecucionesMantenimientoViewModel)) as EjecucionesMantenimientoViewModel;
+                                if (ejecucionesVm != null)
+                                {
+                                    ejecucionesView.DataContext = ejecucionesVm;
+                                }
+                                else
+                                {
+                                    logger?.LogWarning("VehicleDetailsView: No se pudo resolver EjecucionesMantenimientoViewModel desde DI");
+                                }
+                            }
+
+                            if (ejecucionesView.DataContext is EjecucionesMantenimientoViewModel ejecucionesDataContext)
+                            {
+                                ejecucionesDataContext.FilterPlaca = currentPlate;
+                                if (string.IsNullOrWhiteSpace(currentPlate))
+                                {
+                                    await ejecucionesDataContext.LoadEjecucionesAsync();
+                                }
+                                else
+                                {
+                                    await ejecucionesDataContext.LoadHistorialVehiculoAsync();
+                                }
+                            }
                         }
                     }
                     catch (System.Exception dispatchEx)

@@ -1,0 +1,170 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.RegistroPreventivoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:GestLog.Converters"
+        Title="Registrar preventivo"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        Width="980"
+        Height="720"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        Style="{StaticResource ModalWindowBase}">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="980" Height="720"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                Style="{StaticResource ModalCardStyle}">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,20" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="✅" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModalTextBlockBase}"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Registrar preventivo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Checklist y datos de ejecución" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="BtnCloseHeader" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="24">
+                        <Border Style="{StaticResource CardSectionStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Plan y ventana" Style="{StaticResource SectionHeaderStyle}" />
+                                <Border Background="#F3F9F3" BorderBrush="#D8EADC" BorderThickness="1" CornerRadius="6" Padding="10">
+                                    <StackPanel>
+                                        <TextBlock Text="Tipo: Preventivo (Correctivo pendiente de implementación)" Foreground="#2E5E39" FontSize="11" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding PlanPreventivoInfo}" Foreground="#2E5E39" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding VentanaPreventivoInfo}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#2E5E39"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding VentanaPreventivoAdvertencia}" Value="True">
+                                                            <Setter Property="Foreground" Value="#C0392B"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource CardSectionStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Actividades realizadas" Style="{StaticResource SectionHeaderStyle}" />
+                                <WrapPanel Margin="0,0,0,8" IsEnabled="{Binding HasPlanPreventivo}">
+                                    <CheckBox Content="Cambio aceite" IsChecked="{Binding PreventivoCambioAceite}" Margin="0,0,16,8" />
+                                    <CheckBox Content="Filtro aceite" IsChecked="{Binding PreventivoFiltroAceite}" Margin="0,0,16,8" />
+                                    <CheckBox Content="Filtro aire" IsChecked="{Binding PreventivoFiltroAire}" Margin="0,0,16,8" />
+                                    <CheckBox Content="Filtro combustible" IsChecked="{Binding PreventivoFiltroCombustible}" Margin="0,0,16,8" />
+                                    <CheckBox Content="Revisión general" IsChecked="{Binding PreventivoRevisionGeneral}" Margin="0,0,16,8" />
+                                </WrapPanel>
+
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="170" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Fecha ejecución:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <DatePicker Grid.Column="1" SelectedDate="{Binding RegistroFechaEjecucion}" Style="{StaticResource ModernDatePickerStyle}" />
+
+                                    <TextBlock Grid.Column="3" Text="KM al momento:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="4" Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+
+                                    <Button Grid.Column="6" Content="Tomar KM actual" Command="{Binding CargarKilometrajeActualCommand}"
+                                            Style="{StaticResource PrimaryButtonStyle}" FontSize="12" Padding="10,6"
+                                            IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
+                                </Grid>
+
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="140" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Responsable:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Text="{Binding RegistroResponsable, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+
+                                    <TextBlock Grid.Column="3" Text="Costo:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="4" Text="{Binding RegistroCostoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                </Grid>
+
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Detalle libre:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Top" />
+                                    <TextBox Grid.Column="1" Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}" MinHeight="72" Style="{StaticResource ModernTextBoxStyle}" Margin="0" TextWrapping="Wrap" AcceptsReturn="True" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#FFEBEE" CornerRadius="6" Padding="12" Margin="0,0,0,12"
+                                Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" TextWrapping="Wrap" />
+                        </Border>
+
+                        <Border Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,0,0,12"
+                                Visibility="{Binding SuccessMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding SuccessMessage}" Foreground="#10B981" FontSize="12" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1,1,1,0" Padding="16" CornerRadius="0,0,12,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" />
+                        <Button Content="Registrar preventivo" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RegistrarEjecucionCommand}"
+                                IsEnabled="{Binding HasPlanPreventivo}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -40,6 +40,12 @@
     </PropertyGroup>
   </Target>
 
+  <!-- Detiene la app en ejecución para evitar bloqueo del EXE al compilar -->
+  <Target Name="StopGestLogBeforeBuild" BeforeTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
+    <Message Text="[Build] Cerrando GestLog.exe si está en ejecución..." Importance="High" />
+    <Exec Command="powershell -NoProfile -Command &quot;try { $p = Get-Process -Name GestLog -ErrorAction SilentlyContinue; if ($p) { $p | Stop-Process -Force } } catch { } exit 0&quot;" />
+  </Target>
+
   <ItemGroup>
     <!-- Include Assets and Data files -->
     <Resource Include="Assets\*" />
