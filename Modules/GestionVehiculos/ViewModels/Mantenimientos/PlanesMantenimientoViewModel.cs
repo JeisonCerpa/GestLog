@@ -44,6 +44,36 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         public event Action? RequestClose;
 
         [ObservableProperty]
+        private PlantillaPlanSelectionItem? selectedTemplate;
+
+        public bool IsDetailVisible => SelectedTemplate != null;
+
+        [RelayCommand]
+        private void SelectTemplate(PlantillaPlanSelectionItem template)
+        {
+            // when user opens a template for editing we also mark it as selected
+            template.IsSelected = true;
+            SelectedTemplate = template;
+        }
+
+        [RelayCommand]
+        private void DeselectTemplate(PlantillaPlanSelectionItem template)
+        {
+            if (template != null)
+            {
+                template.IsSelected = false;
+            }
+            SelectedTemplate = null;
+        }
+
+        partial void OnSelectedTemplateChanged(PlantillaPlanSelectionItem? value)
+        {
+            // update visibility when template selection changes
+            OnPropertyChanged(nameof(IsDetailVisible));
+        }
+
+
+        [ObservableProperty]
         private string errorMessage = string.Empty;
 
         [ObservableProperty]
@@ -123,6 +153,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     NombrePlantilla = plantilla.Nombre,
                     IntervaloKmBase = plantilla.IntervaloKM,
                     IntervaloDiasBase = plantilla.IntervaloDias,
+                    IntervaloKMAplicado = plantilla.IntervaloKM,
                     IsVisibleWhenEditing = true
                 });
             }
@@ -260,7 +291,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private void EditPlan(PlanMantenimientoVehiculoDto plan)
         {
             if (plan == null) return;
-            SelectedPlan = plan;
+            // prepare for editing (same as opening from main view)
+            PrepareEditPlan(plan);
             SuccessMessage = "Editar plan seleccionado";
             OnPropertyChanged(nameof(PlanActualResumen));
         }
@@ -639,21 +671,27 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             EditingPlanId = plan.Id;
             FilterPlaca = NormalizePlate(plan.PlacaVehiculo);
             SyncPlantillasSeleccionablesConPlanes();
-            // seleccionar únicamente la plantilla que corresponde al plan
+            // seleccionar únicamente la plantilla que corresponde al plan y abrir su detalle
             foreach (var item in PlantillasSeleccionables)
             {
                 bool matches = item.PlanIdExistente.HasValue && item.PlanIdExistente.Value == plan.Id;
                 item.IsSelected = matches;
                 item.IsExpanded = matches;
                 item.IsVisibleWhenEditing = matches;
+                if (matches)
+                {
+                    SelectTemplate(item);
+                }
             }
         }
+
 
         public void ResetEditContext()
         {
             IsEditingSinglePlan = false;
             EditingPlanId = null;
             SelectedPlan = null;
+            SelectedTemplate = null;
             foreach (var item in PlantillasSeleccionables)
             {
                 item.IsVisibleWhenEditing = true;
@@ -731,6 +769,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 item.IntervaloDiasPersonalizadoInput = plan?.IntervaloDiasPersonalizado?.ToString() ?? string.Empty;
                 item.UltimoKMRegistradoInput = plan?.UltimoKMRegistrado?.ToString() ?? string.Empty;
                 item.UltimaFechaMantenimiento = plan?.UltimaFechaMantenimiento?.Date;
+                // aplicar intervalo existente o base
+                item.IntervaloKMAplicado = plan?.IntervaloKMPersonalizado ?? item.IntervaloKmBase;
+                item.IntervaloDiasAplicado = plan?.IntervaloDiasPersonalizado ?? item.IntervaloDiasBase;
             }
             OnPropertyChanged(nameof(PlantillaSeleccionadaResumen));
         }
@@ -748,6 +789,13 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             public string NombrePlantilla { get; set; } = string.Empty;
             public int IntervaloKmBase { get; set; }
             public int IntervaloDiasBase { get; set; }
+
+            // intervalo realmente usado (herramienta mostrará esto)
+            [ObservableProperty]
+            private int intervaloKMAplicado;
+
+            [ObservableProperty]
+            private int intervaloDiasAplicado;
 
             [ObservableProperty]
             private bool isSelected;
@@ -772,6 +820,56 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
             [ObservableProperty]
             private bool isVisibleWhenEditing = true;
+
+            // vistas de previsualización
+            public long? NextKmPreview
+            {
+                get
+                {
+                    if (long.TryParse(UltimoKMRegistradoInput, out var km))
+                    {
+                        return km + IntervaloKMAplicado;
+                    }
+                    return IntervaloKMAplicado > 0 ? (long)IntervaloKMAplicado : (long?)null;
+                }
+            }
+
+            public string NextKmFormula
+            {
+                get
+                {
+                    if (long.TryParse(UltimoKMRegistradoInput, out var km))
+                    {
+                        return $"{km:N0} + {IntervaloKMAplicado:N0} = {NextKmPreview:N0}";
+                    }
+                    return string.Empty;
+                }
+            }
+
+            // update applied intervals when user changes custom inputs
+            partial void OnIntervaloKMPersonalizadoInputChanged(string value)
+            {
+                if (int.TryParse(value, out var v) && v > 0)
+                {
+                    IntervaloKMAplicado = v;
+                }
+                else
+                {
+                    IntervaloKMAplicado = IntervaloKmBase;
+                }
+            }
+
+            partial void OnIntervaloDiasPersonalizadoInputChanged(string value)
+            {
+                if (int.TryParse(value, out var v) && v > 0)
+                {
+                    IntervaloDiasAplicado = v;
+                }
+                else
+                {
+                    IntervaloDiasAplicado = IntervaloDiasBase;
+                }
+            }
         }
     }
 }
