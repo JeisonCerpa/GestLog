@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -62,19 +63,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private string registroCostoInput = string.Empty;
 
         [ObservableProperty]
-        private bool preventivoCambioAceite;
+        private string kmValidationMessage = string.Empty;
 
         [ObservableProperty]
-        private bool preventivoFiltroAceite;
+        private string fechaValidationMessage = string.Empty;
 
         [ObservableProperty]
-        private bool preventivoFiltroAire;
+        private string responsableValidationMessage = string.Empty;
 
         [ObservableProperty]
-        private bool preventivoFiltroCombustible;
+        private string costoValidationMessage = string.Empty;
 
         [ObservableProperty]
-        private bool preventivoRevisionGeneral;
+        private ObservableCollection<PlanPreventivoSelectionItem> planesPreventivoSeleccionables = new();
 
         [ObservableProperty]
         private string planPreventivoInfo = "Sin plan activo para preventivo";
@@ -84,8 +85,85 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         [ObservableProperty]
         private bool ventanaPreventivoAdvertencia;
+
+        [ObservableProperty]
+        private string confirmacionRegistroMessage = string.Empty;
+
     [ObservableProperty]
     private bool hasPlanPreventivo;
+
+        public bool HasPlanesSeleccionados => PlanesPreventivoSeleccionables.Any(p => p.IsSelected);
+
+        public string PlanesSeleccionadosResumen
+        {
+            get
+            {
+                var count = PlanesPreventivoSeleccionables.Count(p => p.IsSelected);
+                return count == 0
+                    ? "Selecciona uno o varios planes a registrar"
+                    : $"{count} plan(es) seleccionado(s)";
+            }
+        }
+
+        public string ResumenPrevioGuardado
+        {
+            get
+            {
+                var planes = PlanesPreventivoSeleccionables.Where(p => p.IsSelected).ToList();
+                if (planes.Count == 0)
+                {
+                    return "Selecciona al menos un plan para ver el resumen previo.";
+                }
+
+                var planesTxt = string.Join(", ", planes.Select(p => p.NombrePlantilla));
+                var fechaTxt = RegistroFechaEjecucion?.ToString("dd/MM/yyyy") ?? "Sin fecha";
+                var kmTxt = string.IsNullOrWhiteSpace(RegistroKMAlMomentoInput) ? "Sin KM" : RegistroKMAlMomentoInput.Trim();
+                var responsableTxt = string.IsNullOrWhiteSpace(RegistroResponsable) ? "Sin responsable" : RegistroResponsable.Trim();
+
+                decimal? costo = null;
+                if (decimal.TryParse(RegistroCostoInput?.Trim(), out var parsedCosto) && parsedCosto >= 0)
+                {
+                    costo = parsedCosto;
+                }
+
+                if (!costo.HasValue)
+                {
+                    return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}.";
+                }
+
+                if (planes.Count == 1)
+                {
+                    return $"Se creará 1 ejecución para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo: ${costo.Value:N0}.";
+                }
+
+                var costoProrrateado = Math.Round(costo.Value / planes.Count, 2);
+                return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo total: ${costo.Value:N0} (prorrateado aprox. ${costoProrrateado:N2} por plan).";
+            }
+        }
+
+        public string RegistrarPreventivoButtonText
+        {
+            get
+            {
+                var count = PlanesPreventivoSeleccionables.Count(p => p.IsSelected);
+                return count <= 1
+                    ? "Registrar 1 preventivo"
+                    : $"Registrar {count} preventivos";
+            }
+        }
+
+        private void ClearInlineValidationMessages()
+        {
+            KmValidationMessage = string.Empty;
+            FechaValidationMessage = string.Empty;
+            ResponsableValidationMessage = string.Empty;
+            CostoValidationMessage = string.Empty;
+        }
+
+        partial void OnRegistroKMAlMomentoInputChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroFechaEjecucionChanged(DateTime? value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroResponsableChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroCostoInputChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
 
         public EjecucionesMantenimientoViewModel(
             IEjecucionMantenimientoService ejecucionService,
@@ -108,6 +186,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             {
                 ErrorMessage = string.Empty;
                 SuccessMessage = string.Empty;
+                ConfirmacionRegistroMessage = string.Empty;
+                ClearInlineValidationMessages();
 
                 if (string.IsNullOrWhiteSpace(FilterPlaca))
                 {
@@ -118,13 +198,29 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 var placa = NormalizePlate(FilterPlaca);
                 if (!long.TryParse(RegistroKMAlMomentoInput?.Trim(), out var kmAlMomento) || kmAlMomento <= 0)
                 {
+                    KmValidationMessage = "Ingresa un kilometraje válido mayor que cero.";
                     ErrorMessage = "Debe ingresar un KM al momento válido";
+                    return;
+                }
+
+                if (!RegistroFechaEjecucion.HasValue)
+                {
+                    FechaValidationMessage = "Selecciona la fecha de ejecución.";
+                    ErrorMessage = "Debe seleccionar una fecha de ejecución";
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(RegistroResponsable))
+                {
+                    ResponsableValidationMessage = "Ingresa el responsable de la ejecución.";
+                    ErrorMessage = "Debe indicar un responsable";
                     return;
                 }
 
                 var vehiculoActual = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
                 if (vehiculoActual != null && kmAlMomento < vehiculoActual.Mileage)
                 {
+                    KmValidationMessage = $"El KM no puede ser menor al actual ({vehiculoActual.Mileage:N0}).";
                     ErrorMessage = $"El KM registrado ({kmAlMomento:N0}) no puede ser menor al KM actual del vehículo ({vehiculoActual.Mileage:N0})";
                     return;
                 }
@@ -134,6 +230,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 {
                     if (!decimal.TryParse(RegistroCostoInput.Trim(), out var parsedCosto) || parsedCosto < 0)
                     {
+                        CostoValidationMessage = "Ingresa un costo válido mayor o igual a cero.";
                         ErrorMessage = "El costo debe ser un valor numérico válido";
                         return;
                     }
@@ -143,18 +240,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 IsLoading = true;
 
-                var plan = await _planService.GetByPlacaAsync(placa, cancellationToken);
-                if (plan == null)
+                var planesSeleccionados = PlanesPreventivoSeleccionables.Where(p => p.IsSelected).ToList();
+                if (planesSeleccionados.Count == 0)
                 {
-                    ErrorMessage = "Para registrar preventivo, el vehículo debe tener un plan activo asignado";
-                    return;
-                }
-
-                var actividades = BuildPreventivoChecklist();
-                var tieneDetalleLibre = !string.IsNullOrWhiteSpace(RegistroObservaciones);
-                if (actividades.Count == 0 && !tieneDetalleLibre)
-                {
-                    ErrorMessage = "Debe marcar al menos una actividad del checklist o escribir detalle de lo realizado";
+                    ErrorMessage = "Debe seleccionar al menos un plan preventivo";
                     return;
                 }
 
@@ -162,21 +251,50 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     ? new DateTimeOffset(RegistroFechaEjecucion.Value.Date)
                     : DateTimeOffset.Now;
 
-                var observacionesPreventivo = BuildPreventivoObservaciones(actividades, RegistroObservaciones);
+                var costosPorPlan = BuildCostDistribution(costo, planesSeleccionados.Count);
+                var nombresPlanesSeleccionados = planesSeleccionados.Select(p => p.NombrePlantilla).ToList();
 
-                var dto = new EjecucionMantenimientoDto
+                for (var index = 0; index < planesSeleccionados.Count; index++)
                 {
-                    PlacaVehiculo = placa,
-                    PlanMantenimientoId = plan.Id,
-                    FechaEjecucion = fechaEjecucion,
-                    KMAlMomento = kmAlMomento,
-                    ObservacionesTecnico = observacionesPreventivo,
-                    Costo = costo,
-                    ResponsableEjecucion = string.IsNullOrWhiteSpace(RegistroResponsable) ? null : RegistroResponsable.Trim(),
-                    Estado = 2
-                };
+                    var planSeleccionado = planesSeleccionados[index];
+                    var observacionesPreventivo = BuildPreventivoObservaciones(
+                        RegistroObservaciones,
+                        planSeleccionado.DetalleOpcional,
+                        planSeleccionado.NombrePlantilla,
+                        costo,
+                        costosPorPlan[index],
+                        nombresPlanesSeleccionados);
 
-                await _ejecucionService.CreateAsync(dto, cancellationToken);
+                    var dto = new EjecucionMantenimientoDto
+                    {
+                        PlacaVehiculo = placa,
+                        PlanMantenimientoId = planSeleccionado.PlanId,
+                        FechaEjecucion = fechaEjecucion,
+                        KMAlMomento = kmAlMomento,
+                        ObservacionesTecnico = observacionesPreventivo,
+                        Costo = costosPorPlan[index],
+                        ResponsableEjecucion = string.IsNullOrWhiteSpace(RegistroResponsable) ? null : RegistroResponsable.Trim(),
+                        Estado = 2
+                    };
+
+                    await _ejecucionService.CreateAsync(dto, cancellationToken);
+
+                    var planActualizado = new PlanMantenimientoVehiculoDto
+                    {
+                        Id = planSeleccionado.PlanId,
+                        PlacaVehiculo = placa,
+                        PlantillaId = planSeleccionado.PlantillaId,
+                        IntervaloKMPersonalizado = planSeleccionado.IntervaloKMPersonalizado,
+                        IntervaloDiasPersonalizado = planSeleccionado.IntervaloDiasPersonalizado,
+                        FechaInicio = planSeleccionado.FechaInicio,
+                        UltimoKMRegistrado = kmAlMomento,
+                        UltimaFechaMantenimiento = fechaEjecucion,
+                        FechaFin = planSeleccionado.FechaFin,
+                        Activo = true
+                    };
+
+                    await _planService.UpdateAsync(planSeleccionado.PlanId, planActualizado, cancellationToken);
+                }
 
                 var vehiculo = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
                 if (vehiculo != null && kmAlMomento > vehiculo.Mileage)
@@ -185,24 +303,40 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     await _vehicleService.UpdateAsync(vehiculo.Id, vehiculo, cancellationToken);
                 }
 
-                plan.UltimoKMRegistrado = kmAlMomento;
-                plan.UltimaFechaMantenimiento = fechaEjecucion;
-                await _planService.UpdateAsync(plan.Id, plan, cancellationToken);
-
                 await LoadHistorialVehiculoAsync(cancellationToken);
 
-                PreventivoCambioAceite = false;
-                PreventivoFiltroAceite = false;
-                PreventivoFiltroAire = false;
-                PreventivoFiltroCombustible = false;
-                PreventivoRevisionGeneral = false;
+                foreach (var planItem in PlanesPreventivoSeleccionables)
+                {
+                    planItem.IsSelected = false;
+                    planItem.DetalleOpcional = string.Empty;
+                }
                 RegistroObservaciones = string.Empty;
                 RegistroResponsable = string.Empty;
                 RegistroCostoInput = string.Empty;
 
+                var planesTxt = string.Join(", ", planesSeleccionados.Select(p => p.NombrePlantilla));
                 SuccessMessage = VentanaPreventivoAdvertencia
-                    ? "Preventivo registrado. Advertencia: se registró fuera de la ventana sugerida (7 días / 500 km)."
-                    : "Preventivo registrado correctamente";
+                    ? $"Se registraron {planesSeleccionados.Count} preventivo(s): {planesTxt}. Advertencia: fuera de ventana sugerida (7 días / 500 km)."
+                    : $"Se registraron {planesSeleccionados.Count} preventivo(s): {planesTxt}.";
+
+                ConfirmacionRegistroMessage = BuildConfirmacionRegistroMessage(
+                    planesSeleccionados.Select(p => p.NombrePlantilla),
+                    costo,
+                    costosPorPlan,
+                    VentanaPreventivoAdvertencia);
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var dialog = System.Windows.Application.Current.Windows
+                        .OfType<System.Windows.Window>()
+                        .FirstOrDefault(w => ReferenceEquals(w.DataContext, this));
+
+                    if (dialog != null)
+                    {
+                        dialog.DialogResult = true;
+                        dialog.Close();
+                    }
+                });
             }
             catch (OperationCanceledException)
             {
@@ -213,6 +347,36 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             {
                 ErrorMessage = "Error al registrar ejecución de mantenimiento";
                 _logger.LogError(ex, "Error registrando ejecución de mantenimiento");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        public async Task LoadByPlanAsync(int planId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = string.Empty;
+                SuccessMessage = string.Empty;
+
+                var result = await _ejecucionService.GetByPlanAsync(planId, cancellationToken);
+                Ejecuciones.Clear();
+                foreach (var ejec in result)
+                {
+                    Ejecuciones.Add(ejec);
+                }
+
+                SuccessMessage = $"Historial cargado para plan #{planId}";
+                _logger.LogInformation("Ejecuciones cargadas por plan {PlanId}", planId);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al cargar ejecuciones por plan";
+                _logger.LogError(ex, "Error cargando ejecuciones por plan {PlanId}", planId);
             }
             finally
             {
@@ -473,17 +637,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             SelectedEjecucion = null;
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
+            ConfirmacionRegistroMessage = string.Empty;
             RegistroFechaEjecucion = DateTime.Today;
             RegistroKMAlMomentoInput = string.Empty;
             RegistroResponsable = string.Empty;
             RegistroObservaciones = string.Empty;
             RegistroCostoInput = string.Empty;
-            PreventivoCambioAceite = false;
-            PreventivoFiltroAceite = false;
-            PreventivoFiltroAire = false;
-            PreventivoFiltroCombustible = false;
-            PreventivoRevisionGeneral = false;
+            PlanesPreventivoSeleccionables.Clear();
             HasPlanPreventivo = false;
+            ClearInlineValidationMessages();
         }
 
         /// <summary>
@@ -559,71 +721,258 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 return;
             }
 
-            var plan = await _planService.GetByPlacaAsync(placaNormalizada, cancellationToken);
-            if (plan == null)
+            var planes = (await _planService.GetByPlacaListAsync(placaNormalizada, cancellationToken)).ToList();
+            if (planes.Count == 0)
             {
                 PlanPreventivoInfo = "No hay plan activo asignado para este vehículo.";
                 VentanaPreventivoInfo = "Preventivo deshabilitado hasta asignar plan.";
                 VentanaPreventivoAdvertencia = true;
                 HasPlanPreventivo = false;
+                PlanesPreventivoSeleccionables.Clear();
+                OnPropertyChanged(nameof(PlanesSeleccionadosResumen));
+                OnPropertyChanged(nameof(HasPlanesSeleccionados));
                 return;
             }
             HasPlanPreventivo = true;
-
-            var plantilla = await _plantillaService.GetByIdAsync(plan.PlantillaId, cancellationToken);
             var vehiculo = await _vehicleService.GetByPlateAsync(placaNormalizada, cancellationToken);
 
-            var nombrePlantilla = plantilla?.Nombre ?? $"Plantilla #{plan.PlantillaId}";
-            PlanPreventivoInfo = $"Plan activo: {nombrePlantilla} | Próximo: {plan.ProximaFechaEjecucion:dd/MM/yyyy} o {plan.ProximoKMEjecucion:N0} km";
+            var planesOrdenados = planes
+                .OrderBy(p => GetEstadoPrioridad(p.EstadoPlan))
+                .ThenBy(p => p.ProximaFechaEjecucion ?? DateTimeOffset.MaxValue)
+                .ThenBy(p => p.ProximoKMEjecucion ?? long.MaxValue)
+                .ToList();
 
-            var diasRestantes = plan.ProximaFechaEjecucion.HasValue
-                ? (int?)(plan.ProximaFechaEjecucion.Value.Date - DateTimeOffset.Now.Date).TotalDays
-                : null;
+            PlanesPreventivoSeleccionables.Clear();
+            foreach (var plan in planesOrdenados)
+            {
+                var nombrePlan = !string.IsNullOrWhiteSpace(plan.PlantillaNombre)
+                    ? plan.PlantillaNombre!
+                    : $"Plantilla #{plan.PlantillaId}";
 
-            var kmsRestantes = (plan.ProximoKMEjecucion.HasValue && vehiculo != null)
-                ? plan.ProximoKMEjecucion.Value - vehiculo.Mileage
-                : (long?)null;
+                var item = new PlanPreventivoSelectionItem
+                {
+                    PlanId = plan.Id,
+                    PlantillaId = plan.PlantillaId,
+                    NombrePlantilla = nombrePlan,
+                    ProximaFechaEjecucion = plan.ProximaFechaEjecucion,
+                    ProximoKMEjecucion = plan.ProximoKMEjecucion,
+                    EstadoPlan = plan.EstadoPlan ?? "N/D",
+                    IntervaloKMPersonalizado = plan.IntervaloKMPersonalizado,
+                    IntervaloDiasPersonalizado = plan.IntervaloDiasPersonalizado,
+                    FechaInicio = plan.FechaInicio,
+                    FechaFin = plan.FechaFin,
+                    IsSelected = false
+                };
 
-            var cercaPorFecha = diasRestantes.HasValue && diasRestantes.Value <= 7;
-            var cercaPorKm = kmsRestantes.HasValue && kmsRestantes.Value <= 500;
+                item.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName == nameof(PlanPreventivoSelectionItem.IsSelected)
+                        || e.PropertyName == nameof(PlanPreventivoSelectionItem.DetalleOpcional))
+                    {
+                        OnPropertyChanged(nameof(HasPlanesSeleccionados));
+                        OnPropertyChanged(nameof(PlanesSeleccionadosResumen));
+                        OnPropertyChanged(nameof(RegistrarPreventivoButtonText));
+                        OnPropertyChanged(nameof(ResumenPrevioGuardado));
+                    }
+                };
+
+                PlanesPreventivoSeleccionables.Add(item);
+            }
+
+            var planResumen = string.Join(" | ", PlanesPreventivoSeleccionables
+                .Take(3)
+                .Select(p => p.NombrePlantilla));
+            PlanPreventivoInfo = $"Planes disponibles: {PlanesPreventivoSeleccionables.Count}. {planResumen}";
+
+            var now = DateTimeOffset.Now.Date;
+            var diasMin = planes
+                .Where(p => p.ProximaFechaEjecucion.HasValue)
+                .Select(p => (int?)(p.ProximaFechaEjecucion!.Value.Date - now).TotalDays)
+                .Where(v => v.HasValue)
+                .DefaultIfEmpty(null)
+                .Min();
+
+            var kmMin = planes
+                .Where(p => p.ProximoKMEjecucion.HasValue && vehiculo != null)
+                .Select(p => (long?)(p.ProximoKMEjecucion!.Value - vehiculo!.Mileage))
+                .Where(v => v.HasValue)
+                .DefaultIfEmpty(null)
+                .Min();
+
+            var cercaPorFecha = diasMin.HasValue && diasMin.Value <= 7;
+            var cercaPorKm = kmMin.HasValue && kmMin.Value <= 500;
             var enVentana = cercaPorFecha || cercaPorKm;
 
             VentanaPreventivoAdvertencia = !enVentana;
 
-            var diasTxt = diasRestantes.HasValue ? $"{diasRestantes.Value} días" : "N/D";
-            var kmTxt = kmsRestantes.HasValue ? $"{kmsRestantes.Value:N0} km" : "N/D";
+            var diasTxt = diasMin.HasValue ? $"{diasMin.Value} días" : "N/D";
+            var kmTxt = kmMin.HasValue ? $"{kmMin.Value:N0} km" : "N/D";
             VentanaPreventivoInfo = enVentana
-                ? $"Dentro de ventana sugerida. Restante aprox.: {diasTxt} o {kmTxt}."
-                : $"Fuera de ventana sugerida (7 días/500 km). Restante aprox.: {diasTxt} o {kmTxt}.";
+                ? $"Dentro de ventana sugerida. Restante mínimo aprox.: {diasTxt} o {kmTxt}."
+                : $"Fuera de ventana sugerida (7 días/500 km). Restante mínimo aprox.: {diasTxt} o {kmTxt}.";
+
+            OnPropertyChanged(nameof(HasPlanesSeleccionados));
+            OnPropertyChanged(nameof(PlanesSeleccionadosResumen));
+            OnPropertyChanged(nameof(RegistrarPreventivoButtonText));
+            OnPropertyChanged(nameof(ResumenPrevioGuardado));
         }
 
-        private System.Collections.Generic.List<string> BuildPreventivoChecklist()
+        private static int GetEstadoPrioridad(string? estado)
         {
-            var items = new System.Collections.Generic.List<string>();
-            if (PreventivoCambioAceite) items.Add("Cambio de aceite");
-            if (PreventivoFiltroAceite) items.Add("Cambio de filtro de aceite");
-            if (PreventivoFiltroAire) items.Add("Cambio de filtro de aire");
-            if (PreventivoFiltroCombustible) items.Add("Cambio de filtro de combustible");
-            if (PreventivoRevisionGeneral) items.Add("Revisión general");
-            return items;
+            return estado switch
+            {
+                "Vencido" => 0,
+                "Próximo" => 1,
+                "Vigente" => 2,
+                _ => 3
+            };
         }
 
-        private static string BuildPreventivoObservaciones(System.Collections.Generic.IEnumerable<string> actividades, string? detalleLibre)
+        private static string BuildPreventivoObservaciones(string? detalleGeneral, string? detallePlan, string nombrePlan)
         {
-            var actividadesTexto = string.Join(", ", actividades);
-            var detalle = string.IsNullOrWhiteSpace(detalleLibre) ? "" : detalleLibre.Trim();
+            return BuildPreventivoObservaciones(detalleGeneral, detallePlan, nombrePlan, null, null, Array.Empty<string>());
+        }
 
-            if (!string.IsNullOrWhiteSpace(actividadesTexto) && !string.IsNullOrWhiteSpace(detalle))
+        private static string BuildPreventivoObservaciones(
+            string? detalleGeneral,
+            string? detallePlan,
+            string nombrePlan,
+            decimal? costoTotalServicio,
+            decimal? costoAsignadoRegistro,
+            IReadOnlyCollection<string> planesDelServicio)
+        {
+            var parts = new List<string>
             {
-                return $"Tipo: Preventivo | Actividades: {actividadesTexto} | Detalle: {detalle}";
+                "Tipo: Preventivo",
+                $"Plan: {nombrePlan}"
+            };
+
+            var general = string.IsNullOrWhiteSpace(detalleGeneral) ? string.Empty : detalleGeneral.Trim();
+            var detalle = string.IsNullOrWhiteSpace(detallePlan) ? string.Empty : detallePlan.Trim();
+
+            if (!string.IsNullOrWhiteSpace(general))
+            {
+                parts.Add($"General: {general}");
             }
 
-            if (!string.IsNullOrWhiteSpace(actividadesTexto))
+            if (!string.IsNullOrWhiteSpace(detalle))
             {
-                return $"Tipo: Preventivo | Actividades: {actividadesTexto}";
+                parts.Add($"Detalle plan: {detalle}");
             }
 
-            return $"Tipo: Preventivo | Detalle: {detalle}";
+            if (planesDelServicio.Count > 1)
+            {
+                parts.Add($"Servicio conjunto con planes: {string.Join(", ", planesDelServicio)}");
+            }
+
+            if (costoTotalServicio.HasValue)
+            {
+                parts.Add($"Costo total servicio: ${costoTotalServicio.Value:N0}");
+
+                if (planesDelServicio.Count > 1 && costoAsignadoRegistro.HasValue)
+                {
+                    parts.Add($"Costo aplicado a este registro (prorrateado): ${costoAsignadoRegistro.Value:N2}");
+                }
+            }
+
+            return string.Join(" | ", parts);
+        }
+
+        private static string BuildConfirmacionRegistroMessage(
+            IEnumerable<string> planes,
+            decimal? costoTotalServicio,
+            IReadOnlyList<decimal?> costosPorPlan,
+            bool conAdvertenciaVentana)
+        {
+            var listaPlanes = planes.ToList();
+            var planesTxt = string.Join(", ", listaPlanes);
+            var total = listaPlanes.Count;
+
+            var mensajeBase = $"Se registraron {total} preventivo(s): {planesTxt}.";
+            if (!costoTotalServicio.HasValue)
+            {
+                return conAdvertenciaVentana
+                    ? $"{mensajeBase} Nota: fuera de ventana sugerida (7 días / 500 km)."
+                    : mensajeBase;
+            }
+
+            if (total <= 1)
+            {
+                var simple = $"{mensajeBase} Costo total servicio: ${costoTotalServicio.Value:N0}.";
+                return conAdvertenciaVentana
+                    ? $"{simple} Nota: fuera de ventana sugerida (7 días / 500 km)."
+                    : simple;
+            }
+
+            var costoPromedio = costosPorPlan.Where(c => c.HasValue).Select(c => c!.Value).DefaultIfEmpty(0m).Average();
+            var prorrateado = $"{mensajeBase} Costo total servicio: ${costoTotalServicio.Value:N0} (prorrateado entre planes, aprox. ${costoPromedio:N2} por registro).";
+            return conAdvertenciaVentana
+                ? $"{prorrateado} Nota: fuera de ventana sugerida (7 días / 500 km)."
+                : prorrateado;
+        }
+
+        private static List<decimal?> BuildCostDistribution(decimal? totalCost, int plansCount)
+        {
+            var result = new List<decimal?>();
+            if (!totalCost.HasValue || plansCount <= 0)
+            {
+                for (var i = 0; i < plansCount; i++)
+                {
+                    result.Add(null);
+                }
+                return result;
+            }
+
+            if (plansCount == 1)
+            {
+                result.Add(totalCost.Value);
+                return result;
+            }
+
+            var perPlan = Math.Round(totalCost.Value / plansCount, 2, MidpointRounding.AwayFromZero);
+            var accumulated = 0m;
+
+            for (var i = 0; i < plansCount; i++)
+            {
+                if (i < plansCount - 1)
+                {
+                    result.Add(perPlan);
+                    accumulated += perPlan;
+                }
+                else
+                {
+                    result.Add(totalCost.Value - accumulated);
+                }
+            }
+
+            return result;
+        }
+
+        public partial class PlanPreventivoSelectionItem : ObservableObject
+        {
+            public int PlanId { get; set; }
+            public int PlantillaId { get; set; }
+            public string NombrePlantilla { get; set; } = string.Empty;
+            public DateTimeOffset? ProximaFechaEjecucion { get; set; }
+            public long? ProximoKMEjecucion { get; set; }
+            public string EstadoPlan { get; set; } = string.Empty;
+            public int? IntervaloKMPersonalizado { get; set; }
+            public int? IntervaloDiasPersonalizado { get; set; }
+            public DateTimeOffset FechaInicio { get; set; }
+            public DateTimeOffset? FechaFin { get; set; }
+            public string EstadoVisual => EstadoPlan switch
+            {
+                "Vencido" => "🔴 Vencido",
+                "Próximo" => "🟡 Próximo",
+                "Vigente" => "🟢 Vigente",
+                _ => "⚪ Sin estado"
+            };
+
+            [ObservableProperty]
+            private bool isSelected;
+
+            [ObservableProperty]
+            private string detalleOpcional = string.Empty;
         }
     }
 }

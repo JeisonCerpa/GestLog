@@ -11,6 +11,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             InitializeComponent();
             DataContext = viewModel;
 
+            if (viewModel != null)
+            {
+                viewModel.RequestClose += () =>
+                {
+                    // usar Dispatcher para asegurarnos de que la ventana ya esté en el árbol visual
+                    this.Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        if (this.IsLoaded && this.IsVisible)
+                        {
+                            try
+                            {
+                                this.DialogResult = true;
+                            }
+                            catch { }
+                            this.Close();
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Normal);
+                };
+            }
+
             ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
 
             KeyDown += (_, e) =>
@@ -25,6 +45,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
+            if (DataContext is PlanesMantenimientoViewModel vm)
+            {
+                vm.ResetEditContext();
+            }
             DialogResult = false;
             Close();
         }
@@ -41,6 +65,15 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            if (DataContext is PlanesMantenimientoViewModel vm)
+            {
+                vm.ResetEditContext();
+            }
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

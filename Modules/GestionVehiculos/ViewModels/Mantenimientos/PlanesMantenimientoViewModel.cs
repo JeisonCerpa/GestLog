@@ -35,6 +35,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private bool isLoading = false;
 
         [ObservableProperty]
+        private bool isEditingSinglePlan = false;
+
+        [ObservableProperty]
+        private int? editingPlanId;
+
+        // event para notificar al view que debe cerrarse
+        public event Action? RequestClose;
+
+        [ObservableProperty]
         private string errorMessage = string.Empty;
 
         [ObservableProperty]
@@ -50,32 +59,27 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private ObservableCollection<PlantillaMantenimientoDto> plantillasDisponibles = new();
 
         [ObservableProperty]
-        private PlantillaMantenimientoDto? selectedPlantilla;
-
-        [ObservableProperty]
-        private string intervaloKMPersonalizadoInput = string.Empty;
-
-        [ObservableProperty]
-        private string intervaloDiasPersonalizadoInput = string.Empty;
+        private ObservableCollection<PlantillaPlanSelectionItem> plantillasSeleccionables = new();
 
         [ObservableProperty]
         private DateTime? fechaInicioPlan = DateTime.Today;
 
         [ObservableProperty]
-        private string ultimoKMRegistradoInput = string.Empty;
+        private ObservableCollection<PlanMantenimientoVehiculoDto> planesOrdenados = new();
 
-        [ObservableProperty]
-        private DateTime? ultimaFechaMantenimiento;
+        public string PlantillaSeleccionadaResumen => PlantillasSeleccionables.Count == 0
+            ? "No hay plantillas disponibles."
+            : $"Seleccionadas: {PlantillasSeleccionables.Count(p => p.IsSelected)} de {PlantillasSeleccionables.Count}";
 
-        public string PlantillaSeleccionadaResumen => SelectedPlantilla == null
-            ? "Selecciona una plantilla para ver su configuración base."
-            : $"Base plantilla → KM: {SelectedPlantilla.IntervaloKM:N0}, Días: {SelectedPlantilla.IntervaloDias:N0}";
+        public bool HasPlanActual => Planes.Count > 0;
 
-        public bool HasPlanActual => SelectedPlan != null;
+        public string PlanesConfiguradosResumen => Planes.Count == 0
+            ? "Sin planes asignados para este vehículo."
+            : $"{Planes.Count} plan(es) asignado(s): {string.Join(", ", Planes.Select(p => p.PlantillaNombre ?? $"Plantilla #{p.PlantillaId}"))}";
 
         public string PlanActualResumen => SelectedPlan == null
             ? "Este vehículo aún no tiene plan asignado."
-            : $"Plan: {SelectedPlan.EstadoPlan ?? "N/D"} | Inicio: {SelectedPlan.FechaInicio:dd/MM/yyyy} | Último KM: {(SelectedPlan.UltimoKMRegistrado?.ToString("N0") ?? "N/D")} | Última fecha: {(SelectedPlan.UltimaFechaMantenimiento?.ToString("dd/MM/yyyy") ?? "N/D")}";
+            : $"{SelectedPlan.PlantillaNombre ?? $"Plantilla #{SelectedPlan.PlantillaId}"} | Estado: {SelectedPlan.EstadoPlan ?? "N/D"} | Inicio: {SelectedPlan.FechaInicio:dd/MM/yyyy} | Último KM: {(SelectedPlan.UltimoKMRegistrado?.ToString("N0") ?? "N/D")} | Última fecha: {(SelectedPlan.UltimaFechaMantenimiento?.ToString("dd/MM/yyyy") ?? "N/D")}";
 
         public PlanesMantenimientoViewModel(
             IPlanMantenimientoVehiculoService planService,
@@ -88,6 +92,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             _vehicleService = vehicleService;
             _ejecucionService = ejecucionService;
             _logger = logger;
+
+            Planes.CollectionChanged += Planes_CollectionChanged;
         }
 
         public async Task InitializeForVehicleAsync(string placaVehiculo, CancellationToken cancellationToken = default)
@@ -107,10 +113,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             var plantillas = await _plantillaService.GetAllAsync(cancellationToken);
 
             PlantillasDisponibles.Clear();
+            PlantillasSeleccionables.Clear();
             foreach (var plantilla in plantillas.Where(p => p.Activo).OrderBy(p => p.Nombre))
             {
                 PlantillasDisponibles.Add(plantilla);
+                PlantillasSeleccionables.Add(new PlantillaPlanSelectionItem
+                {
+                    PlantillaId = plantilla.Id,
+                    NombrePlantilla = plantilla.Nombre,
+                    IntervaloKmBase = plantilla.IntervaloKM,
+                    IntervaloDiasBase = plantilla.IntervaloDias,
+                    IsVisibleWhenEditing = true
+                });
             }
+
+            OnPropertyChanged(nameof(PlantillaSeleccionadaResumen));
         }
 
         /// <summary>
@@ -132,6 +149,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 {
                     Planes.Add(plan);
                 }
+
+                ActualizarPlanesOrdenados();
 
                 _logger.LogInformation("Planes de mantenimiento cargados exitosamente");
             }
@@ -237,6 +256,23 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             ErrorMessage = string.Empty;
         }
 
+        [RelayCommand]
+        private void EditPlan(PlanMantenimientoVehiculoDto plan)
+        {
+            if (plan == null) return;
+            SelectedPlan = plan;
+            SuccessMessage = "Editar plan seleccionado";
+            OnPropertyChanged(nameof(PlanActualResumen));
+        }
+
+        [RelayCommand]
+        private void OpenHistory(PlanMantenimientoVehiculoDto plan)
+        {
+            if (plan == null) return;
+            SelectedPlan = plan;
+            SuccessMessage = "Abriendo historial";
+        }
+
         /// <summary>
         /// Limpia la selección actual
         /// </summary>
@@ -244,17 +280,41 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         public void ClearSelection()
         {
             SelectedPlan = null;
-            SelectedPlantilla = null;
-            IntervaloKMPersonalizadoInput = string.Empty;
-            IntervaloDiasPersonalizadoInput = string.Empty;
             FechaInicioPlan = DateTime.Today;
-            UltimoKMRegistradoInput = "0";
-            UltimaFechaMantenimiento = null;
+            foreach (var item in PlantillasSeleccionables)
+            {
+                item.IsSelected = false;
+                item.IsExpanded = false;
+                item.IntervaloKMPersonalizadoInput = string.Empty;
+                item.IntervaloDiasPersonalizadoInput = string.Empty;
+                item.UltimoKMRegistradoInput = string.Empty;
+                item.UltimaFechaMantenimiento = null;
+                item.PlanIdExistente = null;
+            }
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
             OnPropertyChanged(nameof(PlantillaSeleccionadaResumen));
             OnPropertyChanged(nameof(HasPlanActual));
             OnPropertyChanged(nameof(PlanActualResumen));
+            OnPropertyChanged(nameof(PlanesConfiguradosResumen));
+        }
+
+        [RelayCommand]
+        public void PrepararNuevoPlan()
+        {
+            SelectedPlan = null;
+            FechaInicioPlan = DateTime.Today;
+            ErrorMessage = string.Empty;
+            SuccessMessage = "Selecciona una o varias plantillas y personaliza KM/Días por cada una.";
+            OnPropertyChanged(nameof(PlanActualResumen));
+            ResetEditContext();
+            // en modo "nuevo" ocultamos las plantillas que ya tienen un plan asignado
+            foreach (var item in PlantillasSeleccionables)
+            {
+                item.IsVisibleWhenEditing = item.PlanIdExistente == null;
+                item.IsSelected = false;
+                item.IsExpanded = false;
+            }
         }
 
         [RelayCommand]
@@ -278,15 +338,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
 
-                if (SelectedPlantilla == null)
+                var configuracionesSeleccionadas = PlantillasSeleccionables
+                    .Where(p => p.IsSelected)
+                    .ToList();
+
+                if (configuracionesSeleccionadas.Count == 0)
                 {
-                    ErrorMessage = "Debe seleccionar una plantilla";
+                    ErrorMessage = "Debe seleccionar al menos una plantilla";
                     return;
                 }
 
-                var intervaloKmPersonalizado = ParseOptionalPositiveInt(IntervaloKMPersonalizadoInput, "intervalo KM personalizado");
-                var intervaloDiasPersonalizado = ParseOptionalPositiveInt(IntervaloDiasPersonalizadoInput, "intervalo en días personalizado");
-                var ultimoKmRegistrado = ParseOptionalNonNegativeLong(UltimoKMRegistradoInput, "último KM registrado") ?? 0;
                 var vehiculo = await _vehicleService.GetByPlateAsync(placaNormalizada, cancellationToken);
 
                 if (vehiculo == null)
@@ -295,62 +356,95 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
 
-                var ultimaFecha = UltimaFechaMantenimiento.HasValue
-                    ? new DateTimeOffset(UltimaFechaMantenimiento.Value.Date)
-                    : (DateTimeOffset?)null;
-
-                if (ultimoKmRegistrado > 0 && !ultimaFecha.HasValue)
-                {
-                    ErrorMessage = "Si registra un último KM mayor a 0, debe indicar también la fecha del último mantenimiento";
-                    return;
-                }
-
-                if (ultimaFecha.HasValue && ultimaFecha.Value.Date > DateTimeOffset.Now.Date)
-                {
-                    ErrorMessage = "La fecha del último mantenimiento no puede ser futura";
-                    return;
-                }
-
-                if (vehiculo.Mileage > 0 && ultimoKmRegistrado == 0)
-                {
-                    ErrorMessage = $"El vehículo tiene kilometraje actual ({vehiculo.Mileage:N0} km). Debe registrar el último KM de mantenimiento";
-                    return;
-                }
-
-                if (ultimoKmRegistrado > vehiculo.Mileage)
-                {
-                    ErrorMessage = $"El último KM de mantenimiento ({ultimoKmRegistrado:N0}) no puede ser mayor al kilometraje actual del vehículo ({vehiculo.Mileage:N0})";
-                    return;
-                }
-
                 IsLoading = true;
 
-                var dto = new PlanMantenimientoVehiculoDto
+                foreach (var configuracion in configuracionesSeleccionadas)
                 {
-                    PlacaVehiculo = placaNormalizada,
-                    PlantillaId = SelectedPlantilla.Id,
-                    IntervaloKMPersonalizado = intervaloKmPersonalizado,
-                    IntervaloDiasPersonalizado = intervaloDiasPersonalizado,
-                    FechaInicio = FechaInicioPlan.HasValue
-                        ? new DateTimeOffset(FechaInicioPlan.Value.Date)
-                        : DateTimeOffset.UtcNow,
-                    UltimoKMRegistrado = ultimoKmRegistrado,
-                    UltimaFechaMantenimiento = ultimaFecha,
-                    FechaFin = null,
-                    Activo = true
-                };
+                    var ultimoKmRegistrado = ParseOptionalNonNegativeLong(
+                        configuracion.UltimoKMRegistradoInput,
+                        $"último KM de {configuracion.NombrePlantilla}") ?? 0;
 
-                if (SelectedPlan == null)
-                {
-                    await _planService.CreateAsync(dto, cancellationToken);
-                }
-                else
-                {
-                    await _planService.UpdateAsync(SelectedPlan.Id, dto, cancellationToken);
+                    var ultimaFecha = configuracion.UltimaFechaMantenimiento.HasValue
+                        ? new DateTimeOffset(configuracion.UltimaFechaMantenimiento.Value.Date)
+                        : (DateTimeOffset?)null;
+
+                    if (ultimoKmRegistrado > 0 && !ultimaFecha.HasValue)
+                    {
+                        ErrorMessage = $"En '{configuracion.NombrePlantilla}', si registra último KM mayor a 0 debe indicar la fecha del último mantenimiento";
+                        return;
+                    }
+
+                    if (ultimaFecha.HasValue && ultimaFecha.Value.Date > DateTimeOffset.Now.Date)
+                    {
+                        ErrorMessage = $"En '{configuracion.NombrePlantilla}', la fecha del último mantenimiento no puede ser futura";
+                        return;
+                    }
+
+                    if (vehiculo.Mileage > 0 && ultimoKmRegistrado == 0)
+                    {
+                        ErrorMessage = $"En '{configuracion.NombrePlantilla}', debe registrar último KM (el vehículo está en {vehiculo.Mileage:N0} km)";
+                        return;
+                    }
+
+                    if (ultimoKmRegistrado > vehiculo.Mileage)
+                    {
+                        ErrorMessage = $"En '{configuracion.NombrePlantilla}', el último KM ({ultimoKmRegistrado:N0}) no puede ser mayor al kilometraje actual ({vehiculo.Mileage:N0})";
+                        return;
+                    }
+
+                    var intervaloKmPersonalizado = ParseOptionalPositiveInt(
+                        configuracion.IntervaloKMPersonalizadoInput,
+                        $"intervalo KM de {configuracion.NombrePlantilla}");
+                    var intervaloDiasPersonalizado = ParseOptionalPositiveInt(
+                        configuracion.IntervaloDiasPersonalizadoInput,
+                        $"intervalo en días de {configuracion.NombrePlantilla}");
+
+                    var dto = new PlanMantenimientoVehiculoDto
+                    {
+                        PlacaVehiculo = placaNormalizada,
+                        PlantillaId = configuracion.PlantillaId,
+                        IntervaloKMPersonalizado = intervaloKmPersonalizado,
+                        IntervaloDiasPersonalizado = intervaloDiasPersonalizado,
+                        FechaInicio = FechaInicioPlan.HasValue
+                            ? new DateTimeOffset(FechaInicioPlan.Value.Date)
+                            : DateTimeOffset.UtcNow,
+                        UltimoKMRegistrado = ultimoKmRegistrado,
+                        UltimaFechaMantenimiento = ultimaFecha,
+                        FechaFin = null,
+                        Activo = true
+                    };
+
+                    if (configuracion.PlanIdExistente.HasValue)
+                    {
+                        await _planService.UpdateAsync(configuracion.PlanIdExistente.Value, dto, cancellationToken);
+                    }
+                    else
+                    {
+                        await _planService.CreateAsync(dto, cancellationToken);
+                    }
+
+                    // recalculo inmediato local en edit único
+                    if (IsEditingSinglePlan && EditingPlanId.HasValue &&
+                        configuracion.PlanIdExistente == EditingPlanId.Value)
+                    {
+                        var planObj = Planes.FirstOrDefault(p => p.Id == EditingPlanId.Value);
+                        if (planObj != null)
+                        {
+                            var baseKm = ultimoKmRegistrado;
+                            var baseFecha = ultimaFecha ?? planObj.FechaInicio;
+                            var intervaloKm = intervaloKmPersonalizado ?? planObj.IntervaloKMPersonalizado ?? 0;
+                            var intervaloDias = intervaloDiasPersonalizado ?? planObj.IntervaloDiasPersonalizado ?? 0;
+                            planObj.ProximoKMEjecucion = baseKm + intervaloKm;
+                            planObj.ProximaFechaEjecucion = baseFecha.AddDays(intervaloDias);
+                        }
+                    }
                 }
 
+                // después de guardar salimos del modo edición individual
+                ResetEditContext();
                 await FilterByPlacaAsync(cancellationToken);
-                SuccessMessage = "Plan de mantenimiento guardado correctamente para este vehículo";
+                SuccessMessage = $"Se guardaron {configuracionesSeleccionadas.Count} plan(es) de mantenimiento para el vehículo";
+                RequestClose?.Invoke();
             }
             catch (OperationCanceledException)
             {
@@ -392,35 +486,34 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     await LoadPlantillasDisponiblesAsync(cancellationToken);
                 }
 
-                var plan = await _planService.GetByPlacaAsync(FilterPlaca, cancellationToken);
+                var planes = (await _planService.GetByPlacaListAsync(FilterPlaca, cancellationToken)).ToList();
                 
                 Planes.Clear();
-                if (plan != null)
+                foreach (var plan in planes)
                 {
                     Planes.Add(plan);
-                    SelectedPlan = plan;
-                    SelectedPlantilla = PlantillasDisponibles.FirstOrDefault(p => p.Id == plan.PlantillaId);
-                    IntervaloKMPersonalizadoInput = plan.IntervaloKMPersonalizado?.ToString() ?? string.Empty;
-                    IntervaloDiasPersonalizadoInput = plan.IntervaloDiasPersonalizado?.ToString() ?? string.Empty;
-                    FechaInicioPlan = plan.FechaInicio.Date;
-                    UltimoKMRegistradoInput = (plan.UltimoKMRegistrado ?? 0).ToString();
-                    UltimaFechaMantenimiento = plan.UltimaFechaMantenimiento?.Date;
+                }
+
+                ActualizarPlanesOrdenados();
+
+                if (planes.Count > 0)
+                {
+                    SelectedPlan = planes[0];
+                    ApplySelectedPlanToForm(SelectedPlan);
                 }
                 else
                 {
                     SelectedPlan = null;
-                    SelectedPlantilla = null;
-                    IntervaloKMPersonalizadoInput = string.Empty;
-                    IntervaloDiasPersonalizadoInput = string.Empty;
                     FechaInicioPlan = DateTime.Today;
-                    UltimoKMRegistradoInput = "0";
-                    UltimaFechaMantenimiento = null;
                     await CargarLineaBaseDesdeHistorialAsync(cancellationToken);
                 }
+
+                SyncPlantillasSeleccionablesConPlanes();
 
                 OnPropertyChanged(nameof(PlantillaSeleccionadaResumen));
                 OnPropertyChanged(nameof(HasPlanActual));
                 OnPropertyChanged(nameof(PlanActualResumen));
+                OnPropertyChanged(nameof(PlanesConfiguradosResumen));
 
                 _logger.LogInformation("Plan filtrado por placa: {Placa}", FilterPlaca);
             }
@@ -470,6 +563,34 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             return value;
         }
 
+        [RelayCommand]
+        public async Task DeletePlanAsync(PlanMantenimientoVehiculoDto plan, CancellationToken cancellationToken = default)
+        {
+            if (plan == null) return;
+
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = string.Empty;
+                SuccessMessage = string.Empty;
+
+                await _planService.DeleteAsync(plan.Id, cancellationToken);
+                await FilterByPlacaAsync(cancellationToken);
+                SuccessMessage = "Plan eliminado";
+                RequestClose?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al eliminar el plan";
+                _logger.LogError(ex, "Error eliminando plan {PlanId}", plan.Id);
+            }
+            finally
+            {
+                IsLoading = false;
+                ResetEditContext();
+            }
+        }
+
         private async Task CargarLineaBaseDesdeHistorialAsync(CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(FilterPlaca))
@@ -482,13 +603,135 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
             if (ultimaEjecucion != null)
             {
-                UltimoKMRegistradoInput = ultimaEjecucion.KMAlMomento.ToString();
-                UltimaFechaMantenimiento = ultimaEjecucion.FechaEjecucion.Date;
+                var km = ultimaEjecucion.KMAlMomento.ToString();
+                var fecha = ultimaEjecucion.FechaEjecucion.Date;
+
+                foreach (var item in PlantillasSeleccionables)
+                {
+                    if (string.IsNullOrWhiteSpace(item.UltimoKMRegistradoInput))
+                    {
+                        item.UltimoKMRegistradoInput = km;
+                    }
+
+                    if (!item.UltimaFechaMantenimiento.HasValue)
+                    {
+                        item.UltimaFechaMantenimiento = fecha;
+                    }
+                }
             }
         }
 
-        partial void OnSelectedPlantillaChanged(PlantillaMantenimientoDto? value)
+        partial void OnSelectedPlanChanged(PlanMantenimientoVehiculoDto? value)
         {
+            ApplySelectedPlanToForm(value);
+            OnPropertyChanged(nameof(PlanActualResumen));
+        }
+
+        /// <summary>
+        /// Prepara el ViewModel para editar un solo plan existente.
+        /// La interfaz mostrará sólo la plantilla asociada.
+        /// </summary>
+        public void PrepareEditPlan(PlanMantenimientoVehiculoDto plan)
+        {
+            if (plan == null) return;
+            SelectedPlan = plan;
+            IsEditingSinglePlan = true;
+            EditingPlanId = plan.Id;
+            FilterPlaca = NormalizePlate(plan.PlacaVehiculo);
+            SyncPlantillasSeleccionablesConPlanes();
+            // seleccionar únicamente la plantilla que corresponde al plan
+            foreach (var item in PlantillasSeleccionables)
+            {
+                bool matches = item.PlanIdExistente.HasValue && item.PlanIdExistente.Value == plan.Id;
+                item.IsSelected = matches;
+                item.IsExpanded = matches;
+                item.IsVisibleWhenEditing = matches;
+            }
+        }
+
+        public void ResetEditContext()
+        {
+            IsEditingSinglePlan = false;
+            EditingPlanId = null;
+            SelectedPlan = null;
+            foreach (var item in PlantillasSeleccionables)
+            {
+                item.IsVisibleWhenEditing = true;
+            }
+        }
+
+        partial void OnPlanesChanging(ObservableCollection<PlanMantenimientoVehiculoDto> value)
+        {
+            // Desuscribirse del evento previo si existe
+            if (Planes != null)
+            {
+                Planes.CollectionChanged -= Planes_CollectionChanged;
+            }
+        }
+
+        partial void OnPlanesChanged(ObservableCollection<PlanMantenimientoVehiculoDto> value)
+        {
+            // Suscribirse al nuevo evento
+            if (Planes != null)
+            {
+                Planes.CollectionChanged += Planes_CollectionChanged;
+            }
+            // Actualizar la colección ordenada
+            ActualizarPlanesOrdenados();
+        }
+
+        private void Planes_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ActualizarPlanesOrdenados();
+        }
+
+        private void ActualizarPlanesOrdenados()
+        {
+            var ordenados = new ObservableCollection<PlanMantenimientoVehiculoDto>();
+            
+            // Vencidos primero (más lejanos en pasado primero)
+            foreach (var plan in Planes.Where(p => p.EstadoPlan == "Vencido").OrderByDescending(p => p.ProximaFechaEjecucion))
+            {
+                ordenados.Add(plan);
+            }
+            
+            // Próximos (más cercanos PRIMERO - los más urgentes)
+            foreach (var plan in Planes.Where(p => p.EstadoPlan == "Próximo").OrderBy(p => p.ProximaFechaEjecucion))
+            {
+                ordenados.Add(plan);
+            }
+            
+            // Vigentes al final (más cercanos primero)
+            foreach (var plan in Planes.Where(p => p.EstadoPlan == "Vigente").OrderBy(p => p.ProximaFechaEjecucion))
+            {
+                ordenados.Add(plan);
+            }
+            
+            PlanesOrdenados = ordenados;
+        }
+
+        private void ApplySelectedPlanToForm(PlanMantenimientoVehiculoDto? plan)
+        {
+            if (plan == null)
+            {
+                return;
+            }
+            FechaInicioPlan = plan.FechaInicio.Date;
+        }
+
+        private void SyncPlantillasSeleccionablesConPlanes()
+        {
+            foreach (var item in PlantillasSeleccionables)
+            {
+                var plan = Planes.FirstOrDefault(p => p.PlantillaId == item.PlantillaId);
+                item.PlanIdExistente = plan?.Id;
+                item.IsSelected = plan != null;
+                item.IsExpanded = plan != null;
+                item.IntervaloKMPersonalizadoInput = plan?.IntervaloKMPersonalizado?.ToString() ?? string.Empty;
+                item.IntervaloDiasPersonalizadoInput = plan?.IntervaloDiasPersonalizado?.ToString() ?? string.Empty;
+                item.UltimoKMRegistradoInput = plan?.UltimoKMRegistrado?.ToString() ?? string.Empty;
+                item.UltimaFechaMantenimiento = plan?.UltimaFechaMantenimiento?.Date;
+            }
             OnPropertyChanged(nameof(PlantillaSeleccionadaResumen));
         }
 
@@ -497,6 +740,38 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             return string.IsNullOrWhiteSpace(plate)
                 ? string.Empty
                 : plate.Trim().ToUpperInvariant();
+        }
+
+        public partial class PlantillaPlanSelectionItem : ObservableObject
+        {
+            public int PlantillaId { get; set; }
+            public string NombrePlantilla { get; set; } = string.Empty;
+            public int IntervaloKmBase { get; set; }
+            public int IntervaloDiasBase { get; set; }
+
+            [ObservableProperty]
+            private bool isSelected;
+
+            [ObservableProperty]
+            private bool isExpanded;
+
+            [ObservableProperty]
+            private string intervaloKMPersonalizadoInput = string.Empty;
+
+            [ObservableProperty]
+            private string intervaloDiasPersonalizadoInput = string.Empty;
+
+            [ObservableProperty]
+            private string ultimoKMRegistradoInput = string.Empty;
+
+            [ObservableProperty]
+            private DateTime? ultimaFechaMantenimiento;
+
+            [ObservableProperty]
+            private int? planIdExistente;
+
+            [ObservableProperty]
+            private bool isVisibleWhenEditing = true;
         }
     }
 }

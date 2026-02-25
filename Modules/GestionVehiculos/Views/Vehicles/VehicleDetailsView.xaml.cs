@@ -77,6 +77,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                         }
 
                         var planesView = this.FindName("PlanesView") as PlanesMantenimientoView;
+                        var ejecucionesView = this.FindName("EjecucionesView") as EjecucionesMantenimientoView;
                         if (planesView != null)
                         {
                             if (!(planesView.DataContext is PlanesMantenimientoViewModel))
@@ -92,6 +93,23 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                                 }
                             }
 
+                                // suscribir eventos para interacciones de la vista de planes
+                                planesView.HistoryRequested += async plan =>
+                                {
+                                    // cambiar a la pestaña de ejecuciones y cargar datos
+                                    if (this.FindName("MantenimientosTabs") is System.Windows.Controls.TabControl maintTab)
+                                    {
+                                        maintTab.SelectedIndex = 1; // índice de Ejecuciones
+                                    }
+
+                                    var ejecucionesView = this.FindName("EjecucionesView") as EjecucionesMantenimientoView;
+                                    if (ejecucionesView != null && ejecucionesView.DataContext is EjecucionesMantenimientoViewModel ejecVm)
+                                    {
+                                        await ejecVm.LoadByPlanAsync(plan.Id);
+                                    }
+                                };
+
+                            // cargar los planes en el viewmodel
                             if (planesView.DataContext is PlanesMantenimientoViewModel planesDataContext)
                             {
                                 if (string.IsNullOrWhiteSpace(currentPlate))
@@ -103,34 +121,33 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                                     await planesDataContext.InitializeForVehicleAsync(currentPlate);
                                 }
                             }
-                        }
 
-                        var ejecucionesView = this.FindName("EjecucionesView") as EjecucionesMantenimientoView;
-                        if (ejecucionesView != null)
-                        {
-                            if (!(ejecucionesView.DataContext is EjecucionesMantenimientoViewModel))
+                            if (ejecucionesView != null)
                             {
-                                var ejecucionesVm = sp?.GetService(typeof(EjecucionesMantenimientoViewModel)) as EjecucionesMantenimientoViewModel;
-                                if (ejecucionesVm != null)
+                                if (!(ejecucionesView.DataContext is EjecucionesMantenimientoViewModel))
                                 {
-                                    ejecucionesView.DataContext = ejecucionesVm;
+                                    var ejecucionesVm = sp?.GetService(typeof(EjecucionesMantenimientoViewModel)) as EjecucionesMantenimientoViewModel;
+                                    if (ejecucionesVm != null)
+                                    {
+                                        ejecucionesView.DataContext = ejecucionesVm;
+                                    }
+                                    else
+                                    {
+                                        logger?.LogWarning("VehicleDetailsView: No se pudo resolver EjecucionesMantenimientoViewModel desde DI");
+                                    }
                                 }
-                                else
-                                {
-                                    logger?.LogWarning("VehicleDetailsView: No se pudo resolver EjecucionesMantenimientoViewModel desde DI");
-                                }
-                            }
 
-                            if (ejecucionesView.DataContext is EjecucionesMantenimientoViewModel ejecucionesDataContext)
-                            {
-                                ejecucionesDataContext.FilterPlaca = currentPlate;
-                                if (string.IsNullOrWhiteSpace(currentPlate))
+                                if (ejecucionesView.DataContext is EjecucionesMantenimientoViewModel ejecucionesDataContext)
                                 {
-                                    await ejecucionesDataContext.LoadEjecucionesAsync();
-                                }
-                                else
-                                {
-                                    await ejecucionesDataContext.LoadHistorialVehiculoAsync();
+                                    ejecucionesDataContext.FilterPlaca = currentPlate;
+                                    if (string.IsNullOrWhiteSpace(currentPlate))
+                                    {
+                                        await ejecucionesDataContext.LoadEjecucionesAsync();
+                                    }
+                                    else
+                                    {
+                                        await ejecucionesDataContext.LoadHistorialVehiculoAsync();
+                                    }
                                 }
                             }
                         }

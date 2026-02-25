@@ -16,6 +16,7 @@
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
@@ -80,69 +81,109 @@
                                     <DatePicker Grid.Column="4" SelectedDate="{Binding FechaInicioPlan}" Style="{StaticResource ModernDatePickerStyle}" />
                                 </Grid>
 
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="240" />
-                                        <ColumnDefinition Width="20" />
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="240" />
-                                    </Grid.ColumnDefinitions>
+                                <TextBlock Text="Plantillas (selecciona y personaliza)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,6" />
+                                <Border Background="#F5F9F6" BorderBrush="#D8EADC" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding PlantillaSeleccionadaResumen}" Foreground="#2E5E39" FontSize="11" TextWrapping="Wrap" />
+                                </Border>
 
-                                    <TextBlock Grid.Column="0" Text="Plantilla:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
-                                    <ComboBox Grid.Column="1"
-                                              ItemsSource="{Binding PlantillasDisponibles}"
-                                              SelectedItem="{Binding SelectedPlantilla}"
-                                              DisplayMemberPath="Nombre"
-                                              Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
+                                <TextBlock Text="Despliega cada plantilla para personalizar sus valores." FontSize="10" Foreground="#7A7A7A" Margin="0,0,0,6" />
 
-                                    <Border Grid.Column="3" Grid.ColumnSpan="2" Background="#F5F9F6" BorderBrush="#D8EADC" BorderThickness="1" CornerRadius="6" Padding="10,6">
-                                        <TextBlock Text="{Binding PlantillaSeleccionadaResumen}" Foreground="#2E5E39" FontSize="11" TextWrapping="Wrap" />
-                                    </Border>
-                                </Grid>
+                                <ListBox ItemsSource="{Binding PlantillasSeleccionables}" MinHeight="180" MaxHeight="280" BorderBrush="#E5E5E5" BorderThickness="1" Margin="0,0,0,12">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="4" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"
+                                                    Visibility="{Binding IsVisibleWhenEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Expander IsExpanded="{Binding IsExpanded}" Background="Transparent">
+                                                    <Expander.Header>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="420" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
 
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="20" />
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="140" />
-                                    </Grid.ColumnDefinitions>
+                                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center">
+                                                                <TextBlock>
+                                                                    <Run Text="{Binding NombrePlantilla}" FontWeight="SemiBold" />
+                                                                    <Run Text="  (Base " Foreground="#7A7A7A" />
+                                                                    <Run Text="{Binding IntervaloKmBase, StringFormat={}{0:N0} km}" Foreground="#7A7A7A" />
+                                                                    <Run Text=" / " Foreground="#7A7A7A" />
+                                                                    <Run Text="{Binding IntervaloDiasBase, StringFormat={}{0} días}" Foreground="#7A7A7A" />
+                                                                    <Run Text=")" Foreground="#7A7A7A" />
+                                                                </TextBlock>
+                                                            </CheckBox>
 
-                                    <TextBlock Grid.Column="0" Text="Intervalo KM:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" Text="{Binding IntervaloKMPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PlanIdExistente, StringFormat=Plan actual: {0}}" Foreground="#7A7A7A" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                                        </Grid>
+                                                    </Expander.Header>
 
-                                    <TextBlock Grid.Column="3" Text="Intervalo días:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="4" Text="{Binding IntervaloDiasPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
-                                </Grid>
+                                                    <Border Margin="26,6,4,6" Padding="8" Background="#FAFAFA" BorderBrush="#EAEAEA" BorderThickness="1" CornerRadius="6"
+                                                            IsEnabled="{Binding IsSelected}">
+                                                        <StackPanel>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="140" />
+                                                                    <ColumnDefinition Width="140" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Text="Cada cuántos KM" FontSize="10" Foreground="#504F4E" HorizontalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1" Text="Cada cuántos días" FontSize="10" Foreground="#504F4E" HorizontalAlignment="Center" />
+                                                                <TextBlock Grid.Column="2" Text="KM del último cambio" FontSize="10" Foreground="#504F4E" HorizontalAlignment="Center" />
+                                                                <TextBlock Grid.Column="3" Text="Fecha del último cambio" FontSize="10" Foreground="#504F4E" HorizontalAlignment="Center" />
+                                                            </Grid>
 
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="20" />
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="140" />
-                                    </Grid.ColumnDefinitions>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="140" />
+                                                                    <ColumnDefinition Width="140" />
+                                                                </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0" Text="Último KM:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" Text="{Binding UltimoKMRegistradoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
-
-                                    <TextBlock Grid.Column="3" Text="Última fecha:" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
-                                    <DatePicker Grid.Column="4" SelectedDate="{Binding UltimaFechaMantenimiento}" Style="{StaticResource ModernDatePickerStyle}" />
-                                </Grid>
+                                                                <TextBox Grid.Column="0" Text="{Binding IntervaloKMPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,6,0" VerticalContentAlignment="Center" ToolTip="KM personalizado (opcional)" />
+                                                                <TextBox Grid.Column="1" Text="{Binding IntervaloDiasPersonalizadoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,6,0" VerticalContentAlignment="Center" ToolTip="Días personalizados (opcional)" />
+                                                                <TextBox Grid.Column="2" Text="{Binding UltimoKMRegistradoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,6,0" VerticalContentAlignment="Center" ToolTip="Último KM de esta plantilla" />
+                                                                <DatePicker Grid.Column="3" SelectedDate="{Binding UltimaFechaMantenimiento, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernDatePickerStyle}" ToolTip="Última fecha de mantenimiento de esta plantilla" />
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Expander>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
                                 <Border Background="#FFF8E1" BorderBrush="#F0DFA5" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,4,0,0">
                                     <TextBlock Foreground="#7A6226" FontSize="11" TextWrapping="Wrap"
-                                               Text="Vehículo usado: ingresa el KM y la fecha del último mantenimiento. Vehículo nuevo: deja KM en 0 y la fecha vacía." />
+                                               Text="Cada plantilla tiene su propio último KM y última fecha. No tienen que coincidir entre sí." />
                                 </Border>
                             </StackPanel>
                         </Border>
 
                         <Border Style="{StaticResource CardSectionStyle}">
                             <StackPanel>
-                                <TextBlock Text="Estado actual" Style="{StaticResource SectionHeaderStyle}" />
+                                <TextBlock Text="Planes asignados" Style="{StaticResource SectionHeaderStyle}" />
+                                <TextBlock Text="{Binding PlanesConfiguradosResumen}" Foreground="#7A7A7A" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <ListBox ItemsSource="{Binding Planes}" SelectedItem="{Binding SelectedPlan}" MinHeight="130" MaxHeight="220" BorderBrush="#E5E5E5" BorderThickness="1">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="SemiBold" Foreground="#118938" Text="{Binding PlantillaNombre}" />
+                                                    <TextBlock FontSize="11" Foreground="#504F4E" Text="{Binding EstadoPlan, StringFormat=Estado: {0}}" />
+                                                    <TextBlock FontSize="11" Foreground="#7A7A7A" Text="{Binding ProximoKMEjecucion, StringFormat=Próx. KM: {0:N0}}" />
+                                                    <TextBlock FontSize="11" Foreground="#7A7A7A" Text="{Binding ProximaFechaEjecucion, StringFormat=Próx. Fecha: {0:dd/MM/yyyy}}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,8">
+                                    <Button Content="Nuevo plan" Style="{StaticResource GhostButton}" Command="{Binding PrepararNuevoPlanCommand}" Margin="0,0,8,0" />
+                                </StackPanel>
+
+                                <TextBlock Text="Estado actual" Style="{StaticResource SectionHeaderStyle}" Margin="0,4,0,4" />
                                 <Border Background="#F8F8F8" CornerRadius="6" Padding="10" BorderBrush="#E5E5E5" BorderThickness="1">
                                     <TextBlock Text="{Binding PlanActualResumen}" Foreground="#504F4E" FontSize="11" TextWrapping="Wrap" />
                                 </Border>
@@ -164,8 +205,13 @@
                 <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1,1,1,0" Padding="16" CornerRadius="0,0,12,12">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" />
+                        <!-- sólo mostrar botón de eliminar cuando estamos editando un único plan -->
+                        <Button Content="🗑 Eliminar" Style="{StaticResource GhostButton}" Margin="0,0,8,0"
+                                Foreground="#C0392B" Command="{Binding DeletePlanCommand}"
+                                CommandParameter="{Binding SelectedPlan}"
+                                Visibility="{Binding IsEditingSinglePlan, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <Button Content="Guardar plan" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding GuardarPlanVehiculoCommand}"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" />
                     </StackPanel>
                 </Border>
             </Grid>
