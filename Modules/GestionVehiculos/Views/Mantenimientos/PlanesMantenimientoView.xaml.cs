@@ -46,6 +46,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 }
             }
 
+            // al abrir desde el encabezado se configura un NUEVO plan
+            vm.PrepararNuevoPlan();
+
             var dialog = new PlanMantenimientoDialog(vm);
             var owner = System.Windows.Application.Current?.Windows.Count > 0
                 ? System.Windows.Application.Current.Windows[0]
