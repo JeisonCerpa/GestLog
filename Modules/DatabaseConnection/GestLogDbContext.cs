@@ -478,8 +478,12 @@ namespace GestLog.Modules.DatabaseConnection
                     .HasDefaultValueSql("GETUTCDATE()");
                 
                 entity.HasIndex(e => e.PlacaVehiculo)
-                    .IsUnique()
                     .HasDatabaseName("IX_PlanesMantenimiento_PlacaVehiculo");
+
+                entity.HasIndex(e => new { e.PlacaVehiculo, e.PlantillaId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0")
+                    .HasDatabaseName("IX_PlanesMantenimiento_PlacaPlantilla_Activa");
                 
                 entity.HasIndex(e => e.PlantillaId)
                     .HasDatabaseName("IX_PlanesMantenimiento_PlantillaId");

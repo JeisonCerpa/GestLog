@@ -18,6 +18,7 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         public bool Activo { get; set; }
         public DateTimeOffset FechaCreacion { get; set; }
         public DateTimeOffset FechaActualizacion { get; set; }
+        public string? PlantillaNombre { get; set; }
 
         /// <summary>
         /// Propiedades calculadas (calculadas en Service o ViewModel)

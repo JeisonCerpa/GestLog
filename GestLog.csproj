@@ -27,6 +27,13 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <!-- Evita bloqueo del exe en Debug; el run usa el dll -->
+    <UseAppHost>false</UseAppHost>
+    <!-- Salida separada para evitar bloqueo del DLL cuando la app está ejecutándose -->
+    <OutputPath>bin\Debug\_build\</OutputPath>
+  </PropertyGroup>
+
   <!-- Target para leer la versión desde version.txt -->
   <Target Name="ReadVersionFromFile" BeforeTargets="Build">
     <ReadLinesFromFile File="$(MSBuildProjectDirectory)\version.txt">
@@ -40,10 +47,10 @@
     </PropertyGroup>
   </Target>
 
-  <!-- Detiene la app en ejecución para evitar bloqueo del EXE al compilar -->
-  <Target Name="StopGestLogBeforeBuild" BeforeTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
-    <Message Text="[Build] Cerrando GestLog.exe si está en ejecución..." Importance="High" />
-    <Exec Command="powershell -NoProfile -Command &quot;try { $p = Get-Process -Name GestLog -ErrorAction SilentlyContinue; if ($p) { $p | Stop-Process -Force } } catch { } exit 0&quot;" />
+  <!-- Detiene la app en ejecución para evitar bloqueo del EXE/DLL al compilar -->
+  <Target Name="StopGestLogBeforeBuild" BeforeTargets="PrepareForBuild" Condition="'$(OS)' == 'Windows_NT'">
+    <Message Text="[Build] Cerrando GestLog (GestLog.exe/dotnet host) si está en ejecución..." Importance="High" />
+    <Exec IgnoreExitCode="true" Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Scripts\Stop-GestLogProcesses.ps1&quot;" />
   </Target>
 
   <ItemGroup>

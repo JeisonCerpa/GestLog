@@ -51,6 +51,38 @@
             </Setter>
         </Style>
 
+        <Style x:Key="NestedTabControlStyle" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Cabecera de pestañas: sin márgenes laterales -->
+                            <Border Grid.Row="0" Margin="0" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                                    <TabPanel IsItemsHost="True" Background="Transparent" />
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- Contenido de la pestaña: sin márgenes ni padding adicional -->
+                            <Border Grid.Row="1" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="0,0,8,8" Margin="0" Padding="0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
+                                </Border.Effect>
+                                <ContentPresenter ContentSource="SelectedContent" Margin="0"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DetailTabItemStyle}"/>
+        </Style>
+
         <Style x:Key="DetailTabControlStyle" TargetType="TabControl">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
@@ -75,7 +107,7 @@
                                 <Border.Effect>
                                     <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
                                 </Border.Effect>
-                                <ContentPresenter ContentSource="SelectedContent" Margin="12"/>
+                                <ContentPresenter ContentSource="SelectedContent" Margin="0"/>
                             </Border>
                         </Grid>
                     </ControlTemplate>
@@ -312,13 +344,13 @@
                     <views:VehicleDocumentsView x:Name="DocumentsView" />
                 </TabItem>
 
-                <TabItem Header="Mantenimientos">
-                    <TabControl>
-                        <TabItem Header="Planes">
-                            <mantenimientos:PlanesMantenimientoView x:Name="PlanesView" />
+                <TabItem Header="Mantenimientos" Padding="0">
+                    <TabControl x:Name="MantenimientosTabs" Style="{StaticResource NestedTabControlStyle}">
+                        <TabItem Header="Planes" Style="{StaticResource DetailTabItemStyle}">
+                            <mantenimientos:PlanesMantenimientoView x:Name="PlanesView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" />
                         </TabItem>
-                        <TabItem Header="Ejecuciones">
-                            <mantenimientos:EjecucionesMantenimientoView x:Name="EjecucionesView" />
+                        <TabItem Header="Ejecuciones" Style="{StaticResource DetailTabItemStyle}">
+                            <mantenimientos:EjecucionesMantenimientoView x:Name="EjecucionesView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" />
                         </TabItem>
                     </TabControl>
                 </TabItem>

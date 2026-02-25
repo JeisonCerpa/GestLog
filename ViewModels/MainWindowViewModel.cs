@@ -10,6 +10,7 @@ using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Services.Interfaces;
 using GestLog.Models.Events;
 using System.Windows.Media;
+using System;
 
 namespace GestLog.ViewModels
 {
@@ -184,62 +185,77 @@ namespace GestLog.ViewModels
         {
             try
             {
-                switch (state)
+                ExecuteOnUiThread(() =>
                 {
-                    case DatabaseConnectionState.Connected:
-                        DatabaseStatusIcon = "✅";
-                        DatabaseStatusText = "Conectado";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2B8E3F"));
-                        DatabaseStatusTooltip = $"Conectado a base de datos - {message}";
-                        break;
+                    switch (state)
+                    {
+                        case DatabaseConnectionState.Connected:
+                            DatabaseStatusIcon = "✅";
+                            DatabaseStatusText = "Conectado";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2B8E3F"));
+                            DatabaseStatusTooltip = $"Conectado a base de datos - {message}";
+                            break;
 
-                    case DatabaseConnectionState.Connecting:
-                        DatabaseStatusIcon = "🔄";
-                        DatabaseStatusText = "Conectando...";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E67E22"));
-                        DatabaseStatusTooltip = $"Conectando a base de datos - {message}";
-                        break;
+                        case DatabaseConnectionState.Connecting:
+                            DatabaseStatusIcon = "🔄";
+                            DatabaseStatusText = "Conectando...";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E67E22"));
+                            DatabaseStatusTooltip = $"Conectando a base de datos - {message}";
+                            break;
 
-                    case DatabaseConnectionState.Reconnecting:
-                        DatabaseStatusIcon = "🔄";
-                        DatabaseStatusText = "Reconectando...";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#D68910"));
-                        DatabaseStatusTooltip = $"Reconectando a base de datos - {message}";
-                        break;
+                        case DatabaseConnectionState.Reconnecting:
+                            DatabaseStatusIcon = "🔄";
+                            DatabaseStatusText = "Reconectando...";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#D68910"));
+                            DatabaseStatusTooltip = $"Reconectando a base de datos - {message}";
+                            break;
 
-                    case DatabaseConnectionState.Disconnected:
-                        DatabaseStatusIcon = "⏸️";
-                        DatabaseStatusText = "Desconectado";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#706F6F"));
-                        DatabaseStatusTooltip = $"Desconectado de base de datos - {message}";
-                        break;
+                        case DatabaseConnectionState.Disconnected:
+                            DatabaseStatusIcon = "⏸️";
+                            DatabaseStatusText = "Desconectado";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#706F6F"));
+                            DatabaseStatusTooltip = $"Desconectado de base de datos - {message}";
+                            break;
 
-                    case DatabaseConnectionState.Error:
-                        DatabaseStatusIcon = "❌";
-                        DatabaseStatusText = "Error";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#C0392B"));
-                        DatabaseStatusTooltip = $"Error de conexión a base de datos - {message}";
-                        break;
+                        case DatabaseConnectionState.Error:
+                            DatabaseStatusIcon = "❌";
+                            DatabaseStatusText = "Error";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#C0392B"));
+                            DatabaseStatusTooltip = $"Error de conexión a base de datos - {message}";
+                            break;
 
-                    default:
-                        DatabaseStatusIcon = "❓";
-                        DatabaseStatusText = "Desconocido";
-                        DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#9D9D9C"));
-                        DatabaseStatusTooltip = $"Estado desconocido de base de datos - {message}";
-                        break;
-                }
+                        default:
+                            DatabaseStatusIcon = "❓";
+                            DatabaseStatusText = "Desconocido";
+                            DatabaseStatusBackground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#9D9D9C"));
+                            DatabaseStatusTooltip = $"Estado desconocido de base de datos - {message}";
+                            break;
+                    }
 
-                // Notificar cambios
-                OnPropertyChanged(nameof(DatabaseStatusIcon));
-                OnPropertyChanged(nameof(DatabaseStatusText));
-                OnPropertyChanged(nameof(DatabaseStatusBackground));
-                OnPropertyChanged(nameof(DatabaseStatusTooltip));
+                    // Notificar cambios
+                    OnPropertyChanged(nameof(DatabaseStatusIcon));
+                    OnPropertyChanged(nameof(DatabaseStatusText));
+                    OnPropertyChanged(nameof(DatabaseStatusBackground));
+                    OnPropertyChanged(nameof(DatabaseStatusTooltip));
+                });
             }
             catch (System.Exception ex)
             {
                 var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
                 logger.Logger.LogWarning(ex, "⚠️ Error actualizando estado de BD en ViewModel (public)");
             }
+        }
+
+        private static void ExecuteOnUiThread(Action action)
+        {
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.CheckAccess())
+            {
+                action();
+                return;
+            }
+
+            dispatcher.Invoke(action);
         }
 
         private async System.Threading.Tasks.Task InitializeDatabaseStatusAsync(IDatabaseConnectionService databaseService)

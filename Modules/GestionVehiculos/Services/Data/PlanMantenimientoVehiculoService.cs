@@ -76,22 +76,45 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         {
             try
             {
-                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                var plan = await context.Set<PlanMantenimientoVehiculo>()
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(p => p.PlacaVehiculo == placaVehiculo && !p.IsDeleted, cancellationToken);
-                if (plan == null)
+                var planes = (await GetByPlacaListAsync(placaVehiculo, cancellationToken)).ToList();
+                if (planes.Count == 0)
                 {
                     return null;
                 }
 
-                var dto = MapToDto(plan);
-                await EnrichCalculatedFieldsAsync(context, new List<PlanMantenimientoVehiculoDto> { dto }, cancellationToken);
-                return dto;
+                return planes
+                    .OrderBy(p => GetEstadoPrioridad(p.EstadoPlan))
+                    .ThenBy(p => p.ProximaFechaEjecucion ?? DateTimeOffset.MaxValue)
+                    .ThenBy(p => p.ProximoKMEjecucion ?? long.MaxValue)
+                    .FirstOrDefault();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener plan por placa: {PlacaVehiculo}", placaVehiculo);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PlanMantenimientoVehiculoDto>> GetByPlacaListAsync(string placaVehiculo, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var placaNormalizada = NormalizePlate(placaVehiculo);
+
+                var planes = await context.Set<PlanMantenimientoVehiculo>()
+                    .AsNoTracking()
+                    .Where(p => p.PlacaVehiculo == placaNormalizada && !p.IsDeleted && p.Activo)
+                    .OrderByDescending(p => p.FechaActualizacion)
+                    .ToListAsync(cancellationToken);
+
+                var dtos = planes.Select(MapToDto).ToList();
+                await EnrichCalculatedFieldsAsync(context, dtos, cancellationToken);
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener lista de planes por placa: {PlacaVehiculo}", placaVehiculo);
                 throw;
             }
         }
@@ -289,6 +312,17 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             };
         }
 
+        private static int GetEstadoPrioridad(string? estado)
+        {
+            return estado switch
+            {
+                "Vencido" => 0,
+                "Próximo" => 1,
+                "Vigente" => 2,
+                _ => 3
+            };
+        }
+
         private async Task EnrichCalculatedFieldsAsync(
             GestLogDbContext context,
             List<PlanMantenimientoVehiculoDto> planes,
@@ -322,9 +356,9 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             var planIds = planes.Select(p => p.Id).Distinct().ToList();
             var ejecuciones = await context.Set<EjecucionMantenimiento>()
                 .AsNoTracking()
-                .Where(e => !e.IsDeleted && (
-                    (e.PlanMantenimientoId.HasValue && planIds.Contains(e.PlanMantenimientoId.Value)) ||
-                    placas.Contains(e.PlacaVehiculo)))
+                .Where(e => !e.IsDeleted &&
+                    e.PlanMantenimientoId.HasValue &&
+                    planIds.Contains(e.PlanMantenimientoId.Value))
                 .OrderByDescending(e => e.FechaEjecucion)
                 .ToListAsync(cancellationToken);
 
@@ -332,25 +366,30 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 if (!plantillas.TryGetValue(plan.PlantillaId, out var plantilla))
                 {
+                    plan.PlantillaNombre = $"Plantilla #{plan.PlantillaId}";
                     continue;
                 }
+
+                plan.PlantillaNombre = plantilla.Nombre;
 
                 var placa = NormalizePlate(plan.PlacaVehiculo);
                 var ultimaEjecucion = ejecuciones
                     .FirstOrDefault(e =>
-                        (e.PlanMantenimientoId.HasValue && e.PlanMantenimientoId.Value == plan.Id) ||
-                        string.Equals(e.PlacaVehiculo, placa, StringComparison.OrdinalIgnoreCase));
+                        e.PlanMantenimientoId.HasValue &&
+                        e.PlanMantenimientoId.Value == plan.Id);
 
                 var intervaloKm = plan.IntervaloKMPersonalizado ?? plantilla.IntervaloKM;
                 var intervaloDias = plan.IntervaloDiasPersonalizado ?? plantilla.IntervaloDias;
 
-                var baseKm = ultimaEjecucion?.KMAlMomento
-                             ?? plan.UltimoKMRegistrado
-                             ?? 0L;
+                var kmEjecucion = ultimaEjecucion?.KMAlMomento;
+                var kmPlan = plan.UltimoKMRegistrado;
+                var baseKm = Math.Max(kmEjecucion ?? 0L, kmPlan ?? 0L);
 
-                var baseFecha = ultimaEjecucion?.FechaEjecucion
-                                ?? plan.UltimaFechaMantenimiento
-                                ?? plan.FechaInicio;
+                var fechaEjecucion = ultimaEjecucion?.FechaEjecucion;
+                var fechaPlan = plan.UltimaFechaMantenimiento;
+                var baseFecha = (fechaEjecucion.HasValue && fechaPlan.HasValue)
+                    ? (fechaEjecucion.Value >= fechaPlan.Value ? fechaEjecucion.Value : fechaPlan.Value)
+                    : (fechaEjecucion ?? fechaPlan ?? plan.FechaInicio);
 
                 plan.ProximoKMEjecucion = baseKm + intervaloKm;
                 plan.ProximaFechaEjecucion = baseFecha.AddDays(intervaloDias);

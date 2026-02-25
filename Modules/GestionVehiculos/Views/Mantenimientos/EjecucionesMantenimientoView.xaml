@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignWidth="800" d:DesignHeight="600">
-
+             d:DesignWidth="800" d:DesignHeight="600"
+             Background="#FAFAFA">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
@@ -71,15 +71,17 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="#FAFAFA">
-        <Grid Background="#FAFAFA">
+    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <ScrollViewer Grid.Row="0" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="#FAFAFA">
+            <StackPanel>
+
         <!-- Header -->
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="16,16,16,8">
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="8,8,8,4">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Ejecuciones de Mantenimiento" 
                            FontSize="18" FontWeight="Bold" Foreground="#504F4E" />
@@ -89,14 +91,14 @@
         </Border>
 
         <!-- Content -->
-        <Grid Grid.Row="1" Margin="16,8,16,16">
+        <Grid Grid.Row="1" Margin="8,4,8,8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <!-- Filtros y Acciones -->
-            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
                 <StackPanel Orientation="Vertical">
                     <!-- Filtro por Placa y Fechas -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -247,6 +249,7 @@
                 </ListBox>
             </Border>
         </Grid>
-        </Grid>
-    </ScrollViewer>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

@@ -14,6 +14,7 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Data
         Task<IEnumerable<PlanMantenimientoVehiculoDto>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<PlanMantenimientoVehiculoDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<PlanMantenimientoVehiculoDto?> GetByPlacaAsync(string placaVehiculo, CancellationToken cancellationToken = default);
+        Task<IEnumerable<PlanMantenimientoVehiculoDto>> GetByPlacaListAsync(string placaVehiculo, CancellationToken cancellationToken = default);
         Task<PlanMantenimientoVehiculoDto> CreateAsync(PlanMantenimientoVehiculoDto dto, CancellationToken cancellationToken = default);
         Task<PlanMantenimientoVehiculoDto> UpdateAsync(int id, PlanMantenimientoVehiculoDto dto, CancellationToken cancellationToken = default);
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);

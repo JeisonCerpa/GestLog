@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
-             d:DesignWidth="800" d:DesignHeight="600">
-
+             d:DesignWidth="800" d:DesignHeight="600"
+             Background="#FAFAFA">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
@@ -86,96 +86,221 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Estilo para botones redondos con hover elegante -->
+        <Style x:Key="RoundIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BorderBg" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="20"
+                                Width="40" Height="40"
+                                Effect="{TemplateBinding Effect}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Botón redondo pequeño para overlay: usa TemplateBinding para ancho/alto y CornerRadius proporcional -->
+        <Style x:Key="RoundSmallIconButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundIconButtonStyle}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BorderBg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"
+                                Opacity="0.96"
+                                Effect="{TemplateBinding Effect}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.06" BlurRadius="4" ShadowDepth="1" />
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="#FAFAFA">
-        <Grid Background="#FAFAFA">
+    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="16,16,16,8">
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="Planes de Mantenimiento" 
-                           FontSize="18" FontWeight="Bold" Foreground="#504F4E" />
-                <TextBlock Text="Configura el plan del vehículo actual" 
-                           FontSize="13" Foreground="#9D9D9C" Margin="0,6,0,0" />
-            </StackPanel>
+        <!-- Header con botones redondos -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="8,8,8,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="📋" FontSize="20" Margin="0,0,8,0" />
+                        <TextBlock Text="Planes de Mantenimiento" 
+                                   FontSize="18" FontWeight="Bold" Foreground="#504F4E" 
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="Configura el plan del vehículo actual" 
+                               FontSize="13" Foreground="#9D9D9C" Margin="28,0,0,0" />
+                </StackPanel>
+
+                <!-- Botones redondos a la derecha -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <!-- Botón Configuración -->
+                    <Button Style="{StaticResource RoundIconButtonStyle}"
+                            Click="BtnOpenPlanModal_Click"
+                            Foreground="White" FontSize="18"
+                            ToolTip="Configurar plan"
+                            Margin="0,0,8,0">
+                        ⚙️
+                    </Button>
+                    
+                    <!-- Botón Recargar -->
+                    <Button Style="{StaticResource RoundIconButtonStyle}"
+                            Command="{Binding FilterByPlacaCommand}"
+                            Foreground="White" FontSize="18"
+                            ToolTip="Recargar planes">
+                        🔄
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Content -->
-        <Grid Grid.Row="1" Margin="16,8,16,16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- Acciones -->
-            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,12">
-                <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Asignación de plan" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" />
-                    <TextBlock Text="Gestiona el plan del vehículo en una ventana modal" FontSize="11" Foreground="#9D9D9C" Margin="0,6,0,0" />
-
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button Content="Abrir configuración de plan"
-                                Click="BtnOpenPlanModal_Click"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0" />
-                        <Button Content="Recargar plan actual" 
-                                Command="{Binding FilterByPlacaCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-                    </StackPanel>
-
-                    <Border Background="#F8F8F8" CornerRadius="6" Padding="10" Margin="0,12,0,0" BorderBrush="#E5E5E5" BorderThickness="1">
-                        <TextBlock Text="{Binding PlanActualResumen}" Foreground="#504F4E" FontSize="11" TextWrapping="Wrap" />
-                    </Border>
-                </StackPanel>
-            </Border>
-
-            <!-- Lista de Planes -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}">
-                <ListBox ItemsSource="{Binding Planes}" 
-                         SelectedItem="{Binding SelectedPlan}"
-                         Background="Transparent"
-                         BorderThickness="0">
-                    <ListBox.ItemTemplate>
+        <!-- Content - Grid de Tarjetas Compactas (3 columnas) -->
+        <ScrollViewer Grid.Row="1" Margin="8,4,8,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="ContentScroller">
+            <Grid>
+                <ItemsControl ItemsSource="{Binding PlanesOrdenados}" Margin="0" Background="Transparent" x:Name="PlanesItemsControl">
+                    <!-- Hacer que cada ítem ocupe todo el espacio de la celda -->
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter Property="VerticalAlignment" Value="Top" />
+                            <Setter Property="Margin" Value="0" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <!-- UniformGrid reparte el espacio disponible en columnas iguales -->
+                            <UniformGrid Columns="3" HorizontalAlignment="Stretch" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="White" CornerRadius="6" Padding="12" 
-                                    BorderBrush="#EDEDED" BorderThickness="1" Margin="0,4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                                <Border Background="White" CornerRadius="8" Padding="12" 
+                                        BorderBrush="#EDEDED" BorderThickness="1" Margin="6" HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Top" Height="120"
+                                        AutomationProperties.Name="{Binding PlantillaNombre}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Orientation="Vertical">
-                                        <TextBlock Text="{Binding PlacaVehiculo}" 
-                                                   FontWeight="Bold" FontSize="13" Foreground="#118938" />
-                                        <TextBlock Text="Próxima Ejecución:" FontSize="11" Foreground="#9D9D9C" Margin="0,8,0,0" />
-                                        <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat='F'}" 
-                                                   FontSize="11" Foreground="#1D1D1B" />
-                                        <TextBlock Text="Próximo KM:" FontSize="11" Foreground="#9D9D9C" Margin="0,8,0,0" />
-                                        <TextBlock Text="{Binding ProximoKMEjecucion}" 
-                                                   FontSize="11" Foreground="#1D1D1B" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Grid.Row="0" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding EstadoPlan}" Style="{StaticResource PlanStatusTextStyle}" HorizontalAlignment="Right" />
-                                        <TextBlock Text="{Binding EstadoPlanDetalle}" FontSize="10" Foreground="#9D9D9C" HorizontalAlignment="Right" />
-                                    </StackPanel>
-                                </Grid>
+                                        <!-- Izquierda: título y timeline -->
+                                        <StackPanel Grid.Column="0" Orientation="Vertical">
+                                            <TextBlock Text="{Binding PlantillaNombre}"
+                                                       FontWeight="Bold" FontSize="14" Foreground="#118938" TextWrapping="Wrap" MaxHeight="40" />
+
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                <TextBlock Text="Últ: " FontSize="11" Foreground="#9D9D9C" />
+                                                <TextBlock Text="{Binding UltimaFechaMantenimiento, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="#1D1D1B" />
+                                                <TextBlock Text="  ·  KM:" FontSize="11" Foreground="#9D9D9C" Margin="8,0,0,0" />
+                                                <TextBlock Text="{Binding UltimoKMRegistrado, StringFormat={}{0:N0}}" FontSize="11" Foreground="#1D1D1B" />
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Vertical" Margin="0,4,0,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Próx: " FontSize="11" Foreground="#9D9D9C" />
+                                                    <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="#1D1D1B" />
+                                                    <TextBlock Text="  ·  KM:" FontSize="11" Foreground="#9D9D9C" Margin="8,0,0,0" />
+                                                    <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat={}{0:N0}}" FontSize="11" Foreground="#1D1D1B" ToolTip="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo: {0:N0} km}" />
+                                                </StackPanel>
+                                                <TextBlock FontSize="10" Foreground="#7A7A7A" Text="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo KM: {0:N0}}" />
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Derecha: badge + overflow menu (alineados y tamaño uniforme) -->
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal" Margin="6,0,0,0">
+                                            <Border Height="28" CornerRadius="14" Padding="10,0" Margin="0,0,6,0" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding EstadoPlan}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#10B981" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
+                                                                <Setter Property="Background" Value="#C0392B" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
+                                                                <Setter Property="Background" Value="#F59E0B" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+
+                                            <!-- Overflow menu: usar estilo redondo pequeño para que sea circular -->
+                                            <Button Style="{StaticResource RoundSmallIconButtonStyle}" Width="28" Height="28" ToolTip="Más acciones" Click="OverflowButton_Click" Background="#118938" Foreground="White" BorderThickness="0" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" Placement="Right">
+                                                        <MenuItem Header="Editar" Command="{Binding EditPlanCommand}" CommandParameter="{Binding}" Click="MenuItem_Edit_Click" />
+                                                        <MenuItem Header="Historial" Command="{Binding OpenHistoryCommand}" CommandParameter="{Binding}" Click="MenuItem_History_Click" />
+                                                        <Separator />
+                                                        <MenuItem Header="Ejecutar" Command="{Binding SelectPlanCommand}" CommandParameter="{Binding}" />
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                                <TextBlock Text="⋯" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Button>
+                                        </StackPanel>
+
+                                        </Grid>
                             </Border>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
-        </Grid>
-        </Grid>
-    </ScrollViewer>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
