@@ -1,0 +1,117 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.DetalleCorrectivoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Detalles de correctivo"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Style="{StaticResource ModalWindowBase}">
+
+    <Grid x:Name="RootGrid" Background="#80000000">
+        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="920" MaxHeight="860"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="0" Effect="{StaticResource WindowShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="📋" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel>
+                                <TextBlock x:Name="TxtTitulo" Text="Detalle correctivo" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
+                                <TextBlock x:Name="TxtSubtitulo" Text="Resumen y trazabilidad" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnClose_Click" ToolTip="Cerrar (Esc)">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" Margin="20" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Estado" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtEstado" IsReadOnly="True" Style="{StaticResource InputStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Fecha" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtFecha" IsReadOnly="True" Style="{StaticResource InputStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Responsable" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtResponsable" IsReadOnly="True" Style="{StaticResource InputStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Proveedor" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtProveedor" IsReadOnly="True" Style="{StaticResource InputStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Costo" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtCosto" IsReadOnly="True" Style="{StaticResource InputStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Factura" FontWeight="SemiBold"/>
+                                <TextBox x:Name="TxtFactura" IsReadOnly="True" Style="{StaticResource InputStyle}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Historial de observaciones" FontWeight="SemiBold"/>
+                        <TextBox x:Name="TxtTimeline" IsReadOnly="True" Style="{StaticResource InputStyle}" MinHeight="240" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cerrar" Style="{StaticResource PrimaryButtonStyle}" Click="BtnClose_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

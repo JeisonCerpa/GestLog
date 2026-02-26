@@ -1,0 +1,69 @@
+<UserControl x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.CorrectivosMantenimientoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             x:Name="CorrectivosRoot"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="900">
+    <Grid Background="#FAFAFA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Margin="8,8,8,4" Padding="12" Background="White" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="Mantenimientos Correctivos" FontSize="18" FontWeight="Bold" Foreground="#504F4E"/>
+                    <TextBlock Text="Flujo: Falla reportada → En taller → Completado" FontSize="12" Foreground="#706F6F" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Actualizar" Padding="10,6" Margin="0,0,8,0" Command="{Binding LoadCorrectivosVehiculoCommand}"/>
+                    <Button Content="+ Nuevo correctivo" Padding="10,6" Click="BtnNuevoCorrectivo_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Margin="8,4,8,8" Padding="8" Background="White" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" Margin="0,0,0,8"/>
+
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Correctivos}"
+                          SelectedItem="{Binding SelectedCorrectivo}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="Horizontal"
+                          AlternatingRowBackground="#F9F9F9">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Título" Binding="{Binding TituloActividad}" Width="2*"/>
+                        <DataGridTextColumn Header="Estado" Binding="{Binding EstadoCorrectivoTexto}" Width="1.2*"/>
+                        <DataGridTextColumn Header="Fecha" Binding="{Binding FechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" Width="1.2*"/>
+                        <DataGridTextColumn Header="KM" Binding="{Binding KMAlMomento}" Width="1*"/>
+                        <DataGridTextColumn Header="Responsable" Binding="{Binding ResponsableEjecucion}" Width="1.5*"/>
+                        <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="1.5*"/>
+                        <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat={}{0:C2}}" Width="1*"/>
+                        <DataGridTemplateColumn Header="Acción" Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding AccionCorrectivoTexto}"
+                                            Padding="8,4"
+                                            Click="ActionButton_Click" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

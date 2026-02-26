@@ -28,5 +28,10 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Data
         /// Obtiene el historial de ejecuciones para un vehículo
         /// </summary>
         Task<IEnumerable<EjecucionMantenimientoDto>> GetHistorialVehiculoAsync(string placaVehiculo, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene ejecuciones por placa y tipo de mantenimiento.
+        /// </summary>
+        Task<IEnumerable<EjecucionMantenimientoDto>> GetByPlacaAndTipoAsync(string placaVehiculo, int tipoMantenimiento, CancellationToken cancellationToken = default);
     }
 }

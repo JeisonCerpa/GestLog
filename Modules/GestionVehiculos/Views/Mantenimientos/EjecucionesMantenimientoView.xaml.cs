@@ -143,5 +143,51 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             return string.Empty;
         }
+
+        private void DataGrid_RowDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (EjecucionesList == null) return;
+            var row = (System.Windows.Controls.DataGridRow)System.Windows.Controls.ItemsControl.ContainerFromElement(EjecucionesList, e.OriginalSource as DependencyObject);
+            if (row?.Item is Models.DTOs.EjecucionMantenimientoDto ejec)
+            {
+                ShowDetailDialog(ejec);
+            }
+        }
+
+        private void DetailButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is Models.DTOs.EjecucionMantenimientoDto ejec)
+            {
+                ShowDetailDialog(ejec);
+            }
+        }
+
+        private void ShowDetailDialog(Models.DTOs.EjecucionMantenimientoDto ejec)
+        {
+            var dialog = new EjecucionMantenimientoDetailDialog(ejec);
+            dialog.SaveRequested += async (e) =>
+            {
+                if (DataContext is EjecucionesMantenimientoViewModel vm)
+                {
+                    await vm.UpdateEjecucionAsync(e);
+                    dialog.Close();
+                }
+            };
+            dialog.DeleteRequested += async (e) =>
+            {
+                var result = System.Windows.MessageBox.Show(
+                    "¿Confirma eliminar esta ejecución?",
+                    "Confirmar eliminación",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (result == MessageBoxResult.Yes && DataContext is EjecucionesMantenimientoViewModel vm)
+                {
+                    await vm.DeleteEjecucionAsync(e);
+                    dialog.Close();
+                }
+            };
+            dialog.Owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
+            dialog.ShowDialog();
+        }
     }
 }

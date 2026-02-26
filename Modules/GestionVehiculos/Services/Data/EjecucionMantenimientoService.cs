@@ -33,7 +33,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
                     .AsNoTracking()
-                    .Where(e => !e.IsDeleted)
+                    .Where(e => !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
                     .ToListAsync(cancellationToken);
 
@@ -71,7 +71,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
                     .AsNoTracking()
-                    .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted)
+                    .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
                     .ToListAsync(cancellationToken);
 
@@ -91,7 +91,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
                     .AsNoTracking()
-                    .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted)
+                    .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
                     .ToListAsync(cancellationToken);
 
@@ -121,6 +121,12 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     RutaFactura = dto.RutaFactura,
                     ResponsableEjecucion = dto.ResponsableEjecucion,
                     Proveedor = dto.Proveedor,
+                    TipoMantenimiento = (Models.Enums.TipoMantenimientoVehiculo)dto.TipoMantenimiento,
+                    TituloActividad = dto.TituloActividad,
+                    EsExtraordinario = dto.EsExtraordinario,
+                    EstadoCorrectivo = dto.EstadoCorrectivo.HasValue
+                        ? (Models.Enums.EstadoMantenimientoCorrectivoVehiculo?)dto.EstadoCorrectivo.Value
+                        : null,
                     Estado = (Models.Enums.EstadoEjecucion)dto.Estado,
                     FechaRegistro = DateTime.UtcNow,
                     FechaActualizacion = DateTime.UtcNow
@@ -159,6 +165,12 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 ejecucion.RutaFactura = dto.RutaFactura;
                 ejecucion.ResponsableEjecucion = dto.ResponsableEjecucion;
                 ejecucion.Proveedor = dto.Proveedor;
+                ejecucion.TipoMantenimiento = (Models.Enums.TipoMantenimientoVehiculo)dto.TipoMantenimiento;
+                ejecucion.TituloActividad = dto.TituloActividad;
+                ejecucion.EsExtraordinario = dto.EsExtraordinario;
+                ejecucion.EstadoCorrectivo = dto.EstadoCorrectivo.HasValue
+                    ? (Models.Enums.EstadoMantenimientoCorrectivoVehiculo?)dto.EstadoCorrectivo.Value
+                    : null;
                 ejecucion.Estado = (Models.Enums.EstadoEjecucion)dto.Estado;
                 ejecucion.FechaActualizacion = DateTime.UtcNow;
 
@@ -208,7 +220,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ultimaEjecucion = await context.Set<EjecucionMantenimiento>()
                     .AsNoTracking()
-                    .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted)
+                    .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
                     .FirstOrDefaultAsync(cancellationToken);
 
@@ -228,7 +240,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var historial = await context.Set<EjecucionMantenimiento>()
                     .AsNoTracking()
-                    .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted)
+                    .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
                     .ToListAsync(cancellationToken);
 
@@ -255,10 +267,36 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 RutaFactura = entity.RutaFactura,
                 ResponsableEjecucion = entity.ResponsableEjecucion,
                 Proveedor = entity.Proveedor,
+                TipoMantenimiento = (int)entity.TipoMantenimiento,
+                TituloActividad = entity.TituloActividad,
+                EsExtraordinario = entity.EsExtraordinario,
+                EstadoCorrectivo = entity.EstadoCorrectivo.HasValue ? (int?)entity.EstadoCorrectivo.Value : null,
                 Estado = (int)entity.Estado,
                 FechaRegistro = entity.FechaRegistro,
                 FechaActualizacion = entity.FechaActualizacion
             };
+        }
+
+        public async Task<IEnumerable<EjecucionMantenimientoDto>> GetByPlacaAndTipoAsync(string placaVehiculo, int tipoMantenimiento, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var tipo = (Models.Enums.TipoMantenimientoVehiculo)tipoMantenimiento;
+
+                var ejecuciones = await context.Set<EjecucionMantenimiento>()
+                    .AsNoTracking()
+                    .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == tipo)
+                    .OrderByDescending(e => e.FechaEjecucion)
+                    .ToListAsync(cancellationToken);
+
+                return ejecuciones.Select(MapToDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener ejecuciones por placa y tipo: {PlacaVehiculo} / {Tipo}", placaVehiculo, tipoMantenimiento);
+                throw;
+            }
         }
     }
 }

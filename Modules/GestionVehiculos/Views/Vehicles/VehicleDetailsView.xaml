@@ -352,6 +352,9 @@
                         <TabItem Header="Ejecuciones" Style="{StaticResource DetailTabItemStyle}">
                             <mantenimientos:EjecucionesMantenimientoView x:Name="EjecucionesView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" />
                         </TabItem>
+                        <TabItem Header="Correctivos" Style="{StaticResource DetailTabItemStyle}">
+                            <mantenimientos:CorrectivosMantenimientoView x:Name="CorrectivosView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" />
+                        </TabItem>
                     </TabControl>
                 </TabItem>
 

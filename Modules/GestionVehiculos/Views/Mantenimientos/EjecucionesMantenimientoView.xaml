@@ -57,6 +57,79 @@
             </Setter>
         </Style>
 
+        <!-- Estilos para botones redondos similares a los usados en Planes -->
+        <Style x:Key="RoundIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BorderBg" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="20"
+                                Width="40" Height="40"
+                                Effect="{TemplateBinding Effect}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RoundSmallIconButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundIconButtonStyle}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BorderBg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"
+                                Opacity="0.96"
+                                Effect="{TemplateBinding Effect}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.06" BlurRadius="4" ShadowDepth="1" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16" />
@@ -69,9 +142,76 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Estilo de encabezados de DataGrid similar al corporativo -->
+        <Style x:Key="EjecucionesDataGridHeader" TargetType="DataGridColumnHeader">
+            <!-- usar off-white o blanco para encajar con paleta -->
+            <Setter Property="Background" Value="#FAFAFA" />
+            <Setter Property="Foreground" Value="#504F4E" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="BorderBrush" Value="#E5E5E5" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridColumnHeader">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"
+                                              UseLayoutRounding="True"
+                                              SnapsToDevicePixels="True" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="#FAFAFA">
+        <Grid.Resources>
+            <DropShadowEffect x:Key="EjecucionesDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+
+            <!-- botón cuadrado pequeño para acciones dentro de tablas -->
+            <Style x:Key="TableActionButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="24" />
+                <Setter Property="Height" Value="24" />
+                <Setter Property="Background" Value="#118938" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderBrush" Value="#118938" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#0D8E35" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#118938" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -82,12 +222,33 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="8,8,8,4">
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="Ejecuciones de Mantenimiento" 
-                           FontSize="18" FontWeight="Bold" Foreground="#504F4E" />
-                <TextBlock Text="Historial y registro de ejecuciones de mantenimiento" 
-                           FontSize="13" Foreground="#9D9D9C" Margin="0,6,0,0" />
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="📋" FontSize="20" Margin="0,0,8,0" />
+                        <TextBlock Text="Ejecuciones de Mantenimiento" 
+                                   FontSize="18" FontWeight="Bold" Foreground="#504F4E" 
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="Historial y registro de ejecuciones de mantenimiento" 
+                               FontSize="13" Foreground="#9D9D9C" Margin="28,0,0,0" />
+                </StackPanel>
+
+                <!-- Botón de registrar mantenimiento -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Button Style="{StaticResource RoundIconButtonStyle}"
+                            Click="BtnOpenPreventivoModal_Click"
+                            Foreground="White" FontSize="18"
+                            ToolTip="Registrar mantenimiento">
+                        ➕
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Content -->
@@ -97,156 +258,65 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Filtros y Acciones -->
-            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
-                <StackPanel Orientation="Vertical">
-                    <!-- Filtro por Placa y Fechas -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Placa:" VerticalAlignment="Center" 
-                                       Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,6,0" />                            <TextBox Text="{Binding FilterPlaca, UpdateSourceTrigger=PropertyChanged}"
-                                     Width="180" Height="32" Padding="8" FontSize="12"
-                                     Background="White" BorderBrush="#CCCCCC" BorderThickness="1"
-                                     Margin="0,0,20,0" />
-                        </StackPanel>
 
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Desde:" VerticalAlignment="Center" 
-                                       Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,6,0" />
-                            <DatePicker SelectedDate="{Binding FilterFechaDesde}"
-                                       Width="140" Height="32" Padding="4" FontSize="12"
-                                       Background="White" BorderBrush="#CCCCCC" BorderThickness="1" Margin="0,0,20,0" />
-                        </StackPanel>
 
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Hasta:" VerticalAlignment="Center" 
-                                       Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,6,0" />
-                            <DatePicker SelectedDate="{Binding FilterFechaHasta}"
-                                       Width="140" Height="32" Padding="4" FontSize="12"
-                                       Background="White" BorderBrush="#CCCCCC" BorderThickness="1" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Botones de Acción -->
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="Cargar Todas" 
-                                Command="{Binding LoadEjecucionesCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
-                        <Button Content="Historial por Placa" 
-                                Command="{Binding LoadHistorialVehiculoCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
-                        <Button Content="Última Ejecución" 
-                                Command="{Binding GetUltimaEjecucionCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
-                        <Button Content="Filtrar por Fechas" 
-                                Command="{Binding FilterByFechasCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0"
-                                IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />                        <Button Content="Limpiar" 
-                                Command="{Binding ClearSelectionCommand}"
-                                Background="#9D9D9C"
-                                Foreground="White"
-                                Padding="12,8"
-                                FontSize="13"
-                                FontWeight="SemiBold"
-                                BorderThickness="0"
-                                Cursor="Hand" />
-                    </StackPanel>
-
-                    <Border Background="#F7F9FB" BorderBrush="#DDE5EC" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,12,0,0">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="Registro de mantenimiento" FontSize="12" FontWeight="Bold" Foreground="#504F4E" />
-                            <TextBlock Text="El registro preventivo se gestiona en una ventana modal" FontSize="11" Foreground="#9D9D9C" Margin="0,6,0,0" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Content="Abrir registro preventivo"
-                                        Click="BtnOpenPreventivoModal_Click"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Margin="0,0,8,0" />
-                                <Button Content="Actualizar solo kilometraje"
-                                        Command="{Binding ActualizarKilometrajeVehiculoCommand}"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        IsEnabled="{Binding IsLoading, Converter={StaticResource BooleanToOpacityConverter}, ConverterParameter=Invert}" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Messages -->
-                    <TextBlock Text="Cargando..." 
-                               Foreground="#118938" FontSize="12" Margin="0,12,0,0"
-                               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                    <Border Background="#FFEBEE" CornerRadius="6" Padding="12" Margin="0,12,0,0"
-                            Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding ErrorMessage}" 
-                                   Foreground="#C0392B" FontSize="12" 
-                                   TextWrapping="Wrap" />
-                    </Border>
-
-                    <Border Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,12,0,0"
-                            Visibility="{Binding SuccessMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding SuccessMessage}" 
-                                   Foreground="#10B981" FontSize="12" 
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </StackPanel>
-            </Border>
-
-            <!-- Lista de Ejecuciones -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}">
-                <ListBox ItemsSource="{Binding Ejecuciones}" 
-                         SelectedItem="{Binding SelectedEjecucion}"
-                         Background="Transparent"
-                         BorderThickness="0">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="White" CornerRadius="6" Padding="12" 
-                                    BorderBrush="#EDEDED" BorderThickness="1" Margin="0,4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <StackPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="4" Orientation="Vertical">
-                                        <TextBlock Text="{Binding PlacaVehiculo}" 
-                                                   FontWeight="Bold" FontSize="13" Foreground="#118938" />
-                                        <TextBlock Text="Fecha:" FontSize="11" Foreground="#9D9D9C" Margin="0,8,0,0" />
-                                        <TextBlock Text="{Binding FechaEjecucion, StringFormat='F'}" 
-                                                   FontSize="11" Foreground="#1D1D1B" />
-                                        <TextBlock Text="KM al Momento:" FontSize="11" Foreground="#9D9D9C" Margin="0,8,0,0" />
-                                        <TextBlock Text="{Binding KMAlMomento}" 
-                                                   FontSize="11" Foreground="#1D1D1B" />
-                                        <TextBlock Text="Responsable:" FontSize="11" Foreground="#9D9D9C" Margin="0,8,0,0" />
-                                        <TextBlock Text="{Binding ResponsableEjecucion}" 
-                                                   FontSize="11" Foreground="#1D1D1B" />
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Orientation="Vertical"
-                                               VerticalAlignment="Top" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding Estado}" 
-                                                   FontSize="11" FontWeight="SemiBold"
-                                                   Foreground="#118938" />
-                                        <TextBlock Text="{Binding Costo, StringFormat='${0:N2}'}" 
-                                                   FontSize="11" Foreground="#1D1D1B" Margin="0,8,0,0" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+            <!-- Tabla de Ejecuciones -->
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8" Effect="{StaticResource EjecucionesDataGridShadow}">
+                <DataGrid x:Name="EjecucionesList" ItemsSource="{Binding Ejecuciones}"
+                          SelectedItem="{Binding SelectedEjecucion}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          HeadersVisibility="Column"
+                          ColumnHeaderStyle="{StaticResource EjecucionesDataGridHeader}"
+                          Background="White"
+                          RowHeight="36"
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="None"
+                          MouseDoubleClick="DataGrid_RowDoubleClick">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Foreground" Value="#504F4E"/>
+                            <Setter Property="Background" Value="White"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#E8F5E8"/>
+                                    <Setter Property="Foreground" Value="#118938"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Foreground" Value="#504F4E"/>
+                            <Setter Property="Background" Value="White"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#E8F5E8"/>
+                                    <Setter Property="Foreground" Value="#118938"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Plan" Binding="{Binding PlanNombre}" Width="2*" />
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding TipoMantenimientoTexto}" Width="1*" />
+                        <DataGridTextColumn Header="Extra" Binding="{Binding ExtraordinarioTexto}" Width="0.9*" />
+                        <DataGridTextColumn Header="Fecha" Binding="{Binding FechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" Width="1.2*" />
+                        <DataGridTextColumn Header="KM" Binding="{Binding KMAlMomento}" Width="1*" />
+                        <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat={}{0:C2}}" Width="1*" />
+                        <DataGridTextColumn Header="Responsable" Binding="{Binding ResponsableEjecucion}" Width="1.5*" />
+                        <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="1.5*" />
+                        <DataGridTemplateColumn Header="" Width="60">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="🔍" Style="{StaticResource TableActionButtonStyle}"
+                                            ToolTip="Ver detalles"
+                                            Click="DetailButton_Click" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Border>
         </Grid>
             </StackPanel>

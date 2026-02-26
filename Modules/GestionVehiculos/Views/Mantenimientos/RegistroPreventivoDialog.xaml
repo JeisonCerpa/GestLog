@@ -147,30 +147,69 @@
                                                         <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat=Próx. KM: {0:N0}}" FontSize="10" Foreground="#7A7A7A" Margin="20,2,0,0" />
                                                         <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat=Próx. fecha: {0:dd/MM/yyyy}}" FontSize="10" Foreground="#7A7A7A" Margin="20,2,0,0" />
 
-                                                        <Border Margin="20,8,0,0"
-                                                                Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                Background="#F7F9FB"
-                                                                BorderBrush="#DDE5EC"
-                                                                BorderThickness="1"
-                                                                CornerRadius="6"
-                                                                Padding="8">
-                                                            <StackPanel>
-                                                                <TextBlock Text="Nota específica de este plan (opcional)"
-                                                                           FontSize="10"
-                                                                           FontWeight="SemiBold"
-                                                                           Foreground="#504F4E" />
-                                                                <TextBlock Text="Ejemplo: cambio de marca, observación técnica, pendiente para próxima revisión."
-                                                                           FontSize="9"
-                                                                           Foreground="#7A7A7A"
-                                                                           Margin="0,2,0,6"
-                                                                           TextWrapping="Wrap" />
-                                                                <TextBox Text="{Binding DetalleOpcional, UpdateSourceTrigger=PropertyChanged}"
-                                                                         MinHeight="56"
-                                                                         Style="{StaticResource ModernTextBoxStyle}"
-                                                                         TextWrapping="Wrap"
-                                                                         AcceptsReturn="True" />
-                                                            </StackPanel>
-                                                        </Border>
+                                                        <StackPanel Orientation="Horizontal" Margin="20,8,0,0"
+                                                                    Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                            <Button Content="📝 Editar nota"
+                                                                    Click="BtnEditPlanNote_Click"
+                                                                    Padding="10,4"
+                                                                    Margin="0,0,8,0"
+                                                                    Style="{StaticResource ButtonStyle}"
+                                                                    Background="#EFF6FF"
+                                                                    BorderBrush="#BFDBFE"
+                                                                    BorderThickness="1"
+                                                                    Foreground="#1E3A8A"
+                                                                    FontSize="10" />
+                                                            <TextBlock Text="Nota guardada"
+                                                                       FontSize="10"
+                                                                       Foreground="#2E7D32"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,8,0"
+                                                                       Visibility="Collapsed">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasDetalleOpcional}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBlock Text="Proveedor personalizado"
+                                                                       FontSize="10"
+                                                                       Foreground="#1E3A8A"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,8,0"
+                                                                       Visibility="Collapsed">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasProveedorOpcional}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBlock Text="Factura adjunta"
+                                                                       FontSize="10"
+                                                                       Foreground="#1E3A8A"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="Collapsed">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasFacturaAdjunta}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </StackPanel>
                                                     </StackPanel>
                                                 </Border>
                                             </DataTemplate>
@@ -225,7 +264,7 @@
                                     </Grid>
 
                                     <Button Content="Tomar KM actual" Command="{Binding CargarKilometrajeActualCommand}"
-                                            Style="{StaticResource PrimaryButtonStyle}" FontSize="12" Padding="10,6" Margin="0,8,0,0" Width="150"
+                                            Style="{StaticResource GhostButton}" FontSize="12" Padding="10,6" Margin="0,8,0,0" Width="170"
                                             IsEnabled="{Binding HasPlanPreventivo}" />
 
                                     <Grid Margin="0,8,0,0">
@@ -275,7 +314,55 @@
                                         </StackPanel>
                                     </Grid>
 
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Proveedor (común)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
+                                            <TextBox Text="{Binding RegistroProveedor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                            <TextBlock Text="Se aplicará a todos los planes, salvo que se personalice por plan."
+                                                       FontSize="10" Foreground="#7A7A7A" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Factura (común)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" Text="{Binding RegistroRutaFactura}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                                <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachCommonFactura_Click" />
+                                            </Grid>
+                                            <TextBlock Text="Acepta PDF, PNG, JPG y JPEG. Puedes sobrescribir por plan desde ‘Editar nota’."
+                                                       FontSize="10" Foreground="#7A7A7A" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Grid>
+
                                     <StackPanel Margin="0,8,0,0">
+                                        <CheckBox Content="Registrar como preventivo extraordinario"
+                                                  IsChecked="{Binding RegistroEsExtraordinario}"
+                                                  FontWeight="SemiBold"
+                                                  Foreground="#504F4E"
+                                                  Margin="0,0,0,6" />
+
+                                        <Border Background="#FFF8E1" BorderBrush="#F9E2A8" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8"
+                                                Visibility="{Binding RegistroEsExtraordinario, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <StackPanel>
+                                                <TextBlock Text="Motivo extraordinario" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
+                                                <TextBox Text="{Binding RegistroMotivoExtraordinario, UpdateSourceTrigger=PropertyChanged}"
+                                                         MinHeight="56"
+                                                         Style="{StaticResource ModernTextBoxStyle}"
+                                                         Margin="0"
+                                                         TextWrapping="Wrap"
+                                                         AcceptsReturn="True" />
+                                            </StackPanel>
+                                        </Border>
+
                                         <TextBlock Text="Observación general" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
                                         <TextBox Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}" MinHeight="90" Style="{StaticResource ModernTextBoxStyle}" Margin="0" TextWrapping="Wrap" AcceptsReturn="True" />
                                     </StackPanel>

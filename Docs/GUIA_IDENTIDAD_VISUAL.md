@@ -157,6 +157,7 @@ CornerRadius: Redondeados
 - **copilot-instructions.md** - Instrucciones de desarrollo completas
 - **Modern-UI-Style-Library.md** - Estilos modernos (referencia)
 - **Recursos en Assets/** - Logos y activos visuales
+- **Resources/ModalWindowsStander.xaml** - Estilos para ventanas modales
 
 ---
 
