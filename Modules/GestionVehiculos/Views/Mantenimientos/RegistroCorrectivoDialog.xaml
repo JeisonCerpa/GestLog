@@ -1,0 +1,84 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.RegistroCorrectivoDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Registrar correctivo"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Style="{StaticResource ModalWindowBase}">
+
+    <Grid x:Name="RootGrid" Background="#80000000">
+        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="760" MaxHeight="860"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="0" Effect="{StaticResource WindowShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="🔧" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="Registrar mantenimiento correctivo" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
+                                <TextBlock Text="Reporte inicial de falla" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" Margin="20" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Fecha falla" FontWeight="SemiBold"/>
+                                <DatePicker SelectedDate="{Binding RegistroFechaEjecucion}" Style="{StaticResource InputStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Kilometraje" FontWeight="SemiBold"/>
+                                <TextBox Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Descripción de la falla / Observaciones" FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding RegistroDescripcionFalla, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}" MinHeight="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click"/>
+                        <Button Content="Guardar" Style="{StaticResource PrimaryButtonStyle}" Click="BtnSave_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

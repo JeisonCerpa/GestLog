@@ -57,6 +57,16 @@
         <Setter Property="Background" Value="White"/>
         <Setter Property="Foreground" Value="#1D1D1B"/>
         <Setter Property="Margin" Value="0,0,0,16"/>
+        <Style.Triggers>
+            <!-- when control is disabled make it look like plain text without changing opacity or font color -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Opacity" Value="1"/>
+                <!-- keep same foreground as enabled so text remains dense -->
+                <Setter Property="Foreground" Value="#1D1D1B"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="ButtonStyle" TargetType="Button">

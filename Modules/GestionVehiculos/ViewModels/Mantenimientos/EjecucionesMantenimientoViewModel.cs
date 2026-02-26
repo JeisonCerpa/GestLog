@@ -63,6 +63,18 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private string registroCostoInput = string.Empty;
 
         [ObservableProperty]
+        private string registroProveedor = string.Empty;
+
+        [ObservableProperty]
+        private string registroRutaFactura = string.Empty;
+
+        [ObservableProperty]
+        private bool registroEsExtraordinario;
+
+        [ObservableProperty]
+        private string registroMotivoExtraordinario = string.Empty;
+
+        [ObservableProperty]
         private string kmValidationMessage = string.Empty;
 
         [ObservableProperty]
@@ -128,16 +140,25 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 if (!costo.HasValue)
                 {
-                    return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}.";
+                    var extraTxt = RegistroEsExtraordinario
+                        ? $" Extraordinario: Sí. Motivo: {(string.IsNullOrWhiteSpace(RegistroMotivoExtraordinario) ? "Sin motivo" : RegistroMotivoExtraordinario.Trim())}."
+                        : string.Empty;
+                    return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}.{extraTxt}";
                 }
 
                 if (planes.Count == 1)
                 {
-                    return $"Se creará 1 ejecución para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo: ${costo.Value:N0}.";
+                    var extraTxt = RegistroEsExtraordinario
+                        ? $" Extraordinario: Sí. Motivo: {(string.IsNullOrWhiteSpace(RegistroMotivoExtraordinario) ? "Sin motivo" : RegistroMotivoExtraordinario.Trim())}."
+                        : string.Empty;
+                    return $"Se creará 1 ejecución para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo: ${costo.Value:N0}.{extraTxt}";
                 }
 
                 var costoProrrateado = Math.Round(costo.Value / planes.Count, 2);
-                return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo total: ${costo.Value:N0} (prorrateado aprox. ${costoProrrateado:N2} por plan).";
+                var extraTxtFinal = RegistroEsExtraordinario
+                    ? $" Extraordinario: Sí. Motivo: {(string.IsNullOrWhiteSpace(RegistroMotivoExtraordinario) ? "Sin motivo" : RegistroMotivoExtraordinario.Trim())}."
+                    : string.Empty;
+                return $"Se crearán {planes.Count} ejecución(es) para: {planesTxt}. Fecha: {fechaTxt}. KM: {kmTxt}. Responsable: {responsableTxt}. Costo total: ${costo.Value:N0} (prorrateado aprox. ${costoProrrateado:N2} por plan).{extraTxtFinal}";
             }
         }
 
@@ -164,6 +185,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         partial void OnRegistroFechaEjecucionChanged(DateTime? value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
         partial void OnRegistroResponsableChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
         partial void OnRegistroCostoInputChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroProveedorChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroRutaFacturaChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroEsExtraordinarioChanged(bool value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroMotivoExtraordinarioChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
 
         public EjecucionesMantenimientoViewModel(
             IEjecucionMantenimientoService ejecucionService,
@@ -217,6 +242,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
 
+                if (RegistroEsExtraordinario && string.IsNullOrWhiteSpace(RegistroMotivoExtraordinario))
+                {
+                    ErrorMessage = "Debe indicar el motivo del preventivo extraordinario";
+                    return;
+                }
+
                 var vehiculoActual = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
                 if (vehiculoActual != null && kmAlMomento < vehiculoActual.Mileage)
                 {
@@ -257,13 +288,25 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 for (var index = 0; index < planesSeleccionados.Count; index++)
                 {
                     var planSeleccionado = planesSeleccionados[index];
+                    var proveedorAplicado = !string.IsNullOrWhiteSpace(planSeleccionado.ProveedorOpcional)
+                        ? planSeleccionado.ProveedorOpcional.Trim()
+                        : (string.IsNullOrWhiteSpace(RegistroProveedor) ? null : RegistroProveedor.Trim());
+
+                    var rutaFacturaAplicada = !string.IsNullOrWhiteSpace(planSeleccionado.RutaFacturaOpcional)
+                        ? planSeleccionado.RutaFacturaOpcional.Trim()
+                        : (string.IsNullOrWhiteSpace(RegistroRutaFactura) ? null : RegistroRutaFactura.Trim());
+
                     var observacionesPreventivo = BuildPreventivoObservaciones(
                         RegistroObservaciones,
                         planSeleccionado.DetalleOpcional,
                         planSeleccionado.NombrePlantilla,
                         costo,
                         costosPorPlan[index],
-                        nombresPlanesSeleccionados);
+                        nombresPlanesSeleccionados,
+                        proveedorAplicado,
+                        rutaFacturaAplicada,
+                        RegistroEsExtraordinario,
+                        RegistroMotivoExtraordinario);
 
                     var dto = new EjecucionMantenimientoDto
                     {
@@ -274,6 +317,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         ObservacionesTecnico = observacionesPreventivo,
                         Costo = costosPorPlan[index],
                         ResponsableEjecucion = string.IsNullOrWhiteSpace(RegistroResponsable) ? null : RegistroResponsable.Trim(),
+                        Proveedor = proveedorAplicado,
+                        RutaFactura = rutaFacturaAplicada,
+                        TipoMantenimiento = (int)Models.Enums.TipoMantenimientoVehiculo.Preventivo,
+                        EsExtraordinario = RegistroEsExtraordinario,
                         Estado = 2
                     };
 
@@ -309,10 +356,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 {
                     planItem.IsSelected = false;
                     planItem.DetalleOpcional = string.Empty;
+                    planItem.ProveedorOpcional = string.Empty;
+                    planItem.RutaFacturaOpcional = string.Empty;
                 }
                 RegistroObservaciones = string.Empty;
                 RegistroResponsable = string.Empty;
                 RegistroCostoInput = string.Empty;
+                RegistroProveedor = string.Empty;
+                RegistroRutaFactura = string.Empty;
+                RegistroEsExtraordinario = false;
+                RegistroMotivoExtraordinario = string.Empty;
 
                 var planesTxt = string.Join(", ", planesSeleccionados.Select(p => p.NombrePlantilla));
                 SuccessMessage = VentanaPreventivoAdvertencia
@@ -323,7 +376,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     planesSeleccionados.Select(p => p.NombrePlantilla),
                     costo,
                     costosPorPlan,
-                    VentanaPreventivoAdvertencia);
+                    VentanaPreventivoAdvertencia,
+                    RegistroEsExtraordinario,
+                    RegistroMotivoExtraordinario);
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -483,6 +538,42 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         }
 
         /// <summary>
+        /// Llena los nombres de los planes asociados a un conjunto de ejecuciones.
+        /// </summary>
+        private async Task EnrichPlanNamesAsync(IEnumerable<EjecucionMantenimientoDto> ejecuciones, CancellationToken cancellationToken = default)
+        {
+            var ids = ejecuciones
+                .Where(e => e.PlanMantenimientoId.HasValue)
+                .Select(e => e.PlanMantenimientoId!.Value)
+                .Distinct()
+                .ToList();
+            if (ids.Count == 0)
+                return;
+
+            var cache = new Dictionary<int, string?>();
+            foreach (var id in ids)
+            {
+                try
+                {
+                    var plan = await _planService.GetByIdAsync(id, cancellationToken);
+                    cache[id] = plan?.PlantillaNombre;
+                }
+                catch
+                {
+                    cache[id] = null;
+                }
+            }
+
+            foreach (var ejec in ejecuciones.Where(e => e.PlanMantenimientoId.HasValue))
+            {
+                if (cache.TryGetValue(ejec.PlanMantenimientoId!.Value, out var nombre))
+                {
+                    ejec.PlanNombre = nombre;
+                }
+            }
+        }
+
+        /// <summary>
         /// Carga todas las ejecuciones de mantenimiento
         /// </summary>
         [RelayCommand]
@@ -495,6 +586,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 var result = await _ejecucionService.GetAllAsync(cancellationToken);
                 
+                // poblar nombre del plan en cada ejecución
+                await EnrichPlanNamesAsync(result, cancellationToken);
+
                 Ejecuciones.Clear();
                 foreach (var ejecucion in result)
                 {
@@ -540,6 +634,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 var result = await _ejecucionService.GetHistorialVehiculoAsync(FilterPlaca, cancellationToken);
                 
+                // poblar nombre del plan
+                await EnrichPlanNamesAsync(result, cancellationToken);
+
                 Ejecuciones.Clear();
                 foreach (var ejecucion in result)
                 {
@@ -573,7 +670,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         }        /// <summary>
         /// Obtiene la última ejecución de mantenimiento de un vehículo
         /// </summary>
-        [RelayCommand]
+
         public async Task GetUltimaEjecucionAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -643,9 +740,79 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             RegistroResponsable = string.Empty;
             RegistroObservaciones = string.Empty;
             RegistroCostoInput = string.Empty;
+            RegistroProveedor = string.Empty;
+            RegistroRutaFactura = string.Empty;
+            RegistroEsExtraordinario = false;
+            RegistroMotivoExtraordinario = string.Empty;
             PlanesPreventivoSeleccionables.Clear();
             HasPlanPreventivo = false;
             ClearInlineValidationMessages();
+        }
+
+        /// <summary>
+        /// Elimina una ejecución (soft delete) y la remueve de la colección
+        /// </summary>
+        [RelayCommand]
+        public async Task DeleteEjecucionAsync(EjecucionMantenimientoDto ejecucion, CancellationToken cancellationToken = default)
+        {
+            if (ejecucion == null)
+                return;
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = string.Empty;
+                await _ejecucionService.DeleteAsync(ejecucion.Id, cancellationToken);
+                Ejecuciones.Remove(ejecucion);
+                SuccessMessage = "Ejecución eliminada correctamente.";
+                _logger.LogInformation("Ejecución eliminada desde vista: {Id}", ejecucion.Id);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al eliminar la ejecución.";
+                _logger.LogError(ex, "Error eliminando ejecución {Id}", ejecucion.Id);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza una ejecución ya existente en el backend.
+        /// </summary>
+        [RelayCommand]
+        public async Task UpdateEjecucionAsync(EjecucionMantenimientoDto ejecucion, CancellationToken cancellationToken = default)
+        {
+            if (ejecucion == null)
+                return;
+            try
+            {
+                IsLoading = true;
+                ErrorMessage = string.Empty;
+
+                await _ejecucionService.UpdateAsync(ejecucion.Id, ejecucion, cancellationToken);
+                SuccessMessage = "Ejecución actualizada correctamente.";
+                _logger.LogInformation("Ejecución actualizada desde vista: {Id}", ejecucion.Id);
+
+                // reload the current list so that any bound DataGrid reflects the change
+                if (!string.IsNullOrWhiteSpace(FilterPlaca))
+                {
+                    await LoadHistorialVehiculoAsync(cancellationToken);
+                }
+                else
+                {
+                    await LoadEjecucionesAsync(cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al actualizar la ejecución.";
+                _logger.LogError(ex, "Error actualizando ejecución {Id}", ejecucion.Id);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         /// <summary>
@@ -830,7 +997,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         private static string BuildPreventivoObservaciones(string? detalleGeneral, string? detallePlan, string nombrePlan)
         {
-            return BuildPreventivoObservaciones(detalleGeneral, detallePlan, nombrePlan, null, null, Array.Empty<string>());
+            return BuildPreventivoObservaciones(detalleGeneral, detallePlan, nombrePlan, null, null, Array.Empty<string>(), null, null, false, null);
         }
 
         private static string BuildPreventivoObservaciones(
@@ -839,7 +1006,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             string nombrePlan,
             decimal? costoTotalServicio,
             decimal? costoAsignadoRegistro,
-            IReadOnlyCollection<string> planesDelServicio)
+            IReadOnlyCollection<string> planesDelServicio,
+            string? proveedorAplicado,
+            string? rutaFacturaAplicada,
+            bool esExtraordinario,
+            string? motivoExtraordinario)
         {
             var parts = new List<string>
             {
@@ -875,6 +1046,25 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(proveedorAplicado))
+            {
+                parts.Add($"Proveedor: {proveedorAplicado.Trim()}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(rutaFacturaAplicada))
+            {
+                parts.Add($"Factura: {rutaFacturaAplicada.Trim()}");
+            }
+
+            if (esExtraordinario)
+            {
+                parts.Add("Preventivo extraordinario: Sí");
+                if (!string.IsNullOrWhiteSpace(motivoExtraordinario))
+                {
+                    parts.Add($"Motivo extraordinario: {motivoExtraordinario.Trim()}");
+                }
+            }
+
             return string.Join(" | ", parts);
         }
 
@@ -882,13 +1072,20 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             IEnumerable<string> planes,
             decimal? costoTotalServicio,
             IReadOnlyList<decimal?> costosPorPlan,
-            bool conAdvertenciaVentana)
+            bool conAdvertenciaVentana,
+            bool esExtraordinario,
+            string? motivoExtraordinario)
         {
             var listaPlanes = planes.ToList();
             var planesTxt = string.Join(", ", listaPlanes);
             var total = listaPlanes.Count;
 
             var mensajeBase = $"Se registraron {total} preventivo(s): {planesTxt}.";
+            if (esExtraordinario)
+            {
+                var motivo = string.IsNullOrWhiteSpace(motivoExtraordinario) ? "Sin motivo" : motivoExtraordinario.Trim();
+                mensajeBase += $" Extraordinario: Sí ({motivo}).";
+            }
             if (!costoTotalServicio.HasValue)
             {
                 return conAdvertenciaVentana
@@ -973,6 +1170,31 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
             [ObservableProperty]
             private string detalleOpcional = string.Empty;
+
+            [ObservableProperty]
+            private string proveedorOpcional = string.Empty;
+
+            [ObservableProperty]
+            private string rutaFacturaOpcional = string.Empty;
+
+            public bool HasDetalleOpcional => !string.IsNullOrWhiteSpace(DetalleOpcional);
+            public bool HasProveedorOpcional => !string.IsNullOrWhiteSpace(ProveedorOpcional);
+            public bool HasFacturaAdjunta => !string.IsNullOrWhiteSpace(RutaFacturaOpcional);
+
+            partial void OnDetalleOpcionalChanged(string value)
+            {
+                OnPropertyChanged(nameof(HasDetalleOpcional));
+            }
+
+            partial void OnProveedorOpcionalChanged(string value)
+            {
+                OnPropertyChanged(nameof(HasProveedorOpcional));
+            }
+
+            partial void OnRutaFacturaOpcionalChanged(string value)
+            {
+                OnPropertyChanged(nameof(HasFacturaAdjunta));
+            }
         }
     }
 }

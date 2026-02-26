@@ -7,6 +7,7 @@ using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
 using GestLog.Modules.GestionVehiculos.Services.Data;
 using GestLog.Modules.GestionVehiculos.Services.Dialog;
 using GestLog.Modules.GestionVehiculos.Views.Vehicles;
+using GestLog.Modules.GestionVehiculos.Views.Mantenimientos;
 
 namespace GestLog.Modules.GestionVehiculos.Services
 {
@@ -34,6 +35,7 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddTransient<VehicleFormDialog>();
             services.AddTransient<VehicleDocumentsView>();
             services.AddTransient<VehicleDocumentDialog>();
+            services.AddTransient<CorrectivosMantenimientoView>();
 
             // ✅ ViewModels
             services.AddTransient<GestionVehiculosHomeViewModel>();
@@ -44,6 +46,7 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddTransient<PlantillasMantenimientoViewModel>();
             services.AddTransient<PlanesMantenimientoViewModel>();
             services.AddTransient<EjecucionesMantenimientoViewModel>();
+            services.AddTransient<CorrectivosMantenimientoViewModel>();
 
             return services;
         }

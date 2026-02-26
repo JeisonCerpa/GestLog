@@ -517,6 +517,15 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.Property(e => e.Proveedor)
                     .HasMaxLength(200);
+
+                entity.Property(e => e.TipoMantenimiento)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.TituloActividad)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.EstadoCorrectivo)
+                    .HasConversion<int?>();
                 
                 entity.Property(e => e.Estado)
                     .HasConversion<int>();

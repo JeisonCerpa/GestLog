@@ -78,6 +78,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
                         var planesView = this.FindName("PlanesView") as PlanesMantenimientoView;
                         var ejecucionesView = this.FindName("EjecucionesView") as EjecucionesMantenimientoView;
+                        var correctivosView = this.FindName("CorrectivosView") as CorrectivosMantenimientoView;
                         if (planesView != null)
                         {
                             if (!(planesView.DataContext is PlanesMantenimientoViewModel))
@@ -147,6 +148,31 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                                     else
                                     {
                                         await ejecucionesDataContext.LoadHistorialVehiculoAsync();
+                                    }
+                                }
+                            }
+
+                            if (correctivosView != null)
+                            {
+                                if (!(correctivosView.DataContext is CorrectivosMantenimientoViewModel))
+                                {
+                                    var correctivosVm = sp?.GetService(typeof(CorrectivosMantenimientoViewModel)) as CorrectivosMantenimientoViewModel;
+                                    if (correctivosVm != null)
+                                    {
+                                        correctivosView.DataContext = correctivosVm;
+                                    }
+                                    else
+                                    {
+                                        logger?.LogWarning("VehicleDetailsView: No se pudo resolver CorrectivosMantenimientoViewModel desde DI");
+                                    }
+                                }
+
+                                if (correctivosView.DataContext is CorrectivosMantenimientoViewModel correctivosDataContext)
+                                {
+                                    correctivosDataContext.FilterPlaca = currentPlate;
+                                    if (!string.IsNullOrWhiteSpace(currentPlate))
+                                    {
+                                        await correctivosDataContext.LoadCorrectivosVehiculoAsync();
                                     }
                                 }
                             }

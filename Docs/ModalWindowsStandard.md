@@ -2,7 +2,16 @@
 
 Guía rápida para crear ventanas modales consistentes en GestLog.
 
+MIRAR EN Resources\ModalWindowsStandard.xaml PARA ESTILOS Y SOMBRAS DEFINIDOS.
+
 ## Estructura XAML
+
+> **Nota**: evita usar `Width`/`Height` fijos en la ventana o en el `Border` principal. Lo ideal es dejar que el card sea adaptativo (con `MaxWidth`/`MaxHeight`, `MinWidth`/`MinHeight`) y sólo fijar tamaño cuando se requiera explícitamente. Esto asegura que el overlay ocupe toda la pantalla y que el diálogo responda bien a diferentes resoluciones.
+>
+> **Importante**: no combines `WindowState="Maximized"` con `SizeToContent`; el segundo puede reducir la ventana y hacer que el overlay no cubra el fondo completo o que el card aparezca en una esquina. El `Grid` raíz debe tener `HorizontalAlignment="Stretch"` y `VerticalAlignment="Stretch"` para rellenar todo el cliente. También conviene invocar `ConfigurarParaVentanaPadre(owner)` en el constructor o antes de `ShowDialog` para garantizar que la ventana se maximice sobre el padre y se mantenga centrada.
+>
+> **Tamaño del card**: por defecto **el card se ajusta al contenido**. No agregues `Width`, `Height`, `MaxWidth`, etc., a menos que específicamente se requiera un límite. Las propiedades `MinWidth`/`MinHeight` o `MaxWidth`/`MaxHeight` sólo se establecen cuando hay una razón clara para restringir el tamaño del diálogo (por ejemplo formularios muy anchos o muy altos). Si optas por usar `SizeToContent="WidthAndHeight"` en la ventana para que su tamaño se base en el contenido interno, evita combinarlo con valores fijos que reduzcan la ventana. Estos valores nunca afectan al overlay oscuro, sólo al panel central.
+
 
 ```xaml
 <Window x:Class="GestLog.Modules.[Modulo].Views.[Carpeta].MiDialogView"
@@ -155,6 +164,40 @@ namespace GestLog.Modules.[Modulo].Views.[Carpeta]
                     Close();
                 }
             };
+
+            // Ejemplo de uso de eventos cuando el diálogo es de solo lectura/edición
+            // Algunos diálogos (ver EjecucionMantenimientoDetailDialog) exponen eventos
+            // como SaveRequested o DeleteRequested en lugar de depender únicamente de comandos
+            // del ViewModel. Esto permite al código llamante reaccionar directamente y,
+            // en el caso de un guardado, invocar al método correspondiente del VM:
+            //
+            //   var dlg = new EjecucionMantenimientoDetailDialog(ejec);
+            //   dlg.SaveRequested += async e =>
+            //   {
+            //       await ViewModel.UpdateEjecucionAsync(e);
+            //       dlg.Close();
+            //   };
+            //   dlg.DeleteRequested += async e => { /* confirmar y eliminar */ };
+            //
+            // El control interno puede llevar un booleano IsEditing que habilita/deshabilita
+            // los campos y cambia el texto de los botones. El evento SaveRequested se
+            // dispara en el clic "Guardar" cuando ya está en modo edición.
+            //
+            // También es buena práctica convertir propiedades numéricas como estados a
+            // enums y mostrarlos con un ComboBox. De este modo, el usuario no introduce
+            // accidentalmente un valor inválido (por ejemplo "2" en lugar de "Completado").
+            // El conjunto de valores se puede obtener mediante un ObjectDataProvider:
+            //
+            //   <ObjectDataProvider MethodName="GetValues" ObjectType="{x:Type sys:Enum}" 
+            //                       x:Key="EstadoValores">
+            //       <ObjectDataProvider.MethodParameters>
+            //           <x:Type TypeName="models:EstadoEjecucion"/>
+            //       </ObjectDataProvider.MethodParameters>
+            //   </ObjectDataProvider>
+            //
+            // Por último, la plantilla InputStyle ahora incluye disparadores para que los
+            // controles read-only o deshabilitados se dibujen como texto plano, evitando
+            // que el usuario piense que puede escribir en ellos.
 
             // Asegura que el overlay cubra toda la pantalla del owner
             var ownerWindow = Application.Current?.MainWindow;
