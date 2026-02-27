@@ -20,6 +20,14 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
     /// </summary>
     public partial class CorrectivosMantenimientoViewModel : ObservableObject
     {
+        public class PlanPreventivoCostoInput
+        {
+            public int PlanId { get; set; }
+            public decimal CostoAsignado { get; set; }
+            public bool EsCostoPersonalizado { get; set; }
+            public bool IsOutsideCorrectivoInvoice { get; set; }
+        }
+
         private readonly IEjecucionMantenimientoService _ejecucionService;
         private readonly IPlanMantenimientoVehiculoService _planService;
         private readonly IGestLogLogger _logger;
@@ -296,6 +304,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             string? rutaFactura,
             string? observaciones,
             IReadOnlyCollection<PlanMantenimientoVehiculoDto>? planesPreventivosEjecutados,
+            IReadOnlyCollection<PlanPreventivoCostoInput>? planesPreventivosConCosto,
             CancellationToken cancellationToken = default)
         {
             if (correctivo == null)
@@ -346,8 +355,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 if (planesPreventivosEjecutados != null)
                 {
+                    var fechaTexto = DateTime.Now.ToString("dd/MM/yyyy");
+
                     foreach (var plan in planesPreventivosEjecutados)
                     {
+                        var costoPlan = planesPreventivosConCosto?
+                            .FirstOrDefault(c => c.PlanId == plan.Id);
+
+                        var observacionPreventiva = costoPlan == null
+                            ? $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}."
+                            : costoPlan.EsCostoPersonalizado
+                                ? costoPlan.IsOutsideCorrectivoInvoice
+                                    ? $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo personalizado fuera de factura de correctivo: ${costoPlan.CostoAsignado:N2}."
+                                    : $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo personalizado dentro de factura de correctivo: ${costoPlan.CostoAsignado:N2} (referencial, no suma independiente)."
+                                : $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo prorrateado dentro de factura de correctivo: ${costoPlan.CostoAsignado:N2} (referencial, no suma independiente).";
+
                         var preventivaDto = new EjecucionMantenimientoDto
                         {
                             PlacaVehiculo = correctivo.PlacaVehiculo,
@@ -356,13 +378,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                             TituloActividad = plan.PlantillaNombre,
                             FechaEjecucion = DateTimeOffset.Now,
                             KMAlMomento = kilometrajeAlCompletar,
-                            ObservacionesTecnico = $"Ejecutado durante correctivo #{correctivo.Id}",
+                            ObservacionesTecnico = observacionPreventiva,
                             ResponsableEjecucion = correctivo.ResponsableEjecucion,
                             Proveedor = correctivo.Proveedor,
                             EsExtraordinario = true,
                             Estado = (int)EstadoEjecucion.Completado,
                             EstadoCorrectivo = null,
-                            Costo = null,
+                            Costo = (costoPlan != null && costoPlan.IsOutsideCorrectivoInvoice)
+                                ? costoPlan.CostoAsignado
+                                : null,
                             RutaFactura = null
                         };
 
@@ -376,6 +400,25 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             {
                 ErrorMessage = "Error al completar correctivo";
                 _logger.LogError(ex, "Error completando correctivo: {Id}", correctivo.Id);
+            }
+        }
+
+        public async Task UpdateCorrectivoAsync(EjecucionMantenimientoDto correctivo, CancellationToken cancellationToken = default)
+        {
+            if (correctivo == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
+                await LoadCorrectivosVehiculoAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Error al actualizar correctivo";
+                _logger.LogError(ex, "Error actualizando correctivo: {Id}", correctivo.Id);
             }
         }
 

@@ -67,12 +67,24 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     var costo = dto.Costo;
                     var rutaFactura = dto.RutaFactura ?? string.Empty;
                     var observaciones = string.Empty;
-                    if (!ShowCompletarDialog(planesDisponibles, ref kilometraje, ref responsable, ref proveedor, ref costo, ref rutaFactura, ref observaciones, out var planesSeleccionados))
+                    if (!ShowCompletarDialog(planesDisponibles, ref kilometraje, ref responsable, ref proveedor, ref costo, ref rutaFactura, ref observaciones, out var planesSeleccionados, out var planesConCosto))
                     {
                         return;
                     }
 
-                    await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesSeleccionados);
+                    var planesConCostoVm = System.Linq.Enumerable.ToList(
+                        System.Linq.Enumerable.Select(
+                            planesConCosto,
+                            c => new ViewModels.Mantenimientos.CorrectivosMantenimientoViewModel.PlanPreventivoCostoInput
+                            {
+                                PlanId = c.PlanId,
+                                CostoAsignado = c.CostoAsignado,
+                                EsCostoPersonalizado = c.EsCostoPersonalizado,
+                                IsOutsideCorrectivoInvoice = c.IsOutsideCorrectivoInvoice
+                            }));
+
+                    await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesSeleccionados, planesConCostoVm);
+                    await RefreshPreventivosViewAsync(dto.PlacaVehiculo);
                     break;
                 }
 
@@ -110,9 +122,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             ref decimal? costo,
             ref string rutaFactura,
             ref string observaciones,
-            out System.Collections.Generic.IReadOnlyCollection<Models.DTOs.PlanMantenimientoVehiculoDto> planesSeleccionados)
+            out System.Collections.Generic.IReadOnlyCollection<Models.DTOs.PlanMantenimientoVehiculoDto> planesSeleccionados,
+            out System.Collections.Generic.IReadOnlyCollection<CompletarCorrectivoDialog.PlanPreventivoCostoAsignado> planesConCosto)
         {
             planesSeleccionados = System.Array.Empty<Models.DTOs.PlanMantenimientoVehiculoDto>();
+            planesConCosto = System.Array.Empty<CompletarCorrectivoDialog.PlanPreventivoCostoAsignado>();
 
             var dialog = new CompletarCorrectivoDialog(kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesDisponibles)
             {
@@ -130,6 +144,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 observaciones = dialog.Observaciones;
                 rutaFactura = dialog.RutaFactura;
                 costo = dialog.Costo;
+                planesConCosto = dialog.PlanesPreventivosConCosto;
 
                 if (dialog.PlanesPreventivosSeleccionados.Count > 0)
                 {
@@ -143,6 +158,38 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             return result;
         }
 
+        private async System.Threading.Tasks.Task RefreshPreventivosViewAsync(string placa)
+        {
+            if (string.IsNullOrWhiteSpace(placa))
+            {
+                return;
+            }
+
+            System.Windows.DependencyObject? current = this;
+            while (current != null && current is not Views.Vehicles.VehicleDetailsView)
+            {
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            }
+
+            if (current is not Views.Vehicles.VehicleDetailsView detailsView)
+            {
+                return;
+            }
+
+            if (detailsView.FindName("EjecucionesView") is not EjecucionesMantenimientoView ejecucionesView)
+            {
+                return;
+            }
+
+            if (ejecucionesView.DataContext is not ViewModels.Mantenimientos.EjecucionesMantenimientoViewModel ejecVm)
+            {
+                return;
+            }
+
+            ejecVm.FilterPlaca = placa;
+            await ejecVm.LoadEjecucionesAsync();
+        }
+
         private void ShowDetallesDialog(Models.DTOs.EjecucionMantenimientoDto dto)
         {
             var dialog = new DetalleCorrectivoDialog(dto)
@@ -150,6 +197,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 Owner = System.Windows.Application.Current?.Windows.Count > 0
                     ? System.Windows.Application.Current.Windows[0]
                     : System.Windows.Application.Current?.MainWindow
+            };
+
+            dialog.SaveRequested += async (editado) =>
+            {
+                if (DataContext is ViewModels.Mantenimientos.CorrectivosMantenimientoViewModel vm)
+                {
+                    await vm.UpdateCorrectivoAsync(editado);
+                }
             };
 
             dialog.ShowDialog();

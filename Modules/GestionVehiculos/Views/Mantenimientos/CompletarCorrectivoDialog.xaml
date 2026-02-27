@@ -77,7 +77,7 @@
                             <ListBox x:Name="LstPlanesPreventivos" MinHeight="140" MaxHeight="220">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,2">
+                                        <Grid Margin="0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="12"/>
@@ -85,7 +85,20 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Nombre}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="{Binding Nombre}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <CheckBox Content="Costo personalizado" IsChecked="{Binding IsCustomCost}" VerticalAlignment="Center"/>
+                                                    <TextBox Width="110" Margin="10,0,0,0" Style="{StaticResource InputStyle}"
+                                                             Text="{Binding CustomCostInput, UpdateSourceTrigger=PropertyChanged}"
+                                                             IsEnabled="{Binding IsCustomCost}" ToolTip="Costo para este plan" />
+                                                    <CheckBox Content="Fuera de factura correctivo"
+                                                              Margin="10,0,0,0"
+                                                              IsChecked="{Binding IsOutsideCorrectivoInvoice}"
+                                                              IsEnabled="{Binding IsCustomCost}"
+                                                              VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
                                             <TextBlock Grid.Column="3" Text="{Binding Estado}" Opacity="0.7" VerticalAlignment="Center"/>
                                         </Grid>
                                     </DataTemplate>

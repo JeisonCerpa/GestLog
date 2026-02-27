@@ -137,9 +137,19 @@
                                       Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                             <TextBlock Text="Factura:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent">
+                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
+                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
                                 <TextBlock Text="{Binding RutaFactura}" Foreground="#1D1D1B" TextWrapping="Wrap" />
                             </Border>
+                            <Grid Margin="0,0,0,16"
+                                  Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding RutaFactura, Mode=TwoWay}" Style="{StaticResource InputStyle}" />
+                                <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" />
+                            </Grid>
 
                             <TextBlock Text="Observaciones:" FontWeight="Bold" />
                             <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"

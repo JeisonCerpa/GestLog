@@ -97,7 +97,14 @@
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Factura" FontWeight="SemiBold"/>
-                                <TextBox x:Name="TxtFactura" IsReadOnly="True" Style="{StaticResource InputStyle}" TextWrapping="Wrap"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtFactura" IsReadOnly="True" Style="{StaticResource InputStyle}" TextWrapping="Wrap"/>
+                                    <Button x:Name="BtnAttachFactura" Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" IsEnabled="False"/>
+                                </Grid>
                             </StackPanel>
                         </Grid>
 
@@ -108,6 +115,8 @@
 
                 <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnEdit" Content="Editar" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Click="BtnEdit_Click"/>
+                        <Button x:Name="BtnCancel" Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" Visibility="Collapsed"/>
                         <Button Content="Cerrar" Style="{StaticResource PrimaryButtonStyle}" Click="BtnClose_Click"/>
                     </StackPanel>
                 </Border>

@@ -177,5 +177,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 DeleteRequested?.Invoke(ejec);
             }
         }
+
+        private void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsEditing || DataContext is not EjecucionMantenimientoDto ejec)
+            {
+                return;
+            }
+
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Seleccionar factura (PDF o imagen)",
+                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (dlg.ShowDialog(this) == true)
+            {
+                ejec.RutaFactura = dlg.FileName;
+            }
+        }
     }
 }

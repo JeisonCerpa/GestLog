@@ -16,6 +16,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string Nombre { get; set; } = string.Empty;
             public string Estado { get; set; } = string.Empty;
             public bool IsSelected { get; set; }
+            public bool IsCustomCost { get; set; }
+            public string CustomCostInput { get; set; } = string.Empty;
+            public bool IsOutsideCorrectivoInvoice { get; set; }
+        }
+
+        public class PlanPreventivoCostoAsignado
+        {
+            public int PlanId { get; set; }
+            public decimal CostoAsignado { get; set; }
+            public bool EsCostoPersonalizado { get; set; }
+            public bool IsOutsideCorrectivoInvoice { get; set; }
         }
 
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planes = new();
@@ -27,6 +38,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         public string RutaFactura { get; private set; }
         public string Observaciones { get; private set; }
         public IReadOnlyCollection<int> PlanesPreventivosSeleccionados { get; private set; } = Array.Empty<int>();
+        public IReadOnlyCollection<PlanPreventivoCostoAsignado> PlanesPreventivosConCosto { get; private set; } = Array.Empty<PlanPreventivoCostoAsignado>();
 
         public CompletarCorrectivoDialog(
             long? kilometrajeInicial,
@@ -122,6 +134,76 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             else
             {
                 Costo = null;
+            }
+
+            var planesSeleccionados = _planes.Where(p => p.IsSelected).ToList();
+            if (planesSeleccionados.Count > 0)
+            {
+                var asignaciones = new List<PlanPreventivoCostoAsignado>();
+                decimal sumaPersonalizados = 0m;
+                var sinPersonalizar = new List<PlanPreventivoSeleccionItem>();
+
+                foreach (var plan in planesSeleccionados)
+                {
+                    if (plan.IsCustomCost)
+                    {
+                        if (!decimal.TryParse(plan.CustomCostInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var costoPlan) || costoPlan < 0)
+                        {
+                            if (!decimal.TryParse(plan.CustomCostInput?.Trim(), out costoPlan) || costoPlan < 0)
+                            {
+                                TxtError.Text = $"Costo personalizado inválido para '{plan.Nombre}'.";
+                                return;
+                            }
+                        }
+
+                        sumaPersonalizados += costoPlan;
+                        asignaciones.Add(new PlanPreventivoCostoAsignado
+                        {
+                            PlanId = plan.PlanId,
+                            CostoAsignado = decimal.Round(costoPlan, 2),
+                            EsCostoPersonalizado = true,
+                            IsOutsideCorrectivoInvoice = plan.IsOutsideCorrectivoInvoice
+                        });
+                    }
+                    else
+                    {
+                        sinPersonalizar.Add(plan);
+                    }
+                }
+
+                if (sinPersonalizar.Count > 0)
+                {
+                    if (!Costo.HasValue)
+                    {
+                        TxtError.Text = "Si hay planes sin costo personalizado, debes ingresar costo del correctivo para prorratear.";
+                        return;
+                    }
+
+                    var restante = Costo.Value - sumaPersonalizados;
+                    if (restante < 0)
+                    {
+                        TxtError.Text = "La suma de costos personalizados supera el costo total del correctivo.";
+                        return;
+                    }
+
+                    var prorrateado = decimal.Round(restante / sinPersonalizar.Count, 2);
+                    foreach (var plan in sinPersonalizar)
+                    {
+                        asignaciones.Add(new PlanPreventivoCostoAsignado
+                        {
+                            PlanId = plan.PlanId,
+                            CostoAsignado = prorrateado,
+                            EsCostoPersonalizado = false,
+                            IsOutsideCorrectivoInvoice = false
+                        });
+                    }
+                }
+
+                PlanesPreventivosConCosto = asignaciones;
+            }
+            else
+            {
+                PlanesPreventivosConCosto = Array.Empty<PlanPreventivoCostoAsignado>();
             }
 
             TxtError.Text = string.Empty;
