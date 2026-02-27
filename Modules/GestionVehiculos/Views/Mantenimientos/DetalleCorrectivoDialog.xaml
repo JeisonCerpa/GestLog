@@ -101,9 +101,11 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="TxtFactura" IsReadOnly="True" Style="{StaticResource InputStyle}" TextWrapping="Wrap"/>
                                     <Button x:Name="BtnAttachFactura" Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" IsEnabled="False"/>
+                                    <Button x:Name="BtnOpenFactura" Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFactura_Click"/>
                                 </Grid>
                             </StackPanel>
                         </Grid>

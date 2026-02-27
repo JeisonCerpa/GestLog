@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using GestLog.Modules.GestionVehiculos.Services.Utilities;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -92,20 +93,18 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             };
         }
 
-        private void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
+        private async void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new Microsoft.Win32.OpenFileDialog
+            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
+            if (!string.IsNullOrWhiteSpace(uploaded))
             {
-                Title = "Seleccionar factura (PDF o imagen)",
-                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            if (dlg.ShowDialog(this) == true)
-            {
-                TxtRutaFactura.Text = dlg.FileName;
+                TxtRutaFactura.Text = uploaded;
             }
+        }
+
+        private async void BtnOpenFactura_Click(object sender, RoutedEventArgs e)
+        {
+            await FacturaStorageHelper.OpenFacturaAsync(this, TxtRutaFactura.Text);
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)

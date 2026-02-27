@@ -1,5 +1,6 @@
 using System.Windows;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using GestLog.Modules.GestionVehiculos.Services.Utilities;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -178,25 +179,28 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
-        private void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
+        private async void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
         {
             if (!IsEditing || DataContext is not EjecucionMantenimientoDto ejec)
             {
                 return;
             }
 
-            var dlg = new Microsoft.Win32.OpenFileDialog
+            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, $"factura_preventivo_{ejec.PlacaVehiculo}");
+            if (!string.IsNullOrWhiteSpace(uploaded))
             {
-                Title = "Seleccionar factura (PDF o imagen)",
-                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            if (dlg.ShowDialog(this) == true)
-            {
-                ejec.RutaFactura = dlg.FileName;
+                ejec.RutaFactura = uploaded;
             }
+        }
+
+        private async void BtnOpenFactura_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EjecucionMantenimientoDto ejec)
+            {
+                return;
+            }
+
+            await FacturaStorageHelper.OpenFacturaAsync(this, ejec.RutaFactura);
         }
     }
 }

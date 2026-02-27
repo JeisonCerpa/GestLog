@@ -64,9 +64,11 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="TxtRutaFactura" Grid.Column="0" IsReadOnly="True" Style="{StaticResource InputStyle}" />
                             <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" />
+                            <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFactura_Click" />
                         </Grid>
 
                         <TextBlock Text="Observaciones (si hay garantía, incluirla aquí)" FontWeight="SemiBold"/>

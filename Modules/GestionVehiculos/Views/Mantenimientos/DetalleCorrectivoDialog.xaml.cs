@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using GestLog.Modules.GestionVehiculos.Services.Utilities;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -59,9 +61,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             _ejecucion.ResponsableEjecucion = string.IsNullOrWhiteSpace(TxtResponsable.Text) ? null : TxtResponsable.Text.Trim();
             _ejecucion.Proveedor = string.IsNullOrWhiteSpace(TxtProveedor.Text) ? null : TxtProveedor.Text.Trim();
             _ejecucion.ObservacionesTecnico = string.IsNullOrWhiteSpace(TxtTimeline.Text) ? null : TxtTimeline.Text.Trim();
-            _ejecucion.RutaFactura = string.IsNullOrWhiteSpace(TxtFactura.Text) || TxtFactura.Text.Trim().Equals("N/D")
-                ? null
-                : TxtFactura.Text.Trim();
 
             if (decimal.TryParse(TxtCosto.Text?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedCosto) && parsedCosto >= 0)
             {
@@ -95,26 +94,24 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             SetEditing(false);
         }
-
-        private void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
+        private async void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
         {
             if (!_isEditing)
             {
                 return;
             }
 
-            var dlg = new Microsoft.Win32.OpenFileDialog
+            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, $"factura_correctivo_{_ejecucion.PlacaVehiculo}");
+            if (!string.IsNullOrWhiteSpace(uploaded))
             {
-                Title = "Seleccionar factura (PDF o imagen)",
-                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            if (dlg.ShowDialog(this) == true)
-            {
-                TxtFactura.Text = dlg.FileName;
+                _ejecucion.RutaFactura = uploaded;
+                TxtFactura.Text = GetFacturaDisplayName(uploaded);
             }
+        }
+
+        private async void BtnOpenFactura_Click(object sender, RoutedEventArgs e)
+        {
+            await FacturaStorageHelper.OpenFacturaAsync(this, TxtFactura.Text);
         }
 
         private void FillFields(EjecucionMantenimientoDto dto)
@@ -126,7 +123,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtResponsable.Text = string.IsNullOrWhiteSpace(dto.ResponsableEjecucion) ? "" : dto.ResponsableEjecucion;
             TxtProveedor.Text = string.IsNullOrWhiteSpace(dto.Proveedor) ? "" : dto.Proveedor;
             TxtCosto.Text = dto.Costo.HasValue ? dto.Costo.Value.ToString(CultureInfo.CurrentCulture) : string.Empty;
-            TxtFactura.Text = string.IsNullOrWhiteSpace(dto.RutaFactura) ? "" : dto.RutaFactura;
+            TxtFactura.Text = GetFacturaDisplayName(dto.RutaFactura);
             TxtTimeline.Text = dto.ObservacionesTecnico ?? string.Empty;
         }
 
@@ -136,12 +133,22 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtResponsable.IsReadOnly = !value;
             TxtProveedor.IsReadOnly = !value;
             TxtCosto.IsReadOnly = !value;
-            TxtFactura.IsReadOnly = !value;
+            TxtFactura.IsReadOnly = true;
             TxtTimeline.IsReadOnly = !value;
             BtnAttachFactura.IsEnabled = value;
 
             BtnEdit.Content = value ? "Guardar" : "Editar";
             BtnCancel.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private static string GetFacturaDisplayName(string? ruta)
+        {
+            if (string.IsNullOrWhiteSpace(ruta))
+            {
+                return string.Empty;
+            }
+
+            return Path.GetFileName(ruta);
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

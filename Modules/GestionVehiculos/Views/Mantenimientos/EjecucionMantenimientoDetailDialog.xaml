@@ -11,6 +11,7 @@
     <Window.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <conv:PathToFileNameConverter x:Key="PathToFileNameConverter" />
         <!-- items for estado enum -->
         <ObjectDataProvider x:Key="EstadoEjecucionValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -64,7 +65,7 @@
                     </Grid>
                 </Border>
 
-                <ScrollViewer Grid.Row="1" Margin="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <ScrollViewer Grid.Row="1" Margin="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -139,16 +140,27 @@
                             <TextBlock Text="Factura:" FontWeight="Bold" />
                             <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding RutaFactura}" Foreground="#1D1D1B" TextWrapping="Wrap" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding RutaFactura, Converter={StaticResource PathToFileNameConverter}}" Foreground="#1D1D1B" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                    <Button Grid.Column="1" Content="Ver" Style="{StaticResource GhostButton}" Padding="10,6" Click="BtnOpenFactura_Click" />
+                                </Grid>
                             </Border>
                             <Grid Margin="0,0,0,16"
                                   Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding RutaFactura, Mode=TwoWay}" Style="{StaticResource InputStyle}" />
+                                <Border Grid.Column="0" Padding="12,10" Background="Transparent" MinHeight="72" BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8">
+                                    <TextBlock Text="{Binding RutaFactura, Converter={StaticResource PathToFileNameConverter}}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                </Border>
                                 <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" />
+                                <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFactura_Click" />
                             </Grid>
 
                             <TextBlock Text="Observaciones:" FontWeight="Bold" />
@@ -160,7 +172,7 @@
                                      Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"
                                      TextWrapping="Wrap" Margin="0,0,0,8"
                                      AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
-                                     MaxWidth="600" MinHeight="120" />
+                                     MinHeight="120" />
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>

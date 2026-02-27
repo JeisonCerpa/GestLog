@@ -1,6 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Threading.Tasks;
+using System.IO;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Services.Utilities;
 using WpfGrid = System.Windows.Controls.Grid;
 using WpfRowDefinition = System.Windows.Controls.RowDefinition;
 using WpfTextBlock = System.Windows.Controls.TextBlock;
@@ -13,6 +16,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             InitializeComponent();
             DataContext = viewModel;
+
+            viewModel.RegistroEsExtraordinario = false;
+            viewModel.RegistroMotivoExtraordinario = string.Empty;
 
             ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
 
@@ -63,12 +69,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 return;
             }
 
-            var edited = ShowPlanNoteEditor(item.NombrePlantilla, item.DetalleOpcional ?? string.Empty, item.ProveedorOpcional ?? string.Empty, item.RutaFacturaOpcional ?? string.Empty);
+            var edited = ShowPlanNoteEditor(item.NombrePlantilla, item.DetalleOpcional ?? string.Empty, item.ProveedorOpcional ?? string.Empty, item.RutaFacturaOpcional ?? string.Empty, item.CostoOpcionalInput ?? string.Empty);
             if (edited != null)
             {
                 item.DetalleOpcional = edited.Detalle;
                 item.ProveedorOpcional = edited.Proveedor;
                 item.RutaFacturaOpcional = edited.RutaFactura;
+                item.CostoOpcionalInput = edited.CostoIndividual;
             }
         }
 
@@ -77,24 +84,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string Detalle { get; set; } = string.Empty;
             public string Proveedor { get; set; } = string.Empty;
             public string RutaFactura { get; set; } = string.Empty;
+            public string CostoIndividual { get; set; } = string.Empty;
         }
 
-        private static string? PickFacturaFile(Window owner)
+        private static Task<string?> PickFacturaFileAsync(Window owner)
         {
-            var dlg = new Microsoft.Win32.OpenFileDialog
-            {
-                Title = "Seleccionar factura (PDF o imagen)",
-                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            return dlg.ShowDialog(owner) == true ? dlg.FileName : null;
+            return FacturaStorageHelper.PickAndUploadFacturaAsync(owner, "factura_preventivo");
         }
 
-        private void BtnAttachCommonFactura_Click(object sender, RoutedEventArgs e)
+        private async void BtnAttachCommonFactura_Click(object sender, RoutedEventArgs e)
         {
-            var selected = PickFacturaFile(this);
+            var selected = await PickFacturaFileAsync(this);
             if (selected == null)
             {
                 return;
@@ -106,8 +106,18 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
-        private PlanNoteEditResult? ShowPlanNoteEditor(string planName, string currentDetalle, string currentProveedor, string currentRutaFactura)
+        private async void BtnOpenCommonFactura_Click(object sender, RoutedEventArgs e)
         {
+            if (DataContext is EjecucionesMantenimientoViewModel vm)
+            {
+                await FacturaStorageHelper.OpenFacturaAsync(this, vm.RegistroRutaFactura);
+            }
+        }
+
+        private PlanNoteEditResult? ShowPlanNoteEditor(string planName, string currentDetalle, string currentProveedor, string currentRutaFactura, string currentCostoIndividual = "")
+        {
+            var facturaPath = currentRutaFactura?.Trim() ?? string.Empty;
+
             var editor = new Window
             {
                 Title = $"Nota específica - {planName}",
@@ -116,12 +126,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 SizeToContent = SizeToContent.WidthAndHeight,
                 ResizeMode = ResizeMode.NoResize,
                 ShowInTaskbar = false,
-                MinWidth = 560,
-                MaxWidth = 640,
+                MinWidth = 640,
+                MaxWidth = 760,
                 Background = System.Windows.Media.Brushes.White
             };
 
-            var root = new WpfGrid { Margin = new Thickness(16) };
+            var root = new WpfGrid { Margin = new Thickness(18) };
+            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
             root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
@@ -131,9 +142,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             var lbl = new WpfTextBlock
             {
-                Text = "Ingresa la nota específica para este plan (opcional):",
+                Text = "Configurar datos específicos del plan",
                 FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 0, 0, 8)
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 0, 10)
             };
             WpfGrid.SetRow(lbl, 0);
             root.Children.Add(lbl);
@@ -144,8 +156,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 TextWrapping = TextWrapping.Wrap,
                 AcceptsReturn = true,
                 VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto,
-                MinHeight = 130,
-                MaxWidth = 580,
+                MinHeight = 120,
+                MaxWidth = 700,
                 Padding = new Thickness(10)
             };
             WpfGrid.SetRow(txt, 1);
@@ -163,21 +175,48 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             var proveedorTxt = new System.Windows.Controls.TextBox
             {
                 Text = currentProveedor,
-                MaxWidth = 580,
+                MaxWidth = 700,
                 Padding = new Thickness(10)
             };
             WpfGrid.SetRow(proveedorTxt, 3);
             root.Children.Add(proveedorTxt);
 
+            var costoGrid = new WpfGrid { Margin = new Thickness(0, 10, 0, 0) };
+            costoGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
+            costoGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var costoLbl = new WpfTextBlock
+            {
+                Text = "Costo individual (opcional):",
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            WpfGrid.SetColumn(costoLbl, 0);
+            costoGrid.Children.Add(costoLbl);
+
+            var costoTxt = new System.Windows.Controls.TextBox
+            {
+                Text = currentCostoIndividual,
+                MaxWidth = 220,
+                Padding = new Thickness(10)
+            };
+            WpfGrid.SetColumn(costoTxt, 1);
+            costoGrid.Children.Add(costoTxt);
+
+            WpfGrid.SetRow(costoGrid, 4);
+            root.Children.Add(costoGrid);
+
             var facturaGrid = new WpfGrid { Margin = new Thickness(0, 10, 0, 0) };
             facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
             facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
 
             var facturaTxt = new System.Windows.Controls.TextBox
             {
-                Text = currentRutaFactura,
+                Text = GetFacturaDisplayName(facturaPath),
                 IsReadOnly = true,
-                MaxWidth = 470,
+                MaxWidth = 500,
                 Padding = new Thickness(10)
             };
             WpfGrid.SetColumn(facturaTxt, 0);
@@ -189,18 +228,32 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 Margin = new Thickness(8, 0, 0, 0),
                 Padding = new Thickness(10, 6, 10, 6)
             };
-            facturaBtn.Click += (_, _) =>
+            facturaBtn.Click += async (_, _) =>
             {
-                var selected = PickFacturaFile(editor);
+                var selected = await PickFacturaFileAsync(editor);
                 if (selected != null)
                 {
-                    facturaTxt.Text = selected;
+                    facturaPath = selected;
+                    facturaTxt.Text = GetFacturaDisplayName(facturaPath);
                 }
             };
             WpfGrid.SetColumn(facturaBtn, 1);
             facturaGrid.Children.Add(facturaBtn);
 
-            WpfGrid.SetRow(facturaGrid, 4);
+            var facturaOpenBtn = new System.Windows.Controls.Button
+            {
+                Content = "Ver",
+                Margin = new Thickness(8, 0, 0, 0),
+                Padding = new Thickness(10, 6, 10, 6)
+            };
+            facturaOpenBtn.Click += async (_, _) =>
+            {
+                await FacturaStorageHelper.OpenFacturaAsync(editor, facturaPath);
+            };
+            WpfGrid.SetColumn(facturaOpenBtn, 2);
+            facturaGrid.Children.Add(facturaOpenBtn);
+
+            WpfGrid.SetRow(facturaGrid, 5);
             root.Children.Add(facturaGrid);
 
             var footer = new System.Windows.Controls.StackPanel
@@ -227,7 +280,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             footer.Children.Add(btnCancel);
             footer.Children.Add(btnSave);
-            WpfGrid.SetRow(footer, 5);
+            WpfGrid.SetRow(footer, 6);
             root.Children.Add(footer);
 
             editor.Content = root;
@@ -241,8 +294,19 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 Detalle = txt.Text?.Trim() ?? string.Empty,
                 Proveedor = proveedorTxt.Text?.Trim() ?? string.Empty,
-                RutaFactura = facturaTxt.Text?.Trim() ?? string.Empty
+                RutaFactura = facturaPath,
+                CostoIndividual = costoTxt.Text?.Trim() ?? string.Empty
             };
+        }
+
+        private static string GetFacturaDisplayName(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            return Path.GetFileName(path);
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

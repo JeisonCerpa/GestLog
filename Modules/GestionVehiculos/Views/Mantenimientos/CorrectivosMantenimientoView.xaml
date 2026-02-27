@@ -144,11 +144,37 @@
             <DropShadowEffect x:Key="CorrectivosDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
 
             <Style x:Key="TableActionButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="24" />
+                <Setter Property="Height" Value="24" />
                 <Setter Property="Background" Value="#118938" />
                 <Setter Property="Foreground" Value="White" />
                 <Setter Property="BorderBrush" Value="#118938" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#0D8E35" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#118938" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="TableActionPillStyle" TargetType="Button" BasedOn="{StaticResource TableActionButtonStyle}">
+                <Setter Property="Width" Value="110" />
+                <Setter Property="Height" Value="28" />
                 <Setter Property="Padding" Value="8,4" />
                 <Setter Property="FontSize" Value="11" />
                 <Setter Property="FontWeight" Value="SemiBold" />
@@ -199,10 +225,14 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                            <Button Content="Actualizar"
-                                    Style="{StaticResource PrimaryButtonStyle}"
+                            <Button Style="{StaticResource RoundIconButtonStyle}"
                                     Margin="0,0,8,0"
-                                    Command="{Binding LoadCorrectivosVehiculoCommand}" />
+                                    Command="{Binding LoadCorrectivosVehiculoCommand}"
+                                    Foreground="White"
+                                    FontSize="18"
+                                    ToolTip="Recargar correctivos">
+                                🔄
+                            </Button>
                             <Button Style="{StaticResource RoundIconButtonStyle}"
                                     Click="BtnNuevoCorrectivo_Click"
                                     Foreground="White" FontSize="18"
@@ -214,14 +244,7 @@
                 </Border>
 
                 <Grid Grid.Row="1" Margin="8,4,8,8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" Margin="0,0,0,8"/>
-
-                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8" Effect="{StaticResource CorrectivosDataGridShadow}">
+                    <Border Style="{StaticResource CardStyle}" Padding="8" Effect="{StaticResource CorrectivosDataGridShadow}">
                         <DataGrid ItemsSource="{Binding Correctivos}"
                                   SelectedItem="{Binding SelectedCorrectivo}"
                                   AutoGenerateColumns="False"
@@ -269,9 +292,36 @@
                                 <DataGridTemplateColumn Header="Acción" Width="150">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Content="{Binding AccionCorrectivoTexto}"
-                                                    Style="{StaticResource TableActionButtonStyle}"
-                                                    Click="ActionButton_Click" />
+                                            <Grid>
+                                                <Button Content="🔍"
+                                                        Click="ActionButton_Click"
+                                                        ToolTip="Ver detalles">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource TableActionButtonStyle}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding AccionCorrectivoTexto}" Value="Detalles">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <Button Content="{Binding AccionCorrectivoTexto}"
+                                                        Click="ActionButton_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource TableActionPillStyle}">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding AccionCorrectivoTexto}" Value="Detalles">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </Grid>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>

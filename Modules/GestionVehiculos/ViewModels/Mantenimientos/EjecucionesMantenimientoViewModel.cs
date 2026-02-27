@@ -282,7 +282,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     ? new DateTimeOffset(RegistroFechaEjecucion.Value.Date)
                     : DateTimeOffset.Now;
 
-                var costosPorPlan = BuildCostDistribution(costo, planesSeleccionados.Count);
+                if (!TryBuildCostDistribution(costo, planesSeleccionados, out var costosPorPlan, out var costoError))
+                {
+                    CostoValidationMessage = costoError ?? string.Empty;
+                    ErrorMessage = costoError ?? "Error en la distribución de costos";
+                    return;
+                }
                 var nombresPlanesSeleccionados = planesSeleccionados.Select(p => p.NombrePlantilla).ToList();
 
                 for (var index = 0; index < planesSeleccionados.Count; index++)
@@ -358,6 +363,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     planItem.DetalleOpcional = string.Empty;
                     planItem.ProveedorOpcional = string.Empty;
                     planItem.RutaFacturaOpcional = string.Empty;
+                    planItem.CostoOpcionalInput = string.Empty;
                 }
                 RegistroObservaciones = string.Empty;
                 RegistroResponsable = string.Empty;
@@ -934,7 +940,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 item.PropertyChanged += (_, e) =>
                 {
                     if (e.PropertyName == nameof(PlanPreventivoSelectionItem.IsSelected)
-                        || e.PropertyName == nameof(PlanPreventivoSelectionItem.DetalleOpcional))
+                        || e.PropertyName == nameof(PlanPreventivoSelectionItem.DetalleOpcional)
+                        || e.PropertyName == nameof(PlanPreventivoSelectionItem.CostoOpcionalInput))
                     {
                         OnPropertyChanged(nameof(HasPlanesSeleccionados));
                         OnPropertyChanged(nameof(PlanesSeleccionadosResumen));
@@ -1108,41 +1115,96 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 : prorrateado;
         }
 
-        private static List<decimal?> BuildCostDistribution(decimal? totalCost, int plansCount)
+        private static bool TryBuildCostDistribution(
+            decimal? totalCost,
+            IReadOnlyList<PlanPreventivoSelectionItem> selectedPlans,
+            out List<decimal?> distribution,
+            out string? error)
         {
-            var result = new List<decimal?>();
-            if (!totalCost.HasValue || plansCount <= 0)
+            distribution = new List<decimal?>();
+            error = null;
+
+            if (selectedPlans.Count == 0)
             {
-                for (var i = 0; i < plansCount; i++)
+                return true;
+            }
+
+            var personalizados = new Dictionary<int, decimal>();
+            decimal sumaPersonalizados = 0m;
+
+            for (var i = 0; i < selectedPlans.Count; i++)
+            {
+                var input = selectedPlans[i].CostoOpcionalInput?.Trim();
+                if (string.IsNullOrWhiteSpace(input))
                 {
-                    result.Add(null);
+                    continue;
                 }
-                return result;
-            }
 
-            if (plansCount == 1)
-            {
-                result.Add(totalCost.Value);
-                return result;
-            }
-
-            var perPlan = Math.Round(totalCost.Value / plansCount, 2, MidpointRounding.AwayFromZero);
-            var accumulated = 0m;
-
-            for (var i = 0; i < plansCount; i++)
-            {
-                if (i < plansCount - 1)
+                if (!decimal.TryParse(input, out var costoPlan) || costoPlan < 0)
                 {
-                    result.Add(perPlan);
-                    accumulated += perPlan;
+                    error = $"Costo individual inválido para '{selectedPlans[i].NombrePlantilla}'.";
+                    distribution = new List<decimal?>();
+                    return false;
+                }
+
+                personalizados[i] = costoPlan;
+                sumaPersonalizados += costoPlan;
+            }
+
+            if (!totalCost.HasValue)
+            {
+                for (var i = 0; i < selectedPlans.Count; i++)
+                {
+                    distribution.Add(personalizados.TryGetValue(i, out var custom) ? custom : null);
+                }
+
+                return true;
+            }
+
+            if (sumaPersonalizados > totalCost.Value)
+            {
+                error = "La suma de costos individuales supera el costo total del servicio.";
+                distribution = new List<decimal?>();
+                return false;
+            }
+
+            var indicesSinPersonalizar = Enumerable.Range(0, selectedPlans.Count)
+                .Where(i => !personalizados.ContainsKey(i))
+                .ToList();
+
+            var restante = totalCost.Value - sumaPersonalizados;
+            var prorrateado = indicesSinPersonalizar.Count > 0
+                ? Math.Round(restante / indicesSinPersonalizar.Count, 2, MidpointRounding.AwayFromZero)
+                : 0m;
+            var acumuladoNoPersonalizado = 0m;
+
+            for (var i = 0; i < selectedPlans.Count; i++)
+            {
+                if (personalizados.TryGetValue(i, out var custom))
+                {
+                    distribution.Add(custom);
+                    continue;
+                }
+
+                if (indicesSinPersonalizar.Count == 0)
+                {
+                    distribution.Add(0m);
+                    continue;
+                }
+
+                var posicion = indicesSinPersonalizar.IndexOf(i);
+                if (posicion < indicesSinPersonalizar.Count - 1)
+                {
+                    distribution.Add(prorrateado);
+                    acumuladoNoPersonalizado += prorrateado;
                 }
                 else
                 {
-                    result.Add(totalCost.Value - accumulated);
+                    distribution.Add(restante - acumuladoNoPersonalizado);
                 }
             }
 
-            return result;
+            return true;
         }
 
         public partial class PlanPreventivoSelectionItem : ObservableObject
@@ -1177,9 +1239,13 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             [ObservableProperty]
             private string rutaFacturaOpcional = string.Empty;
 
+            [ObservableProperty]
+            private string costoOpcionalInput = string.Empty;
+
             public bool HasDetalleOpcional => !string.IsNullOrWhiteSpace(DetalleOpcional);
             public bool HasProveedorOpcional => !string.IsNullOrWhiteSpace(ProveedorOpcional);
             public bool HasFacturaAdjunta => !string.IsNullOrWhiteSpace(RutaFacturaOpcional);
+            public bool HasCostoOpcional => !string.IsNullOrWhiteSpace(CostoOpcionalInput);
 
             partial void OnDetalleOpcionalChanged(string value)
             {
@@ -1194,6 +1260,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             partial void OnRutaFacturaOpcionalChanged(string value)
             {
                 OnPropertyChanged(nameof(HasFacturaAdjunta));
+            }
+
+            partial void OnCostoOpcionalInputChanged(string value)
+            {
+                OnPropertyChanged(nameof(HasCostoOpcional));
             }
         }
     }
