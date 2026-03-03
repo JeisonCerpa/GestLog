@@ -2,15 +2,20 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Services.Utilities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
     public partial class CompletarCorrectivoDialog : Window
     {
+        private readonly IEjecucionMantenimientoService? _ejecucionService;
+
         public class PlanPreventivoSeleccionItem
         {
             public int PlanId { get; set; }
@@ -52,6 +57,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             InitializeComponent();
 
+            _ejecucionService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IEjecucionMantenimientoService>();
+
             KilometrajeAlCompletar = kilometrajeInicial;
             Responsable = responsableInicial?.Trim() ?? string.Empty;
             Proveedor = proveedorInicial?.Trim() ?? string.Empty;
@@ -74,12 +81,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             TxtKilometraje.Text = KilometrajeAlCompletar?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
-            TxtResponsable.Text = Responsable;
-            TxtProveedor.Text = Proveedor;
+            CmbResponsable.Text = Responsable;
+            CmbProveedor.Text = Proveedor;
             TxtCosto.Text = Costo?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
             TxtRutaFactura.Text = RutaFactura;
             TxtObservaciones.Text = Observaciones;
             LstPlanesPreventivos.ItemsSource = _planes;
+
+            _ = CargarSugerenciasAsync();
 
             ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
 
@@ -116,8 +125,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             KilometrajeAlCompletar = km;
-            Responsable = TxtResponsable.Text?.Trim() ?? string.Empty;
-            Proveedor = TxtProveedor.Text?.Trim() ?? string.Empty;
+            Responsable = CmbResponsable.Text?.Trim() ?? string.Empty;
+            Proveedor = CmbProveedor.Text?.Trim() ?? string.Empty;
             Observaciones = TxtObservaciones.Text?.Trim() ?? string.Empty;
             RutaFactura = TxtRutaFactura.Text?.Trim() ?? string.Empty;
             PlanesPreventivosSeleccionados = _planes.Where(p => p.IsSelected).Select(p => p.PlanId).Distinct().ToList();
@@ -208,6 +217,28 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtError.Text = string.Empty;
             DialogResult = true;
             Close();
+        }
+
+        private async Task CargarSugerenciasAsync()
+        {
+            if (_ejecucionService == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var responsables = await _ejecucionService.GetSuggestedResponsablesAsync(limit: 100);
+                var proveedores = await _ejecucionService.GetSuggestedProveedoresAsync(limit: 100);
+
+                CmbResponsable.ItemsSource = responsables;
+                CmbProveedor.ItemsSource = proveedores;
+            }
+            catch
+            {
+                CmbResponsable.ItemsSource = Array.Empty<string>();
+                CmbProveedor.ItemsSource = Array.Empty<string>();
+            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)

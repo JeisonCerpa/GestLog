@@ -48,7 +48,10 @@
                 <ScrollViewer Grid.Row="1" Margin="20" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <TextBlock Text="Proveedor" FontWeight="SemiBold"/>
-                        <TextBox x:Name="TxtProveedor" Style="{StaticResource InputStyle}" />
+                        <ComboBox x:Name="CmbProveedor"
+                                  Style="{StaticResource InputStyle}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False" />
 
                         <TextBlock Text="Observaciones (opcional)" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtObservaciones" Style="{StaticResource InputStyle}" MinHeight="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />

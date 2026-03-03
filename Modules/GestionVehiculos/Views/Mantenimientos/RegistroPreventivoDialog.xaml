@@ -283,7 +283,11 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Responsable" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <TextBox Text="{Binding RegistroResponsable, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                            <ComboBox Text="{Binding RegistroResponsable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding ResponsablesFiltrados}"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
                                             <TextBlock Text="{Binding ResponsableValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -330,7 +334,11 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Proveedor (común)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <TextBox Text="{Binding RegistroProveedor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
+                                            <ComboBox Text="{Binding RegistroProveedor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding ProveedoresFiltrados}"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
                                             <TextBlock Text="Se aplicará a todos los planes, salvo que se personalice por plan."
                                                        FontSize="10" Foreground="#7A7A7A" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                         </StackPanel>

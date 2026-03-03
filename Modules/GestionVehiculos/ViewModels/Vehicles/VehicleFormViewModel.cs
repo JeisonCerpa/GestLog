@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -41,6 +42,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         [ObservableProperty]
         private string brand = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<string> marcasFiltradas = new();
+
+        private List<string> _marcasDisponibles = new();
 
         [ObservableProperty]
         private string model = string.Empty;
@@ -112,6 +118,36 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 "GNC",
                 "GLP"
             });
+
+            _ = CargarMarcasSugeridasAsync();
+        }
+
+        partial void OnBrandChanged(string value)
+        {
+            ActualizarMarcasFiltradas(value);
+        }
+
+        private async Task CargarMarcasSugeridasAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _marcasDisponibles = await _vehicleService.GetSuggestedBrandsAsync(limit: 100, cancellationToken: cancellationToken);
+                ActualizarMarcasFiltradas(Brand);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudieron cargar sugerencias de marcas de vehículos");
+            }
+        }
+
+        private void ActualizarMarcasFiltradas(string? filtro)
+        {
+            var term = (filtro ?? string.Empty).Trim();
+            var items = string.IsNullOrWhiteSpace(term)
+                ? _marcasDisponibles
+                : _marcasDisponibles.Where(m => m.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            MarcasFiltradas = new ObservableCollection<string>(items);
         }
 
         [RelayCommand]
@@ -200,6 +236,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                         dialog.Close();
                     }
                 });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Validación de negocio al guardar vehículo");
+                ErrorMessage = ex.Message;
             }
             catch (Exception ex)
             {
@@ -354,6 +395,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             PhotoThumbPath = vehicle.PhotoThumbPath;
             FuelType = vehicle.FuelType;
 
+            _ = CargarMarcasSugeridasAsync();
+
             TituloDialog = "Editar Vehículo";
             TextoBotonPrincipal = "Actualizar";
             IsEditing = true;
@@ -376,6 +419,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             FuelType = null;
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
+            _ = CargarMarcasSugeridasAsync();
         }
     }
 }

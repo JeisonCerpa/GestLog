@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Services.Utilities;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -50,18 +51,16 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new Microsoft.Win32.OpenFileDialog
+            async Task AdjuntarFacturaAsync()
             {
-                Title = "Seleccionar factura (PDF o imagen)",
-                Filter = "Archivos PDF/Imagen|*.pdf;*.png;*.jpg;*.jpeg|PDF (*.pdf)|*.pdf|Imagen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|Todos los archivos (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-
-            if (dlg.ShowDialog(this) == true)
-            {
-                _viewModel.RegistroRutaFactura = dlg.FileName;
+                var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
+                if (!string.IsNullOrWhiteSpace(uploaded))
+                {
+                    _viewModel.RegistroRutaFactura = uploaded;
+                }
             }
+
+            _ = AdjuntarFacturaAsync();
         }
 
         protected override void OnClosed(System.EventArgs e)

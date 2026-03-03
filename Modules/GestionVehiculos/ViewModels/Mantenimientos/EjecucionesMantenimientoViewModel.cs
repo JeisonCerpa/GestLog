@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         private readonly IPlanMantenimientoVehiculoService _planService;
         private readonly IPlantillaMantenimientoService _plantillaService;
         private readonly IVehicleService _vehicleService;
+        private readonly IVehicleDocumentService _vehicleDocumentService;
         private readonly IGestLogLogger _logger;
 
         [ObservableProperty]
@@ -85,6 +87,15 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         [ObservableProperty]
         private string costoValidationMessage = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<string> responsablesFiltrados = new();
+
+        [ObservableProperty]
+        private ObservableCollection<string> proveedoresFiltrados = new();
+
+        private List<string> _responsablesDisponibles = new();
+        private List<string> _proveedoresDisponibles = new();
 
         [ObservableProperty]
         private ObservableCollection<PlanPreventivoSelectionItem> planesPreventivoSeleccionables = new();
@@ -183,9 +194,17 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         partial void OnRegistroKMAlMomentoInputChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
         partial void OnRegistroFechaEjecucionChanged(DateTime? value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
-        partial void OnRegistroResponsableChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroResponsableChanged(string value)
+        {
+            OnPropertyChanged(nameof(ResumenPrevioGuardado));
+            ActualizarResponsablesFiltrados(value);
+        }
         partial void OnRegistroCostoInputChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
-        partial void OnRegistroProveedorChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
+        partial void OnRegistroProveedorChanged(string value)
+        {
+            OnPropertyChanged(nameof(ResumenPrevioGuardado));
+            ActualizarProveedoresFiltrados(value);
+        }
         partial void OnRegistroRutaFacturaChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
         partial void OnRegistroEsExtraordinarioChanged(bool value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
         partial void OnRegistroMotivoExtraordinarioChanged(string value) => OnPropertyChanged(nameof(ResumenPrevioGuardado));
@@ -195,13 +214,53 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             IPlanMantenimientoVehiculoService planService,
             IPlantillaMantenimientoService plantillaService,
             IVehicleService vehicleService,
+            IVehicleDocumentService vehicleDocumentService,
             IGestLogLogger logger)
         {
             _ejecucionService = ejecucionService;
             _planService = planService;
             _plantillaService = plantillaService;
             _vehicleService = vehicleService;
+            _vehicleDocumentService = vehicleDocumentService;
             _logger = logger;
+
+            _ = CargarCatalogosResponsableProveedorAsync();
+        }
+
+        private async Task CargarCatalogosResponsableProveedorAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _responsablesDisponibles = await _ejecucionService.GetSuggestedResponsablesAsync(limit: 100, cancellationToken: cancellationToken);
+                _proveedoresDisponibles = await _ejecucionService.GetSuggestedProveedoresAsync(limit: 100, cancellationToken: cancellationToken);
+
+                ActualizarResponsablesFiltrados(RegistroResponsable);
+                ActualizarProveedoresFiltrados(RegistroProveedor);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudieron cargar catálogos de responsables/proveedores para preventivos");
+            }
+        }
+
+        private void ActualizarResponsablesFiltrados(string? filtro)
+        {
+            var term = (filtro ?? string.Empty).Trim();
+            var items = string.IsNullOrWhiteSpace(term)
+                ? _responsablesDisponibles
+                : _responsablesDisponibles.Where(r => r.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            ResponsablesFiltrados = new ObservableCollection<string>(items);
+        }
+
+        private void ActualizarProveedoresFiltrados(string? filtro)
+        {
+            var term = (filtro ?? string.Empty).Trim();
+            var items = string.IsNullOrWhiteSpace(term)
+                ? _proveedoresDisponibles
+                : _proveedoresDisponibles.Where(p => p.Contains(term, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            ProveedoresFiltrados = new ObservableCollection<string>(items);
         }
 
         [RelayCommand]
@@ -289,6 +348,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
                 var nombresPlanesSeleccionados = planesSeleccionados.Select(p => p.NombrePlantilla).ToList();
+                var rutasFacturaPreventivo = new List<string>();
 
                 for (var index = 0; index < planesSeleccionados.Count; index++)
                 {
@@ -300,6 +360,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     var rutaFacturaAplicada = !string.IsNullOrWhiteSpace(planSeleccionado.RutaFacturaOpcional)
                         ? planSeleccionado.RutaFacturaOpcional.Trim()
                         : (string.IsNullOrWhiteSpace(RegistroRutaFactura) ? null : RegistroRutaFactura.Trim());
+
+                    if (!string.IsNullOrWhiteSpace(rutaFacturaAplicada))
+                    {
+                        rutasFacturaPreventivo.Add(rutaFacturaAplicada);
+                    }
 
                     var observacionesPreventivo = BuildPreventivoObservaciones(
                         RegistroObservaciones,
@@ -353,6 +418,57 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 {
                     vehiculo.Mileage = kmAlMomento;
                     await _vehicleService.UpdateAsync(vehiculo.Id, vehiculo, cancellationToken);
+                }
+
+                if (vehiculo != null && rutasFacturaPreventivo.Count > 0)
+                {
+                    try
+                    {
+                        var facturasUnicas = rutasFacturaPreventivo
+                            .Where(r => !string.IsNullOrWhiteSpace(r))
+                            .Select(r => r.Trim())
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+                        if (facturasUnicas.Count > 0)
+                        {
+                            var existentes = await _vehicleDocumentService.GetByVehicleIdAsync(vehiculo.Id);
+
+                            foreach (var rutaFactura in facturasUnicas)
+                            {
+                                var yaExiste = existentes.Any(d =>
+                                    d.DocumentType.Equals("Factura", StringComparison.OrdinalIgnoreCase) &&
+                                    d.IsActive &&
+                                    string.Equals(d.FilePath ?? string.Empty, rutaFactura, StringComparison.OrdinalIgnoreCase));
+
+                                if (yaExiste)
+                                {
+                                    continue;
+                                }
+
+                                var facturaDto = new VehicleDocumentDto
+                                {
+                                    VehicleId = vehiculo.Id,
+                                    DocumentType = "Factura",
+                                    DocumentNumber = null,
+                                    IssuedDate = fechaEjecucion,
+                                    ExpirationDate = fechaEjecucion,
+                                    FileName = Path.GetFileName(rutaFactura),
+                                    FilePath = rutaFactura,
+                                    Notes = $"Factura de preventivo ({placa})",
+                                    IsActive = true
+                                };
+
+                                await _vehicleDocumentService.AddAsync(facturaDto);
+
+                                existentes = await _vehicleDocumentService.GetByVehicleIdAsync(vehiculo.Id);
+                            }
+                        }
+                    }
+                    catch (Exception exFactura)
+                    {
+                        _logger.LogError(exFactura, "Error registrando factura(s) de preventivo como documentos del vehículo {Placa}", placa);
+                    }
                 }
 
                 await LoadHistorialVehiculoAsync(cancellationToken);

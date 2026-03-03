@@ -198,7 +198,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 _logger.LogDebug($"✅ LoadDocumentsAsync: {documents.Count} documentos obtenidos de BD");
                 
                 Documents.Clear();
-                foreach (var doc in documents.OrderByDescending(d => d.ExpirationDate))
+                foreach (var doc in documents
+                    .OrderBy(d => GetDocumentPriority(d.DocumentType))
+                    .ThenByDescending(d => d.IssuedDate)
+                    .ThenByDescending(d => d.CreatedAt))
                 {
                     // Si el storage service está disponible y el documento es imagen, solicitar URI para thumbnail/previsualización
                     try
@@ -231,6 +234,17 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 IsLoading = false;
             }
+        }
+
+        private static int GetDocumentPriority(string? documentType)
+        {
+            if (string.IsNullOrWhiteSpace(documentType)) return 99;
+
+            if (documentType.Equals("SOAT", StringComparison.OrdinalIgnoreCase)) return 0;
+            if (documentType.Equals("Tecno-Mecánica", StringComparison.OrdinalIgnoreCase)) return 1;
+            if (documentType.Equals("Factura", StringComparison.OrdinalIgnoreCase)) return 2;
+
+            return 10;
         }
 
         /// <summary>

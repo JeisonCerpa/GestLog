@@ -417,7 +417,7 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.HasIndex(e => new { e.VehicleId, e.DocumentType })
                     .HasDatabaseName("IX_VehicleDocuments_VehicleId_DocumentType_Active")
                     .IsUnique()
-                    .HasFilter("[IsActive] = 1");
+                    .HasFilter("[IsActive] = 1 AND [DocumentType] IN (N'SOAT', N'Tecno-Mecánica')");
                 
                 entity.HasIndex(e => new { e.VehicleId, e.ExpirationDate })
                     .HasDatabaseName("IX_VehicleDocuments_VehicleId_ExpirationDate");

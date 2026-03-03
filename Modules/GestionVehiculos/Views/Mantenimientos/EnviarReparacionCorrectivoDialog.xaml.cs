@@ -1,10 +1,15 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Threading.Tasks;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
     public partial class EnviarReparacionCorrectivoDialog : Window
     {
+        private readonly IEjecucionMantenimientoService? _ejecucionService;
+
         public string Proveedor { get; private set; }
         public string Observaciones { get; private set; }
 
@@ -12,11 +17,15 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             InitializeComponent();
 
+            _ejecucionService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IEjecucionMantenimientoService>();
+
             Proveedor = proveedorInicial?.Trim() ?? string.Empty;
             Observaciones = observacionesInicial?.Trim() ?? string.Empty;
 
-            TxtProveedor.Text = Proveedor;
+            CmbProveedor.Text = Proveedor;
             TxtObservaciones.Text = Observaciones;
+
+            _ = CargarProveedoresSugeridosAsync();
 
             ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
 
@@ -32,7 +41,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            var proveedor = TxtProveedor.Text?.Trim() ?? string.Empty;
+            var proveedor = CmbProveedor.Text?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(proveedor))
             {
                 TxtError.Text = "Debe indicar proveedor.";
@@ -45,6 +54,24 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             DialogResult = true;
             Close();
+        }
+
+        private async Task CargarProveedoresSugeridosAsync()
+        {
+            if (_ejecucionService == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var proveedores = await _ejecucionService.GetSuggestedProveedoresAsync(limit: 100);
+                CmbProveedor.ItemsSource = proveedores;
+            }
+            catch
+            {
+                CmbProveedor.ItemsSource = Array.Empty<string>();
+            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)

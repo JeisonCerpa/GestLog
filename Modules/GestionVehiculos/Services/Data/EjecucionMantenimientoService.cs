@@ -298,5 +298,77 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 throw;
             }
         }
+
+        public async Task<List<string>> GetSuggestedResponsablesAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var normalizedFilter = (filter ?? string.Empty).Trim().ToLower();
+                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+                var query = context.Set<EjecucionMantenimiento>()
+                    .AsNoTracking()
+                    .Where(e => !e.IsDeleted && !string.IsNullOrWhiteSpace(e.ResponsableEjecucion));
+
+                if (!string.IsNullOrWhiteSpace(normalizedFilter))
+                {
+                    query = query.Where(e => e.ResponsableEjecucion!.ToLower().Contains(normalizedFilter));
+                }
+
+                return await query
+                    .GroupBy(e => e.ResponsableEjecucion!.Trim().ToLower())
+                    .Select(g => new
+                    {
+                        Valor = g.First().ResponsableEjecucion!.Trim(),
+                        Cantidad = g.Count()
+                    })
+                    .OrderByDescending(x => x.Cantidad)
+                    .ThenBy(x => x.Valor)
+                    .Take(limit)
+                    .Select(x => x.Valor)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener sugerencias de responsables");
+                throw;
+            }
+        }
+
+        public async Task<List<string>> GetSuggestedProveedoresAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var normalizedFilter = (filter ?? string.Empty).Trim().ToLower();
+                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+                var query = context.Set<EjecucionMantenimiento>()
+                    .AsNoTracking()
+                    .Where(e => !e.IsDeleted && !string.IsNullOrWhiteSpace(e.Proveedor));
+
+                if (!string.IsNullOrWhiteSpace(normalizedFilter))
+                {
+                    query = query.Where(e => e.Proveedor!.ToLower().Contains(normalizedFilter));
+                }
+
+                return await query
+                    .GroupBy(e => e.Proveedor!.Trim().ToLower())
+                    .Select(g => new
+                    {
+                        Valor = g.First().Proveedor!.Trim(),
+                        Cantidad = g.Count()
+                    })
+                    .OrderByDescending(x => x.Cantidad)
+                    .ThenBy(x => x.Valor)
+                    .Take(limit)
+                    .Select(x => x.Valor)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener sugerencias de proveedores");
+                throw;
+            }
+        }
     }
 }

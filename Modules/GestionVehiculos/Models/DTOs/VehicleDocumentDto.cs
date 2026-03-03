@@ -83,6 +83,8 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         /// </summary>
         public string? PreviewUri { get; set; }
 
+        public bool IsFactura => DocumentType.Equals("Factura", StringComparison.OrdinalIgnoreCase);
+
         /// <summary>
         /// Indica si el archivo es una imagen soportada para previsualización inline
         /// </summary>
@@ -104,6 +106,9 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         {
             get
             {
+                if (IsFactura)
+                    return "🧾 Soporte";
+
                 // Tratar fecha por defecto (no establecida) como "sin vencimiento"
                 if (ExpirationDate == default(DateTimeOffset))
                     return "⚪ Sin vencimiento";
@@ -123,6 +128,9 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         {
             get
             {
+                if (IsFactura)
+                    return "#EEF2FF"; // índigo claro
+
                 if (ExpirationDate == default(DateTimeOffset))
                     return "#F3F4F6"; // gris claro
 
@@ -141,6 +149,9 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         {
             get
             {
+                if (IsFactura)
+                    return "#4338CA"; // índigo
+
                 if (ExpirationDate == default(DateTimeOffset))
                     return "#6B7280"; // gris oscuro
 
@@ -151,6 +162,23 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
                 return "#10B981"; // verde
             }
         }
+
+        public string DisplayDocumentNumber
+            => IsFactura
+                ? "—"
+                : string.IsNullOrWhiteSpace(DocumentNumber) ? "—" : DocumentNumber!;
+
+        public string DisplayIssuedDate
+            => IssuedDate == default(DateTimeOffset)
+                ? "—"
+                : IssuedDate.ToString("dd/MM/yyyy");
+
+        public string DisplayExpirationDate
+            => IsFactura
+                ? "No aplica"
+                : ExpirationDate == default(DateTimeOffset)
+                    ? "—"
+                    : ExpirationDate.ToString("dd/MM/yyyy");
 
     }
 }

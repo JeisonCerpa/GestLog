@@ -246,9 +246,9 @@
 
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Número" Binding="{Binding DocumentNumber}" Width="1.2*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Emisión" Binding="{Binding IssuedDate, StringFormat=dd/MM/yyyy}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Vencimiento" Binding="{Binding ExpirationDate, StringFormat=dd/MM/yyyy}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Número" Binding="{Binding DisplayDocumentNumber}" Width="1.2*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Emisión" Binding="{Binding DisplayIssuedDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                        <DataGridTextColumn Header="Vencimiento" Binding="{Binding DisplayExpirationDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
 
                         <DataGridTemplateColumn Header="Estado" Width="1*">
                             <DataGridTemplateColumn.CellTemplate>

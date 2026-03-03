@@ -43,74 +43,91 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Contenido Principal -->
-        <Grid Grid.Row="0" Margin="40,30">
-            <StackPanel>
-                <!-- Header con Botón Agregar -->
-                <Grid Margin="0,0,0,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>                    <TextBlock Text="Gestión de Vehículos" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold" Foreground="#118938"/>
-                    <!-- Botón circular consistente con otras vistas -->
-                    <Button Grid.Column="1" Command="{Binding AgregarVehiculoAsyncCommand}" ToolTip="Agregar vehículo"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Margin="8,0,0,0" Click="BtnAgregar_Click"/>
-                </Grid>
-                
-                <!-- Grid de vehículos -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <ItemsControl ItemsSource="{Binding Vehicles}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="3"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <!-- Card para cada vehículo -->
-                                    <Border Style="{StaticResource ModernCardStyle}" Width="320" Height="Auto" HorizontalAlignment="Left" Margin="0,0,12,12">
-                                        <StackPanel>
-                                            <!-- Foto del vehículo -->
-                                            <Image Source="{Binding PhotoPath}" Width="160" Height="128" Stretch="UniformToFill" HorizontalAlignment="Center" Margin="0,0,0,12" />
+        <!-- Header con Botón Agregar (estilo similar a Gestión Cartera) -->
+        <Grid Grid.Row="0" Margin="40,30,40,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                                            <!-- Título vehículo -->
-                                            <TextBlock Text="{Binding VehicleName}" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="White" Width="80" Height="80" CornerRadius="40"
+                        HorizontalAlignment="Center" Margin="0,0,20,0"
+                        BorderBrush="#E5E5E5" BorderThickness="1" Padding="6">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000"
+                                          BlurRadius="6"
+                                          ShadowDepth="1"
+                                          Opacity="0.08"/>
+                    </Border.Effect>
+                    <TextBlock Text="🚗" FontFamily="Segoe UI" FontSize="36"
+                               Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
 
-                                            <!-- Kilometraje -->
-                                            <TextBlock Text="{Binding MileageText}" FontFamily="Segoe UI" FontSize="13" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-
-                                            <!-- Badge estado -->
-                                            <Border Background="{Binding BadgeBackground}" CornerRadius="6" Padding="6,2" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                                <TextBlock Text="{Binding BadgeText}" Foreground="{Binding BadgeForeground}" FontWeight="SemiBold" FontSize="11"/>
-                                            </Border>
-
-                                            <!-- Documentos resumen -->
-                                            <TextBlock Text="{Binding DocumentSummary}" FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,14"/>
-
-                                            <!-- Botón Ver detalles -->
-                                            <Button Content="Ver detalles" Command="{Binding VerDetallesCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Card de configuración de planes (siempre al final) -->
-                        <Border Style="{StaticResource ModernCardStyle}" Width="320" Height="Auto" HorizontalAlignment="Left" Margin="0,0,12,12">
-                            <StackPanel>
-                                <TextBlock Text="Configuración de planes" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
-                                <TextBlock Text="Administra plantillas de mantenimiento para todos los vehículos." FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,14"/>
-                                <Button Content="Configurar plantillas" Command="{Binding AbrirConfiguracionPlantillasCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Gestión de Vehículos"
+                               FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold"
+                               Foreground="#118938" Margin="0,0,0,8"/>
+                    <TextBlock Text="Administra vehículos, mantenimientos y documentación"
+                               FontFamily="Segoe UI" FontSize="16"
+                               Foreground="#706F6F"/>
+                </StackPanel>
             </StackPanel>
-        </Grid>        
+
+            <!-- Botones de acción: configuración + agregar -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Command="{Binding AbrirConfiguracionPlantillasCommand}" ToolTip="Configuración de plantillas"
+                        Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE713;" Margin="0,0,8,0"/>
+                <Button Command="{Binding AgregarVehiculoAsyncCommand}" ToolTip="Agregar vehículo"
+                        Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Click="BtnAgregar_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Contenido Principal (Vehículos) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="40,0,40,40">
+            <StackPanel VerticalAlignment="Center">
+                <ItemsControl ItemsSource="{Binding Vehicles}" HorizontalAlignment="Left">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Card para cada vehículo -->
+                            <Border Style="{StaticResource ModernCardStyle}" Width="320" Height="Auto" HorizontalAlignment="Left" Margin="0,0,12,12">
+                                <StackPanel>
+                                    <!-- Foto del vehículo -->
+                                    <Image Source="{Binding PhotoPath}" Width="160" Height="128" Stretch="UniformToFill" HorizontalAlignment="Center" Margin="0,0,0,12" />
+
+                                    <!-- Título vehículo -->
+                                    <TextBlock Text="{Binding VehicleName}" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
+
+                                    <!-- Kilometraje -->
+                                    <TextBlock Text="{Binding MileageText}" FontFamily="Segoe UI" FontSize="13" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
+                                    <!-- Badge estado -->
+                                    <Border Background="{Binding BadgeBackground}" CornerRadius="6" Padding="6,2" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                        <TextBlock Text="{Binding BadgeText}" Foreground="{Binding BadgeForeground}" FontWeight="SemiBold" FontSize="11"/>
+                                    </Border>
+
+                                    <!-- Documentos resumen -->
+                                    <TextBlock Text="{Binding DocumentSummary}" FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,14"/>
+
+                                    <!-- Botón Ver detalles -->
+                                    <Button Content="Ver detalles" Command="{Binding VerDetallesCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+        
         <!-- Overlay/modal inline eliminado: el Window VehicleFormDialog no puede ser instanciado dentro del UserControl. -->
     </Grid>
 </UserControl>

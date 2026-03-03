@@ -51,10 +51,16 @@
                         <TextBox x:Name="TxtKilometraje" Style="{StaticResource InputStyle}" />
 
                         <TextBlock Text="Responsable" FontWeight="SemiBold"/>
-                        <TextBox x:Name="TxtResponsable" Style="{StaticResource InputStyle}" />
+                        <ComboBox x:Name="CmbResponsable"
+                                  Style="{StaticResource InputStyle}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False" />
 
                         <TextBlock Text="Proveedor" FontWeight="SemiBold"/>
-                        <TextBox x:Name="TxtProveedor" Style="{StaticResource InputStyle}" />
+                        <ComboBox x:Name="CmbProveedor"
+                                  Style="{StaticResource InputStyle}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False" />
 
                         <TextBlock Text="Costo" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtCosto" Style="{StaticResource InputStyle}" />

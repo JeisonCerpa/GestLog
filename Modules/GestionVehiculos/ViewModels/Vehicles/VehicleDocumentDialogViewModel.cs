@@ -61,7 +61,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _vehicleService = vehicleService ?? throw new ArgumentNullException(nameof(vehicleService));
 
-            DocumentTypes = new ObservableCollection<string>(new[] { "SOAT", "Tecno-Mecánica", "Carta de propiedad", "Otros" });            SelectFileCommand = new RelayCommand(SelectFile);
+            DocumentTypes = new ObservableCollection<string>(new[] { "SOAT", "Tecno-Mecánica", "Factura", "Carta de propiedad", "Otros" });            SelectFileCommand = new RelayCommand(SelectFile);
             // Inicializar comando Remove y exponerlo
             _removeSelectedFileCommand = new RelayCommand(RemoveSelectedFile, () => HasSelectedFile);
             _removeSelectedFileCommand.SetDebugLogger(logger);

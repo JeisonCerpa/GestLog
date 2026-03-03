@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         private readonly IEjecucionMantenimientoService _ejecucionService;
         private readonly IPlanMantenimientoVehiculoService _planService;
+        private readonly IVehicleService _vehicleService;
+        private readonly IVehicleDocumentService _vehicleDocumentService;
         private readonly IGestLogLogger _logger;
 
         public event Action? RegistroCorrectivoExitoso;
@@ -82,10 +85,14 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         public CorrectivosMantenimientoViewModel(
             IEjecucionMantenimientoService ejecucionService,
             IPlanMantenimientoVehiculoService planService,
+            IVehicleService vehicleService,
+            IVehicleDocumentService vehicleDocumentService,
             IGestLogLogger logger)
         {
             _ejecucionService = ejecucionService;
             _planService = planService;
+            _vehicleService = vehicleService;
+            _vehicleDocumentService = vehicleDocumentService;
             _logger = logger;
         }
 
@@ -207,7 +214,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         descripcionFalla,
                         RegistroFechaEjecucion),
                     Costo = null,
-                    RutaFactura = null,
+                    RutaFactura = string.IsNullOrWhiteSpace(RegistroRutaFactura) ? null : RegistroRutaFactura.Trim(),
                     ResponsableEjecucion = null,
                     Proveedor = null,
                     EstadoCorrectivo = (int)EstadoMantenimientoCorrectivoVehiculo.FallaReportada,
@@ -215,6 +222,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 };
 
                 await _ejecucionService.CreateAsync(dto, cancellationToken);
+                await EnsureFacturaDocumentAsync(dto.PlacaVehiculo, dto.RutaFactura, dto.FechaEjecucion, cancellationToken);
                 await LoadCorrectivosVehiculoAsync(cancellationToken);
                 RegistroCorrectivoExitoso?.Invoke();
             }
@@ -352,6 +360,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     observacionesCompletado);
 
                 await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
+                await EnsureFacturaDocumentAsync(correctivo.PlacaVehiculo, correctivo.RutaFactura, correctivo.FechaEjecucion, cancellationToken);
 
                 if (planesPreventivosEjecutados != null)
                 {
@@ -413,6 +422,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             try
             {
                 await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
+                await EnsureFacturaDocumentAsync(correctivo.PlacaVehiculo, correctivo.RutaFactura, correctivo.FechaEjecucion, cancellationToken);
                 await LoadCorrectivosVehiculoAsync(cancellationToken);
             }
             catch (Exception ex)
@@ -430,6 +440,58 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 EstadoMantenimientoCorrectivoVehiculo.Cancelado => EstadoEjecucion.Cancelado,
                 _ => EstadoEjecucion.Pendiente
             };
+        }
+
+        private async Task EnsureFacturaDocumentAsync(
+            string placaVehiculo,
+            string? rutaFactura,
+            DateTimeOffset fechaEmision,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(placaVehiculo) || string.IsNullOrWhiteSpace(rutaFactura))
+            {
+                return;
+            }
+
+            try
+            {
+                var rutaNormalizada = rutaFactura.Trim();
+                var vehiculo = await _vehicleService.GetByPlateAsync(placaVehiculo.Trim().ToUpperInvariant(), cancellationToken);
+                if (vehiculo == null)
+                {
+                    return;
+                }
+
+                var documentos = await _vehicleDocumentService.GetByVehicleIdAsync(vehiculo.Id);
+                var yaExiste = documentos.Any(d =>
+                    d.DocumentType.Equals("Factura", StringComparison.OrdinalIgnoreCase) &&
+                    d.IsActive &&
+                    string.Equals(d.FilePath ?? string.Empty, rutaNormalizada, StringComparison.OrdinalIgnoreCase));
+
+                if (yaExiste)
+                {
+                    return;
+                }
+
+                var facturaDto = new VehicleDocumentDto
+                {
+                    VehicleId = vehiculo.Id,
+                    DocumentType = "Factura",
+                    DocumentNumber = null,
+                    IssuedDate = fechaEmision == default ? DateTimeOffset.UtcNow : fechaEmision,
+                    ExpirationDate = fechaEmision == default ? DateTimeOffset.UtcNow : fechaEmision,
+                    FileName = Path.GetFileName(rutaNormalizada),
+                    FilePath = rutaNormalizada,
+                    Notes = $"Factura de correctivo ({placaVehiculo})",
+                    IsActive = true
+                };
+
+                await _vehicleDocumentService.AddAsync(facturaDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sincronizando factura de correctivo en documentos para placa {Placa}", placaVehiculo);
+            }
         }
     }
 }

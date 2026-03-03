@@ -957,7 +957,7 @@ namespace GestLog.Migrations
                     b.HasIndex("VehicleId", "DocumentType")
                         .IsUnique()
                         .HasDatabaseName("IX_VehicleDocuments_VehicleId_DocumentType_Active")
-                        .HasFilter("[IsActive] = 1");
+                        .HasFilter("[IsActive] = 1 AND [DocumentType] IN (N'SOAT', N'Tecno-Mecánica')");
 
                     b.HasIndex("VehicleId", "ExpirationDate")
                         .HasDatabaseName("IX_VehicleDocuments_VehicleId_ExpirationDate");

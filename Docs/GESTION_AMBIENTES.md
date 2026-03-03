@@ -73,5 +73,43 @@ $env:GESTLOG_ENVIRONMENT = "Production"
 
 ---
 
-**Última actualización**: 22 de diciembre de 2025
+## 🛠️ Aplicar migraciones en Development y Production
+
+Para cambios de esquema (como permitir múltiples facturas activas), aplica migración en **ambos ambientes**.
+
+### 1) Development
+
+```powershell
+$env:GESTLOG_ENVIRONMENT = "Development"
+dotnet ef database update
+```
+
+Verifica:
+
+```powershell
+dotnet ef migrations list
+```
+
+### 2) Production
+
+```powershell
+$env:GESTLOG_ENVIRONMENT = "Production"
+dotnet ef database update
+```
+
+Verifica:
+
+```powershell
+dotnet ef migrations list
+```
+
+### Recomendaciones para Production
+
+- Realizar respaldo de base de datos antes de `dotnet ef database update`.
+- Ejecutar en ventana de mantenimiento.
+- Confirmar conexión del ambiente (`GESTLOG_ENVIRONMENT=Production`) antes de correr el comando.
+
+---
+
+**Última actualización**: 3 de marzo de 2026
 

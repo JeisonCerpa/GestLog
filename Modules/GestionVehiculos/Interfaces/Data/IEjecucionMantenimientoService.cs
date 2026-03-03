@@ -33,5 +33,15 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Data
         /// Obtiene ejecuciones por placa y tipo de mantenimiento.
         /// </summary>
         Task<IEnumerable<EjecucionMantenimientoDto>> GetByPlacaAndTipoAsync(string placaVehiculo, int tipoMantenimiento, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene responsables sugeridos desde ejecuciones históricas.
+        /// </summary>
+        Task<List<string>> GetSuggestedResponsablesAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene proveedores sugeridos desde ejecuciones históricas.
+        /// </summary>
+        Task<List<string>> GetSuggestedProveedoresAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default);
     }
 }

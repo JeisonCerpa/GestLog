@@ -115,160 +115,136 @@
             </Setter>
             <Setter Property="ItemContainerStyle" Value="{StaticResource DetailTabItemStyle}"/>
         </Style>
+
+        <Style x:Key="HeaderActionButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#118938" />
+            <Setter Property="BorderBrush" Value="#118938" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.8" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderDangerButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderActionButtonStyle}">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="BorderBrush" Value="#DC2626" />
+        </Style>
     </UserControl.Resources>
     <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>        <!-- Header con título del vehículo (Marca Modelo Año) -->
-        <Border Grid.Row="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="0,0,0,1" Padding="24,16">
-            <StackPanel>
-                <TextBlock FontSize="28" FontWeight="SemiBold" Foreground="#118938" Margin="0,0,0,8" Text="{Binding VehicleTitle}" />
-                <TextBlock FontSize="13" Foreground="#706F6F" Text="{Binding PlateDisplay}" />
-            </StackPanel>
+        <Border Grid.Row="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="0,0,0,1" Padding="20,10" MinHeight="104">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Foto del vehículo -->
+                <Border Grid.Column="0"
+                        Width="120"
+                        VerticalAlignment="Stretch"
+                        CornerRadius="10"
+                        Background="#F7F7F7"
+                        BorderBrush="#E5E5E5"
+                        BorderThickness="1"
+                        ClipToBounds="True">
+                    <Image Stretch="Uniform">
+                        <Image.Source>
+                            <PriorityBinding>
+                                <Binding Path="PhotoPath" />
+                                <Binding Path="PhotoThumbPath" />
+                            </PriorityBinding>
+                        </Image.Source>
+                    </Image>
+                </Border>
+
+                <!-- Center: Title + subtitle + chips -->
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="#118938" Text="{Binding VehicleTitle}" />
+                    <TextBlock FontSize="13" Foreground="#706F6F" Text="{Binding PlateDisplay}" Margin="0,4,0,6"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="KM: " FontSize="12" Foreground="#706F6F" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding Mileage, StringFormat={}{0:N0} km}" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Próx. mant.: " FontSize="12" Foreground="#706F6F" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right: Actions -->
+                <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Border Background="#FFFFFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="Actualizar KM" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox Width="110"
+                                         Height="34"
+                                         Text="{Binding NuevoKilometrajeInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Padding="8,4"
+                                         FontSize="12"
+                                         BorderBrush="#D0D0D0"
+                                         BorderThickness="1"
+                                         VerticalContentAlignment="Center"
+                                         Margin="0,0,8,0"/>
+                                <Button Content="Actualizar"
+                                        Command="{Binding ActualizarKilometrajeCommand}"
+                                        Style="{StaticResource HeaderActionButtonStyle}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Editar" Command="{Binding EditarVehiculoCommand}" Style="{StaticResource HeaderActionButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="Eliminar" Command="{Binding EliminarVehiculoCommand}" Style="{StaticResource HeaderDangerButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+
+            </Grid>
         </Border>
 
         <!-- Contenido principal -->
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>            <!-- Panel izquierdo: Foto y datos -->
-            <StackPanel Grid.Column="0" Margin="24" VerticalAlignment="Top" Width="320">                <!-- Título pequeño eliminado: se usa el header superior para Brand/Model/Año -->
-
-                <!-- Foto -->
-                <Border MaxWidth="320" MaxHeight="256" HorizontalAlignment="Left" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,0,0,12">
-                    <Grid Background="#F9F9F9">
-                        <Image HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
-                               SnapsToDevicePixels="True">
-                            <Image.Source>
-                                <PriorityBinding>
-                                    <Binding Path="PhotoPath" />
-                                    <Binding Path="PhotoThumbPath" />
-                                </PriorityBinding>
-                            </Image.Source>
-                        </Image>
-                    </Grid>
-                </Border>                <!-- Datos principales debajo de la foto -->
-                <Border Width="320" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" HorizontalAlignment="Left">
-                    <StackPanel>
-                        <TextBlock Text="Detalles del Vehículo" FontSize="12" FontWeight="SemiBold" Foreground="#706F6F" Margin="0,0,0,8" />
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Placa:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding Plate}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="VIN:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding Vin}" FontSize="11" Foreground="#1D1D1B" TextWrapping="Wrap" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Color:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding Color}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tipo:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding Type}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Kilometraje:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding Mileage, StringFormat='{}{0:N0} km'}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-
-                        <StackPanel Margin="0,0,0,8">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
-                                    <ColumnDefinition Width="110" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Nuevo KM:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" VerticalAlignment="Center" />
-                                <TextBox Grid.Column="1"
-                                         Text="{Binding NuevoKilometrajeInput, UpdateSourceTrigger=PropertyChanged}"
-                                         Height="26"
-                                         Padding="6,3"
-                                         FontSize="11"
-                                         BorderBrush="#CCCCCC"
-                                         BorderThickness="1"
-                                         Background="White" />
-                                <Button Grid.Column="3"
-                                        Content="Actualizar Kilometraje"
-                                        Command="{Binding ActualizarKilometrajeCommand}"
-                                        Background="#118938"
-                                        Foreground="White"
-                                        BorderThickness="0"
-                                        Padding="10,5"
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Cursor="Hand"
-                                        HorizontalAlignment="Left" />
-                            </Grid>
-
-                            <TextBlock Text="{Binding MileageUpdateMessage}"
-                                       FontSize="10"
-                                       Margin="110,4,0,0"
-                                       TextWrapping="Wrap">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#10B981"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasMileageUpdateError}" Value="True">
-                                                <Setter Property="Foreground" Value="#C0392B"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </StackPanel>
-
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Estado:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding State}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Combustible:" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" />
-                            <TextBlock Grid.Column="1" Text="{Binding FuelType, TargetNullValue='No especificado'}" FontSize="11" Foreground="#1D1D1B" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-            </StackPanel>            <!-- Pestañas en la derecha -->
-            <TabControl Grid.Column="2" Margin="0,24,24,24" Style="{StaticResource DetailTabControlStyle}">
+            <TabControl Margin="0,16,0,0" Style="{StaticResource DetailTabControlStyle}">
                 <TabItem Header="General">
                     <ScrollViewer>
                         <StackPanel Margin="16">

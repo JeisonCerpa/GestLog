@@ -111,7 +111,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private async void BtnOpenFactura_Click(object sender, RoutedEventArgs e)
         {
-            await FacturaStorageHelper.OpenFacturaAsync(this, TxtFactura.Text);
+            await FacturaStorageHelper.OpenFacturaAsync(this, _ejecucion.RutaFactura);
         }
 
         private void FillFields(EjecucionMantenimientoDto dto)

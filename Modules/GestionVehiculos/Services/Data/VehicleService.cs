@@ -3,6 +3,7 @@ using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Models.Entities;
 using GestLog.Services.Core.Logging;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -86,14 +87,24 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         {
             try
             {
-                // Validar que la placa no exista
-                var exists = await ExistsByPlateAsync(vehicleDto.Plate, cancellationToken);
-                if (exists)
-                {
-                    throw new InvalidOperationException($"Ya existe un vehículo con la placa {vehicleDto.Plate}");
-                }
-
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+                var normalizedPlate = NormalizePlate(vehicleDto.Plate);
+
+                // Validar placa incluyendo eliminados lógicos (el índice UNIQUE en BD también los incluye)
+                var existingByPlate = await context.Vehicles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(v => v.Plate == normalizedPlate, cancellationToken);
+
+                if (existingByPlate != null)
+                {
+                    if (existingByPlate.IsDeleted)
+                    {
+                        throw new InvalidOperationException($"La placa '{normalizedPlate}' ya existe en un vehículo eliminado. Debes restaurarlo o usar otra placa.");
+                    }
+
+                    throw new InvalidOperationException($"Ya existe un vehículo con la placa '{normalizedPlate}'.");
+                }
                 
                 var vehicle = new Vehicle
                 {
@@ -120,6 +131,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
                 return MapToDto(vehicle);
             }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+            {
+                var normalizedPlate = NormalizePlate(vehicleDto.Plate);
+                throw new InvalidOperationException($"No se pudo guardar: la placa '{normalizedPlate}' ya está registrada (incluyendo vehículos eliminados).", ex);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear vehículo");
@@ -132,6 +148,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             try
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var normalizedPlate = NormalizePlate(vehicleDto.Plate);
                 
                 var vehicle = await context.Vehicles
                     .FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted, cancellationToken);
@@ -142,16 +159,24 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 }
 
                 // Validar cambio de placa
-                if (vehicle.Plate != vehicleDto.Plate)
+                if (!string.Equals(vehicle.Plate, normalizedPlate, StringComparison.OrdinalIgnoreCase))
                 {
-                    var exists = await ExistsByPlateAsync(vehicleDto.Plate, cancellationToken);
-                    if (exists)
+                    var duplicated = await context.Vehicles
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(v => v.Plate == normalizedPlate && v.Id != id, cancellationToken);
+
+                    if (duplicated != null)
                     {
-                        throw new InvalidOperationException($"Ya existe un vehículo con la placa {vehicleDto.Plate}");
+                        if (duplicated.IsDeleted)
+                        {
+                            throw new InvalidOperationException($"La placa '{normalizedPlate}' ya existe en un vehículo eliminado. Debes restaurarlo o usar otra placa.");
+                        }
+
+                        throw new InvalidOperationException($"Ya existe un vehículo con la placa '{normalizedPlate}'.");
                     }
                 }
 
-                vehicle.Plate = vehicleDto.Plate;
+                vehicle.Plate = normalizedPlate;
                 vehicle.Vin = vehicleDto.Vin;                vehicle.Brand = vehicleDto.Brand;
                 vehicle.Model = vehicleDto.Model;
                 vehicle.Version = vehicleDto.Version;
@@ -169,6 +194,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 await context.SaveChangesAsync(cancellationToken);
 
                 return MapToDto(vehicle);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+            {
+                var normalizedPlate = NormalizePlate(vehicleDto.Plate);
+                throw new InvalidOperationException($"No se pudo actualizar: la placa '{normalizedPlate}' ya está registrada (incluyendo vehículos eliminados).", ex);
             }
             catch (Exception ex)
             {
@@ -209,10 +239,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
         {
             try
             {
+                var normalizedPlate = NormalizePlate(plate);
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 return await context.Vehicles
                     .AsNoTracking()
-                    .AnyAsync(v => v.Plate == plate && !v.IsDeleted, cancellationToken);
+                    .AnyAsync(v => v.Plate == normalizedPlate && !v.IsDeleted, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -220,6 +251,9 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 throw;
             }
         }
+
+        private static string NormalizePlate(string? plate)
+            => (plate ?? string.Empty).Trim().ToUpperInvariant();
 
         public async Task<int> GetTotalCountAsync(CancellationToken cancellationToken = default)
         {
@@ -236,7 +270,48 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 _logger.LogError(ex, "Error al obtener contador total de vehículos");
                 throw;
             }
-        }        /// <summary>
+        }
+
+        public async Task<List<string>> GetSuggestedBrandsAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var normalizedFilter = (filter ?? string.Empty).Trim();
+                using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+                var query = context.Vehicles
+                    .AsNoTracking()
+                    .Where(v => !v.IsDeleted && !string.IsNullOrWhiteSpace(v.Brand));
+
+                if (!string.IsNullOrWhiteSpace(normalizedFilter))
+                {
+                    var lowered = normalizedFilter.ToLower();
+                    query = query.Where(v => v.Brand.ToLower().Contains(lowered));
+                }
+
+                var marcas = await query
+                    .GroupBy(v => v.Brand.Trim().ToLower())
+                    .Select(g => new
+                    {
+                        Marca = g.First().Brand.Trim(),
+                        Cantidad = g.Count()
+                    })
+                    .OrderByDescending(x => x.Cantidad)
+                    .ThenBy(x => x.Marca)
+                    .Take(limit)
+                    .Select(x => x.Marca)
+                    .ToListAsync(cancellationToken);
+
+                return marcas;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener sugerencias de marcas de vehículos");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Mapea una entidad Vehicle a VehicleDto
         /// </summary>
         private static VehicleDto MapToDto(Vehicle vehicle)

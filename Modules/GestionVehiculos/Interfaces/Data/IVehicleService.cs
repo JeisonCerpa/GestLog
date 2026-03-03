@@ -51,5 +51,10 @@ namespace GestLog.Modules.GestionVehiculos.Interfaces.Data
         /// Obtiene el contador total de vehículos activos
         /// </summary>
         Task<int> GetTotalCountAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene marcas de vehículos sugeridas desde histórico.
+        /// </summary>
+        Task<List<string>> GetSuggestedBrandsAsync(string? filter = null, int limit = 30, CancellationToken cancellationToken = default);
     }
 }
