@@ -80,7 +80,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                                 PlanId = c.PlanId,
                                 CostoAsignado = c.CostoAsignado,
                                 EsCostoPersonalizado = c.EsCostoPersonalizado,
-                                IsOutsideCorrectivoInvoice = c.IsOutsideCorrectivoInvoice
+                                FacturaRuta = c.FacturaRuta,
+                                DetalleOpcional = c.DetalleOpcional,
+                                ProveedorOpcional = c.ProveedorOpcional,
+                                RutaFacturaOpcional = c.RutaFacturaOpcional,
+                                CostoOpcionalInput = c.CostoOpcionalInput
                             }));
 
                     await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesSeleccionados, planesConCostoVm);

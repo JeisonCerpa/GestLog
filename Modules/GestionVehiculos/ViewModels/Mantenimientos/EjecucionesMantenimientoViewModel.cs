@@ -1118,12 +1118,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             };
         }
 
-        private static string BuildPreventivoObservaciones(string? detalleGeneral, string? detallePlan, string nombrePlan)
+        public static string BuildPreventivoObservaciones(string? detalleGeneral, string? detallePlan, string nombrePlan)
         {
             return BuildPreventivoObservaciones(detalleGeneral, detallePlan, nombrePlan, null, null, Array.Empty<string>(), null, null, false, null);
         }
 
-        private static string BuildPreventivoObservaciones(
+        public static string BuildPreventivoObservaciones(
             string? detalleGeneral,
             string? detallePlan,
             string nombrePlan,

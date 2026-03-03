@@ -26,7 +26,13 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             public int PlanId { get; set; }
             public decimal CostoAsignado { get; set; }
             public bool EsCostoPersonalizado { get; set; }
-            public bool IsOutsideCorrectivoInvoice { get; set; }
+            // ruta del archivo de factura asociado cuando el costo es personalizado
+            public string FacturaRuta { get; set; } = string.Empty;
+            // información adicional de nota
+            public string DetalleOpcional { get; set; } = string.Empty;
+            public string ProveedorOpcional { get; set; } = string.Empty;
+            public string RutaFacturaOpcional { get; set; } = string.Empty;
+            public string CostoOpcionalInput { get; set; } = string.Empty;
         }
 
         private readonly IEjecucionMantenimientoService _ejecucionService;
@@ -104,8 +110,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             }
 
             var planes = await _planService.GetByPlacaListAsync(placaVehiculo.Trim().ToUpperInvariant(), cancellationToken);
+            // mostrar todos los planes del vehículo (no sólo los activos) para permitir selección completa
             return planes
-                .Where(p => p.Activo)
                 .OrderBy(p => p.PlantillaNombre)
                 .ToList();
         }
@@ -371,13 +377,28 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         var costoPlan = planesPreventivosConCosto?
                             .FirstOrDefault(c => c.PlanId == plan.Id);
 
-                        var observacionPreventiva = costoPlan == null
-                            ? $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}."
-                            : costoPlan.EsCostoPersonalizado
-                                ? costoPlan.IsOutsideCorrectivoInvoice
-                                    ? $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo personalizado fuera de factura de correctivo: ${costoPlan.CostoAsignado:N2}."
-                                    : $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo personalizado dentro de factura de correctivo: ${costoPlan.CostoAsignado:N2} (referencial, no suma independiente)."
-                                : $"[{fechaTexto}] Ejecutado durante correctivo #{correctivo.Id}. Costo prorrateado dentro de factura de correctivo: ${costoPlan.CostoAsignado:N2} (referencial, no suma independiente).";
+                        // build observation using the helper that handles optional notes/proveedor/factura
+                        var nombresPlanes = planesPreventivosEjecutados.Select(p => p.PlantillaNombre ?? $"Plan #{p.Id}").ToList();
+                        var detalleGeneral = observaciones ?? string.Empty;
+                        var nombrePlan = plan.PlantillaNombre ?? $"Plan #{plan.Id}";
+                        var proveedorAplicado = costoPlan != null && !string.IsNullOrWhiteSpace(costoPlan.ProveedorOpcional)
+                            ? costoPlan.ProveedorOpcional
+                            : proveedor;
+                        var rutaFacturaAplicada = costoPlan != null && !string.IsNullOrWhiteSpace(costoPlan.RutaFacturaOpcional)
+                            ? costoPlan.RutaFacturaOpcional
+                            : null;
+
+                        var observacionPreventiva = EjecucionesMantenimientoViewModel.BuildPreventivoObservaciones(
+                            detalleGeneral,
+                            costoPlan?.DetalleOpcional,
+                            nombrePlan,
+                            costo,
+                            costoPlan?.CostoAsignado,
+                            nombresPlanes,
+                            proveedorAplicado,
+                            rutaFacturaAplicada,
+                            false,
+                            null);
 
                         var preventivaDto = new EjecucionMantenimientoDto
                         {
@@ -393,10 +414,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                             EsExtraordinario = true,
                             Estado = (int)EstadoEjecucion.Completado,
                             EstadoCorrectivo = null,
-                            Costo = (costoPlan != null && costoPlan.IsOutsideCorrectivoInvoice)
+                            Costo = (costoPlan != null && costoPlan.EsCostoPersonalizado)
                                 ? costoPlan.CostoAsignado
                                 : null,
-                            RutaFactura = null
+                            RutaFactura = (costoPlan != null && costoPlan.EsCostoPersonalizado)
+                                ? costoPlan.FacturaRuta
+                                : null
                         };
 
                         await _ejecucionService.CreateAsync(preventivaDto, cancellationToken);

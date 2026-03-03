@@ -81,38 +81,87 @@
                         <TextBox x:Name="TxtObservaciones" Style="{StaticResource InputStyle}" MinHeight="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 
                         <TextBlock Text="Planes preventivos ejecutados en esta intervención (opcional)" FontWeight="SemiBold"/>
-                        <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,4,0,0">
-                            <ListBox x:Name="LstPlanesPreventivos" MinHeight="140" MaxHeight="220">
-                                <ListBox.ItemTemplate>
+                        <TextBlock Text="Selecciona los planes ya realizados durante este correctivo. Usa 'Editar nota' para configurar costo personalizado y adjuntar la factura por plan cuando aplique."
+                                   FontSize="10" Foreground="#555" TextWrapping="Wrap" Margin="0,2,0,8" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MinHeight="140" MaxHeight="220">
+                            <ItemsControl x:Name="IcPlanesPreventivos">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" ItemWidth="320" ItemHeight="Auto" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="12"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="{Binding Nombre}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                    <CheckBox Content="Costo personalizado" IsChecked="{Binding IsCustomCost}" VerticalAlignment="Center"/>
-                                                    <TextBox Width="110" Margin="10,0,0,0" Style="{StaticResource InputStyle}"
-                                                             Text="{Binding CustomCostInput, UpdateSourceTrigger=PropertyChanged}"
-                                                             IsEnabled="{Binding IsCustomCost}" ToolTip="Costo para este plan" />
-                                                    <CheckBox Content="Fuera de factura correctivo"
-                                                              Margin="10,0,0,0"
-                                                              IsChecked="{Binding IsOutsideCorrectivoInvoice}"
-                                                              IsEnabled="{Binding IsCustomCost}"
-                                                              VerticalAlignment="Center"/>
+                                        <Border Width="310" MinHeight="98" Margin="4" Padding="8"
+                                                BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="Vencido">
+                                                            <Setter Property="Background" Value="#FFEBEE" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="Próximo">
+                                                            <Setter Property="Background" Value="#FFF8E1" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Estado}" Value="Vigente">
+                                                            <Setter Property="Background" Value="#E8F5E9" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Grid.Column="0" VerticalAlignment="Top" Margin="0,2,0,0" IsChecked="{Binding IsSelected}"/>
+                                                    <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                                        <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                        <Border Margin="0,6,0,0" Padding="6,2" CornerRadius="10" HorizontalAlignment="Left">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#E8F5E9" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Estado}" Value="Vencido">
+                                                                            <Setter Property="Background" Value="#FFEBEE" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Estado}" Value="Próximo">
+                                                                            <Setter Property="Background" Value="#FFF8E1" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Estado}" Value="Vigente">
+                                                                            <Setter Property="Background" Value="#E8F5E9" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock Text="{Binding Estado}" FontSize="10" FontWeight="SemiBold" Foreground="#2E7D32"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                                            Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                    <Button Content="📝 Editar nota" Click="BtnEditPlanNote_Click" Padding="10,4"
+                                                            Margin="0,0,8,0" Style="{StaticResource ButtonStyle}"
+                                                            Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" Foreground="#1E3A8A"
+                                                            FontSize="10"/>
+                                                    <TextBlock Text="Nota guardada" FontSize="10" Foreground="#2E7D32"
+                                                               VerticalAlignment="Center" Margin="0,0,8,0"
+                                                               Visibility="{Binding HasDetalleOpcional, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                    <TextBlock Text="Costo personalizado" FontSize="10" Foreground="#1E3A8A"
+                                                               VerticalAlignment="Center" Margin="0,0,8,0"
+                                                               Visibility="{Binding IsCustomCost, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                    <TextBlock Text="Factura adjunta" FontSize="10" Foreground="#2E5E39"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding InvoicePath, Converter={StaticResource StringToVisibilityConverter}}"/>
                                                 </StackPanel>
                                             </StackPanel>
-                                            <TextBlock Grid.Column="3" Text="{Binding Estado}" Opacity="0.7" VerticalAlignment="Center"/>
-                                        </Grid>
+                                        </Border>
                                     </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Border>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
 
                         <TextBlock x:Name="TxtError" Foreground="#C0392B" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
