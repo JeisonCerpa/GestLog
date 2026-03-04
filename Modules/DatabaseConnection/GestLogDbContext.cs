@@ -44,6 +44,7 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<PlantillaMantenimiento> PlantillasMantenimiento { get; set; }
         public DbSet<PlanMantenimientoVehiculo> PlanesMantenimientoVehiculo { get; set; }
         public DbSet<EjecucionMantenimiento> EjecucionesMantenimiento { get; set; }
+        public DbSet<ConsumoCombustibleVehiculo> ConsumosCombustibleVehiculo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -546,6 +547,49 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.HasIndex(e => e.FechaEjecucion)
                     .HasDatabaseName("IX_EjecucionesMantenimiento_FechaEjecucion");
+            });
+
+            // ConsumoCombustibleVehiculo
+            modelBuilder.Entity<ConsumoCombustibleVehiculo>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_ConsumosCombustible");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.PlacaVehiculo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Galones)
+                    .HasPrecision(18, 2);
+
+                entity.Property(e => e.ValorTotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(e => e.Proveedor)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.RutaFactura)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Observaciones)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.FechaRegistro)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.FechaActualizacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasIndex(e => e.PlacaVehiculo)
+                    .HasDatabaseName("IX_ConsumosCombustible_PlacaVehiculo");
+
+                entity.HasIndex(e => e.FechaTanqueada)
+                    .HasDatabaseName("IX_ConsumosCombustible_FechaTanqueada");
+
+                entity.HasIndex(e => new { e.PlacaVehiculo, e.FechaTanqueada, e.KMAlMomento })
+                    .HasDatabaseName("IX_ConsumosCombustible_PlacaFechaKm");
             });
         }
 

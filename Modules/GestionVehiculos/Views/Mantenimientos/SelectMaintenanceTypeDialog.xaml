@@ -1,0 +1,93 @@
+<Window x:Class="GestLog.Modules.GestionVehiculos.Views.Mantenimientos.SelectMaintenanceTypeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Agregar mantenimiento"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        Style="{StaticResource ModalWindowBase}">
+    <Grid x:Name="RootGrid" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+                Width="600" MaxHeight="400"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="🔧" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="Agregar mantenimiento" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
+                                <TextBlock Text="Elige el tipo de mantenimiento a registrar" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnCancelar_Click" ToolTip="Cerrar (Esc)">
+                            <Grid Width="14" Height="14">
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="20" VerticalAlignment="Center">
+                    <TextBlock Text="Selecciona el tipo de mantenimiento a registrar" FontSize="13" Foreground="#706F6F" Margin="0,0,0,20"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Tarjeta Preventivo -->
+                        <Border Grid.Column="0" Background="#F9FFFE" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand" 
+                                MouseLeftButtonDown="BtnPreventivo_Click">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
+                            </Border.Effect>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="📅" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                <TextBlock Text="Preventivo" FontSize="16" FontWeight="SemiBold" Foreground="#118938" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock Text="Mantenimiento planificado" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Tarjeta Correctivo -->
+                        <Border Grid.Column="1" Background="#FFFBF9" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Cursor="Hand"
+                                MouseLeftButtonDown="BtnCorrectivo_Click">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
+                            </Border.Effect>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="🔨" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                <TextBlock Text="Correctivo" FontSize="16" FontWeight="SemiBold" Foreground="#C0392B" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock Text="Reparación por falla" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+
+                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancelar_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

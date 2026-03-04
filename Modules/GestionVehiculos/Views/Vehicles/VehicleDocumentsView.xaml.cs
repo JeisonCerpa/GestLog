@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
@@ -223,6 +224,33 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             {
                 var appDialogErr = sp?.GetService(typeof(GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService)) as GestLog.Modules.GestionVehiculos.Interfaces.Dialog.IAppDialogService;
                 appDialogErr?.ShowError($"Error al descargar/abrir documento: {ex.Message}");
+            }
+        }
+
+        private void DgDocuments_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                // Obtener el elemento clickeado
+                var element = e.OriginalSource as System.Windows.FrameworkElement;
+                var row = ItemsControl.ContainerFromElement(sender as DataGrid, element) as DataGridRow;
+
+                if (row?.Item is VehicleDocumentDto document && document != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DgDocuments_PreviewMouseDoubleClick] Doble click en documento: {document.DisplayDocumentNumber}");
+                    
+                    // Si el documento tiene un archivo asociado, abrirlo
+                    if (!string.IsNullOrWhiteSpace(document.FilePath))
+                    {
+                        BtnDownload_Click(null, null);
+                        e.Handled = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DgDocuments_PreviewMouseDoubleClick] Error: {ex.Message}");
+                // No lanzar excepción, simplemente no hacer nada
             }
         }
     }

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Vehicles"
              xmlns:mantenimientos="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Mantenimientos"
+             xmlns:combustible="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Combustible"
              mc:Ignorable="d"
              d:DesignWidth="1000" d:DesignHeight="700">
     <UserControl.Resources>
@@ -226,7 +227,7 @@
                                          BorderThickness="1"
                                          VerticalContentAlignment="Center"
                                          Margin="0,0,8,0"/>
-                                <Button Content="Actualizar"
+                                <Button Content="🔄"
                                         Command="{Binding ActualizarKilometrajeCommand}"
                                         Style="{StaticResource HeaderActionButtonStyle}"/>
                             </StackPanel>
@@ -234,8 +235,10 @@
                     </Border>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Editar" Command="{Binding EditarVehiculoCommand}" Style="{StaticResource HeaderActionButtonStyle}" Margin="0,0,8,0" />
-                        <Button Content="Eliminar" Command="{Binding EliminarVehiculoCommand}" Style="{StaticResource HeaderDangerButtonStyle}" />
+                        <Button Content="🔧" Click="BtnQuickMantenimiento_Click" Style="{StaticResource HeaderActionButtonStyle}" Margin="0,0,8,0" ToolTip="Agregar mantenimiento" />
+                        <Button Content="⛽" Click="BtnQuickTanqueada_Click" Style="{StaticResource HeaderActionButtonStyle}" Margin="0,0,8,0" ToolTip="Registrar tanqueada" />
+                        <Button Content="✏️" Command="{Binding EditarVehiculoCommand}" Style="{StaticResource HeaderActionButtonStyle}" Margin="0,0,8,0" ToolTip="Editar" />
+                        <Button Content="🗑️" Command="{Binding EliminarVehiculoCommand}" Style="{StaticResource HeaderDangerButtonStyle}" ToolTip="Eliminar" />
                     </StackPanel>
                 </StackPanel>
 
@@ -244,7 +247,7 @@
 
         <!-- Contenido principal -->
         <Grid Grid.Row="1">
-            <TabControl Margin="0,16,0,0" Style="{StaticResource DetailTabControlStyle}">
+            <TabControl x:Name="MainTabControl" Margin="0,16,0,0" Style="{StaticResource DetailTabControlStyle}">
                 <TabItem Header="General">
                     <ScrollViewer>
                         <StackPanel Margin="16">
@@ -332,6 +335,10 @@
                             <mantenimientos:CorrectivosMantenimientoView x:Name="CorrectivosView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" />
                         </TabItem>
                     </TabControl>
+                </TabItem>
+
+                <TabItem Header="Combustible">
+                    <combustible:ConsumoCombustibleView x:Name="CombustibleView" />
                 </TabItem>
 
                 <TabItem Header="Historial">

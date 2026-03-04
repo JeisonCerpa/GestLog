@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.ViewModels.Combustible;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Interfaces.Dialog;
 using GestLog.Modules.GestionVehiculos.Interfaces.Storage;
@@ -22,6 +23,7 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddScoped<IPlantillaMantenimientoService, PlantillaMantenimientoService>();
             services.AddScoped<IPlanMantenimientoVehiculoService, PlanMantenimientoVehiculoService>();
             services.AddScoped<IEjecucionMantenimientoService, EjecucionMantenimientoService>();
+            services.AddScoped<IConsumoCombustibleService, ConsumoCombustibleService>();
 
             // ✅ Dialog Services
             services.AddTransient<IVehicleDocumentDialogService, VehicleDocumentDialogService>();
@@ -47,6 +49,7 @@ namespace GestLog.Modules.GestionVehiculos.Services
             services.AddTransient<PlanesMantenimientoViewModel>();
             services.AddTransient<EjecucionesMantenimientoViewModel>();
             services.AddTransient<CorrectivosMantenimientoViewModel>();
+            services.AddTransient<ConsumoCombustibleViewModel>();
 
             return services;
         }

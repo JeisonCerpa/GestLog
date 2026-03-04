@@ -17,6 +17,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             InitializeComponent();
         }
 
+        public async Task OpenRegistroPreventivoAsync()
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                BtnOpenPreventivoModal_Click(this, new RoutedEventArgs());
+            });
+        }
+
         private async void BtnOpenPreventivoModal_Click(object sender, RoutedEventArgs e)
         {
             var sp = ((App)System.Windows.Application.Current).ServiceProvider;

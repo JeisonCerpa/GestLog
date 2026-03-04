@@ -1,7 +1,9 @@
 using System.Windows.Controls;
 using GestLog.Modules.GestionVehiculos.ViewModels.Vehicles;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.ViewModels.Combustible;
 using GestLog.Modules.GestionVehiculos.Views.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Views.Combustible;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System;
@@ -176,6 +178,28 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                                     }
                                 }
                             }
+
+                            var combustibleView = this.FindName("CombustibleView") as ConsumoCombustibleView;
+                            if (combustibleView != null)
+                            {
+                                if (!(combustibleView.DataContext is ConsumoCombustibleViewModel))
+                                {
+                                    var combustibleVm = sp?.GetService(typeof(ConsumoCombustibleViewModel)) as ConsumoCombustibleViewModel;
+                                    if (combustibleVm != null)
+                                    {
+                                        combustibleView.DataContext = combustibleVm;
+                                    }
+                                    else
+                                    {
+                                        logger?.LogWarning("VehicleDetailsView: No se pudo resolver ConsumoCombustibleViewModel desde DI");
+                                    }
+                                }
+
+                                if (combustibleView.DataContext is ConsumoCombustibleViewModel combustibleDataContext)
+                                {
+                                    await combustibleDataContext.InitializeForVehicleAsync(currentPlate);
+                                }
+                            }
                         }
                     }
                     catch (System.Exception dispatchEx)
@@ -189,6 +213,55 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             {
                 logger?.LogError(ex, "VehicleDetailsView: Error al cargar vehículo o documentos");
             }
+        }
+
+        private async void BtnQuickMantenimiento_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (this.FindName("MantenimientosTabs") is not System.Windows.Controls.TabControl maintTab)
+            {
+                return;
+            }
+
+            var dialog = new SelectMaintenanceTypeDialog();
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            var selection = dialog.SelectedType;
+
+            if (selection == "preventivo")
+            {
+                maintTab.SelectedIndex = 1;
+                if (this.FindName("EjecucionesView") is EjecucionesMantenimientoView ejecView)
+                {
+                    await ejecView.OpenRegistroPreventivoAsync();
+                }
+            }
+            else if (selection == "correctivo")
+            {
+                maintTab.SelectedIndex = 2;
+                if (this.FindName("CorrectivosView") is CorrectivosMantenimientoView correctivosView)
+                {
+                    await correctivosView.OpenRegistroCorrectivoAsync();
+                }
+            }
+        }
+
+        private async void BtnQuickTanqueada_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (this.FindName("CombustibleView") is not ConsumoCombustibleView combustibleView)
+            {
+                return;
+            }
+
+            if (this.FindName("MainTabControl") is System.Windows.Controls.TabControl mainTabs)
+            {
+                mainTabs.SelectedIndex = 3;
+            }
+
+            await combustibleView.OpenRegistroTanqueadaAsync();
         }
     }
 }

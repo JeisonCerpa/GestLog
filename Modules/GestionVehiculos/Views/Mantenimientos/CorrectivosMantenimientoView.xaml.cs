@@ -10,6 +10,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             InitializeComponent();
         }
 
+        public async System.Threading.Tasks.Task OpenRegistroCorrectivoAsync()
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                BtnNuevoCorrectivo_Click(this, new System.Windows.RoutedEventArgs());
+            });
+        }
+
         private void BtnNuevoCorrectivo_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (DataContext is not ViewModels.Mantenimientos.CorrectivosMantenimientoViewModel vm)

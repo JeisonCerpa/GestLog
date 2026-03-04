@@ -153,6 +153,45 @@
             <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
 
+        <!-- Estilo para botones redondos con hover elegante -->
+        <Style x:Key="RoundIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#118938" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BorderBg" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="20"
+                                Width="40" Height="40"
+                                Effect="{TemplateBinding Effect}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="BadgeTextStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -206,21 +245,8 @@
 
             <!-- Buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
-                <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ Nuevo Documento" Click="BtnNewDocument_Click" />
-                <Border CornerRadius="8" Background="#FFFFFF" BorderBrush="#118938" BorderThickness="1" Margin="8,0,0,0" Padding="4,2" Cursor="Hand">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" />
-                    </Border.Effect>
-                    <Button Content="Actualizar" Background="Transparent" Foreground="#118938" Padding="8,6" Command="{Binding RefreshCommand}"
-                            BorderThickness="0" FocusVisualStyle="{x:Null}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Cursor="Hand">
-                        <!-- Plantilla simple para evitar el chrome por defecto y respetar el Border redondeado padre -->
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                </Border>
+                <Button Style="{StaticResource RoundIconButtonStyle}" Content="➕" Click="BtnNewDocument_Click" ToolTip="Nuevo documento" FontSize="18" Margin="0,0,8,0" />
+                <Button Style="{StaticResource RoundIconButtonStyle}" Content="🔄" Command="{Binding RefreshCommand}" ToolTip="Actualizar" FontSize="18" />
             </StackPanel>
         </Grid>
 
@@ -238,11 +264,12 @@
                 </StackPanel>
 
                 <!-- DataGrid -->
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}"
+                <DataGrid x:Name="DgDocuments" Grid.Row="1" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           ColumnWidth="*" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                           RowStyle="{StaticResource DocumentsDataGridRowStyle}" Style="{StaticResource DocumentsDataGridStyle}" CanUserResizeColumns="True"
-                          SelectionMode="Single" SelectionUnit="FullRow">
+                          SelectionMode="Single" SelectionUnit="FullRow"
+                          PreviewMouseDoubleClick="DgDocuments_PreviewMouseDoubleClick">
 
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
