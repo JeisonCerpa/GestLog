@@ -62,6 +62,9 @@
                                   IsEditable="True"
                                   IsTextSearchEnabled="False" />
 
+                        <TextBlock Text="Título del mantenimiento realizado" FontWeight="SemiBold"/>
+                        <TextBox x:Name="TxtTituloActividad" Style="{StaticResource InputStyle}" />
+
                         <TextBlock Text="Costo" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtCosto" Style="{StaticResource InputStyle}" />
 

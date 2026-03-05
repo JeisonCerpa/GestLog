@@ -61,12 +61,12 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         /// <summary>
         /// Indica si el documento está vencido (calculado)
         /// </summary>
-        public bool IsExpired => DateTimeOffset.UtcNow > ExpirationDate;
+        public bool IsExpired => !IsFactura && DateTimeOffset.UtcNow > ExpirationDate;
 
         /// <summary>
         /// Días restantes para vencer (negativo si ya está vencido)
         /// </summary>
-        public int DaysUntilExpiration => (int)(ExpirationDate - DateTimeOffset.UtcNow).TotalDays;
+        public int DaysUntilExpiration => IsFactura ? int.MaxValue : (int)(ExpirationDate - DateTimeOffset.UtcNow).TotalDays;
 
         /// <summary>
         /// Fecha de creación

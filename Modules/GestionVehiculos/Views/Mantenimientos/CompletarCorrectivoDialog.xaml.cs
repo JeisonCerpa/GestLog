@@ -63,6 +63,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         public decimal? Costo { get; private set; }
         public string RutaFactura { get; private set; }
         public string Observaciones { get; private set; }
+        public string TituloActividad { get; private set; }
         public IReadOnlyCollection<int> PlanesPreventivosSeleccionados { get; private set; } = Array.Empty<int>();
         public IReadOnlyCollection<PlanPreventivoCostoAsignado> PlanesPreventivosConCosto { get; private set; } = Array.Empty<PlanPreventivoCostoAsignado>();
 
@@ -73,6 +74,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             decimal? costoInicial,
             string? rutaFacturaInicial,
             string? observacionesInicial,
+            string? tituloActividadInicial,
             IEnumerable<PlanMantenimientoVehiculoDto>? planesPreventivosDisponibles)
         {
             InitializeComponent();
@@ -85,6 +87,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Costo = costoInicial;
             RutaFactura = rutaFacturaInicial?.Trim() ?? string.Empty;
             Observaciones = observacionesInicial?.Trim() ?? string.Empty;
+            TituloActividad = tituloActividadInicial?.Trim() ?? string.Empty;
 
             if (planesPreventivosDisponibles != null)
             {
@@ -116,6 +119,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtCosto.Text = Costo?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
             TxtRutaFactura.Text = RutaFactura;
             TxtObservaciones.Text = Observaciones;
+            TxtTituloActividad.Text = TituloActividad;
 
             _ = CargarSugerenciasAsync();
 
@@ -459,6 +463,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Responsable = CmbResponsable.Text?.Trim() ?? string.Empty;
             Proveedor = CmbProveedor.Text?.Trim() ?? string.Empty;
             Observaciones = TxtObservaciones.Text?.Trim() ?? string.Empty;
+            TituloActividad = TxtTituloActividad.Text?.Trim() ?? string.Empty;
             RutaFactura = TxtRutaFactura.Text?.Trim() ?? string.Empty;
             PlanesPreventivosSeleccionados = _planes.Where(p => p.IsSelected).Select(p => p.PlanId).Distinct().ToList();
 

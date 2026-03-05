@@ -228,6 +228,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 };
 
                 await _ejecucionService.CreateAsync(dto, cancellationToken);
+                await UpdateVehicleMileageIfHigherAsync(dto.PlacaVehiculo, kmAlMomento, cancellationToken);
                 await EnsureFacturaDocumentAsync(dto.PlacaVehiculo, dto.RutaFactura, dto.FechaEjecucion, cancellationToken);
                 await LoadCorrectivosVehiculoAsync(cancellationToken);
                 RegistroCorrectivoExitoso?.Invoke();
@@ -317,6 +318,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             decimal? costo,
             string? rutaFactura,
             string? observaciones,
+            string? tituloActividad,
             IReadOnlyCollection<PlanMantenimientoVehiculoDto>? planesPreventivosEjecutados,
             IReadOnlyCollection<PlanPreventivoCostoInput>? planesPreventivosConCosto,
             CancellationToken cancellationToken = default)
@@ -342,6 +344,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 correctivo.Costo = costo;
                 correctivo.RutaFactura = string.IsNullOrWhiteSpace(rutaFactura) ? null : rutaFactura.Trim();
+                if (!string.IsNullOrWhiteSpace(tituloActividad))
+                {
+                    correctivo.TituloActividad = tituloActividad.Trim();
+                }
                 correctivo.EstadoCorrectivoEnum = EstadoMantenimientoCorrectivoVehiculo.Completado;
                 correctivo.Estado = (int)MapEstadoGeneralFromCorrectivo(EstadoMantenimientoCorrectivoVehiculo.Completado);
 
@@ -366,6 +372,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     observacionesCompletado);
 
                 await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
+                await UpdateVehicleMileageIfHigherAsync(correctivo.PlacaVehiculo, kilometrajeAlCompletar, cancellationToken);
                 await EnsureFacturaDocumentAsync(correctivo.PlacaVehiculo, correctivo.RutaFactura, correctivo.FechaEjecucion, cancellationToken);
 
                 if (planesPreventivosEjecutados != null)
@@ -445,6 +452,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             try
             {
                 await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
+                await UpdateVehicleMileageIfHigherAsync(correctivo.PlacaVehiculo, correctivo.KMAlMomento, cancellationToken);
                 await EnsureFacturaDocumentAsync(correctivo.PlacaVehiculo, correctivo.RutaFactura, correctivo.FechaEjecucion, cancellationToken);
                 await LoadCorrectivosVehiculoAsync(cancellationToken);
             }
@@ -463,6 +471,27 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 EstadoMantenimientoCorrectivoVehiculo.Cancelado => EstadoEjecucion.Cancelado,
                 _ => EstadoEjecucion.Pendiente
             };
+        }
+
+        private async Task UpdateVehicleMileageIfHigherAsync(string placaVehiculo, long kmRegistrado, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(placaVehiculo) || kmRegistrado <= 0)
+            {
+                return;
+            }
+
+            var placa = placaVehiculo.Trim().ToUpperInvariant();
+            var vehiculo = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
+            if (vehiculo == null)
+            {
+                return;
+            }
+
+            if (kmRegistrado > vehiculo.Mileage)
+            {
+                vehiculo.Mileage = kmRegistrado;
+                await _vehicleService.UpdateAsync(vehiculo.Id, vehiculo, cancellationToken);
+            }
         }
 
         private async Task EnsureFacturaDocumentAsync(

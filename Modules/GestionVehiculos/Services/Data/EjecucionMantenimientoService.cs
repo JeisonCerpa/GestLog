@@ -135,6 +135,8 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 context.Add(ejecucion);
                 await context.SaveChangesAsync(cancellationToken);
 
+                await SyncVehicleMileageIfHigherAsync(context, ejecucion.PlacaVehiculo, cancellationToken);
+
                 _logger.LogInformation("Ejecución de mantenimiento registrada para: {PlacaVehiculo}", dto.PlacaVehiculo);
 
                 return MapToDto(ejecucion);
@@ -176,6 +178,8 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
                 context.Update(ejecucion);
                 await context.SaveChangesAsync(cancellationToken);
+
+                await SyncVehicleMileageIfHigherAsync(context, ejecucion.PlacaVehiculo, cancellationToken);
 
                 return MapToDto(ejecucion);
             }
@@ -275,6 +279,44 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 FechaRegistro = entity.FechaRegistro,
                 FechaActualizacion = entity.FechaActualizacion
             };
+        }
+
+        private static async Task SyncVehicleMileageIfHigherAsync(
+            GestLogDbContext context,
+            string placaVehiculo,
+            CancellationToken cancellationToken)
+        {
+            var placa = (placaVehiculo ?? string.Empty).Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(placa))
+            {
+                return;
+            }
+
+            var vehiculo = await context.Vehicles
+                .FirstOrDefaultAsync(v => !v.IsDeleted && v.Plate == placa, cancellationToken);
+
+            if (vehiculo == null)
+            {
+                return;
+            }
+
+            var maxKmMantenimiento = await context.EjecucionesMantenimiento
+                .Where(x => !x.IsDeleted && x.PlacaVehiculo == placa)
+                .Select(x => (long?)x.KMAlMomento)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            var maxKmCombustible = await context.ConsumosCombustibleVehiculo
+                .Where(x => !x.IsDeleted && x.PlacaVehiculo == placa)
+                .Select(x => (long?)x.KMAlMomento)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            var kmOperativoMax = Math.Max(maxKmMantenimiento, maxKmCombustible);
+            if (kmOperativoMax > vehiculo.Mileage)
+            {
+                vehiculo.Mileage = kmOperativoMax;
+                vehiculo.UpdatedAt = DateTimeOffset.UtcNow;
+                await context.SaveChangesAsync(cancellationToken);
+            }
         }
 
         public async Task<IEnumerable<EjecucionMantenimientoDto>> GetByPlacaAndTipoAsync(string placaVehiculo, int tipoMantenimiento, CancellationToken cancellationToken = default)

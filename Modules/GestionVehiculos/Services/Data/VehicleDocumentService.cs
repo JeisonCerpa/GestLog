@@ -367,6 +367,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     .AsNoTracking()
                     .Where(d => d.VehicleId == vehicleId 
                         && d.IsActive 
+                        && !d.DocumentType.Equals("Factura")
                         && d.ExpirationDate.Date < today)
                     .OrderBy(d => d.ExpirationDate)
                     .ToListAsync();
@@ -395,6 +396,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     .AsNoTracking()
                     .Where(d => d.VehicleId == vehicleId 
                         && d.IsActive 
+                        && !d.DocumentType.Equals("Factura")
                         && d.ExpirationDate.Date >= today
                         && d.ExpirationDate.Date <= expirationLimit)
                     .OrderBy(d => d.ExpirationDate)
@@ -430,7 +432,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                         .AnyAsync(d => d.VehicleId == vehicleId 
                             && d.IsActive 
                             && d.DocumentType == docType
-                            && d.ExpirationDate.Date >= today);
+                            && (d.DocumentType.Equals("Factura") || d.ExpirationDate.Date >= today));
 
                     if (!hasValidDocument)
                     {
@@ -462,10 +464,11 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     .Where(d => d.VehicleId == vehicleId && d.IsActive)
                     .ToListAsync();
 
-                var validDocuments = allDocuments.Count(d => d.ExpirationDate.Date >= today);
-                var expiredDocuments = allDocuments.Count(d => d.ExpirationDate.Date < today);
-                var soonToExpireDocuments = allDocuments.Count(d => 
-                    d.ExpirationDate.Date >= today && 
+                var validDocuments = allDocuments.Count(d => d.DocumentType.Equals("Factura") || d.ExpirationDate.Date >= today);
+                var expiredDocuments = allDocuments.Count(d => !d.DocumentType.Equals("Factura") && d.ExpirationDate.Date < today);
+                var soonToExpireDocuments = allDocuments.Count(d =>
+                    !d.DocumentType.Equals("Factura") &&
+                    d.ExpirationDate.Date >= today &&
                     d.ExpirationDate.Date <= today.AddDays(30));
 
                 return new DocumentStatisticsDto

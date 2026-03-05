@@ -210,6 +210,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         private async void BtnDownload_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (Vm?.SelectedDocument == null) return;
+            await OpenDocumentAsync(Vm.SelectedDocument);
+        }
+
+        private async Task OpenDocumentAsync(VehicleDocumentDto document)
+        {
+            if (string.IsNullOrWhiteSpace(document.FilePath)) return;
 
             var sp = ((App)System.Windows.Application.Current).ServiceProvider;
             var photoStorage = sp?.GetService(typeof(IPhotoStorageService)) as IPhotoStorageService;
@@ -217,7 +223,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
             try
             {
-                var uri = await photoStorage.GetUriAsync(Vm.SelectedDocument.FilePath ?? string.Empty);
+                var uri = await photoStorage.GetUriAsync(document.FilePath);
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri) { UseShellExecute = true });
             }
             catch (Exception ex)
@@ -227,7 +233,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             }
         }
 
-        private void DgDocuments_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private async void DgDocuments_PreviewMouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             try
             {
@@ -235,16 +241,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 var element = e.OriginalSource as System.Windows.FrameworkElement;
                 var row = ItemsControl.ContainerFromElement(sender as DataGrid, element) as DataGridRow;
 
-                if (row?.Item is VehicleDocumentDto document && document != null)
+                if (row?.Item is VehicleDocumentDto document)
                 {
                     System.Diagnostics.Debug.WriteLine($"[DgDocuments_PreviewMouseDoubleClick] Doble click en documento: {document.DisplayDocumentNumber}");
                     
-                    // Si el documento tiene un archivo asociado, abrirlo
-                    if (!string.IsNullOrWhiteSpace(document.FilePath))
-                    {
-                        BtnDownload_Click(null, null);
-                        e.Handled = true;
-                    }
+                    await OpenDocumentAsync(document);
+                    e.Handled = true;
                 }
             }
             catch (Exception ex)

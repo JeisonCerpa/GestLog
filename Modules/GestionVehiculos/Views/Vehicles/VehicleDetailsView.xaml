@@ -6,6 +6,7 @@
              xmlns:views="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Vehicles"
              xmlns:mantenimientos="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Mantenimientos"
              xmlns:combustible="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Combustible"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignWidth="1000" d:DesignHeight="700">
     <UserControl.Resources>
@@ -251,68 +252,227 @@
                 <TabItem Header="General">
                     <ScrollViewer>
                         <StackPanel Margin="16">
-                            <TextBlock Text="Indicadores (KPIs)" FontSize="16" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,12" />
+                            <TextBlock Text="KPIs operativos" FontSize="16" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,12" />
 
-                            <!-- Cuadrícula de tarjetas de KPI -->
-                            <UniformGrid Columns="2" Rows="2" Margin="-6,0,0,12">
+                            <UniformGrid Columns="3" Rows="3" Margin="-6,0,0,12">
                                 <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Consumo promedio" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding AverageConsumption, StringFormat='{}{0:N1} L/100km'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Tanqueadas" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding TotalTanqueadas}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-
                                 <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Kilometraje mensual" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding MonthlyMileage, StringFormat='{}{0:N0} km'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Galones consumidos" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding TotalGalonesConsumidos, StringFormat='{}{0:N2} gal'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-
                                 <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Costo mantenimiento (acum.)" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding MaintenanceCost, StringFormat='{}{0:C}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Costo combustible" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding TotalCostoCombustible, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-
                                 <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Último / Próximo servicio" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding LastServiceDate, StringFormat='Último: {0:dd/MM/yyyy}'}" FontSize="13" Foreground="#1D1D1B" Margin="0,6,0,0" />
-                                        <TextBlock Text="{Binding NextServiceDate, StringFormat='Próximo: {0:dd/MM/yyyy}'}" FontSize="13" Foreground="#706F6F" />
+                                        <TextBlock Text="Mantenimientos" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding CantidadMantenimientos}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Text="Costo mantenimiento" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding CostoTotalMantenimiento, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Text="Costo operación" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding CostoTotalOperacion, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Text="Costo por km" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding CostoPorKmDisplay}" FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Text="Próximo mantenimiento" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" Margin="0,8,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Text="Documentos (vigentes / total)" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0">
+                                            <Run Text="{Binding DocumentosVigentes}"/>
+                                            <Run Text=" / "/>
+                                            <Run Text="{Binding TotalDocumentos}"/>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Border>
                             </UniformGrid>
 
-                            <!-- Sección de rendimiento y uso -->
-                            <TextBlock Text="Rendimiento y uso" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,8,0,8" />
+                            <TextBlock Text="Gráficos" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,6,0,8" />
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="1*" />
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                    <TextBlock Text="Total viajes" FontSize="12" Foreground="#706F6F" />
-                                    <TextBlock Text="{Binding TotalTrips}" FontSize="14" FontWeight="Bold" Foreground="#1D1D1B" Margin="0,6,0,8" />
+                                <!-- Combustible: consumo promedio -->
+                                <Border Grid.Row="0" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Consumo promedio (km/gal) a través del tiempo" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:CartesianChart Height="180"
+                                                            Series="{Binding ConsumoPromedioSeries}"
+                                                            XAxes="{Binding ChartDateAxes}"
+                                                            YAxes="{Binding ChartConsumptionAxes}"/>
+                                    </StackPanel>
+                                </Border>
 
-                                    <TextBlock Text="Velocidad promedio" FontSize="12" Foreground="#706F6F" />
-                                    <TextBlock Text="{Binding AverageSpeed, StringFormat='{}{0:N1} km/h'}" FontSize="14" FontWeight="Bold" Foreground="#1D1D1B" Margin="0,6,0,0" />
-                                </StackPanel>
+                                <!-- Combustible: gasto mensual -->
+                                <Border Grid.Row="0" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Gasto mensual en combustible" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:CartesianChart Height="180"
+                                                            Series="{Binding CostoMensualSeries}"
+                                                            XAxes="{Binding ChartMonthAxes}"
+                                                            YAxes="{Binding ChartCurrencyAxes}"/>
+                                    </StackPanel>
+                                </Border>
 
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Horas motor" FontSize="12" Foreground="#706F6F" />
-                                    <TextBlock Text="{Binding EngineHours, StringFormat='{}{0:N0} h'}" FontSize="14" FontWeight="Bold" Foreground="#1D1D1B" Margin="0,6,0,8" />
+                                <!-- Mantenimientos timeline -->
+                                <Border Grid.Row="1" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Mantenimientos" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:CartesianChart Height="180"
+                                                            Series="{Binding MantenimientosTimelineSeries}"
+                                                            XAxes="{Binding ChartMaintenanceAxes}"
+                                                            YAxes="{Binding ChartMaintenanceCountAxes}" />
+                                        <ItemsControl ItemsSource="{Binding MantenimientosTitulos}" Margin="0,8,0,0">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,6,6">
+                                                        <TextBlock Text="{Binding}" FontSize="11" Foreground="#4B5563" TextWrapping="Wrap" MaxWidth="220"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
 
-                                    <TextBlock Text="Combustible usado" FontSize="12" Foreground="#706F6F" />
-                                    <TextBlock Text="{Binding FuelConsumed, StringFormat='{}{0:N1} L'}" FontSize="14" FontWeight="Bold" Foreground="#1D1D1B" Margin="0,6,0,0" />
-                                </StackPanel>
+                                <!-- Kilometraje -->
+                                <Border Grid.Row="1" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Kilometraje" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:CartesianChart Height="180"
+                                                            Series="{Binding KilometrajeSeries}"
+                                                            XAxes="{Binding ChartDateAxes}"
+                                                            YAxes="{Binding ChartKmAxes}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Pie costos totales -->
+                                <Border Grid.Row="2" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Costos totales" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:PieChart Height="180" Series="{Binding DistribucionGastoSeries}" LegendPosition="Bottom" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Documentos/otro recomendado -->
+                                <Border Grid.Row="2" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Documentos" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <lvc:PieChart Height="180" Series="{Binding DocumentosPieSeries}" LegendPosition="Bottom" />
+                                    </StackPanel>
+                                </Border>
                             </Grid>
 
-                            <!-- Notas o resumen breve -->
-                            <TextBlock Text="Resumen" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,8,0,8" />
-                            <TextBlock Text="{Binding GeneralNotes}" TextWrapping="Wrap" Foreground="#1D1D1B" />
+                            <TextBlock Text="Ficha completa del vehículo" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,8,0,8" />
+                            <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,8">
+                                        <TextBlock Text="Placa" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding Plate}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Text="VIN" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding Vin}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,8">
+                                        <TextBlock Text="Marca / Modelo" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding BrandModelDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Text="Versión" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding VersionDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,8">
+                                        <TextBlock Text="Año" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding Year}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Text="Color" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding ColorDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,8">
+                                        <TextBlock Text="Tipo" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding TypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Text="Estado" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding StateDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,12,8">
+                                        <TextBlock Text="Combustible" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding FuelTypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Text="Kilometraje" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding Mileage, StringFormat='{}{0:N0} km'}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="5" Grid.Column="0" Margin="0,0,12,0">
+                                        <TextBlock Text="Creado" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding CreatedAtDisplay}" FontSize="13" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,0">
+                                        <TextBlock Text="Actualizado" FontSize="12" Foreground="#706F6F" />
+                                        <TextBlock Text="{Binding UpdatedAtDisplay}" FontSize="13" Foreground="#1D1D1B" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

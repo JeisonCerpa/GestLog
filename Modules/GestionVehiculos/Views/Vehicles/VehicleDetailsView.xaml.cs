@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System;
 using GestLog.Services.Core.Logging;
+using LiveChartsCore.SkiaSharpView.WPF;
+using WpfBinding = System.Windows.Data.Binding;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 {
@@ -17,6 +19,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         {
             InitializeComponent();
         }
+
 
         public VehicleDetailsView(VehicleDetailsViewModel vm) : this()
         {

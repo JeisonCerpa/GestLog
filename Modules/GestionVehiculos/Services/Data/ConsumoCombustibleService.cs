@@ -78,6 +78,9 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
             context.ConsumosCombustibleVehiculo.Add(entity);
             await context.SaveChangesAsync(cancellationToken);
+
+            await SyncVehicleMileageIfHigherAsync(context, placa, cancellationToken);
+
             return MapToDto(entity);
         }
 
@@ -112,6 +115,10 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             entity.FechaActualizacion = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
+
+            var placa = (entity.PlacaVehiculo ?? string.Empty).Trim().ToUpperInvariant();
+            await SyncVehicleMileageIfHigherAsync(context, placa, cancellationToken);
+
             return MapToDto(entity);
         }
 
@@ -165,6 +172,43 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 RutaFactura = entity.RutaFactura,
                 Observaciones = entity.Observaciones
             };
+        }
+
+        private static async Task SyncVehicleMileageIfHigherAsync(
+            GestLogDbContext context,
+            string placa,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(placa))
+            {
+                return;
+            }
+
+            var vehiculo = await context.Vehicles
+                .FirstOrDefaultAsync(v => !v.IsDeleted && v.Plate == placa, cancellationToken);
+
+            if (vehiculo == null)
+            {
+                return;
+            }
+
+            var maxKmCombustible = await context.ConsumosCombustibleVehiculo
+                .Where(x => !x.IsDeleted && x.PlacaVehiculo == placa)
+                .Select(x => (long?)x.KMAlMomento)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            var maxKmMantenimiento = await context.EjecucionesMantenimiento
+                .Where(x => !x.IsDeleted && x.PlacaVehiculo == placa)
+                .Select(x => (long?)x.KMAlMomento)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            var maxOperativo = Math.Max(maxKmCombustible, maxKmMantenimiento);
+            if (maxOperativo > vehiculo.Mileage)
+            {
+                vehiculo.Mileage = maxOperativo;
+                vehiculo.UpdatedAt = DateTimeOffset.UtcNow;
+                await context.SaveChangesAsync(cancellationToken);
+            }
         }
     }
 }

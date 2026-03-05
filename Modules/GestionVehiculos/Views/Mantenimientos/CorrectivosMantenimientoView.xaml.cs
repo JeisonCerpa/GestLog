@@ -75,7 +75,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     var costo = dto.Costo;
                     var rutaFactura = dto.RutaFactura ?? string.Empty;
                     var observaciones = string.Empty;
-                    if (!ShowCompletarDialog(planesDisponibles, ref kilometraje, ref responsable, ref proveedor, ref costo, ref rutaFactura, ref observaciones, out var planesSeleccionados, out var planesConCosto))
+                    var tituloActividad = dto.TituloActividad ?? string.Empty;
+                    if (!ShowCompletarDialog(planesDisponibles, ref kilometraje, ref responsable, ref proveedor, ref costo, ref rutaFactura, ref observaciones, ref tituloActividad, out var planesSeleccionados, out var planesConCosto))
                     {
                         return;
                     }
@@ -95,7 +96,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                                 CostoOpcionalInput = c.CostoOpcionalInput
                             }));
 
-                    await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesSeleccionados, planesConCostoVm);
+                    await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, tituloActividad, planesSeleccionados, planesConCostoVm);
                     await RefreshPreventivosViewAsync(dto.PlacaVehiculo);
                     break;
                 }
@@ -134,13 +135,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             ref decimal? costo,
             ref string rutaFactura,
             ref string observaciones,
+            ref string tituloActividad,
             out System.Collections.Generic.IReadOnlyCollection<Models.DTOs.PlanMantenimientoVehiculoDto> planesSeleccionados,
             out System.Collections.Generic.IReadOnlyCollection<CompletarCorrectivoDialog.PlanPreventivoCostoAsignado> planesConCosto)
         {
             planesSeleccionados = System.Array.Empty<Models.DTOs.PlanMantenimientoVehiculoDto>();
             planesConCosto = System.Array.Empty<CompletarCorrectivoDialog.PlanPreventivoCostoAsignado>();
 
-            var dialog = new CompletarCorrectivoDialog(kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, planesDisponibles)
+            var dialog = new CompletarCorrectivoDialog(kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, tituloActividad, planesDisponibles)
             {
                 Owner = System.Windows.Application.Current?.Windows.Count > 0
                     ? System.Windows.Application.Current.Windows[0]
@@ -154,6 +156,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 responsable = dialog.Responsable;
                 proveedor = dialog.Proveedor;
                 observaciones = dialog.Observaciones;
+                tituloActividad = dialog.TituloActividad;
                 rutaFactura = dialog.RutaFactura;
                 costo = dialog.Costo;
                 planesConCosto = dialog.PlanesPreventivosConCosto;

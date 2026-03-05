@@ -266,16 +266,17 @@
                 <!-- DataGrid -->
                 <DataGrid x:Name="DgDocuments" Grid.Row="1" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                    IsReadOnly="True"
                           ColumnWidth="*" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                           RowStyle="{StaticResource DocumentsDataGridRowStyle}" Style="{StaticResource DocumentsDataGridStyle}" CanUserResizeColumns="True"
                           SelectionMode="Single" SelectionUnit="FullRow"
                           PreviewMouseDoubleClick="DgDocuments_PreviewMouseDoubleClick">
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Número" Binding="{Binding DisplayDocumentNumber}" Width="1.2*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Emisión" Binding="{Binding DisplayIssuedDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
-                        <DataGridTextColumn Header="Vencimiento" Binding="{Binding DisplayExpirationDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" EditingElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                                                <DataGridTextColumn Header="Tipo" Binding="{Binding DocumentType}" Width="*" ElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                                                <DataGridTextColumn Header="Número" Binding="{Binding DisplayDocumentNumber}" Width="1.2*" ElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                                                <DataGridTextColumn Header="Emisión" Binding="{Binding DisplayIssuedDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" />
+                                                <DataGridTextColumn Header="Vencimiento" Binding="{Binding DisplayExpirationDate}" Width="0.9*" ElementStyle="{StaticResource CenteredTextBlockStyle}" />
 
                         <DataGridTemplateColumn Header="Estado" Width="1*">
                             <DataGridTemplateColumn.CellTemplate>
