@@ -1,32 +1,32 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using GestLog.Modules.Usuarios.ViewModels;
 
-namespace GestLog.Views.Usuarios
+namespace GestLog.Modules.Usuarios.Views.Usuarios
 {
     /// <summary>
-    /// Vista modal para recuperación de contraseña olvidada
+    /// Vista modal para cambio de contraseña obligatorio en primer login
     /// Abre como Window modal con overlay y spinner de carga
     /// </summary>
-    public partial class ForgotPasswordModalView : Window
+    public partial class ChangePasswordModalView : Window
     {
         private System.Windows.Forms.Screen? _lastScreenOwner;
-        private Storyboard? _spinnerStoryboard;
-
-        public ForgotPasswordModalView()
+        private Storyboard? _spinnerStoryboard;        public ChangePasswordModalView()
         {
             InitializeComponent();
             
-            // Manejar tecla Escape
-            this.KeyDown += ForgotPasswordModalView_KeyDown;
-            this.Loaded += ForgotPasswordModalView_Loaded;
-        }
-
-        private void ForgotPasswordModalView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+            // Manejar eventos
+            this.KeyDown += ChangePasswordModalView_KeyDown;
+            this.Loaded += ChangePasswordModalView_Loaded;
+            this.Closing += ChangePasswordModalView_Closing;
+        }        private void ChangePasswordModalView_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.Escape)
+            if (e.Key == System.Windows.Input.Key.Escape)
             {
+                // Solo cerrar sin ejecutar comandos
+                // La lógica se manejará en LoginView basada en DialogResult
                 this.DialogResult = false;
                 this.Close();
             }
@@ -34,7 +34,8 @@ namespace GestLog.Views.Usuarios
 
         private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // Cerrar al hacer clic en el overlay
+            // Solo cerrar sin ejecutar comandos
+            // La lógica se manejará en LoginView basada en DialogResult
             this.DialogResult = false;
             this.Close();
         }
@@ -47,13 +48,32 @@ namespace GestLog.Views.Usuarios
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
         {
+            // Solo cerrar sin ejecutar comandos
+            // La lógica se manejará en LoginView basada en DialogResult
             this.DialogResult = false;
             this.Close();
+        }private void ChangePasswordModalView_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Solo establecer DialogResult basado en ShowSuccess
+            // NO ejecutar comandos aquí para evitar conflictos con el cierre de ventana
+            if (this.DataContext is ChangePasswordViewModel viewModel)
+            {
+                // Si ShowSuccess es true, fue exitoso
+                if (viewModel.ShowSuccess)
+                {
+                    this.DialogResult = true;
+                }
+                else
+                {
+                    // Si ShowSuccess es false, no fue exitoso
+                    this.DialogResult = false;
+                }
+            }
         }
 
         /// <summary>
         /// Configura la ventana modal para abrir sobre una ventana padre
-        /// Sigue el estándar PerifericoDetalleView
+        /// Sigue el estándar de ForgotPasswordModalView
         /// </summary>
         public void ConfigurarParaVentanaPadre(Window? parentWindow)
         {
@@ -76,7 +96,9 @@ namespace GestLog.Views.Usuarios
                 // Fallback: maximizar en pantalla principal
                 this.WindowState = WindowState.Maximized;
             }
-        }        private void ForgotPasswordModalView_Loaded(object? sender, RoutedEventArgs e)
+        }
+
+        private void ChangePasswordModalView_Loaded(object? sender, RoutedEventArgs e)
         {
             if (this.Owner != null)
             {
@@ -86,14 +108,14 @@ namespace GestLog.Views.Usuarios
             }
 
             // Establecer DataContext ViewModel si es necesario
-            if (this.DataContext is ForgotPasswordViewModel viewModel)
+            if (this.DataContext is ChangePasswordViewModel viewModel)
             {
                 viewModel.SetView(this);
                 
                 // Suscribirse a cambios de IsLoading para controlar el spinner
                 viewModel.PropertyChanged += ViewModel_PropertyChanged;
             }
-            
+
             // Obtener la animación del storyboard
             if (this.Resources.Contains("SpinnerRotation"))
             {
@@ -106,18 +128,16 @@ namespace GestLog.Views.Usuarios
         /// </summary>
         private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ForgotPasswordViewModel.IsLoading))
+            if (e.PropertyName == nameof(ChangePasswordViewModel.IsLoading))
             {
-                if (this.DataContext is ForgotPasswordViewModel viewModel)
+                if (this.DataContext is ChangePasswordViewModel viewModel)
                 {
                     if (viewModel.IsLoading && _spinnerStoryboard != null)
                     {
-                        // Iniciar animación
                         _spinnerStoryboard.Begin(this, HandoffBehavior.SnapshotAndReplace);
                     }
                     else if (_spinnerStoryboard != null)
                     {
-                        // Detener animación
                         _spinnerStoryboard.Stop(this);
                     }
                 }
@@ -148,6 +168,40 @@ namespace GestLog.Views.Usuarios
                 }
             });
         }
+
+        /// <summary>
+        /// Obtiene la contraseña actual del PasswordBox
+        /// (Se accede desde el ViewModel mediante Binding si es necesario)
+        /// </summary>
+        public string GetCurrentPassword()
+        {
+            return CurrentPasswordBox.Password;
+        }
+
+        /// <summary>
+        /// Obtiene la nueva contraseña del PasswordBox
+        /// </summary>
+        public string GetNewPassword()
+        {
+            return NewPasswordBox.Password;
+        }
+
+        /// <summary>
+        /// Obtiene la confirmación de contraseña del PasswordBox
+        /// </summary>
+        public string GetConfirmPassword()
+        {
+            return ConfirmPasswordBox.Password;
+        }
+
+        /// <summary>
+        /// Limpia los PasswordBox después de un cambio exitoso
+        /// </summary>
+        public void ClearPasswords()
+        {
+            CurrentPasswordBox.Clear();
+            NewPasswordBox.Clear();
+            ConfirmPasswordBox.Clear();
+        }
     }
 }
-

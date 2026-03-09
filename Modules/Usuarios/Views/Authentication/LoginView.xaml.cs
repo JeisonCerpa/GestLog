@@ -182,7 +182,7 @@ namespace GestLog.Modules.Usuarios.Views.Authentication
 
                 changePasswordVM.IsFirstLogin = true;
 
-                var changePasswordView = new GestLog.Views.Usuarios.ChangePasswordModalView()
+                var changePasswordView = new GestLog.Modules.Usuarios.Views.Usuarios.ChangePasswordModalView()
                 {
                     DataContext = changePasswordVM
                 };
@@ -253,7 +253,7 @@ namespace GestLog.Modules.Usuarios.Views.Authentication
                     return;
                 }
 
-                var forgotPasswordView = new GestLog.Views.Usuarios.ForgotPasswordModalView()
+                var forgotPasswordView = new GestLog.Modules.Usuarios.Views.Usuarios.ForgotPasswordModalView()
                 {
                     DataContext = forgotPasswordVM
                 };

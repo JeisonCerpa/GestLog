@@ -2,7 +2,6 @@
 using System.Windows.Controls;
 using GestLog.Modules.DaaterProccesor.Views;
 using GestLog.Modules.EnvioCatalogo.Views;
-using GestLog.Views;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas;
 using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario;
@@ -33,7 +32,7 @@ namespace GestLog.Modules.Shell.Views
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessEquiposInformaticos)
             {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder a Equipos InformÃ¡ticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -47,12 +46,12 @@ namespace GestLog.Modules.Shell.Views
                     equiposInformaticosView.DataContext = gestionVm;
                 }
 
-                _mainWindow?.NavigateToView(equiposInformaticosView, "Equipos InformÃ¡ticos");
+                _mainWindow?.NavigateToView(equiposInformaticosView, "Equipos Informáticos");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar Equipos InformÃ¡ticos desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar Equipos Informáticos desde herramientas");
             }
         }
 
@@ -61,19 +60,19 @@ namespace GestLog.Modules.Shell.Views
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessGestionMantenimientos)
             {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder a GestiÃ³n de Mantenimientos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Mantenimientos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
                 var gestionMantenimientosView = new GestionMantenimientosView();
-                _mainWindow?.NavigateToView(gestionMantenimientosView, "GestiÃ³n de Mantenimientos");
+                _mainWindow?.NavigateToView(gestionMantenimientosView, "Gestión de Mantenimientos");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar gestiÃ³n de mantenimientos desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar gestión de mantenimientos desde herramientas");
             }
         }
 
@@ -82,7 +81,7 @@ namespace GestLog.Modules.Shell.Views
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessGestionVehiculos)
             {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder a GestiÃ³n de VehÃ­culos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Vehículos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -91,12 +90,12 @@ namespace GestLog.Modules.Shell.Views
                 var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
                 var gestionVehiculosViewModel = serviceProvider.GetRequiredService<GestLog.Modules.GestionVehiculos.ViewModels.Vehicles.GestionVehiculosHomeViewModel>();
                 var gestionVehiculosView = new GestLog.Modules.GestionVehiculos.Views.Vehicles.GestionVehiculosHomeView(gestionVehiculosViewModel);
-                _mainWindow?.NavigateToView(gestionVehiculosView, "GestiÃ³n de VehÃ­culos");
+                _mainWindow?.NavigateToView(gestionVehiculosView, "Gestión de Vehículos");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar gestiÃ³n de vehÃ­culos desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar gestión de vehículos desde herramientas");
             }
         }
 
@@ -105,12 +104,12 @@ namespace GestLog.Modules.Shell.Views
             try
             {
                 var gestionCarteraView = new GestLog.Modules.GestionCartera.Views.GestionCarteraView();
-                _mainWindow?.NavigateToView(gestionCarteraView, "GestiÃ³n de Cartera");
+                _mainWindow?.NavigateToView(gestionCarteraView, "Gestión de Cartera");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar gestiÃ³n de cartera desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar gestión de cartera desde herramientas");
             }
         }
 
@@ -132,19 +131,19 @@ namespace GestLog.Modules.Shell.Views
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessEnvioCatalogo)
             {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder al EnvÃ­o de CatÃ¡logo.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("No tiene permisos para acceder al Envío de Catálogo.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
                 var envioCatalogoView = new EnvioCatalogoView();
-                _mainWindow?.NavigateToView(envioCatalogoView, "EnvÃ­o de CatÃ¡logo");
+                _mainWindow?.NavigateToView(envioCatalogoView, "Envío de Catálogo");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar envÃ­o de catÃ¡logo desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar envío de catálogo desde herramientas");
             }
         }
 
@@ -155,7 +154,7 @@ namespace GestLog.Modules.Shell.Views
             var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.IdentidadCatalogosHomeView { DataContext = viewModel };
             var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
             if (mainWindow != null)
-                mainWindow.NavigateToView(view, "GestiÃ³n de Identidad y CatÃ¡logos");
+                mainWindow.NavigateToView(view, "Gestión de Identidad y Catálogos");
         }
 
         private void BtnGestionUsuarios_Click(object sender, RoutedEventArgs e)
@@ -173,18 +172,18 @@ namespace GestLog.Modules.Shell.Views
                     }
                     else
                     {
-                        System.Windows.MessageBox.Show("No se pudo crear la ventana de gestiÃ³n de usuarios.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show("No se pudo crear la ventana de gestión de usuarios.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("No se encontrÃ³ la clase UsuarioManagementView en GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("No se encontró la clase UsuarioManagementView en GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar gestiÃ³n de usuarios desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar gestión de usuarios desde herramientas");
             }
         }
 
@@ -193,12 +192,12 @@ namespace GestLog.Modules.Shell.Views
             try
             {
                 var view = new PersonaManagementView();
-                _mainWindow?.NavigateToView(view, "GestiÃ³n de Personas");
+                _mainWindow?.NavigateToView(view, "Gestión de Personas");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar gestiÃ³n de personas desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar gestión de personas desde herramientas");
             }
         }
 
@@ -207,7 +206,7 @@ namespace GestLog.Modules.Shell.Views
             var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
             if (viewModel != null && !viewModel.CanAccessGestionEquipos)
             {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder a GestiÃ³n de Equipos InformÃ¡ticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("No tiene permisos para acceder a Gestión de Equipos Informáticos.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -221,12 +220,12 @@ namespace GestLog.Modules.Shell.Views
                     gestionEquiposView.DataContext = gestionVm;
                 }
 
-                _mainWindow?.NavigateToView(gestionEquiposView, "GestiÃ³n de Equipos InformÃ¡ticos");
+                _mainWindow?.NavigateToView(gestionEquiposView, "Gestión de Equipos Informáticos");
             }
             catch (System.Exception ex)
             {
                 var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar GestiÃ³n de Equipos desde herramientas");
+                errorHandler.HandleException(ex, "Mostrar Gestión de Equipos desde herramientas");
             }
         }
     }

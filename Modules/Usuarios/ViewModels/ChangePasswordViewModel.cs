@@ -20,7 +20,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private readonly IGestLogLogger _logger;
         private readonly ICurrentUserService _currentUserService;
         private string? _userId;
-        private GestLog.Views.Usuarios.ChangePasswordModalView? _view;        [ObservableProperty]
+        private GestLog.Modules.Usuarios.Views.Usuarios.ChangePasswordModalView? _view;        [ObservableProperty]
         private string _errorMessage = string.Empty;
 
         [ObservableProperty]
@@ -65,7 +65,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         /// <summary>
         /// Establece la referencia a la vista (se llama desde el code-behind)
         /// </summary>
-        public void SetView(GestLog.Views.Usuarios.ChangePasswordModalView view)
+        public void SetView(GestLog.Modules.Usuarios.Views.Usuarios.ChangePasswordModalView view)
         {
             _view = view;
         }[RelayCommand]
