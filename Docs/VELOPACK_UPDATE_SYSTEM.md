@@ -47,9 +47,9 @@ vpk --version
 cd "E:\Softwares\GestLog" `
 ; dotnet clean `
 ; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false `
-; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe" `
+; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows10.0.19041\win-x64\publish" --mainExe "GestLog.exe" `
 ; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" `
-; $deployPath = "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"; $files = Get-ChildItem $deployPath -Filter "GestLog-1.0.*-*.nupkg" | Sort-Object -Property {[version]($_.BaseName -replace 'GestLog-|-(full|delta)', '')} -Descending; $toDelete = $files | Select-Object -Skip 10; if ($toDelete.Count -gt 0) { $toDelete | Remove-Item -Force -Verbose; Write-Host "`n✅ Eliminados: $($toDelete.Count) archivos" -ForegroundColor Green; Write-Host "✔️ Mantienen: $($files.Count - $toDelete.Count) archivos (últimas 5 versiones)" -ForegroundColor Green } else { Write-Host "`n✅ Sin archivos para eliminar - Versiones OK" -ForegroundColor Green }
+; $deployPath = "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"; $files = Get-ChildItem $deployPath -Filter "GestLog-*-*.nupkg" | Sort-Object -Property {[version]($_.BaseName -replace 'GestLog-|-(full|delta)', '')} -Descending; $toDelete = $files | Select-Object -Skip 10; if ($toDelete.Count -gt 0) { $toDelete | Remove-Item -Force -Verbose; Write-Host "`n✅ Eliminados: $($toDelete.Count) archivos" -ForegroundColor Green; Write-Host "✔️ Mantienen: $($files.Count - $toDelete.Count) archivos (últimas 5 versiones)" -ForegroundColor Green } else { Write-Host "`n✅ Sin archivos para eliminar - Versiones OK" -ForegroundColor Green }
 ```
 
 ### **Paso 1: Actualizar Versión**
@@ -59,12 +59,12 @@ Resumen rápido — qué cambiar antes de publicar:
 **Cambios REQUERIDOS (antes de compilar):**
 - `version.txt`: cambiar el número de versión (p.ej. `1.0.44` → `1.0.45`). Solo este archivo.
 - `Changelog.md`: actualizar con las mejoras, implementaciones y arreglos de la nueva versión (para que usuarios finales vean el resumen en el diálogo de información).
-- `Views/HomeView.xaml.cs` (método `btnInfo_Click`): actualizar el resumen del changelog en el MessageBox para reflejar los cambios principales (debe coincidir con Changelog.md, solo versión resumida, debe tocar todos los puntos del changelog).
+- `Modules/Shell/Views/HomeView.xaml.cs` (método `btnInfo_Click`): actualizar el resumen del changelog en el MessageBox para reflejar los cambios principales (debe coincidir con Changelog.md, solo versión resumida, debe tocar todos los puntos del changelog).
 
 **Cambios AUTOMÁTICOS (generados al compilar):**
 - `GestLog.csproj`: todas las propiedades de versión se actualizan automáticamente desde `version.txt` mediante el Target `ReadVersionFromFile`.
 - `MainWindow.xaml` Title: se actualiza automáticamente en `MainWindow.xaml.cs` mediante `BuildVersion.VersionLabel`.
-- `Views/HomeView.xaml` y `Views/HomeView.xaml.cs`: usan `x:Static app:BuildVersion.VersionLabel`, que se regenera desde `version.txt` en tiempo de compilación.
+- `Modules/Shell/Views/HomeView.xaml` y `Modules/Shell/Views/HomeView.xaml.cs`: usan `x:Static app:BuildVersion.VersionLabel`, que se regenera desde `version.txt` en tiempo de compilación.
 - `Properties/BuildVersion.g.cs`: se regenera automáticamente mediante el Target `GenerateBuildVersion`.
 
 **Flujo simplificado:**
@@ -81,7 +81,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false
 
 ### **Paso 3: Generar Paquetes Velopack**
 ```powershell
-vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe"
+vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows10.0.19041\win-x64\publish" --mainExe "GestLog.exe"
 ```
 
 #### **Archivos Generados:**
@@ -235,7 +235,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false
 
 #### **Generar Paquete Velopack**
 ```powershell
-vpk pack --packId GestLog --packVersion <VERSION> --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe"
+vpk pack --packId GestLog --packVersion <VERSION> --packDir "bin\Release\net9.0-windows10.0.19041\win-x64\publish" --mainExe "GestLog.exe"
 ```
 
 #### **Subir al Servidor**
@@ -317,7 +317,7 @@ Remove-Item "$env:LOCALAPPDATA\GestLog" -Recurse -Force -ErrorAction SilentlyCon
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false
 
 # 3. Empaquetar
-vpk pack --packId GestLog --packVersion 1.0.6 --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe"
+vpk pack --packId GestLog --packVersion 1.0.6 --packDir "bin\Release\net9.0-windows10.0.19041\win-x64\publish" --mainExe "GestLog.exe"
 
 # 4. Desplegar
 vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"
@@ -355,7 +355,7 @@ dir "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater" | findstr "1.0.6"
 4. **No Interrumpir**: Permitir que las actualizaciones se completen
 
 ```powershell
-dotnet clean; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows\win-x64\publish" --mainExe "GestLog.exe"; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"
+dotnet clean; dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=false; vpk pack --packId GestLog --packVersion 1.0.X --packDir "bin\Release\net9.0-windows10.0.19041\win-x64\publish" --mainExe "GestLog.exe"; vpk upload local --path "\\SIMICSGROUPWKS1\Hackerland\Programas\GestLogUpdater"
 ```
 ---
 

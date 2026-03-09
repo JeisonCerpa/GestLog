@@ -88,9 +88,7 @@ public static class LoggingService
             services.AddSingleton<IEnvironmentDetectionService, EnvironmentDetectionService>();
             services.AddSingleton<IUnifiedDatabaseConfigurationService, UnifiedDatabaseConfigurationService>();
             services.AddSingleton<IDatabaseConfigurationProvider, UnifiedDatabaseConfigurationService>();
-            services.AddSingleton<SecurityStartupValidationService>();            // 🚀 SERVICIOS DE FIRST RUN SETUP
-            services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
-            services.AddTransient<FirstRunSetupViewModel>();
+            services.AddSingleton<SecurityStartupValidationService>();
             
             // 🔄 SERVICIO DE ACTUALIZACIONES VELOPACK
             services.AddSingleton<VelopackUpdateService>(serviceProvider =>

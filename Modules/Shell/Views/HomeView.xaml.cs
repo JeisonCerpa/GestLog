@@ -1,9 +1,7 @@
 using System.Windows;
-using System.Windows.Controls;
 using GestLog;
-using GestLog.Views.Tools;
 
-namespace GestLog.Views
+namespace GestLog.Modules.Shell.Views
 {    /// <summary>
     /// Interaction logic for HomeView.xaml
     /// </summary>

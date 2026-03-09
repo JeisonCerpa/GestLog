@@ -1,216 +1,151 @@
 ﻿<Window x:Class="GestLog.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        xmlns:local="clr-namespace:GestLog"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GestLog"
         mc:Ignorable="d"
         Title="GestLog" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
-      <Window.Resources>        <!-- Estilo para botones simples de la navbar -->
-        <Style x:Key="NavButtonStyle" TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8" 
-                                Padding="{TemplateBinding Padding}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#000000" 
-                                                BlurRadius="4" 
-                                                ShadowDepth="1" 
-                                                Opacity="0.12"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#256332"/>
-                                <Setter TargetName="ButtonBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="6" 
-                                                        ShadowDepth="2" 
-                                                        Opacity="0.18"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="Cursor" Value="Hand"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#1F5229"/>
-                                <Setter TargetName="ButtonBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="2" 
-                                                        ShadowDepth="0" 
-                                                        Opacity="0.25"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>        <!-- Estilo para el indicador de estado -->
+    <Window.Resources>
+        <Style x:Key="NavButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeHeaderSecondaryButtonStyle}"/>
+
         <Style x:Key="StatusIndicatorStyle" TargetType="Border">
             <Setter Property="Background" Value="#C0392B"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#000000" 
-                                    BlurRadius="3" 
-                                    ShadowDepth="1" 
-                                    Opacity="0.15"/>
+                    <DropShadowEffect Color="#000000" BlurRadius="3" ShadowDepth="1" Opacity="0.15"/>
                 </Setter.Value>
             </Setter>
         </Style>
-          <!-- Estilo para el indicador de estado conectado -->
+
         <Style x:Key="StatusIndicatorConnectedStyle" TargetType="Border">
             <Setter Property="Background" Value="#2B8E3F"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#000000" 
-                                    BlurRadius="3" 
-                                    ShadowDepth="1" 
-                                    Opacity="0.15"/>
-                </Setter.Value>
-            </Setter>
-        </Style><!-- Estilo para el botón de configuración -->
-        <Style x:Key="ConfigButtonStyle" TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ConfigBorder"
-                                Background="#504F4E"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}"
-                                Width="{TemplateBinding Width}"
-                                Height="{TemplateBinding Height}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#000000" 
-                                                BlurRadius="4" 
-                                                ShadowDepth="1" 
-                                                Opacity="0.12"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ConfigBorder" Property="Background" Value="#706F6F"/>
-                                <Setter TargetName="ConfigBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="6" 
-                                                        ShadowDepth="2" 
-                                                        Opacity="0.18"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="Cursor" Value="Hand"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ConfigBorder" Property="Background" Value="#3C3B3A"/>
-                                <Setter TargetName="ConfigBorder" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" 
-                                                        BlurRadius="2" 
-                                                        ShadowDepth="0" 
-                                                        Opacity="0.25"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
+                    <DropShadowEffect Color="#000000" BlurRadius="3" ShadowDepth="1" Opacity="0.15"/>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="ConfigButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeHeaderSecondaryButtonStyle}"/>
     </Window.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>        </Grid.RowDefinitions>        <!-- Navigation Bar -->
-        <Border x:Name="navbar" Grid.Row="0" Padding="18,12" Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#118938" Offset="0"/>
-                    <GradientStop Color="#0F7A30" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border x:Name="navbar"
+                Grid.Row="0"
+                Padding="18,12"
+                Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Style="{DynamicResource ThemeHeaderContainerStyle}">
             <Border.Effect>
-                <DropShadowEffect Color="#000000" 
-                                BlurRadius="6" 
-                                ShadowDepth="2" 
-                                Opacity="0.12"/>
+                <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="2" Opacity="0.12"/>
             </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
-                <!-- Left side buttons -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">                    <Button x:Name="btnHome" Content="🏠 Home" 
-                           Background="#2B8E3F" Foreground="White" 
-                           Padding="16,8" BorderThickness="0" 
-                           FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14"
-                           Margin="0,0,12,0" Click="btnHome_Click"
-                           Style="{StaticResource NavButtonStyle}"/>
-                    
-                    <Button x:Name="btnBack" Content="⬅️ Regresar" 
-                           Background="#2B8E3F" Foreground="White" 
-                           Padding="16,8" BorderThickness="0" 
-                           FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="14"
-                           Margin="0,0,16,0" Click="btnBack_Click"
-                           Visibility="Collapsed"
-                           Style="{StaticResource NavButtonStyle}"/>                    <TextBlock x:Name="txtCurrentView" Text="Home"
-                              Foreground="#FFFFFF" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" 
-                              VerticalAlignment="Center" Margin="16,0,0,0">
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="btnHome"
+                            Content="🏠 Home"
+                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
+                            Foreground="White"
+                            Padding="16,8"
+                            BorderThickness="0"
+                            FontFamily="Segoe UI"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            Margin="0,0,12,0"
+                            Click="btnHome_Click"
+                            Style="{StaticResource NavButtonStyle}"/>
+
+                    <Button x:Name="btnBack"
+                            Content="⬅️ Regresar"
+                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
+                            Foreground="White"
+                            Padding="16,8"
+                            BorderThickness="0"
+                            FontFamily="Segoe UI"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            Margin="0,0,16,0"
+                            Click="btnBack_Click"
+                            Visibility="Collapsed"
+                            Style="{StaticResource NavButtonStyle}"/>
+
+                    <TextBlock x:Name="txtCurrentView"
+                              Text="Home"
+                              Foreground="#FFFFFF"
+                              FontFamily="Segoe UI"
+                              FontSize="16"
+                              FontWeight="SemiBold"
+                              VerticalAlignment="Center"
+                              Margin="16,0,0,0">
                         <TextBlock.Effect>
-                            <DropShadowEffect Color="#000000" 
-                                            BlurRadius="2" 
-                                            ShadowDepth="1" 
-                                            Opacity="0.25"/>
+                            <DropShadowEffect Color="#000000" BlurRadius="2" ShadowDepth="1" Opacity="0.25"/>
                         </TextBlock.Effect>
                     </TextBlock>
                 </StackPanel>
-                  <!-- Right side config button -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">                    <!-- Indicador de estado de base de datos -->
-                    <TextBlock Text="{Binding NombrePersonaActual}" 
-                               Foreground="White" FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="15"
-                               VerticalAlignment="Center" Margin="0,0,18,0"/>
-                    <Border x:Name="DatabaseStatusBorder" 
-                            CornerRadius="6" 
-                            Padding="10,6" 
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding NombrePersonaActual}"
+                               Foreground="White"
+                               FontFamily="Segoe UI"
+                               FontWeight="SemiBold"
+                               FontSize="15"
+                               VerticalAlignment="Center"
+                               Margin="0,0,18,0"/>
+
+                    <Border x:Name="DatabaseStatusBorder"
+                            CornerRadius="6"
+                            Padding="10,6"
                             Margin="0,0,12,0"
                             ToolTip="{Binding DatabaseStatusTooltip}"
                             Background="{Binding DatabaseStatusBackground}"
                             Style="{StaticResource StatusIndicatorStyle}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="DatabaseStatusIcon" 
-                                      Text="{Binding DatabaseStatusIcon}" 
-                                      Foreground="White" 
-                                      FontFamily="Segoe UI" FontWeight="Bold" 
+                            <TextBlock x:Name="DatabaseStatusIcon"
+                                      Text="{Binding DatabaseStatusIcon}"
+                                      Foreground="White"
+                                      FontFamily="Segoe UI"
+                                      FontWeight="Bold"
                                       Margin="0,0,6,0"
                                       VerticalAlignment="Center"/>
-                            <TextBlock x:Name="DatabaseStatusText" 
+                            <TextBlock x:Name="DatabaseStatusText"
                                       Text="{Binding DatabaseStatusText}"
-                                      Foreground="White" 
-                                      FontFamily="Segoe UI" FontSize="11" 
+                                      Foreground="White"
+                                      FontFamily="Segoe UI"
+                                      FontSize="11"
                                       FontWeight="SemiBold"
                                       VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Border>                    <Button x:Name="btnCerrarSesion" Content="🔒 Cerrar sesión" 
-                           Foreground="White" 
-                           BorderThickness="0"
-                           FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="15"
-                           Width="140" Height="40"
-                           ToolTip="Cerrar sesión"
-                           Command="{Binding CerrarSesionCommand}"
-                           Style="{StaticResource ConfigButtonStyle}"/>
+                    </Border>
+
+                    <Button x:Name="btnCerrarSesion"
+                            Content="🔒 Cerrar sesión"
+                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontFamily="Segoe UI"
+                            FontWeight="SemiBold"
+                            FontSize="15"
+                            Width="140"
+                            Height="40"
+                            ToolTip="Cerrar sesión"
+                            Command="{Binding CerrarSesionCommand}"
+                            Style="{StaticResource ConfigButtonStyle}"/>
                 </StackPanel>
             </Grid>
-        </Border>        <!-- Main Content -->
+        </Border>
+
         <Grid Grid.Row="1">
             <ContentControl x:Name="contentPanel">
                 <ContentControl.Background>

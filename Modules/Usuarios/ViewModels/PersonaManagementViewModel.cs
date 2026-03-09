@@ -160,7 +160,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Sede = null // Asegurar inicialización explícita
             };
             var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
-            var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
+            var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
             if (win.ShowDialog() == true)
             {
                 await CargarPersonas();
@@ -339,7 +339,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Sede = persona.Sede // Copiar sede para edición
             };
             var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
-            var win = new Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
+            var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
             if (win.ShowDialog() == true)
             {
                 // Guardar cambios en la base de datos y refrescar la lista

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using GestLog.Views;
+using GestLog.Modules.Shell.Views;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,7 +53,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
             _logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();
             SubscribeToDatabaseStatusChanges();
-            var loginView = new GestLog.Views.Authentication.LoginView();
+            var loginView = new GestLog.Modules.Usuarios.Views.Authentication.LoginView();
             loginView.LoginSuccessful += (s, e) =>
             {
                 if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
@@ -497,7 +497,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
             vm.SetAuthenticated(false);
-        var loginView = new GestLog.Views.Authentication.LoginView();
+        var loginView = new GestLog.Modules.Usuarios.Views.Authentication.LoginView();
         loginView.LoginSuccessful += (s, e) =>
         {
             if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)

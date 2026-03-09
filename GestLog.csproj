@@ -22,6 +22,7 @@
     <ApplicationIcon>Assets\image001.ico</ApplicationIcon>
     <!-- Configuración del manifiesto para elevación de privilegios -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>GestLog.Program</StartupObject>
     <!-- Suprimir advertencias CA1416 - GestLog es específicamente una aplicación de Windows -->
     <NoWarn>$(NoWarn);CA1416</NoWarn>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
@@ -35,7 +36,7 @@
   </PropertyGroup>
 
   <!-- Target para leer la versión desde version.txt -->
-  <Target Name="ReadVersionFromFile" BeforeTargets="Build">
+  <Target Name="ReadVersionFromFile" BeforeTargets="BeforeCompile">
     <ReadLinesFromFile File="$(MSBuildProjectDirectory)\version.txt">
       <Output TaskParameter="Lines" ItemName="VersionLines" />
     </ReadLinesFromFile>

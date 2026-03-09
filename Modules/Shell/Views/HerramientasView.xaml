@@ -1,0 +1,122 @@
+<UserControl x:Class="GestLog.Modules.Shell.Views.HerramientasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+
+    <Grid Style="{DynamicResource ThemeRootGridStyle}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="40,30">
+            <StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                    <Border Style="{DynamicResource ThemeCardIconCircleStyle}" Width="80" Height="80" CornerRadius="40" Margin="0,0,20,0">
+                        <TextBlock Text="🛠️" Style="{DynamicResource ThemeCardIconTextStyle}" FontSize="32"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Herramientas" Style="{DynamicResource ThemeSectionTitleStyle}"/>
+                        <TextBlock Text="Selecciona la herramienta que deseas utilizar" Style="{DynamicResource ThemeSectionSubtitleStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <UniformGrid Columns="3" Rows="3" HorizontalAlignment="Center" VerticalAlignment="Top">
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessEquiposInformaticos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="🖥️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Gestión de Equipos Informáticos" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Administra equipos, cronograma y asignaciones de uso diario en formato calendario semanal" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnEquiposInformaticos" Content="Abrir Gestión de Equipos Informáticos" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnEquiposInformaticos_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessGestionMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="🛡️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Gestión de Mantenimientos" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Administra equipos, cronogramas y seguimientos de mantenimiento preventivo y correctivo" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnGestionMantenimientos" Content="Abrir Gestión de Mantenimientos" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnGestionMantenimientos_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessGestionVehiculos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="🚗" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Gestión de Vehículos" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Administra el parque vehicular: identificación, documentos, fotos y mantenimiento." Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnGestionVehiculos" Content="Abrir Gestión de Vehículos" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnGestionVehiculos_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessGestionCartera, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="💼" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Gestión de Cartera" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Genera estados de cuenta en PDF desde archivos Excel y gestiona la cartera de clientes" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnGestionCartera" Content="Abrir Gestión de Cartera" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnGestionCartera_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessDaaterProcessor, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="📊" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="DaaterProccesor" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Procesamiento avanzado de archivos Excel con funciones de consolidación y filtrado de datos" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnDaaterProccesor" Content="Abrir DaaterProccesor" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnDaaterProccesor_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessEnvioCatalogo, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="📧" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Envío de Catálogo" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Envío masivo del catálogo de productos y servicios a múltiples clientes por email" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnEnvioCatalogo" Content="Abrir Envío de Catálogo" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnEnvioCatalogo_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessGestionIdentidadCatalogos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="🆔" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Gestión de Identidad y Catálogos" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Personas, usuarios, cargos, tipos de documento, roles y permisos." Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnGestionIdentidadCatalogos" Content="Abrir Gestión de Identidad y Catálogos" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnGestionIdentidadCatalogos_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
+                            Visibility="{Binding CanAccessErrorLog, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="⚠️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Registro de Errores" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Visualiza y gestiona los errores de la aplicación para diagnosticar y resolver problemas" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnErrorLog" Content="Ver Errores" Style="{DynamicResource ThemeSecondaryButtonStyle}" Click="btnErrorLog_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="⚙️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
+                            <TextBlock Text="Configuración" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Configuración unificada de la aplicación, módulos, interfaz y rendimiento del sistema" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Name="btnConfiguration" Content="Abrir Configuración" Style="{DynamicResource ThemeSecondaryButtonStyle}" Click="BtnConfiguration_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                </UniformGrid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

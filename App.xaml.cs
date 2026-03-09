@@ -14,7 +14,6 @@ using AutoUpdaterDotNET;
 using static AutoUpdaterDotNET.Mode;
 using System.Reflection;
 using System.Diagnostics;
-using Velopack;
 
 namespace GestLog;
 
@@ -26,13 +25,7 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
-        // ✅ PRIMERO: Inicializar Velopack ANTES de cualquier otra cosa
-        // Esto maneja actualizaciones automáticas en segundo plano
-#if !DEBUG
-        VelopackApp.Build().Run();
-#endif
-
-        // ✅ SEGUNDO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
+        // ✅ PRIMERO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
         var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
         if (string.IsNullOrEmpty(environment))
         {
@@ -86,7 +79,7 @@ public partial class App : System.Windows.Application
         await LoadApplicationConfigurationAsync();
         
         // Mostrar SplashScreen antes de cualquier lógica
-        var splash = new GestLog.Views.SplashScreen();
+        var splash = new GestLog.Modules.Shell.Views.SplashScreen();
         splash.Show();
         await System.Threading.Tasks.Task.Delay(500); // Permitir renderizado
 
@@ -151,7 +144,7 @@ public partial class App : System.Windows.Application
                 }
                 
                 // Si el usuario rechaza la actualización, recrear el splash para continuar
-                splash = new GestLog.Views.SplashScreen();
+                splash = new GestLog.Modules.Shell.Views.SplashScreen();
                 splash.Show();
                 await System.Threading.Tasks.Task.Delay(300);
             }
@@ -741,72 +734,6 @@ public partial class App : System.Windows.Application
         }
     }
 
-    /// <summary>
-    /// Verifica si es necesario ejecutar el First Run Setup
-    /// </summary>
-    private async Task CheckFirstRunSetupAsync()
-    {
-        try
-        {
-            _logger?.Logger.LogInformation("🚀 Verificando necesidad de First Run Setup...");
-
-            // Obtener el servicio de First Run Setup
-            var firstRunSetupService = LoggingService.GetService<IFirstRunSetupService>();
-
-            // Verificar si es la primera ejecución
-            var isFirstRun = await firstRunSetupService.IsFirstRunAsync();
-
-            if (isFirstRun)
-            {
-                _logger?.Logger.LogInformation("🔧 Primera ejecución detectada, configurando automáticamente...");
-
-                // Configurar automáticamente usando valores de appsettings.json
-                await firstRunSetupService.ConfigureAutomaticEnvironmentVariablesAsync();
-
-                _logger?.Logger.LogInformation("✅ First Run Setup automático completado exitosamente");
-            }
-            else
-            {
-                _logger?.Logger.LogInformation("✅ Configuración existente encontrada, omitiendo First Run Setup");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger?.Logger.LogError(ex, "❌ Error durante la verificación del First Run Setup");
-
-            // Mostrar error al usuario pero no cerrar la aplicación
-            System.Windows.MessageBox.Show(
-                $"Error durante la configuración automática de base de datos:\n{ex.Message}\n\n" +
-                "La aplicación continuará pero es posible que tenga problemas de conectividad.\n" +
-                "Verifique que SQL Server esté corriendo y revise los logs para más detalles.",
-                "Error de Configuración Automática",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-        }
-    }
-
-    /// <summary>
-    /// Muestra el dialog de First Run Setup
-    /// </summary>
-    /// <returns>True si el setup se completó exitosamente, False si se canceló</returns>
-    private bool ShowFirstRunSetup()
-    {
-        try
-        {
-            // Crear el dialog usando el factory method
-            var setupDialog = Views.FirstRunSetupDialog.Create(LoggingService.GetServiceProvider());
-
-            // Mostrar el dialog como modal
-            var result = setupDialog.ShowDialog();
-
-            return result == true;
-        }        
-        catch (Exception ex)
-        {
-            _logger?.Logger.LogError(ex, "❌ Error al mostrar First Run Setup Dialog");
-            return false;
-        }
-    }    
     /// <summary>
     /// Muestra la ventana de autenticación y maneja el proceso de login
     /// </summary>
