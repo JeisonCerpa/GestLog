@@ -1,11 +1,11 @@
-// MIGRACIÓN A DatabaseAwareViewModel - AUTO-REFRESH AUTOMÁTICO
+﻿// MIGRACIÃ“N A DatabaseAwareViewModel - AUTO-REFRESH AUTOMÃTICO
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using GestLog.Modules.Usuarios.Models;
-using GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario;
+using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario;
 using Modules.Usuarios.Interfaces;
 using System.ComponentModel;
 using System.Linq;
@@ -16,14 +16,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
-using MessageBox = System.Windows.MessageBox; // Usar siempre System.Windows.MessageBox para evitar ambigüedad
+using MessageBox = System.Windows.MessageBox; // Usar siempre System.Windows.MessageBox para evitar ambigÃ¼edad
 
-// ✅ NUEVAS DEPENDENCIAS PARA AUTO-REFRESH
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
-using GestLog.Services.Core.Logging;    // ✅ NUEVO: IGestLogLogger
-using GestLog.Modules.DatabaseConnection; // ✅ NUEVO: IDbContextFactory
-using System.Threading;                  // ✅ NUEVO: CancellationTokenSource
+// âœ… NUEVAS DEPENDENCIAS PARA AUTO-REFRESH
+using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // âœ… NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;    // âœ… NUEVO: IGestLogLogger
+using GestLog.Modules.DatabaseConnection; // âœ… NUEVO: IDbContextFactory
+using System.Threading;                  // âœ… NUEVO: CancellationTokenSource
 
 namespace Modules.Usuarios.ViewModels
 {    public class UsuarioManagementViewModel : DatabaseAwareViewModel
@@ -46,7 +46,7 @@ namespace Modules.Usuarios.ViewModels
         public ObservableCollection<Permiso> Permisos { get; set; } = new();
         public ObservableCollection<Auditoria> Auditorias { get; set; } = new();
 
-        // Propiedades de permisos para el módulo Usuarios
+        // Propiedades de permisos para el mÃ³dulo Usuarios
         private bool _canCreateUser;
         public bool CanCreateUser
         {
@@ -90,10 +90,10 @@ namespace Modules.Usuarios.ViewModels
             {
                 _usuarioSeleccionado = value;
                 OnPropertyChanged();
-                // Cargar correo de la persona asociada si está disponible
+                // Cargar correo de la persona asociada si estÃ¡ disponible
                 CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);
                 
-                // Actualizar información de persona en tiempo real
+                // Actualizar informaciÃ³n de persona en tiempo real
                 _ = ActualizarInformacionUsuarioSeleccionadoAsync();
                 
                 // Cargar roles del usuario seleccionado
@@ -269,7 +269,7 @@ namespace Modules.Usuarios.ViewModels
             RecalcularPermisos();
             _currentUserService.CurrentUserChanged += OnCurrentUserChanged;
 
-            // Comandos con validación de permisos
+            // Comandos con validaciÃ³n de permisos
             RegistrarUsuarioCommand = new RelayCommand(async _ => await RegistrarUsuarioAsync(), _ => true);
             EditarUsuarioCommand = new RelayCommand(async _ => await EditarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanEditUser);
             RestablecerContrasenaCommand = new RelayCommand(async _ => await RestablecerContrasenaAsync(), _ => UsuarioSeleccionado != null && CanResetPassword);
@@ -280,21 +280,21 @@ namespace Modules.Usuarios.ViewModels
             RegistrarNuevoUsuarioCommand = new RelayCommand(async _ => await RegistrarNuevoUsuarioAsync(), _ => PuedeRegistrarNuevoUsuario() && CanCreateUser);
             EliminarUsuarioCommand = new RelayCommand(async _ => await EliminarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanDeleteUser);
 
-            // Inicialización asíncrona
+            // InicializaciÃ³n asÃ­ncrona
             _ = InicializarAsync();
             
-            // Conectar el event handler para la colección de roles seleccionados
+            // Conectar el event handler para la colecciÃ³n de roles seleccionados
             RolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
         }
 
         /// <summary>
-        /// Implementación del método abstracto para auto-refresh automático
+        /// ImplementaciÃ³n del mÃ©todo abstracto para auto-refresh automÃ¡tico
         /// </summary>
         protected override async Task RefreshDataAsync()
         {
             try
             {
-                _logger.LogDebug("[UsuarioManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[UsuarioManagementViewModel] Refrescando datos automÃ¡ticamente");
                 
                 // Recargar todas las listas principales sin mostrar UI
                 await CargarUsuariosAsync();
@@ -317,15 +317,15 @@ namespace Modules.Usuarios.ViewModels
         }
 
         /// <summary>
-        /// Override para manejar cuando se pierde la conexión específicamente para usuarios
+        /// Override para manejar cuando se pierde la conexiÃ³n especÃ­ficamente para usuarios
         /// </summary>
         protected override void OnConnectionLost()
         {
-            StatusMessage = "Sin conexión - Gestión de usuarios no disponible";
+            StatusMessage = "Sin conexiÃ³n - GestiÃ³n de usuarios no disponible";
         }
 
         /// <summary>
-        /// Método de inicialización asíncrona con timeout ultrarrápido
+        /// MÃ©todo de inicializaciÃ³n asÃ­ncrona con timeout ultrarrÃ¡pido
         /// </summary>
         public async Task InicializarAsync()
         {
@@ -343,8 +343,8 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("[UsuarioManagementViewModel] Timeout - sin conexión BD");
-                StatusMessage = "Sin conexión - Módulo no disponible";
+                _logger.LogInformation("[UsuarioManagementViewModel] Timeout - sin conexiÃ³n BD");
+                StatusMessage = "Sin conexiÃ³n - MÃ³dulo no disponible";
             }
             catch (Exception ex)
             {
@@ -357,14 +357,14 @@ namespace Modules.Usuarios.ViewModels
             }
         }
 
-        // Método para cargar usuarios desde la base de datos
+        // MÃ©todo para cargar usuarios desde la base de datos
         public async Task CargarUsuariosAsync()
         {
             try
             {
                 var lista = await _usuarioService.BuscarUsuariosAsync("");
                 
-                // Cargar información de personas para cada usuario
+                // Cargar informaciÃ³n de personas para cada usuario
                 await CargarInformacionPersonasAsync(lista);
                 
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -379,7 +379,7 @@ namespace Modules.Usuarios.ViewModels
                 _logger.LogError(ex, "[UsuarioManagementViewModel] Error al cargar usuarios");
                 // No mostrar UI error en auto-refresh
             }
-        }        // Método para enriquecer usuarios con información de personas
+        }        // MÃ©todo para enriquecer usuarios con informaciÃ³n de personas
         private async Task CargarInformacionPersonasAsync(IEnumerable<Usuario> usuarios)
         {
             try
@@ -400,11 +400,11 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[UsuarioManagementViewModel] Error al cargar información de personas");
+                _logger.LogError(ex, "[UsuarioManagementViewModel] Error al cargar informaciÃ³n de personas");
             }
         }
 
-        // Método para cargar personas activas
+        // MÃ©todo para cargar personas activas
         public async Task CargarPersonasDisponiblesAsync()
         {
             try
@@ -443,7 +443,7 @@ namespace Modules.Usuarios.ViewModels
         }
 
         /// <summary>
-        /// Cargar roles de usuario con timeout ultrarrápido usando IDbContextFactory
+        /// Cargar roles de usuario con timeout ultrarrÃ¡pido usando IDbContextFactory
         /// </summary>
         public async Task CargarRolesDeUsuarioAsync()
         {
@@ -457,7 +457,7 @@ namespace Modules.Usuarios.ViewModels
             }
             
             try
-            {                // ✅ TIMEOUT BALANCEADO CON FACTORY
+            {                // âœ… TIMEOUT BALANCEADO CON FACTORY
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                 using var db = _dbContextFactory.CreateDbContext();
                 db.Database.SetCommandTimeout(15);
@@ -482,19 +482,19 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == -1 || ex.Number == 26 || ex.Number == 10060)
             {
-                _logger.LogInformation("[UsuarioManagementViewModel] Sin conexión BD al cargar roles (Error {Number})", ex.Number);
-                // No lanzar excepción - manejar silenciosamente
+                _logger.LogInformation("[UsuarioManagementViewModel] Sin conexiÃ³n BD al cargar roles (Error {Number})", ex.Number);
+                // No lanzar excepciÃ³n - manejar silenciosamente
             }
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("[UsuarioManagementViewModel] Timeout al cargar roles de usuario");
-                // No lanzar excepción - manejar silenciosamente  
+                // No lanzar excepciÃ³n - manejar silenciosamente  
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[UsuarioManagementViewModel] Error al cargar roles del usuario");
             }
-        }        // Método para actualizar información del usuario seleccionado con datos de persona
+        }        // MÃ©todo para actualizar informaciÃ³n del usuario seleccionado con datos de persona
         private async Task ActualizarInformacionUsuarioSeleccionadoAsync()
         {
             if (UsuarioSeleccionado?.PersonaId == null || UsuarioSeleccionado.PersonaId == Guid.Empty) return;
@@ -512,7 +512,7 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[UsuarioManagementViewModel] Error al actualizar información de persona");
+                _logger.LogError(ex, "[UsuarioManagementViewModel] Error al actualizar informaciÃ³n de persona");
             }
         }        private async Task RegistrarUsuarioAsync() { await Task.CompletedTask; }
         private async Task EditarUsuarioAsync()
@@ -532,8 +532,8 @@ namespace Modules.Usuarios.ViewModels
                     RolesSeleccionados.Add(rol);
                 }
                 
-                // Abrir ventana de edición
-                var window = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioEdicionWindow
+                // Abrir ventana de ediciÃ³n
+                var window = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioEdicionWindow
                 {
                     DataContext = this,
                     Owner = System.Windows.Application.Current.MainWindow
@@ -548,7 +548,7 @@ namespace Modules.Usuarios.ViewModels
                     var rolesIds = RolesSeleccionados.Select(r => r.IdRol).ToArray();
                     await _usuarioService.AsignarRolesAsync(UsuarioSeleccionado.IdUsuario, rolesIds);
                     
-                    System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' editado correctamente.", "Edición exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' editado correctamente.", "EdiciÃ³n exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     
                     // Recargar la lista y los roles
                     await BuscarUsuariosAsync();
@@ -556,7 +556,7 @@ namespace Modules.Usuarios.ViewModels
                 }
                 else
                 {
-                    // Usuario canceló - limpiar RolesSeleccionados
+                    // Usuario cancelÃ³ - limpiar RolesSeleccionados
                     RolesSeleccionados.Clear();
                 }
             }
@@ -572,8 +572,8 @@ namespace Modules.Usuarios.ViewModels
             
             try
             {
-                // Abrir ventana para solicitar nueva contraseña
-                var window = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.RestablecerContrasenaWindow
+                // Abrir ventana para solicitar nueva contraseÃ±a
+                var window = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.RestablecerContrasenaWindow
                 {
                     NombreUsuario = UsuarioSeleccionado.NombreUsuario,
                     Owner = System.Windows.Application.Current.MainWindow
@@ -581,19 +581,19 @@ namespace Modules.Usuarios.ViewModels
                 
                 if (window.ShowDialog() == true && !string.IsNullOrEmpty(window.NuevaContrasena))
                 {
-                    await _usuarioService.RestablecerContraseñaAsync(UsuarioSeleccionado.IdUsuario, window.NuevaContrasena);
-                    System.Windows.MessageBox.Show($"Contraseña del usuario '{UsuarioSeleccionado.NombreUsuario}' restablecida correctamente.", "Restablecimiento exitoso", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    await _usuarioService.RestablecerContrase\u00F1aAsync(UsuarioSeleccionado.IdUsuario, window.NuevaContrasena);
+                    System.Windows.MessageBox.Show($"ContraseÃ±a del usuario '{UsuarioSeleccionado.NombreUsuario}' restablecida correctamente.", "Restablecimiento exitoso", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error al restablecer contraseña: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Error al restablecer contraseÃ±a: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
         private string GenerarContrasenaTemporal()
         {
-            // Este método ya no se usa, pero lo mantengo por si se necesita en el futuro
+            // Este mÃ©todo ya no se usa, pero lo mantengo por si se necesita en el futuro
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var random = new Random();
             return new string(Enumerable.Repeat(chars, 8)
@@ -604,7 +604,7 @@ namespace Modules.Usuarios.ViewModels
         {
             var lista = await _usuarioService.BuscarUsuariosAsync(FiltroTexto);
             
-            // Cargar información de personas para cada usuario encontrado
+            // Cargar informaciÃ³n de personas para cada usuario encontrado
             await CargarInformacionPersonasAsync(lista);
             
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -618,13 +618,13 @@ namespace Modules.Usuarios.ViewModels
         private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }        private void LimpiarCamposNuevoUsuario()
         {
             NuevoUsuarioNombre = string.Empty;
-            // 📝 NuevoUsuarioPassword ya no se usa (se genera automáticamente)
+            // ðŸ“ NuevoUsuarioPassword ya no se usa (se genera automÃ¡ticamente)
             RolesSeleccionados.Clear();
             PersonaIdSeleccionada = Guid.Empty;
         }
           private bool PuedeRegistrarNuevoUsuario()
         {
-            // 📝 CAMBIO: Solo validar nombre de usuario (contraseña se genera automáticamente)
+            // ðŸ“ CAMBIO: Solo validar nombre de usuario (contraseÃ±a se genera automÃ¡ticamente)
             var canRegister = !string.IsNullOrWhiteSpace(NuevoUsuarioNombre);
             System.Diagnostics.Debug.WriteLine($"[DEBUG] PuedeRegistrarNuevoUsuario: {canRegister} (Nombre: '{NuevoUsuarioNombre}')");
             return canRegister;
@@ -645,7 +645,7 @@ namespace Modules.Usuarios.ViewModels
 
             try
             {
-                // 📝 CAMBIO: Generar contraseña temporal en lugar de usar la proporcionada
+                // ðŸ“ CAMBIO: Generar contraseÃ±a temporal en lugar de usar la proporcionada
                 var temporaryPassword = _passwordManagementService.GenerateTemporaryPassword();
                 var (tempHash, tempSalt) = GeneratePasswordHashAndSalt(temporaryPassword);
 
@@ -654,12 +654,12 @@ namespace Modules.Usuarios.ViewModels
                     IdUsuario = Guid.NewGuid(),
                     PersonaId = PersonaIdSeleccionada,
                     NombreUsuario = NuevoUsuarioNombre,
-                    HashContrasena = tempHash,                           // 🔐 Hash temporal
-                    Salt = tempSalt,                                     // 🔐 Salt temporal
-                    TemporaryPasswordHash = tempHash,                    // 🔐 Guardar en campo temporal
-                    TemporaryPasswordSalt = tempSalt,                    // 🔐 Guardar en campo temporal
-                    TemporaryPasswordExpiration = DateTime.UtcNow.AddHours(24), // ⏰ Válida 24 horas
-                    IsFirstLogin = true,                                 // 🔄 Forzar cambio en primer acceso
+                    HashContrasena = tempHash,                           // ðŸ” Hash temporal
+                    Salt = tempSalt,                                     // ðŸ” Salt temporal
+                    TemporaryPasswordHash = tempHash,                    // ðŸ” Guardar en campo temporal
+                    TemporaryPasswordSalt = tempSalt,                    // ðŸ” Guardar en campo temporal
+                    TemporaryPasswordExpiration = DateTime.UtcNow.AddHours(24), // â° VÃ¡lida 24 horas
+                    IsFirstLogin = true,                                 // ðŸ”„ Forzar cambio en primer acceso
                     Activo = true,
                     Desactivado = false,
                     FechaCreacion = DateTime.Now,
@@ -671,16 +671,16 @@ namespace Modules.Usuarios.ViewModels
 
                 // Asignar los roles seleccionados directamente
                 var rolesIds = RolesSeleccionados.Select(r => r.IdRol).ToArray();
-                await _usuarioService.AsignarRolesAsync(nuevoUsuario.IdUsuario, rolesIds);                // 📧 Obtener email y nombre completo de la persona
+                await _usuarioService.AsignarRolesAsync(nuevoUsuario.IdUsuario, rolesIds);                // ðŸ“§ Obtener email y nombre completo de la persona
                 var personas = await _personaService.BuscarPersonasAsync("");
                 var persona = personas.FirstOrDefault(p => p.IdPersona == PersonaIdSeleccionada);
                 var emailAddress = persona?.Correo ?? string.Empty;
                 var fullName = persona != null ? $"{persona.Nombres} {persona.Apellidos}".Trim() : NuevoUsuarioNombre;
 
-                // 📧 Obtener nombres de roles asignados
+                // ðŸ“§ Obtener nombres de roles asignados
                 var roleNames = RolesSeleccionados.Select(r => r.Nombre).ToArray();
 
-                // 📧 Enviar email de bienvenida con nuevo template
+                // ðŸ“§ Enviar email de bienvenida con nuevo template
                 if (!string.IsNullOrEmpty(emailAddress))
                 {
                     var emailSent = await _passwordResetEmailService.SendNewUserEmailAsync(
@@ -694,12 +694,12 @@ namespace Modules.Usuarios.ViewModels
                     if (emailSent)
                     {
                         System.Windows.MessageBox.Show(
-                            $"✅ Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
-                            $"📧 Email de bienvenida enviado a {emailAddress} con:\n" +
-                            $"   • Usuario: {NuevoUsuarioNombre}\n" +
-                            $"   • Contraseña temporal: {temporaryPassword}\n" +
-                            $"   • Roles asignados: {string.Join(", ", roleNames)}\n\n" +
-                            $"⏰ La contraseña temporal vence en 24 horas.",
+                            $"âœ… Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
+                            $"ðŸ“§ Email de bienvenida enviado a {emailAddress} con:\n" +
+                            $"   â€¢ Usuario: {NuevoUsuarioNombre}\n" +
+                            $"   â€¢ ContraseÃ±a temporal: {temporaryPassword}\n" +
+                            $"   â€¢ Roles asignados: {string.Join(", ", roleNames)}\n\n" +
+                            $"â° La contraseÃ±a temporal vence en 24 horas.",
                             "Registro Exitoso", 
                             System.Windows.MessageBoxButton.OK, 
                             System.Windows.MessageBoxImage.Information);
@@ -707,9 +707,9 @@ namespace Modules.Usuarios.ViewModels
                     else
                     {
                         System.Windows.MessageBox.Show(
-                            $"⚠️ Usuario '{nuevoUsuario.NombreUsuario}' creado, pero hubo un error al enviar el email.\n\n" +
-                            $"Contraseña temporal: {temporaryPassword}\n\n" +
-                            $"Puede intentar enviar el email manualmente o el usuario puede usar 'Recuperar contraseña'.",
+                            $"âš ï¸ Usuario '{nuevoUsuario.NombreUsuario}' creado, pero hubo un error al enviar el email.\n\n" +
+                            $"ContraseÃ±a temporal: {temporaryPassword}\n\n" +
+                            $"Puede intentar enviar el email manualmente o el usuario puede usar 'Recuperar contraseÃ±a'.",
                             "Aviso", 
                             System.Windows.MessageBoxButton.OK, 
                             System.Windows.MessageBoxImage.Warning);
@@ -718,16 +718,16 @@ namespace Modules.Usuarios.ViewModels
                 else
                 {
                     System.Windows.MessageBox.Show(
-                        $"✅ Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
-                        $"⚠️ No se encontró email para enviar contraseña temporal.\n" +
-                        $"Contraseña temporal: {temporaryPassword}",
+                        $"âœ… Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente.\n\n" +
+                        $"âš ï¸ No se encontrÃ³ email para enviar contraseÃ±a temporal.\n" +
+                        $"ContraseÃ±a temporal: {temporaryPassword}",
                         "Registro Parcial", 
                         System.Windows.MessageBoxButton.OK, 
                         System.Windows.MessageBoxImage.Warning);
                 }
                 
                 // Cerrar ventana de registro
-                if (global::System.Windows.Application.Current.Windows.OfType<global::System.Windows.Window>().FirstOrDefault(w => w is GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow && w.DataContext == this) is global::System.Windows.Window win)
+                if (global::System.Windows.Application.Current.Windows.OfType<global::System.Windows.Window>().FirstOrDefault(w => w is GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow && w.DataContext == this) is global::System.Windows.Window win)
                     win.DialogResult = true;
 
                 // Recargar lista de usuarios
@@ -737,12 +737,12 @@ namespace Modules.Usuarios.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al registrar usuario: {Username}", NuevoUsuarioNombre);
-                System.Windows.MessageBox.Show($"❌ Error al registrar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"âŒ Error al registrar usuario: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
         /// <summary>
-        /// Genera hash y salt para una contraseña (reutiliza la lógica existente)
+        /// Genera hash y salt para una contraseÃ±a (reutiliza la lÃ³gica existente)
         /// </summary>
         private (string Hash, string Salt) GeneratePasswordHashAndSalt(string password)
         {
@@ -767,8 +767,8 @@ namespace Modules.Usuarios.ViewModels
             if (UsuarioSeleccionado == null) return;
 
             var result = System.Windows.MessageBox.Show(
-                $"¿Está seguro de que desea eliminar el usuario '{UsuarioSeleccionado.NombreUsuario}'?",
-                "Confirmar eliminación",
+                $"Â¿EstÃ¡ seguro de que desea eliminar el usuario '{UsuarioSeleccionado.NombreUsuario}'?",
+                "Confirmar eliminaciÃ³n",
                 System.Windows.MessageBoxButton.YesNo,
                 System.Windows.MessageBoxImage.Question);
 
@@ -777,7 +777,7 @@ namespace Modules.Usuarios.ViewModels
                 try
                 {
                     await _usuarioService.EliminarUsuarioAsync(UsuarioSeleccionado.IdUsuario);
-                    System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' eliminado correctamente.", "Eliminación exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show($"Usuario '{UsuarioSeleccionado.NombreUsuario}' eliminado correctamente.", "EliminaciÃ³n exitosa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     await CargarUsuariosAsync();
                 }
                 catch (Exception ex)
@@ -792,7 +792,7 @@ namespace Modules.Usuarios.ViewModels
             (EditarUsuarioCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        #region Métodos de Permisos
+        #region MÃ©todos de Permisos
 
         private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
@@ -818,7 +818,7 @@ namespace Modules.Usuarios.ViewModels
         {
             try
             {
-                // Desuscribirse de eventos específicos
+                // Desuscribirse de eventos especÃ­ficos
                 if (_currentUserService != null)
                 {
                     _currentUserService.CurrentUserChanged -= OnCurrentUserChanged;
@@ -831,7 +831,7 @@ namespace Modules.Usuarios.ViewModels
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "[UsuarioManagementViewModel] Error durante dispose específico");
+                _logger?.LogError(ex, "[UsuarioManagementViewModel] Error durante dispose especÃ­fico");
             }
             finally
             {
@@ -840,7 +840,7 @@ namespace Modules.Usuarios.ViewModels
             }
         }
 
-        // Implementación simple de RelayCommand para MVVM
+        // ImplementaciÃ³n simple de RelayCommand para MVVM
         public class RelayCommand : ICommand
         {
             private readonly Func<object?, Task> _execute;
@@ -859,3 +859,4 @@ namespace Modules.Usuarios.ViewModels
         }
     }
 }
+

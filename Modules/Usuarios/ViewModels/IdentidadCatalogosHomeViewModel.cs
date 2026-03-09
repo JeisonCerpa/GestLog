@@ -30,7 +30,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     return;
                 }
                 await viewModel.InicializarAsync();
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaManagementView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas.PersonaManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -68,7 +68,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
                 _logger.LogInformation("✅ UsuarioManagementViewModel resuelto exitosamente desde DI");
 
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioManagementView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 
                 if (mainWindow != null)
@@ -101,7 +101,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Catálogos", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogos.CatalogosManagementView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogos.CatalogosManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -121,39 +121,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        private void AbrirAuditoria()
-        {            try
-            {
-                var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(AuditoriaManagementViewModel));
-                if (viewModel == null)
-                {
-                    _logger.LogWarning("❌ AuditoriaManagementViewModel no se pudo resolver desde DI");
-                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Auditoría", "Error", 
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return;
-                }
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Auditoria.AuditoriaManagementView { DataContext = viewModel };
-                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
-                if (mainWindow != null)
-                {
-                    _logger.LogInformation("✅ Navegando a vista de Auditoría");
-                    mainWindow.NavigateToView(view, "Historial de Auditoría");
-                }
-                else
-                {
-                    _logger.LogWarning("❌ MainWindow no encontrada");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error al abrir Historial de Auditoría");
-                System.Windows.MessageBox.Show($"Error al abrir Historial de Auditoría: {ex.Message}", "Error", 
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
-
-        [RelayCommand]
         private async Task AbrirCargos()
         {            try
             {
@@ -166,7 +133,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     return;
                 }
                 await viewModel.InitializeAsync();
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Cargos.CargosView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Cargos.CargosView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -198,7 +165,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     return;
                 }
                 await viewModel.InitializeAsync();
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.TipoDocumento.TipoDocumentoManagementView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.TipoDocumento.TipoDocumentoManagementView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -229,7 +196,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Roles", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Roles.RolesView { DataContext = viewModel };
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Roles.RolesView { DataContext = viewModel };
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)
                 {
@@ -260,7 +227,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                     System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Gestión de Permisos por Rol", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
-                var view = new GestLog.Views.Tools.GestionIdentidadCatalogos.Catalogo.Permisos.GestionPermisosRolView();
+                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Permisos.GestionPermisosRolView();
                 view.DataContext = viewModel;
                 var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
                 if (mainWindow != null)

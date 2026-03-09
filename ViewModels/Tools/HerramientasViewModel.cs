@@ -19,8 +19,6 @@ namespace GestLog.ViewModels.Tools
         [ObservableProperty]
         private bool canAccessGestionMantenimientos;
         [ObservableProperty]
-        private bool canAccessErrorLog;
-        [ObservableProperty]
         private bool canAccessGestionIdentidadCatalogos;
         [ObservableProperty]
         private bool canAccessGestionEquipos;
@@ -49,7 +47,6 @@ namespace GestLog.ViewModels.Tools
             CanAccessGestionCartera = _currentUser.HasPermission("Herramientas.AccederGestionCartera");
             CanAccessEnvioCatalogo = _currentUser.HasPermission("Herramientas.AccederEnvioCatalogo");
             CanAccessGestionMantenimientos = _currentUser.HasPermission("Herramientas.AccederGestionMantenimientos");
-            CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
             CanAccessGestionIdentidadCatalogos = _currentUser.HasPermission("Herramientas.AccederGestionIdentidadCatalogos");
             CanAccessGestionEquipos = _currentUser.HasPermission("Herramientas.AccederGestionEquipos");
             CanAccessGestionVehiculos = _currentUser.HasPermission("Herramientas.AccederGestionVehiculos");

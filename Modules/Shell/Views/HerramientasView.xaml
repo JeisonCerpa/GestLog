@@ -96,25 +96,6 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
-                            Visibility="{Binding CanAccessErrorLog, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel>
-                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="⚠️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
-                            <TextBlock Text="Registro de Errores" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Visualiza y gestiona los errores de la aplicación para diagnosticar y resolver problemas" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                            <Button Name="btnErrorLog" Content="Ver Errores" Style="{DynamicResource ThemeSecondaryButtonStyle}" Click="btnErrorLog_Click"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12">
-                        <StackPanel>
-                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="⚙️" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
-                            <TextBlock Text="Configuración" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Configuración unificada de la aplicación, módulos, interfaz y rendimiento del sistema" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                            <Button Name="btnConfiguration" Content="Abrir Configuración" Style="{DynamicResource ThemeSecondaryButtonStyle}" Click="BtnConfiguration_Click"/>
-                        </StackPanel>
-                    </Border>
-
                 </UniformGrid>
             </StackPanel>
         </ScrollViewer>

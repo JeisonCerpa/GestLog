@@ -46,8 +46,6 @@ namespace GestLog.ViewModels
         private bool canAccessAdminPanel;
         [ObservableProperty]
         private bool canAccessUserManagement;
-        [ObservableProperty]
-        private bool canAccessErrorLog;
 
         [ObservableProperty]
         private string _databaseStatusIcon = "❓";
@@ -150,7 +148,6 @@ namespace GestLog.ViewModels
         {
             CanAccessAdminPanel = _currentUser.HasRole("Administrador");
             CanAccessUserManagement = _currentUser.HasPermission("Herramientas.AccederGestionUsuarios");
-            CanAccessErrorLog = _currentUser.HasPermission("Herramientas.VerErrorLog");
         }
 
         public async System.Threading.Tasks.Task InitializeDatabaseStatusAsyncProxy(int timeoutSeconds = 5)

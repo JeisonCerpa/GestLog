@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Modules.Usuarios.Interfaces;
 using Modules.Usuarios.Services;
@@ -6,12 +6,12 @@ using Modules.Usuarios.ViewModels;
 using Modules.Personas.Interfaces;
 using Modules.Personas.Services;
 using GestLog.Modules.Usuarios.ViewModels;
-using GestLog.Modules.Usuarios.Interfaces; // Para autenticación
-using GestLog.Modules.Usuarios.Services; // Para servicios de autenticación
+using GestLog.Modules.Usuarios.Interfaces; // Para autenticaciÃ³n
+using GestLog.Modules.Usuarios.Services; // Para servicios de autenticaciÃ³n
 using GestLog.Services.Interfaces;
 using GestLog.Services;
-using GestLog.Services.Core.Logging; // ✅ NUEVO: Para IGestLogLogger
-using GestLog.Views.Usuarios;
+using GestLog.Services.Core.Logging; // âœ… NUEVO: Para IGestLogLogger
+using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos;
 using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
@@ -32,7 +32,7 @@ namespace GestLog
     {        
         public static void ConfigureUsuariosPersonasServices(IServiceCollection services, IConfiguration configuration)
         {
-            Console.WriteLine("🔧 Configurando servicios de Usuarios y Personas...");        // 🔐 CONFIGURACIÓN SMTP PARA RESETEO DE CONTRASEÑA
+            Console.WriteLine("ðŸ”§ Configurando servicios de Usuarios y Personas...");        // ðŸ” CONFIGURACIÃ“N SMTP PARA RESETEO DE CONTRASEÃ‘A
             var emailSection = configuration.GetSection(GestLog.Services.Configuration.PasswordResetEmailOptions.SectionName);
             services.Configure<GestLog.Services.Configuration.PasswordResetEmailOptions>(options =>
             {
@@ -43,11 +43,11 @@ namespace GestLog
             services.AddScoped<IUsuarioService, UsuarioService>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             
-            // 🔐 SERVICIOS DE AUTENTICACIÓN
+            // ðŸ” SERVICIOS DE AUTENTICACIÃ“N
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             
-            // 🔐 SERVICIOS DE GESTIÓN DE CONTRASEÑA
+            // ðŸ” SERVICIOS DE GESTIÃ“N DE CONTRASEÃ‘A
             services.AddTransient<GestLog.Services.Interfaces.IPasswordResetEmailService, GestLog.Services.Core.PasswordResetEmailService>();
             services.AddScoped<GestLog.Services.Interfaces.IPasswordManagementService, GestLog.Services.Core.PasswordManagementService>();
             
@@ -68,12 +68,11 @@ namespace GestLog
             services.AddSingleton<global::Modules.Usuarios.ViewModels.UsuarioManagementViewModel>();
             
             services.AddSingleton<RolManagementViewModel>();
-            services.AddSingleton<AuditoriaManagementViewModel>();
-            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesión
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesiÃ³n
             services.AddSingleton<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddSingleton<CatalogosManagementViewModel>();
             services.AddSingleton<GestionPermisosRolViewModel>();
-              // 🔐 ViewModels para gestión de contraseña
+              // ðŸ” ViewModels para gestiÃ³n de contraseÃ±a
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.ChangePasswordViewModel>(sp =>
             {
                 var passwordManagementService = sp.GetRequiredService<GestLog.Services.Interfaces.IPasswordManagementService>();
@@ -87,13 +86,13 @@ namespace GestLog
                 var logger = sp.GetRequiredService<IGestLogLogger>();            return new GestLog.Modules.Usuarios.ViewModels.ForgotPasswordViewModel(passwordManagementService, logger);
             });
 
-            // Servicios y ViewModels para Gestión de Mantenimientos
+            // Servicios y ViewModels para GestiÃ³n de Mantenimientos
             services.AddScoped<IMantenimientoService, MaintenanceService>();
 
-            // ✅ Servicios para Gestión de Equipos Informáticos (Data, Autocomplete, Dialog)
+            // âœ… Servicios para GestiÃ³n de Equipos InformÃ¡ticos (Data, Autocomplete, Dialog)
             services.AddGestionEquiposInformaticosServices();
             
-            // ✅ Servicios para Gestión de Vehículos
+            // âœ… Servicios para GestiÃ³n de VehÃ­culos
             services.AddGestionVehiculosModule();
             
             // Servicios de autocompletado para Equipos (Clasificacion, CompradoA, Marca)
@@ -116,7 +115,7 @@ namespace GestLog
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma.CronogramaDiarioViewModel(
                     cronogramaService, planService, equipoService, usuarioService, seguimientoService, 
                     currentUserService, databaseService, logger, registroDialogService, registroEjecucionService);
-            });            // HistorialEjecucionesViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel y ExportService
+            });            // HistorialEjecucionesViewModel - âœ… ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel y ExportService
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel>(sp =>
             {
                 var planService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data.IPlanCronogramaService>();
@@ -126,7 +125,7 @@ namespace GestLog
                 var logger = sp.GetRequiredService<IGestLogLogger>();
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento.HistorialEjecucionesViewModel(planService, equipoService, exportService, databaseService, logger);
             });
-              // PerifericosViewModel- ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+              // PerifericosViewModel- âœ… ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
             services.AddTransient<GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos.PerifericosViewModel>(sp =>
             {
                 var logger = sp.GetRequiredService<IGestLogLogger>();
@@ -135,7 +134,7 @@ namespace GestLog
                 var exportService = sp.GetRequiredService<GestLog.Modules.GestionEquiposInformaticos.Interfaces.Export.IPerifericoExportService>();
                 return new GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos.PerifericosViewModel(logger, dbContextFactory, databaseService, exportService);
             });
-              // RegistrarMantenimientoViewModel - ✅ ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
+              // RegistrarMantenimientoViewModel - âœ… ACTUALIZADO: Agregadas dependencias para DatabaseAwareViewModel
             services.AddTransient<GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento.RegistrarMantenimientoViewModel>(sp =>
             {
                 var mantenimientoService = sp.GetRequiredService<IMantenimientoService>();
@@ -158,7 +157,7 @@ namespace GestLog
             {
                 var dbContextFactory = provider.GetRequiredService<IDbContextFactory<GestLogDbContext>>();
                 return new PersonaRepository(dbContextFactory);
-            });            // Registrar proveedor seguro de configuración de base de datos
+            });            // Registrar proveedor seguro de configuraciÃ³n de base de datos
             services.AddSingleton<IDatabaseConfigurationProvider, SecureDatabaseConfigurationService>();
             services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>();
             // ViewModels de Personas (agregar cuando existan)
@@ -184,3 +183,4 @@ namespace GestLog
         }
     }
 }
+

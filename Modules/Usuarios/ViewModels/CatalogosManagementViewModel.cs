@@ -1,11 +1,11 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.Usuarios.Models;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
-using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
+using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // âœ… NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // âœ… NUEVO: IGestLogLogger
 using Modules.Usuarios.Interfaces;
-using GestLog.Views.Usuarios;
+using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos;
 using System.Collections.ObjectModel;
 using System;
 using System.Threading.Tasks;
@@ -181,7 +181,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 MensajeErrorCargo = "El nombre del cargo es obligatorio.";
                 return;
             }
-            // Si el cargo ya existe en la lista, es edición
+            // Si el cargo ya existe en la lista, es ediciÃ³n
             var esEdicion = Cargos.Any(c => c.IdCargo == CargoEnEdicion.IdCargo);
             if (!esEdicion)
             {
@@ -207,8 +207,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             if (cargo == null) return;
             var result = System.Windows.MessageBox.Show(
-                $"¿Está seguro que desea eliminar el cargo '{cargo.Nombre}'?",
-                "Confirmar eliminación",
+                $"Â¿EstÃ¡ seguro que desea eliminar el cargo '{cargo.Nombre}'?",
+                "Confirmar eliminaciÃ³n",
                 System.Windows.MessageBoxButton.YesNo,
                 System.Windows.MessageBoxImage.Warning);
             if (result == System.Windows.MessageBoxResult.Yes)
@@ -266,12 +266,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
             if (string.IsNullOrWhiteSpace(TipoDocumentoEnEdicion.Codigo))
             {
-                MensajeErrorTipoDocumento = "El código es obligatorio.";
+                MensajeErrorTipoDocumento = "El cÃ³digo es obligatorio.";
                 return;
             }
             if (string.IsNullOrWhiteSpace(TipoDocumentoEnEdicion.Descripcion))
             {
-                MensajeErrorTipoDocumento = "La descripción es obligatoria.";
+                MensajeErrorTipoDocumento = "La descripciÃ³n es obligatoria.";
                 return;
             }
             var todos = await _tipoDocumentoRepository.ObtenerTodosAsync();
@@ -287,7 +287,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 }
                 if (existeCodigo)
                 {
-                    MensajeErrorTipoDocumento = "Ya existe un tipo de documento con ese código.";
+                    MensajeErrorTipoDocumento = "Ya existe un tipo de documento con ese cÃ³digo.";
                     return;
                 }
                 await _tipoDocumentoRepository.AgregarAsync(TipoDocumentoEnEdicion);
@@ -306,8 +306,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             if (tipo == null) return;
             var result = System.Windows.MessageBox.Show(
-                $"¿Está seguro que desea eliminar el tipo de documento '{tipo.Nombre}'?",
-                "Confirmar eliminación",
+                $"Â¿EstÃ¡ seguro que desea eliminar el tipo de documento '{tipo.Nombre}'?",
+                "Confirmar eliminaciÃ³n",
                 System.Windows.MessageBoxButton.YesNo,
                 System.Windows.MessageBoxImage.Warning);
             if (result == System.Windows.MessageBoxResult.Yes)
@@ -317,13 +317,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         /// <summary>
-        /// Implementación del método abstracto para auto-refresh automático
+        /// ImplementaciÃ³n del mÃ©todo abstracto para auto-refresh automÃ¡tico
         /// </summary>
         protected override async Task RefreshDataAsync()
         {
             try
             {
-                _logger.LogDebug("[CatalogosManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[CatalogosManagementViewModel] Refrescando datos automÃ¡ticamente");
                 await InitializeAsync();
                 _logger.LogDebug("[CatalogosManagementViewModel] Datos refrescados exitosamente");
             }
@@ -335,12 +335,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         /// <summary>
-        /// Override para manejar cuando se pierde la conexión específicamente para catálogos
+        /// Override para manejar cuando se pierde la conexiÃ³n especÃ­ficamente para catÃ¡logos
         /// </summary>
         protected override void OnConnectionLost()
         {
-            MensajeErrorCargo = "Sin conexión - Gestión de catálogos no disponible";
-            MensajeErrorTipoDocumento = "Sin conexión - Gestión de catálogos no disponible";
+            MensajeErrorCargo = "Sin conexiÃ³n - GestiÃ³n de catÃ¡logos no disponible";
+            MensajeErrorTipoDocumento = "Sin conexiÃ³n - GestiÃ³n de catÃ¡logos no disponible";
         }
     }
 }
+

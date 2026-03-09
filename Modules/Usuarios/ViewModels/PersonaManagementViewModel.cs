@@ -1,12 +1,12 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GestLog.Modules.Personas.Models;
 using GestLog.Modules.Usuarios.Models;
 using GestLog.Modules.Usuarios.Models.Authentication;
 using GestLog.Modules.Usuarios.Interfaces;
-using GestLog.ViewModels.Base;           // ✅ NUEVO: Clase base auto-refresh
-using GestLog.Services.Interfaces;       // ✅ NUEVO: IDatabaseConnectionService
-using GestLog.Services.Core.Logging;     // ✅ NUEVO: IGestLogLogger
+using GestLog.ViewModels.Base;           // âœ… NUEVO: Clase base auto-refresh
+using GestLog.Services.Interfaces;       // âœ… NUEVO: IDatabaseConnectionService
+using GestLog.Services.Core.Logging;     // âœ… NUEVO: IGestLogLogger
 using Modules.Personas.Interfaces;
 using Modules.Usuarios.Interfaces;
 using System.Collections.ObjectModel;
@@ -51,10 +51,10 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private string filtroEstado = "Todos";
 
-        // Tipo auxiliar para representar opción de sede con valor y texto
+        // Tipo auxiliar para representar opciÃ³n de sede con valor y texto
         public record SedeOption(GestLog.Modules.Personas.Models.Enums.Sede? Value, string Display);
 
-        // Nueva propiedad: listado de sedes (tipado con SedeOption); incluye opción null = Todas
+        // Nueva propiedad: listado de sedes (tipado con SedeOption); incluye opciÃ³n null = Todas
         private ObservableCollection<SedeOption> _sedes = new();
         public ObservableCollection<SedeOption> Sedes
         {
@@ -76,7 +76,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             set
             {
                 _selectedSedeOption = value;
-                // Sincronizar FiltroSede con el valor de la opción seleccionada
+                // Sincronizar FiltroSede con el valor de la opciÃ³n seleccionada
                 FiltroSede = _selectedSedeOption?.Value;
                 OnPropertyChanged();
             }
@@ -150,17 +150,17 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Nombres = string.Empty,
                 Apellidos = string.Empty,
                 TipoDocumento = null, // Ahora es un objeto, no string
-                TipoDocumentoId = Guid.Empty, // Inicializar como vacío
+                TipoDocumentoId = Guid.Empty, // Inicializar como vacÃ­o
                 NumeroDocumento = string.Empty,
                 Correo = string.Empty,
                 Telefono = string.Empty,
                 Cargo = primerCargo,
                 CargoId = primerCargo?.IdCargo ?? Guid.Empty,
                 Activo = true,
-                Sede = null // Asegurar inicialización explícita
+                Sede = null // Asegurar inicializaciÃ³n explÃ­cita
             };
             var vm = new PersonaRegistroViewModel(nuevaPersona, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
-            var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
+            var win = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas.PersonaRegistroWindow { DataContext = vm };
             if (win.ShowDialog() == true)
             {
                 await CargarPersonas();
@@ -179,7 +179,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 var personaGuardada = await _personaService.EditarPersonaAsync(PersonaSeleccionada);
                 await CargarPersonas();
                 PersonaSeleccionada = personaGuardada;
-                // TODO: Mostrar mensaje de éxito al usuario
+                // TODO: Mostrar mensaje de Ã©xito al usuario
             }
             catch
             {
@@ -211,12 +211,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private void CargarSedes()
         {
             var list = new ObservableCollection<SedeOption>();
-            // Opción 'Todas' con valor null
+            // OpciÃ³n 'Todas' con valor null
             list.Add(new SedeOption(null, "Todas"));
             foreach (var value in Enum.GetValues(typeof(GestLog.Modules.Personas.Models.Enums.Sede)))
             {
                 var sedeVal = (GestLog.Modules.Personas.Models.Enums.Sede)value;
-                // Obtener descripción desde atributo Description si existe
+                // Obtener descripciÃ³n desde atributo Description si existe
                 var name = Enum.GetName(typeof(GestLog.Modules.Personas.Models.Enums.Sede), sedeVal) ?? sedeVal.ToString();
                 var field = typeof(GestLog.Modules.Personas.Models.Enums.Sede).GetField(name);
                 var descAttr = field?.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault() as System.ComponentModel.DescriptionAttribute;
@@ -224,7 +224,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 list.Add(new SedeOption(sedeVal, display));
             }
             Sedes = list;
-            // Seleccionar por defecto la opción 'Todas'
+            // Seleccionar por defecto la opciÃ³n 'Todas'
             SelectedSedeOption = Sedes.FirstOrDefault();
         }
 
@@ -260,12 +260,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         private void MostrarDetalle()
         {
-            // Lógica para mostrar detalle de persona
+            // LÃ³gica para mostrar detalle de persona
         }
 
         private void MostrarEdicion()
         {
-            // Lógica para mostrar vista de edición de persona
+            // LÃ³gica para mostrar vista de ediciÃ³n de persona
         }
 
         private void DebounceFiltrar()
@@ -315,14 +315,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private void VerPersona(Persona persona)
         {
             PersonaSeleccionada = persona;
-            // Lógica para mostrar el detalle en el panel/modal
+            // LÃ³gica para mostrar el detalle en el panel/modal
         }
 
         [RelayCommand]
         private void EditarPersona(Persona? persona)
         {
             if (persona == null) return;
-            // Clonar la persona para edición (evita cambios directos hasta guardar)
+            // Clonar la persona para ediciÃ³n (evita cambios directos hasta guardar)
             var personaCopia = new Persona
             {
                 IdPersona = persona.IdPersona,
@@ -336,10 +336,10 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 Cargo = persona.Cargo,
                 CargoId = persona.CargoId,
                 Activo = persona.Activo,
-                Sede = persona.Sede // Copiar sede para edición
+                Sede = persona.Sede // Copiar sede para ediciÃ³n
             };
             var vm = new PersonaEdicionViewModel(personaCopia, Estados, _personaService, _tipoDocumentoRepository, _cargoRepository, _currentUserService);
-            var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
+            var win = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas.PersonaEdicionWindow { DataContext = vm, Owner = System.Windows.Application.Current.MainWindow };
             if (win.ShowDialog() == true)
             {
                 // Guardar cambios en la base de datos y refrescar la lista
@@ -387,7 +387,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 usuarioVm.PersonaIdSeleccionada = persona.IdPersona;
                 usuarioVm.NuevoUsuarioNombre = string.Empty;
                 usuarioVm.NuevoUsuarioPassword = string.Empty;
-                var win = new GestLog.Views.Tools.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow { DataContext = usuarioVm, Owner = System.Windows.Application.Current.MainWindow };
+                var win = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow { DataContext = usuarioVm, Owner = System.Windows.Application.Current.MainWindow };
                 if (win.ShowDialog() == true)
                 {
                     _ = CargarPersonas();
@@ -400,7 +400,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
         }
 
-        // === MÉTODOS DE GESTIÓN DE PERMISOS ===
+        // === MÃ‰TODOS DE GESTIÃ“N DE PERMISOS ===
         private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
             _currentUser = user ?? new CurrentUserInfo { Username = string.Empty, FullName = string.Empty };
@@ -417,13 +417,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }        
 
         /// <summary>
-        /// Implementación del método abstracto para auto-refresh automático
+        /// ImplementaciÃ³n del mÃ©todo abstracto para auto-refresh automÃ¡tico
         /// </summary>
         protected override async Task RefreshDataAsync()
         {
             try
             {
-                _logger.LogDebug("[PersonaManagementViewModel] Refrescando datos automáticamente");
+                _logger.LogDebug("[PersonaManagementViewModel] Refrescando datos automÃ¡ticamente");
                 await InicializarAsync();
                 _logger.LogDebug("[PersonaManagementViewModel] Datos refrescados exitosamente");
             }
@@ -435,11 +435,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         /// <summary>
-        /// Override para manejar cuando se pierde la conexión específicamente para personas
+        /// Override para manejar cuando se pierde la conexiÃ³n especÃ­ficamente para personas
         /// </summary>
         protected override void OnConnectionLost()
         {
-            MensajeValidacion = "Sin conexión - Gestión de personas no disponible";
+            MensajeValidacion = "Sin conexiÃ³n - GestiÃ³n de personas no disponible";
         }
     }
 }
+

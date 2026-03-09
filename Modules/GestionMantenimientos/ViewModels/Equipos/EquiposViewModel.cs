@@ -651,7 +651,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         }
 
         // Pedir observación obligatoria
-        var obsDialog = new GestLog.Views.Shared.ObservacionDialog(SelectedEquipo.Observaciones);
+        var obsDialog = new GestLog.Modules.GestionMantenimientos.Views.Equipos.ObservacionDialog(SelectedEquipo.Observaciones);
         var owner = System.Windows.Application.Current?.Windows.Count > 0 ? System.Windows.Application.Current.Windows[0] : null;
         if (owner != null) obsDialog.Owner = owner;
         var dialogResult = obsDialog.ShowDialog();
