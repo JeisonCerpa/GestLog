@@ -11,134 +11,340 @@
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType">
 
-    <Grid Style="{DynamicResource ThemeRootGridStyle}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/ModalWindowsStandard.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+        <Style x:Key="HeroBadgeStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="0,0,10,10"/>
+        </Style>
+
+        <Style x:Key="MiniMetricCardStyle" TargetType="Border" BasedOn="{StaticResource ThemeElevatedCardStyle}">
+            <Setter Property="Padding" Value="18,16"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <Style x:Key="StepCircleStyle" TargetType="Border">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="CornerRadius" Value="17"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Style="{StaticResource ThemeRootGridStyle}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="40,30,40,20">
-            <StackPanel>
+        <Grid Grid.Row="0" Margin="28,22,28,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
-                    <Border Style="{DynamicResource ThemeCardIconCircleStyle}" Width="80" Height="80" CornerRadius="40" Margin="0,0,20,0">
-                        <TextBlock Text="📊" Style="{DynamicResource ThemeCardIconTextStyle}" FontSize="40"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="DaaterProccesor" Style="{DynamicResource ThemeSectionTitleStyle}" FontSize="28"/>
-                        <TextBlock Text="Procesamiento avanzado de archivos Excel" Style="{DynamicResource ThemeSectionSubtitleStyle}" FontSize="16"/>
-                    </StackPanel>
-                </StackPanel>
+                <Border Grid.Row="0" Style="{StaticResource ThemeWelcomeCardStyle}" Padding="24,20" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2.2*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="1.15*"/>
+                        </Grid.ColumnDefinitions>
 
-                <Border Style="{DynamicResource ThemeElevatedCardStyle}" Padding="30" CornerRadius="12">
-                    <StackPanel>
-                        <TextBlock Text="Funciones Principales:" Style="{DynamicResource ThemeCardTitleStyle}" FontSize="20" Margin="0,0,0,25"/>
+                        <StackPanel Grid.Column="0">
+                            <WrapPanel Margin="0,0,0,8">
+                                <Border Style="{StaticResource HeroBadgeStyle}">
+                                    <TextBlock Text="Centro de operaciones" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"/>
+                                </Border>
+                                <Border Style="{StaticResource HeroBadgeStyle}">
+                                    <TextBlock Text="Excel Workflow" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"/>
+                                </Border>
+                            </WrapPanel>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="25"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0" Style="{DynamicResource ThemeInteractiveCardStyle}" Padding="25" CornerRadius="10">
-                                <StackPanel>
-                                    <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                                    <TextBlock Text="Procesar Archivos Excel"
-                                               Style="{DynamicResource ThemeBodyTextStyle}"
-                                               FontWeight="SemiBold"
-                                               FontSize="18"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,0,0,12"/>
-                                    <TextBlock Text="Selecciona una carpeta y procesa todos los archivos Excel contenidos"
-                                               Style="{DynamicResource ThemeBodyTextStyle}"
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Border Style="{StaticResource ThemeCardIconCircleStyle}" Width="72" Height="72" CornerRadius="36" Margin="0,0,14,0">
+                                    <TextBlock Text="📊" Style="{StaticResource ThemeCardIconTextStyle}" FontSize="34"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="DaaterProccesor" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="27"/>
+                                    <TextBlock Text="Operación premium para consolidación, análisis y filtrado de archivos Excel"
+                                               Style="{StaticResource ThemeSectionSubtitleStyle}"
                                                FontSize="14"
                                                TextWrapping="Wrap"
-                                               HorizontalAlignment="Center"
-                                               TextAlignment="Center"
-                                               Margin="0,0,0,20"/>
-                                    <Button Content="Seleccionar Carpeta y Procesar"
-                                            Style="{DynamicResource ThemePrimaryButtonStyle}"
-                                            Command="{Binding ProcessExcelFilesCommand}"
-                                            IsEnabled="{Binding CanProcessFiles}"/>
+                                               MaxWidth="560"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <TextBlock Text="Ejecuta el procesamiento masivo desde una sola vista, conserva trazabilidad operativa y pasa al módulo de filtros sin salir del flujo principal."
+                                       Style="{StaticResource ThemeBodyTextStyle}"
+                                       FontSize="14"
+                                       Margin="0,0,0,14"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="700"/>
+
+                            <Border Style="{StaticResource ThemeInfoNoticeStyle}" MaxWidth="720" Padding="14,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="ℹ️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Top"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Salida operativa" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Los consolidados y exportaciones se generan automáticamente en la carpeta Output del ejecutable." Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <Border Style="{StaticResource MiniMetricCardStyle}" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="Estado actual" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
 
-                            <Border Grid.Column="2" Style="{DynamicResource ThemeInteractiveCardStyle}" Padding="25" CornerRadius="10">
+                            <Border Style="{StaticResource MiniMetricCardStyle}" Padding="14,12">
                                 <StackPanel>
-                                    <TextBlock Text="🔍" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                                    <TextBlock Text="Filtrar Consolidado"
-                                               Style="{DynamicResource ThemeBodyTextStyle}"
-                                               FontWeight="SemiBold"
-                                               FontSize="18"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,0,0,12"/>
-                                    <TextBlock Text="Aplicar filtros avanzados a los datos consolidados y exportar resultados"
-                                               Style="{DynamicResource ThemeBodyTextStyle}"
-                                               FontSize="14"
-                                               TextWrapping="Wrap"
-                                               HorizontalAlignment="Center"
-                                               TextAlignment="Center"
-                                               Margin="0,0,0,20"/>
-                                    <Button Content="Abrir Filtros"
-                                            Style="{DynamicResource ThemePrimaryButtonStyle}"
-                                            Click="OnOpenFilteredDataViewClick"/>
+                                    <TextBlock Text="Ruta de trabajo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                    <TextBlock Text="{Binding ExecutablePath}" Foreground="{StaticResource TextBodyBrush}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
-                        </Grid>
-                    </StackPanel>
+
+                            <Border Style="{StaticResource MiniMetricCardStyle}" Padding="14,12" Margin="0">
+                                <StackPanel>
+                                    <TextBlock Text="Módulos disponibles" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                    <TextBlock Text="Procesamiento masivo y filtros avanzados" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
                 </Border>
-            </StackPanel>
-        </ScrollViewer>
 
-        <Border Grid.Row="1"
-                Background="{DynamicResource BackgroundSurfaceBrush}"
-                Padding="25,20"
-                BorderBrush="{DynamicResource BorderDefaultBrush}"
-                BorderThickness="0,1,0,0"
-                Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel>
-                <controls:SimpleProgressBar ProgressValue="{Binding Progress}"
-                                            Title="🔄 Procesando Archivos Excel"
-                                            StatusMessage="{Binding StatusMessage}"
-                                            BackgroundColor="Transparent"
-                                                   TitleColor="{DynamicResource TextPrimaryBrush}"
-                                                   PercentageColor="{DynamicResource PrimaryBrush}"
-                                                   MessageColor="{DynamicResource TextSecondaryBrush}"
-                                  BarForeground="{DynamicResource PrimaryBrush}"
-                                  BarBackground="{DynamicResource BorderDefaultBrush}"
-                                            BarHeight="18"
-                                            CornerRadius="0"
-                                            Margin="0,0,0,15"/>
-
-                <Grid>
+                <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="1.45*"/>
+                        <ColumnDefinition Width="18"/>
+                        <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               FontFamily="Segoe UI"
-                               FontSize="12"
-                               Text="{Binding ExecutablePath}"
-                               TextTrimming="CharacterEllipsis"/>
+                    <Border Grid.Column="0" Style="{StaticResource ThemeElevatedCardStyle}" Padding="24,20">
+                        <StackPanel>
+                            <WrapPanel Margin="0,0,0,10">
+                                <Border Style="{StaticResource HeroBadgeStyle}">
+                                    <TextBlock Text="Acción principal" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"/>
+                                </Border>
+                            </WrapPanel>
 
-                    <Button Grid.Column="1"
-                            Content="❌ Cancelar"
-                            Background="{DynamicResource DangerBrush}"
-                            Foreground="{DynamicResource TextOnPrimaryBrush}"
-                            FontFamily="Segoe UI"
-                            Padding="12,8"
-                            BorderThickness="0"
-                            FontWeight="SemiBold"
-                            FontSize="12"
-                            Command="{Binding CancelProcessingCommand}"/>
+                            <TextBlock Text="Procesamiento de archivos Excel" Style="{StaticResource ThemeCardTitleStyle}" FontSize="18" Margin="0,0,0,8"/>
+                            <TextBlock Text="Selecciona una carpeta y ejecuta el flujo completo de consolidación sobre todos los archivos Excel válidos detectados." Style="{StaticResource ThemeBodyTextStyle}" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                            <Border Background="{StaticResource SurfaceLayer2Brush}" BorderBrush="{StaticResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Incluye" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,8"/>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="• Lectura de múltiples archivos y subcarpetas" Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" Margin="0,0,0,6"/>
+                                        <TextBlock Grid.Row="1" Text="• Consolidación del contenido en una única salida" Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" Margin="0,0,0,6"/>
+                                        <TextBlock Grid.Row="2" Text="• Seguimiento visual del progreso en tiempo real" Style="{StaticResource ThemeBodyTextStyle}" FontSize="13"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Button Content="Seleccionar carpeta y procesar"
+                                    Style="{StaticResource ThemePrimaryButtonStyle}"
+                                    Command="{Binding ProcessExcelFilesCommand}"
+                                    IsEnabled="{Binding CanProcessFiles}"
+                                    HorizontalAlignment="Left"
+                                    Padding="18,11"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Style="{StaticResource ThemeElevatedCardStyle}" Padding="22,18" Margin="0,0,0,18">
+                            <StackPanel>
+                                <WrapPanel Margin="0,0,0,10">
+                                    <Border Style="{StaticResource HeroBadgeStyle}">
+                                        <TextBlock Text="Acceso secundario" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"/>
+                                    </Border>
+                                </WrapPanel>
+
+                                <TextBlock Text="Filtros y exportación" Style="{StaticResource ThemeCardTitleStyle}" FontSize="17" Margin="0,0,0,8"/>
+                                <TextBlock Text="Abre la vista de consolidado para aplicar filtros especializados y exportar resultados finales." Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                                <Button Content="Abrir filtros avanzados"
+                                        Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                        Click="OnOpenFilteredDataViewClick"
+                                        HorizontalAlignment="Left"
+                                        Padding="18,11"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="1" Style="{StaticResource ThemeElevatedCardStyle}" Padding="20,16">
+                            <StackPanel>
+                                <TextBlock Text="Flujo operativo" Style="{StaticResource ThemeCardTitleStyle}" FontSize="17" Margin="0,0,0,10"/>
+
+                                <StackPanel Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource StepCircleStyle}">
+                                            <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold"/>
+                                        </Border>
+                                        <StackPanel>
+                                            <TextBlock Text="Selecciona origen" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Text="Elige la carpeta que contiene los archivos a consolidar." Style="{StaticResource ThemeBodyTextStyle}" FontSize="12" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource StepCircleStyle}">
+                                            <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold"/>
+                                        </Border>
+                                        <StackPanel>
+                                            <TextBlock Text="Consolida" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Text="Supervisa el avance y deja que el sistema genere la salida consolidada." Style="{StaticResource ThemeBodyTextStyle}" FontSize="12" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Margin="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource StepCircleStyle}">
+                                            <TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold"/>
+                                        </Border>
+                                        <StackPanel>
+                                            <TextBlock Text="Filtra y exporta" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Text="Accede al consolidado para obtener subconjuntos listos para entrega." Style="{StaticResource ThemeBodyTextStyle}" FontSize="12" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
-            </StackPanel>
-        </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="2"
+              Background="#80000000"
+              Panel.ZIndex="20"
+              Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border x:Name="ProcessingCard"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinWidth="520"
+                    MaxWidth="700"
+                    Effect="{StaticResource WindowShadow}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Background="{StaticResource PrimaryBrush}"
+                            CornerRadius="10,10,0,0"
+                            Padding="24,16"
+                            Effect="{StaticResource HeaderShadow}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="White"
+                                        CornerRadius="8"
+                                        Padding="8"
+                                        Margin="0,0,16,0"
+                                        Width="44"
+                                        Height="44"
+                                        BorderThickness="0"
+                                        BorderBrush="Transparent"
+                                        Effect="{StaticResource SectionShadow}">
+                                    <TextBlock Text="⏳" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Procesando archivos Excel" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                    <TextBlock Text="La operación continúa en primer plano hasta completar el consolidado" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Margin="0,3,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button DockPanel.Dock="Right"
+                                    Style="{StaticResource CloseButton}"
+                                    Command="{Binding CancelProcessingCommand}"
+                                    ToolTip="Cancelar procesamiento">
+                                <Grid Width="14" Height="14">
+                                    <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                </Grid>
+                            </Button>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Background="#F7F7F7" Padding="24,20">
+                        <StackPanel>
+                            <TextBlock Text="Estado actual" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource ThemeBodyTextStyle}" FontSize="14" Margin="0,0,0,14" TextWrapping="Wrap"/>
+
+                            <controls:SimpleProgressBar ProgressValue="{Binding Progress}"
+                                                        Title="Avance del procesamiento"
+                                                        StatusMessage="{Binding StatusMessage}"
+                                                        BackgroundColor="{StaticResource BackgroundSurfaceBrush}"
+                                                        TitleColor="{StaticResource TextPrimaryBrush}"
+                                                        PercentageColor="{StaticResource PrimaryBrush}"
+                                                        MessageColor="{StaticResource TextSecondaryBrush}"
+                                                        BarForeground="{StaticResource PrimaryBrush}"
+                                                        BarBackground="{StaticResource BorderDefaultBrush}"
+                                                        BarHeight="18"
+                                                        CornerRadius="8"
+                                                        Margin="0,0,0,14"/>
+
+                            <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="Ruta de salida" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding ExecutablePath}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2"
+                            Background="#F5F5F5"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="0,1,0,0"
+                            CornerRadius="0,0,10,10"
+                            Padding="24,16">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar"
+                                    Style="{StaticResource GhostButton}"
+                                    Command="{Binding CancelProcessingCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
 
     </Grid>
 </UserControl>

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using ClosedXML.Excel;
 using Ookii.Dialogs.Wpf;
+using Microsoft.Win32;
 using System.Diagnostics;
 using GestLog.Modules.DaaterProccesor.Services;
 using GestLog.Modules.DaaterProccesor.Exceptions;
@@ -192,18 +193,38 @@ public partial class MainViewModel : ObservableObject
                     
                     StatusMessage = "Generando archivo consolidado...";
                     _logger.Logger.LogInformation("📝 Generando archivo consolidado con {RowCount} filas", resultado.Rows.Count);
-                    
-                    // Preparar carpeta de salida
+
                     string rutaReal = Process.GetCurrentProcess().MainModule?.FileName ?? throw new InvalidOperationException("No se pudo obtener la ruta del ejecutable.");
-                    var directorioReal = Path.GetDirectoryName(rutaReal);
-                    var outputFolder = Path.Combine(directorioReal!, "Output");
-                    if (!Directory.Exists(outputFolder))
+                    var directorioReal = Path.GetDirectoryName(rutaReal) ?? AppDomain.CurrentDomain.BaseDirectory;
+                    var outputFolderDefault = Path.Combine(directorioReal, "Output");
+                    if (!Directory.Exists(outputFolderDefault))
                     {
-                        Directory.CreateDirectory(outputFolder);
-                        _logger.Logger.LogDebug("📁 Carpeta de salida creada: {OutputFolder}", outputFolder);
+                        Directory.CreateDirectory(outputFolderDefault);
+                        _logger.Logger.LogDebug("📁 Carpeta de salida por defecto creada: {OutputFolder}", outputFolderDefault);
                     }
-                    
-                    var outputFilePath = Path.Combine(outputFolder, "Consolidado.xlsx");
+
+                    var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                        FileName = $"Consolidado_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                        InitialDirectory = outputFolderDefault,
+                        Title = "Guardar archivo consolidado"
+                    };
+
+                    var ownerWindow = System.Windows.Application.Current?.MainWindow;
+                    var saveResult = ownerWindow != null
+                        ? saveFileDialog.ShowDialog(ownerWindow)
+                        : saveFileDialog.ShowDialog();
+
+                    if (saveResult != true)
+                    {
+                        _logger.Logger.LogInformation("👤 Usuario canceló la selección de ubicación para el archivo consolidado");
+                        StatusMessage = "Operación cancelada por el usuario.";
+                        System.Windows.MessageBox.Show("No se generó el archivo porque se canceló la selección de ubicación.", "Cancelado", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+
+                    var outputFilePath = saveFileDialog.FileName;
                     
                     // Generar archivo consolidado de forma asíncrona con logging
                     await _logger.LoggedOperationAsync("GenerarArchivoConsolidado",
@@ -245,9 +266,18 @@ public partial class MainViewModel : ObservableObject
                         }
                         
                         // Actualizar mensaje final
-                        await App.Current.Dispatcher.InvokeAsync(() => {
+                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                        if (dispatcher != null)
+                        {
+                            await dispatcher.InvokeAsync(() =>
+                            {
+                                StatusMessage = "Procesamiento completado exitosamente.";
+                            });
+                        }
+                        else
+                        {
                             StatusMessage = "Procesamiento completado exitosamente.";
-                        });
+                        }
                     });
                     
                     System.Windows.MessageBox.Show($"Archivo consolidado generado exitosamente en: {outputFilePath}", "Éxito");

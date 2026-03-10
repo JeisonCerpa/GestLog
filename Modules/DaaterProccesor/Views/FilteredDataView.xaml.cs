@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Win32;
 using ClosedXML.Excel;
 using GestLog.Modules.DaaterProccesor.Services;
@@ -16,13 +18,32 @@ namespace GestLog.Modules.DaaterProccesor.Views
     {
         private DataTable _originalTable = new DataTable();
         private CancellationTokenSource? _cancellationTokenSource;
-        private readonly IGestLogLogger _logger;    public FilteredDataView()
-    {
-        InitializeComponent();
-        _logger = LoggingService.GetLogger<FilteredDataView>();
-        _logger.LogDebug("🔍 Iniciando FilteredDataView...");
-        _ = LoadDataAsync(); // Fire and forget para el constructor
-    }private async Task LoadDataAsync()
+        private string? _loadedFilePath;
+        private readonly IGestLogLogger _logger;
+
+        public FilteredDataView()
+        {
+            InitializeComponent();
+            _logger = LoggingService.GetLogger<FilteredDataView>();
+            _logger.LogDebug("🔍 Iniciando FilteredDataView...");
+
+            this.KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Escape)
+                {
+                    DialogResult = false;
+                    Close();
+                }
+            };
+
+            var ownerWindow = System.Windows.Application.Current?.MainWindow;
+            if (ownerWindow != null)
+                ConfigurarParaVentanaPadre(ownerWindow);
+
+            _ = LoadDataAsync(); // Fire and forget para el constructor
+        }
+
+        private async Task LoadDataAsync()
         {
             using var scope = _logger.BeginScope("LoadDataAsync");
             _logger.LogDebug("🔍 Iniciando carga de datos consolidados...");
@@ -44,6 +65,7 @@ namespace GestLog.Modules.DaaterProccesor.Views
                     {
                         _logger.LogInformation("📄 Archivo consolidado encontrado: {FileName}", Path.GetFileName(file));
                         dt = await LoadConsolidatedExcelAsync(file);
+                        _loadedFilePath = file;
                     }
                     else
                     {
@@ -81,11 +103,15 @@ namespace GestLog.Modules.DaaterProccesor.Views
                     System.Windows.MessageBox.Show($"Error al cargar los datos: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 });
             }
-        }        private void UpdateRecordCount(int count)
+        }
+
+        private void UpdateRecordCount(int count)
         {
             // txtRecordCount.Text = $"Registros: {count:N0}";
             _logger.LogDebug("📊 Actualizado conteo de registros: {Count:N0}", count);
-        }        /// <summary>
+        }
+
+        /// <summary>
         /// Configura las columnas del DataGrid automáticamente con mejor presentación
         /// </summary>
         private void FilteredDataGrid_AutoGeneratingColumn(object sender, System.Windows.Controls.DataGridAutoGeneratingColumnEventArgs e)
@@ -140,16 +166,21 @@ namespace GestLog.Modules.DaaterProccesor.Views
                     {
                         FilteredDataGrid.ItemsSource = data.DefaultView;
                         FilteredDataGrid.Visibility = Visibility.Visible;
-                        txtNoData.Visibility = Visibility.Collapsed;
+                        EmptyStatePanel.Visibility = Visibility.Collapsed;
+                        btnExportFiltros.IsEnabled = true;
                         
                         // Actualizar el mensaje de estado
-                        txtRecordCount.Text = $"📊 {data.Rows.Count:N0} registros cargados - Datos listos para aplicar filtros especializados";
+                        var origen = string.IsNullOrWhiteSpace(_loadedFilePath)
+                            ? "origen desconocido"
+                            : Path.GetFileName(_loadedFilePath);
+                        txtRecordCount.Text = $"📊 {data.Rows.Count:N0} registros cargados ({origen}) - Datos listos para aplicar filtros especializados";
                     }
                     else
                     {
                         FilteredDataGrid.ItemsSource = null;
                         FilteredDataGrid.Visibility = Visibility.Collapsed;
-                        txtNoData.Visibility = Visibility.Visible;
+                        EmptyStatePanel.Visibility = Visibility.Visible;
+                        btnExportFiltros.IsEnabled = false;
                         
                         txtRecordCount.Text = "Cargue datos consolidados para aplicar filtros especializados";
                     }
@@ -162,6 +193,42 @@ namespace GestLog.Modules.DaaterProccesor.Views
                 {
                     txtRecordCount.Text = "Error al mostrar datos";
                 });
+            }
+        }
+
+        private async void LoadConsolidatedFile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var openFileDialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                    Title = "Seleccionar archivo consolidado"
+                };
+
+                if (openFileDialog.ShowDialog(this) != true)
+                {
+                    return;
+                }
+
+                _logger.LogInformation("📂 Usuario seleccionó archivo consolidado manual: {FilePath}", openFileDialog.FileName);
+
+                var dt = await LoadConsolidatedExcelAsync(openFileDialog.FileName);
+                if (dt == null)
+                {
+                    UpdateDataGridDisplay(new DataTable());
+                    System.Windows.MessageBox.Show("No se pudo cargar el archivo consolidado seleccionado.", "Sin datos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                _loadedFilePath = openFileDialog.FileName;
+                _originalTable = dt;
+                UpdateDataGridDisplay(dt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al cargar archivo consolidado manual");
+                System.Windows.MessageBox.Show($"Error al cargar el archivo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -328,7 +395,7 @@ namespace GestLog.Modules.DaaterProccesor.Views
                     Title = "Guardar ACEROS ESPECIALES"
                 };
 
-                if (saveFileDialog.ShowDialog() == true)
+                if (saveFileDialog.ShowDialog(this) == true)
                 {
                     _logger.LogDebug("📁 Archivo seleccionado: {FileName}", saveFileDialog.FileName);
                     _cancellationTokenSource = new CancellationTokenSource();
@@ -443,7 +510,7 @@ namespace GestLog.Modules.DaaterProccesor.Views
                     Title = "Guardar CONSOLIDADO, ACEROS ESPECIALES, LAMINAS, ROLLOS, ANGULOS, CANALES y VIGAS"
                 };
 
-                if (saveFileDialog.ShowDialog() == true)
+                if (saveFileDialog.ShowDialog(this) == true)
                 {
                     _logger.LogDebug("📁 Archivo seleccionado: {FileName}", saveFileDialog.FileName);
                     _cancellationTokenSource = new CancellationTokenSource();
@@ -582,6 +649,54 @@ namespace GestLog.Modules.DaaterProccesor.Views
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
             base.OnClosed(e);
+        }
+
+        private void CancelarButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Grid grid && grid.Name == "RootGrid")
+            {
+                e.Handled = true;
+                DialogResult = false;
+                Close();
+            }
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        public void ConfigurarParaVentanaPadre(System.Windows.Window? parentWindow)
+        {
+            if (parentWindow == null) return;
+
+            this.Owner = parentWindow;
+            this.ShowInTaskbar = false;
+            this.WindowState = WindowState.Maximized;
+
+            this.Loaded += (s, e) =>
+            {
+                if (this.Owner != null)
+                {
+                    this.Owner.LocationChanged += (s2, e2) =>
+                    {
+                        if (this.WindowState != WindowState.Maximized)
+                            this.WindowState = WindowState.Maximized;
+                    };
+
+                    this.Owner.SizeChanged += (s2, e2) =>
+                    {
+                        if (this.WindowState != WindowState.Maximized)
+                            this.WindowState = WindowState.Maximized;
+                    };
+                }
+            };
         }
     }
 }
