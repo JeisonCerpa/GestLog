@@ -883,9 +883,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
                 if (nuevoKilometraje < Mileage)
                 {
-                    HasMileageUpdateError = true;
-                    MileageUpdateMessage = $"El nuevo kilometraje ({nuevoKilometraje:N0}) no puede ser menor al actual ({Mileage:N0})";
-                    return;
+                    HasMileageUpdateError = false;
+                    MileageUpdateMessage = $"⚠️ Advertencia: El nuevo kilometraje ({nuevoKilometraje:N0}) es menor al actual ({Mileage:N0}). Esto permitirá registrar datos históricos del vehículo.";
                 }
 
                 if (nuevoKilometraje == Mileage)

@@ -1,21 +1,160 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
-using System.IO;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
+using System.ComponentModel;
+using System.Windows.Data;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
 using GestLog.Modules.GestionVehiculos.Services.Utilities;
-using WpfGrid = System.Windows.Controls.Grid;
-using WpfRowDefinition = System.Windows.Controls.RowDefinition;
-using WpfTextBlock = System.Windows.Controls.TextBlock;
+using GestLog.Modules.GestionVehiculos.Models.DTOs;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
     public partial class RegistroPreventivoDialog : Window
     {
+        private const string SharedDestinationKey = "SHARED";
+
+        public sealed class PlanDestinoOption
+        {
+            public string Key { get; set; } = string.Empty;
+            public string Label { get; set; } = string.Empty;
+        }
+
+        private sealed class GastoItemInput
+            : INotifyPropertyChanged
+        {
+            private int _tipoGasto = 4;
+            private string _descripcion = string.Empty;
+            private string _proveedor = string.Empty;
+            private string _valorInput = string.Empty;
+            private string _numeroFactura = string.Empty;
+            private string _rutaFactura = string.Empty;
+            private string _planDestinoKey = SharedDestinationKey;
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public int TipoGasto
+            {
+                get => _tipoGasto;
+                set
+                {
+                    if (_tipoGasto == value) return;
+                    _tipoGasto = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGasto)));
+                }
+            }
+
+            public string Descripcion
+            {
+                get => _descripcion;
+                set
+                {
+                    if (_descripcion == value) return;
+                    _descripcion = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Descripcion)));
+                }
+            }
+
+            public string Proveedor
+            {
+                get => _proveedor;
+                set
+                {
+                    if (_proveedor == value) return;
+                    _proveedor = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Proveedor)));
+                }
+            }
+
+            public string ValorInput
+            {
+                get => _valorInput;
+                set
+                {
+                    if (_valorInput == value) return;
+                    _valorInput = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValorInput)));
+                }
+            }
+
+            public string NumeroFactura
+            {
+                get => _numeroFactura;
+                set
+                {
+                    if (_numeroFactura == value) return;
+                    _numeroFactura = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumeroFactura)));
+                }
+            }
+
+            public string RutaFactura
+            {
+                get => _rutaFactura;
+                set
+                {
+                    if (_rutaFactura == value) return;
+                    _rutaFactura = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RutaFactura)));
+                }
+            }
+
+            public string PlanDestinoKey
+            {
+                get => _planDestinoKey;
+                set
+                {
+                    if (_planDestinoKey == value) return;
+                    _planDestinoKey = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlanDestinoKey)));
+                }
+            }
+        }
+
+        private sealed class GastoFacturaGroup : INotifyPropertyChanged
+        {
+            private decimal _totalGrupo;
+            
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public string NumeroFactura { get; set; } = string.Empty;
+            public string ProveedorFactura { get; set; } = string.Empty;
+            public string RutaFactura { get; set; } = string.Empty;
+            public ObservableCollection<GastoItemInput> Items { get; } = new();
+
+            public decimal TotalGrupo
+            {
+                get => _totalGrupo;
+                set
+                {
+                    if (_totalGrupo == value) return;
+                    _totalGrupo = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalGrupo)));
+                }
+            }
+
+            public string DisplayKey => string.IsNullOrWhiteSpace(NumeroFactura) ? "SIN-FACTURA" : NumeroFactura;
+        }
+
+        private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
+        private readonly EjecucionesMantenimientoViewModel _viewModel;
+        private int _currentStep = 1;
+        private string _planFilterText = string.Empty;
+        public ObservableCollection<PlanDestinoOption> PlanDestinoOptions { get; } = new();
+        public ICollectionView? FilteredPlanes { get; private set; }
+
         public RegistroPreventivoDialog(EjecucionesMantenimientoViewModel viewModel)
         {
+            _viewModel = viewModel;
             InitializeComponent();
             DataContext = viewModel;
+            IcItemsGasto.ItemsSource = _itemsGasto;
+            InitializePlanFilter();
+            RefreshPlanDestinoOptions();
+            InitializeWizardState();
 
             viewModel.RegistroEsExtraordinario = false;
             viewModel.RegistroMotivoExtraordinario = string.Empty;
@@ -38,6 +177,27 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Close();
         }
 
+        private async void BtnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not EjecucionesMantenimientoViewModel vm)
+            {
+                return;
+            }
+
+            if (RbModoItems.IsChecked == true)
+            {
+                vm.RegistroItemsGasto = BuildItemsGasto(vm);
+                var totalItems = vm.RegistroItemsGasto.Sum(x => x.Valor);
+                vm.RegistroCostoInput = decimal.Round(totalItems, 2).ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                vm.RegistroItemsGasto = new List<EjecucionMantenimientoItemGastoDto>();
+            }
+
+            await vm.RegistrarEjecucionAsync();
+        }
+
         private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender == RootGrid)
@@ -50,41 +210,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
-        }
-
-        private void BtnEditPlanNote_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not System.Windows.Controls.Button btn)
-            {
-                return;
-            }
-
-            if (btn.DataContext is not EjecucionesMantenimientoViewModel.PlanPreventivoSelectionItem item)
-            {
-                return;
-            }
-
-            if (!item.IsSelected)
-            {
-                return;
-            }
-
-            var edited = ShowPlanNoteEditor(item.NombrePlantilla, item.DetalleOpcional ?? string.Empty, item.ProveedorOpcional ?? string.Empty, item.RutaFacturaOpcional ?? string.Empty, item.CostoOpcionalInput ?? string.Empty);
-            if (edited != null)
-            {
-                item.DetalleOpcional = edited.Detalle;
-                item.ProveedorOpcional = edited.Proveedor;
-                item.RutaFacturaOpcional = edited.RutaFactura;
-                item.CostoOpcionalInput = edited.CostoIndividual;
-            }
-        }
-
-        private sealed class PlanNoteEditResult
-        {
-            public string Detalle { get; set; } = string.Empty;
-            public string Proveedor { get; set; } = string.Empty;
-            public string RutaFactura { get; set; } = string.Empty;
-            public string CostoIndividual { get; set; } = string.Empty;
         }
 
         private static Task<string?> PickFacturaFileAsync(Window owner)
@@ -114,199 +239,483 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
-        private PlanNoteEditResult? ShowPlanNoteEditor(string planName, string currentDetalle, string currentProveedor, string currentRutaFactura, string currentCostoIndividual = "")
+        private void BtnAddGastoItem_Click(object sender, RoutedEventArgs e)
         {
-            var facturaPath = currentRutaFactura?.Trim() ?? string.Empty;
-
-            var editor = new Window
+            var item = new GastoItemInput
             {
-                Title = $"Nota específica - {planName}",
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                SizeToContent = SizeToContent.WidthAndHeight,
-                ResizeMode = ResizeMode.NoResize,
-                ShowInTaskbar = false,
-                MinWidth = 640,
-                MaxWidth = 760,
-                Background = System.Windows.Media.Brushes.White
+                PlanDestinoKey = ResolveDefaultDestinationKey()
             };
 
-            var root = new WpfGrid { Margin = new Thickness(18) };
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
-            root.RowDefinitions.Add(new WpfRowDefinition { Height = GridLength.Auto });
+            item.PropertyChanged += GastoItem_PropertyChanged;
+            AddItemToGroup(item);
+            UpdateTotalItemsAndSummary();
+        }
 
-            var lbl = new WpfTextBlock
+        private void BtnAddFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            var newGroup = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
+            var item = new GastoItemInput { PlanDestinoKey = ResolveDefaultDestinationKey() };
+            item.PropertyChanged += GastoItem_PropertyChanged;
+            newGroup.Items.Add(item);
+            _itemsGasto.Add(newGroup);
+            UpdateTotalItemsAndSummary();
+        }
+
+        private void AddItemToGroup(GastoItemInput item)
+        {
+            // Por defecto, agregar a grupo "SIN-FACTURA"
+            var groupKey = "SIN-FACTURA";
+            var group = _itemsGasto.FirstOrDefault(g => g.DisplayKey == groupKey);
+            
+            if (group == null)
             {
-                Text = "Configurar datos específicos del plan",
-                FontWeight = FontWeights.SemiBold,
-                FontSize = 14,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            WpfGrid.SetRow(lbl, 0);
-            root.Children.Add(lbl);
+                group = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
+                _itemsGasto.Add(group);
+            }
 
-            var txt = new System.Windows.Controls.TextBox
+            group.Items.Add(item);
+            UpdateGroupTotal(group);
+        }
+
+        private void UpdateGroupTotal(GastoFacturaGroup group)
+        {
+            decimal total = 0m;
+            foreach (var item in group.Items)
             {
-                Text = currentDetalle,
-                TextWrapping = TextWrapping.Wrap,
-                AcceptsReturn = true,
-                VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto,
-                MinHeight = 120,
-                MaxWidth = 700,
-                Padding = new Thickness(10)
-            };
-            WpfGrid.SetRow(txt, 1);
-            root.Children.Add(txt);
+                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
+                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
 
-            var proveedorLbl = new WpfTextBlock
-            {
-                Text = "Proveedor (opcional, sobrescribe el común):",
-                FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 10, 0, 6)
-            };
-            WpfGrid.SetRow(proveedorLbl, 2);
-            root.Children.Add(proveedorLbl);
-
-            var proveedorTxt = new System.Windows.Controls.TextBox
-            {
-                Text = currentProveedor,
-                MaxWidth = 700,
-                Padding = new Thickness(10)
-            };
-            WpfGrid.SetRow(proveedorTxt, 3);
-            root.Children.Add(proveedorTxt);
-
-            var costoGrid = new WpfGrid { Margin = new Thickness(0, 10, 0, 0) };
-            costoGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
-            costoGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            var costoLbl = new WpfTextBlock
-            {
-                Text = "Costo individual (opcional):",
-                FontWeight = FontWeights.SemiBold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0)
-            };
-            WpfGrid.SetColumn(costoLbl, 0);
-            costoGrid.Children.Add(costoLbl);
-
-            var costoTxt = new System.Windows.Controls.TextBox
-            {
-                Text = currentCostoIndividual,
-                MaxWidth = 220,
-                Padding = new Thickness(10)
-            };
-            WpfGrid.SetColumn(costoTxt, 1);
-            costoGrid.Children.Add(costoTxt);
-
-            WpfGrid.SetRow(costoGrid, 4);
-            root.Children.Add(costoGrid);
-
-            var facturaGrid = new WpfGrid { Margin = new Thickness(0, 10, 0, 0) };
-            facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
-            facturaGrid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition { Width = GridLength.Auto });
-
-            var facturaTxt = new System.Windows.Controls.TextBox
-            {
-                Text = GetFacturaDisplayName(facturaPath),
-                IsReadOnly = true,
-                MaxWidth = 500,
-                Padding = new Thickness(10)
-            };
-            WpfGrid.SetColumn(facturaTxt, 0);
-            facturaGrid.Children.Add(facturaTxt);
-
-            var facturaBtn = new System.Windows.Controls.Button
-            {
-                Content = "Adjuntar factura",
-                Margin = new Thickness(8, 0, 0, 0),
-                Padding = new Thickness(10, 6, 10, 6)
-            };
-            facturaBtn.Click += async (_, _) =>
-            {
-                var selected = await PickFacturaFileAsync(editor);
-                if (selected != null)
+                if (valorValido && valor > 0)
                 {
-                    facturaPath = selected;
-                    facturaTxt.Text = GetFacturaDisplayName(facturaPath);
+                    total += decimal.Round(valor, 2);
                 }
-            };
-            WpfGrid.SetColumn(facturaBtn, 1);
-            facturaGrid.Children.Add(facturaBtn);
+            }
 
-            var facturaOpenBtn = new System.Windows.Controls.Button
+            group.TotalGrupo = decimal.Round(total, 2);
+        }
+
+        private void BtnRemoveGastoItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is GastoItemInput item)
             {
-                Content = "Ver",
-                Margin = new Thickness(8, 0, 0, 0),
-                Padding = new Thickness(10, 6, 10, 6)
-            };
-            facturaOpenBtn.Click += async (_, _) =>
+                item.PropertyChanged -= GastoItem_PropertyChanged;
+                
+                // Encontrar el grupo que contiene este item
+                var group = _itemsGasto.FirstOrDefault(g => g.Items.Contains(item));
+                if (group != null)
+                {
+                    group.Items.Remove(item);
+                    UpdateGroupTotal(group);
+                    
+                    // Si el grupo quedó vacío, eliminarlo
+                    if (group.Items.Count == 0)
+                    {
+                        _itemsGasto.Remove(group);
+                    }
+                }
+                
+                UpdateTotalItemsAndSummary();
+            }
+        }
+
+        private List<EjecucionMantenimientoItemGastoDto> BuildItemsGasto(EjecucionesMantenimientoViewModel vm)
+        {
+            var items = new List<EjecucionMantenimientoItemGastoDto>();
+            var planesSeleccionados = vm.PlanesPreventivoSeleccionables.Where(p => p.IsSelected).ToDictionary(p => p.PlanId, p => p.NombrePlantilla);
+
+            foreach (var group in _itemsGasto)
             {
-                await FacturaStorageHelper.OpenFacturaAsync(editor, facturaPath);
-            };
-            WpfGrid.SetColumn(facturaOpenBtn, 2);
-            facturaGrid.Children.Add(facturaOpenBtn);
+                var numeroFacturaGrupo = (group.NumeroFactura ?? string.Empty).Trim();
+                var rutaFacturaGrupo = (group.RutaFactura ?? string.Empty).Trim();
 
-            WpfGrid.SetRow(facturaGrid, 5);
-            root.Children.Add(facturaGrid);
+                foreach (var item in group.Items)
+                {
+                    var descripcion = (item.Descripcion ?? string.Empty).Trim();
+                    var proveedor = (item.Proveedor ?? string.Empty).Trim();
+                    
+                    // Usar la factura del grupo si el item no tiene
+                    var numeroFactura = string.IsNullOrWhiteSpace(item.NumeroFactura) 
+                        ? numeroFacturaGrupo 
+                        : (item.NumeroFactura ?? string.Empty).Trim();
+                    
+                    var rutaFactura = string.IsNullOrWhiteSpace(item.RutaFactura) 
+                        ? rutaFacturaGrupo 
+                        : (item.RutaFactura ?? string.Empty).Trim();
 
-            var footer = new System.Windows.Controls.StackPanel
+                    var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
+                        || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+
+                    if (!valorValido)
+                    {
+                        valor = 0m;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(descripcion) && valor <= 0 && string.IsNullOrWhiteSpace(proveedor) && string.IsNullOrWhiteSpace(rutaFactura))
+                    {
+                        continue;
+                    }
+
+                    items.Add(new EjecucionMantenimientoItemGastoDto
+                    {
+                        TipoGasto = item.TipoGasto,
+                        Descripcion = string.IsNullOrWhiteSpace(descripcion) ? "Ítem de preventivo" : descripcion,
+                        Proveedor = string.IsNullOrWhiteSpace(proveedor) ? null : proveedor,
+                        Valor = valor < 0 ? 0m : decimal.Round(valor, 2),
+                        NumeroFactura = string.IsNullOrWhiteSpace(numeroFactura) ? null : numeroFactura,
+                        RutaFactura = string.IsNullOrWhiteSpace(rutaFactura) ? null : rutaFactura,
+                        PlanMantenimientoDestinoId = TryResolvePlanDestinoId(item.PlanDestinoKey, planesSeleccionados.Keys),
+                        EsCompartidoEntrePlanes = IsSharedDestination(item.PlanDestinoKey),
+                        FechaDocumento = vm.RegistroFechaEjecucion.HasValue
+                            ? new System.DateTimeOffset(vm.RegistroFechaEjecucion.Value.Date)
+                            : System.DateTimeOffset.Now
+                    });
+                }
+            }
+
+            return items;
+        }
+
+        private void PlanSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            RefreshPlanDestinoOptions();
+            UpdateResumenRapido();
+            ApplyPlanFilter();
+        }
+
+        private void InitializePlanFilter()
+        {
+            FilteredPlanes = CollectionViewSource.GetDefaultView(_viewModel.PlanesPreventivoSeleccionables);
+            if (FilteredPlanes != null)
             {
-                Orientation = System.Windows.Controls.Orientation.Horizontal,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
-                Margin = new Thickness(0, 12, 0, 0)
-            };
+                FilteredPlanes.Filter = item =>
+                {
+                    if (item is not EjecucionesMantenimientoViewModel.PlanPreventivoSelectionItem plan)
+                    {
+                        return false;
+                    }
 
-            var btnCancel = new System.Windows.Controls.Button
+                    if (string.IsNullOrWhiteSpace(_planFilterText))
+                    {
+                        return true;
+                    }
+
+                    return plan.NombrePlantilla?.IndexOf(_planFilterText, StringComparison.OrdinalIgnoreCase) >= 0;
+                };
+            }
+
+            ApplyPlanFilter();
+        }
+
+        private void TxtPlanFilter_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            _planFilterText = TxtPlanFilter?.Text?.Trim() ?? string.Empty;
+            ApplyPlanFilter();
+        }
+
+        private void BtnClearPlanFilter_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtPlanFilter != null)
             {
-                Content = "Cancelar",
-                Width = 100,
-                Margin = new Thickness(0, 0, 8, 0)
-            };
-            btnCancel.Click += (_, _) => editor.DialogResult = false;
+                TxtPlanFilter.Text = string.Empty;
+            }
 
-            var btnSave = new System.Windows.Controls.Button
+            _planFilterText = string.Empty;
+            ApplyPlanFilter();
+        }
+
+        private void ApplyPlanFilter()
+        {
+            FilteredPlanes?.Refresh();
+
+            if (NoPlanesFilterResult == null || FilteredPlanes == null)
             {
-                Content = "Guardar",
-                Width = 100
-            };
-            btnSave.Click += (_, _) => editor.DialogResult = true;
+                return;
+            }
 
-            footer.Children.Add(btnCancel);
-            footer.Children.Add(btnSave);
-            WpfGrid.SetRow(footer, 6);
-            root.Children.Add(footer);
+            var visibleCount = FilteredPlanes.Cast<object>().Count();
+            NoPlanesFilterResult.Visibility = visibleCount == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
 
-            editor.Content = root;
+        private void RefreshPlanDestinoOptions()
+        {
+            PlanDestinoOptions.Clear();
+            PlanDestinoOptions.Add(new PlanDestinoOption
+            {
+                Key = SharedDestinationKey,
+                Label = "Compartido (prorratear entre planes seleccionados)"
+            });
 
-            if (editor.ShowDialog() != true)
+            var planesSeleccionados = _viewModel.PlanesPreventivoSeleccionables
+                .Where(p => p.IsSelected)
+                .Select(p => new { p.PlanId, p.NombrePlantilla })
+                .ToList();
+
+            foreach (var plan in planesSeleccionados)
+            {
+                PlanDestinoOptions.Add(new PlanDestinoOption
+                {
+                    Key = BuildPlanDestinationKey(plan.PlanId),
+                    Label = $"Solo {plan.NombrePlantilla}"
+                });
+            }
+
+            var validKeys = new HashSet<string>(PlanDestinoOptions.Select(x => x.Key), StringComparer.OrdinalIgnoreCase);
+            foreach (var group in _itemsGasto)
+            {
+                foreach (var item in group.Items)
+                {
+                    if (string.IsNullOrWhiteSpace(item.PlanDestinoKey) || !validKeys.Contains(item.PlanDestinoKey))
+                    {
+                        item.PlanDestinoKey = SharedDestinationKey;
+                    }
+                }
+            }
+
+            UpdateResumenRapido();
+        }
+
+        private void GastoItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(GastoItemInput.ValorInput)
+                || e.PropertyName == nameof(GastoItemInput.PlanDestinoKey)
+                || e.PropertyName == nameof(GastoItemInput.Descripcion)
+                || e.PropertyName == nameof(GastoItemInput.TipoGasto))
+            {
+                UpdateTotalItemsAndSummary();
+            }
+        }
+
+        private void InitializeWizardState()
+        {
+            if (DataContext is EjecucionesMantenimientoViewModel vm)
+            {
+                vm.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(EjecucionesMantenimientoViewModel.RegistroFechaEjecucion)
+                        || args.PropertyName == nameof(EjecucionesMantenimientoViewModel.RegistroKMAlMomentoInput)
+                        || args.PropertyName == nameof(EjecucionesMantenimientoViewModel.RegistroResponsable))
+                    {
+                        UpdateResumenRapido();
+                    }
+
+                    if (args.PropertyName == nameof(EjecucionesMantenimientoViewModel.PlanesPreventivoSeleccionables))
+                    {
+                        InitializePlanFilter();
+                        RefreshPlanDestinoOptions();
+                    }
+                };
+            }
+
+            UpdateStepUI();
+            UpdateCostoPanels();
+            UpdateTotalItemsAndSummary();
+        }
+
+        private void BtnNextStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentStep == 1 && !_viewModel.HasPlanesSeleccionados)
+            {
+                _viewModel.ErrorMessage = "Debes seleccionar al menos un plan para continuar.";
+                return;
+            }
+
+            if (_currentStep < 3)
+            {
+                _currentStep++;
+                UpdateStepUI();
+            }
+        }
+
+        private void BtnPrevStep_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentStep > 1)
+            {
+                _currentStep--;
+                UpdateStepUI();
+            }
+        }
+
+        private void UpdateStepUI()
+        {
+            Step1Panel.Visibility = _currentStep == 1 ? Visibility.Visible : Visibility.Collapsed;
+            Step2Panel.Visibility = _currentStep == 2 ? Visibility.Visible : Visibility.Collapsed;
+            Step3Panel.Visibility = _currentStep == 3 ? Visibility.Visible : Visibility.Collapsed;
+
+            TxtPasoActual.Text = $"Paso {_currentStep} de 3";
+
+            BtnPrevStep.Visibility = _currentStep > 1 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextStep.Visibility = _currentStep < 3 ? Visibility.Visible : Visibility.Collapsed;
+            BtnSave.Visibility = _currentStep == 3 ? Visibility.Visible : Visibility.Collapsed;
+
+            _viewModel.ErrorMessage = string.Empty;
+            UpdateResumenRapido();
+        }
+
+        private void CostoModeChanged(object sender, RoutedEventArgs e)
+        {
+            UpdateCostoPanels();
+            UpdateTotalItemsAndSummary();
+        }
+
+        private void UpdateCostoPanels()
+        {
+            if (RbModoItems == null || PanelCostoItems == null || PanelCostoManual == null)
+            {
+                return;
+            }
+
+            var modoItems = RbModoItems.IsChecked == true;
+            PanelCostoItems.Visibility = modoItems ? Visibility.Visible : Visibility.Collapsed;
+            PanelCostoManual.Visibility = modoItems ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void UpdateTotalItemsAndSummary()
+        {
+            var total = CalculateItemsTotal();
+            if (TxtTotalItems != null)
+            {
+                TxtTotalItems.Text = $"$ {total:N0}";
+            }
+
+            if (TxtCartItemsCountPrev != null)
+            {
+                var totalItems = _itemsGasto.Sum(g => g.Items.Count);
+                TxtCartItemsCountPrev.Text = totalItems.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (TxtCartItemsTotalPrev != null)
+            {
+                TxtCartItemsTotalPrev.Text = $"$ {total:N0}";
+            }
+
+            if (RbModoItems != null && RbModoItems.IsChecked == true)
+            {
+                _viewModel.RegistroCostoInput = total.ToString(CultureInfo.InvariantCulture);
+            }
+
+            UpdateResumenRapido();
+        }
+
+        private decimal CalculateItemsTotal()
+        {
+            decimal total = 0m;
+            foreach (var group in _itemsGasto)
+            {
+                foreach (var item in group.Items)
+                {
+                    var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
+                        || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+
+                    if (valorValido && valor > 0)
+                    {
+                        total += decimal.Round(valor, 2);
+                    }
+                }
+            }
+
+            return decimal.Round(total, 2);
+        }
+
+        private void UpdateResumenRapido()
+        {
+            if (TxtResumenRapido == null)
+            {
+                return;
+            }
+
+            var planes = _viewModel.PlanesPreventivoSeleccionables.Count(x => x.IsSelected);
+            var fecha = _viewModel.RegistroFechaEjecucion?.ToString("dd/MM/yyyy") ?? "Sin fecha";
+            var km = string.IsNullOrWhiteSpace(_viewModel.RegistroKMAlMomentoInput) ? "Sin KM" : _viewModel.RegistroKMAlMomentoInput.Trim();
+            var responsable = string.IsNullOrWhiteSpace(_viewModel.RegistroResponsable) ? "Sin responsable" : _viewModel.RegistroResponsable.Trim();
+            var costo = RbModoItems?.IsChecked == true
+                ? CalculateItemsTotal()
+                : (decimal.TryParse(_viewModel.RegistroCostoInput?.Trim(), out var manual) ? manual : 0m);
+
+            TxtResumenRapido.Text = $"Resumen: {planes} plan(es) · Fecha: {fecha} · KM: {km} · Responsable: {responsable} · Total: $ {costo:N0}";
+        }
+
+        private string ResolveDefaultDestinationKey()
+        {
+            var planesSeleccionados = _viewModel.PlanesPreventivoSeleccionables.Where(p => p.IsSelected).ToList();
+            if (planesSeleccionados.Count == 1)
+            {
+                return BuildPlanDestinationKey(planesSeleccionados[0].PlanId);
+            }
+
+            return SharedDestinationKey;
+        }
+
+        private static bool IsSharedDestination(string? key)
+        {
+            return string.IsNullOrWhiteSpace(key)
+                || key.Equals(SharedDestinationKey, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BuildPlanDestinationKey(int planId) => $"PLAN:{planId}";
+
+        private static int? TryResolvePlanDestinoId(string? key, IEnumerable<int> planIds)
+        {
+            if (string.IsNullOrWhiteSpace(key) || IsSharedDestination(key))
             {
                 return null;
             }
 
-            return new PlanNoteEditResult
+            if (!key.StartsWith("PLAN:", System.StringComparison.OrdinalIgnoreCase))
             {
-                Detalle = txt.Text?.Trim() ?? string.Empty,
-                Proveedor = proveedorTxt.Text?.Trim() ?? string.Empty,
-                RutaFactura = facturaPath,
-                CostoIndividual = costoTxt.Text?.Trim() ?? string.Empty
-            };
-        }
-
-        private static string GetFacturaDisplayName(string? path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return string.Empty;
+                return null;
             }
 
-            return Path.GetFileName(path);
+            var rawId = key.Substring(5).Trim();
+            if (!int.TryParse(rawId, out var planId))
+            {
+                return null;
+            }
+
+            return planIds.Contains(planId) ? planId : null;
+        }
+
+        private async void BtnAttachSharedInvoicePrev_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = await PickFacturaFileAsync(this);
+            if (selected == null)
+            {
+                return;
+            }
+
+            if (TxtSharedInvoicePathPrev != null)
+            {
+                TxtSharedInvoicePathPrev.Text = selected;
+            }
+        }
+
+        private void BtnApplySharedInvoicePrev_Click(object sender, RoutedEventArgs e)
+        {
+            var numero = TxtSharedInvoiceNumberPrev?.Text?.Trim() ?? string.Empty;
+            var ruta = TxtSharedInvoicePathPrev?.Text?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(numero) && string.IsNullOrWhiteSpace(ruta))
+            {
+                return;
+            }
+
+            // Aplicar a los grupos que no tienen factura
+            foreach (var group in _itemsGasto)
+            {
+                if (string.IsNullOrWhiteSpace(group.NumeroFactura) && !string.IsNullOrWhiteSpace(numero))
+                {
+                    group.NumeroFactura = numero;
+                }
+
+                if (string.IsNullOrWhiteSpace(group.RutaFactura) && !string.IsNullOrWhiteSpace(ruta))
+                {
+                    group.RutaFactura = ruta;
+                }
+            }
+
+            IcItemsGasto.Items.Refresh();
+            UpdateTotalItemsAndSummary();
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

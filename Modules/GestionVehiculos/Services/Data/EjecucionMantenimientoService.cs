@@ -32,6 +32,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
@@ -52,6 +53,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecucion = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
 
@@ -70,6 +72,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
@@ -90,6 +93,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
@@ -132,6 +136,14 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                     FechaActualizacion = DateTime.UtcNow
                 };
 
+                var itemsNormalizados = BuildItemsGastoForPersistence(dto, ejecucion.FechaEjecucion);
+                foreach (var item in itemsNormalizados)
+                {
+                    ejecucion.ItemsGasto.Add(item);
+                }
+
+                ApplyResumenFromItems(ejecucion);
+
                 context.Add(ejecucion);
                 await context.SaveChangesAsync(cancellationToken);
 
@@ -139,7 +151,12 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
                 _logger.LogInformation("Ejecución de mantenimiento registrada para: {PlacaVehiculo}", dto.PlacaVehiculo);
 
-                return MapToDto(ejecucion);
+                var persisted = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
+                    .AsNoTracking()
+                    .FirstAsync(e => e.Id == ejecucion.Id, cancellationToken);
+
+                return MapToDto(persisted);
             }
             catch (Exception ex)
             {
@@ -155,6 +172,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 
                 var ejecucion = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
 
                 if (ejecucion == null)
@@ -176,12 +194,31 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 ejecucion.Estado = (Models.Enums.EstadoEjecucion)dto.Estado;
                 ejecucion.FechaActualizacion = DateTime.UtcNow;
 
+                if (ejecucion.ItemsGasto.Count > 0)
+                {
+                    context.RemoveRange(ejecucion.ItemsGasto);
+                    ejecucion.ItemsGasto.Clear();
+                }
+
+                var itemsNormalizados = BuildItemsGastoForPersistence(dto, ejecucion.FechaEjecucion);
+                foreach (var item in itemsNormalizados)
+                {
+                    ejecucion.ItemsGasto.Add(item);
+                }
+
+                ApplyResumenFromItems(ejecucion);
+
                 context.Update(ejecucion);
                 await context.SaveChangesAsync(cancellationToken);
 
                 await SyncVehicleMileageIfHigherAsync(context, ejecucion.PlacaVehiculo, cancellationToken);
 
-                return MapToDto(ejecucion);
+                var persisted = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
+                    .AsNoTracking()
+                    .FirstAsync(e => e.Id == id, cancellationToken);
+
+                return MapToDto(persisted);
             }
             catch (Exception ex)
             {
@@ -223,6 +260,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var ultimaEjecucion = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => e.PlanMantenimientoId == planId && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
@@ -243,6 +281,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
             {
                 using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
                 var historial = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == Models.Enums.TipoMantenimientoVehiculo.Preventivo)
                     .OrderByDescending(e => e.FechaEjecucion)
@@ -259,6 +298,16 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
 
         private static EjecucionMantenimientoDto MapToDto(EjecucionMantenimiento entity)
         {
+            var items = entity.ItemsGasto
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Id)
+                .Select(MapItemToDto)
+                .ToList();
+
+            var costoCalculado = items.Count > 0
+                ? items.Sum(i => i.Valor)
+                : entity.Costo;
+
             return new EjecucionMantenimientoDto
             {
                 Id = entity.Id,
@@ -267,7 +316,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 FechaEjecucion = entity.FechaEjecucion,
                 KMAlMomento = entity.KMAlMomento,
                 ObservacionesTecnico = entity.ObservacionesTecnico,
-                Costo = entity.Costo,
+                Costo = costoCalculado,
                 RutaFactura = entity.RutaFactura,
                 ResponsableEjecucion = entity.ResponsableEjecucion,
                 Proveedor = entity.Proveedor,
@@ -277,8 +326,108 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 EstadoCorrectivo = entity.EstadoCorrectivo.HasValue ? (int?)entity.EstadoCorrectivo.Value : null,
                 Estado = (int)entity.Estado,
                 FechaRegistro = entity.FechaRegistro,
-                FechaActualizacion = entity.FechaActualizacion
+                FechaActualizacion = entity.FechaActualizacion,
+                ItemsGasto = items
             };
+        }
+
+        private static EjecucionMantenimientoItemGastoDto MapItemToDto(EjecucionMantenimientoItemGasto item)
+        {
+            return new EjecucionMantenimientoItemGastoDto
+            {
+                Id = item.Id,
+                EjecucionMantenimientoId = item.EjecucionMantenimientoId,
+                TipoGasto = (int)item.TipoGasto,
+                Descripcion = item.Descripcion,
+                Proveedor = item.Proveedor,
+                Valor = item.Valor,
+                NumeroFactura = item.NumeroFactura,
+                RutaFactura = item.RutaFactura,
+                FechaDocumento = item.FechaDocumento
+            };
+        }
+
+        private static List<EjecucionMantenimientoItemGasto> BuildItemsGastoForPersistence(EjecucionMantenimientoDto dto, DateTimeOffset fechaEjecucion)
+        {
+            var items = new List<EjecucionMantenimientoItemGasto>();
+
+            if (dto.ItemsGasto != null)
+            {
+                foreach (var item in dto.ItemsGasto)
+                {
+                    var descripcion = (item.Descripcion ?? string.Empty).Trim();
+                    var proveedor = string.IsNullOrWhiteSpace(item.Proveedor) ? null : item.Proveedor.Trim();
+                    var rutaFactura = string.IsNullOrWhiteSpace(item.RutaFactura) ? null : item.RutaFactura.Trim();
+                    var numeroFactura = string.IsNullOrWhiteSpace(item.NumeroFactura) ? null : item.NumeroFactura.Trim();
+
+                    if (string.IsNullOrWhiteSpace(descripcion) && item.Valor <= 0 && string.IsNullOrWhiteSpace(proveedor) && string.IsNullOrWhiteSpace(rutaFactura))
+                    {
+                        continue;
+                    }
+
+                    var tipo = Enum.IsDefined(typeof(Models.Enums.TipoGastoMantenimientoVehiculo), item.TipoGasto)
+                        ? (Models.Enums.TipoGastoMantenimientoVehiculo)item.TipoGasto
+                        : Models.Enums.TipoGastoMantenimientoVehiculo.Otro;
+
+                    items.Add(new EjecucionMantenimientoItemGasto
+                    {
+                        TipoGasto = tipo,
+                        Descripcion = string.IsNullOrWhiteSpace(descripcion) ? "Ítem de mantenimiento" : descripcion,
+                        Proveedor = proveedor,
+                        Valor = item.Valor < 0 ? 0 : decimal.Round(item.Valor, 2),
+                        NumeroFactura = numeroFactura,
+                        RutaFactura = rutaFactura,
+                        FechaDocumento = item.FechaDocumento ?? fechaEjecucion,
+                        FechaRegistro = DateTimeOffset.UtcNow,
+                        FechaActualizacion = DateTimeOffset.UtcNow
+                    });
+                }
+            }
+
+            if (items.Count == 0 && (dto.Costo ?? 0) > 0)
+            {
+                items.Add(new EjecucionMantenimientoItemGasto
+                {
+                    TipoGasto = Models.Enums.TipoGastoMantenimientoVehiculo.Otro,
+                    Descripcion = string.IsNullOrWhiteSpace(dto.TituloActividad)
+                        ? "Costo general de mantenimiento"
+                        : dto.TituloActividad.Trim(),
+                    Proveedor = string.IsNullOrWhiteSpace(dto.Proveedor) ? null : dto.Proveedor.Trim(),
+                    Valor = decimal.Round(dto.Costo!.Value, 2),
+                    NumeroFactura = null,
+                    RutaFactura = string.IsNullOrWhiteSpace(dto.RutaFactura) ? null : dto.RutaFactura.Trim(),
+                    FechaDocumento = fechaEjecucion,
+                    FechaRegistro = DateTimeOffset.UtcNow,
+                    FechaActualizacion = DateTimeOffset.UtcNow
+                });
+            }
+
+            return items;
+        }
+
+        private static void ApplyResumenFromItems(EjecucionMantenimiento ejecucion)
+        {
+            var activos = ejecucion.ItemsGasto
+                .Where(x => !x.IsDeleted)
+                .ToList();
+
+            if (activos.Count == 0)
+            {
+                return;
+            }
+
+            var total = activos.Sum(x => x.Valor);
+            ejecucion.Costo = decimal.Round(total, 2);
+
+            if (string.IsNullOrWhiteSpace(ejecucion.Proveedor))
+            {
+                ejecucion.Proveedor = activos.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Proveedor))?.Proveedor;
+            }
+
+            if (string.IsNullOrWhiteSpace(ejecucion.RutaFactura))
+            {
+                ejecucion.RutaFactura = activos.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.RutaFactura))?.RutaFactura;
+            }
         }
 
         private static async Task SyncVehicleMileageIfHigherAsync(
@@ -327,6 +476,7 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 var tipo = (Models.Enums.TipoMantenimientoVehiculo)tipoMantenimiento;
 
                 var ejecuciones = await context.Set<EjecucionMantenimiento>()
+                    .Include(e => e.ItemsGasto)
                     .AsNoTracking()
                     .Where(e => e.PlacaVehiculo == placaVehiculo && !e.IsDeleted && e.TipoMantenimiento == tipo)
                     .OrderByDescending(e => e.FechaEjecucion)

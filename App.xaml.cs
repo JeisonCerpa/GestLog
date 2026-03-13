@@ -617,6 +617,25 @@ public partial class App : System.Windows.Application
         var errorHandler = LoggingService.GetErrorHandler();        // Excepciones no manejadas en el hilo principal (UI)
         DispatcherUnhandledException += (sender, e) =>
         {
+            // LiveChartsCore: NullReference conocido al liberar MotionCanvas durante Unloaded/Dispose.
+            // No es crítico para la app y puede ocurrir al cerrar vistas con gráficos.
+            if (e.Exception is NullReferenceException nullRefEx)
+            {
+                var stack = nullRefEx.StackTrace ?? string.Empty;
+                var isLiveChartsDisposeIssue =
+                    stack.Contains("LiveChartsCore.SkiaSharpView.WPF.Rendering.CompositionTargetTicker.DisposeTicker") ||
+                    stack.Contains("LiveChartsCore.Motion.MotionCanvasComposer.Dispose") ||
+                    stack.Contains("LiveChartsCore.SkiaSharpView.WPF.MotionCanvas.OnUnloaded");
+
+                if (isLiveChartsDisposeIssue)
+                {
+                    _logger?.Logger.LogWarning(nullRefEx,
+                        "⚠️ Excepción no crítica de LiveCharts al liberar recursos de render (se ignora para evitar cierre de la aplicación)");
+                    e.Handled = true;
+                    return;
+                }
+            }
+
             // Información adicional para errores de Background UnsetValue
             if (e.Exception is InvalidOperationException invalidOp && 
                 invalidOp.Message.Contains("DependencyProperty.UnsetValue") &&

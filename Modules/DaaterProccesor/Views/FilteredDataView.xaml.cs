@@ -39,70 +39,6 @@ namespace GestLog.Modules.DaaterProccesor.Views
             var ownerWindow = System.Windows.Application.Current?.MainWindow;
             if (ownerWindow != null)
                 ConfigurarParaVentanaPadre(ownerWindow);
-
-            _ = LoadDataAsync(); // Fire and forget para el constructor
-        }
-
-        private async Task LoadDataAsync()
-        {
-            using var scope = _logger.BeginScope("LoadDataAsync");
-            _logger.LogDebug("🔍 Iniciando carga de datos consolidados...");
-            
-            try
-            {
-                // Selección automática del archivo consolidado más reciente en la carpeta Output
-                var outputDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Output");
-                DataTable? dt = null;
-                
-                _logger.LogDebug("📁 Buscando archivos en directorio: {OutputDir}", outputDir);
-                
-                // Verificar si la carpeta Output existe antes de buscar archivos
-                if (Directory.Exists(outputDir))
-                {
-                    var files = Directory.GetFiles(outputDir, "*Consolidado*.xlsx");
-                    var file = files.OrderByDescending(f => File.GetLastWriteTime(f)).FirstOrDefault();
-                    if (file != null)
-                    {
-                        _logger.LogInformation("📄 Archivo consolidado encontrado: {FileName}", Path.GetFileName(file));
-                        dt = await LoadConsolidatedExcelAsync(file);
-                        _loadedFilePath = file;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("⚠️ No se encontraron archivos consolidados en {OutputDir}", outputDir);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("⚠️ Directorio Output no existe: {OutputDir}", outputDir);
-                }
-                  if (dt != null)
-                {                    // IMPORTANTE: Guardar datos originales SIN FILTRAR para poder aplicar filtros específicos
-                    _logger.LogDebug("💾 Guardando datos originales sin filtrar: {RowCount} registros", dt.Rows.Count);
-                    _originalTable = dt; // Datos originales completos
-                    
-                    // Mostrar los datos originales en el DataGrid para visualización
-                    _logger.LogDebug("🔧 Mostrando datos originales para visualización: {RowCount} registros...", dt.Rows.Count);
-                    UpdateDataGridDisplay(dt);
-                    
-                    _logger.LogInformation("✅ Datos cargados correctamente: {TotalCount} registros originales disponibles para filtrado", dt.Rows.Count);
-                }
-                else
-                {
-                    UpdateDataGridDisplay(new DataTable());
-                    
-                    _logger.LogWarning("⚠️ No se pudieron cargar datos consolidados");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error al cargar datos consolidados");
-                
-                Dispatcher.Invoke(() =>
-                {
-                    System.Windows.MessageBox.Show($"Error al cargar los datos: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                });
-            }
         }
 
         private void UpdateRecordCount(int count)
@@ -224,6 +160,7 @@ namespace GestLog.Modules.DaaterProccesor.Views
                 _loadedFilePath = openFileDialog.FileName;
                 _originalTable = dt;
                 UpdateDataGridDisplay(dt);
+                _logger.LogInformation("✅ Consolidado cargado manualmente para filtrado: {FileName}", Path.GetFileName(openFileDialog.FileName));
             }
             catch (Exception ex)
             {

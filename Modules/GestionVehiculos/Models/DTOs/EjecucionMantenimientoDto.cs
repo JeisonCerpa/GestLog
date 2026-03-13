@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GestLog.Modules.GestionVehiculos.Models.Enums;
 
 namespace GestLog.Modules.GestionVehiculos.Models.DTOs
@@ -62,5 +63,7 @@ namespace GestLog.Modules.GestionVehiculos.Models.DTOs
         };
         public DateTimeOffset FechaRegistro { get; set; }
         public DateTimeOffset FechaActualizacion { get; set; }
+
+        public List<EjecucionMantenimientoItemGastoDto> ItemsGasto { get; set; } = new();
     }
 }

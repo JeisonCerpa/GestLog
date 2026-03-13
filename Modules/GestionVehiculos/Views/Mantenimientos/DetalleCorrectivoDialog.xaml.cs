@@ -125,6 +125,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtCosto.Text = dto.Costo.HasValue ? dto.Costo.Value.ToString(CultureInfo.CurrentCulture) : string.Empty;
             TxtFactura.Text = GetFacturaDisplayName(dto.RutaFactura);
             TxtTimeline.Text = dto.ObservacionesTecnico ?? string.Empty;
+            DgItemsGasto.ItemsSource = dto.ItemsGasto;
         }
 
         private void SetEditing(bool value)

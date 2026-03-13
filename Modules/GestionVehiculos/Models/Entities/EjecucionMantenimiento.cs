@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GestLog.Modules.GestionVehiculos.Models.Enums;
 
 namespace GestLog.Modules.GestionVehiculos.Models.Entities
@@ -97,5 +98,7 @@ namespace GestLog.Modules.GestionVehiculos.Models.Entities
         /// Indicador de borrado lógico
         /// </summary>
         public bool IsDeleted { get; set; } = false;
+
+        public ICollection<EjecucionMantenimientoItemGasto> ItemsGasto { get; set; } = new List<EjecucionMantenimientoItemGasto>();
     }
 }

@@ -112,6 +112,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         [ObservableProperty]
         private string confirmacionRegistroMessage = string.Empty;
 
+        [ObservableProperty]
+        private List<EjecucionMantenimientoItemGastoDto> registroItemsGasto = new();
+
     [ObservableProperty]
     private bool hasPlanPreventivo;
 
@@ -310,9 +313,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 var vehiculoActual = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
                 if (vehiculoActual != null && kmAlMomento < vehiculoActual.Mileage)
                 {
-                    KmValidationMessage = $"El KM no puede ser menor al actual ({vehiculoActual.Mileage:N0}).";
-                    ErrorMessage = $"El KM registrado ({kmAlMomento:N0}) no puede ser menor al KM actual del vehículo ({vehiculoActual.Mileage:N0})";
-                    return;
+                    KmValidationMessage = $"⚠️ Advertencia: El KM registrado ({kmAlMomento:N0}) es menor al actual ({vehiculoActual.Mileage:N0}). Se permite registrar datos históricos.";
                 }
 
                 decimal? costo = null;
@@ -337,15 +338,39 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
 
+                if (RegistroItemsGasto.Count > 0)
+                {
+                    costo = decimal.Round(RegistroItemsGasto.Sum(x => x.Valor), 2);
+                    RegistroCostoInput = costo.Value.ToString();
+                }
+
                 var fechaEjecucion = RegistroFechaEjecucion.HasValue
                     ? new DateTimeOffset(RegistroFechaEjecucion.Value.Date)
                     : DateTimeOffset.Now;
 
-                if (!TryBuildCostDistribution(costo, planesSeleccionados, out var costosPorPlan, out var costoError))
+                var itemsPorPlan = new Dictionary<int, List<EjecucionMantenimientoItemGastoDto>>();
+                List<decimal?> costosPorPlan;
+
+                if (RegistroItemsGasto.Count > 0)
                 {
-                    CostoValidationMessage = costoError ?? string.Empty;
-                    ErrorMessage = costoError ?? "Error en la distribución de costos";
-                    return;
+                    BuildDetailedItemsDistribution(
+                        RegistroItemsGasto,
+                        planesSeleccionados,
+                        fechaEjecucion,
+                        out itemsPorPlan,
+                        out costosPorPlan);
+
+                    costo = decimal.Round(costosPorPlan.Where(x => x.HasValue).Sum(x => x ?? 0m), 2);
+                    RegistroCostoInput = costo.Value.ToString();
+                }
+                else
+                {
+                    if (!TryBuildCostDistribution(costo, planesSeleccionados, out costosPorPlan, out var costoError))
+                    {
+                        CostoValidationMessage = costoError ?? string.Empty;
+                        ErrorMessage = costoError ?? "Error en la distribución de costos";
+                        return;
+                    }
                 }
                 var nombresPlanesSeleccionados = planesSeleccionados.Select(p => p.NombrePlantilla).ToList();
                 var rutasFacturaPreventivo = new List<string>();
@@ -393,6 +418,39 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         EsExtraordinario = RegistroEsExtraordinario,
                         Estado = 2
                     };
+
+                    if (RegistroItemsGasto.Count > 0 && itemsPorPlan.TryGetValue(planSeleccionado.PlanId, out var itemsDistribuidosPlan))
+                    {
+                        dto.ItemsGasto = itemsDistribuidosPlan
+                            .Select(item => new EjecucionMantenimientoItemGastoDto
+                            {
+                                TipoGasto = item.TipoGasto,
+                                Descripcion = item.Descripcion,
+                                Proveedor = item.Proveedor,
+                                Valor = item.Valor,
+                                NumeroFactura = item.NumeroFactura,
+                                RutaFactura = item.RutaFactura,
+                                FechaDocumento = item.FechaDocumento ?? fechaEjecucion,
+                                PlanMantenimientoDestinoId = planSeleccionado.PlanId,
+                                EsCompartidoEntrePlanes = item.EsCompartidoEntrePlanes
+                            })
+                            .ToList();
+                    }
+
+                    if (dto.ItemsGasto.Count == 0 && ((costosPorPlan[index] ?? 0) > 0 || !string.IsNullOrWhiteSpace(proveedorAplicado) || !string.IsNullOrWhiteSpace(rutaFacturaAplicada)))
+                    {
+                        dto.ItemsGasto.Add(new EjecucionMantenimientoItemGastoDto
+                        {
+                            TipoGasto = (int)Models.Enums.TipoGastoMantenimientoVehiculo.Servicio,
+                            Descripcion = string.IsNullOrWhiteSpace(planSeleccionado.NombrePlantilla)
+                                ? "Ejecución de mantenimiento preventivo"
+                                : $"Preventivo: {planSeleccionado.NombrePlantilla}",
+                            Proveedor = proveedorAplicado,
+                            Valor = decimal.Round(costosPorPlan[index] ?? 0m, 2),
+                            RutaFactura = rutaFacturaAplicada,
+                            FechaDocumento = fechaEjecucion
+                        });
+                    }
 
                     await _ejecucionService.CreateAsync(dto, cancellationToken);
 
@@ -488,6 +546,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 RegistroRutaFactura = string.Empty;
                 RegistroEsExtraordinario = false;
                 RegistroMotivoExtraordinario = string.Empty;
+                RegistroItemsGasto = new List<EjecucionMantenimientoItemGastoDto>();
 
                 var planesTxt = string.Join(", ", planesSeleccionados.Select(p => p.NombrePlantilla));
                 SuccessMessage = VentanaPreventivoAdvertencia
@@ -628,8 +687,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 if (nuevoKm < vehiculo.Mileage)
                 {
-                    ErrorMessage = $"El nuevo kilometraje ({nuevoKm:N0}) no puede ser menor al actual ({vehiculo.Mileage:N0})";
-                    return;
+                    SuccessMessage = $"⚠️ Advertencia: El nuevo kilometraje ({nuevoKm:N0}) es menor al actual ({vehiculo.Mileage:N0}). Se permitirá registrar datos históricos.";
                 }
 
                 if (nuevoKm == vehiculo.Mileage)
@@ -1321,6 +1379,97 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             }
 
             return true;
+        }
+
+        private static void BuildDetailedItemsDistribution(
+            IReadOnlyCollection<EjecucionMantenimientoItemGastoDto> sourceItems,
+            IReadOnlyList<PlanPreventivoSelectionItem> selectedPlans,
+            DateTimeOffset fechaEjecucion,
+            out Dictionary<int, List<EjecucionMantenimientoItemGastoDto>> itemsByPlan,
+            out List<decimal?> costByPlan)
+        {
+            var localItemsByPlan = new Dictionary<int, List<EjecucionMantenimientoItemGastoDto>>();
+            foreach (var plan in selectedPlans)
+            {
+                localItemsByPlan[plan.PlanId] = new List<EjecucionMantenimientoItemGastoDto>();
+            }
+
+            itemsByPlan = localItemsByPlan;
+
+            foreach (var raw in sourceItems)
+            {
+                var descripcion = string.IsNullOrWhiteSpace(raw.Descripcion) ? "Ítem de preventivo" : raw.Descripcion.Trim();
+                var proveedor = string.IsNullOrWhiteSpace(raw.Proveedor) ? null : raw.Proveedor.Trim();
+                var numeroFactura = string.IsNullOrWhiteSpace(raw.NumeroFactura) ? null : raw.NumeroFactura.Trim();
+                var rutaFactura = string.IsNullOrWhiteSpace(raw.RutaFactura) ? null : raw.RutaFactura.Trim();
+                var valor = raw.Valor < 0 ? 0m : decimal.Round(raw.Valor, 2);
+
+                if (string.IsNullOrWhiteSpace(descripcion) && valor <= 0 && string.IsNullOrWhiteSpace(proveedor) && string.IsNullOrWhiteSpace(rutaFactura))
+                {
+                    continue;
+                }
+
+                var planDestino = raw.PlanMantenimientoDestinoId;
+                var esCompartido = raw.EsCompartidoEntrePlanes || !planDestino.HasValue || selectedPlans.All(x => x.PlanId != planDestino.Value);
+
+                if (!esCompartido)
+                {
+                    itemsByPlan[planDestino!.Value].Add(new EjecucionMantenimientoItemGastoDto
+                    {
+                        TipoGasto = raw.TipoGasto,
+                        Descripcion = descripcion,
+                        Proveedor = proveedor,
+                        Valor = valor,
+                        NumeroFactura = numeroFactura,
+                        RutaFactura = rutaFactura,
+                        FechaDocumento = raw.FechaDocumento ?? fechaEjecucion,
+                        PlanMantenimientoDestinoId = planDestino.Value,
+                        EsCompartidoEntrePlanes = false
+                    });
+                    continue;
+                }
+
+                if (selectedPlans.Count == 0)
+                {
+                    continue;
+                }
+
+                var prorrata = selectedPlans.Count > 0
+                    ? Math.Round(valor / selectedPlans.Count, 2, MidpointRounding.AwayFromZero)
+                    : 0m;
+                var acumulado = 0m;
+
+                for (var i = 0; i < selectedPlans.Count; i++)
+                {
+                    var plan = selectedPlans[i];
+                    var valorPlan = i < selectedPlans.Count - 1
+                        ? prorrata
+                        : valor - acumulado;
+
+                    acumulado += i < selectedPlans.Count - 1 ? prorrata : valorPlan;
+
+                    itemsByPlan[plan.PlanId].Add(new EjecucionMantenimientoItemGastoDto
+                    {
+                        TipoGasto = raw.TipoGasto,
+                        Descripcion = descripcion,
+                        Proveedor = proveedor,
+                        Valor = decimal.Round(valorPlan, 2),
+                        NumeroFactura = numeroFactura,
+                        RutaFactura = rutaFactura,
+                        FechaDocumento = raw.FechaDocumento ?? fechaEjecucion,
+                        PlanMantenimientoDestinoId = plan.PlanId,
+                        EsCompartidoEntrePlanes = selectedPlans.Count > 1
+                    });
+                }
+            }
+
+            var localCostByPlan = new List<decimal?>();
+            foreach (var plan in selectedPlans)
+            {
+                localCostByPlan.Add(decimal.Round(itemsByPlan[plan.PlanId].Sum(x => x.Valor), 2));
+            }
+
+            costByPlan = localCostByPlan;
         }
 
         public partial class PlanPreventivoSelectionItem : ObservableObject

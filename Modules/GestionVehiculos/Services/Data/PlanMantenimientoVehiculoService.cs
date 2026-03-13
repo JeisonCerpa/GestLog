@@ -373,23 +373,32 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 plan.PlantillaNombre = plantilla.Nombre;
 
                 var placa = NormalizePlate(plan.PlacaVehiculo);
-                var ultimaEjecucion = ejecuciones
-                    .FirstOrDefault(e =>
+                
+                // Filtrar ejecuciones para el plan actual
+                var ejecucionesDelPlan = ejecuciones
+                    .Where(e =>
                         e.PlanMantenimientoId.HasValue &&
-                        e.PlanMantenimientoId.Value == plan.Id);
+                        e.PlanMantenimientoId.Value == plan.Id)
+                    .ToList();
+
+                var ultimaEjecucion = ejecucionesDelPlan.FirstOrDefault();
 
                 var intervaloKm = plan.IntervaloKMPersonalizado ?? plantilla.IntervaloKM;
                 var intervaloDias = plan.IntervaloDiasPersonalizado ?? plantilla.IntervaloDias;
 
-                var kmEjecucion = ultimaEjecucion?.KMAlMomento;
-                var kmPlan = plan.UltimoKMRegistrado;
-                var baseKm = Math.Max(kmEjecucion ?? 0L, kmPlan ?? 0L);
+                // Obtener el KM más alto del historial completo del plan
+                // Esto evita problemas al registrar mantenimientos históricos con KM anterior
+                var maxKmDelHistorial = ejecucionesDelPlan
+                    .Select(e => e.KMAlMomento)
+                    .DefaultIfEmpty(0L)
+                    .Max();
 
-                var fechaEjecucion = ultimaEjecucion?.FechaEjecucion;
-                var fechaPlan = plan.UltimaFechaMantenimiento;
-                var baseFecha = (fechaEjecucion.HasValue && fechaPlan.HasValue)
-                    ? (fechaEjecucion.Value >= fechaPlan.Value ? fechaEjecucion.Value : fechaPlan.Value)
-                    : (fechaEjecucion ?? fechaPlan ?? plan.FechaInicio);
+                var kmPlan = plan.UltimoKMRegistrado ?? 0L;
+                var baseKm = Math.Max(maxKmDelHistorial, kmPlan);
+
+                // Usar la fecha más reciente del historial (primera en la lista ordenada descendente)
+                // Esto asegura que los cálculos de vencimiento sean correctos incluso con datos históricos
+                var baseFecha = ultimaEjecucion?.FechaEjecucion ?? plan.UltimaFechaMantenimiento ?? plan.FechaInicio;
 
                 plan.ProximoKMEjecucion = baseKm + intervaloKm;
                 plan.ProximaFechaEjecucion = baseFecha.AddDays(intervaloDias);

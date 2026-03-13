@@ -112,6 +112,26 @@
 
                         <TextBlock Text="Historial de observaciones" FontWeight="SemiBold"/>
                         <TextBox x:Name="TxtTimeline" IsReadOnly="True" Style="{StaticResource InputStyle}" MinHeight="240" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+
+                        <TextBlock Text="Detalle de gastos" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                        <Border BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8" Padding="8">
+                            <DataGrid x:Name="DgItemsGasto"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      IsReadOnly="True"
+                                      MinHeight="140"
+                                      MaxHeight="260"
+                                      HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tipo" Binding="{Binding TipoGastoTexto}" Width="110"/>
+                                    <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
+                                    <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="170"/>
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:N0}}" Width="120"/>
+                                    <DataGridTextColumn Header="Factura" Binding="{Binding NumeroFactura}" Width="120"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 

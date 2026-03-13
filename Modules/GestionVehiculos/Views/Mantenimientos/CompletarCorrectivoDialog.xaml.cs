@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.ComponentModel;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
 using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
@@ -22,6 +23,78 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
     {
         private readonly IEjecucionMantenimientoService? _ejecucionService;
 
+        public class GastoItemInput : INotifyPropertyChanged
+        {
+            private int _tipoGasto = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro;
+            private string _descripcion = string.Empty;
+            private string _proveedor = string.Empty;
+            private string _valorInput = string.Empty;
+            private string _numeroFactura = string.Empty;
+            private string _rutaFactura = string.Empty;
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public int TipoGasto
+            {
+                get => _tipoGasto;
+                set { if (_tipoGasto == value) return; _tipoGasto = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGasto))); }
+            }
+
+            public string Descripcion
+            {
+                get => _descripcion;
+                set { if (_descripcion == value) return; _descripcion = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Descripcion))); }
+            }
+
+            public string Proveedor
+            {
+                get => _proveedor;
+                set { if (_proveedor == value) return; _proveedor = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Proveedor))); }
+            }
+
+            public string ValorInput
+            {
+                get => _valorInput;
+                set { if (_valorInput == value) return; _valorInput = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValorInput))); }
+            }
+
+            public string NumeroFactura
+            {
+                get => _numeroFactura;
+                set { if (_numeroFactura == value) return; _numeroFactura = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumeroFactura))); }
+            }
+
+            public string RutaFactura
+            {
+                get => _rutaFactura;
+                set { if (_rutaFactura == value) return; _rutaFactura = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RutaFactura))); }
+            }
+        }
+
+        public class GastoFacturaGroup : INotifyPropertyChanged
+        {
+            private decimal _totalGrupo;
+            
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public string NumeroFactura { get; set; } = string.Empty;
+            public string ProveedorFactura { get; set; } = string.Empty;
+            public string RutaFactura { get; set; } = string.Empty;
+            public ObservableCollection<GastoItemInput> Items { get; } = new();
+
+            public decimal TotalGrupo
+            {
+                get => _totalGrupo;
+                set
+                {
+                    if (_totalGrupo == value) return;
+                    _totalGrupo = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalGrupo)));
+                }
+            }
+
+            public string DisplayKey => string.IsNullOrWhiteSpace(NumeroFactura) ? "SIN-FACTURA" : NumeroFactura;
+        }
 
         public class PlanPreventivoCostoAsignado
         {
@@ -56,6 +129,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         }
 
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planes = new();
+        private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
 
         public long? KilometrajeAlCompletar { get; private set; }
         public string Responsable { get; private set; }
@@ -66,6 +140,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         public string TituloActividad { get; private set; }
         public IReadOnlyCollection<int> PlanesPreventivosSeleccionados { get; private set; } = Array.Empty<int>();
         public IReadOnlyCollection<PlanPreventivoCostoAsignado> PlanesPreventivosConCosto { get; private set; } = Array.Empty<PlanPreventivoCostoAsignado>();
+        public IReadOnlyCollection<EjecucionMantenimientoItemGastoDto> ItemsGasto { get; private set; } = Array.Empty<EjecucionMantenimientoItemGastoDto>();
 
         public CompletarCorrectivoDialog(
             long? kilometrajeInicial,
@@ -75,7 +150,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             string? rutaFacturaInicial,
             string? observacionesInicial,
             string? tituloActividadInicial,
-            IEnumerable<PlanMantenimientoVehiculoDto>? planesPreventivosDisponibles)
+            IEnumerable<PlanMantenimientoVehiculoDto>? planesPreventivosDisponibles,
+            IEnumerable<EjecucionMantenimientoItemGastoDto>? itemsGastoIniciales = null)
         {
             InitializeComponent();
 
@@ -121,6 +197,60 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtObservaciones.Text = Observaciones;
             TxtTituloActividad.Text = TituloActividad;
 
+            if (itemsGastoIniciales != null)
+            {
+                // Agrupar items iniciales por factura
+                var groupsByFactura = itemsGastoIniciales
+                    .GroupBy(item => string.IsNullOrWhiteSpace(item.NumeroFactura) ? "SIN-FACTURA" : item.NumeroFactura.Trim())
+                    .ToList();
+
+                foreach (var grouping in groupsByFactura)
+                {
+                    var group = new GastoFacturaGroup
+                    {
+                        NumeroFactura = grouping.Key == "SIN-FACTURA" ? string.Empty : grouping.Key,
+                        RutaFactura = grouping.FirstOrDefault()?.RutaFactura ?? string.Empty
+                    };
+
+                    foreach (var itemDto in grouping)
+                    {
+                        var gastoItem = new GastoItemInput
+                        {
+                            TipoGasto = itemDto.TipoGasto,
+                            Descripcion = itemDto.Descripcion ?? string.Empty,
+                            Proveedor = itemDto.Proveedor ?? string.Empty,
+                            ValorInput = itemDto.Valor.ToString(CultureInfo.CurrentCulture),
+                            NumeroFactura = itemDto.NumeroFactura ?? string.Empty,
+                            RutaFactura = itemDto.RutaFactura ?? string.Empty
+                        };
+
+                        gastoItem.PropertyChanged += GastoItem_PropertyChanged;
+                        group.Items.Add(gastoItem);
+                    }
+
+                    UpdateGroupTotal(group);
+                    _itemsGasto.Add(group);
+                }
+            }
+
+            if (_itemsGasto.Count == 0 || _itemsGasto.Sum(g => g.Items.Count) == 0)
+            {
+                var newItem = new GastoItemInput
+                {
+                    TipoGasto = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro,
+                    Descripcion = string.IsNullOrWhiteSpace(TituloActividad) ? "" : TituloActividad,
+                    Proveedor = Proveedor,
+                    ValorInput = Costo?.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+                    RutaFactura = RutaFactura
+                };
+
+                newItem.PropertyChanged += GastoItem_PropertyChanged;
+                AddItemToGroup(newItem);
+            }
+
+            IcItemsGasto.ItemsSource = _itemsGasto;
+            UpdateCartSummary();
+
             _ = CargarSugerenciasAsync();
 
             ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
@@ -162,6 +292,82 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
+        private void BtnAddGastoItem_Click(object sender, RoutedEventArgs e)
+        {
+            var item = new GastoItemInput
+            {
+                TipoGasto = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro
+            };
+
+            item.PropertyChanged += GastoItem_PropertyChanged;
+            AddItemToGroup(item);
+            UpdateCartSummary();
+        }
+
+        private void BtnAddFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            var newGroup = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
+            var item = new GastoItemInput { TipoGasto = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro };
+            item.PropertyChanged += GastoItem_PropertyChanged;
+            newGroup.Items.Add(item);
+            _itemsGasto.Add(newGroup);
+            UpdateCartSummary();
+        }
+
+        private void AddItemToGroup(GastoItemInput item)
+        {
+            var groupKey = "SIN-FACTURA";
+            var group = _itemsGasto.FirstOrDefault(g => g.DisplayKey == groupKey);
+
+            if (group == null)
+            {
+                group = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
+                _itemsGasto.Add(group);
+            }
+
+            group.Items.Add(item);
+            UpdateGroupTotal(group);
+        }
+
+        private void UpdateGroupTotal(GastoFacturaGroup group)
+        {
+            decimal total = 0m;
+            foreach (var item in group.Items)
+            {
+                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
+                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+
+                if (valorValido && valor > 0)
+                {
+                    total += decimal.Round(valor, 2);
+                }
+            }
+
+            group.TotalGrupo = decimal.Round(total, 2);
+        }
+
+        private void BtnRemoveGastoItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is GastoItemInput item)
+            {
+                item.PropertyChanged -= GastoItem_PropertyChanged;
+
+                var group = _itemsGasto.FirstOrDefault(g => g.Items.Contains(item));
+                if (group != null)
+                {
+                    group.Items.Remove(item);
+                    UpdateGroupTotal(group);
+
+                    if (group.Items.Count == 0)
+                    {
+                        _itemsGasto.Remove(group);
+                    }
+                }
+
+                UpdateCartSummary();
+            }
+        }
+
         private async void BtnOpenPlanFactura_Click(object sender, RoutedEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.DataContext is PlanPreventivoSeleccionItem item)
@@ -171,6 +377,77 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     await FacturaStorageHelper.OpenFacturaAsync(this, item.InvoicePath);
                 }
             }
+        }
+
+        private async void BtnAttachSharedInvoiceCompletar_Click(object sender, RoutedEventArgs e)
+        {
+            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
+            if (!string.IsNullOrWhiteSpace(uploaded))
+            {
+                TxtSharedInvoicePathCompletar.Text = uploaded;
+            }
+        }
+
+        private void BtnApplySharedInvoiceCompletar_Click(object sender, RoutedEventArgs e)
+        {
+            var numero = TxtSharedInvoiceNumberCompletar.Text?.Trim() ?? string.Empty;
+            var ruta = TxtSharedInvoicePathCompletar.Text?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(numero) && string.IsNullOrWhiteSpace(ruta))
+            {
+                return;
+            }
+
+            foreach (var group in _itemsGasto)
+            {
+                if (string.IsNullOrWhiteSpace(group.NumeroFactura) && !string.IsNullOrWhiteSpace(numero))
+                {
+                    group.NumeroFactura = numero;
+                }
+
+                if (string.IsNullOrWhiteSpace(group.RutaFactura) && !string.IsNullOrWhiteSpace(ruta))
+                {
+                    group.RutaFactura = ruta;
+                }
+            }
+
+            IcItemsGasto.Items.Refresh();
+            UpdateCartSummary();
+        }
+
+        private void GastoItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(GastoItemInput.ValorInput)
+                || e.PropertyName == nameof(GastoItemInput.NumeroFactura)
+                || e.PropertyName == nameof(GastoItemInput.RutaFactura))
+            {
+                UpdateCartSummary();
+            }
+        }
+
+        private void UpdateCartSummary()
+        {
+            var total = 0m;
+            var totalItems = 0;
+
+            foreach (var group in _itemsGasto)
+            {
+                foreach (var item in group.Items)
+                {
+                    totalItems++;
+                    if (decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var val)
+                        || decimal.TryParse(item.ValorInput?.Trim(), out val))
+                    {
+                        if (val > 0)
+                        {
+                            total += decimal.Round(val, 2);
+                        }
+                    }
+                }
+            }
+
+            TxtCartItemsCountCompletar.Text = totalItems.ToString(CultureInfo.InvariantCulture);
+            TxtCartItemsTotalCompletar.Text = $"$ {decimal.Round(total, 2):N0}";
         }
 
         private void BtnEditPlanNote_Click(object sender, RoutedEventArgs e)
@@ -479,6 +756,80 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 Costo = null;
             }
+
+            var itemsGasto = new List<EjecucionMantenimientoItemGastoDto>();
+            foreach (var group in _itemsGasto)
+            {
+                var numeroFacturaGrupo = (group.NumeroFactura ?? string.Empty).Trim();
+                var rutaFacturaGrupo = (group.RutaFactura ?? string.Empty).Trim();
+
+                foreach (var item in group.Items)
+                {
+                var descripcion = (item.Descripcion ?? string.Empty).Trim();
+                var proveedorItem = (item.Proveedor ?? string.Empty).Trim();
+                    
+                    var numeroFactura = string.IsNullOrWhiteSpace(item.NumeroFactura) ? numeroFacturaGrupo : (item.NumeroFactura ?? string.Empty).Trim();
+                    var rutaFacturaItem = string.IsNullOrWhiteSpace(item.RutaFactura) ? rutaFacturaGrupo : (item.RutaFactura ?? string.Empty).Trim();
+
+                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
+                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+
+                if (!valorValido)
+                {
+                    valor = 0m;
+                }
+
+                if (string.IsNullOrWhiteSpace(descripcion) && valor <= 0 && string.IsNullOrWhiteSpace(proveedorItem) && string.IsNullOrWhiteSpace(rutaFacturaItem))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(descripcion))
+                {
+                    TxtError.Text = "Cada ítem de gasto debe tener descripción.";
+                    return;
+                }
+
+                if (valor < 0)
+                {
+                    TxtError.Text = "El valor de cada ítem de gasto debe ser mayor o igual a cero.";
+                    return;
+                }
+
+                itemsGasto.Add(new EjecucionMantenimientoItemGastoDto
+                {
+                    TipoGasto = item.TipoGasto,
+                    Descripcion = descripcion,
+                    Proveedor = string.IsNullOrWhiteSpace(proveedorItem) ? null : proveedorItem,
+                    Valor = decimal.Round(valor, 2),
+                    NumeroFactura = string.IsNullOrWhiteSpace(numeroFactura) ? null : numeroFactura,
+                    RutaFactura = string.IsNullOrWhiteSpace(rutaFacturaItem) ? null : rutaFacturaItem,
+                    FechaDocumento = DateTimeOffset.Now
+                });
+                }
+            }
+
+            if (itemsGasto.Count > 0)
+            {
+                var totalItems = decimal.Round(itemsGasto.Sum(x => x.Valor), 2);
+                Costo = totalItems;
+
+                var primerProveedor = itemsGasto.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Proveedor))?.Proveedor;
+                if (string.IsNullOrWhiteSpace(Proveedor) && !string.IsNullOrWhiteSpace(primerProveedor))
+                {
+                    Proveedor = primerProveedor;
+                    CmbProveedor.Text = Proveedor;
+                }
+
+                var primeraRuta = itemsGasto.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.RutaFactura))?.RutaFactura;
+                if (string.IsNullOrWhiteSpace(RutaFactura) && !string.IsNullOrWhiteSpace(primeraRuta))
+                {
+                    RutaFactura = primeraRuta;
+                    TxtRutaFactura.Text = RutaFactura;
+                }
+            }
+
+            ItemsGasto = itemsGasto;
 
             var planesSeleccionados = _planes.Where(p => p.IsSelected).ToList();
             if (planesSeleccionados.Count > 0)

@@ -44,6 +44,7 @@ namespace GestLog.Modules.DatabaseConnection
         public DbSet<PlantillaMantenimiento> PlantillasMantenimiento { get; set; }
         public DbSet<PlanMantenimientoVehiculo> PlanesMantenimientoVehiculo { get; set; }
         public DbSet<EjecucionMantenimiento> EjecucionesMantenimiento { get; set; }
+        public DbSet<EjecucionMantenimientoItemGasto> EjecucionesMantenimientoItemsGasto { get; set; }
         public DbSet<ConsumoCombustibleVehiculo> ConsumosCombustibleVehiculo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -547,6 +548,53 @@ namespace GestLog.Modules.DatabaseConnection
                 
                 entity.HasIndex(e => e.FechaEjecucion)
                     .HasDatabaseName("IX_EjecucionesMantenimiento_FechaEjecucion");
+
+                entity.HasMany(e => e.ItemsGasto)
+                    .WithOne(i => i.EjecucionMantenimiento)
+                    .HasForeignKey(i => i.EjecucionMantenimientoId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<EjecucionMantenimientoItemGasto>(entity =>
+            {
+                entity.ToTable("GestionVehiculos_EjecucionItemsGasto");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.TipoGasto)
+                    .HasConversion<int>();
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(e => e.Proveedor)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Valor)
+                    .HasPrecision(18, 2);
+
+                entity.Property(e => e.NumeroFactura)
+                    .HasMaxLength(80);
+
+                entity.Property(e => e.RutaFactura)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.FechaDocumento)
+                    .HasColumnType("datetimeoffset");
+
+                entity.Property(e => e.FechaRegistro)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.FechaActualizacion)
+                    .HasColumnType("datetimeoffset")
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasIndex(e => e.EjecucionMantenimientoId)
+                    .HasDatabaseName("IX_EjecucionItemsGasto_EjecucionId");
+
+                entity.HasIndex(e => new { e.EjecucionMantenimientoId, e.TipoGasto })
+                    .HasDatabaseName("IX_EjecucionItemsGasto_EjecucionTipo");
             });
 
             // ConsumoCombustibleVehiculo

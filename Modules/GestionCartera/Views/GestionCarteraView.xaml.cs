@@ -36,8 +36,8 @@ namespace GestLog.Modules.GestionCartera.Views
         {
             try
             {
-                // Cambiar a la segunda pestaña (índice 1) que es "🚀 Envío Automático"
-                mainTabControl.SelectedIndex = 1;
+                // Llevar al bloque de envío automático en la vista command-center
+                EmailSectionCard?.BringIntoView();
                 
                 // Ejecutar el comando del ViewModel para logging y limpieza
                 if (DataContext is DocumentGenerationViewModel viewModel)

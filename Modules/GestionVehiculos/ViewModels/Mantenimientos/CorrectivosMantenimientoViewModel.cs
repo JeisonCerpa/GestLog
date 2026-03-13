@@ -88,6 +88,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         [ObservableProperty]
         private string registroDescripcionFalla = string.Empty;
 
+        [ObservableProperty]
+        private List<EjecucionMantenimientoItemGastoDto> registroItemsGasto = new();
+
         public CorrectivosMantenimientoViewModel(
             IEjecucionMantenimientoService ejecucionService,
             IPlanMantenimientoVehiculoService planService,
@@ -129,6 +132,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             RegistroObservaciones = string.Empty;
             RegistroRutaFactura = string.Empty;
             RegistroEstadoCorrectivo = EstadoMantenimientoCorrectivoVehiculo.FallaReportada;
+            RegistroItemsGasto = new List<EjecucionMantenimientoItemGastoDto>();
             ErrorMessage = string.Empty;
         }
 
@@ -207,6 +211,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     ? $"Falla reportada: {descripcionFalla[..80]}..."
                     : $"Falla reportada: {descripcionFalla}";
 
+                var itemsGasto = RegistroItemsGasto
+                    .Select(item => new EjecucionMantenimientoItemGastoDto
+                    {
+                        TipoGasto = item.TipoGasto,
+                        Descripcion = item.Descripcion,
+                        Proveedor = item.Proveedor,
+                        Valor = item.Valor,
+                        NumeroFactura = item.NumeroFactura,
+                        RutaFactura = item.RutaFactura,
+                        FechaDocumento = item.FechaDocumento ?? new DateTimeOffset(RegistroFechaEjecucion.Value.Date)
+                    })
+                    .ToList();
+
                 var dto = new EjecucionMantenimientoDto
                 {
                     PlacaVehiculo = FilterPlaca.Trim().ToUpperInvariant(),
@@ -219,12 +236,13 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         null,
                         descripcionFalla,
                         RegistroFechaEjecucion),
-                    Costo = null,
+                    Costo = itemsGasto.Count > 0 ? decimal.Round(itemsGasto.Sum(x => x.Valor), 2) : null,
                     RutaFactura = string.IsNullOrWhiteSpace(RegistroRutaFactura) ? null : RegistroRutaFactura.Trim(),
                     ResponsableEjecucion = null,
                     Proveedor = null,
                     EstadoCorrectivo = (int)EstadoMantenimientoCorrectivoVehiculo.FallaReportada,
-                    Estado = (int)MapEstadoGeneralFromCorrectivo(EstadoMantenimientoCorrectivoVehiculo.FallaReportada)
+                    Estado = (int)MapEstadoGeneralFromCorrectivo(EstadoMantenimientoCorrectivoVehiculo.FallaReportada),
+                    ItemsGasto = itemsGasto
                 };
 
                 await _ejecucionService.CreateAsync(dto, cancellationToken);
@@ -319,6 +337,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             string? rutaFactura,
             string? observaciones,
             string? tituloActividad,
+            IReadOnlyCollection<EjecucionMantenimientoItemGastoDto>? itemsGasto,
             IReadOnlyCollection<PlanMantenimientoVehiculoDto>? planesPreventivosEjecutados,
             IReadOnlyCollection<PlanPreventivoCostoInput>? planesPreventivosConCosto,
             CancellationToken cancellationToken = default)
@@ -344,6 +363,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
                 correctivo.Costo = costo;
                 correctivo.RutaFactura = string.IsNullOrWhiteSpace(rutaFactura) ? null : rutaFactura.Trim();
+                correctivo.ItemsGasto = itemsGasto?.ToList() ?? new List<EjecucionMantenimientoItemGastoDto>();
                 if (!string.IsNullOrWhiteSpace(tituloActividad))
                 {
                     correctivo.TituloActividad = tituloActividad.Trim();
@@ -428,6 +448,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                                 ? costoPlan.FacturaRuta
                                 : null
                         };
+
+                        if ((preventivaDto.Costo ?? 0) > 0 || !string.IsNullOrWhiteSpace(preventivaDto.Proveedor) || !string.IsNullOrWhiteSpace(preventivaDto.RutaFactura))
+                        {
+                            preventivaDto.ItemsGasto.Add(new EjecucionMantenimientoItemGastoDto
+                            {
+                                TipoGasto = (int)TipoGastoMantenimientoVehiculo.Servicio,
+                                Descripcion = string.IsNullOrWhiteSpace(preventivaDto.TituloActividad)
+                                    ? "Preventivo ejecutado desde correctivo"
+                                    : $"Preventivo: {preventivaDto.TituloActividad}",
+                                Proveedor = preventivaDto.Proveedor,
+                                Valor = decimal.Round(preventivaDto.Costo ?? 0m, 2),
+                                RutaFactura = preventivaDto.RutaFactura,
+                                FechaDocumento = preventivaDto.FechaEjecucion
+                            });
+                        }
 
                         await _ejecucionService.CreateAsync(preventivaDto, cancellationToken);
                     }

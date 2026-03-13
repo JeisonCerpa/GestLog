@@ -7,21 +7,20 @@
         AllowsTransparency="True"
         Background="Transparent"
         SizeToContent="Manual"
-        Width="1280"
-        Height="860"
+        Width="1140"
+        Height="760"
         WindowStartupLocation="Manual"
         ShowInTaskbar="False"
         Style="{StaticResource ModalWindowBase}">
 
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <converters:PathToFileNameConverter x:Key="PathToFileNameConverter" />
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
         <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
-                MaxWidth="1320" MaxHeight="900" Margin="20"
+                MaxWidth="1180" MaxHeight="820" Margin="16"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
                 Style="{StaticResource ModalCardStyle}">
@@ -29,11 +28,12 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,20" Effect="{StaticResource HeaderShadow}">
+                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="18,14" Effect="{StaticResource HeaderShadow}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -41,12 +41,12 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="✅" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModalTextBlockBase}"/>
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="38" Height="38" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="✅" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Registrar preventivo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Planes a registrar y datos comunes" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                                <TextBlock Text="Registrar mantenimiento preventivo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Flujo por pasos para un registro más cómodo" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,2,0,0"/>
                             </StackPanel>
                         </StackPanel>
 
@@ -59,339 +59,435 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" Margin="24">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <Border Grid.Row="1" Margin="16,10,16,0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="TxtResumenRapido" Text="Resumen: sin planes seleccionados" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <TextBlock Grid.Column="1" x:Name="TxtPasoActual" Text="Paso 1 de 3" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" Margin="10,0,0,0"/>
+                    </Grid>
+                </Border>
 
-                    <Border Grid.Row="0" Style="{StaticResource CardSectionStyle}" Margin="0" VerticalAlignment="Stretch">
+                <Grid Grid.Row="2" Margin="16,10,16,0">
+                    <Border x:Name="Step1Panel" Style="{StaticResource CardSectionStyle}" Padding="14">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="0.44*" />
-                                <ColumnDefinition Width="16" />
-                                <ColumnDefinition Width="0.56*" />
-                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                            <Grid Grid.Column="0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
+                            <StackPanel Margin="0,0,0,8">
+                                <TextBlock Text="1. Selecciona los planes a registrar" Style="{StaticResource SectionHeaderStyle}"/>
+                                <TextBlock Text="Marca uno o varios planes. Puedes usar ‘Editar datos de este plan’ para notas específicas." FontSize="11" Foreground="#6B7280" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
 
-                                <TextBlock Grid.Row="0" Text="Planes a registrar" Style="{StaticResource SectionHeaderStyle}" />
+                            <Grid Grid.Row="1" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TxtPlanFilter"
+                                         Grid.Column="0"
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         TextChanged="TxtPlanFilter_TextChanged"
+                                         ToolTip="Buscar por nombre del plan"
+                                         Tag="Buscar plan por nombre..."/>
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Padding="10,6"
+                                        Content="Limpiar"
+                                        Style="{StaticResource GhostButton}"
+                                        Click="BtnClearPlanFilter_Click"/>
+                            </Grid>
 
-                                <Border Grid.Row="1" Background="#F5F9F6" BorderBrush="#D8EADC" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,2,0,8">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding PlanesSeleccionadosResumen}" FontSize="11" Foreground="#2E5E39" />
-                                        <TextBlock Text="Detalle por plan es opcional." FontSize="10" Foreground="#2E5E39" Margin="0,3,0,0" />
-                                    </StackPanel>
-                                </Border>
-
-                                <ListBox Grid.Row="2" ItemsSource="{Binding PlanesPreventivoSeleccionables}" BorderBrush="#E5E5E5" BorderThickness="1" IsEnabled="{Binding HasPlanPreventivo}" VerticalAlignment="Stretch">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Padding="8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
-                                                    <StackPanel>
-                                                        <CheckBox IsChecked="{Binding IsSelected}" FontWeight="SemiBold" Content="{Binding NombrePlantilla}" />
-
-                                                        <Border Margin="20,4,0,0" Padding="6,2" CornerRadius="10" HorizontalAlignment="Left">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Setter Property="Background" Value="#E8F5E9" />
+                            <Grid Grid.Row="2">
+                                <ListBox x:Name="LstPlanes"
+                                         ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FilteredPlanes}"
+                                         BorderBrush="#E5E7EB"
+                                         BorderThickness="1"
+                                         Background="#F8FAFC"
+                                         Padding="6"
+                                         IsEnabled="{Binding HasPlanPreventivo}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Margin="0,0,0,8" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Background="White">
+                                            <StackPanel>
+                                                <DockPanel LastChildFill="True">
+                                                    <CheckBox IsChecked="{Binding IsSelected}" FontWeight="SemiBold" Content="{Binding NombrePlantilla}" Checked="PlanSelectionChanged" Unchecked="PlanSelectionChanged"/>
+                                                    <Border DockPanel.Dock="Right" Padding="8,3" CornerRadius="10" Margin="8,0,0,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🔴 Vencido">
+                                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🟡 Próximo">
+                                                                        <Setter Property="Background" Value="#FFF8E1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🟢 Vigente">
+                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
+                                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
+                                                                        <Setter Property="Background" Value="#FFF8E1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Proximo">
+                                                                        <Setter Property="Background" Value="#FFF8E1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
+                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding EstadoVisual}" FontSize="10" FontWeight="SemiBold">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#2E7D32"/>
                                                                     <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🔴 Vencido">
+                                                                            <Setter Property="Foreground" Value="#C0392B"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🟡 Próximo">
+                                                                            <Setter Property="Foreground" Value="#B7791F"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🟢 Vigente">
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                        </DataTrigger>
                                                                         <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                                                                            <Setter Property="Background" Value="#FFEBEE" />
+                                                                            <Setter Property="Foreground" Value="#C0392B"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
-                                                                            <Setter Property="Background" Value="#FFF8E1" />
+                                                                            <Setter Property="Foreground" Value="#B7791F"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding EstadoPlan}" Value="Proximo">
+                                                                            <Setter Property="Foreground" Value="#B7791F"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
-                                                                            <Setter Property="Background" Value="#E8F5E9" />
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </Border.Style>
-                                                            <TextBlock Text="{Binding EstadoVisual}" FontSize="10" FontWeight="SemiBold">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Foreground" Value="#2E7D32" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                                                                                <Setter Property="Foreground" Value="#C0392B" />
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
-                                                                                <Setter Property="Foreground" Value="#B7791F" />
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
-                                                                                <Setter Property="Foreground" Value="#2E7D32" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </Border>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DockPanel>
 
-                                                        <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat=Próx. KM: {0:N0}}" FontSize="10" Foreground="#7A7A7A" Margin="20,2,0,0" />
-                                                        <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat=Próx. fecha: {0:dd/MM/yyyy}}" FontSize="10" Foreground="#7A7A7A" Margin="20,2,0,0" />
+                                                <StackPanel Orientation="Horizontal" Margin="22,6,0,0">
+                                                    <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat=Próx. KM: {0:N0}}" FontSize="10" Foreground="#6B7280" Margin="0,0,14,0"/>
+                                                    <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat=Próx. fecha: {0:dd/MM/yyyy}}" FontSize="10" Foreground="#6B7280"/>
+                                                </StackPanel>
 
-                                                        <StackPanel Orientation="Horizontal" Margin="20,8,0,0"
-                                                                    Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                            <Button Content="📝 Editar nota"
-                                                                    Click="BtnEditPlanNote_Click"
-                                                                    Padding="10,4"
-                                                                    Margin="0,0,8,0"
-                                                                    Style="{StaticResource ButtonStyle}"
-                                                                    Background="#EFF6FF"
-                                                                    BorderBrush="#BFDBFE"
-                                                                    BorderThickness="1"
-                                                                    Foreground="#1E3A8A"
-                                                                    FontSize="10" />
-                                                            <TextBlock Text="Nota guardada"
-                                                                       FontSize="10"
-                                                                       Foreground="#2E7D32"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,8,0"
-                                                                       Visibility="Collapsed">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding HasDetalleOpcional}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                            <TextBlock Text="Proveedor personalizado"
-                                                                       FontSize="10"
-                                                                       Foreground="#1E3A8A"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,8,0"
-                                                                       Visibility="Collapsed">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding HasProveedorOpcional}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                            <TextBlock Text="Factura adjunta"
-                                                                       FontSize="10"
-                                                                       Foreground="#1E3A8A"
-                                                                       VerticalAlignment="Center"
-                                                                       Visibility="Collapsed">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding HasFacturaAdjunta}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                            <TextBlock Text="Costo individual"
-                                                                       FontSize="10"
-                                                                       Foreground="#7C3AED"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="8,0,0,0"
-                                                                       Visibility="Collapsed">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding HasCostoOpcional}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+                                                <TextBlock Margin="22,8,0,0"
+                                                           Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                           Text="Plan seleccionado para esta ejecución"
+                                                           FontSize="10"
+                                                           Foreground="#1E3A8A"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                                <Border x:Name="NoPlanesFilterResult"
+                                        Visibility="Collapsed"
+                                        Background="#FEF3C7"
+                                        BorderBrush="#FDE68A"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="10"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Margin="16">
+                                    <TextBlock Text="No hay planes que coincidan con el filtro." Foreground="#92400E" FontSize="11"/>
+                                </Border>
                             </Grid>
-
-                            <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Datos comunes de ejecución" Style="{StaticResource SectionHeaderStyle}" />
-                                    <TextBlock Text="Estos datos se aplican a todos los planes seleccionados." FontSize="11" Foreground="#9D9D9C" Margin="0,0,0,8" TextWrapping="Wrap" />
-
-                                    <Grid Margin="0,8,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="16" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Fecha ejecución" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <DatePicker SelectedDate="{Binding RegistroFechaEjecucion}" Style="{StaticResource ModernDatePickerStyle}" />
-                                            <TextBlock Text="{Binding FechaValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding FechaValidationMessage}" Value="">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Kilometraje actual al hacer el mantenimiento" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" TextWrapping="Wrap" />
-                                            <TextBox Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
-                                            <TextBlock Text="{Binding KmValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding KmValidationMessage}" Value="">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <Button Content="Tomar KM actual" Command="{Binding CargarKilometrajeActualCommand}"
-                                            Style="{StaticResource GhostButton}" FontSize="12" Padding="10,6" Margin="0,8,0,0" Width="170"
-                                            IsEnabled="{Binding HasPlanPreventivo}" />
-
-                                    <Grid Margin="0,8,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="16" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Responsable" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <ComboBox Text="{Binding RegistroResponsable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      ItemsSource="{Binding ResponsablesFiltrados}"
-                                                      IsEditable="True"
-                                                      IsTextSearchEnabled="False"
-                                                      Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
-                                            <TextBlock Text="{Binding ResponsableValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding ResponsableValidationMessage}" Value="">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Costo total del servicio" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <TextBox Text="{Binding RegistroCostoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
-                                            <TextBlock Text="{Binding CostoValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding CostoValidationMessage}" Value="">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="Si eliges varios planes, este valor se reparte automáticamente entre los planes seleccionados."
-                                                       FontSize="10"
-                                                       Foreground="#7A7A7A"
-                                                       Margin="0,4,0,0"
-                                                       TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <Grid Margin="0,8,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="16" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Proveedor (común)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <ComboBox Text="{Binding RegistroProveedor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      ItemsSource="{Binding ProveedoresFiltrados}"
-                                                      IsEditable="True"
-                                                      IsTextSearchEnabled="False"
-                                                      Style="{StaticResource ModernComboBoxStyle}" Margin="0" />
-                                            <TextBlock Text="Se aplicará a todos los planes, salvo que se personalice por plan."
-                                                       FontSize="10" Foreground="#7A7A7A" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Factura (común)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox Grid.Column="0" Text="{Binding RegistroRutaFactura, Converter={StaticResource PathToFileNameConverter}, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}" Margin="0" />
-                                                <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachCommonFactura_Click" />
-                                                <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenCommonFactura_Click" />
-                                            </Grid>
-                                            <TextBlock Text="Acepta PDF, PNG, JPG y JPEG. Puedes sobrescribir por plan desde ‘Editar nota’."
-                                                       FontSize="10" Foreground="#7A7A7A" Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <StackPanel Margin="0,8,0,0">
-                                        <TextBlock Text="Observación general" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4" />
-                                        <TextBox Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}" MinHeight="90" Style="{StaticResource ModernTextBoxStyle}" Margin="0" TextWrapping="Wrap" AcceptsReturn="True" />
-                                    </StackPanel>
-
-                                    <Border Margin="0,10,0,0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10">
-                                        <StackPanel>
-                                            <TextBlock Text="Resumen previo de guardado" FontSize="11" FontWeight="SemiBold" Foreground="#1E3A8A" />
-                                            <TextBlock Text="{Binding ResumenPrevioGuardado}" Margin="0,4,0,0" FontSize="11" Foreground="#1E3A8A" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                            </StackPanel>
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="1" Background="#FFEBEE" CornerRadius="6" Padding="12" Margin="0,12,0,0"
-                            Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" TextWrapping="Wrap" />
+                    <Border x:Name="Step2Panel" Style="{StaticResource CardSectionStyle}" Padding="16" Visibility="Collapsed">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="2. Datos de ejecución" Style="{StaticResource SectionHeaderStyle}"/>
+                                <TextBlock Text="Completa estos datos una sola vez. Se aplicarán a todos los planes seleccionados." FontSize="11" Foreground="#6B7280" Margin="0,2,0,12" TextWrapping="Wrap"/>
+
+                                <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,10" Effect="{StaticResource SectionShadow}">
+                                    <StackPanel>
+                                        <TextBlock Text="Cronología y kilometraje" FontSize="12" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Fecha de ejecución" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+                                                <DatePicker SelectedDate="{Binding RegistroFechaEjecucion}" Style="{StaticResource ModernDatePickerStyle}"/>
+                                                <TextBlock Text="{Binding FechaValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Kilometraje al momento" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+                                                <TextBox Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                                <TextBlock Text="{Binding KmValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Button Content="Tomar KM actual"
+                                                Command="{Binding CargarKilometrajeActualCommand}"
+                                                Style="{StaticResource GhostButton}"
+                                                FontSize="12"
+                                                Padding="10,6"
+                                                Margin="0,10,0,0"
+                                                Width="180"
+                                                IsEnabled="{Binding HasPlanPreventivo}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="#FFFFFF" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="12" Effect="{StaticResource SectionShadow}">
+                                    <StackPanel>
+                                        <TextBlock Text="Responsable y notas" FontSize="12" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
+
+                                        <TextBlock Text="Responsable de la ejecución" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+                                        <ComboBox Text="{Binding RegistroResponsable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  ItemsSource="{Binding ResponsablesFiltrados}"
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="False"
+                                                  Style="{StaticResource ModernComboBoxStyle}"/>
+                                        <TextBlock Text="{Binding ResponsableValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+
+                                        <TextBlock Text="Observación general" Style="{StaticResource LabelTextStyle}" Margin="0,10,0,4"/>
+                                        <TextBox Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}"
+                                                 MinHeight="120"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 TextWrapping="Wrap"
+                                                 AcceptsReturn="True"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
 
-                    <Border Grid.Row="2" Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,12,0,0"
-                            Visibility="{Binding SuccessMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding SuccessMessage}" Foreground="#10B981" FontSize="12" TextWrapping="Wrap" />
+                    <Border x:Name="Step3Panel" Style="{StaticResource CardSectionStyle}" Padding="14" Visibility="Collapsed">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="3. Costos" Style="{StaticResource SectionHeaderStyle}"/>
+                                <TextBlock Text="Elige un modo: por ítems (total automático) o total manual sin desglose." FontSize="11" Foreground="#6B7280" Margin="0,2,0,8" TextWrapping="Wrap"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,10">
+                                    <RadioButton x:Name="RbModoItems" Content="Por ítems detallados" IsChecked="True" Checked="CostoModeChanged" Margin="0,0,18,0"/>
+                                    <RadioButton x:Name="RbModoManual" Content="Solo total sin desglose" Checked="CostoModeChanged"/>
+                                </StackPanel>
+
+                                <Border x:Name="PanelCostoItems" BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="8" Padding="10" Background="#FAFAFA">
+                                    <StackPanel>
+                                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="🛒" FontSize="14" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="Carrito de gastos" FontWeight="SemiBold" Foreground="#1E3A8A"/>
+                                                    <TextBlock Text=" · Ítems:" Foreground="#1E3A8A" Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtCartItemsCountPrev" Text="0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="4,0,0,0"/>
+                                                    <TextBlock Text=" · Total:" Foreground="#1E3A8A" Margin="10,0,0,0"/>
+                                                    <TextBlock x:Name="TxtCartItemsTotalPrev" Text="$ 0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button Content="+ Ítem" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0" Click="BtnAddGastoItem_Click" ToolTip="Agrega un ítem al grupo actual"/>
+                                                    <Button Content="📄 Nueva factura" Style="{StaticResource GhostButton}" Padding="10,4" Click="BtnAddFacturaGroup_Click" ToolTip="Crear un nuevo grupo de factura"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBlock Text="Si un ítem es compartido, se prorratea entre planes seleccionados." FontSize="10" Foreground="#555" Margin="0,0,0,8" TextWrapping="Wrap"/>
+
+                                        <Border Background="#FFFFFF" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="Factura compartida para varios ítems (opcional)" FontWeight="SemiBold" Foreground="#374151"/>
+                                                <Grid Margin="0,8,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="220"/>
+                                                        <ColumnDefinition Width="12"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox x:Name="TxtSharedInvoiceNumberPrev" Grid.Column="0" Style="{StaticResource ModernTextBoxStyle}" ToolTip="N° factura"/>
+                                                    <TextBox x:Name="TxtSharedInvoicePathPrev" Grid.Column="2" Style="{StaticResource ModernTextBoxStyle}" IsReadOnly="True" ToolTip="Ruta factura"/>
+                                                    <Button Grid.Column="3" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachSharedInvoicePrev_Click"/>
+                                                </Grid>
+                                                <Button Content="Aplicar factura compartida a ítems sin factura"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Margin="0,8,0,0"
+                                                        Padding="10,6"
+                                                        HorizontalAlignment="Left"
+                                                        Click="BtnApplySharedInvoicePrev_Click"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <ItemsControl x:Name="IcItemsGasto">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <!-- Card de Factura/Grupo -->
+                                                    <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12" Background="White">
+                                                        <StackPanel>
+                                                            <!-- Header de Factura -->
+                                                            <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="0,0,0,8" Margin="0,0,0,10">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <StackPanel>
+                                                                        <TextBlock Text="{Binding NumeroFactura, StringFormat='📄 {0}'}" FontWeight="SemiBold" Foreground="#1F2937" FontSize="12"/>
+                                                                        <TextBlock Text="{Binding ProveedorFactura, StringFormat='Proveedor: {0}'}" Foreground="#6B7280" FontSize="10" Margin="0,2,0,0"/>
+                                                                    </StackPanel>
+                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                                        <TextBlock Text="Total: $" Foreground="#374151" FontWeight="SemiBold"/>
+                                                                        <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" Foreground="#1F2937" FontWeight="SemiBold" Margin="4,0,0,0"/>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Border>
+
+                                                            <!-- Items del Grupo -->
+                                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Background="White" BorderBrush="#F0F0F0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6">
+                                                                            <Grid>
+                                                                                <Grid.RowDefinitions>
+                                                                                    <RowDefinition Height="Auto"/>
+                                                                                    <RowDefinition Height="Auto"/>
+                                                                                </Grid.RowDefinitions>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="140"/>
+                                                                                    <ColumnDefinition Width="150"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="130"/>
+                                                                                    <ColumnDefinition Width="100"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tipo de gasto" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,2" FontSize="10"/>
+                                                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Aplicar a plan" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,2" FontSize="10"/>
+                                                                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Descripción" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,2" FontSize="10"/>
+                                                                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Proveedor" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,2" FontSize="10"/>
+                                                                                <TextBlock Grid.Row="0" Grid.Column="4" Text="Valor ($)" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,2" FontSize="10"/>
+
+                                                                                <ComboBox Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectedValuePath="Tag" SelectedValue="{Binding TipoGasto}" Height="28">
+                                                                                    <ComboBoxItem Content="Repuesto" Tag="1"/>
+                                                                                    <ComboBoxItem Content="Mano de obra" Tag="2"/>
+                                                                                    <ComboBoxItem Content="Servicio externo" Tag="3"/>
+                                                                                    <ComboBoxItem Content="Otro" Tag="4"/>
+                                                                                </ComboBox>
+                                                                                <ComboBox Grid.Row="1" Grid.Column="1"
+                                                                                          Margin="0,0,6,0"
+                                                                                          Height="28"
+                                                                                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=PlanDestinoOptions}"
+                                                                                          DisplayMemberPath="Label"
+                                                                                          SelectedValuePath="Key"
+                                                                                          SelectedValue="{Binding PlanDestinoKey}"/>
+                                                                                <TextBox Grid.Row="1" Grid.Column="2" Margin="0,0,6,0" Text="{Binding Descripcion}" Style="{StaticResource ModernTextBoxStyle}" Height="28"/>
+                                                                                <TextBox Grid.Row="1" Grid.Column="3" Margin="0,0,6,0" Text="{Binding Proveedor}" Style="{StaticResource ModernTextBoxStyle}" Height="28"/>
+                                                                                <TextBox Grid.Row="1" Grid.Column="4" Margin="0,0,6,0" Text="{Binding ValorInput}" Style="{StaticResource ModernTextBoxStyle}" Height="28"/>
+                                                                                <Button Grid.Row="1" Grid.Column="5" Content="✕" Width="24" Height="24" Click="BtnRemoveGastoItem_Click" Style="{StaticResource GhostButton}" Foreground="#C0392B" ToolTip="Eliminar item"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+
+                                                            <!-- Editar Factura del Grupo (opcional) -->
+                                                            <Border Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,8,0,0">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="Datos de la factura para este grupo" FontWeight="SemiBold" FontSize="10" Foreground="#92400E"/>
+                                                                    <Grid Margin="0,6,0,0">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="180"/>
+                                                                            <ColumnDefinition Width="12"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBox Grid.Column="0" Text="{Binding NumeroFactura}" Style="{StaticResource ModernTextBoxStyle}" ToolTip="N° factura" Height="28" Padding="6,4"/>
+                                                                        <TextBox Grid.Column="2" Text="{Binding RutaFactura}" Style="{StaticResource ModernTextBoxStyle}" IsReadOnly="True" ToolTip="Ruta del archivo" Height="28" Padding="6,4"/>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border x:Name="PanelCostoManual" BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,10,0,0" Background="#FAFAFA" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock Text="Registro rápido sin desglose" FontWeight="SemiBold"/>
+
+                                        <TextBlock Text="Costo total del servicio" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
+                                        <TextBox Text="{Binding RegistroCostoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
+                                        <TextBlock Text="{Binding CostoValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+
+                                        <TextBlock Text="Proveedor (común)" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
+                                        <ComboBox Text="{Binding RegistroProveedor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  ItemsSource="{Binding ProveedoresFiltrados}"
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="False"
+                                                  Style="{StaticResource ModernComboBoxStyle}"/>
+
+                                        <TextBlock Text="Factura (común)" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding RegistroRutaFactura, Converter={StaticResource PathToFileNameConverter}, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}"/>
+                                            <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachCommonFactura_Click"/>
+                                            <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenCommonFactura_Click"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Total general" FontWeight="SemiBold" Foreground="#1E3A8A"/>
+                                        <TextBlock x:Name="TxtTotalItems" Text="  $0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="6,0,0,0"/>
+                                        <TextBlock Text="(automático por ítems)" Foreground="#1E3A8A" FontSize="10" Margin="8,0,0,0" Visibility="{Binding IsChecked, ElementName=RbModoItems, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
 
-                <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1,1,1,0" Padding="24,20" CornerRadius="0,0,12,12">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" />
-                        <Button Content="{Binding RegistrarPreventivoButtonText}" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RegistrarEjecucionCommand}"
-                                IsEnabled="{Binding HasPlanesSeleccionados}" />
-                    </StackPanel>
+                <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1,1,1,0" Padding="16,12" CornerRadius="0,0,12,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" x:Name="BtnPrevStep" Content="&lt; Atrás" Style="{StaticResource GhostButton}" Click="BtnPrevStep_Click" Visibility="Collapsed"/>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click"/>
+                            <Button x:Name="BtnNextStep" Content="Siguiente &gt;" Style="{StaticResource PrimaryButtonStyle}" Click="BtnNextStep_Click"/>
+                            <Button x:Name="BtnSave" Content="Registrar preventivo" Style="{StaticResource PrimaryButtonStyle}" Click="BtnSave_Click" Visibility="Collapsed" IsEnabled="{Binding HasPlanesSeleccionados}"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>
