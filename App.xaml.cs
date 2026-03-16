@@ -63,12 +63,41 @@ public partial class App : System.Windows.Application
         {
             var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(databaseConfigFile));
             var dbSection = json.RootElement.GetProperty("Database");
-            
-            Environment.SetEnvironmentVariable("GESTLOG_DB_SERVER", dbSection.GetProperty("Server").GetString() ?? "");
-            Environment.SetEnvironmentVariable("GESTLOG_DB_NAME", dbSection.GetProperty("Database").GetString() ?? "");
-            Environment.SetEnvironmentVariable("GESTLOG_DB_USER", dbSection.GetProperty("Username").GetString() ?? "");
-            Environment.SetEnvironmentVariable("GESTLOG_DB_PASSWORD", dbSection.GetProperty("Password").GetString() ?? "");
-            Environment.SetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY", dbSection.GetProperty("UseIntegratedSecurity").GetBoolean().ToString());
+
+            static bool IsPlaceholderSecret(string value)
+            {
+                return value.Contains("CONFIGURAR", StringComparison.OrdinalIgnoreCase) ||
+                       value.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
+                       (value.Contains("<") && value.Contains(">"));
+            }
+
+            static void SetEnvironmentVariableIfMissing(string key, string value)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    return;
+
+                var existing = Environment.GetEnvironmentVariable(key);
+                if (string.IsNullOrWhiteSpace(existing))
+                {
+                    Environment.SetEnvironmentVariable(key, value);
+                }
+            }
+
+            var server = dbSection.GetProperty("Server").GetString() ?? "";
+            var database = dbSection.GetProperty("Database").GetString() ?? "";
+            var username = dbSection.GetProperty("Username").GetString() ?? "";
+            var password = dbSection.GetProperty("Password").GetString() ?? "";
+            var integratedSecurity = dbSection.GetProperty("UseIntegratedSecurity").GetBoolean().ToString();
+
+            SetEnvironmentVariableIfMissing("GESTLOG_DB_SERVER", server);
+            SetEnvironmentVariableIfMissing("GESTLOG_DB_NAME", database);
+            SetEnvironmentVariableIfMissing("GESTLOG_DB_USER", username);
+            SetEnvironmentVariableIfMissing("GESTLOG_DB_INTEGRATED_SECURITY", integratedSecurity);
+
+            if (!string.IsNullOrWhiteSpace(password) && !IsPlaceholderSecret(password))
+            {
+                SetEnvironmentVariableIfMissing("GESTLOG_DB_PASSWORD", password);
+            }
         }        // ✅ Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
         
@@ -659,12 +688,16 @@ public partial class App : System.Windows.Application
                 {
                     _logger?.Logger.LogError("❌ No se pudo obtener información adicional del error Background");
                 }
+
+                // Error conocido de WPF con temas/plantillas - no crítico, no mostrar al usuario
+                e.Handled = true;
+                return;
             }
 
             errorHandler.HandleException(
                 e.Exception,
                 "DispatcherUnhandledException",
-                showToUser: false); // Cambiado a false para evitar ventanas emergentes constantes
+                showToUser: true); // Mostrar al usuario excepciones inesperadas en el hilo UI
 
             e.Handled = true; // Permitir que la aplicación continúe
         };
@@ -677,7 +710,28 @@ public partial class App : System.Windows.Application
 
             if (e.IsTerminating)
             {
-                _logger?.Logger.LogCritical("💥 La aplicación se está cerrando debido a una excepción no manejada");
+                _logger?.Logger.LogCritical(exception, "💥 La aplicación se está cerrando debido a una excepción no manejada en hilo secundario");
+
+                // Mostrar mensaje al usuario antes del cierre forzado para que no sea silencioso
+                try
+                {
+                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                    if (dispatcher != null)
+                    {
+                        dispatcher.Invoke(() =>
+                        {
+                            System.Windows.MessageBox.Show(
+                                $"GestLog encontró un error inesperado y debe cerrarse.\n\n" +
+                                $"Error: {exception.GetBaseException().Message}\n\n" +
+                                $"Revise los archivos de log en la carpeta Logs/ para más detalles.",
+                                "Error Crítico - GestLog",
+                                System.Windows.MessageBoxButton.OK,
+                                System.Windows.MessageBoxImage.Error);
+                        }, System.Windows.Threading.DispatcherPriority.Send);
+                    }
+                }
+                catch { /* Si el dispatcher ya no está disponible, no se puede mostrar nada */ }
+
                 LoggingService.Shutdown();
             }
         };        

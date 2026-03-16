@@ -44,6 +44,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     if (_tipoGasto == value) return;
                     _tipoGasto = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGasto)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGastoLabel)));
                 }
             }
 
@@ -110,8 +111,21 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     if (_planDestinoKey == value) return;
                     _planDestinoKey = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlanDestinoKey)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlanDestinoResumen)));
                 }
             }
+
+            public string TipoGastoLabel => TipoGasto switch
+            {
+                1 => "Repuesto",
+                2 => "Mano de obra",
+                3 => "Servicio externo",
+                _ => "Otro"
+            };
+
+            public string PlanDestinoResumen => IsSharedDestination(_planDestinoKey)
+                ? "Compartido"
+                : "Plan específico";
         }
 
         private sealed class GastoFacturaGroup : INotifyPropertyChanged
@@ -123,6 +137,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string NumeroFactura { get; set; } = string.Empty;
             public string ProveedorFactura { get; set; } = string.Empty;
             public string RutaFactura { get; set; } = string.Empty;
+            public int DraftTipoGasto { get; set; } = 4;
+            public string DraftDescripcion { get; set; } = string.Empty;
+            public string DraftValorInput { get; set; } = string.Empty;
+            public string DraftPlanDestinoKey { get; set; } = SharedDestinationKey;
             public ObservableCollection<GastoItemInput> Items { get; } = new();
 
             public decimal TotalGrupo
@@ -155,6 +173,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             InitializePlanFilter();
             RefreshPlanDestinoOptions();
             InitializeWizardState();
+            EnsureAtLeastOneFacturaGroup();
 
             viewModel.RegistroEsExtraordinario = false;
             viewModel.RegistroMotivoExtraordinario = string.Empty;
@@ -169,6 +188,23 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     Close();
                 }
             };
+        }
+
+        private GastoFacturaGroup CreateEmptyFacturaGroup()
+        {
+            return new GastoFacturaGroup
+            {
+                DraftTipoGasto = 4,
+                DraftPlanDestinoKey = ResolveDefaultDestinationKey()
+            };
+        }
+
+        private void EnsureAtLeastOneFacturaGroup()
+        {
+            if (_itemsGasto.Count == 0)
+            {
+                _itemsGasto.Add(CreateEmptyFacturaGroup());
+            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
@@ -241,40 +277,114 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void BtnAddGastoItem_Click(object sender, RoutedEventArgs e)
         {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            var descripcion = (group.DraftDescripcion ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(descripcion))
+            {
+                System.Windows.MessageBox.Show(this, "Debe ingresar una descripción para el ítem.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var item = new GastoItemInput
             {
-                PlanDestinoKey = ResolveDefaultDestinationKey()
+                TipoGasto = group.DraftTipoGasto,
+                Descripcion = descripcion,
+                ValorInput = (group.DraftValorInput ?? string.Empty).Trim(),
+                PlanDestinoKey = string.IsNullOrWhiteSpace(group.DraftPlanDestinoKey) ? ResolveDefaultDestinationKey() : group.DraftPlanDestinoKey
             };
 
             item.PropertyChanged += GastoItem_PropertyChanged;
-            AddItemToGroup(item);
+            group.Items.Add(item);
+            group.DraftTipoGasto = 4;
+            group.DraftDescripcion = string.Empty;
+            group.DraftValorInput = string.Empty;
+            group.DraftPlanDestinoKey = ResolveDefaultDestinationKey();
+            UpdateGroupTotal(group);
+            IcItemsGasto.Items.Refresh();
             UpdateTotalItemsAndSummary();
         }
 
         private void BtnAddFacturaGroup_Click(object sender, RoutedEventArgs e)
         {
-            var newGroup = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
-            var item = new GastoItemInput { PlanDestinoKey = ResolveDefaultDestinationKey() };
-            item.PropertyChanged += GastoItem_PropertyChanged;
-            newGroup.Items.Add(item);
-            _itemsGasto.Add(newGroup);
+            _itemsGasto.Add(CreateEmptyFacturaGroup());
+            IcItemsGasto.Items.Refresh();
             UpdateTotalItemsAndSummary();
         }
 
-        private void AddItemToGroup(GastoItemInput item)
+        private async void BtnAttachFacturaGroup_Click(object sender, RoutedEventArgs e)
         {
-            // Por defecto, agregar a grupo "SIN-FACTURA"
-            var groupKey = "SIN-FACTURA";
-            var group = _itemsGasto.FirstOrDefault(g => g.DisplayKey == groupKey);
-            
-            if (group == null)
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
             {
-                group = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
-                _itemsGasto.Add(group);
+                return;
             }
 
-            group.Items.Add(item);
+            var selected = await PickFacturaFileAsync(this);
+            if (selected == null)
+            {
+                return;
+            }
+
+            group.RutaFactura = selected;
+            IcItemsGasto.Items.Refresh();
+        }
+
+        private async void BtnOpenFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(group.RutaFactura))
+            {
+                await FacturaStorageHelper.OpenFacturaAsync(this, group.RutaFactura);
+            }
+        }
+
+        private void BtnRemoveFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            foreach (var item in group.Items)
+            {
+                item.PropertyChanged -= GastoItem_PropertyChanged;
+            }
+
+            _itemsGasto.Remove(group);
+            EnsureAtLeastOneFacturaGroup();
+            IcItemsGasto.Items.Refresh();
+            UpdateTotalItemsAndSummary();
+        }
+
+        private void BtnEditGastoItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoItemInput item)
+            {
+                return;
+            }
+
+            var group = _itemsGasto.FirstOrDefault(g => g.Items.Contains(item));
+            if (group == null)
+            {
+                return;
+            }
+
+            item.PropertyChanged -= GastoItem_PropertyChanged;
+            group.Items.Remove(item);
+            group.DraftTipoGasto = item.TipoGasto;
+            group.DraftDescripcion = item.Descripcion;
+            group.DraftValorInput = item.ValorInput;
+            group.DraftPlanDestinoKey = item.PlanDestinoKey;
             UpdateGroupTotal(group);
+            IcItemsGasto.Items.Refresh();
+            UpdateTotalItemsAndSummary();
         }
 
         private void UpdateGroupTotal(GastoFacturaGroup group)
@@ -310,10 +420,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     // Si el grupo quedó vacío, eliminarlo
                     if (group.Items.Count == 0)
                     {
-                        _itemsGasto.Remove(group);
+                        group.DraftPlanDestinoKey = ResolveDefaultDestinationKey();
                     }
                 }
                 
+                EnsureAtLeastOneFacturaGroup();
+                IcItemsGasto.Items.Refresh();
                 UpdateTotalItemsAndSummary();
             }
         }
@@ -359,7 +471,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     {
                         TipoGasto = item.TipoGasto,
                         Descripcion = string.IsNullOrWhiteSpace(descripcion) ? "Ítem de preventivo" : descripcion,
-                        Proveedor = string.IsNullOrWhiteSpace(proveedor) ? null : proveedor,
+                        Proveedor = string.IsNullOrWhiteSpace(proveedor)
+                            ? (string.IsNullOrWhiteSpace(group.ProveedorFactura) ? null : group.ProveedorFactura.Trim())
+                            : proveedor,
                         Valor = valor < 0 ? 0m : decimal.Round(valor, 2),
                         NumeroFactura = string.IsNullOrWhiteSpace(numeroFactura) ? null : numeroFactura,
                         RutaFactura = string.IsNullOrWhiteSpace(rutaFactura) ? null : rutaFactura,
@@ -674,48 +788,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             return planIds.Contains(planId) ? planId : null;
-        }
-
-        private async void BtnAttachSharedInvoicePrev_Click(object sender, RoutedEventArgs e)
-        {
-            var selected = await PickFacturaFileAsync(this);
-            if (selected == null)
-            {
-                return;
-            }
-
-            if (TxtSharedInvoicePathPrev != null)
-            {
-                TxtSharedInvoicePathPrev.Text = selected;
-            }
-        }
-
-        private void BtnApplySharedInvoicePrev_Click(object sender, RoutedEventArgs e)
-        {
-            var numero = TxtSharedInvoiceNumberPrev?.Text?.Trim() ?? string.Empty;
-            var ruta = TxtSharedInvoicePathPrev?.Text?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(numero) && string.IsNullOrWhiteSpace(ruta))
-            {
-                return;
-            }
-
-            // Aplicar a los grupos que no tienen factura
-            foreach (var group in _itemsGasto)
-            {
-                if (string.IsNullOrWhiteSpace(group.NumeroFactura) && !string.IsNullOrWhiteSpace(numero))
-                {
-                    group.NumeroFactura = numero;
-                }
-
-                if (string.IsNullOrWhiteSpace(group.RutaFactura) && !string.IsNullOrWhiteSpace(ruta))
-                {
-                    group.RutaFactura = ruta;
-                }
-            }
-
-            IcItemsGasto.Items.Refresh();
-            UpdateTotalItemsAndSummary();
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

@@ -12,7 +12,7 @@ namespace GestLog.Services.Core.UI
     /// Cuando se reporta un nuevo valor de progreso, el servicio calcula automáticamente
     /// una serie de pasos intermedios para crear una transición fluida y agradable visualmente.
     /// </summary>
-    public class SmoothProgressService
+    public class SmoothProgressService : IDisposable
     {
         private readonly DispatcherTimer _timer;
         private readonly Action<double> _progressUpdateAction;
@@ -131,7 +131,17 @@ namespace GestLog.Services.Core.UI
             }
 
             // Actualizar la UI con el nuevo valor
-            _progressUpdateAction(_currentValue);
+            try
+            {
+                _progressUpdateAction(_currentValue);
+            }
+            catch
+            {
+                // Si el ViewModel fue liberado o hay un error de binding, detener el timer
+                // para evitar que la excepción llegue al DispatcherUnhandledException
+                _timer.Stop();
+                _isRunning = false;
+            }
         }
 
         /// <summary>
@@ -152,6 +162,17 @@ _timer.Stop();
         public void Stop()
         {
             _timer.Stop();
+            _isRunning = false;
+        }
+
+        /// <summary>
+        /// Libera el DispatcherTimer para evitar que siga corriendo indefinidamente
+        /// cuando el ViewModel dueño es liberado (memory leak + potencial crash).
+        /// </summary>
+        public void Dispose()
+        {
+            _timer.Stop();
+            _timer.Tick -= Timer_Tick!;
             _isRunning = false;
         }
     }

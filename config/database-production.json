@@ -3,7 +3,7 @@
     "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
     "Database": "GestLogDB", 
     "Username": "sa",
-    "Password": "REMOVED_SECRET",
+    "Password": "",
     "UseIntegratedSecurity": false,
     "ConnectionTimeout": 30,
     "CommandTimeout": 30,

@@ -405,6 +405,9 @@ Data/Output/
 *.log
 *.tmp
 temp/
+appsettings.local.json
+config/database-*.local.json
+config/appsettings.local.json
 
 # Temporary integration workspace - external projects under evaluation
 Implementaciones/

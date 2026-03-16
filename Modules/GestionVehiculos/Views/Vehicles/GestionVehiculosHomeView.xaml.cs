@@ -19,9 +19,18 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.DataContext is GestionVehiculosHomeViewModel viewModel)
+            try
             {
-                await viewModel.LoadVehiclesCommand.ExecuteAsync(null);
+                if (this.DataContext is GestionVehiculosHomeViewModel viewModel)
+                {
+                    await viewModel.LoadVehiclesCommand.ExecuteAsync(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GestionVehiculosHomeView] Error al cargar vehículos: {ex.Message}");
+                // El ViewModel maneja su propio estado de error; este catch evita que la excepción
+                // llegue al DispatcherUnhandledException y sea silenciada sin traza visible
             }
         }
 

@@ -88,7 +88,7 @@ Luego ejecuta: `dotnet run`
       "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
       "Database": "GestLogDB_DEV",
       "Username": "sa",
-      "Password": "REMOVED_SECRET"
+      "Password": "<CONFIGURAR_EN_VARIABLE_DE_ENTORNO>"
     }
   }
   ```
@@ -100,7 +100,7 @@ Luego ejecuta: `dotnet run`
       "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
       "Database": "GestLogDB",
       "Username": "sa",
-      "Password": "REMOVED_SECRET"
+      "Password": "<CONFIGURAR_EN_VARIABLE_DE_ENTORNO>"
     }
   }
   ```
@@ -182,7 +182,7 @@ Usuario: admin
 Contraseña: admin123
 
 # Verifica en qué BD estás
-sqlcmd -S "SIMICS-BAYUNCA\DB_SIMICSGROUP" -U sa -P "REMOVED_SECRET" -d GestLogDB_DEV -Q "SELECT COUNT(*) FROM Usuarios"
+sqlcmd -S "SIMICS-BAYUNCA\DB_SIMICSGROUP" -U sa -P "$env:GESTLOG_DB_PASSWORD" -d GestLogDB_DEV -Q "SELECT COUNT(*) FROM Usuarios"
 ```
 
 ---
@@ -216,7 +216,7 @@ sqlcmd -S "SIMICS-BAYUNCA\DB_SIMICSGROUP" -U sa -P "REMOVED_SECRET" -d GestLogDB
     "Server": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
     "Database": "GestLogDB_DEV",
     "Username": "sa",
-    "Password": "REMOVED_SECRET"
+    "Password": "<CONFIGURAR_EN_VARIABLE_DE_ENTORNO>"
   }
 }
 ```

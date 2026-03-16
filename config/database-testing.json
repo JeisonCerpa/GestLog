@@ -3,7 +3,7 @@
     "Server": "TEST-SQL-SERVER\\INSTANCE",
     "Database": "GestLog_Testing",
     "Username": "gestlog_test",
-    "Password": "REMOVED_SECRET",
+    "Password": "",
     "UseIntegratedSecurity": false,
     "ConnectionTimeout": 30,
     "CommandTimeout": 30,

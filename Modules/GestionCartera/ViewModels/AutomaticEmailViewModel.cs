@@ -16,7 +16,7 @@ namespace GestLog.Modules.GestionCartera.ViewModels;
 /// <summary>
 /// ViewModel para funcionalidades de email automático
 /// </summary>
-public partial class AutomaticEmailViewModel : ObservableObject
+public partial class AutomaticEmailViewModel : ObservableObject, IDisposable
 {
     private readonly IEmailService? _emailService;
     private readonly IExcelEmailService? _excelEmailService;
@@ -105,7 +105,9 @@ public partial class AutomaticEmailViewModel : ObservableObject
                 
                 _logger.LogInformation($"📧 Archivo de correos seleccionado: {Path.GetFileName(SelectedEmailExcelFilePath)}");
                 
-                ValidateEmailExcelFileAsync();
+                // Primero validar el archivo, luego analizar (se deben ejecutar en secuencia para evitar
+                // condición de carrera sobre las propiedades compartidas como CompaniesWithEmail)
+                await ValidateEmailExcelFileAsync();
                 
                 // Analizar matching con documentos generados
                 await AnalyzeEmailMatchingAsync();
@@ -554,7 +556,7 @@ public partial class AutomaticEmailViewModel : ObservableObject
         }
     }
     
-    private async void ValidateEmailExcelFileAsync()
+    private async Task ValidateEmailExcelFileAsync()
     {
         try
         {
@@ -1268,5 +1270,28 @@ public partial class AutomaticEmailViewModel : ObservableObject
     public async Task<bool> SendDocumentsAutomaticallyWithConfig(SmtpConfigurationViewModel smtpConfig)
     {
         return await SendDocumentsAutomaticallyAsync(GeneratedDocuments, smtpConfig, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Libera recursos: detiene el DispatcherTimer del SmoothProgressService
+    /// y cancela envios de email pendientes.
+    /// </summary>
+    public void Dispose()
+    {
+        try
+        {
+            _emailCancellationTokenSource?.Cancel();
+            _emailCancellationTokenSource?.Dispose();
+            _emailCancellationTokenSource = null;
+        }
+        catch { }
+
+        try
+        {
+            _smoothProgress?.Dispose();
+        }
+        catch { }
+
+        GC.SuppressFinalize(this);
     }
 }

@@ -27,7 +27,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public int TipoGasto
             {
                 get => _tipoGasto;
-                set { if (_tipoGasto == value) return; _tipoGasto = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGasto))); }
+                set { if (_tipoGasto == value) return; _tipoGasto = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGasto))); PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TipoGastoLabel))); }
             }
 
             public string Descripcion
@@ -59,6 +59,14 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 get => _rutaFactura;
                 set { if (_rutaFactura == value) return; _rutaFactura = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RutaFactura))); }
             }
+
+            public string TipoGastoLabel => TipoGasto switch
+            {
+                1 => "Repuesto",
+                2 => "Mano de obra",
+                3 => "Servicio externo",
+                _ => "Otro"
+            };
         }
 
         private sealed class GastoFacturaGroup : INotifyPropertyChanged
@@ -70,6 +78,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string NumeroFactura { get; set; } = string.Empty;
             public string ProveedorFactura { get; set; } = string.Empty;
             public string RutaFactura { get; set; } = string.Empty;
+            public int DraftTipoGasto { get; set; } = 4;
+            public string DraftDescripcion { get; set; } = string.Empty;
+            public string DraftValorInput { get; set; } = string.Empty;
             public ObservableCollection<GastoItemInput> Items { get; } = new();
 
             public decimal TotalGrupo
@@ -95,6 +106,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             _viewModel = viewModel;
             DataContext = _viewModel;
             IcItemsGasto.ItemsSource = _itemsGasto;
+            EnsureAtLeastOneFacturaGroup();
             UpdateCartSummary();
 
             _viewModel.RegistroCorrectivoExitoso += OnRegistroCorrectivoExitoso;
@@ -120,6 +132,22 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             });
         }
 
+        private GastoFacturaGroup CreateEmptyFacturaGroup()
+        {
+            return new GastoFacturaGroup
+            {
+                DraftTipoGasto = 4
+            };
+        }
+
+        private void EnsureAtLeastOneFacturaGroup()
+        {
+            if (_itemsGasto.Count == 0)
+            {
+                _itemsGasto.Add(CreateEmptyFacturaGroup());
+            }
+        }
+
         private async void BtnSave_Click(object sender, RoutedEventArgs e)
         {
             _viewModel.RegistroItemsGasto = BuildItemsGasto();
@@ -128,35 +156,109 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void BtnAddGastoItem_Click(object sender, RoutedEventArgs e)
         {
-            var item = new GastoItemInput();
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            var descripcion = (group.DraftDescripcion ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(descripcion))
+            {
+                System.Windows.MessageBox.Show(this, "Debe ingresar una descripción para el ítem.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var item = new GastoItemInput
+            {
+                TipoGasto = group.DraftTipoGasto,
+                Descripcion = descripcion,
+                ValorInput = (group.DraftValorInput ?? string.Empty).Trim()
+            };
+
             item.PropertyChanged += GastoItem_PropertyChanged;
-            AddItemToGroup(item);
+            group.Items.Add(item);
+            group.DraftTipoGasto = 4;
+            group.DraftDescripcion = string.Empty;
+            group.DraftValorInput = string.Empty;
+            UpdateGroupTotal(group);
+            IcItemsGasto.Items.Refresh();
             UpdateCartSummary();
         }
 
         private void BtnAddFacturaGroup_Click(object sender, RoutedEventArgs e)
         {
-            var newGroup = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
-            var item = new GastoItemInput();
-            item.PropertyChanged += GastoItem_PropertyChanged;
-            newGroup.Items.Add(item);
-            _itemsGasto.Add(newGroup);
+            _itemsGasto.Add(CreateEmptyFacturaGroup());
+            IcItemsGasto.Items.Refresh();
             UpdateCartSummary();
         }
 
-        private void AddItemToGroup(GastoItemInput item)
+        private async void BtnAttachFacturaGroup_Click(object sender, RoutedEventArgs e)
         {
-            var groupKey = "SIN-FACTURA";
-            var group = _itemsGasto.FirstOrDefault(g => g.DisplayKey == groupKey);
-            
-            if (group == null)
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
             {
-                group = new GastoFacturaGroup { NumeroFactura = string.Empty, ProveedorFactura = string.Empty, RutaFactura = string.Empty };
-                _itemsGasto.Add(group);
+                return;
             }
 
-            group.Items.Add(item);
+            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
+            if (!string.IsNullOrWhiteSpace(uploaded))
+            {
+                group.RutaFactura = uploaded;
+                IcItemsGasto.Items.Refresh();
+            }
+        }
+
+        private async void BtnOpenFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(group.RutaFactura))
+            {
+                await FacturaStorageHelper.OpenFacturaAsync(this, group.RutaFactura);
+            }
+        }
+
+        private void BtnRemoveFacturaGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoFacturaGroup group)
+            {
+                return;
+            }
+
+            foreach (var item in group.Items)
+            {
+                item.PropertyChanged -= GastoItem_PropertyChanged;
+            }
+
+            _itemsGasto.Remove(group);
+            EnsureAtLeastOneFacturaGroup();
+            IcItemsGasto.Items.Refresh();
+            UpdateCartSummary();
+        }
+
+        private void BtnEditGastoItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.DataContext is not GastoItemInput item)
+            {
+                return;
+            }
+
+            var group = _itemsGasto.FirstOrDefault(g => g.Items.Contains(item));
+            if (group == null)
+            {
+                return;
+            }
+
+            item.PropertyChanged -= GastoItem_PropertyChanged;
+            group.Items.Remove(item);
+            group.DraftTipoGasto = item.TipoGasto;
+            group.DraftDescripcion = item.Descripcion;
+            group.DraftValorInput = item.ValorInput;
             UpdateGroupTotal(group);
+            IcItemsGasto.Items.Refresh();
+            UpdateCartSummary();
         }
 
         private void UpdateGroupTotal(GastoFacturaGroup group)
@@ -190,10 +292,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     
                     if (group.Items.Count == 0)
                     {
-                        _itemsGasto.Remove(group);
+                        group.DraftTipoGasto = 4;
                     }
                 }
                 
+                EnsureAtLeastOneFacturaGroup();
+                IcItemsGasto.Items.Refresh();
                 UpdateCartSummary();
             }
         }
@@ -237,7 +341,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     {
                         TipoGasto = item.TipoGasto,
                         Descripcion = string.IsNullOrWhiteSpace(descripcion) ? "Ítem de correctivo" : descripcion,
-                        Proveedor = string.IsNullOrWhiteSpace(proveedor) ? null : proveedor,
+                        Proveedor = string.IsNullOrWhiteSpace(proveedor)
+                            ? (string.IsNullOrWhiteSpace(group.ProveedorFactura) ? null : group.ProveedorFactura.Trim())
+                            : proveedor,
                         Valor = valor < 0 ? 0m : decimal.Round(valor, 2),
                         NumeroFactura = string.IsNullOrWhiteSpace(numeroFactura) ? null : numeroFactura,
                         RutaFactura = string.IsNullOrWhiteSpace(rutaFactura) ? null : rutaFactura,
@@ -269,42 +375,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             _ = AdjuntarFacturaAsync();
-        }
-
-        private async void BtnAttachSharedInvoice_Click(object sender, RoutedEventArgs e)
-        {
-            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
-            if (!string.IsNullOrWhiteSpace(uploaded))
-            {
-                TxtSharedInvoicePath.Text = uploaded;
-            }
-        }
-
-        private void BtnApplySharedInvoice_Click(object sender, RoutedEventArgs e)
-        {
-            var numero = TxtSharedInvoiceNumber.Text?.Trim() ?? string.Empty;
-            var ruta = TxtSharedInvoicePath.Text?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(numero) && string.IsNullOrWhiteSpace(ruta))
-            {
-                return;
-            }
-
-            foreach (var group in _itemsGasto)
-            {
-                if (string.IsNullOrWhiteSpace(group.NumeroFactura) && !string.IsNullOrWhiteSpace(numero))
-                {
-                    group.NumeroFactura = numero;
-                }
-
-                if (string.IsNullOrWhiteSpace(group.RutaFactura) && !string.IsNullOrWhiteSpace(ruta))
-                {
-                    group.RutaFactura = ruta;
-                }
-            }
-
-            IcItemsGasto.Items.Refresh();
-            UpdateCartSummary();
         }
 
         private void GastoItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)

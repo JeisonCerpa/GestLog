@@ -7,7 +7,9 @@ using GestLog.Modules.GestionVehiculos.Views.Combustible;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using System;
+using System.Linq;
 using GestLog.Services.Core.Logging;
+using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView.WPF;
 using WpfBinding = System.Windows.Data.Binding;
 
@@ -15,17 +17,24 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 {
     public partial class VehicleDetailsView : System.Windows.Controls.UserControl
     {
+        private bool _isUnloaded;
+
         public VehicleDetailsView()
         {
             InitializeComponent();
+            Loaded += VehicleDetailsView_Loaded;
+            Unloaded += VehicleDetailsView_Unloaded;
         }
 
 
         public VehicleDetailsView(VehicleDetailsViewModel vm) : this()
         {
             this.DataContext = vm;
-        }        public async Task LoadVehicleAsync(Guid vehicleId)
+        }
+
+        public async Task LoadVehicleAsync(Guid vehicleId)
         {
+            _isUnloaded = false;
             var logger = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider()?.GetService(typeof(IGestLogLogger)) as IGestLogLogger;
             var sp = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
 
@@ -53,6 +62,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 {
                     try
                     {
+                        if (_isUnloaded) return;
+
                         var currentPlate = (this.DataContext as VehicleDetailsViewModel)?.Plate ?? string.Empty;
 
                         var dv = this.FindName("DocumentsView") as VehicleDocumentsView;
@@ -265,6 +276,62 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             }
 
             await combustibleView.OpenRegistroTanqueadaAsync();
+        }
+
+        private void VehicleDetailsView_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            _isUnloaded = false;
+        }
+
+        private void VehicleDetailsView_Unloaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            _isUnloaded = true;
+
+            try
+            {
+                ClearLiveCharts();
+            }
+            catch
+            {
+            }
+        }
+
+        private void ClearLiveCharts()
+        {
+            var cartesianCharts = FindVisualChildren<CartesianChart>(this).ToList();
+            foreach (var chart in cartesianCharts)
+            {
+                chart.Series = Array.Empty<ISeries>();
+                chart.XAxes = null;
+                chart.YAxes = null;
+            }
+
+            var pieCharts = FindVisualChildren<PieChart>(this).ToList();
+            foreach (var chart in pieCharts)
+            {
+                chart.Series = Array.Empty<ISeries>();
+            }
+        }
+
+        private static System.Collections.Generic.IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject depObj)
+            where T : System.Windows.DependencyObject
+        {
+            if (depObj == null) yield break;
+
+            var childrenCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(depObj);
+            for (var i = 0; i < childrenCount; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(depObj, i);
+                if (child is T typedChild)
+                {
+                    yield return typedChild;
+                }
+
+                foreach (var childOfChild in FindVisualChildren<T>(child))
+                {
+                    yield return childOfChild;
+                }
+            }
         }
     }
 }
