@@ -19,11 +19,13 @@ namespace GestLog.Modules.Shell.Views
         {
             var herramientasView = new HerramientasView();
             _mainWindow?.NavigateToView(herramientasView, "Herramientas");
-        }        private void btnInfo_Click(object sender, RoutedEventArgs e)
+        }
+
+        private void btnInfo_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Base de datos reorganizada con prefijos de módulos.\n" +
+                "• Preparación de Gestión de Mantenimientos: más robusta y confiable.\n" +
                 "• Migraciones aplicadas exitosamente a producción.\n" +
                 "• Mejoras de mantenibilidad y escalabilidad.",
                 "Información del Sistema",

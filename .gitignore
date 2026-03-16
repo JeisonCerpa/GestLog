@@ -408,6 +408,11 @@ temp/
 appsettings.local.json
 config/database-*.local.json
 config/appsettings.local.json
+.env
+.env.*
+!.env.example
+secrets.json
+*.secret.json
 
 # Temporary integration workspace - external projects under evaluation
 Implementaciones/

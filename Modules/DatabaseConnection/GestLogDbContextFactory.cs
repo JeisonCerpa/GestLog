@@ -30,11 +30,13 @@ namespace GestLog.Modules.DatabaseConnection
                 .Build();
 
             var dbSection = configuration.GetSection("Database");
-            string server = dbSection["Server"] ?? "localhost";
-            string database = dbSection["Database"] ?? "GestLog";
-            string user = dbSection["Username"] ?? "sa";
-            string password = dbSection["Password"] ?? "";
-            bool integrated = bool.TryParse(dbSection["UseIntegratedSecurity"], out var integ) ? integ : false;
+            string server = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["Server"] ?? "localhost";
+            string database = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["Database"] ?? "GestLog";
+            string user = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["Username"] ?? "sa";
+            string password = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["Password"] ?? "";
+            bool integrated = bool.TryParse(Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY"), out var integFromEnv)
+                ? integFromEnv
+                : (bool.TryParse(dbSection["UseIntegratedSecurity"], out var integFromConfig) && integFromConfig);
             bool trustCert = bool.TryParse(dbSection["TrustServerCertificate"], out var trust) ? trust : true;
 
             string connectionString = integrated

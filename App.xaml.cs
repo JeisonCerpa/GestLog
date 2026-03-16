@@ -14,6 +14,7 @@ using AutoUpdaterDotNET;
 using static AutoUpdaterDotNET.Mode;
 using System.Reflection;
 using System.Diagnostics;
+using GestLog.Services.Core;
 
 namespace GestLog;
 
@@ -25,80 +26,18 @@ public partial class App : System.Windows.Application
     private IGestLogLogger? _logger;    
     public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
-        // ✅ PRIMERO: Establecer variables de entorno desde launchSettings.json ANTES de cualquier otra operación
+        // ✅ PRIMERO: Resolver ambiente y bootstrap ANTES de cualquier otra operación
         var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
         if (string.IsNullOrEmpty(environment))
         {
-            // Si no está establecida, usar default de launchSettings.json
             environment = "Production";
         }
-        
-        // Establecer las variables de base de datos basadas en el ambiente
-        var databaseConfigFileName = environment.ToLower() switch
-        {
-            "development" => "database-development.json",
-            "testing" => "database-testing.json",
-            _ => "database-production.json"
-        };
 
-        // Construir la ruta completa al archivo de configuración (relativa o absoluta)
-        // Primero intenta con ruta relativa, luego con ruta absoluta desde el directorio de ejecución
-        var appDirectory = AppContext.BaseDirectory;
-        var databaseConfigFile = Path.Combine(appDirectory, "config", databaseConfigFileName);
-        
-        // Si no existe en la ruta esperada, intenta en el directorio de ejecución actual
-        if (!File.Exists(databaseConfigFile))
-        {
-            databaseConfigFile = Path.Combine(Directory.GetCurrentDirectory(), "config", databaseConfigFileName);
-        }
-        
-        // Fallback: intenta con ruta relativa simple
-        if (!File.Exists(databaseConfigFile))
-        {
-            databaseConfigFile = Path.Combine("config", databaseConfigFileName);
-        }
+        Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", environment, EnvironmentVariableTarget.Process);
 
-        // Leer configuración de BD desde el archivo correspondiente
-        if (File.Exists(databaseConfigFile))
-        {
-            var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(databaseConfigFile));
-            var dbSection = json.RootElement.GetProperty("Database");
+        var bootstrapResult = await BootstrapProvisioningService.EnsureBootstrapAndMigrateAsync(environment, AppContext.BaseDirectory);
 
-            static bool IsPlaceholderSecret(string value)
-            {
-                return value.Contains("CONFIGURAR", StringComparison.OrdinalIgnoreCase) ||
-                       value.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
-                       (value.Contains("<") && value.Contains(">"));
-            }
-
-            static void SetEnvironmentVariableIfMissing(string key, string value)
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                    return;
-
-                var existing = Environment.GetEnvironmentVariable(key);
-                if (string.IsNullOrWhiteSpace(existing))
-                {
-                    Environment.SetEnvironmentVariable(key, value);
-                }
-            }
-
-            var server = dbSection.GetProperty("Server").GetString() ?? "";
-            var database = dbSection.GetProperty("Database").GetString() ?? "";
-            var username = dbSection.GetProperty("Username").GetString() ?? "";
-            var password = dbSection.GetProperty("Password").GetString() ?? "";
-            var integratedSecurity = dbSection.GetProperty("UseIntegratedSecurity").GetBoolean().ToString();
-
-            SetEnvironmentVariableIfMissing("GESTLOG_DB_SERVER", server);
-            SetEnvironmentVariableIfMissing("GESTLOG_DB_NAME", database);
-            SetEnvironmentVariableIfMissing("GESTLOG_DB_USER", username);
-            SetEnvironmentVariableIfMissing("GESTLOG_DB_INTEGRATED_SECURITY", integratedSecurity);
-
-            if (!string.IsNullOrWhiteSpace(password) && !IsPlaceholderSecret(password))
-            {
-                SetEnvironmentVariableIfMissing("GESTLOG_DB_PASSWORD", password);
-            }
-        }        // ✅ Configurar manejo global de excepciones ANTES de cualquier otra lógica
+        // ✅ Configurar manejo global de excepciones ANTES de cualquier otra lógica
         SetupGlobalExceptionHandling();
         
         // Configurar tooltip delay a 150ms (SOLO UNA VEZ en toda la aplicación)
@@ -119,6 +58,16 @@ public partial class App : System.Windows.Application
         {
             LoggingService.InitializeServices();
             _logger = LoggingService.GetLogger();            splash.ShowStatus("Verificando conexión a la base de datos...");
+
+            _logger?.Logger.LogInformation("🧩 Bootstrap: {Message}. Path={Path}, Created={Created}, Updated={Updated}, EnvCreated={EnvCreated}, EnvUpdated={EnvUpdated}, Skipped={Skipped}",
+                bootstrapResult.Message,
+                bootstrapResult.BootstrapPath,
+                bootstrapResult.BootstrapCreated,
+                bootstrapResult.BootstrapUpdated,
+                bootstrapResult.EnvironmentVariablesCreated,
+                bootstrapResult.EnvironmentVariablesUpdated,
+                bootstrapResult.Skipped);
+
             var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
             bool conexionOk = false;
             if (databaseService != null)

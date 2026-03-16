@@ -1,0 +1,22 @@
+{
+  "configVersion": "1.0.0",
+  "provisioned": true,
+  "environment": "Production",
+  "createdAtUtc": "2026-03-16T00:00:00Z",
+  "updatedAtUtc": "2026-03-16T00:00:00Z",
+  "variables": {
+    "GESTLOG_ENVIRONMENT": "Production",
+    "GESTLOG_DB_SERVER": "SIMICS-BAYUNCA\\DB_SIMICSGROUP",
+    "GESTLOG_DB_NAME": "GestLogDB",
+    "GESTLOG_DB_USER": "sa",
+    "GESTLOG_DB_PASSWORD": "CAMBIAR_ESTA_CONTRASENA",
+    "GESTLOG_DB_INTEGRATED_SECURITY": "False",
+    "GESTLOG_SMTP_SERVER": "smtppro.zoho.com",
+    "GESTLOG_SMTP_PORT": "587",
+    "GESTLOG_SENDER_EMAIL": "info@simicsgroup.com",
+    "GESTLOG_EMAIL_USERNAME": "info@simicsgroup.com",
+    "GESTLOG_EMAIL_PASSWORD": "CAMBIAR_ESTA_CONTRASENA",
+    "GESTLOG_PASSWORD_RESET_EMAIL_USERNAME": "info@simicsgroup.com",
+    "GESTLOG_PASSWORD_RESET_EMAIL_PASSWORD": "CAMBIAR_ESTA_CONTRASENA"
+  }
+}

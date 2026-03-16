@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GestLog.Services.Core;
 
 namespace GestLog.Services.Core
 {
@@ -182,6 +183,12 @@ namespace GestLog.Services.Core
         {
             var variables = new List<EnvironmentVariableDefinition>();
 
+            var bootstrapVariables = BootstrapProvisioningService.LoadBootstrapVariables(AppContext.BaseDirectory, out var bootstrapPath);
+            if (bootstrapVariables.Count > 0)
+            {
+                _logger.Logger.LogInformation("🧩 Bootstrap detectado en {BootstrapPath} con {VariableCount} variable(s)", bootstrapPath, bootstrapVariables.Count);
+            }
+
             // 🔍 Detectar el ambiente actual
             var currentEnvironment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
             _logger.Logger.LogInformation("🔍 Leyendo configuración para ambiente: {Environment}", currentEnvironment);
@@ -193,11 +200,21 @@ namespace GestLog.Services.Core
             var dbSection = _configuration.GetSection("Database");
             
             // Leer valores actuales primero (si existen, respetarlos)
-            var dbServer = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["FallbackServer"];
-            var dbName = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["FallbackDatabase"];
-            var dbUser = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["FallbackUsername"];
-            var dbPassword = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["FallbackPassword"];
-            var dbIntegratedSecurity = Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY") ?? dbSection["FallbackUseIntegratedSecurity"];
+            var dbServer = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER")
+                           ?? bootstrapVariables.GetValueOrDefault("GESTLOG_DB_SERVER")
+                           ?? dbSection["FallbackServer"];
+            var dbName = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME")
+                         ?? bootstrapVariables.GetValueOrDefault("GESTLOG_DB_NAME")
+                         ?? dbSection["FallbackDatabase"];
+            var dbUser = Environment.GetEnvironmentVariable("GESTLOG_DB_USER")
+                         ?? bootstrapVariables.GetValueOrDefault("GESTLOG_DB_USER")
+                         ?? dbSection["FallbackUsername"];
+            var dbPassword = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD")
+                             ?? bootstrapVariables.GetValueOrDefault("GESTLOG_DB_PASSWORD")
+                             ?? dbSection["FallbackPassword"];
+            var dbIntegratedSecurity = Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY")
+                                       ?? bootstrapVariables.GetValueOrDefault("GESTLOG_DB_INTEGRATED_SECURITY")
+                                       ?? dbSection["FallbackUseIntegratedSecurity"];
 
             variables.Add(new EnvironmentVariableDefinition
             {
@@ -248,11 +265,23 @@ namespace GestLog.Services.Core
             var emailSection = _configuration.GetSection("EmailServices:PasswordReset");
             if (emailSection.Exists())
             {
-                var smtpServer = emailSection["SmtpServer"];
-                var smtpPort = emailSection["SmtpPort"];
-                var senderEmail = emailSection["SenderEmail"];
-                var username = emailSection["Username"];
-                var password = emailSection["Password"];
+                var smtpServer = Environment.GetEnvironmentVariable("GESTLOG_SMTP_SERVER")
+                                 ?? bootstrapVariables.GetValueOrDefault("GESTLOG_SMTP_SERVER")
+                                 ?? emailSection["SmtpServer"];
+                var smtpPort = Environment.GetEnvironmentVariable("GESTLOG_SMTP_PORT")
+                               ?? bootstrapVariables.GetValueOrDefault("GESTLOG_SMTP_PORT")
+                               ?? emailSection["SmtpPort"];
+                var senderEmail = Environment.GetEnvironmentVariable("GESTLOG_SENDER_EMAIL")
+                                  ?? bootstrapVariables.GetValueOrDefault("GESTLOG_SENDER_EMAIL")
+                                  ?? emailSection["SenderEmail"];
+                var username = Environment.GetEnvironmentVariable("GESTLOG_EMAIL_USERNAME")
+                               ?? bootstrapVariables.GetValueOrDefault("GESTLOG_EMAIL_USERNAME")
+                               ?? bootstrapVariables.GetValueOrDefault("GESTLOG_PASSWORD_RESET_EMAIL_USERNAME")
+                               ?? emailSection["Username"];
+                var password = Environment.GetEnvironmentVariable("GESTLOG_EMAIL_PASSWORD")
+                               ?? bootstrapVariables.GetValueOrDefault("GESTLOG_EMAIL_PASSWORD")
+                               ?? bootstrapVariables.GetValueOrDefault("GESTLOG_PASSWORD_RESET_EMAIL_PASSWORD")
+                               ?? emailSection["Password"];
 
                 variables.Add(new EnvironmentVariableDefinition
                 {

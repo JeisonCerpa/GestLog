@@ -1,10 +1,12 @@
 ﻿using System.Windows;
 using System.Windows.Data;
 using System.Collections.Generic;
+using System;
 // se usan tipos WPF fully-qualified para evitar ambigüedad con WinForms
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using GestLog.Models.Enums;
+using FrecuenciaMantenimiento = GestLog.Modules.GestionMantenimientos.Models.Enums.FrecuenciaMantenimiento;
 
 namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
 {
@@ -23,6 +25,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             Seguimiento = seguimiento != null ? new SeguimientoMantenimientoDto(seguimiento) : new SeguimientoMantenimientoDto();
             ModoRestringido = modoRestringido;
             _esDesdeCronograma = esDesdeCronograma;
+
+            TipoMantenimientoComboBox.ItemsSource = Enum.GetValues(typeof(TipoMantenimiento));
+            FrecuenciaComboBox.ItemsSource = Enum.GetValues(typeof(FrecuenciaMantenimiento));
+
             // Si se abre desde el cronograma y no hay tipo asignado, preseleccionar Preventivo
             if (_esDesdeCronograma && Seguimiento.TipoMtno == null)
             {
@@ -37,12 +43,30 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             this.Loaded += SeguimientoDialog_OnLoaded;
             Loaded += (s, e) =>
             {
-                var cvs = (CollectionViewSource)this.Resources["TipoMantenimientoFiltrado"];
-                cvs.Filter -= TipoMantenimientoFilterHandler;
-                cvs.Filter += TipoMantenimientoFilterHandler;
-                cvs.View.Refresh();
+                var view = CollectionViewSource.GetDefaultView(TipoMantenimientoComboBox.ItemsSource);
+                if (view != null)
+                {
+                    view.Filter = TipoMantenimientoFilterPredicate;
+                    view.Refresh();
+                }
             };
         }        
+
+        private bool TipoMantenimientoFilterPredicate(object item)
+        {
+            if (item is not TipoMantenimiento tipo)
+            {
+                return false;
+            }
+
+            if (ModoRestringido)
+            {
+                var preseleccionado = Seguimiento?.TipoMtno;
+                return tipo == TipoMantenimiento.Preventivo || (preseleccionado != null && tipo == preseleccionado);
+            }
+
+            return tipo == TipoMantenimiento.Preventivo || tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
+        }
         
         private void SeguimientoDialog_OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -204,22 +228,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
 
         private void TipoMantenimientoFilterHandler(object sender, FilterEventArgs args)
         {
-            if (args.Item is TipoMantenimiento tipo)
-            {
-                if (ModoRestringido)
-                {
-                    // En modo restringido normalmente solo permitimos Preventivo.
-                    // Sin embargo, si el DTO ya tiene un TipoMtno preseleccionado (por ejemplo Correctivo desde el flujo de Equipos), permitir también ese valor para que el combo muestre la selección.
-                    var preseleccionado = Seguimiento?.TipoMtno;
-                    args.Accepted = tipo == TipoMantenimiento.Preventivo || (preseleccionado != null && tipo == preseleccionado);
-                }
-                else
-                    args.Accepted = tipo == TipoMantenimiento.Preventivo || tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
-            }
-            else
-            {
-                args.Accepted = false;
-            }
+            args.Accepted = TipoMantenimientoFilterPredicate(args.Item);
         }
 
         private void Aceptar_Click(object sender, RoutedEventArgs e)
