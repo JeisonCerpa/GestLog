@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using ClosedXML.Excel;
 using GestLog.Services.Core.Logging;
@@ -171,7 +172,7 @@ public class DataConsolidationService : IDataConsolidationService
                     if (string.IsNullOrEmpty(name))
                         continue;
 
-                    var norm = name.ToUpperInvariant();
+                    var norm = CanonicalizeHeader(name);
                     if (!headerPositions.ContainsKey(norm))
                         headerPositions[norm] = new List<int>();
                     headerPositions[norm].Add(cell.Address.ColumnNumber);
@@ -179,7 +180,7 @@ public class DataConsolidationService : IDataConsolidationService
 
                 // Contar cuántas ocurrencias se esperan por cada cabecera (según requiredColumns)
                 var expectedCounts = requiredColumns
-                    .GroupBy(c => c.Trim().ToUpperInvariant())
+                    .GroupBy(c => CanonicalizeHeader(c))
                     .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
 
                 // Validar que existan las columnas requeridas con la cantidad de ocurrencias esperada
@@ -214,7 +215,7 @@ public class DataConsolidationService : IDataConsolidationService
                 // Helpers para trabajar con N-ésima aparición de una cabecera
                 int GetColumnIndexForOccurrence(string name, int occurrence = 1)
                 {
-                    var key = name.Trim().ToUpperInvariant();
+                    var key = CanonicalizeHeader(name);
                     if (!headerPositions.TryGetValue(key, out var positions))
                         return -1;
 
@@ -507,5 +508,44 @@ public class DataConsolidationService : IDataConsolidationService
             
         return sortedData;
         });
+    }
+
+    private static string CanonicalizeHeader(string header)
+    {
+        var normalized = RemoveDiacritics(header)
+            .Trim()
+            .ToUpperInvariant();
+
+        normalized = string.Join(" ", normalized
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+        return normalized switch
+        {
+            "NUMERO FORMULARIO" => "NUMERO DECLARACION",
+            "DIRECCION EXPORTADOR" => "DIRECCION EXPORTADOR (PROVEEDOR)",
+            "FECHA" => "FECHA DECLARACION",
+            "PAIS ORIGEN" => "PAIS DE ORIGEN",
+            _ => normalized
+        };
+    }
+
+    private static string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        var formD = text.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(formD.Length);
+
+        foreach (var c in formD)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(c);
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 }
