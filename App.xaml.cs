@@ -27,11 +27,7 @@ public partial class App : System.Windows.Application
     public IServiceProvider ServiceProvider => LoggingService.GetServiceProvider();    protected override async void OnStartup(StartupEventArgs e)
     {
         // ✅ PRIMERO: Resolver ambiente y bootstrap ANTES de cualquier otra operación
-        var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
-        if (string.IsNullOrEmpty(environment))
-        {
-            environment = "Production";
-        }
+        var environment = ResolveRuntimeEnvironment();
 
         Environment.SetEnvironmentVariable("GESTLOG_ENVIRONMENT", environment, EnvironmentVariableTarget.Process);
 
@@ -879,5 +875,39 @@ public partial class App : System.Windows.Application
             _logger?.Logger.LogError(ex, "❌ Error inicializando servicio de actualizaciones");
             // No es crítico, la aplicación puede continuar
         }
+    }
+
+    private static string ResolveRuntimeEnvironment()
+    {
+        var launchProfile = Environment.GetEnvironmentVariable("DOTNET_LAUNCH_PROFILE");
+        if (!string.IsNullOrWhiteSpace(launchProfile))
+        {
+            if (launchProfile.Equals("Development", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Development";
+            }
+
+            if (launchProfile.Equals("Testing", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Testing";
+            }
+
+            if (launchProfile.Equals("Production", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Production";
+            }
+        }
+
+        var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT");
+        if (string.IsNullOrWhiteSpace(environment))
+        {
+#if DEBUG
+            return "Development";
+#else
+            return "Production";
+#endif
+        }
+
+        return environment;
     }
 }

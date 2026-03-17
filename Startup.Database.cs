@@ -53,13 +53,53 @@ namespace GestLog
 
         private static string BuildConnectionString(IConfiguration dbSection)
         {
-            // Aquí puedes construir la cadena usando variables de entorno o fallback
-            var server = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["FallbackServer"];
-            var database = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["FallbackDatabase"];
-            var user = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["FallbackUsername"];
-            var password = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["FallbackPassword"];
-            var integrated = bool.TryParse(Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY"), out var integ) ? integ : bool.Parse(dbSection["FallbackUseIntegratedSecurity"] ?? "false");
-            var trustCert = bool.TryParse(dbSection["FallbackTrustServerCertificate"], out var trust) ? trust : true;            if (integrated)
+            var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+            var isDevelopment = environment.Equals("Development", StringComparison.OrdinalIgnoreCase);
+
+            string? server;
+            string? database;
+            string? user;
+            string? password;
+            bool integrated;
+
+            if (isDevelopment)
+            {
+                // En desarrollo usar config local y no variables globales de producción.
+                server = dbSection["Server"] ?? dbSection["FallbackServer"];
+                database = dbSection["Database"] ?? dbSection["FallbackDatabase"];
+                user = dbSection["Username"];
+                if (string.IsNullOrWhiteSpace(user))
+                {
+                    user = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["FallbackUsername"];
+                }
+
+                password = dbSection["Password"];
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    password = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["FallbackPassword"];
+                }
+
+                integrated = bool.TryParse(dbSection["UseIntegratedSecurity"], out var integFromConfig)
+                    ? integFromConfig
+                    : bool.Parse(dbSection["FallbackUseIntegratedSecurity"] ?? "false");
+            }
+            else
+            {
+                // Producción/Testing: permitir variables de entorno como prioridad.
+                server = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["FallbackServer"];
+                database = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["FallbackDatabase"];
+                user = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["FallbackUsername"];
+                password = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["FallbackPassword"];
+                integrated = bool.TryParse(Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY"), out var integFromEnv)
+                    ? integFromEnv
+                    : bool.Parse(dbSection["FallbackUseIntegratedSecurity"] ?? "false");
+            }
+
+            var trustCert = bool.TryParse(dbSection["TrustServerCertificate"], out var trustFromConfig)
+                ? trustFromConfig
+                : (bool.TryParse(dbSection["FallbackTrustServerCertificate"], out var trustFromFallback) ? trustFromFallback : true);
+
+            if (integrated)
             {                return $"Server={server};Database={database};Integrated Security=True;TrustServerCertificate={trustCert};" +
                        "Connection Timeout=15;Command Timeout=15;Max Pool Size=100;Min Pool Size=5;Pooling=true;";
             }

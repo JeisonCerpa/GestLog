@@ -47,6 +47,40 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
             var currentEnv = await _environmentService.DetectEnvironmentAsync(cancellationToken);
             _logger.LogDebug("📍 Entorno detectado: {Environment}", currentEnv);
 
+            var isDevelopment = currentEnv.Equals("Development", StringComparison.OrdinalIgnoreCase);
+
+            if (isDevelopment)
+            {
+                // En desarrollo, priorizar archivo de entorno para evitar contaminación
+                // con variables globales de producción (GESTLOG_DB_*).
+                var devConfig = await GetConfigFromEnvironmentFileAsync(currentEnv, cancellationToken);
+                if (!devConfig.UseIntegratedSecurity)
+                {
+                    if (string.IsNullOrWhiteSpace(devConfig.Username))
+                    {
+                        devConfig.Username = GetEnvironmentVariableDirectly(ENV_DB_USER);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(devConfig.Password))
+                    {
+                        devConfig.Password = GetEnvironmentVariableDirectly(ENV_DB_PASSWORD);
+                    }
+                }
+
+                if (devConfig.IsComplete)
+                {
+                    _logger.LogInformation("✅ Configuración de desarrollo obtenida de archivo específico: {Environment}", currentEnv);
+                    return BuildConnectionString(devConfig);
+                }
+
+                var fallbackDevConfig = GetConfigFromFallbackSettings();
+                if (fallbackDevConfig.IsComplete)
+                {
+                    _logger.LogInformation("✅ Configuración de desarrollo obtenida de valores fallback");
+                    return BuildConnectionString(fallbackDevConfig);
+                }
+            }
+
             // Prioridad 1: Variables de entorno
             var config = await GetConfigFromEnvironmentVariablesAsync();
             if (config.IsComplete)

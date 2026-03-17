@@ -10,6 +10,7 @@ namespace GestLog.Modules.DatabaseConnection
     {        public GestLogDbContext CreateDbContext(string[] args)
         {            // Detectar entorno automáticamente
             var environment = Environment.GetEnvironmentVariable("GESTLOG_ENVIRONMENT") ?? "Production";
+            var isDevelopment = environment.Equals("Development", StringComparison.OrdinalIgnoreCase);
             var configFile = environment.ToLower() switch
             {
                 "development" => "config/database-development.json",
@@ -30,13 +31,27 @@ namespace GestLog.Modules.DatabaseConnection
                 .Build();
 
             var dbSection = configuration.GetSection("Database");
-            string server = Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["Server"] ?? "localhost";
-            string database = Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["Database"] ?? "GestLog";
-            string user = Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["Username"] ?? "sa";
-            string password = Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["Password"] ?? "";
-            bool integrated = bool.TryParse(Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY"), out var integFromEnv)
-                ? integFromEnv
-                : (bool.TryParse(dbSection["UseIntegratedSecurity"], out var integFromConfig) && integFromConfig);
+            string server = isDevelopment
+                ? (dbSection["Server"] ?? "localhost")
+                : (Environment.GetEnvironmentVariable("GESTLOG_DB_SERVER") ?? dbSection["Server"] ?? "localhost");
+            string database = isDevelopment
+                ? (dbSection["Database"] ?? "GestLog")
+                : (Environment.GetEnvironmentVariable("GESTLOG_DB_NAME") ?? dbSection["Database"] ?? "GestLog");
+            string user = isDevelopment
+                ? (string.IsNullOrWhiteSpace(dbSection["Username"])
+                    ? (Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? "sa")
+                    : (dbSection["Username"] ?? "sa"))
+                : (Environment.GetEnvironmentVariable("GESTLOG_DB_USER") ?? dbSection["Username"] ?? "sa");
+            string password = isDevelopment
+                ? (string.IsNullOrWhiteSpace(dbSection["Password"])
+                    ? (Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? "")
+                    : (dbSection["Password"] ?? ""))
+                : (Environment.GetEnvironmentVariable("GESTLOG_DB_PASSWORD") ?? dbSection["Password"] ?? "");
+            bool integrated = isDevelopment
+                ? (bool.TryParse(dbSection["UseIntegratedSecurity"], out var integFromConfigDev) && integFromConfigDev)
+                : (bool.TryParse(Environment.GetEnvironmentVariable("GESTLOG_DB_INTEGRATED_SECURITY"), out var integFromEnv)
+                    ? integFromEnv
+                    : (bool.TryParse(dbSection["UseIntegratedSecurity"], out var integFromConfigFallback) && integFromConfigFallback));
             bool trustCert = bool.TryParse(dbSection["TrustServerCertificate"], out var trust) ? trust : true;
 
             string connectionString = integrated
