@@ -11,6 +11,8 @@
     <!-- === HEADER === -->
     <Color x:Key="HeaderBackgroundColor">#118938</Color>
     <Color x:Key="HeaderSecondaryButtonColor">#0F7A31</Color>
+    <Color x:Key="HeaderSecondaryButtonHoverColor">#27A041</Color>
+    <Color x:Key="HeaderSecondaryButtonPressedColor">#0A5724</Color>
     <Color x:Key="HeaderBottomBorderColor">#0F7A31</Color>
 
     <!-- === BACKGROUND === -->
@@ -56,6 +58,8 @@
 
     <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}"/>
     <SolidColorBrush x:Key="HeaderSecondaryButtonBrush" Color="{StaticResource HeaderSecondaryButtonColor}"/>
+    <SolidColorBrush x:Key="HeaderSecondaryButtonHoverBrush" Color="{StaticResource HeaderSecondaryButtonHoverColor}"/>
+    <SolidColorBrush x:Key="HeaderSecondaryButtonPressedBrush" Color="{StaticResource HeaderSecondaryButtonPressedColor}"/>
     <SolidColorBrush x:Key="HeaderBottomBorderBrush" Color="{StaticResource HeaderBottomBorderColor}"/>
 
     <SolidColorBrush x:Key="BackgroundAppBrush" Color="{StaticResource BackgroundAppColor}"/>

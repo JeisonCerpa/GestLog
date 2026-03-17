@@ -17,205 +17,6 @@
                 <LinearDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
-
-        <Style x:Key="LoginTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#504F4E"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Grid>
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
-                                </Border.Effect>
-                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
-                            </Border>
-                            <TextBlock x:Name="Watermark" Text="{TemplateBinding Tag}" Foreground="#A9A9A9" FontSize="15" Padding="12,10" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.7" Visibility="Collapsed"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#118938" Duration="0:0:0.3"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Setter Property="BorderBrush" Value="#118938"/>
-                                <Setter Property="BorderThickness" Value="2"/>
-                            </Trigger>
-                            <Trigger Property="Text" Value="">
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Text" Value="{x:Null}">
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="ValidatedTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource LoginTextBoxStyle}">
-            <Setter Property="Margin" Value="0,0,0,0"/>
-        </Style>
-
-        <Style x:Key="LoginPasswordBoxStyle" TargetType="PasswordBox">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
-            <Setter Property="BorderBrush" Value="#BDBDBD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#504F4E"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="PasswordBox">
-                        <Grid>
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="#706F6F" BlurRadius="8" ShadowDepth="0" Opacity="0.10"/>
-                                </Border.Effect>
-                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#118938" Duration="0:0:0.3"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Setter Property="BorderBrush" Value="#118938"/>
-                                <Setter Property="BorderThickness" Value="2"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="Effect.BlurRadius" To="12" Duration="0:0:0.3"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="#118938" BlurRadius="12" ShadowDepth="0" Opacity="0.18"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="LoginButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="45"/>
-            <Setter Property="Background" Value="#118938"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#2B8E3F" BlurRadius="10" ShadowDepth="2" Opacity="0.18"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="22">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#0D6B2D" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Setter Property="Background" Value="#0D6B2D"/>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="#2B8E3F" BlurRadius="14" ShadowDepth="3" Opacity="0.25"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#118938" Duration="0:0:0.05"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Setter Property="Background" Value="#118938"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#CCCCCC" Duration="0:0:0.1"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Setter Property="Background" Value="#CCCCCC"/>
-                    <Setter Property="Foreground" Value="#666666"/>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="#999999" BlurRadius="5" ShadowDepth="1" Opacity="0.1"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#118938"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontFamily" Value="{DynamicResource PrimaryFont}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#118938"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="18">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </UserControl.Resources>
     <Grid Background="White">
         <Grid.RowDefinitions>
@@ -228,10 +29,12 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Source="/Assets/Simics.png" Width="420" Height="96" Stretch="Uniform" Margin="0,0,0,36"/>
-                <TextBlock Text="GestLog" Style="{DynamicResource HeadingLargeStyle}" Foreground="#118938" HorizontalAlignment="Center" Margin="0,0,0,36"/>
-                <TextBlock Text="Sistema de Gestión Logística" Style="{DynamicResource HeadingMediumStyle}" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,36"/>
-                <StackPanel HorizontalAlignment="Center" Width="340" Margin="0,0,0,0">                    <Border x:Name="ErrorBorder" Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,14" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Image Source="/Assets/Simics.png" Width="420" Height="96" Stretch="Uniform" Margin="{StaticResource ThemeMarginBottomLarge}"/>
+                <TextBlock Text="GestLog" Style="{DynamicResource HeadingLargeStyle}" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" Margin="{StaticResource ThemeMarginBottomLarge}"/>
+                <TextBlock Text="Sistema de Gestión Logística" Style="{DynamicResource HeadingMediumStyle}" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="{StaticResource ThemeMarginBottomLarge}"/>
+
+                <StackPanel HorizontalAlignment="Center" Width="340">
+                    <Border x:Name="ErrorBorder" Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="{StaticResource ThemeMarginBottomSmall}" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border.Effect>
                             <DropShadowEffect Color="#FFC107" BlurRadius="4" ShadowDepth="0" Opacity="0.1"/>
                         </Border.Effect>
@@ -240,10 +43,11 @@
                             <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="#856404" TextWrapping="Wrap" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    <StackPanel Margin="0,0,0,12">
-                        <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>
+
+                    <StackPanel Margin="{StaticResource ThemeMarginBottomSmall}">
+                        <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="{StaticResource ThemeMarginBottomXSmall}"/>
                         <Grid>
-                            <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Tag="Ingrese su usuario" Style="{StaticResource ValidatedTextBoxStyle}" TabIndex="1" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" TextChanged="UsernameTextBox_TextChanged">
+                            <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Tag="Ingrese su usuario" Style="{StaticResource ThemeTextBoxStyle}" TabIndex="1" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" TextChanged="UsernameTextBox_TextChanged">
                                 <TextBox.InputBindings>
                                     <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
                                 </TextBox.InputBindings>
@@ -251,37 +55,32 @@
                             <TextBlock x:Name="UsernameValidation" Text="✓" Foreground="Green" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
                         </Grid>
                     </StackPanel>
-                    <StackPanel Margin="0,0,0,12">
-                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="#504F4E" Margin="0,0,0,5"/>                        <Grid>
-                            <PasswordBox x:Name="PasswordBox" Style="{StaticResource LoginPasswordBoxStyle}" TabIndex="2" PasswordChanged="PasswordBox_PasswordChanged" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
+
+                    <StackPanel Margin="{StaticResource ThemeMarginBottomSmall}">
+                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="{StaticResource ThemeMarginBottomXSmall}"/>
+                        <Grid>
+                            <PasswordBox x:Name="PasswordBox" Style="{StaticResource ThemePasswordBoxStyle}" Tag="Ingrese su contraseña" TabIndex="2" PasswordChanged="PasswordBox_PasswordChanged" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
                                 <PasswordBox.InputBindings>
                                     <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
                                 </PasswordBox.InputBindings>
                             </PasswordBox>
-                            <TextBlock x:Name="PasswordPlaceholder" Text="Ingrese su contraseña" Foreground="#A9A9A9" FontSize="15" Padding="12,10" VerticalAlignment="Center" IsHitTestVisible="False" Opacity="0.7" Visibility="Visible"/>
                             <TextBlock x:Name="CapsLockIndicator" Text="Caps Lock activado" Foreground="Red" FontSize="12" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
                         </Grid>
-                    </StackPanel>                    <Grid Margin="0,6,0,0">
+                    </StackPanel>
+
+                    <Grid Margin="{StaticResource ThemeMarginTopXSmall}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <CheckBox Grid.Column="0" IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="#706F6F" TabIndex="3" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="¿Olvidó contraseña?" Command="{Binding ForgotPasswordCommand}" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" FontSize="11" Foreground="#118938" Cursor="Hand" Padding="0" TabIndex="4" VerticalAlignment="Center">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <TextBlock Text="{TemplateBinding Content}" Cursor="Hand" TextDecorations="Underline">
-                                        <TextBlock.Foreground>
-                                            <SolidColorBrush Color="#118938"/>
-                                        </TextBlock.Foreground>
-                                    </TextBlock>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
+                        <CheckBox Grid.Column="0" IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TabIndex="3" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="¿Olvidó contraseña?" Command="{Binding ForgotPasswordCommand}" Style="{StaticResource ThemeLinkButtonStyle}" TabIndex="4" VerticalAlignment="Center"/>
                     </Grid>
-                    <Button Content="Iniciar Sesión" Style="{StaticResource LoginButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" Height="40" FontSize="15" FontWeight="SemiBold" TabIndex="5" Margin="0,18,0,0"/>
-                    <Grid Width="28" Height="28" Margin="0,16,0,8" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="#118938" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
+
+                    <Button Content="Iniciar Sesión" Style="{StaticResource ThemePrimaryButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" TabIndex="5" Margin="{StaticResource ThemeMarginTopLarge}"/>
+
+                    <Grid Width="28" Height="28" Margin="{StaticResource ThemeMarginTopMediumBottomSmall}" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="{DynamicResource PrimaryBrush}" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
                             <Ellipse.RenderTransform>
                                 <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
                             </Ellipse.RenderTransform>
@@ -296,13 +95,14 @@
                             </Ellipse.Triggers>
                         </Ellipse>
                     </Grid>
-                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,0,12"/>
                 </StackPanel>
             </StackPanel>
         </Grid>
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,18,0,0">
-            <TextBlock Text="© 2025 GestLog - Sistema de Gestión Logística" FontSize="10" Foreground="#BDBDBD" HorizontalAlignment="Center"/>
-            <TextBlock Text="Versión 1.0.0" FontSize="9" Foreground="#BDBDBD" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,24,0,0">
+            <TextBlock Text="© 2025 GestLog - Sistema de Gestión Logística" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Versión 1.0.0" FontSize="9" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
         </StackPanel>
     </Grid>
 </UserControl>
