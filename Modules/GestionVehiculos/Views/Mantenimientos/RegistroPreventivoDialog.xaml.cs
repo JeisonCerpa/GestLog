@@ -15,7 +15,7 @@ using GestLog.Modules.GestionVehiculos.Models.DTOs;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
-    public partial class RegistroPreventivoDialog : Window
+    public partial class RegistroPreventivoDialog : Window, INotifyPropertyChanged
     {
         private const string SharedDestinationKey = "SHARED";
 
@@ -133,6 +133,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private sealed class GastoFacturaGroup : INotifyPropertyChanged
         {
             private decimal _totalGrupo;
+            private bool _isExpanded = false;
             
             public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -156,6 +157,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 }
             }
 
+            public bool IsExpanded
+            {
+                get => _isExpanded;
+                set
+                {
+                    if (_isExpanded == value) return;
+                    _isExpanded = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                }
+            }
+
             public string DisplayKey => string.IsNullOrWhiteSpace(NumeroFactura) ? "SIN-FACTURA" : NumeroFactura;
         }
 
@@ -165,6 +177,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private string _planFilterText = string.Empty;
         public ObservableCollection<PlanDestinoOption> PlanDestinoOptions { get; } = new();
         public ICollectionView? FilteredPlanes { get; private set; }
+
+        public string CurrentStepDisplay => $"Paso {_currentStep} de 3";
 
         public RegistroPreventivoDialog(EjecucionesMantenimientoViewModel viewModel)
         {
@@ -203,10 +217,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void EnsureAtLeastOneFacturaGroup()
         {
-            if (_itemsGasto.Count == 0)
-            {
-                _itemsGasto.Add(CreateEmptyFacturaGroup());
-            }
+            // No crear factura por defecto - dejar vacío para que el usuario agregue si lo necesita
+            // if (_itemsGasto.Count == 0)
+            // {
+            //     _itemsGasto.Add(CreateEmptyFacturaGroup());
+            // }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
@@ -694,14 +709,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Step2Panel.Visibility = _currentStep == 2 ? Visibility.Visible : Visibility.Collapsed;
             Step3Panel.Visibility = _currentStep == 3 ? Visibility.Visible : Visibility.Collapsed;
 
-            TxtPasoActual.Text = $"Paso {_currentStep} de 3";
-
             BtnPrevStep.Visibility = _currentStep > 1 ? Visibility.Visible : Visibility.Collapsed;
             BtnNextStep.Visibility = _currentStep < 3 ? Visibility.Visible : Visibility.Collapsed;
             BtnSave.Visibility = _currentStep == 3 ? Visibility.Visible : Visibility.Collapsed;
 
             _viewModel.ErrorMessage = string.Empty;
             UpdateResumenRapido();
+            OnPropertyChanged(nameof(CurrentStepDisplay));
         }
 
         private void CostoModeChanged(object sender, RoutedEventArgs e)
@@ -771,20 +785,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void UpdateResumenRapido()
         {
-            if (TxtResumenRapido == null)
-            {
-                return;
-            }
-
-            var planes = _viewModel.PlanesPreventivoSeleccionables.Count(x => x.IsSelected);
-            var fecha = _viewModel.RegistroFechaEjecucion?.ToString("dd/MM/yyyy") ?? "Sin fecha";
-            var km = string.IsNullOrWhiteSpace(_viewModel.RegistroKMAlMomentoInput) ? "Sin KM" : _viewModel.RegistroKMAlMomentoInput.Trim();
-            var responsable = string.IsNullOrWhiteSpace(_viewModel.RegistroResponsable) ? "Sin responsable" : _viewModel.RegistroResponsable.Trim();
-            var costo = RbModoItems?.IsChecked == true
-                ? CalculateItemsTotal()
-                : (decimal.TryParse(_viewModel.RegistroCostoInput?.Trim(), out var manual) ? manual : 0m);
-
-            TxtResumenRapido.Text = $"Resumen: {planes} plan(es) · Fecha: {fecha} · KM: {km} · Responsable: {responsable} · Total: $ {costo:N0}";
+            // UpdateResumenRapido ya no es necesario - el resumen ahora se muestra mediante bindings en el XAML
         }
 
         private string ResolveDefaultDestinationKey()
@@ -860,6 +861,31 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     }
                 };
             };
+        }
+
+        /// <summary>
+        /// Selecciona el modo de costo "Por ítems" cuando se hace click en la card
+        /// </summary>
+        private void SelectCostoModeItems_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            RbModoItems.IsChecked = true;
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Selecciona el modo de costo "Solo total" cuando se hace click en la card
+        /// </summary>
+        private void SelectCostoModeManual_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            RbModoManual.IsChecked = true;
+            e.Handled = true;
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

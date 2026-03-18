@@ -59,14 +59,63 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="1" Margin="16,10,16,0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10">
+                <Border Grid.Row="1" Margin="16,10,16,0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12">
                     <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="TxtResumenRapido" Text="Resumen: sin planes seleccionados" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                        <TextBlock Grid.Column="1" x:Name="TxtPasoActual" Text="Paso 1 de 3" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" Margin="10,0,0,0"/>
+                        
+                        <!-- Planes seleccionados -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="📌" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding PlanesSeleccionadosResumen}" FontSize="12" FontWeight="SemiBold" Foreground="#1E3A8A" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <!-- Separador visual -->
+                        <TextBlock Grid.Column="1" Text="|" Foreground="#BFDBFE" FontSize="14" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                        
+                        <!-- Fecha ejecución -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="📅" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Fecha:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="{Binding RegistroFechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <!-- Separador visual -->
+                        <TextBlock Grid.Column="3" Text="|" Foreground="#BFDBFE" FontSize="14" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                        
+                        <!-- KM -->
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="⚙" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="KM:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="{Binding RegistroKMAlMomentoInput, StringFormat={}{0:N0}, FallbackValue='Pendiente'}" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <!-- Separador visual -->
+                        <TextBlock Grid.Column="5" Text="|" Foreground="#BFDBFE" FontSize="14" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                        
+                        <!-- Responsable -->
+                        <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="👤" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Responsable:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="{Binding RegistroResponsable, FallbackValue='Pendiente'}" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center" MaxWidth="150" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        
+                        <!-- Espaciador -->
+                        <Grid Grid.Column="7"/>
+                        <Grid Grid.Column="8"/>
+                        
+                        <!-- Paso (alineado a la derecha) -->
+                        <TextBlock Grid.Column="9" Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=CurrentStepDisplay}" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </Grid>
                 </Border>
 
@@ -86,12 +135,6 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12" VerticalAlignment="Center">
-                                <Border Background="#EFF6FF" CornerRadius="10" Padding="6,4" Margin="0,0,10,0">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="📌" FontSize="12" Margin="0,0,6,0"/>
-                                        <TextBlock Text="{Binding PlanesSeleccionadosResumen}" FontSize="11" Foreground="#1E3A8A"/>
-                                    </StackPanel>
-                                </Border>
                                 <Border Background="#F3F4F6" CornerRadius="10" Padding="6,4">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <TextBlock Text="📋" FontSize="12" Margin="0,0,6,0"/>
@@ -101,22 +144,19 @@
                                 </Border>
                             </StackPanel>
 
-                            <Grid Grid.Row="2" Margin="0,0,0,8" Height="36">
+                            <Grid Grid.Row="2" Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="TxtPlanFilter"
                                          Grid.Column="0"
-                                         VerticalContentAlignment="Center"
-                                         VerticalAlignment="Center"
-                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         Style="{StaticResource ThemeTextBoxStyle}"
                                          TextChanged="TxtPlanFilter_TextChanged"
-                                         ToolTip="Buscar por nombre del plan"
                                          Tag="Buscar plan por nombre..."/>
                                 <Button Grid.Column="1"
                                         Margin="8,0,0,0"
-                                        Padding="10,6"
+                                        Height="40"
                                         VerticalAlignment="Center"
                                         Content="Limpiar"
                                         Style="{StaticResource GhostButton}"
@@ -284,214 +324,366 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Text="2. Datos de ejecución" Style="{StaticResource SectionHeaderStyle}"/>
-                                <TextBlock Text="Completa estos datos una sola vez. Se aplicarán a todos los planes seleccionados." FontSize="11" Foreground="#6B7280" Margin="0,2,0,12" TextWrapping="Wrap"/>
+                                <TextBlock Text="Completa estos datos una sola vez. Se aplicarán a todos los planes seleccionados." FontSize="11" Foreground="#6B7280" Margin="0,2,0,16" TextWrapping="Wrap"/>
 
-                                <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,10" Effect="{StaticResource SectionShadow}">
-                                    <StackPanel>
-                                        <TextBlock Text="Cronología y kilometraje" FontSize="12" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
+                                <!-- Grid 2x2 con las 4 cards principales -->
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="12"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Fecha de ejecución" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+                                    <!-- Card 1: Fecha de ejecución -->
+                                    <Border Grid.Row="0" Grid.Column="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,12,12" Effect="{StaticResource SectionShadow}">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="📅" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Fecha de ejecución" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Border BorderBrush="#F3F4F6" BorderThickness="1" CornerRadius="8" Padding="0" Background="#F9FAFB">
                                                 <DatePicker SelectedDate="{Binding RegistroFechaEjecucion}" Style="{StaticResource ModernDatePickerStyle}"/>
-                                                <TextBlock Text="{Binding FechaValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding FechaValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Card 2: Kilometraje -->
+                                    <Border Grid.Row="0" Grid.Column="1" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,12" Effect="{StaticResource SectionShadow}">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="⚙️" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Kilometraje" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
                                             </StackPanel>
-
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Kilometraje al momento" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
-                                                <TextBox Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                <TextBlock Text="{Binding KmValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+                                            <StackPanel>
+                                                <TextBox Text="{Binding RegistroKMAlMomentoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Margin="0,0,0,8"/>
+                                                <TextBlock Text="{Binding KmValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,0,0,8"/>
+                                                <Button Content="Tomar KM actual"
+                                                        Command="{Binding CargarKilometrajeActualCommand}"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Padding="10,6"
+                                                        FontSize="11"
+                                                        IsEnabled="{Binding HasPlanPreventivo}"/>
                                             </StackPanel>
-                                        </Grid>
+                                        </StackPanel>
+                                    </Border>
 
-                                        <Button Content="Tomar KM actual"
-                                                Command="{Binding CargarKilometrajeActualCommand}"
-                                                Style="{StaticResource GhostButton}"
-                                                FontSize="12"
-                                                Padding="10,6"
-                                                Margin="0,10,0,0"
-                                                Width="180"
-                                                IsEnabled="{Binding HasPlanPreventivo}"/>
-                                    </StackPanel>
-                                </Border>
+                                    <!-- Card 3: Responsable -->
+                                    <Border Grid.Row="1" Grid.Column="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,12,0" Effect="{StaticResource SectionShadow}">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="👤" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Responsable" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <ComboBox Text="{Binding RegistroResponsable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding ResponsablesFiltrados}"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ModernComboBoxStyle}"
+                                                      Height="40"
+                                                      Margin="0,0,0,6"/>
+                                            <TextBlock Text="{Binding ResponsableValidationMessage}" Foreground="#C0392B" FontSize="10"/>
+                                        </StackPanel>
+                                    </Border>
 
-                                <Border Background="#FFFFFF" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="12" Effect="{StaticResource SectionShadow}">
-                                    <StackPanel>
-                                        <TextBlock Text="Responsable y notas" FontSize="12" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
-
-                                        <TextBlock Text="Responsable de la ejecución" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
-                                        <ComboBox Text="{Binding RegistroResponsable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  ItemsSource="{Binding ResponsablesFiltrados}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  Style="{StaticResource ModernComboBoxStyle}"/>
-                                        <TextBlock Text="{Binding ResponsableValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
-
-                                        <TextBlock Text="Observación general" Style="{StaticResource LabelTextStyle}" Margin="0,10,0,4"/>
-                                        <TextBox Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}"
-                                                 MinHeight="120"
-                                                 Style="{StaticResource ModernTextBoxStyle}"
-                                                 TextWrapping="Wrap"
-                                                 AcceptsReturn="True"/>
-                                    </StackPanel>
-                                </Border>
+                                    <!-- Card 4: Observaciones -->
+                                    <Border Grid.Row="1" Grid.Column="1" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,0" Effect="{StaticResource SectionShadow}">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="📝" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Observaciones" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBox Text="{Binding RegistroObservaciones, UpdateSourceTrigger=PropertyChanged}"
+                                                     MinHeight="110"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     TextWrapping="Wrap"
+                                                     AcceptsReturn="True"
+                                                     VerticalScrollBarVisibility="Auto"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
 
-                    <Border x:Name="Step3Panel" Style="{StaticResource CardSectionStyle}" Padding="14" Visibility="Collapsed">
+                    <Border x:Name="Step3Panel" Style="{StaticResource CardSectionStyle}" Padding="16" Visibility="Collapsed">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Text="3. Costos" Style="{StaticResource SectionHeaderStyle}"/>
-                                <TextBlock Text="Elige un modo: por ítems (total automático) o total manual sin desglose." FontSize="11" Foreground="#6B7280" Margin="0,2,0,8" TextWrapping="Wrap"/>
+                                <TextBlock Text="3. Costos y facturación" Style="{StaticResource SectionHeaderStyle}"/>
+                                <TextBlock Text="Completa los gastos asociados a estos planes" FontSize="11" Foreground="#6B7280" Margin="0,2,0,16" TextWrapping="Wrap"/>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,10">
-                                    <RadioButton x:Name="RbModoItems" Content="Por ítems detallados" IsChecked="True" Checked="CostoModeChanged" Margin="0,0,18,0"/>
-                                    <RadioButton x:Name="RbModoManual" Content="Solo total sin desglose" Checked="CostoModeChanged"/>
-                                </StackPanel>
+                                <!-- Selector de modo - Cards pequeñas -->
+                                <Grid Margin="0,0,0,16" Height="52">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <Border x:Name="PanelCostoItems" BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="8" Padding="10" Background="#FAFAFA">
+                                    <!-- Card: Por ítems -->
+                                    <Border Grid.Column="0" Background="White" BorderBrush="{Binding IsChecked, ElementName=RbModoItems, Converter={StaticResource BooleanToColorConverter}, ConverterParameter='#118938|#E5E7EB'}" BorderThickness="2" CornerRadius="10" Padding="14,10" Effect="{StaticResource SectionShadow}" Cursor="Hand" MouseLeftButtonUp="SelectCostoModeItems_Click">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <RadioButton x:Name="RbModoItems" GroupName="CostoMode" IsChecked="True" Checked="CostoModeChanged" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="💼 Por ítems" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                                <TextBlock Text="Desglose detallado" FontSize="9" Foreground="#6B7280" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Card: Solo total -->
+                                    <Border Grid.Column="2" Background="White" BorderBrush="{Binding IsChecked, ElementName=RbModoManual, Converter={StaticResource BooleanToColorConverter}, ConverterParameter='#118938|#E5E7EB'}" BorderThickness="2" CornerRadius="10" Padding="14,10" Effect="{StaticResource SectionShadow}" Cursor="Hand" MouseLeftButtonUp="SelectCostoModeManual_Click">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <RadioButton x:Name="RbModoManual" GroupName="CostoMode" Checked="CostoModeChanged" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="💰 Solo total" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                                <TextBlock Text="Registro rápido" FontSize="9" Foreground="#6B7280" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- PANEL MODO ÍTEMS -->
+                                <Border x:Name="PanelCostoItems" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,16">
                                     <StackPanel>
-                                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                        <!-- Carrito principal - Mejorado -->
+                                        <Border CornerRadius="10" Padding="16,12" Margin="0,0,0,16" Effect="{StaticResource CardShadow}">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#EFF6FF" Offset="0"/>
+                                                    <GradientStop Color="#F0FAFB" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="🛒" FontSize="14" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="Carrito de gastos" FontWeight="SemiBold" Foreground="#1E3A8A"/>
-                                                    <TextBlock Text=" · Ítems:" Foreground="#1E3A8A" Margin="10,0,0,0"/>
-                                                    <TextBlock x:Name="TxtCartItemsCountPrev" Text="0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="4,0,0,0"/>
-                                                    <TextBlock Text=" · Total:" Foreground="#1E3A8A" Margin="10,0,0,0"/>
-                                                    <TextBlock x:Name="TxtCartItemsTotalPrev" Text="$ 0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="4,0,0,0"/>
+
+                                                <!-- Icono y Título -->
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="🛒" FontSize="18" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Carrito de gastos" FontSize="13" FontWeight="SemiBold" Foreground="#1E3A8A" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                 </StackPanel>
-                                                <Button Grid.Column="1" Content="📄 Agregar factura" Style="{StaticResource GhostButton}" Padding="10,4" Click="BtnAddFacturaGroup_Click" ToolTip="Crear un nuevo grupo de factura"/>
+
+                                                <!-- Badge: Ítems -->
+                                                <Border Grid.Column="1" Background="#DBEAFE" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock x:Name="TxtCartItemsCountPrev" Text="0" FontSize="11" FontWeight="Bold" Foreground="#0C4A6E" VerticalAlignment="Center"/>
+                                                        <TextBlock Text=" ítems" FontSize="10" Foreground="#0C4A6E" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Badge: Subtotal -->
+                                                <Border Grid.Column="2" Background="#DCFCE7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="💰" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                        <TextBlock x:Name="TxtCartItemsTotalPrev" Text="$0" FontSize="11" FontWeight="Bold" Foreground="#15803D" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Spacer para empujar botón a la derecha -->
+                                                <Border Grid.Column="3"/>
+
+                                                <!-- Botón Agregar -->
+                                                <Button Grid.Column="4" Content="+ Agregar factura" Style="{StaticResource GhostButton}" Padding="12,6" Click="BtnAddFacturaGroup_Click" ToolTip="Crear un nuevo grupo de factura" VerticalAlignment="Center" FontSize="11" Foreground="#1E40AF"/>
                                             </Grid>
                                         </Border>
 
-                                        <TextBlock Text="Si un ítem es compartido, se prorratea entre planes seleccionados." FontSize="10" Foreground="#555" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                                        <!-- Lista de facturas -->
+                                        <TextBlock Text="Si un ítem es compartido, se prorratea entre planes." FontSize="10" Foreground="#6B7280" Margin="0,0,0,14" TextWrapping="Wrap"/>
 
                                         <ItemsControl x:Name="IcItemsGasto">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="8" Margin="0,0,0,12" Background="White">
-                                                        <Expander IsExpanded="False" Background="Transparent" BorderThickness="0">
-                                                            <Expander.Header>
-                                                                <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <StackPanel>
-                                                                        <TextBlock Text="📄 Factura / remisión" FontWeight="SemiBold" Foreground="#1F2937" FontSize="12"/>
-                                                                        <TextBlock Text="{Binding NumeroFactura, StringFormat='N°: {0}'}" Foreground="#6B7280" FontSize="10" Margin="0,2,0,0"/>
+                                                    <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="0" Margin="0,0,0,14" Background="White" Effect="{StaticResource CardShadow}">
+                                                        <Grid>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="*"/>
+                                                            </Grid.RowDefinitions>
+
+                                                            <!-- Header con contenido + botón + toggle -->
+                                                            <Grid Grid.Row="0" Margin="0,12,0,12">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- Flecha toggle -->
+                                                                <ToggleButton Grid.Column="0" x:Name="ExpanderToggle" Margin="8,0,0,0" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}" IsChecked="{Binding IsExpanded}">
+                                                                    <TextBlock Text="▶" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                                </ToggleButton>
+
+                                                                <!-- Izquierda: Icono, título, badges -->
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                                    <!-- Icono y título -->
+                                                                    <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="6,0,8,0"/>
+                                                                    <StackPanel VerticalAlignment="Center">
+                                                                        <TextBlock Text="Factura / Remisión" FontWeight="SemiBold" Foreground="#1F2937" FontSize="12"/>
+                                                                        <TextBlock Text="{Binding NumeroFactura, StringFormat='N°: {0}', TargetNullValue='Sin número'}" Foreground="#6B7280" FontSize="10" Margin="0,2,0,0"/>
                                                                     </StackPanel>
-                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                                                        <TextBlock Text="Ítems:" Foreground="#475569" FontSize="10" Margin="0,0,4,0"/>
-                                                                        <TextBlock Text="{Binding Items.Count}" Foreground="#475569" FontWeight="SemiBold" FontSize="10" Margin="0,0,10,0"/>
-                                                                        <TextBlock Text="Total: $" Foreground="#374151" FontWeight="SemiBold"/>
-                                                                        <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" Foreground="#1F2937" FontWeight="SemiBold" Margin="4,0,0,0"/>
-                                                                        <Button Content="Quitar factura" Margin="12,0,0,0" Style="{StaticResource GhostButton}" Padding="10,4" Click="BtnRemoveFacturaGroup_Click"/>
-                                                                    </StackPanel>
-                                                                </Grid>
-                                                            </Expander.Header>
-                                                            <StackPanel Margin="0,10,0,0">
 
-                                                            <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
-                                                                <Grid>
-                                                                    <Grid.RowDefinitions>
-                                                                        <RowDefinition Height="Auto"/>
-                                                                        <RowDefinition Height="Auto"/>
-                                                                    </Grid.RowDefinitions>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="180"/>
-                                                                        <ColumnDefinition Width="12"/>
-                                                                        <ColumnDefinition Width="220"/>
-                                                                        <ColumnDefinition Width="12"/>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
+                                                                    <!-- Badge Ítems -->
+                                                                    <Border Background="#FEF3C7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,8,0">
+                                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                            <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                                            <TextBlock Text="{Binding Items.Count}" FontSize="11" FontWeight="Bold" Foreground="#92400E" VerticalAlignment="Center"/>
+                                                                            <TextBlock Text=" ítems" FontSize="10" Foreground="#92400E" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                                        </StackPanel>
+                                                                    </Border>
 
-                                                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="N° factura" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
-                                                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Proveedor" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
-                                                                    <TextBlock Grid.Row="0" Grid.Column="4" Text="Documento adjunto" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,4"/>
+                                                                    <!-- Badge Total -->
+                                                                    <Border Background="#DCFCE7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                            <TextBlock Text="💵" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                                            <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="#15803D" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </StackPanel>
 
-                                                                    <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding NumeroFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ProveedorFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                                    <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding RutaFactura}" Style="{StaticResource ModernTextBoxStyle}" IsReadOnly="True"/>
-                                                                    <Button Grid.Row="1" Grid.Column="5" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFacturaGroup_Click"/>
-                                                                    <Button Grid.Row="1" Grid.Column="6" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFacturaGroup_Click"/>
-                                                                </Grid>
-                                                            </Border>
+                                                                <!-- Spacer -->
+                                                                <Border Grid.Column="2"/>
 
-                                                            <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
-                                                                <StackPanel>
-                                                                    <TextBlock Text="Agregar ítem a esta factura" FontWeight="SemiBold" Foreground="#1E3A8A"/>
-                                                                    <Grid Margin="0,8,0,0">
+                                                                <!-- Derecha: Botón Quitar -->
+                                                                <Button Grid.Column="3" Content="✕ Quitar" Style="{StaticResource GhostButton}" Padding="8,4" Click="BtnRemoveFacturaGroup_Click" Foreground="#C0392B" FontSize="10" VerticalAlignment="Center" Margin="0,0,14,0" HorizontalAlignment="Right"/>
+                                                            </Grid>
+
+                                                            <!-- Contenido expandible -->
+                                                            <StackPanel Grid.Row="1" x:Name="ExpanderContent" Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="14,12,14,12">
+                                                                <!-- Separador visual -->
+                                                                <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
+
+                                                                <!-- Datos de factura -->
+                                                                <StackPanel Margin="0,0,0,12">
+                                                                    <TextBlock Text="Datos de la factura / remisión" FontWeight="SemiBold" Foreground="#374151" FontSize="11" Margin="0,0,0,10"/>
+                                                                    <Grid>
                                                                         <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="150"/>
-                                                                            <ColumnDefinition Width="170"/>
                                                                             <ColumnDefinition Width="*"/>
-                                                                            <ColumnDefinition Width="120"/>
-                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="12"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="12"/>
+                                                                            <ColumnDefinition Width="*"/>
                                                                         </Grid.ColumnDefinitions>
-                                                                        <ComboBox Grid.Column="0" Margin="0,0,8,0" SelectedValuePath="Tag" SelectedValue="{Binding DraftTipoGasto}">
-                                                                            <ComboBoxItem Content="Repuesto" Tag="1"/>
-                                                                            <ComboBoxItem Content="Mano de obra" Tag="2"/>
-                                                                            <ComboBoxItem Content="Servicio externo" Tag="3"/>
-                                                                            <ComboBoxItem Content="Otro" Tag="4"/>
-                                                                        </ComboBox>
-                                                                        <ComboBox Grid.Column="1" Margin="0,0,8,0"
-                                                                                  ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=PlanDestinoOptions}"
-                                                                                  DisplayMemberPath="Label"
-                                                                                  SelectedValuePath="Key"
-                                                                                  SelectedValue="{Binding DraftPlanDestinoKey}"/>
-                                                                        <TextBox Grid.Column="2" Margin="0,0,8,0" Text="{Binding DraftDescripcion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                                        <TextBox Grid.Column="3" Margin="0,0,8,0" Text="{Binding DraftValorInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                                                        <Button Grid.Column="4" Content="Agregar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,6" Click="BtnAddGastoItem_Click"/>
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                        </Grid.RowDefinitions>
+
+                                                                        <!-- N° factura -->
+                                                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                                                            <TextBlock Text="📋 N° factura" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                                                            <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding NumeroFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
+                                                                        </StackPanel>
+
+                                                                        <!-- Proveedor -->
+                                                                        <StackPanel Grid.Row="0" Grid.Column="2">
+                                                                            <TextBlock Text="🏢 Proveedor" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                                                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ProveedorFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
+                                                                        </StackPanel>
+
+                                                                        <!-- Documento adjunto -->
+                                                                        <StackPanel Grid.Row="0" Grid.Column="4">
+                                                                            <TextBlock Text="📎 Documento" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="8"/>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <TextBox Grid.Column="0" Text="{Binding RutaFactura}" Style="{StaticResource ThemeTextBoxStyle}" IsReadOnly="True" Height="40"/>
+                                                                                <Button Grid.Column="2" Content="Adjuntar" Style="{StaticResource GhostButton}" Padding="10,6" Click="BtnAttachFacturaGroup_Click" VerticalAlignment="Center" FontSize="10"/>
+                                                                            </Grid>
+                                                                        </StackPanel>
                                                                     </Grid>
                                                                 </StackPanel>
-                                                            </Border>
 
-                                                            <Border Background="#FFFFFF" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="8">
+                                                                <!-- Separador -->
+                                                                <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
+
+                                                                <!-- Agregar ítem -->
+                                                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                                                    <StackPanel>
+                                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                                            <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                                            <TextBlock Text="Agregar ítem a esta factura" FontWeight="SemiBold" Foreground="#1E3A8A" VerticalAlignment="Center" FontSize="11"/>
+                                                                        </StackPanel>
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="140"/>
+                                                                                <ColumnDefinition Width="8"/>
+                                                                                <ColumnDefinition Width="160"/>
+                                                                                <ColumnDefinition Width="8"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="8"/>
+                                                                                <ColumnDefinition Width="120"/>
+                                                                                <ColumnDefinition Width="8"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+
+                                                                            <ComboBox Grid.Column="0" SelectedValuePath="Tag" SelectedValue="{Binding DraftTipoGasto}" Height="40">
+                                                                                <ComboBoxItem Content="Repuesto" Tag="1"/>
+                                                                                <ComboBoxItem Content="Mano de obra" Tag="2"/>
+                                                                                <ComboBoxItem Content="Servicio externo" Tag="3"/>
+                                                                                <ComboBoxItem Content="Otro" Tag="4"/>
+                                                                            </ComboBox>
+                                                                            <ComboBox Grid.Column="2" Height="40"
+                                                                                      ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=PlanDestinoOptions}"
+                                                                                      DisplayMemberPath="Label"
+                                                                                      SelectedValuePath="Key"
+                                                                                      SelectedValue="{Binding DraftPlanDestinoKey}"/>
+                                                                            <TextBox Grid.Column="4" Text="{Binding DraftDescripcion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
+                                                                            <TextBox Grid.Column="6" Text="{Binding DraftValorInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
+                                                                            <Button Grid.Column="8" Content="Agregar" Style="{StaticResource PrimaryButtonStyle}" Padding="12,8" Click="BtnAddGastoItem_Click" VerticalAlignment="Center" FontSize="10"/>
+                                                                        </Grid>
+                                                                    </StackPanel>
+                                                                </Border>
+
+                                                                <!-- Separador -->
+                                                                <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
+
+                                                                <!-- Resumen de ítems -->
                                                                 <StackPanel>
-                                                                    <TextBlock Text="Resumen de ítems" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
-                                                                    <ItemsControl ItemsSource="{Binding Items}">
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate>
-                                                                                <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
-                                                                                    <Grid>
-                                                                                        <Grid.ColumnDefinitions>
-                                                                                            <ColumnDefinition Width="140"/>
-                                                                                            <ColumnDefinition Width="130"/>
-                                                                                            <ColumnDefinition Width="*"/>
-                                                                                            <ColumnDefinition Width="90"/>
-                                                                                            <ColumnDefinition Width="Auto"/>
-                                                                                            <ColumnDefinition Width="Auto"/>
-                                                                                        </Grid.ColumnDefinitions>
-                                                                                        <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" FontWeight="SemiBold" Foreground="#1F2937"/>
-                                                                                        <TextBlock Grid.Column="1" Text="{Binding PlanDestinoResumen}" Foreground="#475569"/>
-                                                                                        <TextBlock Grid.Column="2" Text="{Binding Descripcion}" Foreground="#1F2937" TextWrapping="Wrap" Margin="8,0,0,0"/>
-                                                                                        <TextBlock Grid.Column="3" Text="{Binding ValorInput}" Foreground="#0F766E" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="8,0,0,0"/>
-                                                                                        <Button Grid.Column="4" Content="Editar" Style="{StaticResource GhostButton}" Padding="10,4" Margin="12,0,0,0" Click="BtnEditGastoItem_Click"/>
-                                                                                        <Button Grid.Column="5" Content="Quitar" Style="{StaticResource GhostButton}" Padding="10,4" Margin="8,0,0,0" Click="BtnRemoveGastoItem_Click" Foreground="#C0392B"/>
-                                                                                    </Grid>
-                                                                                </Border>
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
+                                                                    <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,0,0,8" FontSize="11"/>
+                                                                    <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="10">
+                                                                        <ItemsControl ItemsSource="{Binding Items}">
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,6">
+                                                                                        <Grid>
+                                                                                            <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="140"/>
+                                                                                                <ColumnDefinition Width="130"/>
+                                                                                                <ColumnDefinition Width="*"/>
+                                                                                                <ColumnDefinition Width="100"/>
+                                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                            </Grid.ColumnDefinitions>
+                                                                                            <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" FontWeight="SemiBold" Foreground="#1F2937" FontSize="10"/>
+                                                                                            <TextBlock Grid.Column="1" Text="{Binding PlanDestinoResumen}" Foreground="#6B7280" FontSize="10"/>
+                                                                                            <TextBlock Grid.Column="2" Text="{Binding Descripcion}" Foreground="#1F2937" TextWrapping="Wrap" Margin="8,0,0,0" FontSize="10"/>
+                                                                                            <TextBlock Grid.Column="3" Text="{Binding ValorInput, StringFormat='${0:N0}'}" Foreground="#118938" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="8,0,0,0" FontSize="10"/>
+                                                                                            <Button Grid.Column="4" Content="✎" Style="{StaticResource GhostButton}" Padding="8,4" Margin="8,0,0,0" Click="BtnEditGastoItem_Click" ToolTip="Editar"/>
+                                                                                            <Button Grid.Column="5" Content="✕" Style="{StaticResource GhostButton}" Padding="8,4" Margin="4,0,0,0" Click="BtnRemoveGastoItem_Click" Foreground="#C0392B" ToolTip="Quitar"/>
+                                                                                        </Grid>
+                                                                                    </Border>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </Border>
                                                                 </StackPanel>
-                                                            </Border>
                                                             </StackPanel>
-                                                        </Expander>
+
+                                                        </Grid>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -499,40 +691,55 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border x:Name="PanelCostoManual" BorderBrush="#DADCE0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,10,0,0" Background="#FAFAFA" Visibility="Collapsed">
+                                <!-- PANEL MODO MANUAL -->
+                                <Border x:Name="PanelCostoManual" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,16" Visibility="Collapsed">
                                     <StackPanel>
-                                        <TextBlock Text="Registro rápido sin desglose" FontWeight="SemiBold"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <TextBlock Text="💰" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Registro rápido de costo" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                        </StackPanel>
 
-                                        <TextBlock Text="Costo total del servicio" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
-                                        <TextBox Text="{Binding RegistroCostoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}"/>
-                                        <TextBlock Text="{Binding CostoValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Costo total del servicio" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding RegistroCostoInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Margin="0,0,0,12"/>
+                                        <TextBlock Text="{Binding CostoValidationMessage}" Foreground="#C0392B" FontSize="10" Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="Proveedor (común)" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
+                                        <TextBlock Text="Proveedor (común)" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
                                         <ComboBox Text="{Binding RegistroProveedor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   ItemsSource="{Binding ProveedoresFiltrados}"
                                                   IsEditable="True"
                                                   IsTextSearchEnabled="False"
-                                                  Style="{StaticResource ModernComboBoxStyle}"/>
+                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                  Height="40"
+                                                  Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="Factura (común)" Style="{StaticResource LabelTextStyle}" Margin="0,8,0,4"/>
-                                        <Grid>
+                                        <TextBlock Text="Factura (común)" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <Grid Margin="0,0,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" Text="{Binding RegistroRutaFactura, Converter={StaticResource PathToFileNameConverter}, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}"/>
-                                            <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachCommonFactura_Click"/>
-                                            <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenCommonFactura_Click"/>
+                                            <TextBox Grid.Column="0" Text="{Binding RegistroRutaFactura, Converter={StaticResource PathToFileNameConverter}, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource ThemeTextBoxStyle}"/>
+                                            <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachCommonFactura_Click" Height="40"/>
+                                            <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenCommonFactura_Click" Height="40"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
 
-                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+                                <!-- Resumen total -->
+                                <Border CornerRadius="10" Padding="14" Effect="{StaticResource CardShadow}">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#EFF6FF" Offset="0"/>
+                                            <GradientStop Color="#E0F2FE" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Total general" FontWeight="SemiBold" Foreground="#1E3A8A"/>
-                                        <TextBlock x:Name="TxtTotalItems" Text="  $0" FontWeight="SemiBold" Foreground="#1E3A8A" Margin="6,0,0,0"/>
-                                        <TextBlock Text="(automático por ítems)" Foreground="#1E3A8A" FontSize="10" Margin="8,0,0,0" Visibility="{Binding IsChecked, ElementName=RbModoItems, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="📊" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Total general:" FontWeight="SemiBold" Foreground="#1E3A8A" FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock x:Name="TxtTotalItems" Text="$0" FontWeight="SemiBold" Foreground="#118938" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="(automático por ítems)" Foreground="#6B7280" FontSize="10" Margin="0,0,0,0" Visibility="{Binding IsChecked, ElementName=RbModoItems, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="(manual)" Foreground="#6B7280" FontSize="10" Margin="0,0,0,0" Visibility="{Binding IsChecked, ElementName=RbModoManual, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
