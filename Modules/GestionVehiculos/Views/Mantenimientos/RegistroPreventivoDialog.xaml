@@ -76,6 +76,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
@@ -84,13 +85,31 @@
                                 <TextBlock Text="Marca uno o varios planes. Puedes usar ‘Editar datos de este plan’ para notas específicas." FontSize="11" Foreground="#6B7280" Margin="0,2,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
 
-                            <Grid Grid.Row="1" Margin="0,0,0,8">
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12" VerticalAlignment="Center">
+                                <Border Background="#EFF6FF" CornerRadius="10" Padding="6,4" Margin="0,0,10,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📌" FontSize="12" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding PlanesSeleccionadosResumen}" FontSize="11" Foreground="#1E3A8A"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#F3F4F6" CornerRadius="10" Padding="6,4">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📋" FontSize="12" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Planes totales:" FontSize="11" Foreground="#6B7280" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding PlanesPreventivoSeleccionables.Count}" FontSize="11" FontWeight="SemiBold" Foreground="#1F2937"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <Grid Grid.Row="2" Margin="0,0,0,8" Height="36">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="TxtPlanFilter"
                                          Grid.Column="0"
+                                         VerticalContentAlignment="Center"
+                                         VerticalAlignment="Center"
                                          Style="{StaticResource ModernTextBoxStyle}"
                                          TextChanged="TxtPlanFilter_TextChanged"
                                          ToolTip="Buscar por nombre del plan"
@@ -98,102 +117,152 @@
                                 <Button Grid.Column="1"
                                         Margin="8,0,0,0"
                                         Padding="10,6"
+                                        VerticalAlignment="Center"
                                         Content="Limpiar"
                                         Style="{StaticResource GhostButton}"
                                         Click="BtnClearPlanFilter_Click"/>
                             </Grid>
 
-                            <Grid Grid.Row="2">
-                                <ListBox x:Name="LstPlanes"
-                                         ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FilteredPlanes}"
-                                         BorderBrush="#E5E7EB"
-                                         BorderThickness="1"
-                                         Background="#F8FAFC"
-                                         Padding="6"
-                                         IsEnabled="{Binding HasPlanPreventivo}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="10" Margin="0,0,0,8" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Background="White">
-                                            <StackPanel>
-                                                <DockPanel LastChildFill="True">
-                                                    <CheckBox IsChecked="{Binding IsSelected}" FontWeight="SemiBold" Content="{Binding NombrePlantilla}" Checked="PlanSelectionChanged" Unchecked="PlanSelectionChanged"/>
-                                                    <Border DockPanel.Dock="Right" Padding="8,3" CornerRadius="10" Margin="8,0,0,0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="#E8F5E9"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🔴 Vencido">
-                                                                        <Setter Property="Background" Value="#FFEBEE"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🟡 Próximo">
-                                                                        <Setter Property="Background" Value="#FFF8E1"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoVisual}" Value="🟢 Vigente">
-                                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                                                                        <Setter Property="Background" Value="#FFEBEE"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
-                                                                        <Setter Property="Background" Value="#FFF8E1"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Proximo">
-                                                                        <Setter Property="Background" Value="#FFF8E1"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
-                                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{Binding EstadoVisual}" FontSize="10" FontWeight="SemiBold">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🔴 Vencido">
-                                                                            <Setter Property="Foreground" Value="#C0392B"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🟡 Próximo">
-                                                                            <Setter Property="Foreground" Value="#B7791F"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoVisual}" Value="🟢 Vigente">
-                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                                                                            <Setter Property="Foreground" Value="#C0392B"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
-                                                                            <Setter Property="Foreground" Value="#B7791F"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoPlan}" Value="Proximo">
-                                                                            <Setter Property="Foreground" Value="#B7791F"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
-                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Border>
-                                                </DockPanel>
+                            <Grid Grid.Row="3">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+                                    <ItemsControl x:Name="LstPlanes" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FilteredPlanes}" IsEnabled="{Binding HasPlanPreventivo}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="340" MinHeight="128" Background="White" CornerRadius="12" Padding="14" Margin="0,0,12,12" Effect="{StaticResource CardShadow}" Cursor="Hand" RenderTransformOrigin="0.5,0.5" MouseLeftButtonUp="PlanCard_MouseLeftButtonUp">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                            <Setter Property="Background" Value="White"/>
+                                                            <Setter Property="RenderTransform">
+                                                                <Setter.Value>
+                                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Setter Property="Effect">
+                                                                <Setter.Value>
+                                                                    <DropShadowEffect ShadowDepth="2" BlurRadius="6" Opacity="0.1" Color="#000000"/>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#F7F9FC"/>
+                                                                    <Setter Property="RenderTransform">
+                                                                        <Setter.Value>
+                                                                            <ScaleTransform ScaleX="1.01" ScaleY="1.01"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Setter Property="Effect">
+                                                                        <Setter.Value>
+                                                                            <DropShadowEffect ShadowDepth="4" BlurRadius="12" Opacity="0.16" Color="#000000"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="#118938"/>
+                                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                                    <Setter Property="Effect">
+                                                                        <Setter.Value>
+                                                                            <DropShadowEffect ShadowDepth="6" BlurRadius="14" Opacity="0.22" Color="#000000"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
 
-                                                <StackPanel Orientation="Horizontal" Margin="22,6,0,0">
-                                                    <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat=Próx. KM: {0:N0}}" FontSize="10" Foreground="#6B7280" Margin="0,0,14,0"/>
-                                                    <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat=Próx. fecha: {0:dd/MM/yyyy}}" FontSize="10" Foreground="#6B7280"/>
-                                                </StackPanel>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
 
-                                                <TextBlock Margin="22,8,0,0"
-                                                           Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                           Text="Plan seleccionado para esta ejecución"
-                                                           FontSize="10"
-                                                           Foreground="#1E3A8A"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <CheckBox IsChecked="{Binding IsSelected}" FontWeight="SemiBold" FontSize="12" Margin="0,2,0,0" Checked="PlanSelectionChanged" Unchecked="PlanSelectionChanged"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding NombrePlantilla}" FontSize="13" FontWeight="SemiBold" Foreground="#1F2937" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                                        </Grid>
+
+                                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+                                                            <Border Background="#F3F4F6" CornerRadius="8" Padding="4,2" MinWidth="92" Margin="0,0,8,0">
+                                                                <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat=KM {0:N0}}" FontSize="10" Foreground="#374151" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                            <Border Background="#F3F4F6" CornerRadius="8" Padding="4,2" MinWidth="110" Margin="0,0,8,0">
+                                                                <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" FontSize="10" Foreground="#374151" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                            <Border CornerRadius="8" Padding="4,2" MinWidth="88">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                        <Setter Property="BorderBrush" Value="#E8F5E9"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding EstadoVisual}" Value="🔴 Vencido">
+                                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoVisual}" Value="🟡 Próximo">
+                                                                                <Setter Property="Background" Value="#FFF8E1"/>
+                                                                                <Setter Property="BorderBrush" Value="#FDE68A"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoVisual}" Value="🟢 Vigente">
+                                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                                                <Setter Property="BorderBrush" Value="#A7F3D0"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
+                                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
+                                                                                <Setter Property="Background" Value="#FFF8E1"/>
+                                                                                <Setter Property="BorderBrush" Value="#FDE68A"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Proximo">
+                                                                                <Setter Property="Background" Value="#FFF8E1"/>
+                                                                                <Setter Property="BorderBrush" Value="#FDE68A"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Vigente">
+                                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                                                <Setter Property="BorderBrush" Value="#A7F3D0"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <TextBlock Text="{Binding EstadoVisual}" FontSize="10" FontWeight="SemiBold" Foreground="#1F5134" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="2" Margin="0,10,0,0">
+                                                            <TextBlock Text="{Binding DetalleOpcional}" FontSize="10" Foreground="#4B5563" TextWrapping="Wrap" Visibility="{Binding HasDetalleOpcional, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding HasProveedorOpcional, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <TextBlock Text="👤" FontSize="12" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="{Binding ProveedorOpcional}" FontSize="10" Foreground="#4B5563" TextTrimming="CharacterEllipsis"/>
+                                                            </StackPanel>
+
+                                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0" Visibility="{Binding HasFacturaAdjunta, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <TextBlock Text="📄" FontSize="12" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="Factura adjunta" FontSize="10" Foreground="#4B5563"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+
+                                                        <TextBlock Grid.Row="3" Text="✓ Plan seleccionado para esta ejecución" FontSize="10" Foreground="#1E3A8A" Margin="0,10,0,0" Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
 
                                 <Border x:Name="NoPlanesFilterResult"
                                         Visibility="Collapsed"

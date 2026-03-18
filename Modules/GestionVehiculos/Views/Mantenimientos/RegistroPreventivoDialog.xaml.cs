@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -494,6 +496,41 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             RefreshPlanDestinoOptions();
             UpdateResumenRapido();
             ApplyPlanFilter();
+        }
+
+        private void PlanCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is DependencyObject dep)
+            {
+                // Ignore clicks coming from the checkbox itself to avoid double toggling
+                if (FindVisualParent<System.Windows.Controls.CheckBox>(dep) != null)
+                {
+                    return;
+                }
+            }
+
+            if (sender is FrameworkElement fe && fe.DataContext is EjecucionesMantenimientoViewModel.PlanPreventivoSelectionItem plan)
+            {
+                plan.IsSelected = !plan.IsSelected;
+                RefreshPlanDestinoOptions();
+                UpdateResumenRapido();
+                ApplyPlanFilter();
+            }
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T typed)
+                {
+                    return typed;
+                }
+
+                child = VisualTreeHelper.GetParent(child);
+            }
+
+            return null;
         }
 
         private void InitializePlanFilter()
