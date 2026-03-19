@@ -1,31 +1,53 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using GestLog.Models.Configuration;
 using GestLog.Modules.GestionCartera.Models;
 using GestLog.Modules.GestionCartera.Services;
-using GestLog.Services.Core.Security;
-using GestLog.Services.Core.Logging;
 using GestLog.Services.Configuration;
-using GestLog.Models.Configuration;
+using GestLog.Services.Core.Logging;
+using GestLog.Services.Core.Security;
+using Button = System.Windows.Controls.Button;
+using CheckBox = System.Windows.Controls.CheckBox;
+using Color = System.Windows.Media.Color;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MessageBox = System.Windows.MessageBox;
+using MessageBoxButton = System.Windows.MessageBoxButton;
+using MessageBoxImage = System.Windows.MessageBoxImage;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace GestLog.Modules.GestionCartera.Views
-{    /// <summary>
-    /// Ventana de configuración SMTP - Versión corregida
+{
+    /// <summary>
+    /// Ventana de configuración SMTP.
     /// </summary>
     public partial class SmtpConfigurationWindow : Window
-    {        private readonly IEmailService _emailService;
+    {
+        private readonly IEmailService _emailService;
         private readonly ICredentialService _credentialService;
         private readonly IConfigurationService _configurationService;
         private readonly ISmtpPersistenceService _smtpPersistenceService;
-        private readonly IGestLogLogger _logger = null!;
+        private readonly IGestLogLogger _logger;
+
         private SmtpSettings _currentSettings;
-        private bool _isTestSuccessful = false;
-        
-        public SmtpSettings Settings => _currentSettings;        public SmtpConfigurationWindow(
-            IEmailService emailService, 
-            ICredentialService credentialService, 
+        private bool _isTestSuccessful;
+        private bool _isLoadingConfiguration;
+
+        public ObservableCollection<string> BccEmails { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> CcEmails { get; } = new ObservableCollection<string>();
+
+        public SmtpSettings Settings => _currentSettings;
+
+        public SmtpConfigurationWindow(
+            IEmailService emailService,
+            ICredentialService credentialService,
             IConfigurationService configurationService,
             ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
@@ -34,28 +56,39 @@ namespace GestLog.Modules.GestionCartera.Views
             _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _smtpPersistenceService = smtpPersistenceService ?? throw new ArgumentNullException(nameof(smtpPersistenceService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));try
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            InitializeComponent();
+
+            DataContext = this;
+            _currentSettings = _configurationService.Current.Modules.GestionCartera.Smtp ?? new SmtpSettings();
+
+            BccEmails.CollectionChanged += (_, _) =>
             {
-                InitializeComponent();
-                
-                _currentSettings = _configurationService.Current.Modules.GestionCartera.Smtp ?? new SmtpSettings();
-                
-                // Suscribirse al evento Loaded SOLO para cargar la configuración cuando la ventana esté completamente inicializada
-                this.Loaded += (sender, e) => {                LoadConfigurationToUI();
-                    UpdateUI();
-                };
-                
-                // NO cargar inmediatamente - esperar a que la ventana se cargue completamente
-            }
-            catch (Exception ex)
+                UpdateCopyCounters();
+                UpdatePlaceholderVisibility();
+                UpdateUI();
+            };
+
+            CcEmails.CollectionChanged += (_, _) =>
             {
-                _logger?.LogError(ex, "Error inicializando SmtpConfigurationWindow");
-                throw;
-            }
-        }        public SmtpConfigurationWindow(
-            SmtpSettings settings, 
-            IEmailService emailService, 
-            ICredentialService credentialService, 
+                UpdateCopyCounters();
+                UpdatePlaceholderVisibility();
+                UpdateUI();
+            };
+
+            Loaded += (_, _) =>
+            {
+                LoadConfigurationToUI();
+                UpdatePlaceholderVisibility();
+                UpdateUI();
+            };
+        }
+
+        public SmtpConfigurationWindow(
+            SmtpSettings settings,
+            IEmailService emailService,
+            ICredentialService credentialService,
             IConfigurationService configurationService,
             ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
@@ -69,48 +102,34 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private void OnFieldChanged(object sender, RoutedEventArgs e)
         {
-            try
+            UpdatePlaceholderVisibility();
+            if (IsLoaded && _currentSettings != null)
             {
-                if (this.IsLoaded && _currentSettings != null)
-                {
-                    UpdateUI();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning("Error en OnFieldChanged: {ErrorMessage}", ex.Message);
+                UpdateUI();
             }
         }
 
         private void OnPasswordChanged(object sender, RoutedEventArgs e)
         {
-            try
+            if (IsLoaded && _currentSettings != null)
             {
-                if (this.IsLoaded && _currentSettings != null)
-                {
-                    UpdateUI();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning("Error en OnPasswordChanged: {ErrorMessage}", ex.Message);
+                UpdateUI();
             }
         }
 
         private void GmailPreset_Click(object sender, RoutedEventArgs e)
         {
-            ApplyGmailPreset();
-            UpdateUI();
-        }        private void ZohoPreset_Click(object sender, RoutedEventArgs e)
+            ApplyPreset("smtp.gmail.com", "587", true, "Configuración de Gmail aplicada");
+        }
+
+        private void ZohoPreset_Click(object sender, RoutedEventArgs e)
         {
-            ApplyZohoPreset();
-            UpdateUI();
+            ApplyPreset("smtppro.zoho.com", "587", true, "Configuración de Zoho aplicada");
         }
 
         private void Office365Preset_Click(object sender, RoutedEventArgs e)
         {
-            ApplyOffice365Preset();
-            UpdateUI();
+            ApplyPreset("smtp.office365.com", "587", true, "Configuración de Office 365 aplicada");
         }
 
         private async void TestConfiguration_Click(object sender, RoutedEventArgs e)
@@ -125,163 +144,148 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
+            DialogResult = false;
             Close();
+        }
+
+        private void BccEmailInputTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                AddBccEmail_Click(sender, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
+        private void CcEmailInputTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                AddCcEmail_Click(sender, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
+        private void AddBccEmail_Click(object sender, RoutedEventArgs e)
+        {
+            var input = FindName("BccEmailInputTextBox") as TextBox;
+            HandleAddEmailsFromInput(input, BccEmails, "BCC");
+        }
+
+        private void AddCcEmail_Click(object sender, RoutedEventArgs e)
+        {
+            var input = FindName("CcEmailInputTextBox") as TextBox;
+            HandleAddEmailsFromInput(input, CcEmails, "CC");
+        }
+
+        private void RemoveBccEmail_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string email)
+            {
+                BccEmails.Remove(email);
+            }
+        }
+
+        private void RemoveCcEmail_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string email)
+            {
+                CcEmails.Remove(email);
+            }
         }
 
         #endregion
 
         #region Private Methods
 
-        private void ApplyGmailPreset()
+        private void ApplyPreset(string host, string port, bool useSsl, string status)
         {
-            var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-            var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-            var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
+            var hostTextBox = FindName("HostTextBox") as TextBox;
+            var portTextBox = FindName("PortTextBox") as TextBox;
+            var sslCheckBox = FindName("SslCheckBox") as CheckBox;
 
-            if (hostTextBox != null && portTextBox != null && sslCheckBox != null)
-            {
-                hostTextBox.Text = "smtp.gmail.com";
-                portTextBox.Text = "587";
-                sslCheckBox.IsChecked = true;
-                UpdateStatus("Configuración de Gmail aplicada", Colors.Orange);
-                _logger?.LogInformation("Aplicada configuración predefinida: Gmail");
-            }
-        }        private void ApplyZohoPreset()
-        {
-            var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-            var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-            var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
+            if (hostTextBox != null) hostTextBox.Text = host;
+            if (portTextBox != null) portTextBox.Text = port;
+            if (sslCheckBox != null) sslCheckBox.IsChecked = useSsl;
 
-            if (hostTextBox != null && portTextBox != null && sslCheckBox != null)
-            {
-                hostTextBox.Text = "smtppro.zoho.com";
-                portTextBox.Text = "587";
-                sslCheckBox.IsChecked = true;
-                UpdateStatus("Configuración de Zoho aplicada", Colors.Orange);
-                _logger?.LogInformation("Aplicada configuración predefinida: Zoho");
-            }
+            UpdateStatus(status, Colors.Orange);
+            UpdateUI();
         }
 
-        private void ApplyOffice365Preset()
-        {
-            var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-            var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-            var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
-
-            if (hostTextBox != null && portTextBox != null && sslCheckBox != null)
-            {
-                hostTextBox.Text = "smtp.office365.com";
-                portTextBox.Text = "587";
-                sslCheckBox.IsChecked = true;
-                UpdateStatus("Configuración de Office 365 aplicada", Colors.Orange);
-                _logger?.LogInformation("Aplicada configuración predefinida: Office 365");
-            }        }
-
-        private bool _isLoadingConfiguration = false;
-        
         private void LoadConfigurationToUI()
-        {            try
-            {
-            // Protección contra múltiples ejecuciones simultáneas
+        {
             if (_isLoadingConfiguration)
-            {
                 return;
-            }
-            
-            _isLoadingConfiguration = true;
 
-                // Obtener la configuración más actualizada desde el servicio
+            try
+            {
+                _isLoadingConfiguration = true;
+
                 var latestConfig = _configurationService?.Current?.Modules?.GestionCartera?.Smtp;
                 if (latestConfig != null)
                 {
                     _currentSettings = latestConfig;
                 }
-                    
+
                 if (_currentSettings == null)
                 {
-                    _logger?.LogWarning("⚠️ SALIENDO: CurrentSettings es null");
-                    return;
-                }var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-                var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-                var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
-                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
-                var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
-                var saveCredentialsCheckBox = this.FindName("SaveCredentialsCheckBox") as System.Windows.Controls.CheckBox;
-                var bccEmailTextBox = this.FindName("BccEmailTextBox") as System.Windows.Controls.TextBox;
-                var ccEmailTextBox = this.FindName("CcEmailTextBox") as System.Windows.Controls.TextBox;
-
-                // Verificar que los controles críticos existan antes de continuar
-                if (hostTextBox == null || emailTextBox == null)
-                {
-                    _logger?.LogWarning("⚠️ SALIENDO: Controles críticos no encontrados (HostTextBox={HasHost}, EmailTextBox={HasEmail})", 
-                        hostTextBox != null, emailTextBox != null);
+                    _logger.LogWarning("No se encontró configuración SMTP actual para cargar en UI");
                     return;
                 }
 
-                if (hostTextBox != null)
+                var hostTextBox = FindName("HostTextBox") as TextBox;
+                var portTextBox = FindName("PortTextBox") as TextBox;
+                var sslCheckBox = FindName("SslCheckBox") as CheckBox;
+                var emailTextBox = FindName("EmailTextBox") as TextBox;
+                var passwordBox = FindName("PasswordBox") as PasswordBox;
+                var saveCredentialsCheckBox = FindName("SaveCredentialsCheckBox") as CheckBox;
+
+                if (hostTextBox != null) hostTextBox.Text = _currentSettings.Server ?? string.Empty;
+                if (portTextBox != null) portTextBox.Text = _currentSettings.Port.ToString();
+                if (sslCheckBox != null) sslCheckBox.IsChecked = _currentSettings.UseSSL;
+                if (emailTextBox != null) emailTextBox.Text = _currentSettings.Username ?? string.Empty;
+
+                BccEmails.Clear();
+                foreach (var email in ParseEmailList(_currentSettings.BccEmail))
                 {
-                    hostTextBox.Text = _currentSettings.Server ?? string.Empty;
+                    BccEmails.Add(email);
                 }
-                  if (portTextBox != null)
+
+                CcEmails.Clear();
+                foreach (var email in ParseEmailList(_currentSettings.CcEmail))
                 {
-                    portTextBox.Text = _currentSettings.Port.ToString();
+                    CcEmails.Add(email);
                 }
-                  if (sslCheckBox != null)
-                {
-                    sslCheckBox.IsChecked = _currentSettings.UseSSL;
-                }                if (emailTextBox != null)
-                {
-                    emailTextBox.Text = _currentSettings.Username ?? string.Empty;
-                }                // Cargar campos BCC y CC desde la configuración
-                if (bccEmailTextBox != null)
-                {
-                    var bccValue = _currentSettings.BccEmail ?? string.Empty;
-                    bccEmailTextBox.Text = bccValue;
-                    
-                    // Verificar que la asignación fue exitosa
-                    var verifyBcc = bccEmailTextBox.Text;
-                }
-                else
-                {
-                    _logger?.LogWarning("⚠️ BccEmailTextBox es NULL - no se puede asignar valor");
-                }                if (ccEmailTextBox != null)
-                {
-                    var ccValue = _currentSettings.CcEmail ?? string.Empty;
-                    ccEmailTextBox.Text = ccValue;
-                }// Cargar credenciales guardadas si existen
+
                 if (_currentSettings.UseAuthentication && !string.IsNullOrEmpty(_currentSettings.Username))
                 {
                     var credentialTarget = $"SMTP_{_currentSettings.Server}_{_currentSettings.Username}";
-                    
-                    var credentials = _credentialService?.GetCredentials(credentialTarget);
-                    
-                    if (credentials.HasValue && !string.IsNullOrEmpty(credentials.Value.username) && !string.IsNullOrEmpty(credentials.Value.password))
+                    var credentials = _credentialService.GetCredentials(credentialTarget);
+
+                    if (!string.IsNullOrEmpty(credentials.username) &&
+                        !string.IsNullOrEmpty(credentials.password))
                     {
                         if (saveCredentialsCheckBox != null)
                             saveCredentialsCheckBox.IsChecked = true;
-                        
+
                         if (passwordBox != null)
-                            passwordBox.Password = credentials.Value.password;
-                        
-                        // Asignar la contraseña recuperada al objeto de configuración                        _currentSettings.Password = credentials.Value.password;
+                            passwordBox.Password = credentials.password;
+
+                        _currentSettings.Password = credentials.password;
                     }
                 }
-                else
-                {
-                    if (_currentSettings.UseAuthentication && string.IsNullOrEmpty(_currentSettings.Username))
-                    {
-                        _logger?.LogWarning("⚠️ No se cargarán credenciales: UseAuthentication={UseAuth}, Username vacio={IsEmpty}", 
-                            _currentSettings.UseAuthentication, string.IsNullOrEmpty(_currentSettings.Username));
-                    }
-                }                UpdateStatus(_currentSettings.IsConfigured ? "Configuración cargada" : "No configurado",
-                           _currentSettings.IsConfigured ? Colors.Green : Colors.Red);
+
+                UpdateCopyCounters();
+                UpdatePlaceholderVisibility();
+                UpdateStatus(_currentSettings.IsConfigured ? "Configuración cargada" : "No configurado",
+                    _currentSettings.IsConfigured ? Colors.Green : Colors.Red);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error al cargar configuración a la UI");
+                _logger.LogError(ex, "Error al cargar configuración a la UI");
                 UpdateStatus("Error al cargar configuración", Colors.Red);
-            }            finally
+            }
+            finally
             {
                 _isLoadingConfiguration = false;
             }
@@ -289,51 +293,33 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private void UpdateUI()
         {
-            try
-            {
-                var testButton = this.FindName("TestButton") as System.Windows.Controls.Button;
-                var saveButton = this.FindName("SaveButton") as System.Windows.Controls.Button;
+            var testButton = FindName("TestButton") as Button;
+            var saveButton = FindName("SaveButton") as Button;
 
-                if (testButton == null || saveButton == null)
-                {
-                    return;
-                }
+            if (testButton == null || saveButton == null)
+                return;
 
-                var isValidForTest = ValidateForTest();
-                var isValidForSave = ValidateForSave();
-                
-                testButton.IsEnabled = isValidForTest;
-                saveButton.IsEnabled = isValidForSave && _isTestSuccessful;
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning("Error en UpdateUI: {ErrorMessage}", ex.Message);
-            }
+            var isValidForTest = ValidateForTest();
+            var isValidForSave = ValidateForSave();
+
+            testButton.IsEnabled = isValidForTest;
+            saveButton.IsEnabled = isValidForSave && _isTestSuccessful;
         }
 
         private bool ValidateForTest()
         {
-            try
-            {
-                var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-                var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
-                var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
+            var hostTextBox = FindName("HostTextBox") as TextBox;
+            var portTextBox = FindName("PortTextBox") as TextBox;
+            var emailTextBox = FindName("EmailTextBox") as TextBox;
+            var passwordBox = FindName("PasswordBox") as PasswordBox;
 
-                if (hostTextBox == null || portTextBox == null || emailTextBox == null || passwordBox == null)
-                {
-                    return false;
-                }
-
-                return !string.IsNullOrWhiteSpace(hostTextBox.Text) &&
-                       int.TryParse(portTextBox.Text, out int port) && port > 0 && port <= 65535 &&
-                       !string.IsNullOrWhiteSpace(emailTextBox.Text) &&
-                       !string.IsNullOrWhiteSpace(passwordBox.Password);
-            }
-            catch
-            {
+            if (hostTextBox == null || portTextBox == null || emailTextBox == null || passwordBox == null)
                 return false;
-            }
+
+            return !string.IsNullOrWhiteSpace(hostTextBox.Text)
+                   && int.TryParse(portTextBox.Text, out var port) && port > 0 && port <= 65535
+                   && !string.IsNullOrWhiteSpace(emailTextBox.Text)
+                   && !string.IsNullOrWhiteSpace(passwordBox.Password);
         }
 
         private bool ValidateForSave()
@@ -345,12 +331,12 @@ namespace GestLog.Modules.GestionCartera.Views
         {
             try
             {
-                var testButton = this.FindName("TestButton") as System.Windows.Controls.Button;
-                var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-                var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-                var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
-                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
-                var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
+                var testButton = FindName("TestButton") as Button;
+                var hostTextBox = FindName("HostTextBox") as TextBox;
+                var portTextBox = FindName("PortTextBox") as TextBox;
+                var sslCheckBox = FindName("SslCheckBox") as CheckBox;
+                var emailTextBox = FindName("EmailTextBox") as TextBox;
+                var passwordBox = FindName("PasswordBox") as PasswordBox;
 
                 UpdateStatus("Probando configuración...", Colors.Orange);
                 if (testButton != null)
@@ -359,7 +345,7 @@ namespace GestLog.Modules.GestionCartera.Views
                 var testConfig = new SmtpConfiguration
                 {
                     SmtpServer = hostTextBox?.Text?.Trim() ?? string.Empty,
-                    Port = int.TryParse(portTextBox?.Text?.Trim(), out int port) ? port : 587,
+                    Port = int.TryParse(portTextBox?.Text?.Trim(), out var port) ? port : 587,
                     EnableSsl = sslCheckBox?.IsChecked ?? true,
                     Username = emailTextBox?.Text?.Trim() ?? string.Empty,
                     Password = passwordBox?.Password ?? string.Empty
@@ -372,60 +358,71 @@ namespace GestLog.Modules.GestionCartera.Views
                 {
                     _isTestSuccessful = true;
                     UpdateStatus("✅ Configuración válida", Colors.Green);
-                    _logger?.LogInformation("Configuración SMTP validada exitosamente");
                 }
                 else
                 {
                     _isTestSuccessful = false;
                     UpdateStatus("❌ Error en la configuración", Colors.Red);
-                    _logger?.LogWarning("Error en validación SMTP");
                 }
             }
             catch (Exception ex)
             {
                 _isTestSuccessful = false;
                 UpdateStatus($"❌ Error: {ex.Message}", Colors.Red);
-                _logger?.LogError(ex, "Error al probar configuración SMTP");
+                _logger.LogError(ex, "Error al probar configuración SMTP");
             }
             finally
             {
-                var testButton = this.FindName("TestButton") as System.Windows.Controls.Button;
+                var testButton = FindName("TestButton") as Button;
                 if (testButton != null)
                     testButton.IsEnabled = true;
+
                 UpdateUI();
             }
-        }        private async Task SaveConfigurationAsync()
+        }
+
+        private async Task SaveConfigurationAsync()
         {
             try
             {
                 if (!_isTestSuccessful)
                 {
-                    System.Windows.MessageBox.Show("Debe probar la configuración antes de guardarla.", 
-                                  "Validación requerida", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    MessageBox.Show("Debe probar la configuración antes de guardarla.",
+                        "Validación requerida", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                var hostTextBox = this.FindName("HostTextBox") as System.Windows.Controls.TextBox;
-                var portTextBox = this.FindName("PortTextBox") as System.Windows.Controls.TextBox;
-                var sslCheckBox = this.FindName("SslCheckBox") as System.Windows.Controls.CheckBox;
-                var emailTextBox = this.FindName("EmailTextBox") as System.Windows.Controls.TextBox;
-                var passwordBox = this.FindName("PasswordBox") as System.Windows.Controls.PasswordBox;
-                var saveCredentialsCheckBox = this.FindName("SaveCredentialsCheckBox") as System.Windows.Controls.CheckBox;
-                var bccEmailTextBox = this.FindName("BccEmailTextBox") as System.Windows.Controls.TextBox;
-                var ccEmailTextBox = this.FindName("CcEmailTextBox") as System.Windows.Controls.TextBox;
+                if (!TryCommitPendingEmailInputs())
+                {
+                    MessageBox.Show("Revise los correos de CC/BCC antes de guardar.",
+                        "Correos inválidos", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var hostTextBox = FindName("HostTextBox") as TextBox;
+                var portTextBox = FindName("PortTextBox") as TextBox;
+                var sslCheckBox = FindName("SslCheckBox") as CheckBox;
+                var emailTextBox = FindName("EmailTextBox") as TextBox;
+                var passwordBox = FindName("PasswordBox") as PasswordBox;
+                var saveCredentialsCheckBox = FindName("SaveCredentialsCheckBox") as CheckBox;
 
                 var email = emailTextBox?.Text?.Trim() ?? string.Empty;
                 var password = passwordBox?.Password ?? string.Empty;
                 var shouldSaveCredentials = saveCredentialsCheckBox?.IsChecked ?? false;
-                var bccEmail = bccEmailTextBox?.Text?.Trim() ?? string.Empty;
-                var ccEmail = ccEmailTextBox?.Text?.Trim() ?? string.Empty;                _logger?.LogInformation("💾 [SmtpConfigurationWindow] Iniciando guardado de configuración SMTP");
-                _logger?.LogInformation("   📌 Servidor: {Server}", hostTextBox?.Text?.Trim() ?? "(vacío)");
-                _logger?.LogInformation("   📧 Usuario: {Email}", email);
-                _logger?.LogInformation("   📨 BCC: {BccEmail}", string.IsNullOrWhiteSpace(bccEmail) ? "(vacío)" : bccEmail);
-                _logger?.LogInformation("   📋 CC: {CcEmail}", string.IsNullOrWhiteSpace(ccEmail) ? "(vacío)" : ccEmail);                var smtpConfiguration = new SmtpSettings
+
+                var bccEmail = JoinEmailList(BccEmails);
+                var ccEmail = JoinEmailList(CcEmails);
+
+                _logger.LogInformation("💾 [SmtpConfigurationWindow] Iniciando guardado de configuración SMTP");
+                _logger.LogInformation("   📌 Servidor: {Server}", hostTextBox?.Text?.Trim() ?? "(vacío)");
+                _logger.LogInformation("   📧 Usuario: {Email}", email);
+                _logger.LogInformation("   📨 BCC: {BccEmail}", string.IsNullOrWhiteSpace(bccEmail) ? "(vacío)" : bccEmail);
+                _logger.LogInformation("   📋 CC: {CcEmail}", string.IsNullOrWhiteSpace(ccEmail) ? "(vacío)" : ccEmail);
+
+                var smtpConfiguration = new SmtpSettings
                 {
                     Server = hostTextBox?.Text?.Trim() ?? string.Empty,
-                    Port = int.TryParse(portTextBox?.Text?.Trim(), out int port) ? port : 587,
+                    Port = int.TryParse(portTextBox?.Text?.Trim(), out var port) ? port : 587,
                     Username = email,
                     FromEmail = email,
                     FromName = email,
@@ -436,73 +433,201 @@ namespace GestLog.Modules.GestionCartera.Views
                     IsConfigured = true
                 };
 
-                bool saved = await _smtpPersistenceService.SaveSmtpConfigurationAsync(
+                var saved = await _smtpPersistenceService.SaveSmtpConfigurationAsync(
                     smtpConfiguration,
                     operationSource: "SmtpConfigurationWindow.SaveConfigurationAsync");
 
                 if (!saved)
                 {
-                    _logger?.LogError(new InvalidOperationException(), "❌ [SmtpConfigurationWindow] Error guardando configuración SMTP");
-                    UpdateStatus("Error al guardar la configuración", System.Windows.Media.Colors.Red);
-                    System.Windows.MessageBox.Show("Error al guardar la configuración SMTP", 
-                                  "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    UpdateStatus("Error al guardar la configuración", Colors.Red);
+                    MessageBox.Show("Error al guardar la configuración SMTP",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }                _logger?.LogInformation("✅ [SmtpConfigurationWindow] Configuración SMTP guardada exitosamente");
+                }
 
                 if (shouldSaveCredentials && !string.IsNullOrEmpty(email))
                 {
                     var credentialTarget = $"GestionCartera_SMTP_{smtpConfiguration.Server}_{email}";
-                    _credentialService?.DeleteCredentials(credentialTarget);
+                    _credentialService.DeleteCredentials(credentialTarget);
 
-                    var savedCreds = _credentialService?.SaveCredentials(
-                        credentialTarget,
-                        email,
-                        password) ?? false;
-                    if (savedCreds)
+                    var savedCreds = _credentialService.SaveCredentials(credentialTarget, email, password);
+                    if (!savedCreds)
                     {
-                        _logger?.LogInformation("🔐 [SmtpConfigurationWindow] Credenciales guardadas en Windows Credential Manager");
-                    }
-                    else
-                    {
-                        _logger?.LogWarning("⚠️ [SmtpConfigurationWindow] Error guardando credenciales");
-                        System.Windows.MessageBox.Show("Error al guardar las credenciales de forma segura. Inténtelo nuevamente.", 
-                                      "Error de Credenciales", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        _logger.LogWarning("Error guardando credenciales SMTP en Credential Manager");
                     }
                 }
 
-                UpdateStatus("Configuración guardada exitosamente", System.Windows.Media.Colors.Green);
-                this.DialogResult = true;
+                UpdateStatus("Configuración guardada exitosamente", Colors.Green);
+                DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "❌ [SmtpConfigurationWindow] Error en SaveConfigurationAsync: {ErrorMessage}", ex.Message);
-                UpdateStatus($"Error al guardar: {ex.Message}", System.Windows.Media.Colors.Red);
-                System.Windows.MessageBox.Show($"Error al guardar la configuración: {ex.Message}", 
-                              "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _logger.LogError(ex, "Error al guardar configuración SMTP");
+                UpdateStatus($"Error al guardar: {ex.Message}", Colors.Red);
+                MessageBox.Show($"Error al guardar la configuración: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void UpdateStatus(string message, System.Windows.Media.Color color)
+        private void HandleAddEmailsFromInput(TextBox? inputTextBox, ObservableCollection<string> targetCollection, string listName)
+        {
+            if (inputTextBox == null)
+                return;
+
+            var rawValue = inputTextBox.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return;
+
+            var parsedEmails = ParseEmailList(rawValue).ToList();
+            var invalidEmails = new List<string>();
+            var addedCount = 0;
+
+            foreach (var email in parsedEmails)
+            {
+                if (!IsValidEmail(email))
+                {
+                    invalidEmails.Add(email);
+                    continue;
+                }
+
+                var alreadyExists = targetCollection.Any(existing =>
+                    existing.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+                if (!alreadyExists)
+                {
+                    targetCollection.Add(email);
+                    addedCount++;
+                }
+            }
+
+            inputTextBox.Clear();
+            UpdatePlaceholderVisibility();
+
+            if (invalidEmails.Count > 0)
+            {
+                UpdateStatus($"⚠️ Correos inválidos en {listName}: {string.Join(", ", invalidEmails)}", Colors.Orange);
+                return;
+            }
+
+            if (addedCount > 0)
+            {
+                UpdateStatus($"✅ {addedCount} correo(s) agregado(s) a {listName}", Colors.Green);
+            }
+        }
+
+        private bool TryCommitPendingEmailInputs()
+        {
+            var bccInput = FindName("BccEmailInputTextBox") as TextBox;
+            var ccInput = FindName("CcEmailInputTextBox") as TextBox;
+
+            if (bccInput != null && !string.IsNullOrWhiteSpace(bccInput.Text))
+            {
+                if (HasInvalidEmailInRawInput(bccInput.Text))
+                    return false;
+
+                HandleAddEmailsFromInput(bccInput, BccEmails, "BCC");
+            }
+
+            if (ccInput != null && !string.IsNullOrWhiteSpace(ccInput.Text))
+            {
+                if (HasInvalidEmailInRawInput(ccInput.Text))
+                    return false;
+
+                HandleAddEmailsFromInput(ccInput, CcEmails, "CC");
+            }
+
+            return true;
+        }
+
+        private static bool HasInvalidEmailInRawInput(string rawInput)
+        {
+            var emails = ParseEmailList(rawInput);
+            return emails.Any(email => !IsValidEmail(email));
+        }
+
+        private static IEnumerable<string> ParseEmailList(string? rawEmailList)
+        {
+            if (string.IsNullOrWhiteSpace(rawEmailList))
+                return Enumerable.Empty<string>();
+
+            return rawEmailList
+                .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(email => email.Trim())
+                .Where(email => !string.IsNullOrWhiteSpace(email));
+        }
+
+        private static string JoinEmailList(IEnumerable<string> emails)
+        {
+            return string.Join(";", emails
+                .Select(email => email.Trim())
+                .Where(email => !string.IsNullOrWhiteSpace(email))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+
+        private static bool IsValidEmail(string email)
         {
             try
             {
-                var statusTextBlock = this.FindName("StatusTextBlock") as TextBlock;
-                var statusIndicator = this.FindName("StatusIndicator") as System.Windows.Shapes.Ellipse;
-
-                if (statusTextBlock != null)
-                    statusTextBlock.Text = message;
-                
-                if (statusIndicator != null)
-                    statusIndicator.Fill = new SolidColorBrush(color);
+                var addr = new MailAddress(email);
+                return addr.Address.Equals(email, StringComparison.OrdinalIgnoreCase);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger?.LogWarning("Error actualizando status: {ErrorMessage}", ex.Message);
+                return false;
             }
+        }
+
+        private void UpdateCopyCounters()
+        {
+            var bccCountTextBlock = FindName("BccCountTextBlock") as TextBlock;
+            var ccCountTextBlock = FindName("CcCountTextBlock") as TextBlock;
+
+            if (bccCountTextBlock != null)
+            {
+                bccCountTextBlock.Text = $"{BccEmails.Count} correo(s) BCC";
+            }
+
+            if (ccCountTextBlock != null)
+            {
+                ccCountTextBlock.Text = $"{CcEmails.Count} correo(s) CC";
+            }
+        }
+
+        private void UpdatePlaceholderVisibility()
+        {
+            var bccInput = FindName("BccEmailInputTextBox") as TextBox;
+            var ccInput = FindName("CcEmailInputTextBox") as TextBox;
+            var bccPlaceholder = FindName("BccPlaceholderTextBlock") as TextBlock;
+            var ccPlaceholder = FindName("CcPlaceholderTextBlock") as TextBlock;
+
+            if (bccPlaceholder != null)
+            {
+                bccPlaceholder.Visibility = string.IsNullOrWhiteSpace(bccInput?.Text)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+
+            if (ccPlaceholder != null)
+            {
+                ccPlaceholder.Visibility = string.IsNullOrWhiteSpace(ccInput?.Text)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateStatus(string message, Color color)
+        {
+            var statusTextBlock = FindName("StatusTextBlock") as TextBlock;
+            var statusIndicator = FindName("StatusIndicator") as System.Windows.Shapes.Ellipse;
+
+            if (statusTextBlock != null)
+                statusTextBlock.Text = message;
+
+            if (statusIndicator != null)
+                statusIndicator.Fill = new SolidColorBrush(color);
         }
 
         #endregion
     }
 }
-

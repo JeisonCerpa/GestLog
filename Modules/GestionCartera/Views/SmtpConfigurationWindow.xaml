@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    x:Name="RootWindow"
         mc:Ignorable="d"
         Title="⚙️ Configuración SMTP"
         Height="600" Width="500"
@@ -140,24 +141,119 @@
                         <TextBlock Text="📧 Configuración de Copias" 
                                   FontSize="14" FontWeight="SemiBold" 
                                   Foreground="#2C3E50" Margin="0,0,0,15"/>
-                        
-                        <!-- BCC Email -->
-                        <TextBlock Text="Copia Oculta (BCC):" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="BccEmailTextBox" 
-                                Padding="10" BorderBrush="#BDC3C7" 
-                                FontSize="12" Margin="0,0,0,15"
-                                TextChanged="OnFieldChanged"
-                                ToolTip="Correo que recibirá copia oculta de todos los envíos (opcional)"/>
 
-                        <!-- CC Email -->
+                        <!-- BCC múltiple -->
+                        <TextBlock Text="Copia Oculta (BCC):" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Margin="0,0,8,0">
+                                <TextBox x:Name="BccEmailInputTextBox"
+                                         Padding="10" BorderBrush="#BDC3C7"
+                                         FontSize="12"
+                                         TextChanged="OnFieldChanged"
+                                         KeyDown="BccEmailInputTextBox_KeyDown"
+                                         ToolTip="Escriba un correo y presione Enter o Agregar"/>
+                                <TextBlock x:Name="BccPlaceholderTextBlock"
+                                           Text="Ej: cartera@cliente.com; tesoreria@cliente.com"
+                                           Margin="12,0,10,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="#95A5A6"
+                                           FontSize="11"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+
+                            <Button Grid.Column="1"
+                                    Content="+ Agregar"
+                                    Background="#2B8E3F" Foreground="White"
+                                    Padding="10,6" BorderThickness="0" FontWeight="SemiBold"
+                                    Click="AddBccEmail_Click"/>
+                        </Grid>
+
+                        <Border Background="White" BorderBrush="#E1E4E8" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90">
+                                <ItemsControl ItemsSource="{Binding BccEmails, ElementName=RootWindow}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,2,0,2">
+                                                <Button Content="✕"
+                                                        DockPanel.Dock="Right"
+                                                        Tag="{Binding}"
+                                                        Width="24" Height="24"
+                                                        Margin="8,0,0,0"
+                                                        Background="#E74C3C" Foreground="White"
+                                                        BorderThickness="0"
+                                                        FontWeight="Bold"
+                                                        Click="RemoveBccEmail_Click"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                        <TextBlock x:Name="BccCountTextBlock" Text="0 correos BCC" FontSize="11" Foreground="#7F8C8D" Margin="0,0,0,12"/>
+
+                        <!-- CC múltiple -->
                         <TextBlock Text="Copia (CC):" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="CcEmailTextBox" 
-                                Padding="10" BorderBrush="#BDC3C7" 
-                                FontSize="12" Margin="0,0,0,10"
-                                TextChanged="OnFieldChanged"
-                                ToolTip="Correo que recibirá copia de todos los envíos (opcional)"/>
-                        
-                        <TextBlock Text="💡 Las copias se aplicarán automáticamente en todos los envíos" 
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Margin="0,0,8,0">
+                                <TextBox x:Name="CcEmailInputTextBox"
+                                         Padding="10" BorderBrush="#BDC3C7"
+                                         FontSize="12"
+                                         TextChanged="OnFieldChanged"
+                                         KeyDown="CcEmailInputTextBox_KeyDown"
+                                         ToolTip="Escriba un correo y presione Enter o Agregar"/>
+                                <TextBlock x:Name="CcPlaceholderTextBlock"
+                                           Text="Ej: finanzas@empresa.com, compras@empresa.com"
+                                           Margin="12,0,10,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="#95A5A6"
+                                           FontSize="11"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+
+                            <Button Grid.Column="1"
+                                    Content="+ Agregar"
+                                    Background="#2B8E3F" Foreground="White"
+                                    Padding="10,6" BorderThickness="0" FontWeight="SemiBold"
+                                    Click="AddCcEmail_Click"/>
+                        </Grid>
+
+                        <Border Background="White" BorderBrush="#E1E4E8" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,6">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="90">
+                                <ItemsControl ItemsSource="{Binding CcEmails, ElementName=RootWindow}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,2,0,2">
+                                                <Button Content="✕"
+                                                        DockPanel.Dock="Right"
+                                                        Tag="{Binding}"
+                                                        Width="24" Height="24"
+                                                        Margin="8,0,0,0"
+                                                        Background="#E74C3C" Foreground="White"
+                                                        BorderThickness="0"
+                                                        FontWeight="Bold"
+                                                        Click="RemoveCcEmail_Click"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                        <TextBlock x:Name="CcCountTextBlock" Text="0 correos CC" FontSize="11" Foreground="#7F8C8D" Margin="0,0,0,8"/>
+
+                        <TextBlock Text="💡 Las copias se aplicarán automáticamente en todos los envíos. También puede pegar listas separadas por coma (,) o punto y coma (;)" 
+                                  TextWrapping="Wrap"
                                   FontSize="11" Foreground="#7F8C8D" FontStyle="Italic"/>
                     </StackPanel>
                 </Border>

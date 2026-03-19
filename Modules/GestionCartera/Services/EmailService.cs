@@ -467,7 +467,9 @@ namespace GestLog.Modules.GestionCartera.Services
             {
                 return false;
             }
-        }        private MailMessage CreateMailMessage(EmailInfo emailInfo)
+        }
+
+        private MailMessage CreateMailMessage(EmailInfo emailInfo)
         {
             var config = CurrentConfiguration!;
             
@@ -476,13 +478,15 @@ namespace GestLog.Modules.GestionCartera.Services
                 config.Username ?? "(vacío)", 
                 string.IsNullOrWhiteSpace(config.BccEmail) ? "(vacío)" : config.BccEmail,
                 string.IsNullOrWhiteSpace(config.CcEmail) ? "(vacío)" : config.CcEmail);
-              var message = new MailMessage
+            var message = new MailMessage
             {
                 From = new MailAddress(config.Username ?? string.Empty),
                 Subject = emailInfo.Subject,
                 Body = emailInfo.Body,
                 IsBodyHtml = emailInfo.IsBodyHtml
-            };// Agregar destinatarios
+            };
+
+            // Agregar destinatarios
             foreach (var recipient in emailInfo.Recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
             {
                 if (!string.IsNullOrWhiteSpace(recipient))
@@ -490,37 +494,59 @@ namespace GestLog.Modules.GestionCartera.Services
             }
 
             // Agregar CC desde EmailInfo (opcional, específico por correo)
-            if (!string.IsNullOrWhiteSpace(emailInfo.CcRecipient))
-                message.CC.Add(emailInfo.CcRecipient);
-
-            // Agregar BCC desde EmailInfo (opcional, específico por correo)
-            if (!string.IsNullOrWhiteSpace(emailInfo.BccRecipient))
-                message.Bcc.Add(emailInfo.BccRecipient);            // Agregar BCC y CC automáticamente desde la configuración SMTP
-            if (!string.IsNullOrWhiteSpace(config.BccEmail))
+            foreach (var ccRecipient in ParseEmailList(emailInfo.CcRecipient))
             {
-                bool alreadyInBcc = message.Bcc.Cast<MailAddress>().Any(addr => 
-                    addr.Address.Equals(config.BccEmail, StringComparison.OrdinalIgnoreCase));
-                    
-                if (!alreadyInBcc)
-                {
-                    message.Bcc.Add(config.BccEmail);
-                    _logger.LogDebug("BCC agregado: {BccEmail}", config.BccEmail);
-                }
+                AddIfNotExists(message.CC, ccRecipient, "CC");
             }
 
-            if (!string.IsNullOrWhiteSpace(config.CcEmail))
+            // Agregar BCC desde EmailInfo (opcional, específico por correo)
+            foreach (var bccRecipient in ParseEmailList(emailInfo.BccRecipient))
             {
-                bool alreadyInCc = message.CC.Cast<MailAddress>().Any(addr => 
-                    addr.Address.Equals(config.CcEmail, StringComparison.OrdinalIgnoreCase));
-                    
-                if (!alreadyInCc)
-                {
-                    message.CC.Add(config.CcEmail);
-                    _logger.LogDebug("CC agregado: {CcEmail}", config.CcEmail);
-                }
+                AddIfNotExists(message.Bcc, bccRecipient, "BCC");
+            }
+
+            // Agregar BCC y CC automáticamente desde la configuración SMTP
+            foreach (var configuredBcc in ParseEmailList(config.BccEmail))
+            {
+                AddIfNotExists(message.Bcc, configuredBcc, "BCC");
+            }
+
+            foreach (var configuredCc in ParseEmailList(config.CcEmail))
+            {
+                AddIfNotExists(message.CC, configuredCc, "CC");
             }
 
             return message;
+        }
+
+        private static IEnumerable<string> ParseEmailList(string? rawEmails)
+        {
+            if (string.IsNullOrWhiteSpace(rawEmails))
+                return Enumerable.Empty<string>();
+
+            return rawEmails
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(email => email.Trim())
+                .Where(email => !string.IsNullOrWhiteSpace(email))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private void AddIfNotExists(MailAddressCollection collection, string email, string type)
+        {
+            if (!IsValidEmail(email))
+            {
+                _logger.LogWarning("Se omitió correo inválido en {Type}: {Email}", type, email);
+                return;
+            }
+
+            bool exists = collection.Cast<MailAddress>().Any(addr =>
+                addr.Address.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+            if (exists)
+                return;
+
+            collection.Add(email);
+            _logger.LogDebug("{Type} agregado: {Email}", type, email);
         }
 
                 private SmtpClient CreateSmtpClient()

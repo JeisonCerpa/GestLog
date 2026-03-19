@@ -293,16 +293,20 @@ public class SmtpPersistenceService : ISmtpPersistenceService
             return false;
         }
 
-        // Validar emails BCC y CC si están presentes
-        if (!string.IsNullOrWhiteSpace(configuration.BccEmail) && !IsValidEmail(configuration.BccEmail))
+        // Validar emails BCC y CC (permitir listas separadas por ';' o ',')
+        var invalidBcc = GetInvalidEmails(configuration.BccEmail).ToList();
+        if (invalidBcc.Any())
         {
-            _logger.LogWarning("⚠️ [SmtpPersistenceService] Validación: BCC email inválido - {BccEmail}", configuration.BccEmail);
+            _logger.LogWarning("⚠️ [SmtpPersistenceService] Validación: BCC email(s) inválido(s) - {InvalidBcc}",
+                string.Join(", ", invalidBcc));
             return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(configuration.CcEmail) && !IsValidEmail(configuration.CcEmail))
+        var invalidCc = GetInvalidEmails(configuration.CcEmail).ToList();
+        if (invalidCc.Any())
         {
-            _logger.LogWarning("⚠️ [SmtpPersistenceService] Validación: CC email inválido - {CcEmail}", configuration.CcEmail);
+            _logger.LogWarning("⚠️ [SmtpPersistenceService] Validación: CC email(s) inválido(s) - {InvalidCc}",
+                string.Join(", ", invalidCc));
             return false;
         }
 
@@ -453,5 +457,22 @@ public class SmtpPersistenceService : ISmtpPersistenceService
         {
             return false;
         }
+    }
+
+    private static IEnumerable<string> ParseEmailList(string? rawEmails)
+    {
+        if (string.IsNullOrWhiteSpace(rawEmails))
+            return Enumerable.Empty<string>();
+
+        return rawEmails
+            .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(email => email.Trim())
+            .Where(email => !string.IsNullOrWhiteSpace(email));
+    }
+
+    private static IEnumerable<string> GetInvalidEmails(string? rawEmails)
+    {
+        return ParseEmailList(rawEmails)
+            .Where(email => !IsValidEmail(email));
     }
 }
