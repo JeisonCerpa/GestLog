@@ -134,6 +134,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             private decimal _totalGrupo;
             private bool _isExpanded = false;
+            private string _draftValorInput = string.Empty;
             
             public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -142,7 +143,37 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string RutaFactura { get; set; } = string.Empty;
             public int DraftTipoGasto { get; set; } = 4;
             public string DraftDescripcion { get; set; } = string.Empty;
-            public string DraftValorInput { get; set; } = string.Empty;
+            
+            public string DraftValorInput
+            {
+                get => _draftValorInput;
+                set
+                {
+                    if (_draftValorInput == value) return;
+                    
+                    // Formatear en vivo: remover caracteres no numéricos, agregar separadores
+                    var cleaned = System.Text.RegularExpressions.Regex.Replace(value ?? "", @"[^\d]", "");
+                    if (string.IsNullOrEmpty(cleaned))
+                    {
+                        _draftValorInput = string.Empty;
+                    }
+                    else if (cleaned.Length <= 3)
+                    {
+                        _draftValorInput = cleaned;
+                    }
+                    else if (decimal.TryParse(cleaned, out var num))
+                    {
+                        _draftValorInput = num.ToString("N0", new System.Globalization.CultureInfo("es-CO"));
+                    }
+                    else
+                    {
+                        _draftValorInput = cleaned;
+                    }
+                    
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DraftValorInput)));
+                }
+            }
+            
             public string DraftPlanDestinoKey { get; set; } = SharedDestinationKey;
             public ObservableCollection<GastoItemInput> Items { get; } = new();
 
@@ -171,11 +202,18 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string DisplayKey => string.IsNullOrWhiteSpace(NumeroFactura) ? "SIN-FACTURA" : NumeroFactura;
         }
 
+        public sealed class TipoGastoOption
+        {
+            public int Valor { get; set; }
+            public string Etiqueta { get; set; } = string.Empty;
+        }
+
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
         private readonly EjecucionesMantenimientoViewModel _viewModel;
         private int _currentStep = 1;
         private string _planFilterText = string.Empty;
         public ObservableCollection<PlanDestinoOption> PlanDestinoOptions { get; } = new();
+        public ObservableCollection<TipoGastoOption> TipoGastoOptions { get; } = new();
         public ICollectionView? FilteredPlanes { get; private set; }
 
         public string CurrentStepDisplay => $"Paso {_currentStep} de 3";
@@ -188,6 +226,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             IcItemsGasto.ItemsSource = _itemsGasto;
             InitializePlanFilter();
             RefreshPlanDestinoOptions();
+            InitializeTipoGastoOptions();
             InitializeWizardState();
             EnsureAtLeastOneFacturaGroup();
 
@@ -642,6 +681,15 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             UpdateResumenRapido();
         }
 
+        private void InitializeTipoGastoOptions()
+        {
+            TipoGastoOptions.Clear();
+            TipoGastoOptions.Add(new TipoGastoOption { Valor = 1, Etiqueta = "Repuesto" });
+            TipoGastoOptions.Add(new TipoGastoOption { Valor = 2, Etiqueta = "Mano de obra" });
+            TipoGastoOptions.Add(new TipoGastoOption { Valor = 3, Etiqueta = "Servicio externo" });
+            TipoGastoOptions.Add(new TipoGastoOption { Valor = 4, Etiqueta = "Otro" });
+        }
+
         private void GastoItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(GastoItemInput.ValorInput)
@@ -770,8 +818,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 foreach (var item in group.Items)
                 {
-                    var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                        || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                    // Limpiar el valor: quitar puntos que son separadores de miles
+                    var cleanedValue = item.ValorInput?.Trim()?.Replace(".", "") ?? "0";
+                    var valorValido = decimal.TryParse(cleanedValue, NumberStyles.Number, CultureInfo.InvariantCulture, out var valor);
 
                     if (valorValido && valor > 0)
                     {
