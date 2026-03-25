@@ -72,6 +72,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private sealed class GastoFacturaGroup : INotifyPropertyChanged
         {
             private decimal _totalGrupo;
+            private bool _isExpanded = false;
             
             public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -91,6 +92,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     if (_totalGrupo == value) return;
                     _totalGrupo = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalGrupo)));
+                }
+            }
+
+            public bool IsExpanded
+            {
+                get => _isExpanded;
+                set
+                {
+                    if (_isExpanded == value) return;
+                    _isExpanded = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
                 }
             }
 
@@ -146,6 +158,38 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 _itemsGasto.Add(CreateEmptyFacturaGroup());
             }
+        }
+
+        private async void BtnTomarKmActual_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_viewModel.FilterPlaca))
+            {
+                System.Windows.MessageBox.Show(this, "Debe indicar la placa para consultar el kilometraje actual.", "Kilometraje", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var kmActual = await _viewModel.GetVehicleCurrentMileageAsync();
+            if (!kmActual.HasValue || kmActual.Value <= 0)
+            {
+                System.Windows.MessageBox.Show(this, "No fue posible obtener el kilometraje actual del vehículo.", "Kilometraje", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (long.TryParse(_viewModel.RegistroKMAlMomentoInput?.Trim(), out var kmActualInput) && kmActualInput > 0 && kmActualInput != kmActual.Value)
+            {
+                var confirmar = System.Windows.MessageBox.Show(this,
+                    $"Ya hay un kilometraje ingresado ({kmActualInput:N0}). ¿Desea reemplazarlo por el kilometraje actual ({kmActual.Value:N0})?",
+                    "Confirmar reemplazo",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (confirmar != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+            }
+
+            _viewModel.RegistroKMAlMomentoInput = kmActual.Value.ToString(CultureInfo.InvariantCulture);
         }
 
         private async void BtnSave_Click(object sender, RoutedEventArgs e)

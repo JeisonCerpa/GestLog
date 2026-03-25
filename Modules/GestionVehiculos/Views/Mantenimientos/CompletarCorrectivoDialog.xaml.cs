@@ -82,6 +82,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         public class GastoFacturaGroup : INotifyPropertyChanged
         {
             private decimal _totalGrupo;
+            private bool _isExpanded = false;
             
             public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -101,6 +102,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     if (_totalGrupo == value) return;
                     _totalGrupo = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalGrupo)));
+                }
+            }
+
+            public bool IsExpanded
+            {
+                get => _isExpanded;
+                set
+                {
+                    if (_isExpanded == value) return;
+                    _isExpanded = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
                 }
             }
 

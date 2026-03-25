@@ -119,6 +119,23 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 .ToList();
         }
 
+        public async Task<long?> GetVehicleCurrentMileageAsync(CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(FilterPlaca))
+            {
+                return null;
+            }
+
+            var placa = FilterPlaca.Trim().ToUpperInvariant();
+            var vehiculo = await _vehicleService.GetByPlateAsync(placa, cancellationToken);
+            if (vehiculo == null)
+            {
+                return null;
+            }
+
+            return vehiculo.Mileage;
+        }
+
         [RelayCommand]
         public void PrepararNuevoCorrectivo()
         {

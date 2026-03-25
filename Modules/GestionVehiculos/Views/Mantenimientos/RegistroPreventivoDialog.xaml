@@ -18,6 +18,7 @@
         <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
         <converters:IsStringNullOrEmptyConverter x:Key="IsStringNullOrEmptyConverter" />
         <converters:PathToFileNameConverter x:Key="PathToFileNameConverter" />
+        <converters:AlternationIndexToColorConverter x:Key="AlternationIndexToColorConverter" />
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
@@ -689,44 +690,78 @@
 
                                                                 <!-- Resumen de ítems -->
                                                                 <StackPanel>
+                                                                    <!-- Encabezado -->
                                                                     <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,0,0,8" FontSize="11"/>
-                                                                    <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8">
-                                                                        <ItemsControl ItemsSource="{Binding Items}">
-                                                                            <ItemsControl.ItemTemplate>
-                                                                                <DataTemplate>
-                                                                                    <StackPanel>
-                                                                                        <!-- Encabezado: Tipo - Plan -->
-                                                                                        <StackPanel Margin="12,10,12,6" Orientation="Horizontal">
-                                                                                            <TextBlock Text="{Binding TipoGastoLabel}" FontWeight="SemiBold" Foreground="#1F2937" FontSize="11"/>
-                                                                                            <TextBlock Text=" - " Foreground="#6B7280" FontSize="11"/>
-                                                                                            <TextBlock Text="{Binding PlanDestinoResumen}" Foreground="#6B7280" FontSize="11"/>
-                                                                                        </StackPanel>
-                                                                                        
-                                                                                        <!-- Descripción y Valor -->
-                                                                                        <Grid Margin="12,0,12,8">
-                                                                                            <Grid.ColumnDefinitions>
-                                                                                                <ColumnDefinition Width="*"/>
-                                                                                                <ColumnDefinition Width="70"/>
-                                                                                                <ColumnDefinition Width="Auto"/>
-                                                                                                <ColumnDefinition Width="Auto"/>
-                                                                                            </Grid.ColumnDefinitions>
-                                                                                            
-                                                                                            <TextBlock Grid.Column="0" Text="{Binding Descripcion}" Foreground="#374151" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                                                                                            <TextBlock Grid.Column="1" Text="{Binding ValorInput, StringFormat='$ {0}'}" Foreground="#118938" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="11" Margin="8,0,0,0"/>
-                                                                                            <Border Grid.Column="2" Background="#F3F4F6" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" Width="28" Height="28" Margin="8,0,0,0" Cursor="Hand">
-                                                                                                <Button Content="✎" Background="Transparent" BorderThickness="0" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="12" Foreground="#1F2937"/>
-                                                                                            </Border>
-                                                                                            <Border Grid.Column="3" Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="4" Width="28" Height="28" Margin="4,0,0,0" Cursor="Hand">
-                                                                                                <Button Content="✕" Background="Transparent" BorderThickness="0" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="12" Foreground="#C0392B"/>
-                                                                                            </Border>
-                                                                                        </Grid>
-                                                                                        
-                                                                                        <!-- Separador -->
-                                                                                        <Border Background="#E5E7EB" Height="1" Margin="12,0,12,0"/>
-                                                                                    </StackPanel>
-                                                                                </DataTemplate>
-                                                                            </ItemsControl.ItemTemplate>
-                                                                        </ItemsControl>
+                                                                    
+                                                                    <!-- Container con sombra -->
+                                                                    <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Effect="{StaticResource CardShadow}">
+                                                                        <StackPanel>
+                                                                            <!-- Header de tabla -->
+                                                                            <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="12,10,12,10">
+                                                                                <Grid>
+                                                                                    <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                        <ColumnDefinition Width="*"/>
+                                                                                    </Grid.ColumnDefinitions>
+                                                                                    
+                                                                                    <TextBlock Grid.Column="0" Text="Tipo" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="0,0,12,0"/>
+                                                                                    <TextBlock Grid.Column="1" Text="Plan" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="0,0,12,0"/>
+                                                                                    <TextBlock Grid.Column="2" Text="Descripción" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="8,0,0,0"/>
+                                                                                    <TextBlock Grid.Column="3" Text="Valor" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="12,0,0,0" HorizontalAlignment="Center"/>
+                                                                                    <TextBlock Grid.Column="4" Text="Acciones" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="12,0,0,0" HorizontalAlignment="Center"/>
+                                                                                </Grid>
+                                                                            </Border>
+                                                                            
+                                                                            <!-- Items -->
+                                                                            <ItemsControl ItemsSource="{Binding Items}" AlternationCount="2">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="12,10,12,10">
+                                                                                            <Border.Background>
+                                                                                                <SolidColorBrush Color="{Binding (ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource AlternationIndexToColorConverter}}"/>
+                                                                                            </Border.Background>
+                                                                                            <Grid>
+                                                                                                <Grid.ColumnDefinitions>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                </Grid.ColumnDefinitions>
+                                                                                                
+                                                                                                <!-- Tipo Gasto -->
+                                                                                                <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" Foreground="#1F2937" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                                                                
+                                                                                                <!-- Plan Destino -->
+                                                                                                <TextBlock Grid.Column="1" Text="{Binding PlanDestinoResumen}" Foreground="#6B7280" FontSize="10" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                                                                
+                                                                                                <!-- Descripción -->
+                                                                                                <TextBlock Grid.Column="2" Text="{Binding Descripcion}" Foreground="#374151" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                                                                                
+                                                                                                <!-- Valor -->
+                                                                                                <TextBlock Grid.Column="3" Text="{Binding ValorInput, StringFormat='$ {0}'}" Foreground="#118938" FontWeight="SemiBold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0,0,0"/>
+                                                                                                
+                                                                                                <!-- Botones de Acción -->
+                                                                                                <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                                                                    <Border Background="#F3F4F6" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Cursor="Hand">
+                                                                                                        <Button Content="✎" Background="Transparent" BorderThickness="0" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="10" Foreground="#1F2937"/>
+                                                                                                    </Border>
+                                                                                                    <Border Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Margin="4,0,0,0" Cursor="Hand">
+                                                                                                        <Button Content="✕" Background="Transparent" BorderThickness="0" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="10" Foreground="#C0392B"/>
+                                                                                                    </Border>
+                                                                                                </StackPanel>
+                                                                                            </Grid>
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+                                                                            
+                                                                            <!-- Empty State -->
+                                                                            <TextBlock x:Name="TxtNoItems" Text="Sin ítems agregados" Foreground="#9CA3AF" FontSize="10" FontStyle="Italic" Padding="12,16,12,16" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                                                                        </StackPanel>
                                                                     </Border>
                                                                 </StackPanel>
                                                             </StackPanel>

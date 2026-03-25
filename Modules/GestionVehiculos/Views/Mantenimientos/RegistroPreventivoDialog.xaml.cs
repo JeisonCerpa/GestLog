@@ -35,6 +35,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             private string _numeroFactura = string.Empty;
             private string _rutaFactura = string.Empty;
             private string _planDestinoKey = SharedDestinationKey;
+            private string _planDestinoLabel = string.Empty;
 
             public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -117,6 +118,18 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 }
             }
 
+            public string PlanDestinoLabel
+            {
+                get => _planDestinoLabel;
+                set
+                {
+                    if (_planDestinoLabel == value) return;
+                    _planDestinoLabel = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlanDestinoLabel)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlanDestinoResumen)));
+                }
+            }
+
             public string TipoGastoLabel => TipoGasto switch
             {
                 1 => "Repuesto",
@@ -127,7 +140,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             public string PlanDestinoResumen => IsSharedDestination(_planDestinoKey)
                 ? "Compartido"
-                : "Plan específico";
+                : (string.IsNullOrWhiteSpace(_planDestinoLabel) ? "Plan" : _planDestinoLabel);
         }
 
         private sealed class GastoFacturaGroup : INotifyPropertyChanged
@@ -352,6 +365,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 ValorInput = (group.DraftValorInput ?? string.Empty).Trim(),
                 PlanDestinoKey = string.IsNullOrWhiteSpace(group.DraftPlanDestinoKey) ? ResolveDefaultDestinationKey() : group.DraftPlanDestinoKey
             };
+            item.PlanDestinoLabel = ResolvePlanDestinoLabel(item.PlanDestinoKey);
 
             item.PropertyChanged += GastoItem_PropertyChanged;
             group.Items.Add(item);
@@ -675,6 +689,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     {
                         item.PlanDestinoKey = SharedDestinationKey;
                     }
+
+                    item.PlanDestinoLabel = ResolvePlanDestinoLabel(item.PlanDestinoKey);
                 }
             }
 
@@ -846,6 +862,28 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             return SharedDestinationKey;
+        }
+
+        private string ResolvePlanDestinoLabel(string? key)
+        {
+            if (IsSharedDestination(key))
+            {
+                return "Compartido";
+            }
+
+            var option = PlanDestinoOptions.FirstOrDefault(x => x.Key.Equals(key, System.StringComparison.OrdinalIgnoreCase));
+            if (option == null || string.IsNullOrWhiteSpace(option.Label))
+            {
+                return "Plan";
+            }
+
+            var label = option.Label.Trim();
+            if (label.StartsWith("Solo ", System.StringComparison.OrdinalIgnoreCase))
+            {
+                label = label.Substring(5).Trim();
+            }
+
+            return string.IsNullOrWhiteSpace(label) ? "Plan" : label;
         }
 
         private static bool IsSharedDestination(string? key)

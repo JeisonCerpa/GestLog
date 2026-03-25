@@ -433,7 +433,9 @@ namespace GestLog.Modules.GestionCartera.Services
             if (emailInfo == null)
                 throw new ArgumentNullException(nameof(emailInfo));
 
-            if (emailInfo.Recipients == null || !emailInfo.Recipients.Any())
+            var normalizedRecipients = ParseEmailList(emailInfo.Recipients).ToList();
+
+            if (!normalizedRecipients.Any())
                 throw new RecipientException("Debe especificar al menos un destinatario");
 
             if (string.IsNullOrWhiteSpace(emailInfo.Subject))
@@ -443,17 +445,23 @@ namespace GestLog.Modules.GestionCartera.Services
                 throw new ArgumentException("El cuerpo del mensaje es requerido");
 
             // Validar direcciones de email
-            foreach (var recipient in emailInfo.Recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
+            foreach (var recipient in normalizedRecipients)
             {
                 if (!IsValidEmail(recipient))
                     throw new RecipientException($"Dirección de email inválida: {recipient}", recipient);
             }
 
-            if (!string.IsNullOrWhiteSpace(emailInfo.CcRecipient) && !IsValidEmail(emailInfo.CcRecipient))
-                throw new RecipientException($"Dirección CC inválida: {emailInfo.CcRecipient}", emailInfo.CcRecipient);
+            foreach (var ccRecipient in ParseEmailList(emailInfo.CcRecipient))
+            {
+                if (!IsValidEmail(ccRecipient))
+                    throw new RecipientException($"Dirección CC inválida: {ccRecipient}", ccRecipient);
+            }
 
-            if (!string.IsNullOrWhiteSpace(emailInfo.BccRecipient) && !IsValidEmail(emailInfo.BccRecipient))
-                throw new RecipientException($"Dirección BCC inválida: {emailInfo.BccRecipient}", emailInfo.BccRecipient);
+            foreach (var bccRecipient in ParseEmailList(emailInfo.BccRecipient))
+            {
+                if (!IsValidEmail(bccRecipient))
+                    throw new RecipientException($"Dirección BCC inválida: {bccRecipient}", bccRecipient);
+            }
         }
 
         private bool IsValidEmail(string email)
@@ -487,10 +495,9 @@ namespace GestLog.Modules.GestionCartera.Services
             };
 
             // Agregar destinatarios
-            foreach (var recipient in emailInfo.Recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
+            foreach (var recipient in ParseEmailList(emailInfo.Recipients))
             {
-                if (!string.IsNullOrWhiteSpace(recipient))
-                    message.To.Add(recipient);
+                AddIfNotExists(message.To, recipient, "TO");
             }
 
             // Agregar CC desde EmailInfo (opcional, específico por correo)
@@ -528,6 +535,17 @@ namespace GestLog.Modules.GestionCartera.Services
                 .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(email => email.Trim())
                 .Where(email => !string.IsNullOrWhiteSpace(email))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static IEnumerable<string> ParseEmailList(IEnumerable<string>? rawEmails)
+        {
+            if (rawEmails == null)
+                return Enumerable.Empty<string>();
+
+            return rawEmails
+                .Where(email => !string.IsNullOrWhiteSpace(email))
+                .SelectMany(email => ParseEmailList(email))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
         }
 
