@@ -317,7 +317,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             }
         }
 
-        public async Task EnviarAReparacionAsync(EjecucionMantenimientoDto correctivo, string proveedor, string? observaciones, CancellationToken cancellationToken = default)
+        public async Task EnviarAReparacionAsync(EjecucionMantenimientoDto correctivo, string proveedor, string? observaciones, DateTime? fechaEnvio = null, CancellationToken cancellationToken = default)
         {
             if (correctivo == null || string.IsNullOrWhiteSpace(proveedor))
             {
@@ -333,7 +333,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 correctivo.ObservacionesTecnico = ObservacionesCorrectivoTimelineService.EnviarAReparacion(
                     correctivo.ObservacionesTecnico,
                     proveedor,
-                    observaciones);
+                    observaciones,
+                    fechaEnvio);
 
                 await _ejecucionService.UpdateAsync(correctivo.Id, correctivo, cancellationToken);
                 await LoadCorrectivosVehiculoAsync(cancellationToken);

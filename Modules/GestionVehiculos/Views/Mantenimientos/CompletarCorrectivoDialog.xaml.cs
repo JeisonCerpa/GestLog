@@ -23,6 +23,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
     {
         private readonly IEjecucionMantenimientoService? _ejecucionService;
 
+        public sealed class TipoGastoOption
+        {
+            public int Valor { get; set; }
+            public string Etiqueta { get; set; } = string.Empty;
+        }
+
         public class GastoItemInput : INotifyPropertyChanged
         {
             private int _tipoGasto = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro;
@@ -133,26 +139,123 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             public string CostoOpcionalInput { get; set; } = string.Empty;
         }
 
-        public class PlanPreventivoSeleccionItem
+        public class PlanPreventivoSeleccionItem : INotifyPropertyChanged
         {
+            private bool _isSelected;
+            private bool _isCustomCost;
+            private string _customCostInput = string.Empty;
+            private string _invoicePath = string.Empty;
+            private string _detalleOpcional = string.Empty;
+            private string _proveedorOpcional = string.Empty;
+            private string _rutaFacturaOpcional = string.Empty;
+            private string _costoOpcionalInput = string.Empty;
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+
             public int PlanId { get; set; }
             public string Nombre { get; set; } = string.Empty;
             public string Estado { get; set; } = string.Empty;
-            public bool IsSelected { get; set; }
-            public bool IsCustomCost { get; set; }
-            public string CustomCostInput { get; set; } = string.Empty;
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set
+                {
+                    if (_isSelected == value) return;
+                    _isSelected = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+                }
+            }
+
+            public bool IsCustomCost
+            {
+                get => _isCustomCost;
+                set
+                {
+                    if (_isCustomCost == value) return;
+                    _isCustomCost = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCustomCost)));
+                }
+            }
+
+            public string CustomCostInput
+            {
+                get => _customCostInput;
+                set
+                {
+                    if (_customCostInput == value) return;
+                    _customCostInput = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CustomCostInput)));
+                }
+            }
             // si el costo es personalizado, se adjunta aquí la factura correspondiente
-            public string InvoicePath { get; set; } = string.Empty;
+            public string InvoicePath
+            {
+                get => _invoicePath;
+                set
+                {
+                    if (_invoicePath == value) return;
+                    _invoicePath = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InvoicePath)));
+                }
+            }
             // campos para la edición de nota (igual que en RegistroPreventivo)
-            public string DetalleOpcional { get; set; } = string.Empty;
-            public string ProveedorOpcional { get; set; } = string.Empty;
-            public string RutaFacturaOpcional { get; set; } = string.Empty;
-            public string CostoOpcionalInput { get; set; } = string.Empty;
+            public string DetalleOpcional
+            {
+                get => _detalleOpcional;
+                set
+                {
+                    if (_detalleOpcional == value) return;
+                    _detalleOpcional = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DetalleOpcional)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasDetalleOpcional)));
+                }
+            }
+
+            public string ProveedorOpcional
+            {
+                get => _proveedorOpcional;
+                set
+                {
+                    if (_proveedorOpcional == value) return;
+                    _proveedorOpcional = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProveedorOpcional)));
+                }
+            }
+
+            public string RutaFacturaOpcional
+            {
+                get => _rutaFacturaOpcional;
+                set
+                {
+                    if (_rutaFacturaOpcional == value) return;
+                    _rutaFacturaOpcional = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RutaFacturaOpcional)));
+                }
+            }
+
+            public string CostoOpcionalInput
+            {
+                get => _costoOpcionalInput;
+                set
+                {
+                    if (_costoOpcionalInput == value) return;
+                    _costoOpcionalInput = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CostoOpcionalInput)));
+                }
+            }
+
             public bool HasDetalleOpcional => !string.IsNullOrWhiteSpace(DetalleOpcional);
         }
 
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planes = new();
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
+        public IReadOnlyList<TipoGastoOption> TipoGastoOptions { get; } = new List<TipoGastoOption>
+        {
+            new() { Valor = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Repuesto, Etiqueta = "Repuesto" },
+            new() { Valor = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.ManoDeObra, Etiqueta = "Mano de obra" },
+            new() { Valor = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Servicio, Etiqueta = "Servicio externo" },
+            new() { Valor = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Otro, Etiqueta = "Otro" }
+        };
 
         public long? KilometrajeAlCompletar { get; private set; }
         public string Responsable { get; private set; }
@@ -192,7 +295,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 foreach (var plan in planesPreventivosDisponibles)
                 {
-                    _planes.Add(new PlanPreventivoSeleccionItem
+                    var planItem = new PlanPreventivoSeleccionItem
                     {
                         PlanId = plan.Id,
                         Nombre = plan.PlantillaNombre ?? $"Plan #{plan.Id}",
@@ -205,7 +308,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                         ProveedorOpcional = string.Empty,
                         RutaFacturaOpcional = string.Empty,
                         CostoOpcionalInput = string.Empty
-                    });
+                    };
+
+                    planItem.PropertyChanged += PlanItem_PropertyChanged;
+                    _planes.Add(planItem);
                 }
             }
 
@@ -215,8 +321,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             TxtKilometraje.Text = KilometrajeAlCompletar?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
             CmbResponsable.Text = Responsable;
             CmbProveedor.Text = Proveedor;
-            TxtCosto.Text = Costo?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
-            TxtRutaFactura.Text = RutaFactura;
             TxtObservaciones.Text = Observaciones;
             TxtTituloActividad.Text = TituloActividad;
 
@@ -257,12 +361,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 }
             }
 
-            if (_itemsGasto.Count == 0)
-            {
-                _itemsGasto.Add(CreateEmptyFacturaGroup());
-            }
-
-            if (_itemsGasto.Sum(g => g.Items.Count) == 0)
+            if (_itemsGasto.Count > 0 && _itemsGasto.Sum(g => g.Items.Count) == 0)
             {
                 var draftGroup = _itemsGasto[0];
                 draftGroup.ProveedorFactura = Proveedor;
@@ -273,6 +372,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             IcItemsGasto.ItemsSource = _itemsGasto;
             UpdateCartSummary();
+            UpdatePlanesSummary();
 
             _ = CargarSugerenciasAsync();
 
@@ -295,25 +395,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void EnsureAtLeastOneFacturaGroup()
         {
-            if (_itemsGasto.Count == 0)
-            {
-                _itemsGasto.Add(CreateEmptyFacturaGroup());
-            }
+            // Mantener comportamiento de preventivo: no crear factura por defecto.
         }
 
-        private async void BtnAttachFactura_Click(object sender, RoutedEventArgs e)
-        {
-            var uploaded = await FacturaStorageHelper.PickAndUploadFacturaAsync(this, "factura_correctivo");
-            if (!string.IsNullOrWhiteSpace(uploaded))
-            {
-                TxtRutaFactura.Text = uploaded;
-            }
-        }
 
-        private async void BtnOpenFactura_Click(object sender, RoutedEventArgs e)
-        {
-            await FacturaStorageHelper.OpenFacturaAsync(this, TxtRutaFactura.Text);
-        }
 
         private async void BtnAttachPlanFactura_Click(object sender, RoutedEventArgs e)
         {
@@ -407,9 +492,35 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             _itemsGasto.Remove(group);
-            EnsureAtLeastOneFacturaGroup();
             IcItemsGasto.Items.Refresh();
             UpdateCartSummary();
+        }
+
+        private void PlanItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PlanPreventivoSeleccionItem.IsSelected)
+                || e.PropertyName == nameof(PlanPreventivoSeleccionItem.IsCustomCost)
+                || e.PropertyName == nameof(PlanPreventivoSeleccionItem.HasDetalleOpcional)
+                || e.PropertyName == nameof(PlanPreventivoSeleccionItem.InvoicePath))
+            {
+                UpdatePlanesSummary();
+            }
+        }
+
+        private void UpdatePlanesSummary()
+        {
+            var seleccionados = _planes.Count(p => p.IsSelected);
+            var conNota = _planes.Count(p => p.IsSelected && p.HasDetalleOpcional);
+
+            if (TxtPlanesSeleccionadosCount != null)
+            {
+                TxtPlanesSeleccionadosCount.Text = seleccionados.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (TxtPlanesConNotaCount != null)
+            {
+                TxtPlanesConNotaCount.Text = conNota.ToString(CultureInfo.InvariantCulture);
+            }
         }
 
         private void BtnEditGastoItem_Click(object sender, RoutedEventArgs e)
@@ -557,6 +668,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 item.InvoicePath = edited.RutaFactura;
 
                 IcPlanesPreventivos.Items.Refresh();
+                UpdatePlanesSummary();
             }
         }
 
@@ -813,21 +925,25 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Proveedor = CmbProveedor.Text?.Trim() ?? string.Empty;
             Observaciones = TxtObservaciones.Text?.Trim() ?? string.Empty;
             TituloActividad = TxtTituloActividad.Text?.Trim() ?? string.Empty;
-            RutaFactura = TxtRutaFactura.Text?.Trim() ?? string.Empty;
             PlanesPreventivosSeleccionados = _planes.Where(p => p.IsSelected).Select(p => p.PlanId).Distinct().ToList();
 
-            if (decimal.TryParse(TxtCosto.Text?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedCosto) && parsedCosto >= 0)
+            // El costo se calcula automáticamente como suma de todos los items en el carrito
+            var totalCosto = decimal.Zero;
+            foreach (var group in _itemsGasto)
             {
-                Costo = parsedCosto;
+                foreach (var item in group.Items)
+                {
+                    if (decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valorItem) && valorItem >= 0)
+                    {
+                        totalCosto += valorItem;
+                    }
+                    else if (decimal.TryParse(item.ValorInput?.Trim(), out valorItem) && valorItem >= 0)
+                    {
+                        totalCosto += valorItem;
+                    }
+                }
             }
-            else if (decimal.TryParse(TxtCosto.Text?.Trim(), out parsedCosto) && parsedCosto >= 0)
-            {
-                Costo = parsedCosto;
-            }
-            else
-            {
-                Costo = null;
-            }
+            Costo = totalCosto > 0 ? totalCosto : null;
 
             var itemsGasto = new List<EjecucionMantenimientoItemGastoDto>();
             foreach (var group in _itemsGasto)
@@ -899,7 +1015,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 if (string.IsNullOrWhiteSpace(RutaFactura) && !string.IsNullOrWhiteSpace(primeraRuta))
                 {
                     RutaFactura = primeraRuta;
-                    TxtRutaFactura.Text = RutaFactura;
                 }
             }
 
@@ -954,7 +1069,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 {
                     if (!Costo.HasValue)
                     {
-                        TxtError.Text = "Si hay planes sin costo personalizado, debes ingresar costo del correctivo para prorratear.";
+                        TxtError.Text = "Si hay planes sin costo personalizado, agrega ítems de gasto para calcular el prorrateo.";
                         return;
                     }
 

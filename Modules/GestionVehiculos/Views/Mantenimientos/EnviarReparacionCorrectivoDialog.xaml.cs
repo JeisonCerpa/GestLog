@@ -12,8 +12,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         public string Proveedor { get; private set; }
         public string Observaciones { get; private set; }
+        public DateTime FechaEnvio { get; private set; }
 
-        public EnviarReparacionCorrectivoDialog(string? proveedorInicial, string? observacionesInicial)
+        public EnviarReparacionCorrectivoDialog(string? proveedorInicial, string? observacionesInicial, DateTime? fechaEnvioInicial = null)
         {
             InitializeComponent();
 
@@ -21,9 +22,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             Proveedor = proveedorInicial?.Trim() ?? string.Empty;
             Observaciones = observacionesInicial?.Trim() ?? string.Empty;
+            FechaEnvio = (fechaEnvioInicial ?? DateTime.Today).Date;
 
             CmbProveedor.Text = Proveedor;
             TxtObservaciones.Text = Observaciones;
+            DpFechaEnvio.SelectedDate = FechaEnvio;
 
             _ = CargarProveedoresSugeridosAsync();
 
@@ -48,8 +51,15 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 return;
             }
 
+            if (!DpFechaEnvio.SelectedDate.HasValue)
+            {
+                TxtError.Text = "Debe indicar la fecha de envío.";
+                return;
+            }
+
             Proveedor = proveedor;
             Observaciones = TxtObservaciones.Text?.Trim() ?? string.Empty;
+            FechaEnvio = DpFechaEnvio.SelectedDate.Value.Date;
             TxtError.Text = string.Empty;
 
             DialogResult = true;

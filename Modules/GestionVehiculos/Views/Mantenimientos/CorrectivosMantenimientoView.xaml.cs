@@ -56,12 +56,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 {
                     var proveedor = dto.Proveedor ?? string.Empty;
                     var observaciones = string.Empty;
-                    if (!ShowEnviarAReparacionDialog(ref proveedor, ref observaciones))
+                    var fechaEnvio = DateTime.Today;
+                    if (!ShowEnviarAReparacionDialog(ref proveedor, ref observaciones, ref fechaEnvio))
                     {
                         return;
                     }
 
-                    await vm.EnviarAReparacionAsync(dto, proveedor, observaciones);
+                    await vm.EnviarAReparacionAsync(dto, proveedor, observaciones, fechaEnvio);
                     break;
                 }
 
@@ -108,9 +109,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
-        private bool ShowEnviarAReparacionDialog(ref string proveedor, ref string observaciones)
+        private bool ShowEnviarAReparacionDialog(ref string proveedor, ref string observaciones, ref DateTime fechaEnvio)
         {
-            var dialog = new EnviarReparacionCorrectivoDialog(proveedor, observaciones)
+            var dialog = new EnviarReparacionCorrectivoDialog(proveedor, observaciones, fechaEnvio)
             {
                 Owner = System.Windows.Application.Current?.Windows.Count > 0
                     ? System.Windows.Application.Current.Windows[0]
@@ -122,6 +123,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 proveedor = dialog.Proveedor;
                 observaciones = dialog.Observaciones;
+                fechaEnvio = dialog.FechaEnvio;
             }
 
             return result;
