@@ -248,7 +248,9 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         }
 
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planes = new();
+        private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planesFiltered = new();
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
+        private string _searchText = string.Empty;
         public IReadOnlyList<TipoGastoOption> TipoGastoOptions { get; } = new List<TipoGastoOption>
         {
             new() { Valor = (int)GestLog.Modules.GestionVehiculos.Models.Enums.TipoGastoMantenimientoVehiculo.Repuesto, Etiqueta = "Repuesto" },
@@ -313,10 +315,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     planItem.PropertyChanged += PlanItem_PropertyChanged;
                     _planes.Add(planItem);
                 }
+                
+                // Initialize filtered list with all planes
+                UpdatePlanesFilter();
             }
 
-            // bind the wrap‑panel list to our private collection
-            IcPlanesPreventivos.ItemsSource = _planes;
+            // bind the wrap‑panel list to our filtered collection
+            IcPlanesPreventivos.ItemsSource = _planesFiltered;
 
             TxtKilometraje.Text = KilometrajeAlCompletar?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
             CmbResponsable.Text = Responsable;
@@ -520,6 +525,40 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             if (TxtPlanesConNotaCount != null)
             {
                 TxtPlanesConNotaCount.Text = conNota.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+
+        private void UpdatePlanesFilter()
+        {
+            _planesFiltered.Clear();
+            
+            if (string.IsNullOrWhiteSpace(_searchText))
+            {
+                // Si no hay búsqueda, mostrar todos los planes
+                foreach (var plan in _planes)
+                {
+                    _planesFiltered.Add(plan);
+                }
+            }
+            else
+            {
+                // Filtrar planes por nombre (búsqueda insensible a mayúsculas)
+                var searchLower = _searchText.ToLower(CultureInfo.CurrentCulture);
+                foreach (var plan in _planes.Where(p => 
+                    p.Nombre.ToLower(CultureInfo.CurrentCulture).Contains(searchLower) ||
+                    p.Estado.ToLower(CultureInfo.CurrentCulture).Contains(searchLower)))
+                {
+                    _planesFiltered.Add(plan);
+                }
+            }
+        }
+
+        private void TxtBuscarPlan_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.TextBox txtBox)
+            {
+                _searchText = txtBox.Text;
+                UpdatePlanesFilter();
             }
         }
 

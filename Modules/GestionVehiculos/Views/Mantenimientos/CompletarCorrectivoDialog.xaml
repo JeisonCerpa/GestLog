@@ -390,6 +390,10 @@
                                 <TextBlock Text="Selecciona los planes realizados durante este correctivo. Usa 'Editar nota' para costo personalizado y factura por plan cuando aplique."
                                            FontSize="10" Foreground="#555" TextWrapping="Wrap" Margin="0,0,0,10" />
 
+                                <TextBox x:Name="TxtBuscarPlan" Style="{StaticResource ThemeTextBoxStyle}" 
+                                         TextChanged="TxtBuscarPlan_TextChanged" Margin="0,0,0,10" Padding="8,6" FontSize="11" 
+                                         Tag="🔍 Buscar plan..." Foreground="#999" />
+
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                     <Border Background="#DBEAFE" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
                                         <StackPanel Orientation="Horizontal">
