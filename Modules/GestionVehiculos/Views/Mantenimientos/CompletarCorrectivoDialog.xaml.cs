@@ -250,6 +250,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planes = new();
         private readonly ObservableCollection<PlanPreventivoSeleccionItem> _planesFiltered = new();
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
+        public ObservableCollection<string> ProveedorFacturaOptions { get; } = new();
         private string _searchText = string.Empty;
         public IReadOnlyList<TipoGastoOption> TipoGastoOptions { get; } = new List<TipoGastoOption>
         {
@@ -590,8 +591,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             decimal total = 0m;
             foreach (var item in group.Items)
             {
-                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                 if (valorValido && valor > 0)
                 {
@@ -657,8 +657,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 foreach (var item in group.Items)
                 {
                     totalItems++;
-                    if (decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var val)
-                        || decimal.TryParse(item.ValorInput?.Trim(), out val))
+                    if (TryParseMoneyInput(item.ValorInput, out var val))
                     {
                         if (val > 0)
                         {
@@ -972,11 +971,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             {
                 foreach (var item in group.Items)
                 {
-                    if (decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valorItem) && valorItem >= 0)
-                    {
-                        totalCosto += valorItem;
-                    }
-                    else if (decimal.TryParse(item.ValorInput?.Trim(), out valorItem) && valorItem >= 0)
+                    if (TryParseMoneyInput(item.ValorInput, out var valorItem) && valorItem >= 0)
                     {
                         totalCosto += valorItem;
                     }
@@ -998,8 +993,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     var numeroFactura = string.IsNullOrWhiteSpace(item.NumeroFactura) ? numeroFacturaGrupo : (item.NumeroFactura ?? string.Empty).Trim();
                     var rutaFacturaItem = string.IsNullOrWhiteSpace(item.RutaFactura) ? rutaFacturaGrupo : (item.RutaFactura ?? string.Empty).Trim();
 
-                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                 if (!valorValido)
                 {
@@ -1076,13 +1070,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                             return;
                         }
 
-                        if (!decimal.TryParse(plan.CustomCostInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var costoPlan) || costoPlan < 0)
+                        if (!TryParseMoneyInput(plan.CustomCostInput, out var costoPlan) || costoPlan < 0)
                         {
-                            if (!decimal.TryParse(plan.CustomCostInput?.Trim(), out costoPlan) || costoPlan < 0)
-                            {
-                                TxtError.Text = $"Costo personalizado inválido para '{plan.Nombre}'.";
-                                return;
-                            }
+                            TxtError.Text = $"Costo personalizado inválido para '{plan.Nombre}'.";
+                            return;
                         }
 
                         sumaPersonalizados += costoPlan;
@@ -1148,6 +1139,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Close();
         }
 
+        private static bool TryParseMoneyInput(string? rawInput, out decimal value)
+        {
+            value = 0m;
+
+            if (string.IsNullOrWhiteSpace(rawInput))
+            {
+                return false;
+            }
+
+            var trimmed = rawInput.Trim();
+            var normalized = new string(trimmed.Where(c => char.IsDigit(c) || c == '-').ToArray());
+
+            if (string.IsNullOrWhiteSpace(normalized) || normalized == "-")
+            {
+                return false;
+            }
+
+            return decimal.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
         private async Task CargarSugerenciasAsync()
         {
             if (_ejecucionService == null)
@@ -1162,11 +1173,74 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
                 CmbResponsable.ItemsSource = responsables;
                 CmbProveedor.ItemsSource = proveedores;
+                ProveedorFacturaOptions.Clear();
+                foreach (var proveedor in proveedores
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x))
+                {
+                    ProveedorFacturaOptions.Add(proveedor);
+                }
             }
             catch
             {
                 CmbResponsable.ItemsSource = Array.Empty<string>();
                 CmbProveedor.ItemsSource = Array.Empty<string>();
+                ProveedorFacturaOptions.Clear();
+            }
+        }
+
+        private async Task CargarSugerenciasProveedorFacturaAsync(string? filter = null)
+        {
+            if (_ejecucionService == null)
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+                return;
+            }
+
+            try
+            {
+                var proveedores = await _ejecucionService.GetSuggestedProveedoresAsync(filter: filter, limit: 100);
+                var values = proveedores
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x)
+                    .ToList();
+
+                ProveedorFacturaOptions.Clear();
+                foreach (var proveedor in values)
+                {
+                    ProveedorFacturaOptions.Add(proveedor);
+                }
+            }
+            catch
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+            }
+        }
+
+        private async void ProveedorFacturaCombo_DropDownOpened(object sender, EventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await CargarSugerenciasProveedorFacturaAsync(combo.Text?.Trim());
+            }
+        }
+
+        private async void ProveedorFacturaCombo_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await CargarSugerenciasProveedorFacturaAsync(combo.Text?.Trim());
+                combo.IsDropDownOpen = true;
             }
         }
 

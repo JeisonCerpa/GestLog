@@ -10,8 +10,10 @@ using System.Linq;
 using System.ComponentModel;
 using System.Windows.Data;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Services.Utilities;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -223,10 +225,12 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
         private readonly EjecucionesMantenimientoViewModel _viewModel;
+        private readonly IEjecucionMantenimientoService? _ejecucionService;
         private int _currentStep = 1;
         private string _planFilterText = string.Empty;
         public ObservableCollection<PlanDestinoOption> PlanDestinoOptions { get; } = new();
         public ObservableCollection<TipoGastoOption> TipoGastoOptions { get; } = new();
+        public ObservableCollection<string> ProveedorFacturaOptions { get; } = new();
         public ICollectionView? FilteredPlanes { get; private set; }
 
         public string CurrentStepDisplay => $"Paso {_currentStep} de 3";
@@ -234,6 +238,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         public RegistroPreventivoDialog(EjecucionesMantenimientoViewModel viewModel)
         {
             _viewModel = viewModel;
+            _ejecucionService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IEjecucionMantenimientoService>();
             InitializeComponent();
             DataContext = viewModel;
             IcItemsGasto.ItemsSource = _itemsGasto;
@@ -242,6 +247,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             InitializeTipoGastoOptions();
             InitializeWizardState();
             EnsureAtLeastOneFacturaGroup();
+            _ = LoadProveedorSuggestionsAsync();
 
             viewModel.RegistroEsExtraordinario = false;
             viewModel.RegistroMotivoExtraordinario = string.Empty;
@@ -280,6 +286,59 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             DialogResult = false;
             Close();
+        }
+
+        private async Task LoadProveedorSuggestionsAsync(string? filter = null)
+        {
+            if (_ejecucionService == null)
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+                return;
+            }
+
+            try
+            {
+                var proveedores = await _ejecucionService.GetSuggestedProveedoresAsync(filter: filter, limit: 100);
+                var values = proveedores
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x)
+                    .ToList();
+
+                ProveedorFacturaOptions.Clear();
+                foreach (var proveedor in values)
+                {
+                    ProveedorFacturaOptions.Add(proveedor);
+                }
+            }
+            catch
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+            }
+        }
+
+        private async void ProveedorFacturaCombo_DropDownOpened(object sender, EventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await LoadProveedorSuggestionsAsync(combo.Text?.Trim());
+            }
+        }
+
+        private async void ProveedorFacturaCombo_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await LoadProveedorSuggestionsAsync(combo.Text?.Trim());
+                combo.IsDropDownOpen = true;
+            }
         }
 
         private async void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -462,8 +521,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             decimal total = 0m;
             foreach (var item in group.Items)
             {
-                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                 if (valorValido && valor > 0)
                 {
@@ -524,8 +582,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                         ? rutaFacturaGrupo 
                         : (item.RutaFactura ?? string.Empty).Trim();
 
-                    var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                        || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                    var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                     if (!valorValido)
                     {
@@ -557,6 +614,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             return items;
+        }
+
+        private static bool TryParseMoneyInput(string? rawInput, out decimal value)
+        {
+            value = 0m;
+
+            if (string.IsNullOrWhiteSpace(rawInput))
+            {
+                return false;
+            }
+
+            var trimmed = rawInput.Trim();
+            var normalized = new string(trimmed.Where(c => char.IsDigit(c) || c == '-').ToArray());
+
+            if (string.IsNullOrWhiteSpace(normalized) || normalized == "-")
+            {
+                return false;
+            }
+
+            return decimal.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
         private void PlanSelectionChanged(object sender, RoutedEventArgs e)

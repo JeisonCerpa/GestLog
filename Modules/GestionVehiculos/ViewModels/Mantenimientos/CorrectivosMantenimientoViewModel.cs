@@ -483,6 +483,22 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         }
 
                         await _ejecucionService.CreateAsync(preventivaDto, cancellationToken);
+
+                        var planActualizado = new PlanMantenimientoVehiculoDto
+                        {
+                            Id = plan.Id,
+                            PlacaVehiculo = plan.PlacaVehiculo,
+                            PlantillaId = plan.PlantillaId,
+                            IntervaloKMPersonalizado = plan.IntervaloKMPersonalizado,
+                            IntervaloDiasPersonalizado = plan.IntervaloDiasPersonalizado,
+                            FechaInicio = plan.FechaInicio,
+                            UltimoKMRegistrado = kilometrajeAlCompletar,
+                            UltimaFechaMantenimiento = preventivaDto.FechaEjecucion,
+                            FechaFin = plan.FechaFin,
+                            Activo = plan.Activo
+                        };
+
+                        await _planService.UpdateAsync(plan.Id, planActualizado, cancellationToken);
                     }
                 }
 

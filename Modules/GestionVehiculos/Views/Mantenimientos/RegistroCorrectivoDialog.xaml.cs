@@ -6,8 +6,10 @@ using System.Globalization;
 using System.Linq;
 using System.ComponentModel;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
+using GestLog.Modules.GestionVehiculos.Interfaces.Data;
 using GestLog.Modules.GestionVehiculos.Services.Utilities;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 {
@@ -111,15 +113,19 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private readonly CorrectivosMantenimientoViewModel _viewModel;
         private readonly ObservableCollection<GastoFacturaGroup> _itemsGasto = new();
+        private readonly IEjecucionMantenimientoService? _ejecucionService;
+        public ObservableCollection<string> ProveedorFacturaOptions { get; } = new();
 
         public RegistroCorrectivoDialog(CorrectivosMantenimientoViewModel viewModel)
         {
             InitializeComponent();
             _viewModel = viewModel;
+            _ejecucionService = ((App)System.Windows.Application.Current).ServiceProvider?.GetService<IEjecucionMantenimientoService>();
             DataContext = _viewModel;
             IcItemsGasto.ItemsSource = _itemsGasto;
             EnsureAtLeastOneFacturaGroup();
             UpdateCartSummary();
+            _ = LoadProveedorSuggestionsAsync();
 
             _viewModel.RegistroCorrectivoExitoso += OnRegistroCorrectivoExitoso;
 
@@ -142,6 +148,59 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 DialogResult = true;
                 Close();
             });
+        }
+
+        private async System.Threading.Tasks.Task LoadProveedorSuggestionsAsync(string? filter = null)
+        {
+            if (_ejecucionService == null)
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+                return;
+            }
+
+            try
+            {
+                var proveedores = await _ejecucionService.GetSuggestedProveedoresAsync(filter: filter, limit: 100);
+                var values = proveedores
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x => x)
+                    .ToList();
+
+                ProveedorFacturaOptions.Clear();
+                foreach (var proveedor in values)
+                {
+                    ProveedorFacturaOptions.Add(proveedor);
+                }
+            }
+            catch
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                {
+                    ProveedorFacturaOptions.Clear();
+                }
+            }
+        }
+
+        private async void ProveedorFacturaCombo_DropDownOpened(object sender, EventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await LoadProveedorSuggestionsAsync(combo.Text?.Trim());
+            }
+        }
+
+        private async void ProveedorFacturaCombo_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox combo)
+            {
+                await LoadProveedorSuggestionsAsync(combo.Text?.Trim());
+                combo.IsDropDownOpen = true;
+            }
         }
 
         private GastoFacturaGroup CreateEmptyFacturaGroup()
@@ -310,8 +369,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             decimal total = 0m;
             foreach (var item in group.Items)
             {
-                var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                    || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                 if (valorValido && valor > 0)
                 {
@@ -368,8 +426,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                         ? rutaFacturaGrupo 
                         : (item.RutaFactura ?? string.Empty).Trim();
 
-                    var valorValido = decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var valor)
-                        || decimal.TryParse(item.ValorInput?.Trim(), out valor);
+                    var valorValido = TryParseMoneyInput(item.ValorInput, out var valor);
 
                     if (!valorValido)
                     {
@@ -441,8 +498,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 foreach (var item in group.Items)
                 {
                     totalItems++;
-                    if (decimal.TryParse(item.ValorInput?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var val)
-                        || decimal.TryParse(item.ValorInput?.Trim(), out val))
+                    if (TryParseMoneyInput(item.ValorInput, out var val))
                     {
                         if (val > 0)
                         {
@@ -454,6 +510,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             TxtCartItemsCount.Text = totalItems.ToString(CultureInfo.InvariantCulture);
             TxtCartItemsTotal.Text = $"$ {decimal.Round(total, 2):N0}";
+        }
+
+        private static bool TryParseMoneyInput(string? rawInput, out decimal value)
+        {
+            value = 0m;
+
+            if (string.IsNullOrWhiteSpace(rawInput))
+            {
+                return false;
+            }
+
+            var trimmed = rawInput.Trim();
+            var normalized = new string(trimmed.Where(c => char.IsDigit(c) || c == '-').ToArray());
+
+            if (string.IsNullOrWhiteSpace(normalized) || normalized == "-")
+            {
+                return false;
+            }
+
+            return decimal.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
         protected override void OnClosed(System.EventArgs e)
