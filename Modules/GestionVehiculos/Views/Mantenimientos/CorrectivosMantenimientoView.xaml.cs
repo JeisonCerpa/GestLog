@@ -18,7 +18,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             });
         }
 
-        private void BtnNuevoCorrectivo_Click(object sender, System.Windows.RoutedEventArgs e)
+        private async void BtnNuevoCorrectivo_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (DataContext is not ViewModels.Mantenimientos.CorrectivosMantenimientoViewModel vm)
             {
@@ -34,7 +34,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     : System.Windows.Application.Current?.MainWindow
             };
 
-            dialog.ShowDialog();
+            var result = dialog.ShowDialog() == true;
+            if (result)
+            {
+                await RefreshAllVehicleViewsAsync(vm.FilterPlaca);
+            }
         }
 
         private async void ActionButton_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -98,7 +102,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                             }));
 
                     await vm.CompletarCorrectivoAsync(dto, kilometraje, responsable, proveedor, costo, rutaFactura, observaciones, tituloActividad, itemsGasto, planesSeleccionados, planesConCostoVm);
-                    await RefreshPreventivosViewAsync(dto.PlacaVehiculo);
+                    await RefreshAllVehicleViewsAsync(dto.PlacaVehiculo);
                     break;
                 }
 
@@ -179,7 +183,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             return result;
         }
 
-        private async System.Threading.Tasks.Task RefreshPreventivosViewAsync(string placa)
+        private async System.Threading.Tasks.Task RefreshAllVehicleViewsAsync(string placa)
         {
             if (string.IsNullOrWhiteSpace(placa))
             {
@@ -208,7 +212,26 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             ejecVm.FilterPlaca = placa;
-            await ejecVm.LoadEjecucionesAsync();
+
+            if (detailsView.DataContext is ViewModels.Vehicles.VehicleDetailsViewModel detailsVm && detailsVm.Id != System.Guid.Empty)
+            {
+                await detailsVm.LoadAsync(detailsVm.Id);
+            }
+
+            await ejecVm.LoadHistorialVehiculoAsync();
+
+            if (detailsView.FindName("PlanesView") is PlanesMantenimientoView planesView
+                && planesView.DataContext is ViewModels.Mantenimientos.PlanesMantenimientoViewModel planesVm)
+            {
+                planesVm.FilterPlaca = placa;
+                await planesVm.FilterByPlacaAsync();
+            }
+
+            if (DataContext is ViewModels.Mantenimientos.CorrectivosMantenimientoViewModel correctivosVm)
+            {
+                correctivosVm.FilterPlaca = placa;
+                await correctivosVm.LoadCorrectivosVehiculoAsync();
+            }
         }
 
         private void ShowDetallesDialog(Models.DTOs.EjecucionMantenimientoDto dto)

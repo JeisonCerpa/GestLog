@@ -594,7 +594,16 @@
                                                                         <!-- Proveedor -->
                                                                         <StackPanel Grid.Row="0" Grid.Column="2">
                                                                             <TextBlock Text="🏢 Proveedor" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
-                                                                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ProveedorFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
+                                                                            <ComboBox Grid.Row="1" Grid.Column="2"
+                                                                                      Style="{StaticResource ModernComboBoxStyle}"
+                                                                                      Height="40"
+                                                                                      IsEditable="True"
+                                                                                      IsTextSearchEnabled="False"
+                                                                                      StaysOpenOnEdit="True"
+                                                                                      Text="{Binding ProveedorFactura, UpdateSourceTrigger=PropertyChanged}"
+                                                                                      ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ProveedorFacturaOptions}"
+                                                                                      DropDownOpened="ProveedorFacturaCombo_DropDownOpened"
+                                                                                      KeyUp="ProveedorFacturaCombo_KeyUp"/>
                                                                         </StackPanel>
 
                                                                         <!-- Documento adjunto -->

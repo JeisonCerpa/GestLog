@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Threading.Tasks;
+using System;
 using GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos;
 using GestLog.Modules.GestionVehiculos.Views.Vehicles;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,12 +65,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             var result = dialog.ShowDialog();
             if (result == true)
             {
-                if (!string.IsNullOrWhiteSpace(vm.FilterPlaca))
-                {
-                    await vm.LoadHistorialVehiculoAsync();
-                }
-
-                await RefreshPlanesViewAsync(vm.FilterPlaca);
+                await RefreshAllVehicleViewsAsync(vm.FilterPlaca);
 
                 var message = string.IsNullOrWhiteSpace(vm.ConfirmacionRegistroMessage)
                     ? "Preventivo(s) registrado(s) correctamente."
@@ -80,6 +76,40 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     "Confirmación de registro",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
+            }
+        }
+
+        private async Task RefreshAllVehicleViewsAsync(string placa)
+        {
+            if (string.IsNullOrWhiteSpace(placa))
+            {
+                return;
+            }
+
+            if (DataContext is EjecucionesMantenimientoViewModel ejecVm)
+            {
+                ejecVm.FilterPlaca = placa;
+                await ejecVm.LoadHistorialVehiculoAsync();
+            }
+
+            await RefreshPlanesViewAsync(placa);
+
+            var vehicleDetailsView = FindParentVehicleDetailsView();
+            if (vehicleDetailsView == null)
+            {
+                return;
+            }
+
+            if (vehicleDetailsView.DataContext is ViewModels.Vehicles.VehicleDetailsViewModel detailsVm && detailsVm.Id != Guid.Empty)
+            {
+                await detailsVm.LoadAsync(detailsVm.Id);
+            }
+
+            if (vehicleDetailsView.FindName("CorrectivosView") is CorrectivosMantenimientoView correctivosView
+                && correctivosView.DataContext is CorrectivosMantenimientoViewModel correctivosVm)
+            {
+                correctivosVm.FilterPlaca = placa;
+                await correctivosVm.LoadCorrectivosVehiculoAsync();
             }
         }
 
