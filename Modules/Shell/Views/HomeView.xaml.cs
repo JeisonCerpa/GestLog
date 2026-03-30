@@ -25,9 +25,7 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Preparación de Gestión de Mantenimientos: más robusta y confiable.\n" +
-                "• Migraciones aplicadas exitosamente a producción.\n" +
-                "• Mejoras de mantenibilidad y escalabilidad.",
+                "• Arreglo al agregar un equipo en mantenimiento.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
