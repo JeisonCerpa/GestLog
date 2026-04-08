@@ -21,11 +21,10 @@
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <!-- Limitar anchura total para evitar que el contenido crezca demasiado al escribir -->
-        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+        <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                BorderThickness="0" Effect="{StaticResource WindowShadow}"
-                MaxWidth="900" MinWidth="500">
+                BorderThickness="1" BorderBrush="{DynamicResource BorderDefaultBrush}" Effect="{StaticResource WindowShadow}"
+                MaxWidth="920" MinWidth="500">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -34,175 +33,224 @@
                 </Grid.RowDefinitions>
 
                 <!-- header with icon, title and action buttons -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
+                <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="20,16" Effect="{StaticResource HeaderShadow}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="ℹ️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="40" Height="40">
+                                <TextBlock Text="ℹ️" FontSize="20" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <StackPanel>
-                                <TextBlock Text="Detalle de ejecución" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
-                                <TextBlock Text="Información completa de la ejecución" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
-                                <Border Background="#1FFFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1" CornerRadius="10"
-                                        Padding="8,2" Margin="0,6,0,0"
-                                        Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <TextBlock Text="✏️ Modo edición" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" Foreground="White" />
-                                </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Detalle de Ejecución" FontFamily="Segoe UI" FontSize="16" FontWeight="Bold" Foreground="White" />
+                                <TextBlock Text="Información completa y trazabilidad" FontFamily="Segoe UI" FontSize="11" Foreground="White" Opacity="0.85" />
                             </StackPanel>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0">
-                            <Button x:Name="BtnCloseHeader" Style="{StaticResource CloseButton}" Click="BtnClose_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <Grid Width="14" Height="14">
-                                    <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                    <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                </Grid>
-                            </Button>
-                        </StackPanel>
+                        <Button Grid.Column="1" Background="Transparent" Click="BtnClose_Click" ToolTip="Cerrar (Esc)" Cursor="Hand" Padding="8">
+                            <Grid Width="16" Height="16">
+                                <Line X1="0" Y1="0" X2="16" Y2="16" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="16" Y1="0" X2="0" Y2="16" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Grid>
+                        </Button>
                     </Grid>
                 </Border>
 
-                <ScrollViewer Grid.Row="1" Margin="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <!-- left column details -->
-                        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,24,0">
-                            <TextBlock Text="Plan:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent">
-                                <TextBlock Text="{Binding PlanNombre}" Foreground="#1D1D1B" TextWrapping="Wrap" />
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="{DynamicResource BackgroundSurfaceBrush}">
+                    <StackPanel Margin="20">
+                        <!-- Status Badge -->
+                        <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16,12" Margin="0,0,0,20" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="📊 Estado de la Ejecución" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding EstadoEnum}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Main Metrics Grid - Responsive -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Card: Plan -->
+                            <Border Grid.Column="0" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="📋 Plan" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding PlanNombre}" Background="Transparent" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
+                                </StackPanel>
                             </Border>
 
-                            <TextBlock Text="Fecha de ejecución:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding FechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" Foreground="#1D1D1B" />
+                            <!-- Card: Responsable -->
+                            <Border Grid.Column="1" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="4,0,4,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="👤 Responsable" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding ResponsableEjecucion, Mode=TwoWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
+                                </StackPanel>
                             </Border>
-                            <TextBox Text="{Binding FechaEjecucion, StringFormat={}{0:dd/MM/yyyy}, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                            <TextBlock Text="Kilometraje:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding KMAlMomento}" Foreground="#1D1D1B" />
+                            <!-- Card: Costo Total -->
+                            <Border Grid.Column="2" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="8,0,0,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="💰 Costo" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding Costo, StringFormat={}{0:C2}, Mode=TwoWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" FontSize="14"/>
+                                </StackPanel>
                             </Border>
-                            <TextBox Text="{Binding KMAlMomento, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
 
-                            <TextBlock Text="Costo:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding Costo, StringFormat={}{0:C2}}" Foreground="#1D1D1B" />
-                            </Border>
-                            <TextBox Text="{Binding Costo, StringFormat={}{0:C2}, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </StackPanel>
-                        <!-- right column details -->
-                        <StackPanel Grid.Column="1" Orientation="Vertical">
-                            <TextBlock Text="Responsable:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding ResponsableEjecucion}" Foreground="#1D1D1B" TextWrapping="Wrap" />
-                            </Border>
-                            <TextBox Text="{Binding ResponsableEjecucion, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <!-- Details Row -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="Proveedor:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding Proveedor}" Foreground="#1D1D1B" TextWrapping="Wrap" />
+                            <!-- Card: Fecha -->
+                            <Border Grid.Column="0" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="📅 Fecha de Ejecución" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding FechaEjecucion, StringFormat={}{0:dd/MM/yyyy}, Mode=TwoWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12"/>
+                                </StackPanel>
                             </Border>
-                            <TextBox Text="{Binding Proveedor, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                            <TextBlock Text="Estado:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding EstadoEnum}" Foreground="#1D1D1B" />
+                            <!-- Card: KM -->
+                            <Border Grid.Column="1" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="8,0,0,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🛣️ Kilometraje" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding KMAlMomento, Mode=TwoWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12"/>
+                                </StackPanel>
                             </Border>
-                            <ComboBox ItemsSource="{Binding Source={StaticResource EstadoEjecucionValues}}"
-                                      SelectedItem="{Binding EstadoEnum, Mode=TwoWay}"
-                                      Style="{StaticResource InputStyle}"
-                                      Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
 
-                            <TextBlock Text="Factura:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
+                        <!-- Proveedor & Factura Row -->
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Card: Proveedor -->
+                            <Border Grid.Column="0" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="0,0,8,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🏢 Proveedor" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding Proveedor, Mode=TwoWay}" IsReadOnly="True" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Card: Factura -->
+                            <Border Grid.Column="1" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="8" Padding="16" Margin="8,0,0,0" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding RutaFactura, Converter={StaticResource PathToFileNameConverter}}" Foreground="#1D1D1B" TextWrapping="Wrap" Margin="0,0,8,0" />
-                                    <Button Grid.Column="1" Content="Ver" Style="{StaticResource GhostButton}" Padding="10,6" Click="BtnOpenFactura_Click" />
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="📄 Factura" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{Binding RutaFactura, Converter={StaticResource PathToFileNameConverter}}" Background="Transparent" Foreground="{DynamicResource TextBodyBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1" Content="Ver" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFactura_Click" FontSize="11" Background="{DynamicResource BackgroundSurfaceBrush}" Foreground="{DynamicResource TextSecondaryBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
                             </Border>
-                            <Grid Margin="0,0,0,16"
-                                  Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Padding="12,10" Background="Transparent" MinHeight="72" BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8">
-                                    <TextBlock Text="{Binding RutaFactura, Converter={StaticResource PathToFileNameConverter}}" TextWrapping="Wrap" VerticalAlignment="Center" />
-                                </Border>
-                                <Button Grid.Column="1" Content="Adjuntar" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnAttachFactura_Click" />
-                                <Button Grid.Column="2" Content="Ver" Style="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="10,6" Click="BtnOpenFactura_Click" />
-                            </Grid>
+                        </Grid>
 
-                            <TextBlock Text="Observaciones:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="12,10" Background="Transparent"
-                                    Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}, ConverterParameter=Visibility}">
-                                <TextBlock Text="{Binding ObservacionesTecnico}" Foreground="#1D1D1B" TextWrapping="Wrap" />
-                            </Border>
-                            <TextBox Text="{Binding ObservacionesTecnico, Mode=TwoWay}" Style="{StaticResource InputStyle}"
-                                     Visibility="{Binding IsEditing, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                     TextWrapping="Wrap" Margin="0,0,0,8"
-                                     AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
-                                     MinHeight="120" />
+                        <!-- Observaciones Section -->
+                        <TextBlock Text="📝 Observaciones Técnicas" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12"/>
+                        <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,20">
+                            <TextBox Text="{Binding ObservacionesTecnico, Mode=TwoWay}" 
+                                     IsReadOnly="True"
+                                     MinHeight="120" 
+                                     MaxHeight="180"
+                                     AcceptsReturn="True" 
+                                     TextWrapping="Wrap" 
+                                     VerticalScrollBarVisibility="Auto"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{DynamicResource TextBodyBrush}"
+                                     FontSize="12"
+                                     Padding="0"/>
+                        </Border>
 
-                            <TextBlock Text="Detalle de gastos:" FontWeight="Bold" />
-                            <Border Margin="0,0,0,16" Padding="8" Background="Transparent" BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8">
-                                <DataGrid ItemsSource="{Binding ItemsGasto}"
-                                          AutoGenerateColumns="False"
-                                          CanUserAddRows="False"
-                                          CanUserDeleteRows="False"
-                                          IsReadOnly="True"
-                                          MinHeight="140"
-                                          MaxHeight="260"
-                                          HeadersVisibility="Column">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Tipo" Binding="{Binding TipoGastoTexto}" Width="110"/>
-                                        <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
-                                        <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="170"/>
-                                        <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:N0}}" Width="120"/>
-                                        <DataGridTextColumn Header="Factura" Binding="{Binding NumeroFactura}" Width="120"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
+                        <!-- Desglose de Gastos Section -->
+                        <TextBlock Text="💵 Desglose de Gastos" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12"/>
+                        <Border BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,0,0,20">
+                            <DataGrid ItemsSource="{Binding ItemsGasto}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      IsReadOnly="True"
+                                      MinHeight="140"
+                                      MaxHeight="260"
+                                      HeadersVisibility="Column"
+                                      Background="{DynamicResource BackgroundSurfaceBrush}"
+                                      BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                      BorderThickness="0"
+                                      RowHeight="36"
+                                      RowHeaderWidth="0"
+                                      GridLinesVisibility="None"
+                                      AlternatingRowBackground="{DynamicResource BackgroundElevatedBrush}">
+                                <DataGrid.Resources>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="Padding" Value="12,8"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                        <Setter Property="Height" Value="36"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tipo" Binding="{Binding TipoGastoTexto}" Width="0.4*"/>
+                                    <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
+                                    <DataGridTextColumn Header="Proveedor" Binding="{Binding Proveedor}" Width="0.5*"/>
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:N0}}" Width="0.4*"/>
+                                    <DataGridTextColumn Header="Factura" Binding="{Binding NumeroFactura}" Width="0.4*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
                 </ScrollViewer>
 
-                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12" HorizontalAlignment="Stretch">
+                <!-- Footer -->
+                <Border Grid.Row="2" Background="{DynamicResource BackgroundElevatedBrush}" Padding="20,16" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="BtnEditFooter" Content="Editar" Style="{StaticResource PrimaryButtonStyle}" Width="100" Margin="0,0,8,0" Click="BtnEdit_Click" />
-                        <Button x:Name="BtnCancelFooter" Content="Cancelar" Style="{StaticResource GhostButton}" Width="100" Margin="0,0,8,0" Click="BtnCancelFooter_Click" Visibility="Collapsed" />
-                        <Button x:Name="BtnDeleteFooter" Content="Eliminar" Style="{StaticResource ButtonStyle}" Background="#C0392B" Foreground="White" Width="100" Click="BtnDelete_Click" />
+                        <Button Content="Editar" Click="BtnEdit_Click" Style="{StaticResource ThemePrimaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="Cancelar" Click="BtnCancel_Click" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="Eliminar" Click="BtnDelete_Click" Style="{StaticResource ThemeDangerButtonStyle}"/>
                     </StackPanel>
                 </Border>
             </Grid>

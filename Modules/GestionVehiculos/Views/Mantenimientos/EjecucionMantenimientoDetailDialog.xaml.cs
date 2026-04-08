@@ -1,3 +1,6 @@
+using System;
+using System.Globalization;
+using System.Linq;
 using System.Windows;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
 using GestLog.Modules.GestionVehiculos.Services.Utilities;
@@ -120,16 +123,17 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
             else
             {
-                // save request
+                // save request - limpiar observaciones antes de guardar
                 if (DataContext is EjecucionMantenimientoDto ejec)
                 {
+                    ejec.ObservacionesTecnico = CleanObservaciones(ejec.ObservacionesTecnico);
                     SaveRequested?.Invoke(ejec);
                 }
                 IsEditing = false;
             }
         }
 
-        private void BtnCancelFooter_Click(object sender, RoutedEventArgs e)
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             CancelEdit();
         }
@@ -157,18 +161,8 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
         private void UpdateFooterButtons()
         {
-            if (BtnEditFooter != null)
-            {
-                BtnEditFooter.Content = IsEditing ? "Guardar" : "Editar";
-            }
-            if (BtnCancelFooter != null)
-            {
-                BtnCancelFooter.Visibility = IsEditing ? Visibility.Visible : Visibility.Collapsed;
-            }
-            if (BtnDeleteFooter != null)
-            {
-                BtnDeleteFooter.IsEnabled = !IsEditing;
-            }
+            // Los botones están vinculados directamente en XAML, no necesitan actualización
+            // El estado de edición se maneja a través de binding a IsEditing
         }
 
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
@@ -201,6 +195,58 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             await FacturaStorageHelper.OpenFacturaAsync(this, ejec.RutaFactura);
+        }
+
+        /// <summary>
+        /// Formatea un decimal a formato COP con separador de miles (es-CO culture).
+        /// Ejemplo: 150000 → "150.000,00 COP"
+        /// </summary>
+        private string FormatCostoCop(decimal value)
+        {
+            return $"{value.ToString("N2", CultureInfo.CreateSpecificCulture("es-CO"))} COP";
+        }
+
+        /// <summary>
+        /// Intenta parsear un string de costo que puede contener "COP".
+        /// Soporta múltiples culturas (es-CO, InvariantCulture, default).
+        /// Retorna null si no puede parsearse o es negativo.
+        /// </summary>
+        private decimal? TryParseCosto(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            // Remover sufijo " COP" si existe
+            string cleaned = input.Replace(" COP", "").Trim();
+
+            // Intentar parsear con cultura es-CO primero
+            if (decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.CreateSpecificCulture("es-CO"), out decimal resultEsco))
+                return resultEsco < 0 ? null : resultEsco;
+
+            // Intentar con InvariantCulture
+            if (decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal resultInvariant))
+                return resultInvariant < 0 ? null : resultInvariant;
+
+            // Intentar con cultura default
+            if (decimal.TryParse(cleaned, out decimal resultDefault))
+                return resultDefault < 0 ? null : resultDefault;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Limpia observaciones técnicas removiendo líneas que comienzan con "Factura:".
+        /// Útil para ocultar rutas largas de archivo que se agregaban automáticamente.
+        /// </summary>
+        private string CleanObservaciones(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            var lines = input.Split(new[] { Environment.NewLine, "\n", "\r" }, StringSplitOptions.None);
+            var cleanedLines = lines.Where(line => !line.TrimStart().StartsWith("Factura:", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            return string.Join(Environment.NewLine, cleanedLines).Trim();
         }
     }
 }

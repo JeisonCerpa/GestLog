@@ -6,15 +6,15 @@
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignWidth="800" d:DesignHeight="600"
-             Background="#FAFAFA">
+             Background="{DynamicResource BackgroundSurfaceBrush}">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
 
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#118938" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Padding" Value="12,8" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -33,7 +33,8 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8"
-                                SnapsToDevicePixels="True">
+                                SnapsToDevicePixels="True"
+                                Effect="{TemplateBinding Effect}">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"
                                               Margin="{TemplateBinding Padding}"
@@ -41,15 +42,13 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#37AB4E" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#37AB4E" />
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#118938" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#118938" />
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.70" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.5" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -60,8 +59,8 @@
         <Style x:Key="CardStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#EDEDED" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Effect">
                 <Setter.Value>
@@ -73,23 +72,23 @@
         <Style x:Key="PlanStatusTextStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#118938" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                    <Setter Property="Foreground" Value="#C0392B" />
+                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
                     <Setter Property="Foreground" Value="#F59E0B" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding EstadoPlan}" Value="Sin datos">
-                    <Setter Property="Foreground" Value="#9D9D9C" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
         <!-- Estilo para botones redondos con hover elegante -->
         <Style x:Key="RoundIconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
@@ -105,7 +104,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
+                                <Setter TargetName="BorderBg" Property="Opacity" Value="0.85" />
                                 <Setter TargetName="BorderBg" Property="Effect">
                                     <Setter.Value>
                                         <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
@@ -113,7 +112,7 @@
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                                <Setter TargetName="BorderBg" Property="Opacity" Value="0.70" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -144,11 +143,15 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
                                 <Setter TargetName="BorderBg" Property="Opacity" Value="1" />
+                                <Setter TargetName="BorderBg" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
+                                <Setter TargetName="BorderBg" Property="Opacity" Value="0.70" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -162,7 +165,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FAFAFA">
+    <Grid Background="{DynamicResource BackgroundSurfaceBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -180,11 +183,11 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                         <TextBlock Text="📋" FontSize="20" Margin="0,0,8,0" />
                         <TextBlock Text="Planes de Mantenimiento" 
-                                   FontSize="18" FontWeight="Bold" Foreground="#504F4E" 
+                                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" 
                                    VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="Configura el plan del vehículo actual" 
-                               FontSize="13" Foreground="#9D9D9C" Margin="28,0,0,0" />
+                               FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="28,0,0,0" />
                 </StackPanel>
 
                 <!-- Botones redondos a la derecha -->
@@ -210,7 +213,7 @@
         </Border>
 
         <!-- Content - Grid de Tarjetas Compactas (3 columnas) -->
-        <ScrollViewer Grid.Row="1" Margin="8,4,8,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="ContentScroller">
+        <ScrollViewer Grid.Row="1" Margin="8,4,8,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="ContentScroller" FocusVisualStyle="{x:Null}">
             <Grid>
                 <ItemsControl ItemsSource="{Binding PlanesOrdenados}" Margin="0" Background="Transparent" x:Name="PlanesItemsControl">
                     <!-- Hacer que cada ítem ocupe todo el espacio de la celda -->
@@ -229,8 +232,8 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                                <Border Background="White" CornerRadius="8" Padding="12" 
-                                        BorderBrush="#EDEDED" BorderThickness="1" Margin="6" HorizontalAlignment="Stretch"
+                                    <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="12" 
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" Margin="6" HorizontalAlignment="Stretch"
                                         VerticalAlignment="Top" Height="120"
                                         AutomationProperties.Name="{Binding PlantillaNombre}">
                                     <Grid>
@@ -242,23 +245,23 @@
                                         <!-- Izquierda: título y timeline -->
                                         <StackPanel Grid.Column="0" Orientation="Vertical">
                                             <TextBlock Text="{Binding PlantillaNombre}"
-                                                       FontWeight="Bold" FontSize="14" Foreground="#118938" TextWrapping="Wrap" MaxHeight="40" />
+                                                       FontWeight="Bold" FontSize="14" Foreground="{DynamicResource PrimaryBrush}" TextWrapping="Wrap" MaxHeight="40" />
 
                                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                                <TextBlock Text="Últ: " FontSize="11" Foreground="#9D9D9C" />
-                                                <TextBlock Text="{Binding UltimaFechaMantenimiento, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="#1D1D1B" />
-                                                <TextBlock Text="  ·  KM:" FontSize="11" Foreground="#9D9D9C" Margin="8,0,0,0" />
-                                                <TextBlock Text="{Binding UltimoKMRegistrado, StringFormat={}{0:N0}}" FontSize="11" Foreground="#1D1D1B" />
+                                                <TextBlock Text="Últ: " FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="{Binding UltimaFechaMantenimiento, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="{DynamicResource TextBodyBrush}" />
+                                                <TextBlock Text="  ·  KM:" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,0,0,0" />
+                                                <TextBlock Text="{Binding UltimoKMRegistrado, StringFormat={}{0:N0}}" FontSize="11" Foreground="{DynamicResource TextBodyBrush}" />
                                             </StackPanel>
 
                                             <StackPanel Orientation="Vertical" Margin="0,4,0,0">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="Próx: " FontSize="11" Foreground="#9D9D9C" />
-                                                    <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="#1D1D1B" />
-                                                    <TextBlock Text="  ·  KM:" FontSize="11" Foreground="#9D9D9C" Margin="8,0,0,0" />
-                                                    <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat={}{0:N0}}" FontSize="11" Foreground="#1D1D1B" ToolTip="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo: {0:N0} km}" />
+                                                    <TextBlock Text="Próx: " FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    <TextBlock Text="{Binding ProximaFechaEjecucion, StringFormat={}{0:dd/MM/yyyy}}" FontSize="11" Foreground="{DynamicResource TextBodyBrush}" />
+                                                    <TextBlock Text="  ·  KM:" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,0,0,0" />
+                                                    <TextBlock Text="{Binding ProximoKMEjecucion, StringFormat={}{0:N0}}" FontSize="11" Foreground="{DynamicResource TextBodyBrush}" ToolTip="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo: {0:N0} km}" />
                                                 </StackPanel>
-                                                <TextBlock FontSize="10" Foreground="#7A7A7A" Text="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo KM: {0:N0}}" />
+                                                <TextBlock FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding IntervaloKMPersonalizado, StringFormat=Intervalo KM: {0:N0}}" />
                                             </StackPanel>
                                         </StackPanel>
 
@@ -268,13 +271,16 @@
                                                 <TextBlock Text="{Binding EstadoPlan}" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" FontSize="12" VerticalAlignment="Center" TextWrapping="NoWrap" />
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#10B981" />
+                                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding EstadoPlan}" Value="Vencido">
-                                                                <Setter Property="Background" Value="#C0392B" />
+                                                                <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding EstadoPlan}" Value="Próximo">
                                                                 <Setter Property="Background" Value="#F59E0B" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding EstadoPlan}" Value="Sin datos">
+                                                                <Setter Property="Background" Value="{DynamicResource TextSecondaryBrush}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -282,7 +288,7 @@
                                             </Border>
 
                                             <!-- Overflow menu: usar estilo redondo pequeño para que sea circular -->
-                                            <Button Style="{StaticResource RoundSmallIconButtonStyle}" Width="28" Height="28" ToolTip="Más acciones" Click="OverflowButton_Click" Background="#118938" Foreground="White" BorderThickness="0" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource RoundSmallIconButtonStyle}" Width="28" Height="28" ToolTip="Más acciones" Click="OverflowButton_Click" Background="{DynamicResource PrimaryBrush}" Foreground="White" BorderThickness="0" HorizontalAlignment="Right" VerticalAlignment="Center" FocusVisualStyle="{x:Null}">
                                                 <Button.ContextMenu>
                                                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" Placement="Right">
                                                         <MenuItem Header="Editar" Command="{Binding EditPlanCommand}" CommandParameter="{Binding}" Click="MenuItem_Edit_Click" />

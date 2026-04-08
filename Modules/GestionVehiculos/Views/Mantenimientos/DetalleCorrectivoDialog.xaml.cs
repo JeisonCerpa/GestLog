@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using GestLog.Modules.GestionVehiculos.Models.DTOs;
@@ -60,20 +61,10 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
             _ejecucion.ResponsableEjecucion = string.IsNullOrWhiteSpace(TxtResponsable.Text) ? null : TxtResponsable.Text.Trim();
             _ejecucion.Proveedor = string.IsNullOrWhiteSpace(TxtProveedor.Text) ? null : TxtProveedor.Text.Trim();
-            _ejecucion.ObservacionesTecnico = string.IsNullOrWhiteSpace(TxtTimeline.Text) ? null : TxtTimeline.Text.Trim();
+            var observacionesLimpias = CleanObservaciones(dtoText: TxtTimeline.Text);
+            _ejecucion.ObservacionesTecnico = string.IsNullOrWhiteSpace(observacionesLimpias) ? null : observacionesLimpias;
 
-            if (decimal.TryParse(TxtCosto.Text?.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedCosto) && parsedCosto >= 0)
-            {
-                _ejecucion.Costo = parsedCosto;
-            }
-            else if (decimal.TryParse(TxtCosto.Text?.Trim(), out parsedCosto) && parsedCosto >= 0)
-            {
-                _ejecucion.Costo = parsedCosto;
-            }
-            else
-            {
-                _ejecucion.Costo = null;
-            }
+            _ejecucion.Costo = TryParseCosto(TxtCosto.Text);
 
             SaveRequested?.Invoke(_ejecucion);
             FillFields(_ejecucion);
@@ -118,13 +109,13 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
         {
             TxtTitulo.Text = dto.TituloActividad ?? "Detalle correctivo";
             TxtSubtitulo.Text = $"Placa: {dto.PlacaVehiculo}";
-            TxtEstado.Text = dto.EstadoCorrectivoTexto;
+            TxtEstadoStatus.Text = dto.EstadoCorrectivoTexto;
             TxtFecha.Text = dto.FechaEjecucion.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture);
             TxtResponsable.Text = string.IsNullOrWhiteSpace(dto.ResponsableEjecucion) ? "" : dto.ResponsableEjecucion;
             TxtProveedor.Text = string.IsNullOrWhiteSpace(dto.Proveedor) ? "" : dto.Proveedor;
-            TxtCosto.Text = dto.Costo.HasValue ? dto.Costo.Value.ToString(CultureInfo.CurrentCulture) : string.Empty;
+            TxtCosto.Text = dto.Costo.HasValue ? FormatCostoCop(dto.Costo.Value) : string.Empty;
             TxtFactura.Text = GetFacturaDisplayName(dto.RutaFactura);
-            TxtTimeline.Text = dto.ObservacionesTecnico ?? string.Empty;
+            TxtTimeline.Text = CleanObservaciones(dto.ObservacionesTecnico);
             DgItemsGasto.ItemsSource = dto.ItemsGasto;
         }
 
@@ -150,6 +141,58 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
 
             return Path.GetFileName(ruta);
+        }
+
+        private static string FormatCostoCop(decimal value)
+        {
+            return $"{value.ToString("N2", CultureInfo.CreateSpecificCulture("es-CO"))} COP";
+        }
+
+        private static decimal? TryParseCosto(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return null;
+            }
+
+            var value = input.Trim().Replace("COP", string.Empty, System.StringComparison.OrdinalIgnoreCase).Trim();
+
+            if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.CreateSpecificCulture("es-CO"), out var parsed) && parsed >= 0)
+            {
+                return parsed;
+            }
+
+            if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed) && parsed >= 0)
+            {
+                return parsed;
+            }
+
+            if (decimal.TryParse(value, out parsed) && parsed >= 0)
+            {
+                return parsed;
+            }
+
+            return null;
+        }
+
+        private static string CleanObservaciones(string? dtoText)
+        {
+            if (string.IsNullOrWhiteSpace(dtoText))
+            {
+                return string.Empty;
+            }
+
+            var lines = dtoText
+                .Replace("\r\n", "\n")
+                .Split('\n')
+                .Where(line =>
+                {
+                    var trimmed = line.TrimStart();
+                    return !trimmed.StartsWith("Factura:", System.StringComparison.OrdinalIgnoreCase);
+                })
+                .ToArray();
+
+            return string.Join(System.Environment.NewLine, lines).Trim();
         }
 
         private void ConfigurarParaVentanaPadre(Window? parentWindow)

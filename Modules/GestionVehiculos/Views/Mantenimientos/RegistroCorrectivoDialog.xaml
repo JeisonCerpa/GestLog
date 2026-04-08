@@ -38,7 +38,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="🔧" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Text="🔧" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}" />
                             </Border>
                             <StackPanel>
                                 <TextBlock Text="Registrar mantenimiento correctivo" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}" />
@@ -61,9 +61,9 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📝" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="📝" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                             <TextBlock Text="Fase:" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBlock Text="Registro de falla" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Registro de falla" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Grid.Column="1" Text="Paso 1 de 3" Foreground="{DynamicResource PrimaryBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </Grid>
@@ -74,8 +74,8 @@
                         <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,14">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock Text="⚠️" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Datos iniciales de la falla" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="⚠️" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                    <TextBlock Text="Datos iniciales de la falla" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -127,21 +127,20 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="🛒" FontSize="18" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Carrito de gastos" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            <TextBlock Text="🛒" FontSize="18" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                         </StackPanel>
 
                                         <Border Grid.Column="1" Background="{DynamicResource BackgroundHoverBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,8,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                <TextBlock x:Name="TxtCartItemsCount" Text="0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" ítems" FontSize="10" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                <TextBlock x:Name="TxtCartItemsCount" Text="0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text=" ítems" FontSize="10" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center" Margin="2,0,0,0"/>
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Column="2" Background="{DynamicResource PrimaryLightBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="💰" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="💰" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                 <TextBlock x:Name="TxtCartItemsTotal" Text="$ 0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
@@ -170,30 +169,30 @@
                                                         </Grid.ColumnDefinitions>
 
                                                         <ToggleButton Grid.Column="0" Margin="8,0,0,0" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}" IsChecked="{Binding IsExpanded}">
-                                                            <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='▼|▶'}" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='▼|▶'}" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                         </ToggleButton>
 
                                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                            <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="6,0,8,0"/>
+                                                            <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="6,0,8,0" Foreground="{DynamicResource TextBodyBrush}"/>
                                                             <StackPanel VerticalAlignment="Center">
-                                                                <TextBlock Text="Factura / Remisión" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12"/>
+                                                                <TextBlock Text="Factura / Remisión" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" FontSize="12"/>
                                                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                                                     <TextBlock Text="{Binding NumeroFactura, StringFormat='N°: {0}'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
                                                                     <TextBlock Text="{Binding ProveedorFactura, StringFormat=' | {0}'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
                                                                 </StackPanel>
                                                             </StackPanel>
 
-                                                            <Border Background="{DynamicResource BackgroundHoverBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,8,0">
+                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,8,0">
                                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                                     <TextBlock Text="{Binding Items.Count}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                                                                     <TextBlock Text=" ítems" FontSize="10" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center" Margin="2,0,0,0"/>
                                                                 </StackPanel>
                                                             </Border>
 
-                                                            <Border Background="{DynamicResource PrimaryLightBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
                                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <TextBlock Text="💵" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="💵" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                                     <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -253,10 +252,10 @@
 
                                                         <Border Height="1" Background="{DynamicResource BorderDefaultBrush}" Margin="0,0,0,12"/>
 
-                                                        <Border Background="{DynamicResource PrimaryLightBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                                        <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                                                             <StackPanel>
                                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                                                    <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                                     <TextBlock Text="Agregar ítem a esta factura" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
                                                                 </StackPanel>
 
@@ -273,7 +272,7 @@
 
                                                                     <StackPanel Grid.Column="0">
                                                                         <TextBlock Text="📦 Tipo de gasto" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
-                                                                        <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding DraftTipoGasto}" Height="40" Style="{StaticResource ThemeComboBoxStyle}">
+                                                                        <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding DraftTipoGasto}" IsEditable="False" IsReadOnly="True" Height="40" Style="{StaticResource ThemeComboBoxStyle}">
                                                                             <ComboBoxItem Content="Repuesto" Tag="1"/>
                                                                             <ComboBoxItem Content="Mano de obra" Tag="2"/>
                                                                             <ComboBoxItem Content="Servicio externo" Tag="3"/>
@@ -299,10 +298,10 @@
                                                         <Border Height="1" Background="{DynamicResource BorderDefaultBrush}" Margin="0,0,0,12"/>
 
                                                         <StackPanel>
-                                                            <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8" FontSize="11"/>
+                                                            <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" FontSize="11"/>
                                                             <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Effect="{StaticResource CardShadow}">
                                                                 <StackPanel>
-                                                                    <Border Background="{DynamicResource TableRowHoverBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="12,10,12,10">
+                                                                    <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="12,10,12,10">
                                                                         <Grid>
                                                                             <Grid.ColumnDefinitions>
                                                                                 <ColumnDefinition Width="*"/>
@@ -310,10 +309,10 @@
                                                                                 <ColumnDefinition Width="*"/>
                                                                                 <ColumnDefinition Width="*"/>
                                                                             </Grid.ColumnDefinitions>
-                                                                            <TextBlock Grid.Column="0" Text="Tipo" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
-                                                                            <TextBlock Grid.Column="1" Text="Descripción" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" Margin="8,0,0,0"/>
-                                                                            <TextBlock Grid.Column="2" Text="Valor" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center"/>
-                                                                            <TextBlock Grid.Column="3" Text="Acciones" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center"/>
+                                                                            <TextBlock Grid.Column="0" Text="Tipo" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                                                                            <TextBlock Grid.Column="1" Text="Descripción" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="8,0,0,0"/>
+                                                                            <TextBlock Grid.Column="2" Text="Valor" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                                                                            <TextBlock Grid.Column="3" Text="Acciones" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
                                                                         </Grid>
                                                                     </Border>
 
@@ -331,15 +330,15 @@
                                                                                             <ColumnDefinition Width="*"/>
                                                                                             <ColumnDefinition Width="*"/>
                                                                                         </Grid.ColumnDefinitions>
-                                                                                        <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                                                        <TextBlock Grid.Column="1" Text="{Binding Descripcion}" Foreground="{DynamicResource TextBodyBrush}" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
-                                                                                        <TextBlock Grid.Column="2" Text="{Binding ValorInput, StringFormat='$ {0}'}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                                            <Border Background="{DynamicResource BackgroundHoverBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Cursor="Hand">
-                                                                                                <Button Content="✎" Background="Transparent" BorderThickness="0" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                                                        <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" Foreground="{DynamicResource TextBodyBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                                        <TextBlock Grid.Column="1" Text="{Binding Descripcion}" Foreground="{DynamicResource TextBodyBrush}" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                                                                        <TextBlock Grid.Column="2" Text="{Binding ValorInput, StringFormat='$ {0}'}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                                                        <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                                                            <Border Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource PrimaryBrush}" CornerRadius="5" Width="32" Height="32" Cursor="Hand" Padding="4">
+                                                                                                <Button Content="✎" Style="{StaticResource ThemeTableActionButtonStyle}" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="15"/>
                                                                                             </Border>
-                                                                                            <Border Background="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Margin="4,0,0,0" Cursor="Hand">
-                                                                                                <Button Content="✕" Background="Transparent" BorderThickness="0" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="10" Foreground="{DynamicResource DangerBrush}"/>
+                                                                                            <Border Background="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" CornerRadius="5" Width="32" Height="32" Margin="8,0,0,0" Cursor="Hand" Padding="4">
+                                                                                                <Button Content="✕" Style="{StaticResource ThemeTableActionButtonStyle}" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="15"/>
                                                                                             </Border>
                                                                                         </StackPanel>
                                                                                     </Grid>
@@ -360,9 +359,9 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Background="{DynamicResource TableRowHoverBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                        <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="ℹ️" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="ℹ️" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                 <TextBlock Text="En este paso solo se registra la falla. Los costos y facturas se agregan al completar el correctivo." FontSize="11" Foreground="{DynamicResource TextBodyBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
@@ -371,7 +370,7 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <Border Grid.Row="3" Background="{DynamicResource TableRowHoverBrush}" Padding="14,12" CornerRadius="0,0,12,12" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1,1,1,0">
+                <Border Grid.Row="3" Background="{DynamicResource BackgroundElevatedBrush}" Padding="14,12" CornerRadius="0,0,12,12" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1,1,1,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Cancelar" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnCancel_Click" Padding="12,6"/>
                         <Button Content="Guardar" Style="{StaticResource ThemePrimaryButtonStyle}" Click="BtnSave_Click" Padding="14,6"/>

@@ -4,352 +4,280 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converters="clr-namespace:GestLog.Converters"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
-             d:DesignWidth="800" d:DesignHeight="600">
+             d:DesignWidth="1200" d:DesignHeight="800"
+             Background="{DynamicResource BackgroundSurfaceBrush}">
+
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#118938" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
+        <!-- Plantilla Card para Plantillas -->
+        <Style x:Key="PlantillaCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" />
+                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.0"/>
                 </Setter.Value>
             </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"
-                                              RecognizesAccessKey="True" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#37AB4E" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#37AB4E" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#118938" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#118938" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.15"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#9D9D9C" />
-            <Setter Property="BorderBrush" Value="#9D9D9C" />
-        </Style>
-
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#DC2626" />
-            <Setter Property="BorderBrush" Value="#DC2626" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#B91C1C" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#B91C1C" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#991B1B" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#991B1B" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#EDEDED" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" />
-                </Setter.Value>
-            </Setter>
+        <!-- Status Badge Style -->
+        <Style x:Key="StatusBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FAFAFA" Margin="16">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="12" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+        <!-- HEADER SECTION -->
+        <Border Grid.Row="0" Background="{DynamicResource BackgroundElevatedBrush}" Padding="28,24" Effect="{StaticResource HeaderShadow}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel>
-                    <TextBlock Text="🧩 Plantillas de Mantenimiento"
-                               FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="#118938" />
-                    <TextBlock Text="Crea y administra plantillas reutilizables para todos los vehículos"
-                               Margin="0,6,0,0"
-                               FontSize="13"
-                               Foreground="#706F6F" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="🧩 Plantillas de Mantenimiento" 
+                               FontSize="28" FontWeight="Bold" 
+                               Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Crea y administra plantillas reutilizables para todos tus vehículos" 
+                               FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.8"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Recargar"
+                    <Button Content="🔄 Recargar" 
                             Command="{Binding LoadPlantillasCommand}"
-                            Margin="0,0,8,0"
-                            Style="{StaticResource PrimaryButtonStyle}" />
-                    <Button Content="Limpiar selección"
-                            Command="{Binding ClearSelectionCommand}"
-                            Style="{StaticResource SecondaryButtonStyle}" />
+                            Style="{StaticResource ThemeSecondaryButtonStyle}" 
+                            FocusVisualStyle="{x:Null}"
+                            Margin="0,0,12,0"/>
+                    <Button Content="➕ Nueva Plantilla" 
+                            Click="BtnNuevaPlantilla_Click"
+                            Style="{StaticResource ThemePrimaryButtonStyle}" 
+                            FocusVisualStyle="{x:Null}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Expander Grid.Row="2"
-                  Header="+ Nueva plantilla"
-                  IsExpanded="False"
-                  FontWeight="SemiBold"
-                  Foreground="#504F4E"
-                  Background="White"
-                  BorderBrush="#EDEDED"
-                  BorderThickness="1"
-                  Padding="12,8">
-            <Border Style="{StaticResource CardStyle}" Margin="0,8,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="12"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
+        <!-- MAIN CONTENT -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" FocusVisualStyle="{x:Null}">
+            <StackPanel Margin="28">
+                <!-- SEARCH & FILTER BAR -->
+                <Border Background="{DynamicResource BackgroundElevatedBrush}" 
+                        BorderBrush="{DynamicResource BorderDefaultBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,24"
+                        Effect="{StaticResource WindowShadow}">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="140"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Nombre" Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding NuevaPlantillaNombre, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
+                        <!-- Search Input -->
+                        <TextBox Grid.Column="0" 
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource ThemeTextBoxStyle}"
+                                 Tag="Buscar plantillas..."
+                                 Margin="0,0,12,0"/>
+
+                        <!-- Estado Filter -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="Estado:" Foreground="{DynamicResource TextBodyBrush}" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                            <ComboBox Style="{StaticResource ThemeComboBoxStyle}" Width="100"
+                                      SelectedItem="{Binding FilterEstado}">
+                                <sys:String>Todos</sys:String>
+                                <sys:String>Activos</sys:String>
+                                <sys:String>Inactivos</sys:String>
+                            </ComboBox>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Descripción" Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding NuevaPlantillaDescripcion, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
+                        <!-- Sort -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="Ordenar:" Foreground="{DynamicResource TextBodyBrush}" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                            <ComboBox Style="{StaticResource ThemeComboBoxStyle}" Width="140"
+                                      SelectedItem="{Binding SortOption}">
+                                <sys:String>Nombre (A-Z)</sys:String>
+                                <sys:String>Reciente</sys:String>
+                                <sys:String>Frecuencia</sys:String>
+                            </ComboBox>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="4">
-                            <TextBlock Text="Intervalo KM" Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding NuevoIntervaloKm, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="6">
-                            <TextBlock Text="Intervalo Días" Foreground="#504F4E" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding NuevoIntervaloDias, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
-                        </StackPanel>
+                        <!-- Clear Button -->
+                        <Button Grid.Column="3" Content="Limpiar filtros" 
+                                Command="{Binding ClearFiltersCommand}"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}" 
+                                FocusVisualStyle="{x:Null}"/>
                     </Grid>
+                </Border>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal">
-                        <Button Content="Guardar plantilla"
-                                Command="{Binding CrearPlantillaCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                            Margin="0,0,8,0" />
-                        <TextBlock Text="Cargando..."
-                                   VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Foreground="#118938"
-                                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Expander>
+                <!-- MESSAGES -->
+                <Border Background="{DynamicResource DangerBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,24"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"
+                        Opacity="0.15">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="White" FontSize="13" TextWrapping="Wrap"/>
+                </Border>
 
-        <Grid Grid.Row="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="*" MinWidth="300" />
-            </Grid.ColumnDefinitions>
+                <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,24"
+                        Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}"
+                        Opacity="0.15">
+                    <TextBlock Text="{Binding SuccessMessage}" Foreground="White" FontSize="13" TextWrapping="Wrap"/>
+                </Border>
 
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="8"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <!-- PLANTILLAS GRID (3 COLUMNAS) -->
+                <ItemsControl ItemsSource="{Binding FilteredPlantillas}" Margin="0,0,0,24">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" HorizontalAlignment="Stretch"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource PlantillaCardStyle}" 
+                                    Margin="0,0,16,16"
+                                    Tag="{Binding}">
+                                <StackPanel>
+                                    <!-- Card Header -->
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Plantillas registradas" FontSize="15" FontWeight="SemiBold" Foreground="#504F4E"/>
+                                        <TextBlock Grid.Column="0" Text="{Binding Nombre}" 
+                                                   FontSize="16" FontWeight="Bold" 
+                                                   Foreground="{DynamicResource TextBodyBrush}"
+                                                   TextWrapping="Wrap"/>
 
-                    <Border Grid.Row="1" Background="#FFEBEE" CornerRadius="6" Padding="10" Margin="0,10,0,0"
-                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" FontSize="12" TextWrapping="Wrap"/>
-                    </Border>
-
-                    <Border Grid.Row="1" Background="#E8F5E9" CornerRadius="6" Padding="10" Margin="0,10,0,0"
-                            Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                        <TextBlock Text="{Binding SuccessMessage}" Foreground="#10B981" FontSize="12" TextWrapping="Wrap"/>
-                    </Border>
-
-                    <Grid Grid.Row="3">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                            <TextBox Width="280" Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"
-                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button Content="Limpiar" Command="{Binding LoadPlantillasCommand}" Margin="8,0,0,0" Style="{StaticResource SecondaryButtonStyle}" />
-                        </StackPanel>
-
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding FilteredPlantillas}"
-                             SelectedItem="{Binding SelectedPlantilla}"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" CornerRadius="8" Padding="12"
-                                        BorderBrush="#EDEDED" BorderThickness="1" Margin="0,0,0,8" MinHeight="72">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="{Binding Nombre}" FontWeight="SemiBold" FontSize="13" Foreground="#1D1D1B"/>
-                                        <TextBlock Grid.Row="1" Text="{Binding Descripcion}" FontSize="12" Foreground="#706F6F" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                        <!-- Status Badge -->
+                                        <Border Grid.Column="1" Margin="8,0,0,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Foreground="White" FontSize="10" FontWeight="Bold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="🔴 Inactiva"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                                <Setter Property="Text" Value="🟢 Activa"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
                                     </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </Grid>
-            </Border>
 
-            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.Style>
-                        <Style TargetType="Grid">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedPlantilla}" Value="{x:Null}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
+                                    <!-- Description -->
+                                    <TextBlock Text="{Binding Descripcion}" 
+                                               Foreground="{DynamicResource TextSecondaryBrush}" 
+                                               FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"
+                                               MaxHeight="60"/>
 
-                    <StackPanel>
-                        <TextBlock Text="Detalle de plantilla" FontSize="15" FontWeight="SemiBold" Foreground="#504F4E"/>
+                                    <!-- Intervals -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                        <Border Margin="0,12,0,0" Background="#F8F8F8" CornerRadius="8" Padding="12" BorderBrush="#ECECEC" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="Nombre" FontSize="11" Foreground="#706F6F"/>
-                                <TextBox Text="{Binding SelectedPlantilla.Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8" Height="32" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="KM" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                       FontSize="10"/>
+                                            <TextBlock Text="{Binding IntervaloKM, StringFormat={}{0:N0}}" 
+                                                       Foreground="{DynamicResource TextBodyBrush}" 
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                        </StackPanel>
 
-                                <TextBlock Text="Descripción" FontSize="11" Foreground="#706F6F"/>
-                                <TextBox Text="{Binding SelectedPlantilla.Descripcion, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" Height="Auto" MinHeight="80" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-                            </StackPanel>
-                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <TextBlock Text="Días" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                       FontSize="10"/>
+                                            <TextBlock Text="{Binding IntervaloDias, StringFormat={}{0}}" 
+                                                       Foreground="{DynamicResource TextBodyBrush}" 
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                        <UniformGrid Columns="2" Margin="0,12,0,0">
-                            <Border Margin="0,0,6,0" Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="8" Padding="10">
-                                <StackPanel>
-                                    <TextBlock Text="Intervalo KM" FontSize="11" Foreground="#706F6F"/>
-                                    <TextBox Text="{Binding SelectedPlantilla.IntervaloKM, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" Height="30" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
+                                    <!-- Action Buttons -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Content="✏️ Editar" 
+                                                Click="BtnEditarPlantilla_Click"
+                                                Style="{StaticResource ThemePrimaryButtonStyle}" 
+                                                Padding="8,6" FontSize="11" Margin="0,0,4,0"
+                                                FocusVisualStyle="{x:Null}"/>
+                                        <Button Grid.Column="1" Content="🗑 Eliminar" 
+                                                Click="BtnEliminarPlantilla_Click"
+                                                Style="{StaticResource ThemeDangerButtonStyle}" 
+                                                Padding="8,6" FontSize="11" Margin="4,0,0,0"
+                                                FocusVisualStyle="{x:Null}"/>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
-                            <Border Margin="6,0,0,0" Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="8" Padding="10">
-                                <StackPanel>
-                                    <TextBlock Text="Intervalo Días" FontSize="11" Foreground="#706F6F"/>
-                                    <TextBox Text="{Binding SelectedPlantilla.IntervaloDias, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" Height="30" Padding="8" FontSize="12" BorderBrush="#D9D9D9" BorderThickness="1"/>
-                                </StackPanel>
-                            </Border>
-                        </UniformGrid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                        <Border Margin="0,12,0,0" Background="#F5FDF7" BorderBrush="#CDEED7" BorderThickness="1" CornerRadius="8" Padding="10">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Estado: " FontSize="12" FontWeight="SemiBold" Foreground="#2B7A3D"/>
-                                <TextBlock FontSize="12" Foreground="#2B7A3D">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Inactiva"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedPlantilla.Activo}" Value="True">
-                                                    <Setter Property="Text" Value="Activa"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="Guardar cambios"
-                                Command="{Binding GuardarCambiosPlantillaCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Margin="0,0,8,0"/>
-                                <Button Content="Eliminar plantilla"
-                                    Command="{Binding EliminarPlantillaCommand}"
-                                    Style="{StaticResource DangerButtonStyle}"/>
-                        </StackPanel>
+                <!-- EMPTY STATE -->
+                <Border Background="{DynamicResource BackgroundElevatedBrush}" 
+                        BorderBrush="{DynamicResource BorderDefaultBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="40" 
+                        TextBlock.TextAlignment="Center"
+                        Visibility="Collapsed">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="📭" FontSize="48" Margin="0,0,0,16"/>
+                        <TextBlock Text="No hay plantillas que mostrar" 
+                                   Foreground="{DynamicResource TextBodyBrush}" 
+                                   FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Crea una nueva plantilla para comenzar" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                                   FontSize="13"/>
                     </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

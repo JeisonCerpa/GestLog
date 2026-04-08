@@ -6,189 +6,106 @@
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignWidth="800" d:DesignHeight="600"
-             Background="#FAFAFA">
+             Background="{DynamicResource BackgroundSurfaceBrush}">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
-
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#118938" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" />
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"
-                                              RecognizesAccessKey="True" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#37AB4E" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#37AB4E" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#118938" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#118938" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Estilos para botones redondos similares a los usados en Planes -->
-        <Style x:Key="RoundIconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BorderBg" 
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="20"
-                                Width="40" Height="40"
-                                Effect="{TemplateBinding Effect}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
-                                <Setter TargetName="BorderBg" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="RoundSmallIconButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundIconButtonStyle}">
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BorderBg"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="14"
-                                Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"
-                                Opacity="0.96"
-                                Effect="{TemplateBinding Effect}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
-                                <Setter TargetName="BorderBg" Property="Opacity" Value="1" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.06" BlurRadius="4" ShadowDepth="1" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#EDEDED" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Estilo de encabezados de DataGrid similar al corporativo -->
-        <Style x:Key="EjecucionesDataGridHeader" TargetType="DataGridColumnHeader">
-            <!-- usar off-white o blanco para encajar con paleta -->
-            <Setter Property="Background" Value="#FAFAFA" />
-            <Setter Property="Foreground" Value="#504F4E" />
-            <Setter Property="FontFamily" Value="Segoe UI" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="BorderBrush" Value="#E5E5E5" />
-            <Setter Property="BorderThickness" Value="0,0,1,1" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Height" Value="42" />
-            <Setter Property="UseLayoutRounding" Value="True" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="DataGridColumnHeader">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                UseLayoutRounding="True"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center"
-                                              UseLayoutRounding="True"
-                                              SnapsToDevicePixels="True" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FAFAFA">
+    <Grid Background="{DynamicResource BackgroundSurfaceBrush}">
         <Grid.Resources>
-            <DropShadowEffect x:Key="EjecucionesDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+            <DropShadowEffect x:Key="EjecucionesDataGridShadow" Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
+
+            <Style x:Key="CardStyle" TargetType="Border">
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="RoundIconButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="BorderBg" 
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="20"
+                                    Width="40" Height="40"
+                                    Effect="{TemplateBinding Effect}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="BorderBg" Property="Opacity" Value="0.85" />
+                                    <Setter TargetName="BorderBg" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="BorderBg" Property="Opacity" Value="0.70" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="EjecucionesDataGridHeader" TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="Height" Value="42" />
+                <Setter Property="UseLayoutRounding" Value="True" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DataGridColumnHeader">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center"
+                                                  UseLayoutRounding="True"
+                                                  SnapsToDevicePixels="True" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
             <!-- botón cuadrado pequeño para acciones dentro de tablas -->
             <Style x:Key="TableActionButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="24" />
                 <Setter Property="Height" Value="24" />
-                <Setter Property="Background" Value="#118938" />
+                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
                 <Setter Property="Foreground" Value="White" />
-                <Setter Property="BorderBrush" Value="#118938" />
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Padding" Value="0" />
@@ -201,10 +118,10 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="border" Property="Background" Value="#0D8E35" />
+                                    <Setter TargetName="border" Property="Opacity" Value="0.85" />
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="border" Property="Background" Value="#118938" />
+                                    <Setter TargetName="border" Property="Opacity" Value="0.70" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -217,7 +134,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="#FAFAFA">
+        <ScrollViewer Grid.Row="0" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="{DynamicResource BackgroundSurfaceBrush}" FocusVisualStyle="{x:Null}">
             <StackPanel>
 
         <!-- Header -->
@@ -232,11 +149,11 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                         <TextBlock Text="📋" FontSize="20" Margin="0,0,8,0" />
                         <TextBlock Text="Ejecuciones de Mantenimiento" 
-                                   FontSize="18" FontWeight="Bold" Foreground="#504F4E" 
+                                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" 
                                    VerticalAlignment="Center" />
                     </StackPanel>
                     <TextBlock Text="Historial y registro de ejecuciones de mantenimiento" 
-                               FontSize="13" Foreground="#9D9D9C" Margin="28,0,0,0" />
+                               FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="28,0,0,0" />
                 </StackPanel>
 
                 <!-- Botón de registrar mantenimiento -->
@@ -270,29 +187,33 @@
                           CanUserDeleteRows="False"
                           HeadersVisibility="Column"
                           ColumnHeaderStyle="{StaticResource EjecucionesDataGridHeader}"
-                          Background="White"
+                          Background="{DynamicResource BackgroundSurfaceBrush}"
+                          BorderBrush="{DynamicResource BorderDefaultBrush}"
+                          BorderThickness="1"
                           RowHeight="36"
                           RowHeaderWidth="0"
                           GridLinesVisibility="None"
+                          FocusVisualStyle="{x:Null}"
+                          AlternatingRowBackground="{DynamicResource BackgroundElevatedBrush}"
                           MouseDoubleClick="DataGrid_RowDoubleClick">
                     <DataGrid.Resources>
                         <Style TargetType="DataGridRow">
-                            <Setter Property="Foreground" Value="#504F4E"/>
-                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#E8F5E8"/>
-                                    <Setter Property="Foreground" Value="#118938"/>
+                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                         <Style TargetType="DataGridCell">
-                            <Setter Property="Foreground" Value="#504F4E"/>
-                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#E8F5E8"/>
-                                    <Setter Property="Foreground" Value="#118938"/>
+                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

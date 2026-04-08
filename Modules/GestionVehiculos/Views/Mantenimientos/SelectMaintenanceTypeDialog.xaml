@@ -10,7 +10,7 @@
         SizeToContent="Manual"
         Style="{StaticResource ModalWindowBase}">
     <Grid x:Name="RootGrid" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
-        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+        <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 Width="600" MaxHeight="400"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
@@ -36,17 +36,17 @@
                                 <TextBlock Text="Elige el tipo de mantenimiento a registrar" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
                             </StackPanel>
                         </StackPanel>
-                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnCancelar_Click" ToolTip="Cerrar (Esc)">
+                        <Button Grid.Column="1" Style="{StaticResource ThemeCloseButtonStyle}" Click="BtnCancelar_Click" ToolTip="Cerrar (Esc)">
                             <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                             </Grid>
                         </Button>
                     </Grid>
                 </Border>
 
                 <StackPanel Grid.Row="1" Margin="20" VerticalAlignment="Center">
-                    <TextBlock Text="Selecciona el tipo de mantenimiento a registrar" FontSize="13" Foreground="#706F6F" Margin="0,0,0,20"/>
+                    <TextBlock Text="Selecciona el tipo de mantenimiento a registrar" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,20"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -55,36 +55,36 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Tarjeta Preventivo -->
-                        <Border Grid.Column="0" Background="#F9FFFE" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand" 
+                        <Border Grid.Column="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand" 
                                 MouseLeftButtonDown="BtnPreventivo_Click">
                             <Border.Effect>
                                 <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
                             </Border.Effect>
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock Text="📅" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                <TextBlock Text="Preventivo" FontSize="16" FontWeight="SemiBold" Foreground="#118938" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                <TextBlock Text="Mantenimiento planificado" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                <TextBlock Text="📅" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12" Foreground="{DynamicResource TextBodyBrush}"/>
+                                <TextBlock Text="Preventivo" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock Text="Mantenimiento planificado" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
                             </StackPanel>
                         </Border>
 
                         <!-- Tarjeta Correctivo -->
-                        <Border Grid.Column="1" Background="#FFFBF9" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16" Cursor="Hand"
+                        <Border Grid.Column="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Cursor="Hand"
                                 MouseLeftButtonDown="BtnCorrectivo_Click">
                             <Border.Effect>
                                 <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
                             </Border.Effect>
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock Text="🔨" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                <TextBlock Text="Correctivo" FontSize="16" FontWeight="SemiBold" Foreground="#C0392B" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                <TextBlock Text="Reparación por falla" FontSize="12" Foreground="#706F6F" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                <TextBlock Text="🔨" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12" Foreground="{DynamicResource TextBodyBrush}"/>
+                                <TextBlock Text="Correctivo" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                <TextBlock Text="Reparación por falla" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
                             </StackPanel>
                         </Border>
                     </Grid>
                 </StackPanel>
 
-                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
+                <Border Grid.Row="2" Background="{DynamicResource BackgroundElevatedBrush}" Padding="12" CornerRadius="0,0,12,12" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1,1,1,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancelar_Click"/>
+                        <Button Content="Cancelar" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnCancelar_Click" Foreground="{DynamicResource TextBodyBrush}"/>
                     </StackPanel>
                 </Border>
             </Grid>

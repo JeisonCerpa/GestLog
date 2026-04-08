@@ -54,6 +54,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         [ObservableProperty]
         private int nuevoTipoIntervalo = 1;
 
+        [ObservableProperty]
+        private string filterEstado = "Todos";
+
+        [ObservableProperty]
+        private string sortOption = "Nombre (A-Z)";
+
         public PlantillasMantenimientoViewModel(
             IPlantillaMantenimientoService plantillaService,
             IGestLogLogger logger)
@@ -116,6 +122,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             RefreshFilteredPlantillas();
         }
 
+        partial void OnFilterEstadoChanged(string value)
+        {
+            RefreshFilteredPlantillas();
+        }
+
+        partial void OnSortOptionChanged(string value)
+        {
+            RefreshFilteredPlantillas();
+        }
+
         private void RefreshFilteredPlantillas()
         {
             if (Plantillas == null)
@@ -127,8 +143,26 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     (!string.IsNullOrEmpty(p.Nombre) && p.Nombre.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
                     (!string.IsNullOrEmpty(p.Descripcion) && p.Descripcion.Contains(SearchText, StringComparison.OrdinalIgnoreCase))));
 
+            // Aplicar filtro de estado
+            if (!string.IsNullOrEmpty(FilterEstado) && FilterEstado != "Todos")
+            {
+                q = new ObservableCollection<PlantillaMantenimientoDto>(q.Where(p =>
+                    (FilterEstado == "Activos" && p.Activo) || (FilterEstado == "Inactivos" && !p.Activo)));
+            }
+
+            // Aplicar ordenado
+            IOrderedEnumerable<PlantillaMantenimientoDto> ordenada = q.OrderBy(p => p.Nombre);
+            if (SortOption == "Frecuencia")
+            {
+                ordenada = q.OrderBy(p => p.IntervaloKM);
+            }
+            else if (SortOption == "Reciente")
+            {
+                ordenada = q.OrderByDescending(p => p.Id);
+            }
+
             FilteredPlantillas.Clear();
-            foreach (var item in q)
+            foreach (var item in ordenada)
                 FilteredPlantillas.Add(item);
         }
 
@@ -139,6 +173,39 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         public void ClearSelection()
         {
             SelectedPlantilla = null;
+            ErrorMessage = string.Empty;
+            SuccessMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        public void OpenCrearPlantilla()
+        {
+            NuevaPlantillaNombre = string.Empty;
+            NuevaPlantillaDescripcion = string.Empty;
+            NuevoIntervaloKm = 5000;
+            NuevoIntervaloDias = 180;
+            ErrorMessage = string.Empty;
+            SuccessMessage = string.Empty;
+        }
+
+        [RelayCommand]
+        public void VerPlantilla(PlantillaMantenimientoDto plantilla)
+        {
+            SelectPlantilla(plantilla);
+        }
+
+        [RelayCommand]
+        public void EditarPlantilla(PlantillaMantenimientoDto plantilla)
+        {
+            SelectPlantilla(plantilla);
+        }
+
+        [RelayCommand]
+        public void ClearFilters()
+        {
+            SearchText = string.Empty;
+            FilterEstado = "Todos";
+            SortOption = "Nombre (A-Z)";
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
         }
@@ -164,39 +231,67 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 }
 
                 IsLoading = true;
+                bool esEdicion = SelectedPlantilla != null;
 
-                var nuevaPlantilla = new PlantillaMantenimientoDto
+                // Si hay plantilla seleccionada, actualizamos. Si no, creamos nueva
+                if (esEdicion)
                 {
-                    Nombre = NuevaPlantillaNombre.Trim(),
-                    Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim(),
-                    IntervaloKM = NuevoIntervaloKm,
-                    IntervaloDias = NuevoIntervaloDias,
-                    TipoIntervalo = NuevoTipoIntervalo,
-                    Activo = true
-                };
+                    // MODO EDICIÓN
+                    SelectedPlantilla.Nombre = NuevaPlantillaNombre.Trim();
+                    SelectedPlantilla.Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim();
+                    SelectedPlantilla.IntervaloKM = NuevoIntervaloKm;
+                    SelectedPlantilla.IntervaloDias = NuevoIntervaloDias;
+                    SelectedPlantilla.TipoIntervalo = NuevoTipoIntervalo;
 
-                var creada = await _plantillaService.CreateAsync(nuevaPlantilla, cancellationToken);
+                    var actualizada = await _plantillaService.UpdateAsync(SelectedPlantilla.Id, SelectedPlantilla, cancellationToken);
 
-                Plantillas.Insert(0, creada);
-                SelectedPlantilla = creada;
-                RefreshFilteredPlantillas();
-                SuccessMessage = "Plantilla creada correctamente";
+                    var index = Plantillas.IndexOf(SelectedPlantilla);
+                    if (index >= 0)
+                    {
+                        Plantillas[index] = actualizada;
+                    }
 
-                NuevaPlantillaNombre = string.Empty;
-                NuevaPlantillaDescripcion = string.Empty;
-                NuevoIntervaloKm = 5000;
-                NuevoIntervaloDias = 180;
-                NuevoTipoIntervalo = 1;
+                    SelectedPlantilla = actualizada;
+                    RefreshFilteredPlantillas();
+                    SuccessMessage = "Plantilla actualizada correctamente";
+                }
+                else
+                {
+                    // MODO CREACIÓN
+                    var nuevaPlantilla = new PlantillaMantenimientoDto
+                    {
+                        Nombre = NuevaPlantillaNombre.Trim(),
+                        Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim(),
+                        IntervaloKM = NuevoIntervaloKm,
+                        IntervaloDias = NuevoIntervaloDias,
+                        TipoIntervalo = NuevoTipoIntervalo,
+                        Activo = true
+                    };
+
+                    var creada = await _plantillaService.CreateAsync(nuevaPlantilla, cancellationToken);
+
+                    Plantillas.Insert(0, creada);
+                    SelectedPlantilla = creada;
+                    RefreshFilteredPlantillas();
+                    SuccessMessage = "Plantilla creada correctamente";
+
+                    // Solo en modo creación limpiamos los campos
+                    NuevaPlantillaNombre = string.Empty;
+                    NuevaPlantillaDescripcion = string.Empty;
+                    NuevoIntervaloKm = 5000;
+                    NuevoIntervaloDias = 180;
+                    NuevoTipoIntervalo = 1;
+                }
             }
             catch (OperationCanceledException)
             {
                 ErrorMessage = "Operación cancelada";
-                _logger.LogWarning("Creación de plantilla cancelada");
+                _logger.LogWarning("Creación/Actualización de plantilla cancelada");
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Error al crear plantilla";
-                _logger.LogError(ex, "Error creando plantilla de mantenimiento");
+                ErrorMessage = "Error al procesar plantilla";
+                _logger.LogError(ex, "Error procesando plantilla de mantenimiento");
             }
             finally
             {

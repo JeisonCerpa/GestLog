@@ -6,7 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/LightTheme.xaml"/>
+                <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
                 <ResourceDictionary Source="Themes/ThemeTemplates.xaml"/>
                 <ResourceDictionary Source="Resources/ModalWindowsStandard.xaml"/>
                 <ResourceDictionary Source="Resources/ModernStyles.xaml"/>

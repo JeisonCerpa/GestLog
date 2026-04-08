@@ -18,7 +18,7 @@
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#80000000">
-        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+        <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 MinWidth="640" MaxWidth="1120" MaxHeight="820"
                 HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="24"
                 BorderThickness="0" Effect="{StaticResource WindowShadow}">
@@ -37,45 +37,45 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="✅" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="✅" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}" />
                             </Border>
                             <StackPanel>
-                                <TextBlock Text="Completar mantenimiento" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
-                                <TextBlock Text="Registrar cierre y soporte de factura" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
+                                <TextBlock Text="Completar mantenimiento" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                <TextBlock Text="Registrar cierre y soporte de factura" FontFamily="Segoe UI" FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Opacity="0.9" />
                             </StackPanel>
                         </StackPanel>
-                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)">
+                        <Button Grid.Column="1" Style="{StaticResource ThemeCloseButtonStyle}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)">
                             <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                             </Grid>
                         </Button>
                     </Grid>
                 </Border>
 
-                <Border Grid.Row="1" Margin="16,10,16,0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Border Grid.Row="1" Margin="16,10,16,0" Background="{DynamicResource PrimaryLightBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="✅" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Fase:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBlock Text="Cierre de correctivo" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                            <TextBlock Text="✅" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                            <TextBlock Text="Fase:" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="Cierre de correctivo" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="Paso 3 de 3" Foreground="#1E3A8A" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="1" Text="Paso 3 de 3" Foreground="{DynamicResource PrimaryBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </Grid>
                 </Border>
 
                 <ScrollViewer Grid.Row="2" Margin="16,12,16,0" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,14">
+                        <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,14">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock Text="📋" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Datos de cierre" FontSize="12" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                    <TextBlock Text="📋" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                    <TextBlock Text="Datos de cierre" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <Grid Margin="0,0,0,12">
@@ -85,11 +85,11 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Kilometraje al completar" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <TextBlock Text="Kilometraje al completar" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                         <TextBox x:Name="TxtKilometraje" Style="{StaticResource ThemeTextBoxStyle}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Título del mantenimiento realizado" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <TextBlock Text="Título del mantenimiento realizado" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                         <TextBox x:Name="TxtTituloActividad" Style="{StaticResource ThemeTextBoxStyle}" />
                                     </StackPanel>
                                 </Grid>
@@ -101,17 +101,17 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Responsable" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <TextBlock Text="Responsable" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                         <ComboBox x:Name="CmbResponsable"
-                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                  Style="{StaticResource ThemeComboBoxStyle}"
                                                   IsEditable="True"
                                                   IsTextSearchEnabled="False"
                                                   Height="40"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Proveedor" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                        <TextBlock Text="Proveedor" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                         <ComboBox x:Name="CmbProveedor"
-                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                  Style="{StaticResource ThemeComboBoxStyle}"
                                                   IsEditable="True"
                                                   IsTextSearchEnabled="False"
                                                   Height="40"/>
@@ -120,14 +120,11 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,14">
+                        <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Effect="{StaticResource SectionShadow}" Margin="0,0,0,14">
                             <StackPanel>
                                 <Border CornerRadius="10" Padding="16,12" Margin="0,0,0,16" Effect="{StaticResource CardShadow}">
                                     <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#EFF6FF" Offset="0"/>
-                                            <GradientStop Color="#F0FAFB" Offset="1"/>
-                                        </LinearGradientBrush>
+                                        <SolidColorBrush Color="{DynamicResource BackgroundElevatedColor}"/>
                                     </Border.Background>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -139,34 +136,34 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="🛒" FontSize="18" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Carrito de gastos" FontSize="13" FontWeight="SemiBold" Foreground="#1E3A8A" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text="🛒" FontSize="18" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                            <TextBlock Text="Carrito de gastos" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                         </StackPanel>
 
-                                        <Border Grid.Column="1" Background="#DBEAFE" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,8,0">
+                                        <Border Grid.Column="1" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,8,0">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                <TextBlock x:Name="TxtCartItemsCountCompletar" Text="0" FontSize="11" FontWeight="Bold" Foreground="#0C4A6E" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" ítems" FontSize="10" Foreground="#0C4A6E" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                <TextBlock x:Name="TxtCartItemsCountCompletar" Text="0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text=" ítems" FontSize="10" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center" Margin="2,0,0,0"/>
                                             </StackPanel>
                                         </Border>
 
-                                        <Border Grid.Column="2" Background="#DCFCE7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
+                                        <Border Grid.Column="2" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="💰" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                <TextBlock x:Name="TxtCartItemsTotalCompletar" Text="$ 0" FontSize="11" FontWeight="Bold" Foreground="#15803D" VerticalAlignment="Center"/>
+                                                <TextBlock Text="💰" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                <TextBlock x:Name="TxtCartItemsTotalCompletar" Text="$ 0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Column="3"/>
-                                        <Button Grid.Column="4" Content="+ Agregar factura" Style="{StaticResource GhostButton}" Padding="12,6" Click="BtnAddFacturaGroup_Click" ToolTip="Crear un nuevo grupo de factura" VerticalAlignment="Center" FontSize="11" Foreground="#1E40AF"/>
+                                        <Button Grid.Column="4" Content="+ Agregar factura" Style="{StaticResource ThemeSecondaryButtonStyle}" Padding="12,6" Click="BtnAddFacturaGroup_Click" ToolTip="Crear un nuevo grupo de factura" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource PrimaryBrush}"/>
                                     </Grid>
                                 </Border>
 
                                 <ItemsControl x:Name="IcItemsGasto">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="0" Margin="0,0,0,14" Background="White" Effect="{StaticResource CardShadow}">
+                                                            <Border BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="10" Padding="0" Margin="0,0,0,14" Background="{DynamicResource BackgroundSurfaceBrush}" Effect="{StaticResource CardShadow}">
                                                 <Grid>
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition Height="Auto"/>
@@ -182,45 +179,45 @@
                                                         </Grid.ColumnDefinitions>
 
                                                         <ToggleButton Grid.Column="0" Margin="8,0,0,0" Width="24" Height="24" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}" IsChecked="{Binding IsExpanded}">
-                                                            <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='▼|▶'}" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='▼|▶'}" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                         </ToggleButton>
 
                                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                            <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="6,0,8,0"/>
+                                                            <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="6,0,8,0" Foreground="{DynamicResource TextBodyBrush}"/>
                                                             <StackPanel VerticalAlignment="Center">
-                                                                <TextBlock Text="Factura / Remisión" FontWeight="SemiBold" Foreground="#1F2937" FontSize="12"/>
+                                                                <TextBlock Text="Factura / Remisión" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" FontSize="12"/>
                                                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                                    <TextBlock Text="{Binding NumeroFactura, StringFormat='N°: {0}'}" Foreground="#6B7280" FontSize="10"/>
-                                                                    <TextBlock Text="{Binding ProveedorFactura, StringFormat=' | {0}'}" Foreground="#6B7280" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding NumeroFactura, StringFormat='N°: {0}'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding ProveedorFactura, StringFormat=' | {0}'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
                                                                 </StackPanel>
                                                             </StackPanel>
 
-                                                            <Border Background="#FEF3C7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,8,0">
+                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,8,0">
                                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                                    <TextBlock Text="{Binding Items.Count}" FontSize="11" FontWeight="Bold" Foreground="#92400E" VerticalAlignment="Center"/>
-                                                                    <TextBlock Text=" ítems" FontSize="10" Foreground="#92400E" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                                    <TextBlock Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                                    <TextBlock Text="{Binding Items.Count}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text=" ítems" FontSize="10" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center" Margin="2,0,0,0"/>
                                                                 </StackPanel>
                                                             </Border>
 
-                                                            <Border Background="#DCFCE7" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="0,0,0,0">
                                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <TextBlock Text="💵" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                                    <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="#15803D" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="💵" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                                    <TextBlock Text="{Binding TotalGrupo, StringFormat='{}{0:N0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center"/>
                                                                 </StackPanel>
                                                             </Border>
                                                         </StackPanel>
 
                                                         <Border Grid.Column="2"/>
 
-                                                        <Button Grid.Column="3" Content="✕ Quitar" Style="{StaticResource GhostButton}" Padding="8,4" Click="BtnRemoveFacturaGroup_Click" Foreground="#C0392B" FontSize="10" VerticalAlignment="Center" Margin="0,0,14,0" HorizontalAlignment="Right"/>
+                                                        <Button Grid.Column="3" Content="✕ Quitar" Style="{StaticResource ThemeSecondaryButtonStyle}" Padding="8,4" Click="BtnRemoveFacturaGroup_Click" Foreground="{DynamicResource DangerBrush}" FontSize="10" VerticalAlignment="Center" Margin="0,0,14,0" HorizontalAlignment="Right"/>
                                                     </Grid>
 
                                                     <StackPanel Grid.Row="1" Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="14,12,14,12">
                                                         <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
 
                                                         <StackPanel Margin="0,0,0,12" Visibility="{Binding NumeroFactura, Converter={StaticResource IsStringNullOrEmptyConverter}}">
-                                                            <TextBlock Text="Datos de la factura / remisión" FontWeight="SemiBold" Foreground="#374151" FontSize="11" Margin="0,0,0,10"/>
+                                                            <TextBlock Text="Datos de la factura / remisión" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" Margin="0,0,0,10"/>
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="*"/>
@@ -231,13 +228,13 @@
                                                                 </Grid.ColumnDefinitions>
 
                                                                 <StackPanel Grid.Column="0">
-                                                                    <TextBlock Text="📋 N° factura" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                                                    <TextBlock Text="📋 N° factura" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                                                     <TextBox Text="{Binding NumeroFactura, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40"/>
                                                                 </StackPanel>
 
                                                                 <StackPanel Grid.Column="2">
-                                                                    <TextBlock Text="🏢 Proveedor" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
-                                                                    <ComboBox Style="{StaticResource ModernComboBoxStyle}"
+                                                                    <TextBlock Text="🏢 Proveedor" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
+                                                                    <ComboBox Style="{StaticResource ThemeComboBoxStyle}"
                                                                               Height="40"
                                                                               IsEditable="True"
                                                                               IsTextSearchEnabled="False"
@@ -249,7 +246,7 @@
                                                                 </StackPanel>
 
                                                                 <StackPanel Grid.Column="4">
-                                                                    <TextBlock Text="📎 Documento" FontSize="10" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6"/>
+                                                                    <TextBlock Text="📎 Documento" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,6"/>
                                                                     <Grid>
                                                                         <Grid.ColumnDefinitions>
                                                                             <ColumnDefinition Width="*"/>
@@ -263,13 +260,13 @@
                                                             </Grid>
                                                         </StackPanel>
 
-                                                        <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
+                                                        <Border Height="1" Background="{DynamicResource BorderDefaultBrush}" Margin="0,0,0,12"/>
 
-                                                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                                                        <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
                                                             <StackPanel>
                                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                                                    <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                                    <TextBlock Text="Agregar ítem a esta factura" FontWeight="SemiBold" Foreground="#1E3A8A" VerticalAlignment="Center" FontSize="11"/>
+                                                                    <TextBlock Text="➕" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                                                    <TextBlock Text="Agregar ítem a esta factura" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
                                                                 </StackPanel>
 
                                                                 <Grid Margin="0,0,0,10">
@@ -280,16 +277,18 @@
                                                                     </Grid.ColumnDefinitions>
 
                                                                     <StackPanel Grid.Column="0">
-                                                                        <TextBlock Text="📦 Tipo de gasto" FontSize="9" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,4"/>
+                                                                        <TextBlock Text="📦 Tipo de gasto" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
                                                                         <ComboBox SelectedValuePath="Valor"
                                                                                   SelectedValue="{Binding DraftTipoGasto}"
                                                                                   Height="40"
-                                                                                  Style="{StaticResource ModernComboBoxStyle}"
+                                                                                  Style="{StaticResource ThemeComboBoxStyle}"
+                                                                                  IsEditable="False"
+                                                                                  IsReadOnly="True"
                                                                                   Margin="0,0,0,0"
                                                                                   ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=TipoGastoOptions}">
                                                                             <ComboBox.ItemTemplate>
                                                                                 <DataTemplate>
-                                                                                    <TextBlock Text="{Binding Etiqueta}" VerticalAlignment="Center"/>
+                                                                                    <TextBlock Text="{Binding Etiqueta}" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
                                                                                 </DataTemplate>
                                                                             </ComboBox.ItemTemplate>
                                                                         </ComboBox>
@@ -306,27 +305,27 @@
                                                                     </Grid.ColumnDefinitions>
 
                                                                     <StackPanel Grid.Column="0">
-                                                                        <TextBlock Text="📝 Descripción" FontSize="9" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,4"/>
-                                                                        <TextBox Text="{Binding DraftDescripcion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" Background="White" Tag="Ej: Repuesto o Aceite"/>
+                                                                        <TextBlock Text="📝 Descripción" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                                                        <TextBox Text="{Binding DraftDescripcion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" Background="{DynamicResource BackgroundSurfaceBrush}" Tag="Ej: Repuesto o Aceite"/>
                                                                     </StackPanel>
 
                                                                     <StackPanel Grid.Column="2">
-                                                                        <TextBlock Text="💵 Valor (COP)" FontSize="9" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,4"/>
-                                                                        <TextBox Text="{Binding DraftValorInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" Background="White" Tag="Ej: 50000" InputScope="Number"/>
+                                                                        <TextBlock Text="💵 Valor (COP)" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                                                        <TextBox Text="{Binding DraftValorInput, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" Background="{DynamicResource BackgroundSurfaceBrush}" Tag="Ej: 50000" InputScope="Number"/>
                                                                     </StackPanel>
 
-                                                                    <Button Grid.Column="4" Content="➕ Agregar" Style="{StaticResource PrimaryButtonStyle}" Padding="14,8" Click="BtnAddGastoItem_Click" VerticalAlignment="Bottom" FontSize="10"/>
+                                                                    <Button Grid.Column="4" Content="➕ Agregar" Style="{StaticResource ThemePrimaryButtonStyle}" Padding="14,8" Click="BtnAddGastoItem_Click" VerticalAlignment="Bottom" FontSize="10"/>
                                                                 </Grid>
                                                             </StackPanel>
                                                         </Border>
 
-                                                        <Border Height="1" Background="#E5E7EB" Margin="0,0,0,12"/>
+                                                        <Border Height="1" Background="{DynamicResource BorderDefaultBrush}" Margin="0,0,0,12"/>
 
                                                         <StackPanel>
-                                                            <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="#1F2937" Margin="0,0,0,8" FontSize="11"/>
-                                                            <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Effect="{StaticResource CardShadow}">
+                                                            <TextBlock Text="Ítems en esta factura" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" FontSize="11"/>
+                                                            <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Effect="{StaticResource CardShadow}">
                                                                 <StackPanel>
-                                                                    <Border Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="12,10,12,10">
+                                                                    <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="12,10,12,10">
                                                                         <Grid>
                                                                             <Grid.ColumnDefinitions>
                                                                                 <ColumnDefinition Width="*"/>
@@ -334,17 +333,17 @@
                                                                                 <ColumnDefinition Width="*"/>
                                                                                 <ColumnDefinition Width="*"/>
                                                                             </Grid.ColumnDefinitions>
-                                                                            <TextBlock Grid.Column="0" Text="Tipo" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10"/>
-                                                                            <TextBlock Grid.Column="1" Text="Descripción" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" Margin="8,0,0,0"/>
-                                                                            <TextBlock Grid.Column="2" Text="Valor" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" HorizontalAlignment="Center"/>
-                                                                            <TextBlock Grid.Column="3" Text="Acciones" FontWeight="SemiBold" Foreground="#6B7280" FontSize="10" HorizontalAlignment="Center"/>
+                                                                            <TextBlock Grid.Column="0" Text="Tipo" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"/>
+                                                                            <TextBlock Grid.Column="1" Text="Descripción" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" Margin="8,0,0,0"/>
+                                                                            <TextBlock Grid.Column="2" Text="Valor" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center"/>
+                                                                            <TextBlock Grid.Column="3" Text="Acciones" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center"/>
                                                                         </Grid>
                                                                     </Border>
 
                                                                     <ItemsControl ItemsSource="{Binding Items}" AlternationCount="2">
                                                                         <ItemsControl.ItemTemplate>
                                                                             <DataTemplate>
-                                                                                <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="12,10,12,10">
+                                                                                <Border BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="12,10,12,10">
                                                                                     <Border.Background>
                                                                                         <SolidColorBrush Color="{Binding (ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource AlternationIndexToColorConverter}}"/>
                                                                                     </Border.Background>
@@ -355,15 +354,15 @@
                                                                                             <ColumnDefinition Width="*"/>
                                                                                             <ColumnDefinition Width="*"/>
                                                                                         </Grid.ColumnDefinitions>
-                                                                                        <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" Foreground="#1F2937" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                                                        <TextBlock Grid.Column="1" Text="{Binding Descripcion}" Foreground="#374151" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
-                                                                                        <TextBlock Grid.Column="2" Text="{Binding ValorInput, StringFormat='$ {0:N0}'}" Foreground="#118938" FontWeight="SemiBold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                                                        <TextBlock Grid.Column="0" Text="{Binding TipoGastoLabel}" Foreground="{DynamicResource TextBodyBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                                        <TextBlock Grid.Column="1" Text="{Binding Descripcion}" Foreground="{DynamicResource TextBodyBrush}" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                                                                        <TextBlock Grid.Column="2" Text="{Binding ValorInput, StringFormat='$ {0:N0}'}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                                                                         <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                                                            <Border Background="#F3F4F6" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Cursor="Hand">
-                                                                                                <Button Content="✎" Background="Transparent" BorderThickness="0" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="10" Foreground="#1F2937"/>
+                                                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="4" Width="32" Height="32" Cursor="Hand">
+                                                                                                <Button Content="✎" Background="Transparent" BorderThickness="0" Click="BtnEditGastoItem_Click" ToolTip="Editar" FontSize="10" Foreground="{DynamicResource TextBodyBrush}"/>
                                                                                             </Border>
-                                                                                            <Border Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="4" Width="24" Height="24" Margin="4,0,0,0" Cursor="Hand">
-                                                                                                <Button Content="✕" Background="Transparent" BorderThickness="0" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="10" Foreground="#C0392B"/>
+                                                                                            <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="4" Width="32" Height="32" Margin="4,0,0,0" Cursor="Hand">
+                                                                                                <Button Content="✕" Background="Transparent" BorderThickness="0" Click="BtnRemoveGastoItem_Click" ToolTip="Quitar" FontSize="10" Foreground="{DynamicResource DangerBrush}"/>
                                                                                             </Border>
                                                                                         </StackPanel>
                                                                                     </Grid>
@@ -381,40 +380,40 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="Si agregas ítems, el costo total del correctivo se calculará automáticamente como suma de los valores." FontSize="10" Foreground="#555" TextWrapping="Wrap"/>
+                                <TextBlock Text="Si agregas ítems, el costo total del correctivo se calculará automáticamente como suma de los valores." FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="Observaciones (si hay garantía, incluirla aquí)" FontSize="11" FontWeight="SemiBold" Foreground="#374151" Margin="0,10,0,6"/>
+                        <TextBlock Text="Observaciones (si hay garantía, incluirla aquí)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,10,0,6"/>
                         <TextBox x:Name="TxtObservaciones" Style="{StaticResource ThemeTextBoxStyle}" MinHeight="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
 
-                        <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14" Effect="{StaticResource SectionShadow}" Margin="0,10,0,0">
+                        <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="14" Effect="{StaticResource SectionShadow}" Margin="0,10,0,0">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6" VerticalAlignment="Center">
-                                    <TextBlock Text="🧩" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Planes preventivos ejecutados en esta intervención (opcional)" FontWeight="SemiBold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                    <TextBlock Text="📋" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}"/>
+                                    <TextBlock Text="Planes preventivos ejecutados en esta intervención (opcional)" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <TextBlock Text="Selecciona los planes realizados durante este correctivo. Usa 'Editar nota' para costo personalizado y factura por plan cuando aplique."
-                                           FontSize="10" Foreground="#555" TextWrapping="Wrap" Margin="0,0,0,10" />
+                                           FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
                                 <TextBox x:Name="TxtBuscarPlan" Style="{StaticResource ThemeTextBoxStyle}" 
                                          TextChanged="TxtBuscarPlan_TextChanged" Margin="0,0,0,10" Padding="8,6" FontSize="11" 
                                          Tag="🔍 Buscar plan..." Foreground="#999" />
 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Border Background="#DBEAFE" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                                    <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="✅" FontSize="10" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Seleccionados:" FontSize="10" Foreground="#1E3A8A" Margin="0,0,4,0"/>
-                                            <TextBlock x:Name="TxtPlanesSeleccionadosCount" Text="0" FontSize="10" FontWeight="SemiBold" Foreground="#1E3A8A"/>
+                                            <TextBlock Text="✅" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource TextBodyBrush}"/>
+                                            <TextBlock Text="Seleccionados:" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,4,0"/>
+                                            <TextBlock x:Name="TxtPlanesSeleccionadosCount" Text="0" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Background="#DCFCE7" CornerRadius="6" Padding="8,4">
+                                    <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="6" Padding="8,4">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="📝" FontSize="10" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Con nota:" FontSize="10" Foreground="#166534" Margin="0,0,4,0"/>
-                                            <TextBlock x:Name="TxtPlanesConNotaCount" Text="0" FontSize="10" FontWeight="SemiBold" Foreground="#166534"/>
+                                            <TextBlock Text="📝" FontSize="10" Margin="0,0,4,0" Foreground="{DynamicResource TextBodyBrush}"/>
+                                            <TextBlock Text="Con nota:" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,4,0"/>
+                                            <TextBlock x:Name="TxtPlanesConNotaCount" Text="0" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -429,19 +428,19 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Margin="0,0,0,8" Padding="10"
-                                                        BorderBrush="#D9D9D9" BorderThickness="1" CornerRadius="8">
+                                                        BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}" />
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding Estado}" Value="Vencido">
-                                                                    <Setter Property="Background" Value="#FFEBEE" />
+                                                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding Estado}" Value="Próximo">
-                                                                    <Setter Property="Background" Value="#FFF8E1" />
+                                                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding Estado}" Value="Vigente">
-                                                                    <Setter Property="Background" Value="#E8F5E9" />
+                                                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -458,43 +457,43 @@
                                                             <CheckBox Grid.Column="0" VerticalAlignment="Top" Margin="0,2,0,0" IsChecked="{Binding IsSelected}"/>
 
                                                             <StackPanel Grid.Column="1" Margin="6,0,0,0">
-                                                                <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="#1F2937"/>
+                                                                <TextBlock Text="{Binding Nombre}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource TextBodyBrush}"/>
                                                             </StackPanel>
 
                                                             <Border Grid.Column="2" Margin="8,0,0,0" Padding="6,2" CornerRadius="10" HorizontalAlignment="Right" VerticalAlignment="Top">
                                                                 <Border.Style>
                                                                     <Style TargetType="Border">
-                                                                        <Setter Property="Background" Value="#E8F5E9" />
+                                                                        <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding Estado}" Value="Vencido">
-                                                                                <Setter Property="Background" Value="#FFEBEE" />
+                                                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Estado}" Value="Próximo">
-                                                                                <Setter Property="Background" Value="#FFF8E1" />
+                                                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Estado}" Value="Vigente">
-                                                                                <Setter Property="Background" Value="#E8F5E9" />
+                                                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </Border.Style>
-                                                                <TextBlock Text="{Binding Estado}" FontSize="10" FontWeight="SemiBold" Foreground="#2E7D32"/>
+                                                                <TextBlock Text="{Binding Estado}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
                                                             </Border>
                                                         </Grid>
 
                                                         <StackPanel Orientation="Horizontal" Margin="30,8,0,0"
                                                                     Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}">
                                                             <Button Content="📝 Editar nota" Click="BtnEditPlanNote_Click" Padding="10,4"
-                                                                    Margin="0,0,8,0" Style="{StaticResource ButtonStyle}"
-                                                                    Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" Foreground="#1E3A8A"
+                                                                    Margin="0,0,8,0" Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                                                    Foreground="{DynamicResource PrimaryBrush}"
                                                                     FontSize="10"/>
-                                                            <TextBlock Text="Nota guardada" FontSize="10" Foreground="#2E7D32"
+                                                            <TextBlock Text="Nota guardada" FontSize="10" Foreground="{DynamicResource PrimaryBrush}"
                                                                        VerticalAlignment="Center" Margin="0,0,8,0"
                                                                        Visibility="{Binding HasDetalleOpcional, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                                            <TextBlock Text="Costo personalizado" FontSize="10" Foreground="#1E3A8A"
+                                                            <TextBlock Text="Costo personalizado" FontSize="10" Foreground="{DynamicResource PrimaryBrush}"
                                                                        VerticalAlignment="Center" Margin="0,0,8,0"
                                                                        Visibility="{Binding IsCustomCost, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                                            <TextBlock Text="Factura adjunta" FontSize="10" Foreground="#2E5E39"
+                                                            <TextBlock Text="Factura adjunta" FontSize="10" Foreground="{DynamicResource PrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Visibility="{Binding InvoicePath, Converter={StaticResource StringToVisibilityConverter}}"/>
                                                         </StackPanel>
@@ -507,14 +506,14 @@
                             </StackPanel>
                         </Border>
 
-                        <TextBlock x:Name="TxtError" Foreground="#C0392B" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="TxtError" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </ScrollViewer>
 
-                <Border Grid.Row="3" Background="#F9FAFB" Padding="14,12" CornerRadius="0,0,12,12" BorderBrush="#E5E7EB" BorderThickness="1,1,1,0">
+                <Border Grid.Row="3" Background="{DynamicResource BackgroundElevatedBrush}" Padding="14,12" CornerRadius="0,0,12,12" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1,1,1,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancel_Click" Padding="12,6"/>
-                        <Button Content="Completar" Style="{StaticResource PrimaryButtonStyle}" Click="BtnSave_Click" Padding="14,6"/>
+                        <Button Content="Cancelar" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnCancel_Click" Padding="12,6" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <Button Content="Completar" Style="{StaticResource ThemePrimaryButtonStyle}" Click="BtnSave_Click" Padding="14,6"/>
                     </StackPanel>
                 </Border>
             </Grid>
