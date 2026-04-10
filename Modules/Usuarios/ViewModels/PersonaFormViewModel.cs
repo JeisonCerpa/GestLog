@@ -15,6 +15,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
 {
     public partial class PersonaFormViewModel : ValidatableViewModel
     {
+        public record SedeOption(Sede? Value, string Display);
+
         private readonly IPersonaService _personaService;
         private readonly ITipoDocumentoRepository _tipoDocumentoRepository;
         private readonly ICargoRepository _cargoRepository;
@@ -42,7 +44,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         public ObservableCollection<Cargo> Cargos { get; }
         public ObservableCollection<TipoDocumento> TiposDocumento { get; }
-        public ObservableCollection<object> Sedes { get; } = new();
+        public ObservableCollection<SedeOption> Sedes { get; } = new();
 
         public string FormTitle => _esEdicion ? "Editar Persona" : "Registrar Persona";
         public string FormSubtitle => _esEdicion ? "Ajusta los datos y el estado de la persona" : "Completa los datos básicos para crear una nueva persona";
@@ -213,8 +215,16 @@ namespace GestLog.Modules.Usuarios.ViewModels
             App.Current.Dispatcher.Invoke(() =>
             {
                 Sedes.Clear();
+                Sedes.Add(new SedeOption(null, "Sin sede"));
                 foreach (var val in Enum.GetValues(typeof(Sede)))
-                    Sedes.Add(val);
+                {
+                    var sede = (Sede)val;
+                    var name = Enum.GetName(typeof(Sede), sede) ?? sede.ToString();
+                    var field = typeof(Sede).GetField(name);
+                    var descAttr = field?.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault() as System.ComponentModel.DescriptionAttribute;
+                    var display = descAttr != null ? descAttr.Description : name;
+                    Sedes.Add(new SedeOption(sede, display));
+                }
             });
         }
 

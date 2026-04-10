@@ -13,6 +13,7 @@
         <local:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Activo" FalseText="Inactivo"/>
         <local:BooleanToColorConverter x:Key="BooleanToColorConverter" TrueColor="#C8E6C9" FalseColor="#FFCDD2"/>
         <local:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
         <Style x:Key="StatusBadgeBorderStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="8"/>
@@ -109,6 +110,10 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
+                    <Button Width="112" Height="40" Margin="12,0,0,0"
+                            Content="Limpiar"
+                            Command="{Binding LimpiarFiltrosCommand}"
+                            Style="{StaticResource ThemeSecondaryButtonStyle}"/>
                 </StackPanel>
                 <Button Grid.Column="1" Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Center"
                         Command="{Binding RegistrarPersonaCommand}"
@@ -120,10 +125,11 @@
         </Border>
 
         <Border Grid.Row="2" Style="{DynamicResource ThemeElevatedCardStyle}" Margin="24,0,24,24" Padding="12">
-            <DataGrid ItemsSource="{Binding Personas}" AutoGenerateColumns="False" IsReadOnly="True"
-                      RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
-                      SelectionMode="Single" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+            <Grid>
+                <DataGrid ItemsSource="{Binding Personas}" AutoGenerateColumns="False" IsReadOnly="True"
+                          RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
+                          SelectionMode="Single" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
                 <DataGrid.Resources>
                     <Style TargetType="DataGridRow">
                         <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
@@ -312,7 +318,48 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
-            </DataGrid>
+                </DataGrid>
+
+                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                        Opacity="0.96"
+                        Visibility="{Binding IsLoadingPersonas, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="Cargando personas..."
+                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock Text="Actualizando listado y relaciones asociadas"
+                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="Transparent"
+                        Visibility="{Binding NoPersonasMessageVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Border Width="72" Height="72" CornerRadius="36" Background="{DynamicResource BackgroundElevatedBrush}" HorizontalAlignment="Center" Margin="0,0,0,14">
+                            <TextBlock Text="👤" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="No hay personas para mostrar"
+                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,6"/>
+                        <TextBlock Text="Prueba limpiando filtros o crea una nueva persona"
+                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="360"
+                                   Margin="0,0,0,14"/>
+                        <Button Content="Limpiar filtros"
+                                Command="{Binding LimpiarFiltrosCommand}"
+                                Width="150"
+                                Height="38"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

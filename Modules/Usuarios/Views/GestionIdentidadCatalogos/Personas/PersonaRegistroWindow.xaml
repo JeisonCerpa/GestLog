@@ -131,19 +131,6 @@
                                                                       Style="{StaticResource ThemeTextBoxStyle}"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,16,16,0">
-                                        <TextBlock Text="Sede" Style="{DynamicResource ThemeBodyTextStyle}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                        <ComboBox Height="40"
-                                                  ItemsSource="{Binding Sedes}"
-                                                  SelectedItem="{Binding Persona.Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource ThemeComboBoxStyle}">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -165,7 +152,6 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
@@ -195,21 +181,7 @@
                                                   ToolTip="Buscar y seleccionar cargo"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,16">
-                                        <TextBlock Text="Sede" Style="{DynamicResource ThemeBodyTextStyle}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                        <ComboBox Height="40"
-                                                  ItemsSource="{Binding Sedes}"
-                                                  SelectedItem="{Binding Persona.Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource ThemeComboBoxStyle}">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Row="2" Grid.Column="0"
+                                    <StackPanel Grid.Row="1" Grid.Column="1"
                                                 Visibility="{Binding MostrarEstado, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="Estado" Style="{DynamicResource ThemeBodyTextStyle}" FontWeight="SemiBold" Margin="0,0,0,6"/>
                                         <Border Background="{DynamicResource BackgroundElevatedBrush}"

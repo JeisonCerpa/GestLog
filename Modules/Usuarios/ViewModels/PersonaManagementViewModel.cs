@@ -51,6 +51,9 @@ namespace GestLog.Modules.Usuarios.ViewModels
         [ObservableProperty]
         private string filtroEstado = "Todos";
 
+        [ObservableProperty]
+        private bool isLoadingPersonas;
+
         // Tipo auxiliar para representar opciÃ³n de sede con valor y texto
         public record SedeOption(GestLog.Modules.Personas.Models.Enums.Sede? Value, string Display);
 
@@ -66,7 +69,14 @@ namespace GestLog.Modules.Usuarios.ViewModels
         public GestLog.Modules.Personas.Models.Enums.Sede? FiltroSede
         {
             get => filtroSede;
-            set { filtroSede = value; OnPropertyChanged(); PersonasView?.Refresh(); }
+            set
+            {
+                filtroSede = value;
+                OnPropertyChanged();
+                PersonasView?.Refresh();
+                OnPropertyChanged(nameof(HasVisiblePersonas));
+                OnPropertyChanged(nameof(NoPersonasMessageVisible));
+            }
         }
 
         private SedeOption? _selectedSedeOption;
@@ -79,13 +89,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 // Sincronizar FiltroSede con el valor de la opciÃ³n seleccionada
                 FiltroSede = _selectedSedeOption?.Value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(HasVisiblePersonas));
+                OnPropertyChanged(nameof(NoPersonasMessageVisible));
             }
         }
 
         private System.Timers.Timer? _debounceTimer;
 
-        [ObservableProperty]
-        private System.Windows.Controls.UserControl? vistaActual;        
+        public bool HasVisiblePersonas => PersonasView?.Cast<object>().Any() ?? Personas.Count > 0;
+        public bool NoPersonasMessageVisible => !IsLoadingPersonas && !HasVisiblePersonas;
 
         [ObservableProperty]
         private string mensajeValidacion = string.Empty;
@@ -137,9 +149,19 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         public async Task InicializarAsync()
         {
-            await CargarCargos();
-            await CargarPersonas();
-            CargarSedes();
+            IsLoadingPersonas = true;
+            try
+            {
+                await CargarCargos();
+                await CargarPersonas();
+                CargarSedes();
+            }
+            finally
+            {
+                IsLoadingPersonas = false;
+                OnPropertyChanged(nameof(HasVisiblePersonas));
+                OnPropertyChanged(nameof(NoPersonasMessageVisible));
+            }
         }        
 
         [RelayCommand(CanExecute = nameof(CanCreatePersona))]
@@ -189,17 +211,28 @@ namespace GestLog.Modules.Usuarios.ViewModels
 
         private async Task CargarPersonas()
         {
-            var lista = await _personaService.BuscarPersonasAsync("");
-            // Obtener todos los usuarios para asociar
-            var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-            var usuarioService = serviceProvider.GetService(typeof(IUsuarioService)) as IUsuarioService;
-            var usuarios = usuarioService != null ? await usuarioService.BuscarUsuariosAsync("") : new List<GestLog.Modules.Usuarios.Models.Usuario>();
-            var personas = lista.ToList();
-            foreach (var persona in personas)
+            IsLoadingPersonas = true;
+            OnPropertyChanged(nameof(NoPersonasMessageVisible));
+            try
             {
-                persona.TieneUsuario = usuarios.Any(u => u.PersonaId == persona.IdPersona);
+                var lista = await _personaService.BuscarPersonasAsync("");
+                // Obtener todos los usuarios para asociar
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var usuarioService = serviceProvider.GetService(typeof(IUsuarioService)) as IUsuarioService;
+                var usuarios = usuarioService != null ? await usuarioService.BuscarUsuariosAsync("") : new List<GestLog.Modules.Usuarios.Models.Usuario>();
+                var personas = lista.ToList();
+                foreach (var persona in personas)
+                {
+                    persona.TieneUsuario = usuarios.Any(u => u.PersonaId == persona.IdPersona);
+                }
+                Personas = new ObservableCollection<Persona>(personas);
+                OnPropertyChanged(nameof(HasVisiblePersonas));
+                OnPropertyChanged(nameof(NoPersonasMessageVisible));
             }
-            Personas = new ObservableCollection<Persona>(personas);
+            finally
+            {
+                IsLoadingPersonas = false;
+            }
         }
 
         private async Task CargarCargos()
@@ -236,14 +269,13 @@ namespace GestLog.Modules.Usuarios.ViewModels
         partial void OnFiltroEstadoChanged(string value)
         {
             PersonasView?.Refresh();
+            OnPropertyChanged(nameof(HasVisiblePersonas));
+            OnPropertyChanged(nameof(NoPersonasMessageVisible));
         }
 
         partial void OnPersonaSeleccionadaChanged(Persona? value)
         {
-            if (value != null)
-                MostrarDetalle();
-            else
-                VistaActual = null;
+            // La vista de detalle fue eliminada; la selección se conserva para acciones rápidas
         }
 
         partial void OnPersonasChanged(ObservableCollection<Persona> value)
@@ -256,16 +288,8 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 PersonaSeleccionada = Personas.FirstOrDefault(p => p.IdPersona == PersonaSeleccionada.IdPersona);
             }
-        }
-
-        private void MostrarDetalle()
-        {
-            // LÃ³gica para mostrar detalle de persona
-        }
-
-        private void MostrarEdicion()
-        {
-            // LÃ³gica para mostrar vista de ediciÃ³n de persona
+            OnPropertyChanged(nameof(HasVisiblePersonas));
+            OnPropertyChanged(nameof(NoPersonasMessageVisible));
         }
 
         private void DebounceFiltrar()
@@ -278,7 +302,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 _debounceTimer.Elapsed += (s, e) =>
                 {
                     _debounceTimer?.Stop();
-                    App.Current.Dispatcher.Invoke(() => PersonasView?.Refresh());
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        PersonasView?.Refresh();
+                        OnPropertyChanged(nameof(HasVisiblePersonas));
+                        OnPropertyChanged(nameof(NoPersonasMessageVisible));
+                    });
                 };
             }
             _debounceTimer.Start();
@@ -315,7 +344,6 @@ namespace GestLog.Modules.Usuarios.ViewModels
         private void VerPersona(Persona persona)
         {
             PersonaSeleccionada = persona;
-            // LÃ³gica para mostrar el detalle en el panel/modal
         }
 
         [RelayCommand]
@@ -349,17 +377,15 @@ namespace GestLog.Modules.Usuarios.ViewModels
         }
 
         [RelayCommand]
-        private void CerrarDetalle()
+        private void LimpiarFiltros()
         {
-            PersonaSeleccionada = null;
-            VistaActual = null;
+            FiltroTexto = string.Empty;
+            FiltroEstado = "Todos";
+            SelectedSedeOption = Sedes.FirstOrDefault();
+            PersonasView?.Refresh();
+            OnPropertyChanged(nameof(HasVisiblePersonas));
+            OnPropertyChanged(nameof(NoPersonasMessageVisible));
         }
-
-        [RelayCommand]
-        private void CancelarEdicion()
-        {
-            MostrarDetalle();
-        }        
 
         [RelayCommand(CanExecute = nameof(CanActivatePersona))]
         private async Task ActivarDesactivarPersona(Persona persona)
@@ -423,6 +449,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
         {
             try
             {
+                IsLoadingPersonas = true;
                 _logger.LogDebug("[PersonaManagementViewModel] Refrescando datos automÃ¡ticamente");
                 await InicializarAsync();
                 _logger.LogDebug("[PersonaManagementViewModel] Datos refrescados exitosamente");
@@ -431,6 +458,12 @@ namespace GestLog.Modules.Usuarios.ViewModels
             {
                 _logger.LogError(ex, "[PersonaManagementViewModel] Error al refrescar datos");
                 throw;
+            }
+            finally
+            {
+                IsLoadingPersonas = false;
+                OnPropertyChanged(nameof(HasVisiblePersonas));
+                OnPropertyChanged(nameof(NoPersonasMessageVisible));
             }
         }
 
