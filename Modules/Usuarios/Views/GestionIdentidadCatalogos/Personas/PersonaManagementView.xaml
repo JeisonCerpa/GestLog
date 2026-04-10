@@ -4,129 +4,144 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GestLog.Converters"
-        mc:Ignorable="d">
+        mc:Ignorable="d"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
     <UserControl.Resources>
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="BorderBrush" Value="#DDD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="Margin" Value="2"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#2B8E3F" BlurRadius="6" ShadowDepth="1" Opacity="0.18"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#2B8E3F"/>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="#118938" BlurRadius="10" ShadowDepth="2" Opacity="0.28"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <DropShadowEffect x:Key="PersonaDataGridShadow" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
         <local:BooleanToStatusTextConverter x:Key="BooleanToStatusTextConverter" TrueText="Activo" FalseText="Inactivo"/>
         <local:BooleanToColorConverter x:Key="BooleanToColorConverter" TrueColor="#C8E6C9" FalseColor="#FFCDD2"/>
         <local:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+
+        <Style x:Key="StatusBadgeBorderStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="MinWidth" Value="88"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="OverflowActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeTableActionButtonStyle}">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+
+        <Style x:Key="OverflowMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeSecondaryButtonStyle}">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+        </Style>
+
+        <Style x:Key="ActionIconTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource TableHeaderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
     </UserControl.Resources>
-    <Grid Background="#F5F5F5" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid Style="{DynamicResource ThemeRootGridStyle}">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <!-- Encabezado modernizado -->
-        <Grid Grid.Row="0" Margin="0,8,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                <TextBlock Text="Gestión de Personas" FontSize="28" FontWeight="Bold" Foreground="#388E3C" VerticalAlignment="Center"/>
-                <TextBox Width="260" Height="32" Margin="24,0,0,0" VerticalAlignment="Center"
-                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"/>
-                <ComboBox Width="180" Height="32" Margin="12,0,0,0" VerticalAlignment="Center"
-                          ItemsSource="{Binding Sedes}"
-                          SelectedItem="{Binding SelectedSedeOption, Mode=TwoWay}"
-                          SelectedValue="{Binding FiltroSede, Mode=TwoWay}"
-                          SelectedValuePath="Value">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Display}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </StackPanel>
-            <Button Grid.Column="1" Width="48" Height="48" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,8,0"
-                    Command="{Binding RegistrarPersonaCommand}"
-                    ToolTip="Registrar nueva persona"
-                    Background="#118938" Foreground="White" BorderBrush="#E5E5E5" BorderThickness="1"
-                    Cursor="Hand">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="24">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2B8E3F"/>
-                                <Setter Property="BorderBrush" Value="#118938"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-                <TextBlock Text="+" FontSize="28" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            </Button>
-        </Grid>
-        <!-- DataGrid modernizado -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="0" BorderBrush="#DDD" BorderThickness="1"
-                Effect="{DynamicResource CargoDataGridShadow}" Margin="16,0,16,16">
+        <Border Grid.Row="0" Style="{DynamicResource ThemeWelcomeCardStyle}" Margin="24,20,24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Style="{DynamicResource ThemeCardIconCircleStyle}" Width="72" Height="72" CornerRadius="36" Margin="0" VerticalAlignment="Center">
+                    <TextBlock Text="🧑" Style="{DynamicResource ThemeCardIconTextStyle}" FontSize="30"/>
+                </Border>
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="Gestión de Personas" Style="{DynamicResource ThemeSectionTitleStyle}" FontSize="24"/>
+                    <TextBlock Text="Busca, filtra y administra personas con sus datos de acceso" Style="{DynamicResource ThemeSectionSubtitleStyle}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Style="{DynamicResource ThemeWelcomeCardStyle}" Margin="24,0,24,16" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox Width="280" Height="40" VerticalAlignment="Center"
+                             Style="{StaticResource ThemeTextBoxStyle}"
+                             Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Buscar por nombre, documento o correo"/>
+                    <ComboBox Width="200" Height="40" Margin="12,0,0,0" VerticalAlignment="Center"
+                              Style="{StaticResource ThemeComboBoxStyle}"
+                              ItemsSource="{Binding Sedes}"
+                              SelectedItem="{Binding SelectedSedeOption, Mode=TwoWay}"
+                              SelectedValue="{Binding FiltroSede, Mode=TwoWay}"
+                              SelectedValuePath="Value"
+                              ToolTip="Filtrar por sede">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Display}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                <Button Grid.Column="1" Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Command="{Binding RegistrarPersonaCommand}"
+                        ToolTip="Registrar nueva persona"
+                        Style="{StaticResource ThemePrimaryButtonStyle}">
+                    <TextBlock Text="+" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{DynamicResource ThemeElevatedCardStyle}" Margin="24,0,24,24" Padding="12">
             <DataGrid ItemsSource="{Binding Personas}" AutoGenerateColumns="False" IsReadOnly="True"
                       RowHeight="40" HeadersVisibility="Column" CanUserAddRows="False" CanUserDeleteRows="False"
-                      SelectionMode="Single" Background="White" BorderBrush="#E5E5E5" BorderThickness="1"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,8">
+                      SelectionMode="Single" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
                 <DataGrid.Resources>
                     <Style TargetType="DataGridRow">
-                        <Setter Property="Foreground" Value="#504F4E"/>
-                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#E8F5E8"/>
-                                <Setter Property="Foreground" Value="#118938"/>
+                                <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
                     <Style TargetType="DataGridCell">
-                        <Setter Property="Foreground" Value="#504F4E"/>
-                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#E8F5E8"/>
-                                <Setter Property="Foreground" Value="#118938"/>
+                                <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -141,58 +156,158 @@
                     <DataGridTemplateColumn Header="Estado" Width="1*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="6" Padding="4,2" 
-                                        Background="{Binding Activo, Converter={StaticResource BooleanToColorConverter}, ConverterParameter='Activo=#C8E6C9;Inactivo=#FFCDD2', FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Activo, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Activo;Inactivo'}"
-                                               FontWeight="SemiBold" FontSize="14" Foreground="#333" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border>
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource StatusBadgeBorderStyle}">
+                                            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Activo}" Value="False">
+                                                    <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border Width="8" Height="8" CornerRadius="2" Margin="0,0,8,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource NeutralBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Activo}" Value="False">
+                                                            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                        <TextBlock Text="{Binding Activo, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Activo;Inactivo'}"
+                                                   Style="{DynamicResource ThemeBodyTextStyle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Acciones" Width="110">
+                    <DataGridTemplateColumn Header="Usuario" Width="1*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,0">
-                                    <Button Width="32" Height="32" Padding="0" Background="#E8F5E8" BorderBrush="#388E3C" BorderThickness="1" Cursor="Hand"
-                                            Command="{Binding DataContext.EditarPersonaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="Editar persona">
-                                        <TextBlock Text="✏️" FontSize="18" Foreground="#388E3C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border ToolTip="{Binding TieneUsuario, Converter={StaticResource BooleanToStatusTextConverter}, ConverterParameter='Tiene usuario;No tiene usuario'}">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource StatusBadgeBorderStyle}">
+                                            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneUsuario}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TieneUsuario}" Value="False">
+                                                    <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border Width="8" Height="8" CornerRadius="2" Margin="0,0,0,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource NeutralBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TieneUsuario}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding TieneUsuario}" Value="False">
+                                                            <Setter Property="Background" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                        <TextBlock Text="👤"
+                                                   Margin="6,0,0,0"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Acciones" Width="70">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Button x:Name="OverflowButton"
+                                            Style="{StaticResource OverflowActionButtonStyle}"
+                                            ToolTip="Más acciones"
+                                            Click="OverflowActions_Click"
+                                            Tag="{Binding ElementName=OverflowPopup}">
+                                        <TextBlock Text="⋯" FontSize="18" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Button>
-                                    <Rectangle Width="8" Fill="Transparent"/>
-                                    <Button Width="32" Height="32" Padding="0" Background="#E3F2FD" BorderBrush="#1976D2" BorderThickness="1" Cursor="Hand"
-                                            Command="{Binding DataContext.CrearUsuarioParaPersonaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="Crear usuario">
-                                        <TextBlock Text="👤+" FontSize="18" Foreground="#1976D2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding TieneUsuario}" Value="True">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <Rectangle Width="8" Fill="Transparent"/>
-                                    <Button Width="32" Height="32" Padding="0" Background="#FDECEA" BorderBrush="#D32F2F" BorderThickness="1" Cursor="Hand"
-                                            ToolTip="Desactivar persona"
-                                            Click="DesactivarPersona_Click">
-                                        <TextBlock Text="❌" FontSize="18" Foreground="#D32F2F" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Activo}" Value="False">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </StackPanel>
+                                    <Popup x:Name="OverflowPopup"
+                                           PlacementTarget="{Binding ElementName=OverflowButton}"
+                                           Placement="Bottom"
+                                           StaysOpen="False"
+                                           AllowsTransparency="True"
+                                           DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="10"
+                                                Padding="8"
+                                                MinWidth="180"
+                                                Effect="{DynamicResource ThemeCardShadow}">
+                                            <StackPanel>
+                                                <Button Content="Editar"
+                                                        Style="{StaticResource OverflowMenuButtonStyle}"
+                                                        Tag="{Binding ElementName=OverflowPopup}"
+                                                        Click="OverflowEditar_Click"/>
+                                                <Button Content="Crear usuario"
+                                                        Tag="{Binding ElementName=OverflowPopup}"
+                                                        Click="OverflowCrearUsuario_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource OverflowMenuButtonStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding TieneUsuario}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <Button Content="Desactivar"
+                                                        Tag="{Binding ElementName=OverflowPopup}"
+                                                        Click="OverflowDesactivar_Click">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource OverflowMenuButtonStyle}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Activo}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
+                                </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

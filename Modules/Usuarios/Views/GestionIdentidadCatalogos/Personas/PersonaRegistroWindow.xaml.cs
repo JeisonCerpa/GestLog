@@ -8,6 +8,11 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas
         {
             InitializeComponent();
         }
+
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
     }
 }
 
