@@ -8,12 +8,13 @@
         Title="GestLog" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
+    TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
+    Background="{DynamicResource BackgroundAppBrush}">
     <Window.Resources>
         <Style x:Key="NavButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeHeaderSecondaryButtonStyle}"/>
 
         <Style x:Key="StatusIndicatorStyle" TargetType="Border">
-            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect Color="#000000" BlurRadius="3" ShadowDepth="1" Opacity="0.15"/>
@@ -22,7 +23,7 @@
         </Style>
 
         <Style x:Key="StatusIndicatorConnectedStyle" TargetType="Border">
-            <Setter Property="Background" Value="#2B8E3F"/>
+            <Setter Property="Background" Value="{DynamicResource SuccessBrush}"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect Color="#000000" BlurRadius="3" ShadowDepth="1" Opacity="0.15"/>
@@ -56,26 +57,16 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="btnHome"
                             Content="🏠 Home"
-                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
-                            Foreground="White"
                             Padding="16,8"
                             BorderThickness="0"
-                            FontFamily="Segoe UI"
-                            FontWeight="SemiBold"
-                            FontSize="14"
                             Margin="0,0,12,0"
                             Click="btnHome_Click"
                             Style="{StaticResource NavButtonStyle}"/>
 
                     <Button x:Name="btnBack"
                             Content="⬅️ Regresar"
-                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
-                            Foreground="White"
                             Padding="16,8"
                             BorderThickness="0"
-                            FontFamily="Segoe UI"
-                            FontWeight="SemiBold"
-                            FontSize="14"
                             Margin="0,0,16,0"
                             Click="btnBack_Click"
                             Visibility="Collapsed"
@@ -83,7 +74,7 @@
 
                     <TextBlock x:Name="txtCurrentView"
                               Text="Home"
-                              Foreground="#FFFFFF"
+                          Foreground="{DynamicResource TextOnPrimaryBrush}"
                               FontFamily="Segoe UI"
                               FontSize="16"
                               FontWeight="SemiBold"
@@ -97,7 +88,7 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding NombrePersonaActual}"
-                               Foreground="White"
+                               Foreground="{DynamicResource TextOnPrimaryBrush}"
                                FontFamily="Segoe UI"
                                FontWeight="SemiBold"
                                FontSize="15"
@@ -114,14 +105,14 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock x:Name="DatabaseStatusIcon"
                                       Text="{Binding DatabaseStatusIcon}"
-                                      Foreground="White"
+                                      Foreground="{DynamicResource TextOnPrimaryBrush}"
                                       FontFamily="Segoe UI"
                                       FontWeight="Bold"
                                       Margin="0,0,6,0"
                                       VerticalAlignment="Center"/>
                             <TextBlock x:Name="DatabaseStatusText"
                                       Text="{Binding DatabaseStatusText}"
-                                      Foreground="White"
+                                      Foreground="{DynamicResource TextOnPrimaryBrush}"
                                       FontFamily="Segoe UI"
                                       FontSize="11"
                                       FontWeight="SemiBold"
@@ -131,12 +122,7 @@
 
                     <Button x:Name="btnCerrarSesion"
                             Content="🔒 Cerrar sesión"
-                            Background="{DynamicResource HeaderSecondaryButtonBrush}"
-                            Foreground="White"
                             BorderThickness="0"
-                            FontFamily="Segoe UI"
-                            FontWeight="SemiBold"
-                            FontSize="15"
                             Width="140"
                             Height="40"
                             ToolTip="Cerrar sesión"
@@ -146,12 +132,8 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1">
-            <ContentControl x:Name="contentPanel">
-                <ContentControl.Background>
-                    <SolidColorBrush Color="#FAFAFA"/>
-                </ContentControl.Background>
-            </ContentControl>
+        <Grid Grid.Row="1" Background="{DynamicResource BackgroundAppBrush}">
+            <ContentControl x:Name="contentPanel" Background="{DynamicResource BackgroundSurfaceBrush}" />
         </Grid>
     </Grid>
 </Window>

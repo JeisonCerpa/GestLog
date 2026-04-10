@@ -3,41 +3,40 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:GestLog.Modules.GestionVehiculos.ViewModels.Vehicles"
-             xmlns:vehicles="clr-namespace:GestLog.Modules.GestionVehiculos.Views.Vehicles"
+             xmlns:converters="clr-namespace:GestLog.Converters"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
-             d:DesignWidth="1000" d:DesignHeight="800"
-             d:DataContext="{d:DesignInstance Type=local:GestionVehiculosHomeViewModel}"
-             Background="#FAFAFA"
-             Loaded="UserControl_Loaded">    <UserControl.Resources>
-        <!-- Circular button style - círculo perfecto 100% -->
-        <Style x:Key="CircularButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="56"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="FontSize" Value="26"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Background" Value="#118938"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#118938"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>            <Setter Property="Template">
+             d:DesignWidth="1200" d:DesignHeight="800"
+             Background="{DynamicResource BackgroundSurfaceBrush}"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+
+        <!-- Estilo para cards de vehículos -->
+        <Style x:Key="VehicleCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Effect">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="{TemplateBinding BorderThickness}"/>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2B8E3F"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0D5A2A"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
+                    <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.0"/>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.15"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -47,87 +46,170 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header con Botón Agregar (estilo similar a Gestión Cartera) -->
-        <Grid Grid.Row="0" Margin="40,30,40,24">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="White" Width="80" Height="80" CornerRadius="40"
-                        HorizontalAlignment="Center" Margin="0,0,20,0"
-                        BorderBrush="#E5E5E5" BorderThickness="1" Padding="6">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#000000"
-                                          BlurRadius="6"
-                                          ShadowDepth="1"
-                                          Opacity="0.08"/>
-                    </Border.Effect>
-                    <TextBlock Text="🚗" FontFamily="Segoe UI" FontSize="36"
-                               Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
+        <!-- HEADER SECTION CON ESTADÍSTICAS -->
+        <Border Grid.Row="0" Background="{DynamicResource BackgroundElevatedBrush}" Padding="28,24" Effect="{StaticResource HeaderShadow}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Gestión de Vehículos"
-                               FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold"
-                               Foreground="#118938" Margin="0,0,0,8"/>
-                    <TextBlock Text="Administra vehículos, mantenimientos y documentación"
-                               FontFamily="Segoe UI" FontSize="16"
-                               Foreground="#706F6F"/>
+                    <TextBlock Text="🚗 Gestión de Vehículos" 
+                               FontSize="28" FontWeight="Bold" 
+                               Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Administra vehículos, mantenimientos y documentación" 
+                               FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.8"/>
                 </StackPanel>
-            </StackPanel>
 
-            <!-- Botones de acción: configuración + agregar -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Command="{Binding AbrirConfiguracionPlantillasCommand}" ToolTip="Configuración de plantillas"
-                        Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE713;" Margin="0,0,8,0"/>
-                <Button Command="{Binding AgregarVehiculoAsyncCommand}" ToolTip="Agregar vehículo"
-                        Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Content="&#xE710;" Click="BtnAgregar_Click"/>
-            </StackPanel>
-        </Grid>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Command="{Binding AbrirConfiguracionPlantillasCommand}" ToolTip="Configuración de plantillas"
+                            Style="{StaticResource ThemePrimaryButtonStyle}" 
+                            Content="⚙️ Plantillas" FocusVisualStyle="{x:Null}" Margin="0,0,12,0"/>
+                    <Button Command="{Binding AgregarVehiculoAsyncCommand}" ToolTip="Agregar vehículo"
+                            Style="{StaticResource ThemePrimaryButtonStyle}" 
+                            Content="➕ Agregar Vehículo" Click="BtnAgregar_Click" FocusVisualStyle="{x:Null}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <!-- Contenido Principal (Vehículos) -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="40,0,40,40">
-            <StackPanel VerticalAlignment="Center">
-                <ItemsControl ItemsSource="{Binding Vehicles}" HorizontalAlignment="Left">
+        <!-- MAIN CONTENT -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" FocusVisualStyle="{x:Null}">
+            <StackPanel Margin="28,28,28,40">
+                <!-- SEARCH & FILTER BAR -->
+                <Border Background="{DynamicResource BackgroundElevatedBrush}" 
+                        BorderBrush="{DynamicResource BorderDefaultBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,24"
+                        Effect="{StaticResource WindowShadow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Search Input -->
+                        <TextBox Grid.Column="0" 
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource ThemeTextBoxStyle}"
+                                 Tag="Buscar vehículos..."
+                                 Margin="0,0,12,0"/>
+
+                        <!-- Estado Filter -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="Estado:" Foreground="{DynamicResource TextBodyBrush}" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                            <ComboBox Style="{StaticResource ThemeComboBoxStyle}" Width="100"
+                                      SelectedItem="{Binding FilterEstado}">
+                                <sys:String>Todos</sys:String>
+                                <sys:String>Activos</sys:String>
+                                <sys:String>Con Alertas</sys:String>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Sort -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="Ordenar:" Foreground="{DynamicResource TextBodyBrush}" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                            <ComboBox Style="{StaticResource ThemeComboBoxStyle}" Width="120"
+                                      SelectedItem="{Binding SortOption}">
+                                <sys:String>Nombre (A-Z)</sys:String>
+                                <sys:String>Alertas</sys:String>
+                                <sys:String>Reciente</sys:String>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Clear Button -->
+                        <Button Grid.Column="3" Content="Limpiar filtros" 
+                                Command="{Binding ClearFiltersCommand}"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}" 
+                                FocusVisualStyle="{x:Null}"/>
+                    </Grid>
+                </Border>
+
+                <!-- VEHÍCULOS GRID (4 COLUMNAS) -->
+                <ItemsControl ItemsSource="{Binding FilteredVehicles}" Margin="0,0,0,24">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <UniformGrid Columns="3"/>
+                            <UniformGrid Columns="4" HorizontalAlignment="Stretch"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <!-- Card para cada vehículo -->
-                            <Border Style="{StaticResource ModernCardStyle}" Width="320" Height="Auto" HorizontalAlignment="Left" Margin="0,0,12,12">
-                                <StackPanel>
+                            <Border Style="{StaticResource VehicleCardStyle}" 
+                                    Margin="0,0,16,16">
+                                <Grid>
+                                    <StackPanel Margin="16">
+                                    <!-- Card Header con Status Indicator -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding VehicleName}" 
+                                                       FontSize="14" FontWeight="Bold" 
+                                                       Foreground="{DynamicResource TextBodyBrush}"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Plate}" 
+                                                       FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Margin="0,2,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Status Indicator -->
+                                        <TextBlock Grid.Column="1" Text="{Binding StateIndicator}" 
+                                                   FontSize="18" Margin="8,0,0,0"
+                                                   Foreground="{Binding StateIndicatorBrush}"/>
+                                    </Grid>
+
                                     <!-- Foto del vehículo -->
-                                    <Image Source="{Binding PhotoPath}" Width="160" Height="128" Stretch="UniformToFill" HorizontalAlignment="Center" Margin="0,0,0,12" />
-
-                                    <!-- Título vehículo -->
-                                    <TextBlock Text="{Binding VehicleName}" FontFamily="Segoe UI" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="#504F4E" Margin="0,0,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
-
-                                    <!-- Kilometraje -->
-                                    <TextBlock Text="{Binding MileageText}" FontFamily="Segoe UI" FontSize="13" Foreground="#706F6F" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-
-                                    <!-- Badge estado -->
-                                    <Border Background="{Binding BadgeBackground}" CornerRadius="6" Padding="6,2" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                        <TextBlock Text="{Binding BadgeText}" Foreground="{Binding BadgeForeground}" FontWeight="SemiBold" FontSize="11"/>
+                                    <Border Height="100" Margin="0,0,0,12" CornerRadius="6"
+                                            Background="{DynamicResource BackgroundSurfaceBrush}" ClipToBounds="True">
+                                        <Image Source="{Binding PhotoPath}" Stretch="Uniform"/>
                                     </Border>
 
-                                    <!-- Documentos resumen -->
-                                    <TextBlock Text="{Binding DocumentSummary}" FontFamily="Segoe UI" FontSize="12" Foreground="#706F6F" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,14"/>
+                                    <!-- Kilometraje -->
+                                    <TextBlock Text="{Binding MileageText}" 
+                                               Foreground="{DynamicResource TextSecondaryBrush}" 
+                                               FontSize="11" Margin="0,0,0,8"/>
 
-                                    <!-- Botón Ver detalles -->
-                                    <Button Content="Ver detalles" Command="{Binding VerDetallesCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-                                </StackPanel>
+                                    <!-- Action Buttons -->
+                                    <Button Content="📋 Detalles" 
+                                            Command="{Binding VerDetallesCommand}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}" 
+                                            Padding="8,6" FontSize="11" Margin="0,8,0,0"
+                                            FocusVisualStyle="{x:Null}"/>
+                                    </StackPanel>
+
+                                    <Border Background="#88000000"
+                                            CornerRadius="12"
+                                            Visibility="{Binding IsDiscarded, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            IsHitTestVisible="False"/>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+                <!-- EMPTY STATE -->
+                <Border Background="{DynamicResource BackgroundElevatedBrush}" 
+                        BorderBrush="{DynamicResource BorderDefaultBrush}" 
+                        BorderThickness="1" CornerRadius="12" Padding="60,40" 
+                        TextBlock.TextAlignment="Center"
+                        Visibility="{Binding HasNoVehicles, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="📭" FontSize="48" Margin="0,0,0,16"/>
+                        <TextBlock Text="No hay vehículos" 
+                                   Foreground="{DynamicResource TextBodyBrush}" 
+                                   FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Comienza agregando tu primer vehículo" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                                   FontSize="13"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
-        
-        <!-- Overlay/modal inline eliminado: el Window VehicleFormDialog no puede ser instanciado dentro del UserControl. -->
     </Grid>
 </UserControl>

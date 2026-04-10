@@ -286,31 +286,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
         private void VehicleDetailsView_Unloaded(object sender, System.Windows.RoutedEventArgs e)
         {
             _isUnloaded = true;
-
-            try
-            {
-                ClearLiveCharts();
-            }
-            catch
-            {
-            }
-        }
-
-        private void ClearLiveCharts()
-        {
-            var cartesianCharts = FindVisualChildren<CartesianChart>(this).ToList();
-            foreach (var chart in cartesianCharts)
-            {
-                chart.Series = Array.Empty<ISeries>();
-                chart.XAxes = null;
-                chart.YAxes = null;
-            }
-
-            var pieCharts = FindVisualChildren<PieChart>(this).ToList();
-            foreach (var chart in pieCharts)
-            {
-                chart.Series = Array.Empty<ISeries>();
-            }
         }
 
         private static System.Collections.Generic.IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject depObj)

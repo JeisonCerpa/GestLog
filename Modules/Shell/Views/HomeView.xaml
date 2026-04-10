@@ -10,14 +10,23 @@
              SnapsToDevicePixels="True"
              TextOptions.TextFormattingMode="Display"
              TextOptions.TextRenderingMode="ClearType">
-    <Grid Style="{DynamicResource ThemeRootGridStyle}">        
+    <Grid Style="{DynamicResource ThemeRootGridStyle}">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="50,40">
                 <Border Style="{DynamicResource ThemeWelcomeCardStyle}" Margin="0,0,0,30">
                     <StackPanel>
                         <TextBlock Text="Bienvenido a GestLog" 
                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  FontWeight="SemiBold"
+                                  FontSize="28"
                                   HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                        <Border Width="110"
+                                Height="3"
+                                CornerRadius="1.5"
+                                Background="{DynamicResource PrimaryBrush}"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,12" />
                         
                         <TextBlock Text="Sistema modular de gestión empresarial con interfaz unificada" 
                                   Style="{DynamicResource ThemeSectionSubtitleStyle}" 
@@ -39,9 +48,12 @@
                                 </Border>
                                 <TextBlock Text="Herramientas" Style="{DynamicResource ThemeCardTitleStyle}"
                                           HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                            <TextBlock Text="Accede a las herramientas de gestión empresarial" 
-                                      Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" 
-                                      HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                                <TextBlock Text="Accede a las herramientas de gestión empresarial"
+                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                           TextWrapping="Wrap"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           Margin="0,0,0,20"/>
                                 <Button Name="btnIrHerramientas" Content="Ir a Herramientas" 
                                        Click="btnIrHerramientas_Click"
                                        Style="{DynamicResource ThemePrimaryButtonStyle}"/>
@@ -56,11 +68,15 @@
                                 </Border>
                                 <TextBlock Text="Información" Style="{DynamicResource ThemeCardTitleStyle}"
                                           HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                <TextBlock FontFamily="Segoe UI" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20">
-                                <Run Text="Estado del sistema y estadísticas de módulos (" />
-                                <Run Text="{x:Static app:BuildVersion.VersionLabel}" FontWeight="SemiBold" />
-                                <Run Text=")" />
-                            </TextBlock>
+                                <TextBlock Style="{DynamicResource ThemeBodyTextStyle}"
+                                           TextWrapping="Wrap"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           Margin="0,0,0,20">
+                                    <Run Text="Estado del sistema y estadísticas de módulos (" />
+                                    <Run Text="{x:Static app:BuildVersion.VersionLabel}" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
+                                    <Run Text=")" />
+                                </TextBlock>
                                 <Button Name="btnInfo" Click="btnInfo_Click" Style="{DynamicResource ThemePrimaryButtonStyle}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <TextBlock Text="Ver Información " />

@@ -237,15 +237,22 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 if (esEdicion)
                 {
                     // MODO EDICIÓN
-                    SelectedPlantilla.Nombre = NuevaPlantillaNombre.Trim();
-                    SelectedPlantilla.Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim();
-                    SelectedPlantilla.IntervaloKM = NuevoIntervaloKm;
-                    SelectedPlantilla.IntervaloDias = NuevoIntervaloDias;
-                    SelectedPlantilla.TipoIntervalo = NuevoTipoIntervalo;
+                    var plantillaActual = SelectedPlantilla;
+                    if (plantillaActual == null)
+                    {
+                        ErrorMessage = "No hay plantilla seleccionada para editar.";
+                        return;
+                    }
 
-                    var actualizada = await _plantillaService.UpdateAsync(SelectedPlantilla.Id, SelectedPlantilla, cancellationToken);
+                    plantillaActual.Nombre = NuevaPlantillaNombre.Trim();
+                    plantillaActual.Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim();
+                    plantillaActual.IntervaloKM = NuevoIntervaloKm;
+                    plantillaActual.IntervaloDias = NuevoIntervaloDias;
+                    plantillaActual.TipoIntervalo = NuevoTipoIntervalo;
 
-                    var index = Plantillas.IndexOf(SelectedPlantilla);
+                    var actualizada = await _plantillaService.UpdateAsync(plantillaActual.Id, plantillaActual, cancellationToken);
+
+                    var index = Plantillas.IndexOf(plantillaActual);
                     if (index >= 0)
                     {
                         Plantillas[index] = actualizada;

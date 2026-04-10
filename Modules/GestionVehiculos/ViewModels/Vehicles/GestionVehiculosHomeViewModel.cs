@@ -21,6 +21,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
     {
         public Guid VehicleId { get; set; }
         public string VehicleName { get; set; } = string.Empty;
+        public string Plate { get; set; } = string.Empty;
         public string PhotoPath { get; set; } = string.Empty;
         public string MileageText { get; set; } = string.Empty;
         public string DocumentSummary { get; set; } = string.Empty;
@@ -28,6 +29,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         public System.Windows.Media.Brush? BadgeBackground { get; set; }
         public System.Windows.Media.Brush? BadgeForeground { get; set; }
         public ICommand? VerDetallesCommand { get; set; }
+        
+        // NUEVAS PROPIEDADES PARA INDICADORES
+        public string StateIndicator { get; set; } = "●";
+        public System.Windows.Media.Brush? StateIndicatorBrush { get; set; }
+        public string StatusText { get; set; } = "OK";
+        public string AlertMessage { get; set; } = string.Empty;
+        public bool HasAlerts { get; set; } = false;
+        public bool IsDiscarded { get; set; } = false;
+        public string DiscardedOverlayText { get; set; } = string.Empty;
+        public VehicleState State { get; set; } = VehicleState.Activo;
     }
 
     /// <summary>
@@ -42,6 +53,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private ObservableCollection<VehicleCardViewModel> vehicles = new();
 
         [ObservableProperty]
+        private ObservableCollection<VehicleCardViewModel> filteredVehicles = new();
+
+        [ObservableProperty]
         private bool isLoading = false;
 
         [ObservableProperty]
@@ -49,6 +63,28 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
 
         [ObservableProperty]
         private bool isFormDialogOpen = false;
+
+        // NUEVAS PROPIEDADES PARA ESTADÍSTICAS Y FILTROS
+        [ObservableProperty]
+        private string searchText = string.Empty;
+
+        [ObservableProperty]
+        private string filterEstado = "Todos";
+
+        [ObservableProperty]
+        private string sortOption = "Nombre (A-Z)";
+
+        [ObservableProperty]
+        private int totalVehicles = 0;
+
+        [ObservableProperty]
+        private int pendingMaintenances = 0;
+
+        [ObservableProperty]
+        private int expiredDocuments = 0;
+
+        [ObservableProperty]
+        private bool hasNoVehicles = true;
 
         public GestionVehiculosHomeViewModel(IVehicleService vehicleService, IGestLogLogger logger)
         {
@@ -67,6 +103,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 IsLoading = true;
                 ErrorMessage = string.Empty;
                 Vehicles.Clear();
+                FilteredVehicles.Clear();
 
                 var vehiclesDto = await _vehicleService.GetAllAsync(cancellationToken);
 
@@ -76,12 +113,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     Vehicles.Add(cardVm);
                 }
 
+                TotalVehicles = Vehicles.Count;
+                PendingMaintenances = CalculatePendingMaintenances();
+                ExpiredDocuments = CalculateExpiredDocuments();
+                
+                RefreshFilteredVehicles();  // Esto también actualiza HasNoVehicles
+
                 // _logger.LogInformation($"Vehículos cargados: {Vehicles.Count}");
             }
             catch (Exception ex)
             {
                 ErrorMessage = "Error al cargar vehículos. Intente nuevamente.";
                 _logger.LogError(ex, "Error loading vehicles");
+                HasNoVehicles = true; // Si hay error, mostrar empty state
             }
             finally
             {
@@ -214,14 +258,37 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             {
                 VehicleId = vehicle.Id,
                 VehicleName = $"{vehicle.Brand} {vehicle.Model} {vehicle.Year}",
+                Plate = vehicle.Plate ?? "N/A",
                 PhotoPath = vehicle.PhotoThumbPath ?? vehicle.PhotoPath ?? "/Assets/PlantillaSIMICS.png",
                 MileageText = $"KM: {vehicle.Mileage:N0}",
                 DocumentSummary = GetDocumentSummary(vehicle),
-                VerDetallesCommand = new RelayCommand(async () => await VerDetallesAsync(vehicle.Id))
+                VerDetallesCommand = new RelayCommand(async () => await VerDetallesAsync(vehicle.Id)),
+                State = vehicle.State  // Asignar el estado del vehículo para ordenamiento
             };
 
             // Establecer badge y colores según estado
             (cardVm.BadgeText, cardVm.BadgeBackground, cardVm.BadgeForeground) = GetBadgeInfo(vehicle.State);
+
+            // Establecer indicadores de estado
+            cardVm.StatusText = vehicle.State.ToString();
+            cardVm.StateIndicator = "●";
+            cardVm.StateIndicatorBrush = vehicle.State switch
+            {
+                VehicleState.Activo => new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 17, 137, 56)),
+                VehicleState.EnMantenimiento => new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 230, 126, 34)),
+                VehicleState.DadoDeBaja => new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 220, 53, 69)),
+                VehicleState.Inactivo => new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 140, 140, 140)),
+                _ => new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 140, 140, 140))
+            };
+            cardVm.HasAlerts = false;
+            cardVm.AlertMessage = string.Empty;
+            cardVm.IsDiscarded = vehicle.State == VehicleState.Inactivo || vehicle.State == VehicleState.DadoDeBaja;
+            cardVm.DiscardedOverlayText = vehicle.State switch
+            {
+                VehicleState.DadoDeBaja => "DADO DE BAJA",
+                VehicleState.Inactivo => "INACTIVO",
+                _ => string.Empty
+            };
 
             return cardVm;
         }
@@ -284,31 +351,33 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         }
 
         /// <summary>
-        /// Obtiene información del badge según el estado del vehículo
+        /// Obtiene información del badge - Estado General del vehículo
         /// </summary>
         private (string text, System.Windows.Media.Brush background, System.Windows.Media.Brush foreground) GetBadgeInfo(VehicleState state)
         {
+            // TODO: Integrar datos reales de documentos vencidos y mantenimientos atrasados
+            // Por ahora basamos en estado general del vehículo
             return state switch
             {
                 VehicleState.Activo => (
-                    "VIGENTE ✓",
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 236, 252, 245)),
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 17, 137, 56))
+                    "✓ TODO OK",
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 224, 232, 226)),
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 54, 92, 70))
                 ),
                 VehicleState.EnMantenimiento => (
-                    "EN MANTENIMIENTO",
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, 243, 224)),
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 230, 126, 34))
+                    "⚠ REVISAR",
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 232, 225, 212)),
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 130, 88, 35))
                 ),
                 VehicleState.DadoDeBaja => (
                     "DADO DE BAJA",
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 237, 237, 237)),
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 158, 158, 158))
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 224, 224, 224)),
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 95, 95, 95))
                 ),
                 VehicleState.Inactivo => (
                     "INACTIVO",
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 243, 243, 243)),
-                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 112, 112, 112))
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 224, 224, 224)),
+                    new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 95, 95, 95))
                 ),
                 _ => (
                     "DESCONOCIDO",
@@ -316,6 +385,129 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 100, 100, 100))
                 )
             };
+        }
+
+        /// <summary>
+        /// Observador de cambios en búsqueda
+        /// </summary>
+        partial void OnSearchTextChanged(string value)
+        {
+            RefreshFilteredVehicles();
+        }
+
+        /// <summary>
+        /// Observador de cambios en filtro de estado
+        /// </summary>
+        partial void OnFilterEstadoChanged(string value)
+        {
+            RefreshFilteredVehicles();
+        }
+
+        /// <summary>
+        /// Observador de cambios en ordenamiento
+        /// </summary>
+        partial void OnSortOptionChanged(string value)
+        {
+            RefreshFilteredVehicles();
+        }
+
+        /// <summary>
+        /// Obtiene la prioridad del estado para ordenar: Activos → En Mantenimiento → Inactivos → Dados de Baja
+        /// </summary>
+        private int GetStatePriority(VehicleState state)
+        {
+            return state switch
+            {
+                VehicleState.Activo => 1,
+                VehicleState.EnMantenimiento => 2,
+                VehicleState.Inactivo => 3,
+                VehicleState.DadoDeBaja => 4,
+                _ => 5
+            };
+        }
+
+        /// <summary>
+        /// Actualiza la colección de vehículos filtrados según búsqueda, filtros y orden
+        /// </summary>
+        private void RefreshFilteredVehicles()
+        {
+            if (Vehicles == null)
+                return;
+
+            // Aplicar filtro de búsqueda (por nombre o placa)
+            var q = string.IsNullOrWhiteSpace(SearchText)
+                ? Vehicles
+                : new ObservableCollection<VehicleCardViewModel>(Vehicles.Where(v =>
+                    v.VehicleName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    v.Plate.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+
+            // Aplicar filtro de estado
+            if (!string.IsNullOrEmpty(FilterEstado) && FilterEstado != "Todos")
+            {
+                q = new ObservableCollection<VehicleCardViewModel>(q.Where(v =>
+                    (FilterEstado == "Activos" && v.StatusText == "OK") ||
+                    (FilterEstado == "Con Alertas" && v.HasAlerts)));
+            }
+
+            // Aplicar ordenamiento: primero por estado (Activos → Mantenimiento → Inactivos → Dados de Baja), 
+            // luego por la opción de ordenamiento seleccionada
+            IOrderedEnumerable<VehicleCardViewModel> ordenada;
+            
+            if (SortOption == "Alertas")
+            {
+                ordenada = q
+                    .OrderBy(v => GetStatePriority(v.State))
+                    .ThenByDescending(v => v.HasAlerts)
+                    .ThenBy(v => v.VehicleName);
+            }
+            else if (SortOption == "Reciente")
+            {
+                ordenada = q
+                    .OrderBy(v => GetStatePriority(v.State))
+                    .ThenByDescending(v => v.VehicleId);
+            }
+            else // "Nombre (A-Z)" (default)
+            {
+                ordenada = q
+                    .OrderBy(v => GetStatePriority(v.State))
+                    .ThenBy(v => v.VehicleName);
+            }
+
+            FilteredVehicles.Clear();
+            foreach (var item in ordenada)
+                FilteredVehicles.Add(item);
+
+            // Actualizar HasNoVehicles para el Empty State
+            HasNoVehicles = FilteredVehicles.Count == 0;
+        }
+
+        /// <summary>
+        /// Limpia los filtros
+        /// </summary>
+        [RelayCommand]
+        public void ClearFilters()
+        {
+            SearchText = string.Empty;
+            FilterEstado = "Todos";
+            SortOption = "Nombre (A-Z)";
+        }
+
+        /// <summary>
+        /// Calcula el número de mantenimientos pendientes (placeholder)
+        /// </summary>
+        private int CalculatePendingMaintenances()
+        {
+            // TODO: Implementar lógica real de mantenimientos pendientes
+            return 0;
+        }
+
+        /// <summary>
+        /// Calcula el número de documentos vencidos (placeholder)
+        /// </summary>
+        private int CalculateExpiredDocuments()
+        {
+            // TODO: Implementar lógica real de documentos vencidos
+            return 0;
         }
     }
 }

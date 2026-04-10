@@ -53,5 +53,6 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
                 System.Diagnostics.Debug.WriteLine($"[GestionVehiculosHomeView] Excepción en BtnAgregar_Click: {ex.Message}");
             }
         }
+
     }
 }

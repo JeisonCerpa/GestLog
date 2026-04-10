@@ -12,14 +12,14 @@
     <UserControl.Resources>
         <!-- Estilos locales para tabs, coherentes con ModalWindowsStandard / EquiposInformaticos -->
         <Style x:Key="DetailTabItemStyle" TargetType="TabItem">
-            <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryBrush}"/>
             <Setter Property="Padding" Value="12,8"/>
             <!-- Forzar HeaderTemplate para evitar TextBlock automático que puede recibir UnsetValue en Foreground -->
             <Setter Property="HeaderTemplate">
                 <Setter.Value>
                     <DataTemplate>
                         <TextBlock Text="{Binding}" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=(TextElement.Foreground), FallbackValue={StaticResource TextPrimaryBrush}}"/>
+                                   Foreground="{DynamicResource PrimaryBrush}"/>
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
@@ -39,14 +39,23 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceBrush}"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-                                <Setter Property="TextElement.Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                                <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryBrush}"/>
                                 <Setter Property="Panel.ZIndex" Value="10"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#F3F9F3"/>
+                                <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryBrush}"/>
                             </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsSelected" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <MultiTrigger.Setters>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                                </MultiTrigger.Setters>
+                            </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -65,14 +74,14 @@
                             </Grid.RowDefinitions>
 
                             <!-- Cabecera de pestañas: sin márgenes laterales -->
-                            <Border Grid.Row="0" Margin="0" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
+                            <Border Grid.Row="0" Margin="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
                                     <TabPanel IsItemsHost="True" Background="Transparent" />
                                 </ScrollViewer>
                             </Border>
 
                             <!-- Contenido de la pestaña: sin márgenes ni padding adicional -->
-                            <Border Grid.Row="1" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="0,0,8,8" Margin="0" Padding="0">
+                            <Border Grid.Row="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="0,0,8,8" Margin="0" Padding="0">
                                 <Border.Effect>
                                     <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
                                 </Border.Effect>
@@ -98,14 +107,14 @@
 
                             <!-- Cabecera de pestañas: fondo blanco con borde, esquinas superiores redondeadas -->
                             <!-- Nota: margen superior interno cambiado a 0 para alinear con la imagen (evita suma doble de márgenes) -->
-                            <Border Grid.Row="0" Margin="24,0,24,0" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
+                            <Border Grid.Row="0" Margin="24,0,24,0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8,8,0,0" Padding="8,6">
                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
                                     <TabPanel IsItemsHost="True" Background="Transparent" />
                                 </ScrollViewer>
                             </Border>
 
                             <!-- Contenido de la pestaña con borde y fondo más contrastado, conectado a la cabecera -->
-                            <Border Grid.Row="1" Background="{StaticResource WhiteBrush}" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="0,0,8,8" Margin="24,0,24,24" Padding="8">
+                            <Border Grid.Row="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="0,0,8,8" Margin="24,0,24,24" Padding="8">
                                 <Border.Effect>
                                     <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" ShadowDepth="2" RenderingBias="Quality"/>
                                 </Border.Effect>
@@ -119,9 +128,9 @@
         </Style>
 
         <Style x:Key="HeaderActionButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="BorderBrush" Value="#118938" />
+            <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="12,7" />
             <Setter Property="FontSize" Value="12" />
@@ -156,16 +165,16 @@
         </Style>
 
         <Style x:Key="HeaderDangerButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderActionButtonStyle}">
-            <Setter Property="Background" Value="#DC2626" />
-            <Setter Property="BorderBrush" Value="#DC2626" />
+            <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
         </Style>
     </UserControl.Resources>
-    <Grid Background="#FAFAFA">
+    <Grid Background="{DynamicResource BackgroundElevatedBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>        <!-- Header con título del vehículo (Marca Modelo Año) -->
-        <Border Grid.Row="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="0,0,0,1" Padding="20,10" MinHeight="104">
+        <Border Grid.Row="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="20,10" MinHeight="104">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -179,8 +188,8 @@
                         Width="120"
                         VerticalAlignment="Stretch"
                         CornerRadius="10"
-                        Background="#F7F7F7"
-                        BorderBrush="#E5E5E5"
+                        Background="{DynamicResource BackgroundElevatedBrush}"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
                         BorderThickness="1"
                         ClipToBounds="True">
                     <Image Stretch="Uniform">
@@ -195,19 +204,19 @@
 
                 <!-- Center: Title + subtitle + chips -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                    <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="#118938" Text="{Binding VehicleTitle}" />
-                    <TextBlock FontSize="13" Foreground="#706F6F" Text="{Binding PlateDisplay}" Margin="0,4,0,6"/>
+                    <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Text="{Binding VehicleTitle}" />
+                    <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding PlateDisplay}" Margin="0,4,0,6"/>
                     <StackPanel Orientation="Horizontal">
-                        <Border Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                        <Border Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource PrimaryBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="KM: " FontSize="12" Foreground="#706F6F" Margin="0,0,4,0"/>
-                                <TextBlock Text="{Binding Mileage, StringFormat={}{0:N0} km}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="KM: " FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Margin="0,0,4,0" Opacity="0.85"/>
+                                <TextBlock Text="{Binding Mileage, StringFormat={}{0:N0} km}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
                             </StackPanel>
                         </Border>
-                        <Border Background="#FFFFFF" BorderBrush="#EDEDED" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                        <Border Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource PrimaryBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Próx. mant.: " FontSize="12" Foreground="#706F6F" Margin="0,0,4,0"/>
-                                <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="Próx. mant.: " FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Margin="0,0,4,0" Opacity="0.85"/>
+                                <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -215,18 +224,16 @@
 
                 <!-- Right: Actions -->
                 <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Border Background="#FFFFFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,0,0,8">
+                    <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,0,0,8">
                         <StackPanel>
-                            <TextBlock Text="Actualizar KM" FontSize="11" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,6"/>
+                            <TextBlock Text="Actualizar KM" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <StackPanel Orientation="Horizontal">
                                 <TextBox Width="110"
                                          Height="34"
                                          Text="{Binding NuevoKilometrajeInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource ThemeTextBoxStyle}"
                                          Padding="8,4"
                                          FontSize="12"
-                                         BorderBrush="#D0D0D0"
-                                         BorderThickness="1"
-                                         VerticalContentAlignment="Center"
                                          Margin="0,0,8,0"/>
                                 <Button Content="🔄"
                                         Command="{Binding ActualizarKilometrajeCommand}"
@@ -252,61 +259,61 @@
                 <TabItem Header="General">
                     <ScrollViewer>
                         <StackPanel Margin="16">
-                            <TextBlock Text="KPIs operativos" FontSize="16" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,12" />
+                            <TextBlock Text="KPIs operativos" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12" />
 
                             <UniformGrid Columns="3" Rows="3" Margin="-6,0,0,12">
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Tanqueadas" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding TotalTanqueadas}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Tanqueadas" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalTanqueadas}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Galones consumidos" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding TotalGalonesConsumidos, StringFormat='{}{0:N2} gal'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Galones consumidos" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalGalonesConsumidos, StringFormat='{}{0:N2} gal'}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Costo combustible" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding TotalCostoCombustible, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Costo combustible" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TotalCostoCombustible, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Mantenimientos" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding CantidadMantenimientos}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Mantenimientos" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CantidadMantenimientos}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Costo mantenimiento" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding CostoTotalMantenimiento, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Costo mantenimiento" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CostoTotalMantenimiento, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Costo operación" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding CostoTotalOperacion, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Costo operación" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CostoTotalOperacion, StringFormat='{}{0:C0}'}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Costo por km" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding CostoPorKmDisplay}" FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0" />
+                                        <TextBlock Text="Costo por km" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CostoPorKmDisplay}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Próximo mantenimiento" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" Margin="0,8,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="Próximo mantenimiento" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding ProximoMantenimientoDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6">
                                     <StackPanel>
-                                        <TextBlock Text="Documentos (vigentes / total)" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="#118938" Margin="0,8,0,0">
+                                        <TextBlock Text="Documentos (vigentes / total)" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,0">
                                             <Run Text="{Binding DocumentosVigentes}"/>
                                             <Run Text=" / "/>
                                             <Run Text="{Binding TotalDocumentos}"/>
@@ -315,7 +322,7 @@
                                 </Border>
                             </UniformGrid>
 
-                            <TextBlock Text="Gráficos" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,6,0,8" />
+                            <TextBlock Text="Gráficos" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,6,0,8" />
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="1*" />
@@ -328,10 +335,11 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- Combustible: consumo promedio -->
-                                <Border Grid.Row="0" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
+                                <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
                                     <StackPanel>
-                                        <TextBlock Text="Consumo promedio (km/gal) a través del tiempo" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <TextBlock Text="Consumo promedio (km/gal) a través del tiempo" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
                                         <lvc:CartesianChart Height="180"
+                                                            Background="Transparent"
                                                             Series="{Binding ConsumoPromedioSeries}"
                                                             XAxes="{Binding ChartDateAxes}"
                                                             YAxes="{Binding ChartConsumptionAxes}"/>
@@ -339,10 +347,11 @@
                                 </Border>
 
                                 <!-- Combustible: gasto mensual -->
-                                <Border Grid.Row="0" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                <Border Grid.Row="0" Grid.Column="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <TextBlock Text="Gasto mensual en combustible" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <TextBlock Text="Gasto mensual en combustible" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
                                         <lvc:CartesianChart Height="180"
+                                                            Background="Transparent"
                                                             Series="{Binding CostoMensualSeries}"
                                                             XAxes="{Binding ChartMonthAxes}"
                                                             YAxes="{Binding ChartCurrencyAxes}"/>
@@ -350,35 +359,23 @@
                                 </Border>
 
                                 <!-- Mantenimientos timeline -->
-                                <Border Grid.Row="1" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
+                                <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,10">
                                     <StackPanel>
-                                        <TextBlock Text="Mantenimientos" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <TextBlock Text="Mantenimientos" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
                                         <lvc:CartesianChart Height="180"
+                                                            Background="Transparent"
                                                             Series="{Binding MantenimientosTimelineSeries}"
                                                             XAxes="{Binding ChartMaintenanceAxes}"
                                                             YAxes="{Binding ChartMaintenanceCountAxes}" />
-                                        <ItemsControl ItemsSource="{Binding MantenimientosTitulos}" Margin="0,8,0,0">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,6,6">
-                                                        <TextBlock Text="{Binding}" FontSize="11" Foreground="#4B5563" TextWrapping="Wrap" MaxWidth="220"/>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Kilometraje -->
-                                <Border Grid.Row="1" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <TextBlock Text="Kilometraje" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
+                                        <TextBlock Text="Kilometraje" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
                                         <lvc:CartesianChart Height="180"
+                                                            Background="Transparent"
                                                             Series="{Binding KilometrajeSeries}"
                                                             XAxes="{Binding ChartDateAxes}"
                                                             YAxes="{Binding ChartKmAxes}" />
@@ -386,24 +383,44 @@
                                 </Border>
 
                                 <!-- Pie costos totales -->
-                                <Border Grid.Row="2" Grid.Column="0" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,0">
+                                <Border Grid.Row="2" Grid.Column="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,10,0">
                                     <StackPanel>
-                                        <TextBlock Text="Costos totales" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
-                                        <lvc:PieChart Height="180" Series="{Binding DistribucionGastoSeries}" LegendPosition="Bottom" />
+                                        <TextBlock Text="Costos totales" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
+                                        <lvc:PieChart Height="180" Background="Transparent" Foreground="{DynamicResource TextOnPrimaryBrush}" Series="{Binding DistribucionGastoSeries}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                                                <Border Background="{DynamicResource PrimaryBrush}" Width="12" Height="12" CornerRadius="2" Margin="0,0,6,0" />
+                                                <TextBlock Text="Combustible" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Background="#F59E0B" Width="12" Height="12" CornerRadius="2" Margin="0,0,6,0" />
+                                                <TextBlock Text="Mantenimiento" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Documentos/otro recomendado -->
-                                <Border Grid.Row="2" Grid.Column="1" Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Grid.Row="2" Grid.Column="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel>
-                                        <TextBlock Text="Documentos" FontSize="13" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,8" />
-                                        <lvc:PieChart Height="180" Series="{Binding DocumentosPieSeries}" LegendPosition="Bottom" />
+                                        <TextBlock Text="Documentos" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,8" />
+                                        <lvc:PieChart Height="180" Background="Transparent" Foreground="{DynamicResource TextOnPrimaryBrush}" Series="{Binding DocumentosPieSeries}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                                                <Border Background="#118938" Width="12" Height="12" CornerRadius="2" Margin="0,0,6,0" />
+                                                <TextBlock Text="Vigentes" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Background="#C0392B" Width="12" Height="12" CornerRadius="2" Margin="0,0,6,0" />
+                                                <TextBlock Text="Vencidos" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </Grid>
 
-                            <TextBlock Text="Ficha completa del vehículo" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,8,0,8" />
-                            <Border Background="#FFF" BorderBrush="#E5E5E5" BorderThickness="1" CornerRadius="8" Padding="12">
+                            <TextBlock Text="Ficha completa del vehículo" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,8,0,8" />
+                            <Border Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -419,57 +436,57 @@
                                     </Grid.RowDefinitions>
 
                                     <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,8">
-                                        <TextBlock Text="Placa" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding Plate}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Placa" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Plate}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
-                                        <TextBlock Text="VIN" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding Vin}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="VIN" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Vin}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,8">
-                                        <TextBlock Text="Marca / Modelo" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding BrandModelDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Marca / Modelo" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding BrandModelDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
-                                        <TextBlock Text="Versión" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding VersionDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Versión" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding VersionDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,8">
-                                        <TextBlock Text="Año" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding Year}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Año" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Year}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,8">
-                                        <TextBlock Text="Color" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding ColorDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Color" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding ColorDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,12,8">
-                                        <TextBlock Text="Tipo" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding TypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Tipo" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding TypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,8">
-                                        <TextBlock Text="Estado" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding StateDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Estado" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding StateDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,12,8">
-                                        <TextBlock Text="Combustible" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding FuelTypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Combustible" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding FuelTypeDisplay}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,8">
-                                        <TextBlock Text="Kilometraje" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding Mileage, StringFormat='{}{0:N0} km'}" FontSize="14" FontWeight="SemiBold" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Kilometraje" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Mileage, StringFormat='{}{0:N0} km'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Row="5" Grid.Column="0" Margin="0,0,12,0">
-                                        <TextBlock Text="Creado" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding CreatedAtDisplay}" FontSize="13" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Creado" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CreatedAtDisplay}" FontSize="13" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,0">
-                                        <TextBlock Text="Actualizado" FontSize="12" Foreground="#706F6F" />
-                                        <TextBlock Text="{Binding UpdatedAtDisplay}" FontSize="13" Foreground="#1D1D1B" />
+                                        <TextBlock Text="Actualizado" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding UpdatedAtDisplay}" FontSize="13" Foreground="{DynamicResource TextBodyBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -504,8 +521,8 @@
                 <TabItem Header="Historial">
                     <ScrollViewer>
                         <StackPanel Margin="16">
-                            <TextBlock Text="Historial Operativo" FontSize="14" FontWeight="SemiBold" Foreground="#504F4E" Margin="0,0,0,12" />
-                            <TextBlock Text="Accidentes, infracciones y cambios del vehículo" Foreground="#706F6F" />
+                            <TextBlock Text="Historial Operativo" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12" />
+                            <TextBlock Text="Accidentes, infracciones y cambios del vehículo" Foreground="{DynamicResource TextBodyBrush}" />
                             <!-- Placeholder: implementar lista real más adelante -->
                         </StackPanel>
                     </ScrollViewer>

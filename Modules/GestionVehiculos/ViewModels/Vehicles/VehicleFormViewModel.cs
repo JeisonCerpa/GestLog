@@ -47,6 +47,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         private ObservableCollection<string> marcasFiltradas = new();
 
         private List<string> _marcasDisponibles = new();
+        private Guid? _editingVehicleId;
 
         [ObservableProperty]
         private string model = string.Empty;
@@ -132,7 +133,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             try
             {
                 _marcasDisponibles = await _vehicleService.GetSuggestedBrandsAsync(limit: 100, cancellationToken: cancellationToken);
-                ActualizarMarcasFiltradas(Brand);
+                // Mostrar TODAS las marcas inicialmente
+                MarcasFiltradas = new ObservableCollection<string>(_marcasDisponibles);
             }
             catch (Exception ex)
             {
@@ -184,22 +186,20 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     return;
                 }
 
-                // Si es nuevo vehículo, validar que la placa no exista
-                if (!IsEditing)
+                // Validar placa duplicada (permitir misma placa cuando se edita el mismo vehículo)
+                var plateNormalized = Plate.Trim().ToUpper();
+                var existingByPlate = await _vehicleService.GetByPlateAsync(plateNormalized, cancellationToken);
+                if (existingByPlate != null && (!IsEditing || existingByPlate.Id != _editingVehicleId))
                 {
-                    var existingVehicle = await _vehicleService.ExistsByPlateAsync(Plate.Trim(), cancellationToken);
-                    if (existingVehicle)
-                    {
-                        ErrorMessage = $"Ya existe un vehículo con la placa '{Plate}'";
-                        return;
-                    }
+                    ErrorMessage = $"Ya existe un vehículo con la placa '{Plate}'";
+                    return;
                 }
 
                 // Crear DTO
                 var vehicleDto = new VehicleDto
                 {
-                    Id = Guid.NewGuid(),
-                    Plate = Plate.Trim().ToUpper(),
+                    Id = _editingVehicleId ?? Guid.NewGuid(),
+                    Plate = plateNormalized,
                     Vin = Vin.Trim().ToUpper(),
                     Brand = Brand.Trim(),
                     Model = Model.Trim(),
@@ -218,10 +218,19 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 };
 
                 // Guardar en BD
-                var savedVehicle = await _vehicleService.CreateAsync(vehicleDto, cancellationToken);
-
-                SuccessMessage = $"Vehículo '{savedVehicle.Brand} {savedVehicle.Model}' registrado exitosamente";
-                _logger.LogDebug($"Vehículo creado: {savedVehicle.Plate} - {savedVehicle.Brand} {savedVehicle.Model} | Kilometraje: {savedVehicle.Mileage}");
+                VehicleDto savedVehicle;
+                if (IsEditing && _editingVehicleId.HasValue)
+                {
+                    savedVehicle = await _vehicleService.UpdateAsync(_editingVehicleId.Value, vehicleDto, cancellationToken);
+                    SuccessMessage = $"Vehículo '{savedVehicle.Brand} {savedVehicle.Model}' actualizado exitosamente";
+                    _logger.LogDebug($"Vehículo actualizado: {savedVehicle.Plate} - {savedVehicle.Brand} {savedVehicle.Model} | Kilometraje: {savedVehicle.Mileage}");
+                }
+                else
+                {
+                    savedVehicle = await _vehicleService.CreateAsync(vehicleDto, cancellationToken);
+                    SuccessMessage = $"Vehículo '{savedVehicle.Brand} {savedVehicle.Model}' registrado exitosamente";
+                    _logger.LogDebug($"Vehículo creado: {savedVehicle.Plate} - {savedVehicle.Brand} {savedVehicle.Model} | Kilometraje: {savedVehicle.Mileage}");
+                }
 
                 // Mostrar mensaje de éxito y cerrar
                 await Task.Delay(1500);
@@ -282,71 +291,41 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     return;
                 }
 
-                // Generar nombres seguros
-                var guid = Guid.NewGuid().ToString("N");
-                var originalFileName = guid + ext;
-                var thumbFileName = guid + "_thumb.jpg";
-
-                // Guardar original al storage
-                using (var fs = File.OpenRead(file))
-                {
-                    var savedPath = await _photoStorageService.SaveOriginalAsync(fs, originalFileName);
-                    PhotoPath = savedPath;
-                }
-
-                // Generar thumbnail en memoria y guardar
+                // Cargar imagen original
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(file);
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.DecodePixelWidth = 2000; // Limitar tamaño de carga para evitar consumo excesivo
                 bitmap.EndInit();
                 bitmap.Freeze();
 
-                // Target thumbnail size and aspect (5:4)
-                int targetThumbWidth = 320;
-                int targetThumbHeight = 256; // 320 * 4/5
-                double targetAspect = 5.0 / 4.0;
+                // Generar nombres seguros
+                var guid = Guid.NewGuid().ToString("N");
+                var originalFileName = guid + ".png";
+                var thumbFileName = guid + "_thumb.png";
 
-                int srcW = bitmap.PixelWidth;
-                int srcH = bitmap.PixelHeight;
+                // ========== VERSIÓN OPTIMIZADA PARA "ORIGINAL" (1200x960) ==========
+                // Sin recorte: se ajusta manteniendo proporción y se centra en canvas
+                var optimized = CreateFittedBitmap(bitmap, 1200, 960);
 
-                // Calcular region de recorte centrada para mantener 5:4
-                int cropW, cropH, cropX, cropY;
-                double srcAspect = (double)srcW / srcH;
-                if (srcAspect > targetAspect)
+                // Guardar versión optimizada como PNG para preservar transparencia (evita fondo negro en PNG)
+                var encoderOptimized = new PngBitmapEncoder();
+                encoderOptimized.Frames.Add(BitmapFrame.Create(optimized));
+
+                using (var ms = new MemoryStream())
                 {
-                    // Imagen más ancha -> recortar los lados
-                    cropH = srcH;
-                    cropW = (int)Math.Round(srcH * targetAspect);
-                    cropX = (srcW - cropW) / 2;
-                    cropY = 0;
-                }
-                else
-                {
-                    // Imagen más alta -> recortar arriba/abajo
-                    cropW = srcW;
-                    cropH = (int)Math.Round(srcW / targetAspect);
-                    cropX = 0;
-                    cropY = (srcH - cropH) / 2;
+                    encoderOptimized.Save(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    var savedPath = await _photoStorageService.SaveOriginalAsync(ms, originalFileName);
+                    PhotoPath = savedPath;
                 }
 
-                // Asegurar valores válidos
-                cropW = Math.Max(1, Math.Min(cropW, srcW));
-                cropH = Math.Max(1, Math.Min(cropH, srcH));
-                cropX = Math.Max(0, Math.Min(cropX, srcW - cropW));
-                cropY = Math.Max(0, Math.Min(cropY, srcH - cropH));
+                // ========== VERSIÓN THUMBNAIL (320x256) ==========
+                var thumb = CreateFittedBitmap(bitmap, 320, 256);
 
-                var cropped = new CroppedBitmap(bitmap, new System.Windows.Int32Rect(cropX, cropY, cropW, cropH));
-
-                // Escalar al tamaño objetivo
-                double scaleX = (double)targetThumbWidth / cropW;
-                double scaleY = (double)targetThumbHeight / cropH;
-                var transform = new System.Windows.Media.ScaleTransform(scaleX, scaleY);
-                var resized = new TransformedBitmap(cropped, transform);
-
-                var encoder = new JpegBitmapEncoder();
-                encoder.QualityLevel = 85;
-                encoder.Frames.Add(BitmapFrame.Create(resized));
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(thumb));
 
                 using (var ms = new MemoryStream())
                 {
@@ -365,6 +344,27 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             }
         }
 
+        private static BitmapSource CreateFittedBitmap(BitmapSource source, int targetWidth, int targetHeight)
+        {
+            double scale = Math.Min((double)targetWidth / source.PixelWidth, (double)targetHeight / source.PixelHeight);
+            int drawWidth = Math.Max(1, (int)Math.Round(source.PixelWidth * scale));
+            int drawHeight = Math.Max(1, (int)Math.Round(source.PixelHeight * scale));
+            double offsetX = (targetWidth - drawWidth) / 2.0;
+            double offsetY = (targetHeight - drawHeight) / 2.0;
+
+            var visual = new System.Windows.Media.DrawingVisual();
+            using (var context = visual.RenderOpen())
+            {
+                context.DrawRectangle(System.Windows.Media.Brushes.Transparent, null, new Rect(0, 0, targetWidth, targetHeight));
+                context.DrawImage(source, new Rect(offsetX, offsetY, drawWidth, drawHeight));
+            }
+
+            var render = new RenderTargetBitmap(targetWidth, targetHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            render.Render(visual);
+            render.Freeze();
+            return render;
+        }
+
         /// <summary>
         /// Configura el ViewModel para crear un nuevo vehículo
         /// </summary>
@@ -373,6 +373,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             TituloDialog = "Agregar Vehículo";
             TextoBotonPrincipal = "Guardar";
             IsEditing = false;
+            _editingVehicleId = null;
             ClearForm();
         }
 
@@ -381,6 +382,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
         /// </summary>
         public void ConfigureForEdit(VehicleDto vehicle)
         {
+            _editingVehicleId = vehicle.Id;
             Plate = vehicle.Plate ?? string.Empty;
             Vin = vehicle.Vin ?? string.Empty;
             Brand = vehicle.Brand ?? string.Empty;
@@ -416,6 +418,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
             SelectedState = VehicleState.Activo;
             PhotoPath = null;
             PhotoThumbPath = null;
+            _editingVehicleId = null;
             FuelType = null;
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;

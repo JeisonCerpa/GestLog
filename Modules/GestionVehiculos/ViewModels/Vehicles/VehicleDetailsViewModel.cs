@@ -480,7 +480,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     Values = puntosConsumo,
                     Fill = null,
                     GeometrySize = 6,
-                    Stroke = new SolidColorPaint(SKColors.Blue, 2)
+                    Stroke = new SolidColorPaint(new SKColor(17, 137, 56), 2)
                 }
             ];
 
@@ -501,7 +501,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                     Values = kmPoints,
                     Fill = null,
                     GeometrySize = 6,
-                    Stroke = new SolidColorPaint(SKColors.Green, 2)
+                    Stroke = new SolidColorPaint(new SKColor(17, 137, 56), 2)
                 }
             ];
 
@@ -528,9 +528,9 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 {
                     Name = "Cantidad",
                     Values = mantenimientoCounts,
-                    Fill = new SolidColorPaint(new SKColor(245, 158, 11)),
+                    Fill = new SolidColorPaint(new SKColor(55, 171, 78)),
                     DataLabelsSize = 10,
-                    DataLabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    DataLabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     DataLabelsPosition = DataLabelsPosition.Top
                 }
             ];
@@ -542,13 +542,21 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 {
                     Name = "Vigentes",
                     Values = new[] { DocumentosVigentes },
-                    Fill = new SolidColorPaint(new SKColor(17,137,56))
+                    Fill = new SolidColorPaint(new SKColor(17,137,56)),
+                    DataLabelsSize = 11,
+                    DataLabelsPosition = PolarLabelsPosition.Middle,
+                    DataLabelsPaint = new SolidColorPaint(SKColors.White),
+                    DataLabelsFormatter = point => point.Coordinate.PrimaryValue.ToString()
                 },
                 new PieSeries<int>
                 {
                     Name = "Vencidos",
                     Values = new[] { DocumentosVencidos },
-                    Fill = new SolidColorPaint(new SKColor(192,57,43))
+                    Fill = new SolidColorPaint(new SKColor(192,57,43)),
+                    DataLabelsSize = 11,
+                    DataLabelsPosition = PolarLabelsPosition.Middle,
+                    DataLabelsPaint = new SolidColorPaint(SKColors.White),
+                    DataLabelsFormatter = point => point.Coordinate.PrimaryValue.ToString()
                 }
             ];
 
@@ -603,7 +611,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labels = labels,
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 11
                 }
             ];
@@ -613,7 +621,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labeler = value => value.ToString("C0"),
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 11
                 }
             ];
@@ -623,7 +631,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labeler = value => $"{value:N0}",
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 11
                 }
             ];
@@ -633,7 +641,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labeler = FormatDateAxisLabel,
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 10,
                     UnitWidth = TimeSpan.FromDays(1).Ticks,
                     MinStep = TimeSpan.FromDays(1).Ticks
@@ -645,7 +653,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labeler = value => $"{value:N1}",
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 10
                 }
             ];
@@ -655,7 +663,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labeler = value => $"{value:N0}",
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 10
                 }
             ];
@@ -665,7 +673,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 new Axis
                 {
                     Labels = mantenimientoLabels,
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 10,
                     LabelsRotation = 0
                 }
@@ -677,7 +685,7 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Vehicles
                 {
                     Labeler = value => $"{value:N0}",
                     MinLimit = 0,
-                    LabelsPaint = new SolidColorPaint(new SKColor(80, 79, 78)),
+                    LabelsPaint = new SolidColorPaint(new SKColor(102, 102, 102)),
                     TextSize = 10
                 }
             ];

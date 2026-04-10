@@ -36,17 +36,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
             ViewModel.ConfigureForNew();
             DataContext = ViewModel;
 
-            // Configurar como modal overlay
-            try
-            {
-                this.Owner = System.Windows.Application.Current?.MainWindow;
-                this.ShowInTaskbar = false;
-                this.WindowState = WindowState.Maximized;
-            }
-            catch
-            {
-                // No crítico
-            }
+            ConfigurarParaVentanaPadre(System.Windows.Application.Current?.MainWindow);
 
             // Manejar Escape para cerrar
             this.PreviewKeyDown += (s, e) =>
@@ -60,8 +50,55 @@ namespace GestLog.Modules.GestionVehiculos.Views.Vehicles
 
             Loaded += async (s, e) =>
             {
-                // Cargar datos iniciales si es necesario
-                await System.Threading.Tasks.Task.CompletedTask;
+                // Escuchar cambios en SuccessMessage para cerrar automáticamente después de guardar
+                ViewModel.PropertyChanged += async (sender, args) =>
+                {
+                    if (args.PropertyName == nameof(VehicleFormViewModel.SuccessMessage))
+                    {
+                        if (!string.IsNullOrEmpty(ViewModel.SuccessMessage))
+                        {
+                            // Esperar a que se muestre el mensaje de éxito antes de cerrar
+                            await System.Threading.Tasks.Task.Delay(1500);
+                            this.Close();
+                        }
+                    }
+                };
+            };
+        }
+
+        private void ConfigurarParaVentanaPadre(Window? parentWindow)
+        {
+            if (parentWindow == null)
+            {
+                return;
+            }
+
+            Owner = parentWindow;
+            ShowInTaskbar = false;
+            WindowState = WindowState.Maximized;
+
+            Loaded += (_, __) =>
+            {
+                if (Owner == null)
+                {
+                    return;
+                }
+
+                Owner.LocationChanged += (_, __) =>
+                {
+                    if (WindowState != WindowState.Maximized)
+                    {
+                        WindowState = WindowState.Maximized;
+                    }
+                };
+
+                Owner.SizeChanged += (_, __) =>
+                {
+                    if (WindowState != WindowState.Maximized)
+                    {
+                        WindowState = WindowState.Maximized;
+                    }
+                };
             };
         }
 

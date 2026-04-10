@@ -9,9 +9,32 @@
         WindowStartupLocation="CenterScreen"
         Width="600" Height="400">
     <Grid>
-        <Image Source="/Assets/Simics.png" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-        <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,32">
-            <TextBlock x:Name="StatusText" Text="" FontSize="14" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,0,8"/>
-        </StackPanel>
+        <Border Width="600"
+                Height="400"
+                CornerRadius="28"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#1EFFFFFF"
+                BorderBrush="#55FFFFFF"
+                BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="8" Opacity="0.34" />
+            </Border.Effect>
+
+            <Grid>
+                <Image Source="/Assets/Simics.png"
+                       Stretch="Uniform"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Width="520"
+                       Height="300"
+                       Margin="24"/>
+
+                <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,32">
+                    <TextBlock x:Name="StatusText" Text="" FontSize="14" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,0,8"/>
+                    <TextBlock Text="Cargando..." FontSize="12" Foreground="#CCFFFFFF" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

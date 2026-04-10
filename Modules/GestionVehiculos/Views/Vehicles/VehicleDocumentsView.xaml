@@ -10,55 +10,24 @@
 
     <UserControl.Resources>
         <converters:LoadingIndicatorVisibilityConverter x:Key="LoadingIndicatorVisibilityConverter" />
-        <!-- Estilos locales para mantener consistencia visual -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,2"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" />
-                </Setter.Value>
-            </Setter>
+        
+        <!-- Estilo para centrar TextBlocks dentro de columnas de texto (usado por ElementStyle) -->
+        <Style x:Key="CenteredTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
         </Style>
 
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#EDEDED" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.04" BlurRadius="8" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Estilos para DataGrid -->
+        <!-- Estilos para DataGrid con tema -->
         <Style TargetType="DataGrid" x:Key="DocumentsDataGridStyle">
             <Setter Property="RowHeight" Value="48" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="AlternatingRowBackground" Value="#FAFAFA" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#EFEFEF" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="RowBackground" Value="White" />
-            <!-- Asegurar que el contenido de las celdas esté centrado vertical y horizontalmente -->
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource BackgroundElevatedBrush}" />
+            <Setter Property="GridLinesVisibility" Value="None" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}" />
+            <Setter Property="RowBackground" Value="{DynamicResource BackgroundSurfaceBrush}" />
             <Setter Property="CellStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridCell">
@@ -66,14 +35,12 @@
                         <Setter Property="HorizontalContentAlignment" Value="Center" />
                         <Setter Property="Padding" Value="6,0" />
                         <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="Foreground" Value="#333" />
+                        <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
                         <Style.Triggers>
-                            <!-- Evitar el fondo azul por defecto en celdas seleccionadas: dejar transparente y delegar el estilo al DataGridRow -->
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="#0B3F19" />
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
                             </Trigger>
-                            <!-- Mantener apariencia al recibir el foco dentro de la celda -->
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter Property="Background" Value="Transparent" />
                             </Trigger>
@@ -83,16 +50,9 @@
             </Setter>
         </Style>
 
-        <!-- Estilo para centrar TextBlocks dentro de columnas de texto (usado por ElementStyle) -->
-        <Style x:Key="CenteredTextBlockStyle" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextAlignment" Value="Center" />
-        </Style>
-
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#FAFAFA" />
-            <Setter Property="Foreground" Value="#504F4E" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Height" Value="40" />
             <Setter Property="Padding" Value="8,0" />
@@ -107,10 +67,11 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Width="36" Height="36">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0" CornerRadius="6" Width="36" Height="36">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
@@ -118,11 +79,11 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3FFF3" />
-                    <Setter Property="BorderBrush" Value="#E6F6E8" />
+                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#E8F9E9" />
+                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -131,17 +92,15 @@
         <Style x:Key="DocumentsDataGridRowStyle" TargetType="DataGridRow">
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Padding" Value="4,0" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="Foreground" Value="#333" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
             <Style.Triggers>
-                <!-- Selected row: usar verde muy claro y texto oscuro para buen contraste -->
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#EAF9EE" />
-                    <Setter Property="Foreground" Value="#0B3F19" />
+                    <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
                 </Trigger>
-                <!-- Hover visual ligero para filas no seleccionadas -->
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FBFFFB" />
+                    <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -153,81 +112,41 @@
             <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
 
-        <!-- Estilo para botones redondos con hover elegante -->
-        <Style x:Key="RoundIconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#118938" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BorderBg" 
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="20"
-                                Width="40" Height="40"
-                                Effect="{TemplateBinding Effect}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#0D8E35" />
-                                <Setter TargetName="BorderBg" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#000000" Opacity="0.18" BlurRadius="10" ShadowDepth="2" />
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderBg" Property="Background" Value="#118938" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.12" BlurRadius="6" ShadowDepth="2" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <Style x:Key="BadgeTextStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
         </Style>
-
-        <!-- Estado calculado en DTO / VM: StatusText, StatusBackground, StatusForeground -->
     </UserControl.Resources>
 
-    <Grid Background="Transparent" Margin="0">
+    <Grid Background="{DynamicResource BackgroundSurfaceBrush}" Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header: búsqueda y acciones -->
-        <Grid Grid.Row="0" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Style="{StaticResource ThemeElevatedCardStyle}" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <!-- Search box -->
-            <Border Style="{StaticResource CardStyle}" Background="#FFFFFF" VerticalAlignment="Center">
-                <Grid>
+                <!-- Search box -->
+                <Grid Grid.Column="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="🔎" VerticalAlignment="Center" Margin="6,0" Foreground="#9D9D9C" />
+                    <TextBlock Grid.Column="0" Text="🔎" VerticalAlignment="Center" Margin="6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
                     <Grid Grid.Column="1">
                         <TextBox x:Name="SearchBox" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" 
-                                 Background="Transparent" BorderThickness="0" Foreground="#333" FontSize="13"
+                                 Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextOnPrimaryBrush}" FontSize="13"
                                  VerticalAlignment="Center" Padding="6,6" HorizontalAlignment="Stretch" />
-                        <TextBlock IsHitTestVisible="False" Text="Buscar documentos..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="DarkGray">
+                        <TextBlock IsHitTestVisible="False" Text="Buscar documentos..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -241,17 +160,17 @@
                         </TextBlock>
                     </Grid>
                 </Grid>
-            </Border>
 
-            <!-- Buttons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
-                <Button Style="{StaticResource RoundIconButtonStyle}" Content="➕" Click="BtnNewDocument_Click" ToolTip="Nuevo documento" FontSize="18" Margin="0,0,8,0" />
-                <Button Style="{StaticResource RoundIconButtonStyle}" Content="🔄" Command="{Binding RefreshCommand}" ToolTip="Actualizar" FontSize="18" />
-            </StackPanel>
-        </Grid>
+                <!-- Buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Style="{StaticResource ThemePrimaryButtonStyle}" Content="➕" Click="BtnNewDocument_Click" ToolTip="Nuevo documento" FontSize="18" Margin="0,0,8,0" Padding="10,8" />
+                    <Button Style="{StaticResource ThemePrimaryButtonStyle}" Content="🔄" Command="{Binding RefreshCommand}" ToolTip="Actualizar" FontSize="18" Padding="10,8" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- Contenido principal: DataGrid dentro de card -->
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0">
+        <Border Grid.Row="1" Style="{StaticResource ThemeElevatedCardStyle}" Margin="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -266,10 +185,14 @@
                 <!-- DataGrid -->
                 <DataGrid x:Name="DgDocuments" Grid.Row="1" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-                                                    IsReadOnly="True"
+                          IsReadOnly="True"
                           ColumnWidth="*" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                           RowStyle="{StaticResource DocumentsDataGridRowStyle}" Style="{StaticResource DocumentsDataGridStyle}" CanUserResizeColumns="True"
                           SelectionMode="Single" SelectionUnit="FullRow"
+                          BorderBrush="{DynamicResource BorderDefaultBrush}"
+                          BorderThickness="1"
+                          RowHeaderWidth="0"
+                          FocusVisualStyle="{x:Null}"
                           PreviewMouseDoubleClick="DgDocuments_PreviewMouseDoubleClick">
 
                     <DataGrid.Columns>
@@ -299,7 +222,7 @@
                                                 ToolTip="Ver documento"
                                                 Command="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=DataContext.PreviewCommand}"
                                                 CommandParameter="{Binding}" Margin="0,0,8,0">
-                                            <TextBlock Text="🔍" FontSize="14" />
+                                            <TextBlock Text="🔍" FontSize="14" Foreground="{DynamicResource PrimaryBrush}" />
                                         </Button>
 
                                         <!-- Eliminar -->
@@ -307,7 +230,7 @@
                                                 ToolTip="Eliminar documento"
                                                 Command="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=DataContext.DeleteDocumentCommand}"
                                                 CommandParameter="{Binding}">
-                                            <TextBlock Text="🗑️" FontSize="14" Foreground="#C0392B" />
+                                            <TextBlock Text="🗑️" FontSize="14" Foreground="{DynamicResource DangerBrush}" />
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>
@@ -317,7 +240,7 @@
                 </DataGrid>
 
                 <!-- Mensaje cuando no hay documentos (mostrar sólo cuando NO se está cargando y Count == 0) -->
-                <TextBlock Grid.Row="1" Text="No hay documentos registrados" Foreground="#9D9D9C" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Grid.Row="1" Text="No hay documentos registrados" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <!-- Por defecto oculto -->
@@ -345,7 +268,7 @@
                         </MultiBinding>
                     </StackPanel.Visibility>
 
-                    <TextBlock Text="Cargando documentos..." Foreground="#9D9D9C" FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <TextBlock Text="Cargando documentos..." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,8" />
                     <!-- SimpleProgressBar existe en Controls/ -->
                     <controls:SimpleProgressBar Width="200" BarHeight="10" ProgressValue="{Binding LoadingProgress}" ShowHeader="False" ShowMessage="False" ShowPercentage="True" />
                 </StackPanel>

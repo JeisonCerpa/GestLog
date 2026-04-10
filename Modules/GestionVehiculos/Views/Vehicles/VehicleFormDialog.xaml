@@ -6,13 +6,13 @@
         xmlns:conv="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
         Title="{Binding TituloDialog}" 
-        Height="700" Width="900"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         SizeToContent="Manual"
         WindowStartupLocation="Manual"
         ShowInTaskbar="False"
+        Style="{StaticResource ModalWindowBase}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display"
@@ -31,9 +31,9 @@
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         </ResourceDictionary>    </Window.Resources>
 
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <!-- Panel centrado modal -->
-        <Border x:Name="Card" Width="900" MaxHeight="700" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+    <Grid x:Name="RootGrid" Background="#CC000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
+        <!-- Panel centrado modal - Adaptable al contenido -->
+        <Border x:Name="Card" Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0" MaxWidth="1100" MaxHeight="900"
                 HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
                 UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
             <Grid>
@@ -44,7 +44,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header Modal -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,16" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <Border Grid.Row="0" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="12,12,0,0" Padding="28,24" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" UseLayoutRounding="True" SnapsToDevicePixels="True">
                     <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -52,204 +52,141 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" 
-                                    CornerRadius="8" 
-                                    Padding="8" 
-                                    Margin="0,0,12,0"
-                                    Width="42" 
-                                    Height="42"
-                                    Effect="{StaticResource SectionShadow}"
-                                    UseLayoutRounding="True"
-                                    SnapsToDevicePixels="True">
-                                <!-- Icono de vehículo -->
-                                <TextBlock Text="🚗" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
-                            </Border>
-                            <StackPanel>
-                                <TextBlock Text="{Binding TituloDialog}" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Gestiona información detallada del vehículo" Style="{StaticResource SubHeaderTextStyle}" Foreground="White"/>
+                            <TextBlock Text="🚗" FontSize="28" Margin="0,0,16,0"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TituloDialog}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextBodyBrush}"/>
+                                <TextBlock Text="Gestiona información detallada del vehículo" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="1" x:Name="BtnCerrarHeader" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="6">
-                            <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            </Grid>
+                        <Button Grid.Column="1" x:Name="BtnCerrarHeader" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="8" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <TextBlock Text="✕" FontSize="20" Foreground="{DynamicResource TextBodyBrush}"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Contenido -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <!-- Sección: Información Básica del Vehículo -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24">
-                            <StackPanel>
-                                <TextBlock Text="📋 Información Básica" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Fila 1: Placa y VIN -->
-                                    <StackPanel Grid.Row="0" Grid.Column="0">
-                                        <TextBlock Text="Placa *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtPlaca" 
-                                                 Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="0" Grid.Column="2">
-                                        <TextBlock Text="VIN *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtVin" 
-                                                 Text="{Binding Vin, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Fila 2: Marca y Modelo -->
-                                    <StackPanel Grid.Row="1" Grid.Column="0">
-                                        <TextBlock Text="Marca *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbMarca"
-                                                  Text="{Binding Brand, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  ItemsSource="{Binding MarcasFiltradas}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="1" Grid.Column="2">
-                                        <TextBlock Text="Modelo *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtModelo" 
-                                                 Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Fila 3: Versión y Año -->
-                                    <StackPanel Grid.Row="2" Grid.Column="0">
-                                        <TextBlock Text="Versión" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtVersion" 
-                                                 Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="2" Grid.Column="2">
-                                        <TextBlock Text="Año" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtAno" 
-                                                 Text="{Binding Year, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Fila 4: Color y Kilometraje -->
-                                    <StackPanel Grid.Row="3" Grid.Column="0">
-                                        <TextBlock Text="Color" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtColor" 
-                                                 Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="3" Grid.Column="2">
-                                        <TextBlock Text="Kilometraje (KM)" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtKilometraje" 
-                                                 Text="{Binding Mileage, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
+                <!-- Contenido - Layout Split: Foto Izquierda + Campos Derecha -->
+                <Grid Grid.Row="1" UseLayoutRounding="True" SnapsToDevicePixels="True" Margin="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350" />
+                        <ColumnDefinition Width="420" />
+                    </Grid.ColumnDefinitions>
 
-                                <!-- Nueva fila: Foto del vehículo -->
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
-                                    <!-- Preview 5:4 -->
-                                    <Border Width="320" Height="256" Background="#FFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" HorizontalAlignment="Left" VerticalAlignment="Center" ClipToBounds="True">
-                                        <Image Source="{Binding PhotoThumbPath}" Stretch="UniformToFill" Width="320" Height="256" />
-                                    </Border>
-
-                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <Button Content="Seleccionar foto" Command="{Binding SelectPhotoCommand}" Style="{StaticResource ButtonStyle}" Padding="12,8" />
-                                        <TextBlock Text="Formatos: JPG, PNG. Máx 5MB" Foreground="#706F6F" FontSize="12" Margin="0,8,0,0"/>
-                                    </StackPanel>
-                                </StackPanel>
-
-                            </StackPanel>
+                    <!-- Columna Izquierda: Foto y Controles -->
+                    <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                        <TextBlock Text="📸 FOTO DEL VEHÍCULO" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12"/>
+                        
+                        <!-- Preview de Foto -->
+                        <Border Height="280" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" ClipToBounds="True" Margin="0,0,0,12">
+                            <Image Source="{Binding PhotoThumbPath}" Stretch="Uniform" />
                         </Border>
 
-                        <!-- Sección: Tipo y Estado -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24"
-                                Margin="0,20,0,0">
-                            <StackPanel>
-                                <TextBlock Text="⚙️ Clasificación" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Tipo de Vehículo *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbTipo" 
-                                                  ItemsSource="{Binding VehicleTypes}"
-                                                  SelectedItem="{Binding SelectedType}"
-                                                  Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Estado *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbEstado" 
-                                                  ItemsSource="{Binding VehicleStates}"
-                                                  SelectedItem="{Binding SelectedState}"
-                                                  Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-                                
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Tipo de Combustible" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox ItemsSource="{Binding FuelTypes}" SelectedItem="{Binding FuelType}" Style="{StaticResource InputStyle}" IsEditable="False"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Mensajes de error -->
-                        <TextBlock Text="{Binding ErrorMessage}" 
-                                   Foreground="#C0392B" 
-                                   Style="{StaticResource SectionHeaderStyle}"
-                                   TextWrapping="Wrap" 
-                                   Margin="0,20,0,0"
-                                   Visibility="{Binding ErrorMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
-
-                        <!-- Mensajes de éxito -->
-                        <TextBlock Text="{Binding SuccessMessage}" 
-                                   Foreground="#10B981" 
-                                   Style="{StaticResource SectionHeaderStyle}"
-                                   TextWrapping="Wrap" 
-                                   Margin="0,20,0,0"
-                                   Visibility="{Binding SuccessMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
+                        <!-- Botón Seleccionar -->
+                        <Button Content="📷 Seleccionar foto" Command="{Binding SelectPhotoCommand}" Style="{StaticResource ThemePrimaryButtonStyle}" Padding="16,10" FontSize="12" Margin="0,0,0,8"/>
+                        
+                        <!-- Info -->
+                        <TextBlock Text="Formatos: JPG, PNG" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap"/>
+                        <TextBlock Text="Máximo 5MB (se comprime automáticamente)" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
-                </ScrollViewer>
+
+                    <!-- Columna Derecha: Campos de Información -->
+                    <StackPanel Grid.Column="1">
+                        <!-- Información Básica -->
+                        <TextBlock Text="📋 INFORMACIÓN BÁSICA" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,12"/>
+                        
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Placa y VIN -->
+                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                <TextBlock Text="Placa *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtPlaca" Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                <TextBlock Text="VIN *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtVin" Text="{Binding Vin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            
+                            <!-- Marca y Modelo -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
+                                <TextBlock Text="Marca *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="CmbMarca" ItemsSource="{Binding MarcasFiltradas, UpdateSourceTrigger=PropertyChanged}" Text="{Binding Brand, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEditable="True" IsTextSearchEnabled="True" TextSearch.TextPath="." Style="{StaticResource ThemeComboBoxStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,8,0,0">
+                                <TextBlock Text="Modelo *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtModelo" Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            
+                            <!-- Versión y Año -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,8,0,0">
+                                <TextBlock Text="Versión" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtVersion" Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,8,0,0">
+                                <TextBlock Text="Año" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtAno" Text="{Binding Year, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            
+                            <!-- Color y Kilometraje -->
+                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,8,0,0">
+                                <TextBlock Text="Color" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtColor" Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,8,0,0">
+                                <TextBlock Text="Kilometraje (KM)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="TxtKilometraje" Text="{Binding Mileage, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" Style="{StaticResource ThemeTextBoxStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Clasificación -->
+                        <TextBlock Text="⚙️  CLASIFICACIÓN" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,12,0,12"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Tipo y Estado -->
+                            <StackPanel Grid.Row="0" Grid.Column="0">
+                                <TextBlock Text="Tipo de Vehículo *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="CmbTipo" ItemsSource="{Binding VehicleTypes}" SelectedItem="{Binding SelectedType}" Style="{StaticResource ThemeComboBoxStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2">
+                                <TextBlock Text="Estado *" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="CmbEstado" ItemsSource="{Binding VehicleStates}" SelectedItem="{Binding SelectedState}" Style="{StaticResource ThemeComboBoxStyle}"/>
+                            </StackPanel>
+                            
+                            <!-- Combustible -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,0,0">
+                                <TextBlock Text="Tipo de Combustible" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyBrush}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding FuelTypes}" SelectedItem="{Binding FuelType}" Style="{StaticResource ThemeComboBoxStyle}" IsEditable="False"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Mensajes -->
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" Style="{StaticResource SectionHeaderStyle}" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="{Binding ErrorMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
+                        <TextBlock Text="{Binding SuccessMessage}" Foreground="#10B981" Style="{StaticResource SectionHeaderStyle}" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="{Binding SuccessMessage, Converter={StaticResource CountToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Footer con botones -->
-                <Border Grid.Row="2" Background="#F8F8F8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24">
+                <Border Grid.Row="2" Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,1,0,0" Padding="24">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -261,30 +198,19 @@
                         <Button Grid.Column="1" 
                                 Content="Cancelar" 
                                 Click="BtnCancelar_Click"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}"
                                 Padding="20,10" 
-                                FontFamily="Segoe UI" 
                                 FontSize="13" 
-                                FontWeight="SemiBold" 
-                                Foreground="#706F6F" 
-                                Background="#F0F0F0" 
-                                BorderThickness="1"
-                                BorderBrush="#E0E0E0"
-                                Margin="0,0,10,0"
-                                Style="{StaticResource ButtonStyle}"/>
+                                Margin="0,0,10,0"/>
 
                         <!-- Botón Guardar -->
                         <Button Grid.Column="2" 
-                                Content="Guardar" 
+                                Content="💾 Guardar" 
                                 Command="{Binding SaveCommand}"
+                                Style="{StaticResource ThemePrimaryButtonStyle}"
                                 Padding="20,10" 
-                                FontFamily="Segoe UI" 
-                                FontSize="13" 
-                                FontWeight="SemiBold" 
-                                Foreground="White" 
-                                Background="{StaticResource PrimaryBrush}" 
-                                BorderThickness="0"
-                                IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"
-                                Style="{StaticResource ButtonStyle}"/>
+                                FontSize="13"
+                                IsEnabled="{Binding IsProcessing, Converter={StaticResource InverseBooleanConverter}}"/>
                     </Grid>
                 </Border>
             </Grid>

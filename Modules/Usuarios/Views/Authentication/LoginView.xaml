@@ -18,7 +18,7 @@
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
     </UserControl.Resources>
-    <Grid Background="White">
+    <Grid Background="{DynamicResource BackgroundAppBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -28,77 +28,110 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Source="/Assets/Simics.png" Width="420" Height="96" Stretch="Uniform" Margin="{StaticResource ThemeMarginBottomLarge}"/>
-                <TextBlock Text="GestLog" Style="{DynamicResource HeadingLargeStyle}" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" Margin="{StaticResource ThemeMarginBottomLarge}"/>
-                <TextBlock Text="Sistema de Gestión Logística" Style="{DynamicResource HeadingMediumStyle}" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="{StaticResource ThemeMarginBottomLarge}"/>
+            <Border Grid.Row="0"
+                    Width="540"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="34"
+                    CornerRadius="28"
+                    Background="#1DFFFFFF"
+                    BorderBrush="#55FFFFFF"
+                    BorderThickness="1"
+                    Effect="{StaticResource ThemeCardShadow}">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="/Assets/Simics.png"
+                           Width="420"
+                           Height="96"
+                           Stretch="Uniform"
+                           Margin="0,0,0,18"/>
 
-                <StackPanel HorizontalAlignment="Center" Width="340">
-                    <Border x:Name="ErrorBorder" Background="#FFF3CD" BorderBrush="#FFC107" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="{StaticResource ThemeMarginBottomSmall}" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#FFC107" BlurRadius="4" ShadowDepth="0" Opacity="0.1"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="#856404" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <TextBlock Text="GestLog"
+                               FontSize="34"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextOnPrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Sistema de Gestión Logística"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextOnPrimaryBrush}"
+                               Opacity="0.82"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,22"/>
+
+                    <StackPanel Width="340">
+                        <Border x:Name="ErrorBorder"
+                                Background="#22FFFFFF"
+                                BorderBrush="#55F59E0B"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="10,8"
+                                Margin="0,0,0,12"
+                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="0" Opacity="0.12"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚠️" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
+                                <TextBlock Text="{Binding ErrorMessage}" FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextOnPrimaryBrush}" Margin="0,0,0,6"/>
+                            <Grid>
+                                <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Tag="Ingrese su usuario" Style="{StaticResource ThemeTextBoxStyle}" TabIndex="1" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" TextChanged="UsernameTextBox_TextChanged">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
+                                <TextBlock x:Name="UsernameValidation" Text="✓" Foreground="{DynamicResource SuccessBrush}" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                            </Grid>
                         </StackPanel>
-                    </Border>
 
-                    <StackPanel Margin="{StaticResource ThemeMarginBottomSmall}">
-                        <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="{StaticResource ThemeMarginBottomXSmall}"/>
-                        <Grid>
-                            <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Tag="Ingrese su usuario" Style="{StaticResource ThemeTextBoxStyle}" TabIndex="1" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" TextChanged="UsernameTextBox_TextChanged">
-                                <TextBox.InputBindings>
-                                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                                </TextBox.InputBindings>
-                            </TextBox>
-                            <TextBlock x:Name="UsernameValidation" Text="✓" Foreground="Green" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                        <StackPanel Margin="0,0,0,10">
+                            <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextOnPrimaryBrush}" Margin="0,0,0,6"/>
+                            <Grid>
+                                <PasswordBox x:Name="PasswordBox" Style="{StaticResource ThemePasswordBoxStyle}" Tag="Ingrese su contraseña" TabIndex="2" PasswordChanged="PasswordBox_PasswordChanged" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Foreground="{DynamicResource TextOnPrimaryBrush}" CaretBrush="{DynamicResource TextOnPrimaryBrush}">
+                                    <PasswordBox.InputBindings>
+                                        <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
+                                    </PasswordBox.InputBindings>
+                                </PasswordBox>
+                                <TextBlock x:Name="CapsLockIndicator" Text="Caps Lock activado" Foreground="{DynamicResource DangerBrush}" FontSize="12" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Opacity="0.88" TabIndex="3" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Content="¿Olvidó contraseña?" Command="{Binding ForgotPasswordCommand}" Style="{StaticResource ThemeLinkButtonStyle}" TabIndex="4" VerticalAlignment="Center"/>
                         </Grid>
-                    </StackPanel>
 
-                    <StackPanel Margin="{StaticResource ThemeMarginBottomSmall}">
-                        <TextBlock Text="Contraseña" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="{StaticResource ThemeMarginBottomXSmall}"/>
-                        <Grid>
-                            <PasswordBox x:Name="PasswordBox" Style="{StaticResource ThemePasswordBoxStyle}" Tag="Ingrese su contraseña" TabIndex="2" PasswordChanged="PasswordBox_PasswordChanged" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}">
-                                <PasswordBox.InputBindings>
-                                    <KeyBinding Key="Enter" Command="{Binding LoginCommand}"/>
-                                </PasswordBox.InputBindings>
-                            </PasswordBox>
-                            <TextBlock x:Name="CapsLockIndicator" Text="Caps Lock activado" Foreground="Red" FontSize="12" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,8,0" Visibility="Collapsed"/>
+                        <Button Content="Iniciar Sesión" Style="{StaticResource ThemePrimaryButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" TabIndex="5" Margin="0,18,0,0"/>
+
+                        <Grid Width="28" Height="28" Margin="0,14,0,8" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="{DynamicResource PrimaryBrush}" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
+                                </Ellipse.RenderTransform>
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.8"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
                         </Grid>
+
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Opacity="0.82" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,0,0"/>
                     </StackPanel>
-
-                    <Grid Margin="{StaticResource ThemeMarginTopXSmall}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox Grid.Column="0" IsChecked="{Binding RememberMe}" Content="Recordar mi sesión" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TabIndex="3" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="¿Olvidó contraseña?" Command="{Binding ForgotPasswordCommand}" Style="{StaticResource ThemeLinkButtonStyle}" TabIndex="4" VerticalAlignment="Center"/>
-                    </Grid>
-
-                    <Button Content="Iniciar Sesión" Style="{StaticResource ThemePrimaryButtonStyle}" IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" Command="{Binding LoginCommand}" TabIndex="5" Margin="{StaticResource ThemeMarginTopLarge}"/>
-
-                    <Grid Width="28" Height="28" Margin="{StaticResource ThemeMarginTopMediumBottomSmall}" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Ellipse Width="24" Height="24" StrokeThickness="4" Stroke="{DynamicResource PrimaryBrush}" StrokeDashArray="2 4" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" CacheMode="BitmapCache">
-                            <Ellipse.RenderTransform>
-                                <RotateTransform x:Name="SpinnerRotate" Angle="0"/>
-                            </Ellipse.RenderTransform>
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever">
-                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.8"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                    </Grid>
-
-                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="0,0,0,12"/>
                 </StackPanel>
-            </StackPanel>
+            </Border>
         </Grid>
         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,24,0,0">
             <TextBlock Text="© 2025 GestLog - Sistema de Gestión Logística" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center"/>

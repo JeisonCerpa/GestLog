@@ -14,14 +14,16 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="40,30">
             <StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
-                    <Border Style="{DynamicResource ThemeCardIconCircleStyle}" Width="80" Height="80" CornerRadius="40" Margin="0,0,20,0">
-                        <TextBlock Text="🛠️" Style="{DynamicResource ThemeCardIconTextStyle}" FontSize="32"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Herramientas" Style="{DynamicResource ThemeSectionTitleStyle}"/>
-                        <TextBlock Text="Selecciona la herramienta que deseas utilizar" Style="{DynamicResource ThemeSectionSubtitleStyle}"/>
-                    </StackPanel>
+                <StackPanel Margin="0,0,0,22">
+                    <TextBlock Text="Herramientas disponibles"
+                               Style="{DynamicResource ThemeSectionTitleStyle}"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Left"/>
+                    <TextBlock Text="Selecciona la herramienta que deseas utilizar"
+                               Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                               TextWrapping="Wrap"
+                               Margin="0,6,0,0"/>
                 </StackPanel>
 
                 <UniformGrid Columns="3" Rows="3" HorizontalAlignment="Center" VerticalAlignment="Top">

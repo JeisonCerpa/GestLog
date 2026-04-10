@@ -10,10 +10,10 @@
         SizeToContent="Manual"
         Style="{StaticResource ModalWindowBase}">
     <Grid x:Name="RootGrid" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
-        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+        <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 Width="760" MaxHeight="760"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+            BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -21,25 +21,25 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
+                <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="16,12" Effect="{StaticResource HeaderShadow}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="⛽" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="8" Margin="0,0,12,0" Width="36" Height="36" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" Effect="{StaticResource SectionShadow}">
+                                <TextBlock Text="⛽" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryBrush}" />
                             </Border>
                             <StackPanel>
-                                <TextBlock Text="Registrar tanqueada" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="White" />
-                                <TextBlock Text="Datos de consumo de combustible" FontFamily="Segoe UI" FontSize="12" Foreground="White" Opacity="0.9" />
+                                <TextBlock Text="Registrar tanqueada" FontFamily="Segoe UI" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                <TextBlock Text="Datos de consumo de combustible" FontFamily="Segoe UI" FontSize="12" Foreground="{DynamicResource TextOnPrimaryBrush}" Opacity="0.9" />
                             </StackPanel>
                         </StackPanel>
-                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="BtnCancelar_Click" ToolTip="Cerrar (Esc)">
+                        <Button Grid.Column="1" Style="{StaticResource ThemeCloseButtonStyle}" Click="BtnCancelar_Click" ToolTip="Cerrar (Esc)">
                             <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                             </Grid>
                         </Button>
                     </Grid>
@@ -61,32 +61,32 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Completa la información de la tanqueada" FontSize="13" Foreground="#706F6F" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Completa la información de la tanqueada" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <DatePicker Grid.Row="1" Grid.Column="1" x:Name="DpFecha" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <DatePicker Grid.Row="1" Grid.Column="1" x:Name="DpFecha" Margin="0,0,0,8" Style="{StaticResource ThemeDatePickerStyle}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Kilometraje" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="TxtKM" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Kilometraje" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="TxtKM" Margin="0,0,0,8" Style="{StaticResource ThemeTextBoxStyle}" Tag="Ej. 125000"/>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Galones" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <TextBox Grid.Row="3" Grid.Column="1" x:Name="TxtGalones" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Galones" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" x:Name="TxtGalones" Margin="0,0,0,8" Style="{StaticResource ThemeTextBoxStyle}" Tag="Ej. 12.50"/>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Valor total" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="TxtValor" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Valor total" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="TxtValor" Margin="0,0,0,8" Style="{StaticResource ThemeTextBoxStyle}" Tag="Ej. 45000"/>
 
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Proveedor" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <TextBox Grid.Row="5" Grid.Column="1" x:Name="TxtProveedor" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Proveedor" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" x:Name="TxtProveedor" Margin="0,0,0,8" Style="{StaticResource ThemeTextBoxStyle}" Tag="Estación / proveedor"/>
 
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Observaciones" VerticalAlignment="Top" FontWeight="SemiBold" Margin="0,0,8,8"/>
-                        <TextBox Grid.Row="6" Grid.Column="1" x:Name="TxtObs" MinHeight="100" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8" Style="{StaticResource InputStyle}"/>
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Observaciones" VerticalAlignment="Top" FontWeight="SemiBold" Margin="0,0,8,8" Foreground="{DynamicResource TextBodyBrush}"/>
+                        <TextBox Grid.Row="6" Grid.Column="1" x:Name="TxtObs" MinHeight="100" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8" Style="{StaticResource ThemeTextBoxStyle}" Tag="Notas adicionales"/>
                     </Grid>
                 </ScrollViewer>
 
-                <Border Grid.Row="2" Background="#F5F5F5" Padding="12" CornerRadius="0,0,12,12">
+                <Border Grid.Row="2" Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1,0,0,0" Padding="12" CornerRadius="0,0,12,12">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Margin="0,0,8,0" Click="BtnCancelar_Click"/>
-                        <Button Content="Guardar" Style="{StaticResource PrimaryButtonStyle}" Click="BtnGuardar_Click"/>
+                        <Button Content="Cancelar" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0" Click="BtnCancelar_Click"/>
+                        <Button Content="Guardar" Style="{StaticResource ThemePrimaryButtonStyle}" Click="BtnGuardar_Click"/>
                     </StackPanel>
                 </Border>
             </Grid>

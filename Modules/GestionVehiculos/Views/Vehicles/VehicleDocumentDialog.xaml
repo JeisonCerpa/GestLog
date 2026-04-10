@@ -23,7 +23,7 @@
     </Window.Resources>
 
     <!-- OVERLAY MODAL --><Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Border x:Name="Card" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
+        <Border x:Name="Card" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="14" Padding="0"
                 Width="1200" Height="700"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 BorderThickness="0" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
@@ -37,7 +37,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- HEADER -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,20" Effect="{StaticResource HeaderShadow}">
+                <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" CornerRadius="14,14,0,0" Padding="24,20" Effect="{DynamicResource ThemeCardShadow}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -45,19 +45,19 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="📄" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModalTextBlockBase}"/>
+                            <Border Background="{DynamicResource TextOnPrimaryBrush}" BorderThickness="0" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="44" Height="44">
+                                <TextBlock Text="📄" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryBrush}"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Nuevo documento" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Adjunte SOAT, Tecno-Mecánica u otros documentos" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                                <TextBlock Text="Nuevo documento" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
+                                <TextBlock Text="Adjunte SOAT, Tecno-Mecánica u otros documentos" FontSize="13" Foreground="{DynamicResource TextOnPrimaryBrush}" Opacity="0.95" Margin="0,3,0,0"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="1" x:Name="BtnCloseHeader" Style="{StaticResource CloseButton}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Grid.Column="1" x:Name="BtnCloseHeader" Style="{StaticResource ThemeCloseButtonStyle}" Click="BtnCancel_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                             </Grid>
                         </Button>
                     </Grid>                </Border>                <!-- CONTENIDO - LAYOUT HORIZONTAL (Izquierda: Datos | Derecha: Archivo) -->
@@ -71,9 +71,9 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>                        <!-- CARD 1: DATOS DEL DOCUMENTO -->
-                        <Border Grid.Row="0" Style="{StaticResource CardSectionStyle}" Margin="0,0,0,10">
+                        <Border Grid.Row="0" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="📋 Datos del Documento" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10"/>
+                                <TextBlock Text="📋 Datos del Documento" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
                                 
                                 <!-- Fila 1: Tipo de documento y Número (lado a lado, 50% cada uno) -->
                                 <Grid Margin="0,0,0,8">
@@ -84,14 +84,14 @@
                                     
                                     <!-- Tipo de documento -->
                                     <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,8,0">
-                                        <TextBlock Text="Tipo de documento" Style="{StaticResource LabelTextStyle}" />
-                                        <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource ModernComboBoxStyle}" Margin="0" Height="36"/>
+                                        <TextBlock Text="Tipo de documento" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding DocumentTypes}" SelectedItem="{Binding DocumentType}" Style="{StaticResource ThemeComboBoxStyle}" Margin="0" Height="36"/>
                                     </StackPanel>
                                     
                                     <!-- Número -->
                                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
-                                        <TextBlock Text="Número" Style="{StaticResource LabelTextStyle}" />
-                                        <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource ModernInputTextBoxStyle}" Margin="0" Height="36"/>
+                                        <TextBlock Text="Número" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <TextBox Text="{Binding DocumentNumber}" Style="{StaticResource ThemeTextBoxStyle}" Margin="0" Height="36"/>
                                     </StackPanel>
                                 </Grid>
                                 
@@ -104,34 +104,34 @@
                                     
                                     <!-- Fecha de emisión -->
                                     <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,8,0">
-                                        <TextBlock Text="Fecha de emisión" Style="{StaticResource LabelTextStyle}" />
-                                        <DatePicker SelectedDate="{Binding IssuedDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0" Height="36"/>
+                                        <TextBlock Text="Fecha de emisión" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <DatePicker SelectedDate="{Binding IssuedDate}" Style="{StaticResource ThemeDatePickerStyle}" Margin="0" Height="36"/>
                                     </StackPanel>
                                     
                                     <!-- Fecha de vencimiento -->
                                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
-                                        <TextBlock Text="Fecha de vencimiento" Style="{StaticResource LabelTextStyle}" />
-                                        <DatePicker SelectedDate="{Binding ExpirationDate}" Style="{StaticResource ModernDatePickerStyle}" Margin="0" Height="36"/>
+                                        <TextBlock Text="Fecha de vencimiento" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                        <DatePicker SelectedDate="{Binding ExpirationDate}" Style="{StaticResource ThemeDatePickerStyle}" Margin="0" Height="36"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
                         <!-- CARD OBSERVACIONES: ocupa todo el espacio restante y se estira -->
-                        <Border Grid.Row="1" Style="{StaticResource CardSectionStyle}" Margin="0" VerticalAlignment="Stretch">
+                        <Border Grid.Row="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0" VerticalAlignment="Stretch">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Text="📝 Observaciones" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6"/>                                <!-- TextBox estirable: quitar MinHeight fijo, usar Stretch para llenar la fila '*' -->
+                                <TextBlock Grid.Row="0" Text="📝 Observaciones" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>                                <!-- TextBox estirable: quitar MinHeight fijo, usar Stretch para llenar la fila '*' -->
                                 <TextBox Grid.Row="1"
                                          Text="{Binding Notes}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalScrollBarVisibility="Auto"
-                                         Style="{StaticResource ModernInputTextBoxStyle}"
+                                         Style="{StaticResource ThemeTextBoxStyle}"
                                          Padding="10,6"
                                          Margin="0"
                                          VerticalAlignment="Stretch"
@@ -140,19 +140,19 @@
                         </Border>
                     </Grid>
                       <!-- COLUMNA DERECHA: ARCHIVO ADJUNTO (PROMINENTE) -->
-                    <Border Grid.Column="1" Style="{StaticResource CardSectionStyle}" Margin="0,24,24,24" Background="#FFFFFF" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="2" VerticalAlignment="Stretch">
+                    <Border Grid.Column="1" Background="{DynamicResource BackgroundSurfaceBrush}" BorderBrush="{DynamicResource PrimaryBrush}" BorderThickness="2" CornerRadius="8" Padding="16" Margin="0,24,24,24" VerticalAlignment="Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,0,0,0" VerticalAlignment="Top">
-                            <TextBlock Text="📎 ARCHIVO ADJUNTO" Style="{StaticResource SectionHeaderStyle}" Foreground="{StaticResource PrimaryBrush}" FontSize="16"/>
+                            <TextBlock Text="📎 ARCHIVO ADJUNTO" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
                               <!-- Botón seleccionar -->
-                            <Button x:Name="BtnSelectFile" Content="📁 Seleccionar archivo..." Click="BtnSelectFile_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Margin="0,0,0,16" HorizontalAlignment="Stretch" Padding="12,12" Height="44"/>
+                            <Button x:Name="BtnSelectFile" Content="📁 Seleccionar archivo..." Click="BtnSelectFile_Click" Style="{StaticResource ThemePrimaryButtonStyle}" Margin="0,10,0,16" HorizontalAlignment="Stretch" Padding="12,12" Height="44"/>
                             
                             <!-- Info archivo seleccionado - PROMINENTE -->
-                            <TextBlock Text="Archivo seleccionado:" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" Foreground="{StaticResource TextDarkBrush}"/>                            <TextBlock x:Name="TxtSelectedFile" Text="{Binding SelectedFileName, TargetNullValue='(ninguno seleccionado)'}" 
-                                       Foreground="{StaticResource PrimaryBrush}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                            <TextBlock Text="Archivo seleccionado:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>                            <TextBlock x:Name="TxtSelectedFile" Text="{Binding SelectedFileName, TargetNullValue='(ninguno seleccionado)'}" 
+                                       Foreground="{DynamicResource PrimaryBrush}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,12"/>
                               <!-- Línea separadora -->
-                            <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,12"/>
+                            <Border Height="1" Background="{DynamicResource BorderDefaultBrush}" Margin="0,0,0,12"/>
                               <!-- Preview y metadata -->
-                            <Border Height="100" Width="100" CornerRadius="8" Background="#F5F5F5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <Border Height="100" Width="100" CornerRadius="8" Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
                                 <Grid x:Name="PreviewContainer">
                                     <!-- Imagen real (cuando exista preview de imagen) -->
                                     <Image x:Name="ImgPreview" Source="{Binding SelectedFilePreview}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -164,7 +164,7 @@
                                             <Binding Path="IsPdfSelected" Converter="{StaticResource BooleanToVisibilityConverter}" />
                                         </Grid.Visibility>
                                         <Viewbox Stretch="Uniform">
-                                            <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                                            <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource PrimaryBrush}"/>
                                         </Viewbox>
                                     </Grid>
                                 </Grid>
@@ -176,8 +176,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Tamaño:" FontWeight="SemiBold" Foreground="#504F4E" Width="70"/>
-                                    <TextBlock x:Name="TxtSelectedFileSize" Grid.Column="1" Text="{Binding SelectedFileSize, TargetNullValue='---'}" Foreground="#706F6F"/>
+                                    <TextBlock Grid.Column="0" Text="Tamaño:" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Width="70"/>
+                                    <TextBlock x:Name="TxtSelectedFileSize" Grid.Column="1" Text="{Binding SelectedFileSize, TargetNullValue='---'}" Foreground="{DynamicResource TextBodyBrush}"/>
                                 </Grid>
                                 
                                 <Grid Margin="0,0,0,0">
@@ -185,17 +185,17 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Tipo:" FontWeight="SemiBold" Foreground="#504F4E" Width="70"/>
-                                    <TextBlock x:Name="TxtSelectedFileMime" Grid.Column="1" Text="{Binding SelectedFileMimeType, TargetNullValue='---'}" Foreground="#706F6F"/>
+                                    <TextBlock Grid.Column="0" Text="Tipo:" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Width="70"/>
+                                    <TextBlock x:Name="TxtSelectedFileMime" Grid.Column="1" Text="{Binding SelectedFileMimeType, TargetNullValue='---'}" Foreground="{DynamicResource TextBodyBrush}"/>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Inline validation message for selected file -->
-                            <TextBlock Text="{Binding SelectedFileError}" Foreground="#D32F2F" FontSize="12" Margin="6,8,6,0" Visibility="{Binding SelectedFileError, Converter={StaticResource StringToVisibilityConverter}}" />                            <!-- Botones de acciones -->
+                            <TextBlock Text="{Binding SelectedFileError}" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="6,8,6,0" Visibility="{Binding SelectedFileError, Converter={StaticResource StringToVisibilityConverter}}" />                            <!-- Botones de acciones -->
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Center">
-                                <Button Content="👁️ Ver" Command="{Binding OpenSelectedFileCommand}" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36" Margin="0,0,8,0" 
+                                <Button Content="👁️ Ver" Command="{Binding OpenSelectedFileCommand}" Style="{StaticResource ThemeSecondaryButtonStyle}" Width="90" Height="36" Margin="0,0,8,0" 
                                         ToolTip="Abrir archivo seleccionado" />
-                                <Button x:Name="BtnRemoveFile" Content="✕ Remover" Command="{Binding RemoveSelectedFileCommand}" Click="BtnRemoveFile_Click" Style="{StaticResource ModernSecondaryButtonStyle}" Width="90" Height="36"
+                                <Button x:Name="BtnRemoveFile" Content="✕ Remover" Command="{Binding RemoveSelectedFileCommand}" Click="BtnRemoveFile_Click" Style="{StaticResource ThemeSecondaryButtonStyle}" Width="90" Height="36"
                                         ToolTip="Remover archivo seleccionado" />
                             </StackPanel>
                               <!-- Progreso carga -->
@@ -211,9 +211,9 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>                </Grid>                <!-- FOOTER -->
-                <Border Grid.Row="2" Padding="24,12" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="Cancelar" Click="BtnCancel_Click" Width="110" Height="40" Style="{StaticResource GhostButton}" Margin="0,0,8,0"/>
-                        <Button x:Name="BtnSave" Content="Guardar" Width="110" Height="40" Command="{Binding SaveCommand}" IsDefault="True" ToolTip="{Binding DisabledReason}" Style="{StaticResource ModernPrimaryButtonStyle}"/>
+                <Border Grid.Row="2" Padding="24,12" Background="Transparent" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,1,0,0">                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Content="Cancelar" Click="BtnCancel_Click" Width="110" Height="40" Style="{StaticResource ThemeSecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnSave" Content="Guardar" Width="110" Height="40" Command="{Binding SaveCommand}" IsDefault="True" ToolTip="{Binding DisabledReason}" Style="{StaticResource ThemePrimaryButtonStyle}"/>
                     </StackPanel>
                 </Border>
             </Grid>
