@@ -11,7 +11,7 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogos
         public CatalogosManagementView()
         {
             InitializeComponent();
-            // Asignar el DataContext usando DI para asegurar ModalService
+            // Asignar el DataContext usando DI
             var serviceProvider = LoggingService.GetServiceProvider();
             var viewModel = serviceProvider.GetRequiredService<CatalogosManagementViewModel>();
             DataContext = viewModel;

@@ -90,6 +90,7 @@ namespace Modules.Usuarios.ViewModels
             {
                 _usuarioSeleccionado = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(TieneUsuarioSeleccionado));
                 // Cargar correo de la persona asociada si estÃ¡ disponible
                 CorreoPersonaSeleccionada = ObtenerCorreoDePersona(_usuarioSeleccionado);
                 
@@ -117,6 +118,13 @@ namespace Modules.Usuarios.ViewModels
         {
             get => _isModalNuevoUsuarioVisible;
             set { _isModalNuevoUsuarioVisible = value; OnPropertyChanged(); }
+        }
+
+        private bool _permitirSeleccionarPersona = true;
+        public bool PermitirSeleccionarPersona
+        {
+            get => _permitirSeleccionarPersona;
+            set { _permitirSeleccionarPersona = value; OnPropertyChanged(); }
         }
         private string _nuevoUsuarioNombre = string.Empty;
         public string NuevoUsuarioNombre
@@ -226,6 +234,7 @@ namespace Modules.Usuarios.ViewModels
         public ICommand EditarUsuarioCommand { get; }
         public ICommand RestablecerContrasenaCommand { get; }
         public ICommand BuscarUsuariosCommand { get; }
+        public ICommand LimpiarFiltroTextoCommand { get; }
         public ICommand CargarAuditoriaCommand { get; }
         public ICommand AbrirRegistroUsuarioWindowCommand { get; }
         public ICommand CancelarRegistroUsuarioCommand { get; }
@@ -274,8 +283,9 @@ namespace Modules.Usuarios.ViewModels
             EditarUsuarioCommand = new RelayCommand(async _ => await EditarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanEditUser);
             RestablecerContrasenaCommand = new RelayCommand(async _ => await RestablecerContrasenaAsync(), _ => UsuarioSeleccionado != null && CanResetPassword);
             BuscarUsuariosCommand = new RelayCommand(async _ => await BuscarUsuariosAsync(), _ => true);
+            LimpiarFiltroTextoCommand = new RelayCommand(_ => { LimpiarFiltroTexto(); return Task.CompletedTask; }, _ => true);
             CargarAuditoriaCommand = new RelayCommand(async _ => await CargarAuditoriaAsync(), _ => UsuarioSeleccionado != null && CanViewAudit);
-            AbrirRegistroUsuarioWindowCommand = new RelayCommand(_ => { AbrirRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => CanCreateUser);
+            AbrirRegistroUsuarioWindowCommand = new RelayCommand(_ => { AbrirRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
             CancelarRegistroUsuarioCommand = new RelayCommand(_ => { CerrarRegistroUsuarioWindow(); return Task.CompletedTask; }, _ => true);
             RegistrarNuevoUsuarioCommand = new RelayCommand(async _ => await RegistrarNuevoUsuarioAsync(), _ => PuedeRegistrarNuevoUsuario() && CanCreateUser);
             EliminarUsuarioCommand = new RelayCommand(async _ => await EliminarUsuarioAsync(), _ => UsuarioSeleccionado != null && CanDeleteUser);
@@ -285,7 +295,12 @@ namespace Modules.Usuarios.ViewModels
             
             // Conectar el event handler para la colecciÃ³n de roles seleccionados
             RolesSeleccionados.CollectionChanged += RolesSeleccionados_CollectionChanged;
+            Usuarios.CollectionChanged += (_, __) => ActualizarEstadoListaUsuarios();
         }
+
+        public bool TieneUsuarioSeleccionado => UsuarioSeleccionado != null;
+        public bool HasUsuarios => Usuarios.Any();
+        public bool NoUsuariosMessageVisible => !IsLoading && !HasUsuarios;
 
         /// <summary>
         /// ImplementaciÃ³n del mÃ©todo abstracto para auto-refresh automÃ¡tico
@@ -340,6 +355,7 @@ namespace Modules.Usuarios.ViewModels
                 await CargarRolesDeUsuarioAsync();
                 
                 StatusMessage = $"Cargados {Usuarios.Count} usuarios";
+                ActualizarEstadoListaUsuarios();
             }
             catch (OperationCanceledException)
             {
@@ -350,10 +366,12 @@ namespace Modules.Usuarios.ViewModels
             {
                 _logger.LogError(ex, "[UsuarioManagementViewModel] Error al inicializar");
                 StatusMessage = "Error al cargar usuarios";
+                ActualizarEstadoListaUsuarios();
             }
             finally
             {
                 IsLoading = false;
+                ActualizarEstadoListaUsuarios();
             }
         }
 
@@ -412,10 +430,15 @@ namespace Modules.Usuarios.ViewModels
                 if (_personaService != null)
                 {
                     var personas = await _personaService.BuscarPersonasAsync("");
+
+                    var personasSinUsuario = personas
+                        .Where(p => p.Activo)
+                        .Where(p => !Usuarios.Any(u => u.PersonaId == p.IdPersona))
+                        .ToList();
                     
                     System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                     {
-                        PersonasDisponibles = new ObservableCollection<GestLog.Modules.Personas.Models.Persona>(personas.Where(p => p.Activo));
+                        PersonasDisponibles = new ObservableCollection<GestLog.Modules.Personas.Models.Persona>(personasSinUsuario);
                     });
                 }
             }
@@ -612,7 +635,19 @@ namespace Modules.Usuarios.ViewModels
                 Usuarios.Clear();
                 foreach (var usuario in lista)
                     Usuarios.Add(usuario);
+                ActualizarEstadoListaUsuarios();
             });
+        }
+
+        private void ActualizarEstadoListaUsuarios()
+        {
+            OnPropertyChanged(nameof(HasUsuarios));
+            OnPropertyChanged(nameof(NoUsuariosMessageVisible));
+        }
+
+        private void LimpiarFiltroTexto()
+        {
+            FiltroTexto = string.Empty;
         }
         
         private async Task CargarAuditoriaAsync() { await Task.CompletedTask; }        private void LimpiarCamposNuevoUsuario()
@@ -732,6 +767,7 @@ namespace Modules.Usuarios.ViewModels
 
                 // Recargar lista de usuarios
                 await CargarUsuariosAsync();
+                PermitirSeleccionarPersona = true;
                 LimpiarCamposNuevoUsuario();
             }
             catch (Exception ex)
@@ -754,12 +790,36 @@ namespace Modules.Usuarios.ViewModels
         private void AbrirRegistroUsuarioWindow()
         {
             IsModalNuevoUsuarioVisible = true;
+            PermitirSeleccionarPersona = true;
+            LimpiarCamposNuevoUsuario();
+
+            var window = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow
+            {
+                DataContext = this,
+                Owner = System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w => w.IsActive) ?? System.Windows.Application.Current.MainWindow
+            };
+
+            if (window.ShowDialog() != true)
+            {
+                LimpiarCamposNuevoUsuario();
+            }
         }
         
         private void CerrarRegistroUsuarioWindow()
         {
             IsModalNuevoUsuarioVisible = false;
+            PermitirSeleccionarPersona = true;
             LimpiarCamposNuevoUsuario();
+
+            var window = System.Windows.Application.Current.Windows
+                .OfType<System.Windows.Window>()
+                .FirstOrDefault(w => w is GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow && w.DataContext == this);
+
+            if (window != null)
+            {
+                window.DialogResult = false;
+                window.Close();
+            }
         }
 
         private async Task EliminarUsuarioAsync()

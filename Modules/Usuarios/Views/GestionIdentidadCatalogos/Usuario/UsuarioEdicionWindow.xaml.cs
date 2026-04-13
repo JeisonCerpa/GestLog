@@ -2,6 +2,7 @@ using System.Windows;
 using Modules.Usuarios.ViewModels;
 using GestLog.Modules.Usuarios.Models;
 using System.Linq;
+using System.Windows.Input;
 
 namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario
 {
@@ -10,6 +11,16 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario
         public UsuarioEdicionWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                DialogResult = false;
+                Close();
+                e.Handled = true;
+            }
         }
 
         private void CancelarButton_Click(object sender, RoutedEventArgs e)

@@ -162,7 +162,6 @@ namespace GestLog
             services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>();
             // ViewModels de Personas (agregar cuando existan)
             services.AddSingleton<PersonaManagementViewModel>();
-            services.AddSingleton<IModalService, ModalService>();
             
             // Registrar CurrentUserInfo como servicio Scoped
             services.AddScoped<GestLog.Modules.Usuarios.Models.Authentication.CurrentUserInfo>(provider =>

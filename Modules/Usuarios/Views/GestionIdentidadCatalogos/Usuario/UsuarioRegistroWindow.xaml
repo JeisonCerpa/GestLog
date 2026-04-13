@@ -4,89 +4,410 @@
         xmlns:local="clr-namespace:GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario"
         xmlns:val="clr-namespace:GestLog.Controls.Validation"
         xmlns:behaviors="clr-namespace:GestLog.Behaviors"
-        Title="Registrar Usuario" Height="600" Width="540" MinWidth="480" MinHeight="540" WindowStartupLocation="CenterOwner" ResizeMode="CanResize" WindowStyle="SingleBorderWindow" Background="#F5F5F5">
-    <Border Background="White" CornerRadius="12" Padding="32" BorderBrush="#E0E0E0" BorderThickness="1" Margin="16">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        xmlns:converters="clr-namespace:GestLog.Converters"
+        Title="Registrar Usuario"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Style="{StaticResource ModalWindowBase}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid Background="#A0000000">
+        <Border Style="{DynamicResource ThemeWelcomeCardStyle}"
+                Width="1080"
+                MaxWidth="1180"
+                Margin="24"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                SnapsToDevicePixels="True">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="28" ShadowDepth="0" Opacity="0.30" Color="Black" />
+            </Border.Effect>
+
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <TextBlock Text="Registro de nuevo usuario" FontSize="24" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,24" HorizontalAlignment="Center" Grid.Row="0"/>
-                <StackPanel Grid.Row="1" Margin="0,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
-                    <!-- Persona -->
-                    <StackPanel Margin="0,0,0,16">
-                        <TextBlock Text="Persona asociada" FontWeight="SemiBold"/>
-                        <StackPanel>
-                            <TextBlock
-                                Text="{Binding NombreCompletoPersonaSeleccionada}"
-                                Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToVisibilityConverter}}"
-                                FontWeight="Bold" FontSize="16" Foreground="#1976D2"/>
-                            <ComboBox ItemsSource="{Binding PersonasDisponibles}"
-                                      SelectedValuePath="IdPersona"
-                                      DisplayMemberPath="NombreCompleto"
-                                      SelectedValue="{Binding PersonaIdSeleccionada, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      IsEnabled="False"
-                                      Visibility="{Binding PersonaIdSeleccionada, Converter={StaticResource GuidToInverseVisibilityConverter}}"
-                                      Height="32"/>
+
+                <Border Grid.Row="0"
+                        Background="{DynamicResource PrimaryBrush}"
+                        CornerRadius="24,24,0,0"
+                        Padding="24,22,20,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Crear usuario"
+                                       Style="{DynamicResource ThemeSectionTitleStyle}"
+                                       Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                       FontSize="26"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,6" />
+                            <TextBlock Text="Diseño modal moderno, reutilizable desde Usuarios o Personas, con tema completo para Light y Dark."
+                                       Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                       Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                       Opacity="0.92"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="720" />
                         </StackPanel>
-                    </StackPanel>                    <!-- Usuario -->
-                    <StackPanel Margin="0,0,0,16">
-                        <TextBlock Text="Nombre de usuario" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}" 
-                                 Margin="0,2,0,0" Background="White" BorderBrush="#BDBDBD" BorderThickness="1" Padding="8"
-                                 ToolTip="Ingrese el nombre de usuario" Height="32"/>
-                        <TextBlock Text="El nombre de usuario es obligatorio." Foreground="#D32F2F" FontSize="12" Margin="2,2,0,0"
-                                   Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}"/>
+
+                        <Button Grid.Column="1"
+                                Click="BtnCerrar_Click"
+                                ToolTip="Cerrar"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Width="36"
+                                Height="36"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                            <Grid Width="16" Height="16">
+                                <Line X1="0" Y1="0" X2="16" Y2="16" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Line X1="16" Y1="0" X2="0" Y2="16" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="24">
+                        <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="16"
+                                Padding="18"
+                                Margin="0,0,0,18">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="52"
+                                        Height="52"
+                                        CornerRadius="26"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Margin="0,0,16,0">
+                                    <TextBlock Text="👤"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="24"
+                                               Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Alta de cuenta"
+                                               Style="{DynamicResource ThemeSectionTitleStyle}"
+                                               FontSize="17"
+                                               Margin="0,0,0,6" />
+                                    <TextBlock Text="La cuenta se crea sobre una persona activa sin usuario. Si el flujo viene desde Personas, la selección se mantiene bloqueada para evitar inconsistencias."
+                                               Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.15*" />
+                                <ColumnDefinition Width="0.95*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,18,0">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18"
+                                        Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Persona asociada"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Solo se muestran personas activas que aún no tienen usuario."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,14" />
+
+                                        <StackPanel Visibility="{Binding PermitirSeleccionarPersona, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="Seleccionar persona"
+                                                       Style="{DynamicResource ThemeBodyTextStyle}"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,0,0,6" />
+                                            <ComboBox ItemsSource="{Binding PersonasDisponibles}"
+                                                      SelectedValuePath="IdPersona"
+                                                      DisplayMemberPath="NombreCompleto"
+                                                      SelectedValue="{Binding PersonaIdSeleccionada, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding PermitirSeleccionarPersona}"
+                                                      Height="42"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      ToolTip="Seleccione la persona a la que se asignará la cuenta" />
+                                            <TextBlock Text="{Binding NombreCompletoPersonaSeleccionada, TargetNullValue='Seleccione una persona para continuar'}"
+                                                       Margin="0,10,0,0"
+                                                       Foreground="{DynamicResource PrimaryBrush}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Visibility="{Binding PermitirSeleccionarPersona, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                            <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="14"
+                                                    Padding="14">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border Width="42"
+                                                            Height="42"
+                                                            CornerRadius="21"
+                                                            Background="{DynamicResource PrimaryBrush}"
+                                                            Margin="0,0,12,0">
+                                                        <TextBlock Text="👤"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="18"
+                                                                   Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding NombreCompletoPersonaSeleccionada, TargetNullValue='Persona seleccionada'}"
+                                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                                   FontSize="15"
+                                                                   Margin="0,0,0,4" />
+                                                        <TextBlock Text="La persona fue definida desde la vista de Personas y no puede cambiarse desde este modal."
+                                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                                   TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18"
+                                        Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Nombre de usuario"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Ingrese un nombre claro y único para acceder al sistema."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,12" />
+
+                                        <TextBox Text="{Binding NuevoUsuarioNombre, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource ThemeTextBoxStyle}"
+                                                 Height="42"
+                                                 ToolTip="Ingrese el nombre de usuario" />
+
+                                        <TextBlock Text="El nombre de usuario es obligatorio."
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   FontSize="12"
+                                                   Margin="2,8,0,0"
+                                                   Visibility="{Binding NuevoUsuarioNombre, Converter={StaticResource IsStringNullOrEmptyConverter}}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="Proceso de activación"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="La contraseña temporal se genera automáticamente y se enviará al correo registrado en la persona asociada."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,14" />
+
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource SuccessBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="14"
+                                                Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="Contraseña temporal"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           Margin="0,0,0,8" />
+                                                <TextBlock Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="20">
+                                                    <Run Text="• El usuario recibirá las credenciales por correo" />
+                                                    <LineBreak />
+                                                    <Run Text="• Deberá cambiar la contraseña en el primer ingreso" />
+                                                    <LineBreak />
+                                                    <Run Text="• La contraseña temporal tiene vigencia limitada" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18"
+                                        Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Roles asignados"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Seleccione uno o más roles para definir el nivel de acceso del usuario."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,14" />
+
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="14"
+                                                Padding="12"
+                                                MaxHeight="320">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Disabled">
+                                                <ItemsControl ItemsSource="{Binding RolesDisponibles}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Margin="0,0,10,10"
+                                                                    Padding="10,8"
+                                                                    CornerRadius="12"
+                                                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                                    BorderThickness="1">
+                                                                <CheckBox Content="{Binding Nombre}"
+                                                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                          FontWeight="SemiBold"
+                                                                          Checked="CheckBox_Checked"
+                                                                          Unchecked="CheckBox_Unchecked">
+                                                                    <CheckBox.IsChecked>
+                                                                        <MultiBinding Converter="{StaticResource RoleCheckedConverter}" Mode="OneWay">
+                                                                            <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                            <Binding Path="." />
+                                                                        </MultiBinding>
+                                                                    </CheckBox.IsChecked>
+                                                                </CheckBox>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </Border>
+
+                                        <TextBlock Text="Debe seleccionar al menos un rol."
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   FontSize="12"
+                                                   Margin="2,10,0,0"
+                                                   Visibility="{Binding RolesSeleccionadosCount, Converter={StaticResource CountToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="Resumen rápido"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,10" />
+
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="12"
+                                                Padding="12">
+                                            <StackPanel>
+                                                <TextBlock Text="• El usuario quedará activo cuando se complete el registro"
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,6" />
+                                                <TextBlock Text="• El envío de credenciales depende del correo asociado a la persona"
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
                     </StackPanel>
-                    <!-- Información de Contraseña Temporal -->
-                    <Border Background="#E8F5E9" CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="#4CAF50" BorderThickness="1">
-                        <StackPanel>
-                            <TextBlock Text="🔐 Contraseña Temporal" FontWeight="Bold" Foreground="#2E7D32" Margin="0,0,0,8"/>
-                            <TextBlock Text="Se generará automáticamente una contraseña temporal y se enviará por correo al usuario." 
-                                       TextWrapping="Wrap" Foreground="#1B5E20" FontSize="12" LineHeight="18"/>
-                            <TextBlock Text="• El usuario recibirá el usuario y contraseña por email" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11" Margin="0,6,0,0"/>
-                            <TextBlock Text="• Deberá cambiar la contraseña al primer inicio de sesión" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11"/>
-                            <TextBlock Text="• La contraseña temporal es válida por 24 horas" TextWrapping="Wrap" Foreground="#1B5E20" FontSize="11"/>
+                </ScrollViewer>
+
+                <Border Grid.Row="2"
+                        Padding="24"
+                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,24,24">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="La cuenta se creará sobre la persona seleccionada y se enviará una contraseña temporal por correo."
+                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,18,0" />
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar"
+                                    Margin="0,0,12,0"
+                                    Width="122"
+                                    Height="40"
+                                    Command="{Binding CancelarRegistroUsuarioCommand}"
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}" />
+                            <Button Content="Registrar usuario"
+                                    Width="160"
+                                    Height="40"
+                                    Command="{Binding RegistrarNuevoUsuarioCommand}"
+                                    Style="{StaticResource ThemePrimaryButtonStyle}" />
                         </StackPanel>
-                    </Border>
-                    <!-- Roles -->
-                    <StackPanel Margin="0,0,0,0">
-                        <TextBlock Text="Roles asignados" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <ItemsControl ItemsSource="{Binding RolesDisponibles}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Nombre}"
-                                              Margin="0,2"
-                                              Foreground="#118938"
-                                              FontWeight="SemiBold"
-                                              Checked="CheckBox_Checked"
-                                              Unchecked="CheckBox_Unchecked">                                        <CheckBox.IsChecked>
-                                            <MultiBinding Converter="{StaticResource RoleCheckedConverter}" Mode="OneWay">
-                                                <!-- El ViewModel principal (DataContext de la ventana) -->
-                                                <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}" />
-                                                <!-- El rol actual (DataContext del CheckBox) -->
-                                                <Binding Path="." />
-                                            </MultiBinding>
-                                        </CheckBox.IsChecked>
-                                    </CheckBox>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock Text="Debe seleccionar al menos un rol."
-                                   Foreground="#D32F2F"
-                                   FontSize="12"
-                                   Margin="2,2,0,0"
-                                   Visibility="{Binding RolesSeleccionadosCount, Converter={StaticResource CountToVisibilityConverter}}"/>
-                    </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0" Grid.Row="2">
-                    <Button Content="Cancelar" Margin="0,0,10,0" Width="110" Height="36" Command="{Binding CancelarRegistroUsuarioCommand}"/>
-                    <Button Content="Registrar" Width="120" Height="36" Background="#388E3C" Foreground="White" FontWeight="Bold"
-                            Command="{Binding RegistrarNuevoUsuarioCommand}"/>
-                </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
-        </ScrollViewer>
-    </Border>
+        </Border>
+    </Grid>
 </Window>

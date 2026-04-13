@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 
 namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario
 {
@@ -14,6 +15,16 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario
             // Agregar eventos para validación en tiempo real
             passwordBox.PasswordChanged += PasswordBox_PasswordChanged;
             confirmPasswordBox.PasswordChanged += ConfirmPasswordBox_PasswordChanged;
+        }
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                DialogResult = false;
+                Close();
+                e.Handled = true;
+            }
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)

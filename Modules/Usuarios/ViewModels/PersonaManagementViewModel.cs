@@ -411,6 +411,7 @@ namespace GestLog.Modules.Usuarios.ViewModels
                 // Solo esa persona disponible para el registro
                 usuarioVm.PersonasDisponibles = new System.Collections.ObjectModel.ObservableCollection<GestLog.Modules.Personas.Models.Persona> { persona };
                 usuarioVm.PersonaIdSeleccionada = persona.IdPersona;
+                usuarioVm.PermitirSeleccionarPersona = false;
                 usuarioVm.NuevoUsuarioNombre = string.Empty;
                 usuarioVm.NuevoUsuarioPassword = string.Empty;
                 var win = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.UsuarioRegistroWindow { DataContext = usuarioVm, Owner = System.Windows.Application.Current.MainWindow };

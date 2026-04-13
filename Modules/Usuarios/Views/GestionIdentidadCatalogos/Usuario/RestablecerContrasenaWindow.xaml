@@ -1,106 +1,305 @@
 <Window x:Class="GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario.RestablecerContrasenaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Restablecer Contraseña" SizeToContent="Height" Width="450"
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#FAFAFA">
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Title="Restablecer Contraseña"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Style="{StaticResource ModalWindowBase}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Grid Background="#A0000000">
+        <Border Style="{DynamicResource ThemeWelcomeCardStyle}"
+                Width="920"
+                MaxWidth="980"
+                Margin="24"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="28" ShadowDepth="0" Opacity="0.28" Color="Black" />
+            </Border.Effect>
 
-        <!-- Título -->
-        <TextBlock Grid.Row="0" Text="Restablecer Contraseña" FontSize="18" FontWeight="SemiBold" 
-                   Foreground="#118938" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <!-- Usuario -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
-            <TextBlock Text="Usuario:" Width="120" VerticalAlignment="Center" FontWeight="SemiBold"/>
-            <TextBlock x:Name="txtUsuario" Text="{Binding NombreUsuario}" FontWeight="Bold" Foreground="#2B8E3F"/>
-        </StackPanel>
+                <Border Grid.Row="0"
+                        Background="{DynamicResource PrimaryBrush}"
+                        CornerRadius="24,24,0,0"
+                        Padding="24,22,20,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-        <!-- Nueva contraseña -->
-        <StackPanel Grid.Row="2" Margin="0,0,0,15">
-            <TextBlock Text="Nueva contraseña:" Margin="0,0,0,5" FontWeight="SemiBold"/>
-            <PasswordBox x:Name="passwordBox" Height="32" Background="#FFFFFF" BorderBrush="#BDBDBD" 
-                         BorderThickness="1" Padding="8" FontSize="14"/>
-            <TextBlock Text="Mínimo 6 caracteres" FontSize="11" Foreground="#757575" Margin="0,2,0,0"/>
-        </StackPanel>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="46"
+                                    Height="46"
+                                    CornerRadius="23"
+                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    BorderThickness="1"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="🔐"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="20"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                            </Border>
 
-        <!-- Confirmar contraseña -->
-        <StackPanel Grid.Row="3" Margin="0,0,0,15">
-            <TextBlock Text="Confirmar contraseña:" Margin="0,0,0,5" FontWeight="SemiBold"/>
-            <PasswordBox x:Name="confirmPasswordBox" Height="32" Background="#FFFFFF" BorderBrush="#BDBDBD" 
-                         BorderThickness="1" Padding="8" FontSize="14"/>
-        </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Restablecer contraseña"
+                                           Style="{DynamicResource ThemeSectionTitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                           FontSize="24"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,4" />
+                                <TextBlock Text="Reasigne una contraseña segura para la cuenta seleccionada."
+                                           Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                           Opacity="0.92"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
 
-        <!-- Mensaje de error -->
-        <TextBlock x:Name="txtError" Grid.Row="4" Text="" Foreground="#C0392B" FontWeight="SemiBold"
-                   Visibility="Collapsed" Margin="0,0,0,10"/>
+                        <Button Grid.Column="1"
+                                Click="CancelarButton_Click"
+                                ToolTip="Cerrar"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Width="36"
+                                Height="36">
+                            <Grid Width="16" Height="16">
+                                <Line X1="0" Y1="0" X2="16" Y2="16" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Line X1="16" Y1="0" X2="0" Y2="16" Stroke="{DynamicResource TextOnPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Border>
 
-        <!-- Información adicional -->
-        <Border Grid.Row="5" Background="#E8F5E8" BorderBrush="#C8E6C9" BorderThickness="1" 
-                CornerRadius="4" Padding="10" Margin="0,0,0,15">
-            <StackPanel>
-                <TextBlock Text="💡 Recomendaciones:" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBlock Text="• Use al menos 8 caracteres" FontSize="12"/>
-                <TextBlock Text="• Combine letras, números y símbolos" FontSize="12"/>
-                <TextBlock Text="• Evite información personal" FontSize="12"/>
-            </StackPanel>
-        </Border>        <!-- Botones -->
-        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancelar" Width="100" Height="32" Margin="0,0,10,0"
-                    Background="#757575" Foreground="White" BorderThickness="0"
-                    Click="CancelarButton_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#616161"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <Button Content="Restablecer" Width="100" Height="32"
-                    Background="#FF9800" Foreground="White" BorderThickness="0" FontWeight="Bold"
-                    Click="RestablecerButton_Click">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#F57C00"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </StackPanel>
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="24">
+                        <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="16"
+                                Padding="18"
+                                Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="56"
+                                        Height="56"
+                                        CornerRadius="28"
+                                        Background="{DynamicResource PrimaryLightBrush}"
+                                        Margin="0,0,16,0">
+                                    <TextBlock Text="👤"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="24"
+                                               Foreground="{DynamicResource PrimaryBrush}" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Cuenta seleccionada"
+                                               Style="{DynamicResource ThemeSectionTitleStyle}"
+                                               FontSize="16"
+                                               Margin="0,0,0,6" />
+                                    <TextBlock Text="{Binding NombreUsuario, TargetNullValue='Usuario no disponible'}"
+                                               Foreground="{DynamicResource PrimaryBrush}"
+                                               FontSize="20"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,4" />
+                                    <TextBlock Text="Esta acción reemplazará la contraseña actual por una nueva contraseña temporal."
+                                               Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.05*" />
+                                <ColumnDefinition Width="0.95*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,18,0">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18"
+                                        Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Nueva contraseña"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Debe cumplir con la política mínima establecida y coincidir con la confirmación."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,14" />
+
+                                        <TextBlock Text="Contraseña nueva"
+                                                   Style="{DynamicResource ThemeBodyTextStyle}"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,6" />
+                                        <PasswordBox x:Name="passwordBox"
+                                                     Style="{StaticResource ThemePasswordBoxStyle}"
+                                                     Height="42"
+                                                     Margin="0,0,0,12" />
+
+                                        <TextBlock Text="Confirmar contraseña"
+                                                   Style="{DynamicResource ThemeBodyTextStyle}"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,6" />
+                                        <PasswordBox x:Name="confirmPasswordBox"
+                                                     Style="{StaticResource ThemePasswordBoxStyle}"
+                                                     Height="42" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="Recomendaciones"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,10" />
+
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="12"
+                                                Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="• Use al menos 8 caracteres"
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           Margin="0,0,0,6"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="• Combine letras, números y símbolos"
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           Margin="0,0,0,6"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="• Evite usar información personal visible"
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18"
+                                        Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Estado de validación"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+
+                                        <TextBlock x:Name="txtError"
+                                                   Text=""
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   FontWeight="SemiBold"
+                                                   Visibility="Collapsed"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,12" />
+
+                                        <Border Background="{DynamicResource BackgroundElevatedBrush}"
+                                                BorderBrush="{DynamicResource SuccessBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="12"
+                                                Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="Listo para confirmar"
+                                                           Foreground="{DynamicResource SuccessBrush}"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,0,0,6" />
+                                                <TextBlock Text="El sistema validará coincidencia y longitud antes de guardar."
+                                                           Style="{DynamicResource ThemeBodyTextStyle}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="16"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="Acción irreversible"
+                                                   Style="{DynamicResource ThemeSectionTitleStyle}"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Al confirmar, la contraseña anterior dejará de ser válida inmediatamente."
+                                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2"
+                        Padding="24"
+                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,24,24">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="Verifique que ambas contraseñas sean iguales antes de confirmar."
+                                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,18,0" />
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar"
+                                    Width="122"
+                                    Height="40"
+                                    Margin="0,0,12,0"
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                    Click="CancelarButton_Click" />
+                            <Button Content="Restablecer"
+                                    Width="140"
+                                    Height="40"
+                                    Style="{StaticResource ThemePrimaryButtonStyle}"
+                                    Click="RestablecerButton_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 

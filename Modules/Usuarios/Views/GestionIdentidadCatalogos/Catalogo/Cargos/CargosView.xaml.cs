@@ -33,19 +33,6 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Carg
             }
         }
 
-        private void EliminarCargoDirecto_Click(object sender, System.Windows.RoutedEventArgs e)
-        {
-            var button = sender as System.Windows.Controls.Button;
-            var cargo = button?.Tag as GestLog.Modules.Usuarios.Models.Cargo;
-            if (cargo != null)
-            {
-                var vm = this.DataContext as GestLog.Modules.Usuarios.ViewModels.CatalogosManagementViewModel;
-                if (vm != null && vm.EliminarCargoCommand.CanExecute(cargo))
-                {
-                    vm.EliminarCargoCommand.Execute(cargo);
-                }
-            }
-        }
     }
 }
 

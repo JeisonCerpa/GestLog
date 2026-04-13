@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using GestLog.Modules.Usuarios.Models;
 using Modules.Usuarios.ViewModels;
 using System.Linq;
@@ -9,6 +10,20 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario
         public UsuarioRegistroWindow()
         {
             InitializeComponent();
+        }
+
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+                e.Handled = true;
+            }
         }
 
         private void PasswordBoxNuevoUsuario_Loaded(object sender, RoutedEventArgs e)
