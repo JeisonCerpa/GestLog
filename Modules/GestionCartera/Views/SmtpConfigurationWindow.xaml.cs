@@ -16,7 +16,6 @@ using GestLog.Services.Core.Logging;
 using GestLog.Services.Core.Security;
 using Button = System.Windows.Controls.Button;
 using CheckBox = System.Windows.Controls.CheckBox;
-using Color = System.Windows.Media.Color;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
@@ -39,6 +38,8 @@ namespace GestLog.Modules.GestionCartera.Views
         private SmtpSettings _currentSettings;
         private bool _isTestSuccessful;
         private bool _isLoadingConfiguration;
+        private bool _connectionDirty;
+        private bool _copyDirty;
 
         public ObservableCollection<string> BccEmails { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> CcEmails { get; } = new ObservableCollection<string>();
@@ -102,6 +103,8 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private void OnFieldChanged(object sender, RoutedEventArgs e)
         {
+            _connectionDirty = true;
+            _isTestSuccessful = false;
             UpdatePlaceholderVisibility();
             if (IsLoaded && _currentSettings != null)
             {
@@ -111,8 +114,19 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private void OnPasswordChanged(object sender, RoutedEventArgs e)
         {
+            _connectionDirty = true;
+            _isTestSuccessful = false;
             if (IsLoaded && _currentSettings != null)
             {
+                UpdateUI();
+            }
+        }
+
+        private void OnCopyFieldChanged(object sender, RoutedEventArgs e)
+        {
+            if (IsLoaded && _currentSettings != null)
+            {
+                UpdatePlaceholderVisibility();
                 UpdateUI();
             }
         }
@@ -183,6 +197,8 @@ namespace GestLog.Modules.GestionCartera.Views
             if (sender is Button button && button.Tag is string email)
             {
                 BccEmails.Remove(email);
+                _copyDirty = true;
+                UpdateUI();
             }
         }
 
@@ -191,6 +207,8 @@ namespace GestLog.Modules.GestionCartera.Views
             if (sender is Button button && button.Tag is string email)
             {
                 CcEmails.Remove(email);
+                _copyDirty = true;
+                UpdateUI();
             }
         }
 
@@ -208,7 +226,7 @@ namespace GestLog.Modules.GestionCartera.Views
             if (portTextBox != null) portTextBox.Text = port;
             if (sslCheckBox != null) sslCheckBox.IsChecked = useSsl;
 
-            UpdateStatus(status, Colors.Orange);
+            UpdateStatus(status, ResolveStatusBrush("WarningBrush"));
             UpdateUI();
         }
 
@@ -277,13 +295,16 @@ namespace GestLog.Modules.GestionCartera.Views
 
                 UpdateCopyCounters();
                 UpdatePlaceholderVisibility();
+                _connectionDirty = false;
+                _copyDirty = false;
+                _isTestSuccessful = _currentSettings.IsConfigured;
                 UpdateStatus(_currentSettings.IsConfigured ? "Configuración cargada" : "No configurado",
-                    _currentSettings.IsConfigured ? Colors.Green : Colors.Red);
+                    _currentSettings.IsConfigured ? ResolveStatusBrush("SuccessBrush") : ResolveStatusBrush("DangerBrush"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cargar configuración a la UI");
-                UpdateStatus("Error al cargar configuración", Colors.Red);
+                UpdateStatus("Error al cargar configuración", ResolveStatusBrush("DangerBrush"));
             }
             finally
             {
@@ -303,7 +324,7 @@ namespace GestLog.Modules.GestionCartera.Views
             var isValidForSave = ValidateForSave();
 
             testButton.IsEnabled = isValidForTest;
-            saveButton.IsEnabled = isValidForSave && _isTestSuccessful;
+            saveButton.IsEnabled = isValidForSave;
         }
 
         private bool ValidateForTest()
@@ -324,7 +345,17 @@ namespace GestLog.Modules.GestionCartera.Views
 
         private bool ValidateForSave()
         {
-            return ValidateForTest();
+            if (_connectionDirty)
+            {
+                return ValidateForTest() && _isTestSuccessful;
+            }
+
+            if (_copyDirty)
+            {
+                return true;
+            }
+
+            return _isTestSuccessful || _currentSettings?.IsConfigured == true;
         }
 
         private async Task TestConfigurationAsync()
@@ -338,7 +369,7 @@ namespace GestLog.Modules.GestionCartera.Views
                 var emailTextBox = FindName("EmailTextBox") as TextBox;
                 var passwordBox = FindName("PasswordBox") as PasswordBox;
 
-                UpdateStatus("Probando configuración...", Colors.Orange);
+                UpdateStatus("Probando configuración...", ResolveStatusBrush("WarningBrush"));
                 if (testButton != null)
                     testButton.IsEnabled = false;
 
@@ -357,18 +388,18 @@ namespace GestLog.Modules.GestionCartera.Views
                 if (isValid)
                 {
                     _isTestSuccessful = true;
-                    UpdateStatus("✅ Configuración válida", Colors.Green);
+                    UpdateStatus("✅ Configuración válida", ResolveStatusBrush("SuccessBrush"));
                 }
                 else
                 {
                     _isTestSuccessful = false;
-                    UpdateStatus("❌ Error en la configuración", Colors.Red);
+                    UpdateStatus("❌ Error en la configuración", ResolveStatusBrush("DangerBrush"));
                 }
             }
             catch (Exception ex)
             {
                 _isTestSuccessful = false;
-                UpdateStatus($"❌ Error: {ex.Message}", Colors.Red);
+                UpdateStatus($"❌ Error: {ex.Message}", ResolveStatusBrush("DangerBrush"));
                 _logger.LogError(ex, "Error al probar configuración SMTP");
             }
             finally
@@ -385,7 +416,7 @@ namespace GestLog.Modules.GestionCartera.Views
         {
             try
             {
-                if (!_isTestSuccessful)
+                if (_connectionDirty && !_isTestSuccessful)
                 {
                     MessageBox.Show("Debe probar la configuración antes de guardarla.",
                         "Validación requerida", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -439,13 +470,13 @@ namespace GestLog.Modules.GestionCartera.Views
 
                 if (!saved)
                 {
-                    UpdateStatus("Error al guardar la configuración", Colors.Red);
+                    UpdateStatus("Error al guardar la configuración", ResolveStatusBrush("DangerBrush"));
                     MessageBox.Show("Error al guardar la configuración SMTP",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                if (shouldSaveCredentials && !string.IsNullOrEmpty(email))
+                if (shouldSaveCredentials && _connectionDirty && !string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
                 {
                     var credentialTarget = $"GestionCartera_SMTP_{smtpConfiguration.Server}_{email}";
                     _credentialService.DeleteCredentials(credentialTarget);
@@ -457,14 +488,16 @@ namespace GestLog.Modules.GestionCartera.Views
                     }
                 }
 
-                UpdateStatus("Configuración guardada exitosamente", Colors.Green);
+                UpdateStatus("Configuración guardada exitosamente", ResolveStatusBrush("SuccessBrush"));
+                _connectionDirty = false;
+                _copyDirty = false;
                 DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al guardar configuración SMTP");
-                UpdateStatus($"Error al guardar: {ex.Message}", Colors.Red);
+                UpdateStatus($"Error al guardar: {ex.Message}", ResolveStatusBrush("DangerBrush"));
                 MessageBox.Show($"Error al guardar la configuración: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -501,18 +534,24 @@ namespace GestLog.Modules.GestionCartera.Views
                 }
             }
 
+            if (addedCount > 0)
+            {
+                _copyDirty = true;
+                UpdateUI();
+            }
+
             inputTextBox.Clear();
             UpdatePlaceholderVisibility();
 
             if (invalidEmails.Count > 0)
             {
-                UpdateStatus($"⚠️ Correos inválidos en {listName}: {string.Join(", ", invalidEmails)}", Colors.Orange);
+                UpdateStatus($"⚠️ Correos inválidos en {listName}: {string.Join(", ", invalidEmails)}", ResolveStatusBrush("WarningBrush"));
                 return;
             }
 
             if (addedCount > 0)
             {
-                UpdateStatus($"✅ {addedCount} correo(s) agregado(s) a {listName}", Colors.Green);
+                UpdateStatus($"✅ {addedCount} correo(s) agregado(s) a {listName}", ResolveStatusBrush("SuccessBrush"));
             }
         }
 
@@ -616,7 +655,17 @@ namespace GestLog.Modules.GestionCartera.Views
             }
         }
 
-        private void UpdateStatus(string message, Color color)
+        private System.Windows.Media.Brush ResolveStatusBrush(string resourceKey)
+        {
+            if (TryFindResource(resourceKey) is System.Windows.Media.Brush brush)
+            {
+                return brush;
+            }
+
+            return System.Windows.Media.Brushes.Gray;
+        }
+
+        private void UpdateStatus(string message, System.Windows.Media.Brush brush)
         {
             var statusTextBlock = FindName("StatusTextBlock") as TextBlock;
             var statusIndicator = FindName("StatusIndicator") as System.Windows.Shapes.Ellipse;
@@ -625,7 +674,7 @@ namespace GestLog.Modules.GestionCartera.Views
                 statusTextBlock.Text = message;
 
             if (statusIndicator != null)
-                statusIndicator.Fill = new SolidColorBrush(color);
+                statusIndicator.Fill = brush;
         }
 
         #endregion

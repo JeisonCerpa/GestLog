@@ -26,7 +26,7 @@
                                Margin="0,6,0,0"/>
                 </StackPanel>
 
-                <UniformGrid Columns="3" Rows="3" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <UniformGrid Columns="3" Rows="2" HorizontalAlignment="Center" VerticalAlignment="Top">
 
                     <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
                             Visibility="{Binding CanAccessEquiposInformaticos, Converter={StaticResource BooleanToVisibilityConverter}}">
