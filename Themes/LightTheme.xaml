@@ -67,6 +67,7 @@
     <SolidColorBrush x:Key="BackgroundSurfaceBrush" Color="{StaticResource BackgroundSurfaceColor}"/>
     <SolidColorBrush x:Key="BackgroundHoverBrush" Color="{StaticResource BackgroundHoverColor}"/>
     <SolidColorBrush x:Key="BackgroundElevatedBrush" Color="{StaticResource BackgroundElevatedColor}"/>
+    <SolidColorBrush x:Key="ModalOverlayBrush" Color="#A0000000"/>
 
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
     <SolidColorBrush x:Key="TextBodyBrush" Color="{StaticResource TextBodyColor}"/>

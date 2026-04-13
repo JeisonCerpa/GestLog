@@ -14,7 +14,7 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     </Window.Resources>
 
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+    <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
         <Border Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="12" Padding="0"
                 Width="550" Height="650"
                 HorizontalAlignment="Center" VerticalAlignment="Center"

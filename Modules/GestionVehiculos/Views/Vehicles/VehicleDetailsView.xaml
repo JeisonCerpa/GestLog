@@ -10,7 +10,7 @@
              mc:Ignorable="d"
              d:DesignWidth="1000" d:DesignHeight="700">
     <UserControl.Resources>
-        <!-- Estilos locales para tabs, coherentes con ModalWindowsStandard / EquiposInformaticos -->
+        <!-- Estilos locales para tabs, coherentes con el sistema de ThemeTemplates -->
         <Style x:Key="DetailTabItemStyle" TargetType="TabItem">
             <Setter Property="TextElement.Foreground" Value="{DynamicResource PrimaryBrush}"/>
             <Setter Property="Padding" Value="12,8"/>

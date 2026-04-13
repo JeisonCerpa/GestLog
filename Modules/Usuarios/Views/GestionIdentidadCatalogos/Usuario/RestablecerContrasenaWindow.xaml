@@ -11,7 +11,7 @@
         ShowInTaskbar="False"
         Style="{StaticResource ModalWindowBase}"
         PreviewKeyDown="Window_PreviewKeyDown">
-    <Grid Background="#A0000000">
+    <Grid Background="{DynamicResource ModalOverlayBrush}">
         <Border Style="{DynamicResource ThemeWelcomeCardStyle}"
                 Width="920"
                 MaxWidth="980"

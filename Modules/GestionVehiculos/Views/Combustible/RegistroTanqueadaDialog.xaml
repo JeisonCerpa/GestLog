@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         SizeToContent="Manual"
         Style="{StaticResource ModalWindowBase}">
-    <Grid x:Name="RootGrid" Background="#80000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+    <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
         <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 Width="760" MaxHeight="760"
                 HorizontalAlignment="Center" VerticalAlignment="Center"

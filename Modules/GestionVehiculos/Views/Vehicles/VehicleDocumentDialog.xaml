@@ -22,7 +22,7 @@
         <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Window.Resources>
 
-    <!-- OVERLAY MODAL --><Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <!-- OVERLAY MODAL --><Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Border x:Name="Card" Background="{DynamicResource BackgroundElevatedBrush}" CornerRadius="14" Padding="0"
                 Width="1200" Height="700"
                 HorizontalAlignment="Center" VerticalAlignment="Center"

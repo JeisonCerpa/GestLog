@@ -22,16 +22,13 @@
         RenderOptions.ClearTypeHint="Enabled">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
             <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         </ResourceDictionary>    </Window.Resources>
 
-    <Grid x:Name="RootGrid" Background="#CC000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
         <!-- Panel centrado modal - Adaptable al contenido -->
         <Border x:Name="Card" Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0" MaxWidth="1100" MaxHeight="900"
                 HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"

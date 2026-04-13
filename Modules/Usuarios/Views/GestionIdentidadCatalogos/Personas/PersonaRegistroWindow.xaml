@@ -16,7 +16,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
     </Window.Resources>
-    <Grid Background="#A0000000">
+    <Grid Background="{DynamicResource ModalOverlayBrush}">
         <Border Style="{DynamicResource ThemeWelcomeCardStyle}"
                 Padding="0"
                 Margin="24"

@@ -15,7 +15,7 @@
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
-    <Grid Background="#A0000000">
+    <Grid Background="{DynamicResource ModalOverlayBrush}">
         <Border Style="{DynamicResource ThemeWelcomeCardStyle}"
                 Padding="0"
                 Margin="24"

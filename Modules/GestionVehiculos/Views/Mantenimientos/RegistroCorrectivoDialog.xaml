@@ -17,7 +17,7 @@
         <converters:AlternationIndexToColorConverter x:Key="AlternationIndexToColorConverter" />
     </Window.Resources>
 
-    <Grid x:Name="RootGrid" Background="#80000000">
+    <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}">
         <Border Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="12" Padding="0"
                 MinWidth="640" MaxWidth="1120" MaxHeight="860"
                 HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="24"
