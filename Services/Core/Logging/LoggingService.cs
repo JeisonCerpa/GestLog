@@ -148,11 +148,7 @@ public static class LoggingService
             services.AddTransient<Modules.GestionCartera.Services.IExcelEmailService, 
                 Modules.GestionCartera.Services.ExcelEmailService>();
             
-            // Servicios de Envío de Catálogo
-            services.AddTransient<Modules.EnvioCatalogo.Services.IEnvioCatalogoService, 
-                Modules.EnvioCatalogo.Services.EnvioCatalogoService>();            // ViewModels
             services.AddTransient<Modules.GestionCartera.ViewModels.DocumentGenerationViewModel>();
-            services.AddTransient<Modules.EnvioCatalogo.ViewModels.EnvioCatalogoViewModel>();
             
             // ViewModel de DaaterProccesor con DI (incluye CurrentUserInfo)
             services.AddTransient<GestLog.Modules.DaaterProccesor.ViewModels.MainViewModel>(sp =>

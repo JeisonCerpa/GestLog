@@ -1,7 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using GestLog.Modules.DaaterProccesor.Views;
-using GestLog.Modules.EnvioCatalogo.Views;
 using GestLog.Services.Core.Logging;
 using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Personas;
 using GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Usuario;
@@ -124,27 +123,6 @@ namespace GestLog.Modules.Shell.Views
 
             var daaterProccesorView = new DaaterProccesorView();
             _mainWindow?.NavigateToView(daaterProccesorView, "DaaterProccesor");
-        }
-
-        private void BtnEnvioCatalogo_Click(object sender, RoutedEventArgs e)
-        {
-            var viewModel = DataContext as GestLog.ViewModels.Tools.HerramientasViewModel;
-            if (viewModel != null && !viewModel.CanAccessEnvioCatalogo)
-            {
-                System.Windows.MessageBox.Show("No tiene permisos para acceder al Envío de Catálogo.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var envioCatalogoView = new EnvioCatalogoView();
-                _mainWindow?.NavigateToView(envioCatalogoView, "Envío de Catálogo");
-            }
-            catch (System.Exception ex)
-            {
-                var errorHandler = LoggingService.GetErrorHandler();
-                errorHandler.HandleException(ex, "Mostrar envío de catálogo desde herramientas");
-            }
         }
 
         private void BtnGestionIdentidadCatalogos_Click(object sender, RoutedEventArgs e)

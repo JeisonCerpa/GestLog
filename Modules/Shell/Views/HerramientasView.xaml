@@ -79,16 +79,6 @@
                     </Border>
 
                     <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
-                            Visibility="{Binding CanAccessEnvioCatalogo, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel>
-                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="📧" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>
-                            <TextBlock Text="Envío de Catálogo" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Envío masivo del catálogo de productos y servicios a múltiples clientes por email" Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                            <Button Name="btnEnvioCatalogo" Content="Abrir Envío de Catálogo" Style="{DynamicResource ThemePrimaryButtonStyle}" Click="BtnEnvioCatalogo_Click"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12"
                             Visibility="{Binding CanAccessGestionIdentidadCatalogos, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
                             <Border Style="{DynamicResource ThemeCardIconCircleStyle}"><TextBlock Text="🆔" Style="{DynamicResource ThemeCardIconTextStyle}"/></Border>

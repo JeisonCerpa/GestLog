@@ -9,7 +9,6 @@ namespace GestLog.Models.Configuration;
 public class ModulesConfiguration : INotifyPropertyChanged
 {    private Modules.DaaterProcessorSettings _daaterProcessor = new();
     private Modules.ErrorLogSettings _errorLog = new();
-    private Modules.EnvioCatalogoSettings _envioCatalogo = new();
     private Modules.GestionCarteraSettings _gestionCartera = new();
 
     /// <summary>
@@ -28,13 +27,6 @@ public class ModulesConfiguration : INotifyPropertyChanged
     {
         get => _errorLog;
         set => SetProperty(ref _errorLog, value);
-    }    /// <summary>
-    /// Configuraciones del módulo de Envío de Catálogo
-    /// </summary>
-    public Modules.EnvioCatalogoSettings EnvioCatalogo
-    {
-        get => _envioCatalogo;
-        set => SetProperty(ref _envioCatalogo, value);
     }
 
     /// <summary>
