@@ -8,6 +8,7 @@
         Title="GestLog" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
+        SourceInitialized="Window_SourceInitialized"
     TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
     Background="{DynamicResource BackgroundAppBrush}">
     <Window.Resources>

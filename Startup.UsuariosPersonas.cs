@@ -173,6 +173,7 @@ namespace GestLog
                     Username = "",
                     FullName = "",
                     Email = "",
+                    Sede = currentUserService.Current?.Sede,
                     LoginTime = DateTime.UtcNow,
                     LastActivity = DateTime.UtcNow,
                     Roles = new(),

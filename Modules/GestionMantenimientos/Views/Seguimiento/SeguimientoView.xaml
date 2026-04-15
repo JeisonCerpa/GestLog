@@ -1,413 +1,306 @@
 <UserControl x:Class="GestLog.Modules.GestionMantenimientos.Views.Seguimiento.SeguimientoView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:d="http://schemas.openxmlformats.org/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
-        <converters:EstadoToColorConverter x:Key="EstadoToColorConverter"/>
-        <converters:EstadoSeguimientoToColorConverter x:Key="EstadoSeguimientoToColorConverter"/>
+        <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter"/>
         <converters:SeguimientoEstadoToColorConverter x:Key="SeguimientoEstadoToColorConverter"/>
         <converters:SeguimientoEstadoToTextConverter x:Key="SeguimientoEstadoToTextConverter"/>
-        <converters:EstadoToOpacityConverter x:Key="EstadoToOpacityConverter"/>
-        <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter"/>
-        <converters:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
-        <converters:BooleanToProgressConverter x:Key="BooleanToProgressConverter"/>
-        <!-- Paleta de colores coherente -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
-        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
-        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
-        <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/>
-        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#118938" Offset="0"/>
-            <GradientStop Color="#2B8E3F" Offset="1"/>
-        </LinearGradientBrush>
-
-        <!-- Tipografías y tamaños consistentes -->
-        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Opacity" Value="0.9"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="StatsTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="StatsLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="#706F6F"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-        </Style>
-
-        <!-- Estilo para TextBlocks dentro del DataGrid -->
-        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="8,0,8,0"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="TextWrapping" Value="NoWrap"/>
-        </Style>
-
-        <!-- Estilo para TextBlocks que permiten ajuste de múltiples líneas dentro de columnas con ancho limitado -->
-        <Style x:Key="DataGridWrapTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource DataGridTextBlockStyle}">
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="MaxHeight" Value="120"/>
-        </Style>
-
-        <!-- RowStyle para ajustar opacidad según estado -->
-        <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
-            <Setter Property="Opacity" Value="{Binding Estado, Converter={StaticResource EstadoToOpacityConverter}}"/>
-        </Style>
-
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="0,0,8,8"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="BorderBrush" Value="#DDD"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- PrimaryButtonStyle -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Estilo para botones circulares flotantes -->
-        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Width" Value="56"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="FontSize" Value="26"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderBrush" Value="#E5E5E5"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- SecondaryButtonStyle (gris) para botones de acción -->
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource TextSecondaryBrush}"/>
-        </Style>
-
-        <!-- Estilo para DatePicker -->
-        <Style x:Key="DatePickerStyle" TargetType="DatePicker">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#504F4E"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,6,8,6"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#118938"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#118938"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FAFAFA">
+    <Grid Background="{DynamicResource BackgroundAppBrush}" Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header remodelado similar a EquiposView -->
-        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#118938" Offset="0"/>
-                    <GradientStop Color="#2B8E3F" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
-                        <TextBlock Text="📋" FontFamily="Segoe UI Emoji" FontSize="26"
-                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Seguimiento de Mantenimientos" Style="{StaticResource HeaderTextStyle}"/>
-                        <TextBlock Text="Registro y administración de mantenimientos" Style="{StaticResource SubHeaderTextStyle}"/>
-                    </StackPanel>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
-                    <!-- ComboBox de Año -->
-                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                        <TextBlock Text="Año:" Foreground="White" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0"/>
-                        <ComboBox Width="100"
-                                  ItemsSource="{Binding AniosDisponibles}"
-                                  SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  VerticalAlignment="Center"
-                                  FontSize="13"
-                                  Padding="8,4"
-                                  BorderBrush="#FFFFFF"
-                                  BorderThickness="1.5"
-                                  Background="White"
-                                  Foreground="#504F4E"
-                                  FontWeight="SemiBold"/>
-                    </StackPanel>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- Estadísticas -->
-        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+        <Border Grid.Row="0"
+                Style="{StaticResource ThemeHeaderContainerStyle}"
+                CornerRadius="14"
+                Margin="10,10,10,12"
+                Padding="24,22">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosTotal}" Style="{StaticResource StatsTextStyle}" Foreground="#118938"/>
-                    <TextBlock Text="Total" Style="{StaticResource StatsLabelStyle}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="52"
+                            Height="52"
+                            CornerRadius="26"
+                            Background="{DynamicResource PrimaryLightBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
+                            Margin="0,0,14,0">
+                        <TextBlock Text="🧭"
+                                   FontFamily="Segoe UI Emoji"
+                                   FontSize="24"
+                                   Foreground="{DynamicResource PrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Gestión de Seguimientos"
+                                   Style="{StaticResource ThemeSectionTitleStyle}"/>
+                        <TextBlock Text="Historial, estados y mantenimiento de activos"
+                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosPendientes}" Style="{StaticResource StatsTextStyle}" Foreground="#90CAF9"/>
-                    <TextBlock Text="Pendientes" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="0,0,16,0">
+                    <TextBlock Text="Año"
+                           Style="{StaticResource ThemeBodyTextStyle}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextOnPrimaryBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                        <ComboBox Width="110"
+                          Height="36"
+                                  ItemsSource="{Binding AniosDisponibles}"
+                                  SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Style="{StaticResource ThemeComboBoxStyle}"/>
+                    </StackPanel>
 
-                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosEjecutados}" Style="{StaticResource StatsTextStyle}" Foreground="#388E3C"/>
-                    <TextBlock Text="Ejecutados" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosRetrasados}" Style="{StaticResource StatsTextStyle}" Foreground="#FFB300"/>
-                    <TextBlock Text="Retrasados" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosRealizadosFueraDeTiempo}" Style="{StaticResource StatsTextStyle}" Foreground="#FF9800"/>
-                    <TextBlock Text="Fuera de Tiempo" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="5" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding SeguimientosNoRealizados}" Style="{StaticResource StatsTextStyle}" Foreground="#C80000"/>
-                    <TextBlock Text="No Realizados" Style="{StaticResource StatsLabelStyle}"/>
-                </StackPanel>
-
-                <!-- Botones en Grid.Column="6" -->
-                <StackPanel Grid.Column="6" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
-                    <!-- Botón Refrescar circular -->
-                    <Button Content="&#xE72C;" Command="{Binding LoadSeguimientosCommand}" ToolTip="Actualizar lista de seguimientos"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-
-                    <!-- Botón Importar circular -->
-                    <Button Content="⭲" Command="{Binding ImportarSeguimientosAntiguosCommand}" ToolTip="Importar seguimientos antiguos desde Excel"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
-                            IsEnabled="{Binding CanImportSeguimiento}"
-                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
-                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <!-- Botón Descargar Plantilla -->
-                    <Button Content="📥" Command="{Binding DescargarPlantillaCommand}" ToolTip="Descargar plantilla de importación (.xlsx)"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,8,0"
-                            IsEnabled="{Binding CanImportSeguimiento}"
-                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
-                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <!-- Barra de progreso compacta -->
-                    <controls:SimpleProgressBar Width="220" Height="48" Margin="8,0,0,0"
-                                                ProgressValue="{Binding ProgressValue}"
-                                                ShowHeader="False"
-                                                ShowPercentage="True"
-                                                ShowMessage="False"
-                                                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <!-- Botón Cancelar import -->
-                    <Button Content="✖" Command="{Binding CancelarImportacionCommand}" ToolTip="Cancelar importación"
-                            Style="{StaticResource CircularButtonStyle}" Margin="8,0,0,0"
-                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <!-- Botón Exportar circular -->
-                    <Button Content="⭱" Command="{Binding ExportarCommand}" ToolTip="Exportar seguimientos (filtrados o todos)"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
+                    <Button Content="⭱ Exportar"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Command="{Binding ExportarCommand}"
                             IsEnabled="{Binding CanExportSeguimiento}"
-                            Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                            Opacity="{Binding CanExportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Margin="0,0,8,0"
+                            MinHeight="40"/>
+
+                    <Button Content="↻ Refrescar"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Command="{Binding LoadSeguimientosCommand}"
+                            Margin="0,0,8,0"
+                            MinHeight="40"/>
+
+                    <Button Content="⭲ Importar"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Command="{Binding ImportarSeguimientosAntiguosCommand}"
+                            IsEnabled="{Binding CanImportSeguimiento}"
+                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Margin="0,0,8,0"
+                            MinHeight="40"
+                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="📥 Plantilla"
+                            Style="{StaticResource ThemeHeaderPrimaryButtonStyle}"
+                            Command="{Binding DescargarPlantillaCommand}"
+                            IsEnabled="{Binding CanImportSeguimiento}"
+                            Opacity="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToOpacityConverter}}"
+                            MinHeight="40"
+                            MinWidth="150"
+                            Visibility="{Binding CanImportSeguimiento, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Filtros y DataGrid agrupados -->
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+        <Border Grid.Row="1"
+                Style="{StaticResource ThemeElevatedCardStyle}"
+                Margin="10,0,10,12"
+                Padding="22">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Filtros: left = filtro + fechas + botón, right = limpiar -->
-                <Grid Grid.Row="0" Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Buscar"
+                               Style="{StaticResource ThemeBodyTextStyle}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,12,0"/>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                        <TextBox Width="300" Height="36" Padding="8" VerticalAlignment="Center"
-                                 Text="{Binding FiltroSeguimiento, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}"
-                                 ToolTip="Filtrar por código, nombre, tipo mtto, responsable, fecha, semana, año, estado (separa con ;)"/>
-                        <DatePicker Width="120" Height="36" VerticalAlignment="Center"
-                                    SelectedDate="{Binding FechaDesde, UpdateSourceTrigger=LostFocus}"
-                                    Margin="8,0,0,0" ToolTip="Desde (fecha registro)"
-                                    Style="{StaticResource DatePickerStyle}"/>
-                        <DatePicker Width="120" Height="36" VerticalAlignment="Center"
-                                    SelectedDate="{Binding FechaHasta, UpdateSourceTrigger=LostFocus}"
-                                    Margin="8,0,0,0" ToolTip="Hasta (fecha registro)"
-                                    Style="{StaticResource DatePickerStyle}"/>
-                        <Button Content="Filtrar" Command="{Binding FiltrarCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" MinWidth="100" MinHeight="32" Margin="8,0,0,0"/>
-                    </StackPanel>
+                    <TextBox Width="520"
+                             Tag="Buscar por código, nombre, tipo, responsable, estado o descripción"
+                             Text="{Binding FiltroSeguimiento, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemeTextBoxStyle}"
+                             VerticalAlignment="Center"/>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <Button Content="Limpiar Filtros" Command="{Binding LimpiarFiltrosCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" MinWidth="120" MinHeight="32" Margin="0,0,0,0"/>
-                    </StackPanel>
-                </Grid>
+                    <DatePicker Width="140"
+                                Margin="12,0,0,0"
+                                SelectedDate="{Binding FechaDesde, UpdateSourceTrigger=LostFocus}"
+                                Style="{StaticResource ThemeDatePickerStyle}"
+                                ToolTip="Desde (fecha registro)"/>
 
-                <!-- DataGrid -->
-                <DataGrid Grid.Row="1" ItemsSource="{Binding SeguimientosView}" SelectedItem="{Binding SelectedSeguimiento, Mode=TwoWay}"
-                          AutoGenerateColumns="False" IsReadOnly="True"
-                          CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          VirtualizingPanel.IsVirtualizing="True"
-                          VirtualizingPanel.VirtualizationMode="Standard"
-                          RowStyle="{StaticResource DataGridRowEstadoStyle}"
-                          HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                          RowBackground="White" AlternatingRowBackground="#F5F5F5"
-                          HeadersVisibility="Column" GridLinesVisibility="None"
-                          SnapsToDevicePixels="True" UseLayoutRounding="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" MinWidth="100" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" MinWidth="140" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Fecha Realizada" Binding="{Binding FechaRealizacion, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Tipo Mtto" Binding="{Binding TipoMtno}" MinWidth="110" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" MinWidth="160" Width="300" ElementStyle="{StaticResource DataGridWrapTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Responsable" Binding="{Binding Responsable}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Costo" MinWidth="110" ElementStyle="{StaticResource DataGridTextBlockStyle}">
-                            <DataGridTextColumn.Binding>
-                                <Binding Path="Costo" Converter="{StaticResource DecimalToCopCurrencyConverter}"/>
-                            </DataGridTextColumn.Binding>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" MinWidth="140" Width="300" ElementStyle="{StaticResource DataGridWrapTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Fecha Registro" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" MinWidth="120" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Semana" Binding="{Binding Semana}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Año" Binding="{Binding Anio}" MinWidth="80" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Estado" MinWidth="110">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border CornerRadius="12" Padding="6,2"
-                                            Background="{Binding ., Converter={StaticResource SeguimientoEstadoToColorConverter}, FallbackValue=#F0F0F0, TargetNullValue=#F0F0F0}">
-                                        <TextBlock Text="{Binding ., Converter={StaticResource SeguimientoEstadoToTextConverter}}"
-                                                   Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontSize="12"/>
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" MinWidth="110">
-                            <DataGridTemplateColumn.CellStyle>
-                                <Style TargetType="DataGridCell">
-                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="0"/>
-                                </Style>
-                            </DataGridTemplateColumn.CellStyle>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="Ver Detalles"
-                                            Click="VerDetalles_Click"
-                                            Tag="{Binding}"
-                                            Style="{StaticResource PrimaryButtonStyle}"
-                                            Padding="6,2"
-                                            FontSize="12"
-                                            HorizontalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                    <DatePicker Width="140"
+                                Margin="12,0,0,0"
+                                SelectedDate="{Binding FechaHasta, UpdateSourceTrigger=LostFocus}"
+                                Style="{StaticResource ThemeDatePickerStyle}"
+                                ToolTip="Hasta (fecha registro)"/>
+
+                    <Button Content="Filtrar"
+                            Command="{Binding FiltrarCommand}"
+                            Style="{StaticResource ThemePrimaryButtonStyle}"
+                            MinWidth="100"
+                            Margin="12,0,0,0"
+                            MinHeight="40"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="Limpiar filtros"
+                        Command="{Binding LimpiarFiltrosCommand}"
+                        Style="{StaticResource ThemeSecondaryButtonStyle}"
+                        MinWidth="130"
+                        MinHeight="40"
+                        HorizontalAlignment="Right"/>
             </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Style="{StaticResource ThemeElevatedCardStyle}"
+                Margin="10,0,10,10"
+                Padding="22">
+            <DataGrid ItemsSource="{Binding SeguimientosView}"
+                      SelectedItem="{Binding SelectedSeguimiento, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeRows="False"
+                      SelectionMode="Single"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="{DynamicResource BorderDefaultBrush}"
+                      Background="{DynamicResource BackgroundElevatedBrush}"
+                      RowBackground="{DynamicResource BackgroundElevatedBrush}"
+                      AlternatingRowBackground="{DynamicResource BackgroundElevatedBrush}"
+                      FontSize="13"
+                      RowHeight="40"
+                      ColumnWidth="SizeToCells"
+                      MinColumnWidth="80"
+                      EnableColumnVirtualization="True"
+                      EnableRowVirtualization="True"
+                      VirtualizingPanel.VirtualizationMode="Standard"
+                      ScrollViewer.CanContentScroll="True"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto"
+                      BorderThickness="0"
+                      SnapsToDevicePixels="True"
+                      UseLayoutRounding="True">
+
+                <DataGrid.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}"/>
+                    <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}"/>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Padding" Value="10,10"/>
+                    </Style>
+                </DataGrid.Resources>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Focusable" Value="False"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        <Setter Property="Padding" Value="8,0"/>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Código"
+                                        Binding="{Binding Codigo}"
+                                        Width="SizeToCells"
+                                        MinWidth="110"
+                                        IsReadOnly="True"/>
+
+                    <DataGridTextColumn Header="Nombre"
+                                        Binding="{Binding Nombre}"
+                                        Width="*"
+                                        MinWidth="180"
+                                        IsReadOnly="True"/>
+
+                    <DataGridTextColumn Header="Fecha realizada"
+                                        Binding="{Binding FechaRealizacion, StringFormat=dd/MM/yyyy}"
+                                        Width="SizeToCells"
+                                        MinWidth="130"
+                                        IsReadOnly="True"/>
+
+                    <DataGridTextColumn Header="Responsable"
+                                        Binding="{Binding Responsable}"
+                                        Width="140"
+                                        MinWidth="130"
+                                        IsReadOnly="True"/>
+
+                    <DataGridTemplateColumn Header="Estado"
+                                            Width="140"
+                                            MinWidth="130"
+                                            IsReadOnly="True"
+                                            SortMemberPath="EstadoOrden">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            ToolTip="{Binding Estado, TargetNullValue='Estado desconocido', FallbackValue='Estado desconocido'}">
+                                    <Ellipse Width="12"
+                                             Height="12"
+                                             VerticalAlignment="Center"
+                                             Fill="{Binding ., Converter={StaticResource SeguimientoEstadoToColorConverter}, TargetNullValue=#D1D5DB, FallbackValue=#D1D5DB}"
+                                             Stroke="{DynamicResource BorderDefaultBrush}"
+                                             StrokeThickness="0.5"/>
+                                    <TextBlock Text="{Binding ., Converter={StaticResource SeguimientoEstadoToTextConverter}, TargetNullValue=Desconocido, FallbackValue=Desconocido}"
+                                               Margin="8,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextBodyBrush}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header=""
+                                            Width="SizeToCells"
+                                            MinWidth="92"
+                                            IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Detalles"
+                                        Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                        Click="VerDetalles_Click"
+                                        Tag="{Binding}"
+                                        MinWidth="88"
+                                        Height="34"
+                                        Padding="12,6"
+                                        HorizontalAlignment="Center"
+                                        Focusable="False"
+                                        ToolTip="Ver detalles del seguimiento"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
     </Grid>
 </UserControl>
-
-
-

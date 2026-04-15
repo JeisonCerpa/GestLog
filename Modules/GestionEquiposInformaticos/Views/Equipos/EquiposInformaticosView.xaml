@@ -188,7 +188,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding EquiposEnMantenimiento}" Style="{StaticResource StatsTextStyle}" Foreground="#F59E0B"/>
+                    <TextBlock Text="{Binding EquiposEnMantenimiento}" Style="{StaticResource StatsTextStyle}" Foreground="{DynamicResource WarningBrush}"/>
                     <TextBlock Text="En Mantenimiento" Style="{StaticResource StatsLabelStyle}"/>
                 </StackPanel>
 

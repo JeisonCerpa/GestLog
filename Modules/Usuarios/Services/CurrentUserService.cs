@@ -110,6 +110,14 @@ namespace GestLog.Modules.Usuarios.Services
             {
                 using var db = new GestLog.Modules.DatabaseConnection.GestLogDbContextFactory().CreateDbContext(Array.Empty<string>());
 
+                var personaInfo = await db.Usuarios
+                    .Where(u => u.IdUsuario == _currentUser.UserId)
+                    .Join(db.Personas,
+                         u => u.PersonaId,
+                         p => p.IdPersona,
+                         (_, p) => new { p.Sede })
+                    .FirstOrDefaultAsync();
+
                 // Obtener roles del usuario
                 var roles = await db.UsuarioRoles
                     .Where(ur => ur.IdUsuario == _currentUser.UserId)
@@ -135,10 +143,13 @@ namespace GestLog.Modules.Usuarios.Services
                 // Actualizar los permisos y roles en la sesión actual
                 _currentUser.Roles = roles;
                 _currentUser.Permissions = allPermissions;
+                _currentUser.Sede = personaInfo?.Sede;
                 _currentUser.LastActivity = DateTime.UtcNow;
 
                 _logger.LogDebug("Permisos y roles actualizados para usuario: {Username}. Roles: {RoleCount}, Permisos: {PermissionCount}", 
                     _currentUser.Username, roles.Count, allPermissions.Count);
+
+                CurrentUserChanged?.Invoke(this, _currentUser);
             }
             catch (Exception ex)
             {

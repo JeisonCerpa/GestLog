@@ -3,401 +3,409 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="clr-namespace:GestLog.Controls"
              xmlns:converters="clr-namespace:GestLog.Converters"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900"
-             Background="#F5F5F5">    <UserControl.Resources>
-        <!-- ...otros recursos... -->
-        <converters:CardButtonBackgroundColorConverter x:Key="CardButtonBackgroundColorConverter" />
-        <converters:CardButtonForegroundColorConverter x:Key="CardButtonForegroundColorConverter" />
-        <converters:CardButtonBorderColorConverter x:Key="CardButtonBorderColorConverter" />
+             d:DesignHeight="600"
+             d:DesignWidth="900"
+             Background="{DynamicResource BackgroundAppBrush}">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
-        
-        <!-- Estilos copiados de EquiposView para coherencia -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
-        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
-        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
-        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#118938" Offset="0"/>
-            <GradientStop Color="#2B8E3F" Offset="1"/>
-        </LinearGradientBrush>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+    </UserControl.Resources>
 
-        <!-- Tipografías y tamaños consistentes -->
-        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Opacity" Value="0.9"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <!-- PrimaryButtonStyle alineado con EquiposView -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Estilo para botones circulares flotantes -->
-        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Width" Value="56"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="FontSize" Value="26"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderBrush" Value="#E5E5E5"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" x:Name="BorderCircular">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BorderCircular" Property="Background" Value="{StaticResource SecondaryBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BorderCircular" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <TranslateTransform Y="1"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ...otros recursos... -->
-    </UserControl.Resources>    <Grid Background="#FAFAFA">
+    <Grid Background="{DynamicResource BackgroundAppBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header remodelado similar a EquiposView -->
-        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#118938" Offset="0"/>
-                    <GradientStop Color="#2B8E3F" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
-                        <TextBlock Text="📅" FontFamily="Segoe UI Emoji" FontSize="26"
-                                   Foreground="#118938" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Border Grid.Row="0"
+                Style="{StaticResource ThemeHeaderContainerStyle}"
+                Margin="16,16,16,0"
+                CornerRadius="14,14,0,0"
+            Padding="18,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Style="{StaticResource ThemeCardIconCircleStyle}"
+                            Width="44"
+                            Height="44"
+                            Margin="0,0,12,0">
+                        <TextBlock Text="📅"
+                                   FontFamily="Segoe UI Emoji"
+                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                   FontSize="22" />
                     </Border>
+
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Cronograma de Mantenimientos" Style="{StaticResource HeaderTextStyle}"/>
-                        <TextBlock Text="Vista general de mantenimientos programados" Style="{StaticResource SubHeaderTextStyle}"/>
+                        <TextBlock Text="Cronograma de Mantenimientos"
+                                   Style="{StaticResource ThemeSectionTitleStyle}"
+                                   FontSize="20"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="Vista general de mantenimientos programados"
+                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                   FontSize="12"
+                                   Margin="0,0,0,0" />
                     </StackPanel>
                 </StackPanel>
-                
-                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
-                    <!-- ComboBox de Año -->
-                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                        <TextBlock Text="Año:" Foreground="White" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0"/>
-                        <ComboBox Width="100"
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                        Margin="0,0,10,0">
+                        <TextBlock Text="Año"
+                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                   Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                   FontWeight="SemiBold"
+                           FontSize="12"
+                                   Margin="0,0,8,0"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Width="110"
+                          Height="34"
                                   ItemsSource="{Binding AniosDisponibles}"
                                   SelectedItem="{Binding AnioSeleccionado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  VerticalAlignment="Center"
-                                  FontSize="13"
-                                  Padding="8,4"
-                                  BorderBrush="#FFFFFF"
-                                  BorderThickness="1.5"
-                                  Background="White"
-                                  Foreground="#504F4E"
-                                  FontWeight="SemiBold"/>
+                                  Style="{StaticResource ThemeComboBoxStyle}" />
                     </StackPanel>
 
-                    <!-- Botón Refrescar circular -->
-                    <Button Content="&#xE72C;" Command="{Binding RefreshCommand}" ToolTip="Actualizar cronograma"
-                            Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"
-                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" 
-                            Opacity="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
+                    <Button Content="↻ Actualizar"
+                            Command="{Binding RefreshCommand}"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                        FontSize="12"
+                        Padding="10,6"
+                        MinHeight="34"
+                            Margin="0,0,10,0"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}" />
 
-                    <!-- Botón Exportar circular -->
-                    <Button Content="⭱" Command="{Binding ExportarCronogramasCommand}" ToolTip="Exportar cronograma"
-                            Style="{StaticResource CircularButtonStyle}" Margin="0,0,0,0"
-                            IsEnabled="{Binding CanExportCronograma}" 
-                            Opacity="{Binding CanExportCronograma, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                    <Button Content="⇩ Exportar"
+                            Command="{Binding ExportarCronogramasCommand}"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                        FontSize="12"
+                        Padding="10,6"
+                        MinHeight="34"
+                            IsEnabled="{Binding CanExportCronograma}" />
                 </StackPanel>
-            </DockPanel>
-        </Border>        <!-- Vista semanal tipo calendario -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#FAFAFA" Margin="16,0,16,0">
-            <Grid Background="#FAFAFA">
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled"
+                      Background="{DynamicResource BackgroundAppBrush}"
+                      Margin="16,16,16,0">
+            <Grid Background="{DynamicResource BackgroundAppBrush}">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <!-- Elimino el título para aprovechar el espacio -->
-                <Grid Grid.Row="0" Grid.RowSpan="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <ItemsControl ItemsSource="{Binding PlaceholderSemanas}" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="13" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="ContentPresenter">
-                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                <Setter Property="VerticalAlignment" Value="Stretch"/>
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="#E0E0E0" CornerRadius="8" Margin="2" BorderThickness="0"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <ItemsControl ItemsSource="{Binding Semanas}" Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="13" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="ContentPresenter">
-                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                <Setter Property="VerticalAlignment" Value="Stretch"/>
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <!-- Border principal de la tarjeta -->
-                                    <Border x:Name="SemanaCard" CornerRadius="8" Padding="2" Margin="2" BorderThickness="4"
-                                            BorderBrush="{Binding ColorSemana}"
-                                            Background="White"
-                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">                                    <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="BorderBrush" Value="{Binding ColorSemana}"/>
-                                                <Setter Property="BorderThickness" Value="4"/>
-                                                <Setter Property="Background" Value="White"/>
-                                                <Setter Property="SnapsToDevicePixels" Value="True"/>
+
+                <Grid Grid.Row="0">
+                    <ItemsControl ItemsSource="{Binding PlaceholderSemanas}"
+                                  Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="12"
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Stretch" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter Property="VerticalAlignment" Value="Stretch" />
+                            <Setter Property="Margin" Value="2" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource ThemeElevatedCardStyle}"
+                                    Padding="4"
+                                    Margin="0"
+                                        MinHeight="126"
+                                    Opacity="0.45" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                    <ItemsControl ItemsSource="{Binding Semanas}"
+                                  Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="12"
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Stretch" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter Property="VerticalAlignment" Value="Stretch" />
+                            <Setter Property="Margin" Value="2" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Border Margin="0"
+                                        Padding="4"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        MinHeight="126">
+                                        <Border.Style>
+                                            <Style TargetType="Border" BasedOn="{StaticResource ThemeElevatedCardStyle}">
+                                                <Setter Property="Padding" Value="4" />
+                                                <Setter Property="Margin" Value="1" />
+                                                <Setter Property="BorderBrush" Value="{Binding ColorSemana}" />
+                                                <Setter Property="BorderThickness" Value="2" />
+                                                <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}" />
                                                 <Style.Triggers>
-                                                    <!-- Semana vacía: sin borde -->
-                                                    <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
-                                                        <Setter Property="BorderThickness" Value="0"/>
-                                                        <Setter Property="BorderBrush" Value="Transparent"/>
-                                                    </DataTrigger>
-                                                    <!-- Semana actual: solo fondo sutil, sin borde -->
                                                     <DataTrigger Binding="{Binding IsSemanaActual}" Value="True">
-                                                        <Setter Property="BorderThickness" Value="0"/>
-                                                        <Setter Property="BorderBrush" Value="Transparent"/>
-                                                        <Setter Property="Background" Value="#F8FFF8"/>
+                                                        <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        <Setter Property="BorderThickness" Value="3" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.78" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <StackPanel ToolTipService.ShowDuration="15000" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                            <StackPanel.ToolTip>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding TituloSemana}" FontWeight="Bold" FontSize="13"/>
-                                                    <ItemsControl ItemsSource="{Binding Mantenimientos}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock>
-                                                                    <Run Text="• "/>
-                                                                    <Run Text="{Binding Codigo}"/>
-                                                                    <Run Text=" - "/>
-                                                                    <Run Text="{Binding Nombre}"/>
-                                                                </TextBlock>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <TextBlock Text="Sin mantenimientos programados" Foreground="#C0392B" FontWeight="SemiBold" FontSize="11" Visibility="{Binding Mantenimientos.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}"/>
-                                                </StackPanel>
-                                            </StackPanel.ToolTip>                                        <TextBlock Text="{Binding NumeroSemana, StringFormat='Semana {0}'}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" TextWrapping="NoWrap"
-                                                       Foreground="#333"/>
-                                            <TextBlock Text="{Binding RangoFechas}" FontSize="9" HorizontalAlignment="Center" TextWrapping="NoWrap"
-                                                       Foreground="#333"/>
-                                            <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Mantenimientos: {0}'}"
-                                                       FontWeight="SemiBold" FontSize="11"
-                                                       Foreground="#333"
-                                                       HorizontalAlignment="Center" TextWrapping="NoWrap"/>
-                                            <Button Content="Ver Detalles"
-                                                    Command="{Binding VerSemanaCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Margin="0,4,0,0"
-                                                    Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    FontSize="11"
-                                                    Background="{Binding ColorSemana, Converter={StaticResource CardButtonBackgroundColorConverter}, FallbackValue=LightGray, TargetNullValue=LightGray}"
-                                                    Foreground="Black"
-                                                    BorderBrush="#CCCCCC"
-                                                    BorderThickness="1.5"
-                                                    Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                                                    TextOptions.TextFormattingMode="Display"
-                                                    TextOptions.TextRenderingMode="ClearType"
-                                                    SnapsToDevicePixels="True">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="6"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
-                                        </StackPanel>                                </Border>
 
-                                    <!-- Badge "ACTUAL" para semana actual con más margen -->
-                                    <Border x:Name="CurrentWeekBadge"
-                                            Background="#118938"
-                                            CornerRadius="10"
-                                            Padding="8,3"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Margin="0,6,6,0"
-                                            Panel.ZIndex="20"
-                                            Visibility="{Binding IsSemanaActual, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#118938" Opacity="0.3" BlurRadius="6" ShadowDepth="1"/>
-                                        </Border.Effect>
-                                        <TextBlock Text="ACTUAL" 
-                                                   FontSize="9"
-                                                   FontWeight="Bold"
-                                                   Foreground="White"/>
-                                    </Border>                                <!-- Rectangle punteado para semanas vacías -->
-                                    <Rectangle x:Name="EmptyWeekIndicator"
-                                               Stroke="#BFBFBF" 
-                                               StrokeThickness="2" 
-                                               RadiusX="8" RadiusY="8" 
-                                               Fill="Transparent"
-                                               StrokeDashArray="4 2"
-                                               Margin="2"
-                                               HorizontalAlignment="Stretch" 
-                                               VerticalAlignment="Stretch"
-                                               Panel.ZIndex="10"
-                                               IsHitTestVisible="False">
-                                        <Rectangle.Style>
-                                            <Style TargetType="Rectangle">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <!-- Solo mostrar punteado si está vacía -->
-                                                    <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                    <!-- Si es actual Y vacía, cambiar color del punteado a verde -->
-                                                    <DataTrigger Binding="{Binding IsSemanaActualYVacia}" Value="True">
-                                                        <Setter Property="Stroke" Value="#118938"/>
-                                                        <Setter Property="StrokeThickness" Value="3"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Rectangle.Style>
-                                    </Rectangle>
+                                        <Grid>
+                                            <Rectangle x:Name="EmptyWeekIndicator"
+                                                       Stroke="{DynamicResource BorderDefaultBrush}"
+                                                       StrokeThickness="2"
+                                                       RadiusX="8"
+                                                       RadiusY="8"
+                                                       Fill="Transparent"
+                                                       StrokeDashArray="4 2"
+                                                       Margin="4"
+                                                       HorizontalAlignment="Stretch"
+                                                       VerticalAlignment="Stretch"
+                                                       Panel.ZIndex="10"
+                                                       IsHitTestVisible="False">
+                                                <Rectangle.Style>
+                                                    <Style TargetType="Rectangle">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding EsSemanaVacia}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSemanaActualYVacia}" Value="True">
+                                                                <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}" />
+                                                                <Setter Property="StrokeThickness" Value="3" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Rectangle.Style>
+                                            </Rectangle>
+
+                                            <StackPanel HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        ToolTipService.ShowDuration="15000">
+                                                <StackPanel.ToolTip>
+                                                    <ToolTip Background="{DynamicResource BackgroundElevatedBrush}"
+                                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                                             BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                             BorderThickness="1"
+                                                             Padding="0"
+                                                             Placement="MousePoint"
+                                                             HasDropShadow="True"
+                                                             SnapsToDevicePixels="True">
+                                                        <Border Padding="12"
+                                                                Background="{DynamicResource BackgroundElevatedBrush}"
+                                                                CornerRadius="10"
+                                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                                BorderThickness="1">
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding TituloSemana}"
+                                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           FontSize="10"
+                                                                           FontWeight="SemiBold"
+                                                                           Margin="0,0,0,3" />
+                                                                <ItemsControl ItemsSource="{Binding Mantenimientos}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <TextBlock Style="{StaticResource ThemeBodyTextStyle}"
+                                                                                       Foreground="{DynamicResource TextBodyBrush}"
+                                                                                       FontSize="10">
+                                                                                <Run Text="• " />
+                                                                                <Run Text="{Binding Codigo}" />
+                                                                                <Run Text=" - " />
+                                                                                <Run Text="{Binding Nombre}" />
+                                                                            </TextBlock>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                                <TextBlock Text="Sin mantenimientos programados"
+                                                                           Foreground="{DynamicResource DangerBrush}"
+                                                                           FontWeight="SemiBold"
+                                                                           FontSize="11"
+                                                                           Margin="0,6,0,0">
+                                                                    <TextBlock.Visibility>
+                                                                        <Binding Path="Mantenimientos.Count"
+                                                                                 Converter="{StaticResource CountToVisibilityConverter}" />
+                                                                    </TextBlock.Visibility>
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </ToolTip>
+                                                </StackPanel.ToolTip>
+
+                                                <TextBlock Text="{Binding NumeroSemana, StringFormat=Semana {0}}"
+                                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                                           FontSize="13"
+                                                           HorizontalAlignment="Center"
+                                                           TextWrapping="NoWrap"
+                                                           Margin="0,0,0,0" />
+                                                <TextBlock Text="{Binding RangoFechas}"
+                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                           FontSize="9"
+                                                           HorizontalAlignment="Center"
+                                                           TextWrapping="NoWrap" />
+                                                <TextBlock Text="{Binding Mantenimientos.Count, StringFormat={}{0} Mtto}"
+                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="9"
+                                                           HorizontalAlignment="Center"
+                                                           TextWrapping="NoWrap"
+                                                           Margin="0,0,0,0" />
+
+                                                <Border HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,2,0,0"
+                                                        Padding="6,1"
+                                                        CornerRadius="999"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        Visibility="{Binding IsSemanaActual, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="ACTUAL"
+                                                            FontSize="8"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                                </Border>
+
+                                                <Button Content="Ver detalles"
+                                                        Command="{Binding VerSemanaCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Margin="0,3,0,0"
+                                                        Visibility="{Binding TieneMantenimientos, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource ThemePrimaryButtonStyle}"
+                                                        FontSize="9"
+                                                        Padding="6,2"
+                                                        MinHeight="24"
+                                                        HorizontalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Grid>
-        <TextBlock Text="No hay mantenimientos programados para mostrar." Foreground="#C0392B" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding Semanas.Count, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" Grid.Row="2"/>
-                
-                <!-- Leyenda de colores compacta debajo -->
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0" VerticalAlignment="Top">
-                    <!-- Pendiente -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <Border Width="14" Height="14" CornerRadius="2" Background="#90CAF9" BorderBrush="#64B5F6" BorderThickness="1"/>
-                        <TextBlock Text="Pendiente" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
+
+                <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource ThemeInfoNoticeStyle}"
+                            Padding="16,12"
+                            Visibility="{Binding Semanas.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                        <TextBlock Text="No hay mantenimientos programados para mostrar."
+                                   Foreground="{DynamicResource DangerBrush}"
+                                   FontWeight="Bold"
+                                   FontSize="16"
+                                   HorizontalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <Border Width="14" Height="14" CornerRadius="2" Background="#B3E5FC" BorderBrush="#B3E5FC" BorderThickness="1" />
+                            <TextBlock Text="Pendiente" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="3,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <Border Width="14" Height="14" CornerRadius="2" Background="{DynamicResource SuccessBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" />
+                            <TextBlock Text="Ejecutado" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="3,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <Border Width="14" Height="14" CornerRadius="2" Background="{DynamicResource WarningBrush}" BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" />
+                            <TextBlock Text="Retrasado" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="3,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <Border Width="14" Height="14" CornerRadius="2" Background="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" />
+                            <TextBlock Text="No Realizado" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="3,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="14" Height="14" CornerRadius="2" Background="Transparent" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
+                                <Rectangle Stroke="{DynamicResource BorderDefaultBrush}"
+                                           StrokeThickness="0.5"
+                                           StrokeDashArray="1.5 1.5"
+                                           RadiusX="1"
+                                           RadiusY="1" />
+                            </Border>
+                            <TextBlock Text="Sin Mtto" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="3,0,0,0" />
+                        </StackPanel>
                     </StackPanel>
-                    
-                    <!-- Ejecutado -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <Border Width="14" Height="14" CornerRadius="2" Background="#388E3C" BorderBrush="#2D6A2A" BorderThickness="1"/>
-                        <TextBlock Text="Ejecutado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
-                    </StackPanel>
-                    
-                    <!-- Retrasado -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <Border Width="14" Height="14" CornerRadius="2" Background="#FFB300" BorderBrush="#F59F00" BorderThickness="1"/>
-                        <TextBlock Text="Retrasado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
-                    </StackPanel>
-                    
-                    <!-- No Realizado -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <Border Width="14" Height="14" CornerRadius="2" Background="#C80000" BorderBrush="#A00000" BorderThickness="1"/>
-                        <TextBlock Text="No Realizado" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
-                    </StackPanel>
-                    
-                    <!-- Sin Mantenimientos -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="14" Height="14" CornerRadius="2" Background="Transparent" BorderBrush="#BFBFBF" BorderThickness="1">
-                            <Rectangle Stroke="#BFBFBF" StrokeThickness="0.5" StrokeDashArray="1.5 1.5" RadiusX="1" RadiusY="1"/>
-                        </Border>
-                        <TextBlock Text="Sin Mtto" FontSize="9" Foreground="#666" VerticalAlignment="Center" Margin="3,0,0,0"/>
-                    </StackPanel>
-                </StackPanel>
+                </Grid>
             </Grid>
-        </ScrollViewer>        <!-- Overlay en nivel superior para cubrir encabezado + semanas (dimmer suave) -->
+        </ScrollViewer>
+
         <Grid x:Name="LoadingOverlay"
               Grid.Row="0"
               Grid.RowSpan="3"
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
-              Background="#40000000"
+              Background="{DynamicResource ModalOverlayBrush}"
               Panel.ZIndex="999"
               IsHitTestVisible="True"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch">
-            <Border Width="420" Height="140" CornerRadius="10" Background="#FFFFFF" Opacity="0.98" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <!-- Barra indeterminada más ancha para mejor visibilidad -->
-                    <ProgressBar IsIndeterminate="True" Width="200" Height="18" Margin="0,0,18,0" />
+            <Border Width="420"
+                    Height="140"
+                    CornerRadius="10"
+                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                    Opacity="0.98"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource ThemeElevatedCardStyle}">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="200"
+                                 Height="18"
+                                 Margin="0,0,18,0" />
 
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Cargando..." FontSize="18" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBlock Text="Por favor espere" FontSize="12" Foreground="#666"/>
+                        <TextBlock Text="Cargando..."
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="Por favor espere"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
     </Grid>
 </UserControl>
-
-
-

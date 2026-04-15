@@ -9,20 +9,16 @@
         Loaded="SeguimientoDialog_OnLoaded" KeyDown="SeguimientoDialog_KeyDown">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-            
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:TipoMantenimientoFilterConverter x:Key="TipoMantenimientoFilterConverter" />
             <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
             <!-- UppercaseConverter no usado directamente: conservar archivo en Converters si es reutilizable -->
         </ResourceDictionary>
     </Window.Resources>    <!-- Grid overlay con fondo semi-transparente -->
-    <Grid x:Name="RootGrid" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="#80000000">        <!-- Border con la ventana modal centrada -->
-        <Border Width="760" Height="Auto" MaxHeight="820" Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="0" 
+    <Grid x:Name="RootGrid" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" Background="{DynamicResource ModalOverlayBrush}">        <!-- Border con la ventana modal centrada -->
+        <Border Width="980" MaxWidth="1120" MinWidth="860" MaxHeight="780" Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="14" Padding="0" 
                 HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40" BorderThickness="1"
-                BorderBrush="{StaticResource BorderBrush}" Effect="{StaticResource WindowShadow}"
+                BorderBrush="{DynamicResource BorderDefaultBrush}" Effect="{StaticResource WindowShadow}"
                 MouseLeftButtonDown="Panel_MouseLeftButtonDown">
             <Grid>
                 <Grid.RowDefinitions>
@@ -31,122 +27,340 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header con gradiente -->
-                <Border Grid.Row="0" CornerRadius="8,8,0,0" Padding="24,16">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="#118938" Offset="0"/>
-                            <GradientStop Color="#0F7530" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
+                <!-- Header premium -->
+                <Border Grid.Row="0"
+                    Style="{StaticResource ThemeHeaderContainerStyle}"
+                    CornerRadius="14,14,0,0"
+                        Padding="18,14">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,12,0" Width="36" Height="36">
-                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Style="{StaticResource ThemeCardIconCircleStyle}"
+                                    Width="44"
+                                    Height="44"
+                                    CornerRadius="22"
+                                    Margin="0,0,10,0">
+                                <TextBlock Text="🔧"
+                                           FontFamily="Segoe UI Emoji"
+                                           Style="{StaticResource ThemeCardIconTextStyle}"
+                                           FontSize="18" />
                             </Border>
+
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Registrar Mantenimiento" Style="{StaticResource HeaderTextStyle}"/>
-                                <TextBlock Text="Ingresa los detalles del mantenimiento realizado" Style="{StaticResource SubHeaderTextStyle}" Margin="0,2,0,0"/>
+                                <TextBlock Text="Registrar mantenimiento"
+                                           Style="{StaticResource ThemeCardTitleStyle}"
+                                           FontSize="19"
+                                           Margin="0,0,0,2" />
+                                <TextBlock Text="Completa los datos del seguimiento y guarda el registro con la paleta visual del tema."
+                                           Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                           FontSize="11" />
                             </StackPanel>
-                        </StackPanel>                        <Button Grid.Column="1" Style="{StaticResource CloseButton}" Click="Cancelar_Click" 
-                                ToolTip="Cerrar (Esc)" Padding="6" Margin="0,-6,-6,-6" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            </Grid>
-                        </Button>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                                    <Button Style="{StaticResource CloseButton}"
+                                    Click="Cancelar_Click"
+                                    ToolTip="Cerrar (Esc)"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,0,6" />
+
+                                     <Border Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    BorderThickness="1"
+                                     CornerRadius="8"
+                                     Padding="10,5"
+                                    HorizontalAlignment="Right">
+                                <TextBlock Text="Modo registro"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                         FontSize="11"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- Contenido principal con ScrollViewer: scrollbar automático si es necesario -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0" Background="{StaticResource LightGrayBrush}">
-                    <Border Padding="24">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>  <!-- Código -->
-                                <RowDefinition Height="Auto"/>  <!-- Nombre -->
-                                <RowDefinition Height="Auto"/>  <!-- Fecha Realización -->
-                                <RowDefinition Height="Auto"/>  <!-- Tipo Mtto -->
-                                <RowDefinition Height="Auto"/>  <!-- Responsable -->
-                                <RowDefinition Height="Auto"/>  <!-- Costo -->
-                                <RowDefinition Height="Auto"/>  <!-- Checklist label -->
-                                <RowDefinition Height="Auto"/>  <!-- Checklist controls -->
-                                <RowDefinition Height="*"/>     <!-- Descripción grande -->
-                                <RowDefinition Height="Auto"/>  <!-- Observaciones -->
-                                <RowDefinition Height="Auto"/>  <!-- Frecuencia -->
-                            </Grid.RowDefinitions>
+                <!-- Contenido principal -->
+                <Grid Grid.Row="1" Margin="18,10,18,10" Background="{DynamicResource BackgroundElevatedBrush}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                Style="{StaticResource ThemeInfoNoticeStyle}"
+                            Padding="14,12"
+                                Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Text="Resumen del registro"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="14"
+                                               Margin="0,0,0,1" />
+                                    <TextBlock Text="Revisa el contexto antes de guardar el mantenimiento. Los campos editables están organizados para una lectura rápida."
+                                               Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                               FontSize="10" />
+                                </StackPanel>
+
+                                <Border Grid.Column="1"
+                                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="10,5"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Codigo, StringFormat=Código: {0}}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="1.35*" />
+                                <ColumnDefinition Width="0.85*" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Fila 0: Código -->
-                            <TextBlock Text="Código:" Style="{StaticResource LabelTextStyle}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" />
-                            <TextBox Text="{Binding Codigo}" Grid.Row="0" Grid.Column="1" Style="{StaticResource InputStyle}" 
-                                     IsReadOnly="True" IsEnabled="False" Background="#F8FAFC" Opacity="0.7"/>
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource ThemeElevatedCardStyle}"
+                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    Padding="14">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                            <!-- Fila 1: Nombre -->
-                            <TextBlock Text="Nombre:" Style="{StaticResource LabelTextStyle}" Grid.Row="1" Grid.Column="0"/>
-                            <TextBox Text="{Binding Nombre}" Grid.Row="1" Grid.Column="1" Style="{StaticResource InputStyle}" 
-                                     IsReadOnly="True" IsEnabled="False" Background="#F8FAFC" Opacity="0.7"/>
+                                    <TextBlock Text="Datos base"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="14"
+                                               Margin="0,0,0,8" />
 
-                            <!-- Fila 2: Fecha Realización -->
-                            <TextBlock Text="Fecha Realización:" Style="{StaticResource LabelTextStyle}" Grid.Row="2" Grid.Column="0"/>
-                            <DatePicker SelectedDate="{Binding FechaRealizacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                        Grid.Row="2" Grid.Column="1" Style="{StaticResource InputStyle}"/>
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="1*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="Código" Style="{StaticResource LabelTextStyle}" />
+                                            <TextBox Text="{Binding Codigo}" Style="{StaticResource InputStyle}" IsReadOnly="True" IsEnabled="False" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Nombre" Style="{StaticResource LabelTextStyle}" />
+                                            <TextBox Text="{Binding Nombre}" Style="{StaticResource InputStyle}" IsReadOnly="True" IsEnabled="False" />
+                                        </StackPanel>
+                                    </Grid>
 
-                            <!-- Fila 3: Tipo Mtto -->
-                            <TextBlock Text="Tipo Mtto:" Style="{StaticResource LabelTextStyle}" Grid.Row="3" Grid.Column="0"/>
-                            <ComboBox x:Name="TipoMantenimientoComboBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource InputStyle}" 
-                                      SelectedItem="{Binding TipoMtno, UpdateSourceTrigger=PropertyChanged}" 
-                                      />
+                                    <Grid Grid.Row="2" Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="1*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="Fecha realización" Style="{StaticResource LabelTextStyle}" />
+                                            <DatePicker SelectedDate="{Binding FechaRealizacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                                                Style="{StaticResource ModernDatePickerStyle}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Tipo mantenimiento" Style="{StaticResource LabelTextStyle}" />
+                                            <ComboBox x:Name="TipoMantenimientoComboBox"
+                                                      SelectedItem="{Binding TipoMtno, UpdateSourceTrigger=PropertyChanged}"
+                                                                                                            Style="{StaticResource ModernComboBoxStyle}" />
+                                        </StackPanel>
+                                    </Grid>
 
-                            <!-- Fila 4: Responsable -->
-                            <TextBlock Text="Responsable:" Style="{StaticResource LabelTextStyle}" Grid.Row="4" Grid.Column="0"/>
-                            <TextBox Text="{Binding Responsable, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Grid.Row="4" Grid.Column="1" 
-                                     Style="{StaticResource InputStyle}" CharacterCasing="Upper"/>
+                                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.2*" />
+                                            <ColumnDefinition Width="0.8*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="Responsable" Style="{StaticResource LabelTextStyle}" />
+                                            <TextBox Text="{Binding Responsable, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource InputStyle}"
+                                                     CharacterCasing="Upper" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Costo (COP)" Style="{StaticResource LabelTextStyle}" />
+                                            <TextBox Text="{Binding Costo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}"
+                                                     Style="{StaticResource InputStyle}"
+                                                     HorizontalContentAlignment="Right" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
 
-                            <!-- Fila 5: Costo -->
-                            <TextBlock Text="Costo (COP):" Style="{StaticResource LabelTextStyle}" Grid.Row="5" Grid.Column="0"/>
-                            <TextBox Text="{Binding Costo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}" Grid.Row="5" Grid.Column="1" 
-                                     Style="{StaticResource InputStyle}" HorizontalContentAlignment="Right"/>
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource ThemeElevatedCardStyle}"
+                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    Padding="16"
+                                    Margin="16,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                            <!-- Fila 6: Checklist label -->
-                            <TextBlock Text="Checklist:" Style="{StaticResource LabelTextStyle}" Grid.Row="6" Grid.Column="0"/>
-                            <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,12">
-                                <CheckBox x:Name="cbRevision" Content="Revisión General" Margin="0,0,12,0" Checked="ChecklistItem_Checked" Unchecked="ChecklistItem_Checked"/>
-                                <CheckBox x:Name="cbLimpieza" Content="Limpieza" Margin="0,0,12,0" Checked="ChecklistItem_Checked" Unchecked="ChecklistItem_Checked"/>
-                                <CheckBox x:Name="cbAjustes" Content="Ajustes" Checked="ChecklistItem_Checked" Unchecked="ChecklistItem_Checked"/>
-                            </StackPanel>
+                                    <TextBlock Text="Checklist"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="14"
+                                               Margin="0,0,0,6" />
 
-                            <!-- Fila 7: Descripción grande -->
-                            <TextBlock Text="Descripción:" Style="{StaticResource LabelTextStyle}" Grid.Row="7" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
-                            <TextBox x:Name="DescripcionTextBox" Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" 
-                                     Grid.Row="7" Grid.Column="1" Style="{StaticResource InputStyle}" MinHeight="140" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>                            <!-- Fila 8: Observaciones -->
-                            <TextBlock Text="Observaciones:" Style="{StaticResource LabelTextStyle}" Grid.Row="8" Grid.Column="0" VerticalAlignment="Top" Margin="0,8,8,4"/>
-                            <TextBox Text="{Binding Observaciones, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Grid.Row="8" Grid.Column="1" 
-                                     Style="{StaticResource InputStyle}" MinHeight="50" VerticalAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="1000"/>
+                                    <TextBlock Grid.Row="1"
+                                               Text="Selecciona los puntos verificados durante el mantenimiento."
+                                               Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                               FontSize="10"
+                                               Margin="0,0,0,10" />
 
-                            <!-- Fila 9: Frecuencia -->
-                            <TextBlock Text="Frecuencia:" Style="{StaticResource LabelTextStyle}" Grid.Row="9" Grid.Column="0" 
-                                       Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ModoRestringido, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                            <ComboBox x:Name="FrecuenciaComboBox" Grid.Row="9" Grid.Column="1" Style="{StaticResource InputStyle}" 
-                                      SelectedItem="{Binding Frecuencia, UpdateSourceTrigger=PropertyChanged}" 
-                                      Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ModoRestringido, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                    <Border Grid.Row="2"
+                                            Background="{DynamicResource PrimaryLightBrush}"
+                                            BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Padding="10,8"
+                                            Margin="0,0,0,10">
+                                        <TextBlock Text="Marca rápidamente los procedimientos realizados."
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+
+                                    <WrapPanel Grid.Row="3" HorizontalAlignment="Left">
+                                        <CheckBox x:Name="cbRevision"
+                                                  Content="Revisión general"
+                                                  Style="{StaticResource ThemeCheckBoxStyle}"
+                                                  Margin="0,0,10,10"
+                                                  Checked="ChecklistItem_Checked"
+                                                  Unchecked="ChecklistItem_Checked" />
+                                        <CheckBox x:Name="cbLimpieza"
+                                                  Content="Limpieza"
+                                                  Style="{StaticResource ThemeCheckBoxStyle}"
+                                                  Margin="0,0,10,10"
+                                                  Checked="ChecklistItem_Checked"
+                                                  Unchecked="ChecklistItem_Checked" />
+                                        <CheckBox x:Name="cbAjustes"
+                                                  Content="Ajustes"
+                                                  Style="{StaticResource ThemeCheckBoxStyle}"
+                                                  Margin="0,0,10,10"
+                                                  Checked="ChecklistItem_Checked"
+                                                  Unchecked="ChecklistItem_Checked" />
+                                    </WrapPanel>
+                                </Grid>
+                            </Border>
                         </Grid>
-                    </Border>
-                </ScrollViewer>
+
+                        <Grid Grid.Row="2" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource ThemeElevatedCardStyle}"
+                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    Padding="14"
+                                    Margin="0,0,8,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="Descripción"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="14"
+                                               Margin="0,0,0,8" />
+                                    <TextBox Grid.Row="1"
+                                             x:Name="DescripcionTextBox"
+                                             Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}"
+                                             MinHeight="80"
+                                             VerticalAlignment="Stretch"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             MaxLength="1000" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource ThemeElevatedCardStyle}"
+                                    Background="{DynamicResource BackgroundSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    Padding="14"
+                                    Margin="8,0,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="Observaciones y frecuencia"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="14"
+                                               Margin="0,0,0,8" />
+
+                                    <TextBox Grid.Row="1"
+                                             Text="{Binding Observaciones, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource InputStyle}"
+                                             MinHeight="58"
+                                             VerticalAlignment="Top"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             MaxLength="1000" />
+
+                                    <StackPanel Grid.Row="2" Margin="0,6,0,0"
+                                                Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ModoRestringido, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                        <TextBlock Text="Frecuencia"
+                                                   Style="{StaticResource LabelTextStyle}" />
+                                        <ComboBox x:Name="FrecuenciaComboBox"
+                                                  SelectedItem="{Binding Frecuencia, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource InputStyle}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                </Grid>
 
                 <!-- Footer con botones -->
-                <Border Grid.Row="2" Padding="24" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Background="{StaticResource SurfaceElevatedBrush}">
+                <Border Grid.Row="2"
+                        Padding="16,12"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                        BorderThickness="0,1,0,0"
+                        Background="{DynamicResource BackgroundSurfaceBrush}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar" Style="{StaticResource GhostButton}" Click="Cancelar_Click" MinWidth="100" Margin="0,0,8,0"/>
-                        <Button Content="Guardar Cambios" Style="{StaticResource PrimaryButtonStyle}" Click="Aceptar_Click" 
-                                IsDefault="True" MinWidth="140"/>
+                        <Button Content="Cancelar"
+                                Style="{StaticResource GhostButton}"
+                                Click="Cancelar_Click"
+                                MinWidth="110"
+                                Margin="0,0,10,0" />
+                        <Button Content="Guardar cambios"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="Aceptar_Click"
+                                IsDefault="True"
+                                MinWidth="150" />
                     </StackPanel>
                 </Border>
             </Grid>

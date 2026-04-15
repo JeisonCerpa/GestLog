@@ -3,321 +3,293 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:GestLog.Converters"
         xmlns:behaviors="clr-namespace:GestLog.Behaviors"
-        Title="Equipo" Height="Auto" Width="600" MinHeight="520" MinWidth="520" WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize" WindowStyle="None" AllowsTransparency="True" Background="Transparent" SizeToContent="Manual"
-        ShowInTaskbar="False" Loaded="EquipoDialog_Loaded">
+        Title="Equipo"
+        Width="1040"
+        MinWidth="920"
+        MinHeight="700"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        SizeToContent="Manual"
+        ShowInTaskbar="False"
+        Loaded="EquipoDialog_Loaded">
 
     <Window.Resources>
-        <!-- Referencia al diccionario estándar de modales -->
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-            <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
-            <converters:BooleanToErrorStyleConverter x:Key="BooleanToErrorStyleConverter" />
-            <converters:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter" />
-            <!-- InputStyle compartido (copiado de PerifericoDialog.xaml) -->
-            <Style x:Key="InputStyle" TargetType="Control">
-                <Setter Property="FontFamily" Value="Segoe UI"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Padding" Value="12,10"/>
-                <Setter Property="Margin" Value="0,0,0,16"/>
-                <Setter Property="Height" Value="40"/>
-                <Setter Property="BorderBrush" Value="#D0D0D0"/>
-                <Setter Property="BorderThickness" Value="1.5"/>
-                <Setter Property="Background" Value="#F5F5F5"/>
-                <Setter Property="UseLayoutRounding" Value="True"/>
-                <Setter Property="SnapsToDevicePixels" Value="True"/>
-                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Style.Triggers>
-                    <Trigger Property="IsFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                        <Setter Property="BorderThickness" Value="2"/>
-                        <Setter Property="Background" Value="#FFFFFF"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-
-            <!-- Estilo para campos requeridos con error -->
-            <Style x:Key="RequiredFieldStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
-                <Setter Property="Margin" Value="0,0,0,8"/>
-                <Style.Triggers>
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding ShowValidationErrors}" Value="True"/>
-                            <Condition Binding="{Binding IsNombreVacio}" Value="True"/>
-                        </MultiDataTrigger.Conditions>
-                        <Setter Property="BorderBrush" Value="#E53935"/>
-                        <Setter Property="BorderThickness" Value="2"/>
-                        <Setter Property="Background" Value="#FFEBEE"/>
-                    </MultiDataTrigger>
-                </Style.Triggers>
-            </Style>
-            <!-- Estilo para error en campos -->
-            <Style x:Key="ErrorFieldStyle" TargetType="TextBox" BasedOn="{StaticResource RequiredFieldStyle}">
-                <Setter Property="BorderBrush" Value="#E53935"/>
-                <Setter Property="BorderThickness" Value="2"/>
-                <Setter Property="Background" Value="#FFEBEE"/>
-            </Style>
-            <!-- Estilo para error en ComboBox -->
-            <Style x:Key="ErrorComboBoxStyle" TargetType="ComboBox">
-                <Setter Property="BorderBrush" Value="#E53935"/>
-                <Setter Property="BorderThickness" Value="2"/>
-                <Setter Property="Background" Value="#FFEBEE"/>
-            </Style>
-        </ResourceDictionary>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
     </Window.Resources>
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <!-- Panel centrado -->
-        <Border x:Name="Card" Width="900" MaxHeight="950" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
-                HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
-                UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
+
+    <Grid x:Name="RootGrid"
+          Background="{DynamicResource ModalOverlayBrush}"
+          MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True">
+
+        <Border x:Name="Card"
+                Width="1000"
+                MaxHeight="960"
+                Background="{DynamicResource BackgroundAppBrush}"
+                CornerRadius="18"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Effect="{StaticResource ThemeCardShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True"
+                RenderOptions.BitmapScalingMode="HighQuality">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header Modal -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,16" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <Border Grid.Row="0"
+                        Style="{StaticResource ThemeHeaderContainerStyle}"
+                        CornerRadius="18,18,0,0"
+                        Padding="26,22">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White"
-                                    CornerRadius="8"
-                                    Padding="8"
-                                    Margin="0,0,16,0"
-                                    Width="44"
-                                    Height="44"
-                                    Effect="{StaticResource SectionShadow}"
-                                    UseLayoutRounding="True"
-                                    SnapsToDevicePixels="True">
-                                <!-- Icono de equipo: engranaje (U+2699) -->
-                                <TextBlock Text="⚙" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="56"
+                                    Height="56"
+                                    CornerRadius="28"
+                                    Background="{DynamicResource PrimaryLightBrush}"
+                                    BorderBrush="{DynamicResource PrimaryBrush}"
+                                    BorderThickness="1"
+                                    Margin="0,0,16,0">
+                                <TextBlock Text="⚙"
+                                           FontSize="26"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
                             </Border>
+
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Datos del Equipo" Style="{StaticResource HeaderTextStyle}" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                                <TextBlock Text="Información detallada" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Margin="0,4,0,0" FontSize="13" Opacity="0.9"/>
+                                <TextBlock Text="Equipo"
+                                           Style="{StaticResource HeaderTextStyle}"/>
+                                <TextBlock Text="Alta, edición y control de la ficha del activo"
+                                           Style="{StaticResource SubHeaderTextStyle}"
+                                           Margin="0,4,0,0"/>
                             </StackPanel>
                         </StackPanel>
-                        <Button Grid.Column="1" x:Name="BtnCerrar" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            </Grid>
+
+                        <Button Grid.Column="1"
+                                x:Name="BtnCerrar"
+                                Style="{StaticResource CloseButton}"
+                                Click="BtnCerrar_Click"
+                                ToolTip="Cerrar (Esc)"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Width="38"
+                                Height="38">
+                            <TextBlock Text="✕"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Contenido -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <!-- Sección: Información Básica -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="20">
-                            <StackPanel>
-                                <TextBlock Text="📋 Información Básica" FontSize="16" FontWeight="Bold" Foreground="#2B5D2A" Margin="0,0,0,16" />
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Fila 1: Código y Nombre -->
-                                    <StackPanel Grid.Row="0" Grid.Column="0">
-                                        <TextBlock Text="Código *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="CodigoTextBox" 
-                                                 Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}"
-                                                 IsReadOnly="{Binding Path=IsCodigoReadOnly}"
-                                                 IsEnabled="{Binding Path=IsCodigoEnabled}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                        <TextBlock Text="{Binding MensajeCodigoDuplicado}" 
-                                                   Foreground="#C0392B" 
-                                                   FontSize="11"
-                                                   Visibility="{Binding IsCodigoDuplicado, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                   FontWeight="SemiBold" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Row="0" Grid.Column="2">
-                                        <TextBlock Text="Nombre *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="NombreTextBox"
-                                                 Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource RequiredFieldStyle}"/>
-                                    </StackPanel>
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="26"
+                              UseLayoutRounding="True"
+                              SnapsToDevicePixels="True">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.05*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="0.95*"/>
+                            </Grid.ColumnDefinitions>
 
-                                    <!-- Fila 2: Marca y Estado -->
-                                    <StackPanel Grid.Row="1" Grid.Column="0">
-                                        <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbMarca"
-                                                  IsEditable="True" IsTextSearchEnabled="False"
-                                                  ItemsSource="{Binding MarcasFiltradas}"
-                                                  Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource InputStyle}"
-                                                  behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True">
-                                            <ComboBox.Resources>
-                                                <Style TargetType="TextBox" BasedOn="{StaticResource ComboEditableUpperTextBoxStyle}" />
-                                            </ComboBox.Resources>
-                                        </ComboBox>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Row="1" Grid.Column="2">
-                                        <TextBlock Text="Estado" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox ItemsSource="{Binding EstadosEquipo}"
-                                                  SelectedItem="{Binding Estado, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
+                            <StackPanel Grid.Column="0">
+                                <Border Style="{StaticResource CardSectionStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Identidad del equipo" Style="{StaticResource SectionHeaderStyle}"/>
 
-                                    <!-- Fila 3: Sede (span completo) -->
-                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
-                                        <TextBlock Text="Sede *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox ItemsSource="{Binding Sedes}"
-                                                  SelectedItem="{Binding Sede, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource InputStyle}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Código *" Style="{StaticResource LabelTextStyle}"/>
+                                                <TextBox x:Name="CodigoTextBox"
+                                                         Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsReadOnly="{Binding Path=IsCodigoReadOnly}"
+                                                         IsEnabled="{Binding Path=IsCodigoEnabled}"
+                                                         Style="{StaticResource ModalTextBoxStyle}"/>
+                                                <TextBlock Text="{Binding MensajeCodigoDuplicado}"
+                                                           Foreground="{DynamicResource DangerBrush}"
+                                                           FontSize="11"
+                                                           Margin="2,6,0,0"
+                                                           Visibility="{Binding IsCodigoDuplicado, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Nombre *" Style="{StaticResource LabelTextStyle}"/>
+                                                <TextBox x:Name="NombreTextBox"
+                                                         Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource ModalTextBoxStyle}"/>
+                                                <TextBlock Text="El nombre del equipo es obligatorio."
+                                                           Foreground="{DynamicResource DangerBrush}"
+                                                           FontSize="11"
+                                                           Margin="2,6,0,0"
+                                                           Visibility="{Binding IsNombreVacio, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Margin="0,16,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
+                                                <ComboBox x:Name="CmbMarca"
+                                                          IsEditable="True"
+                                                          IsTextSearchEnabled="False"
+                                                          ItemsSource="{Binding MarcasFiltradas}"
+                                                          Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Style="{StaticResource ModernComboBoxStyle}"
+                                                          behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Estado" Style="{StaticResource LabelTextStyle}"/>
+                                                <ComboBox ItemsSource="{Binding EstadosEquipo}"
+                                                          SelectedItem="{Binding Estado, UpdateSourceTrigger=PropertyChanged}"
+                                                          Style="{StaticResource ModernComboBoxStyle}"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Sede *" Style="{StaticResource LabelTextStyle}"/>
+                                            <ComboBox ItemsSource="{Binding Sedes}"
+                                                      SelectedItem="{Binding Sede, UpdateSourceTrigger=PropertyChanged}"
+                                                      Style="{StaticResource ModernComboBoxStyle}"/>
+                                            <TextBlock Text="La sede del equipo es obligatoria."
+                                                       Foreground="{DynamicResource DangerBrush}"
+                                                       FontSize="11"
+                                                       Margin="2,6,0,0"
+                                                       Visibility="{Binding IsSedeVacio, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </Grid>
+                                </Border>
+
+                                <Border Style="{StaticResource CardSectionStyle}" Margin="0,16,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Compra" Style="{StaticResource SectionHeaderStyle}"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Fecha de compra" Style="{StaticResource LabelTextStyle}"/>
+                                                <DatePicker x:Name="FechaCompraPicker"
+                                                            SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged}"
+                                                            SelectedDateChanged="OnFechaCompra_SelectedDateChanged"
+                                                            Style="{StaticResource ModernDatePickerStyle}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Precio (COP)" Style="{StaticResource LabelTextStyle}"/>
+                                                <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}"
+                                                         Style="{StaticResource ModalTextBoxStyle}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
-                        <!-- Sección: Información de Compra -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="20"
-                                Margin="0,12,0,0">
-                            <StackPanel>
-                                <TextBlock Text="💰 Información de Compra" FontSize="16" FontWeight="Bold" Foreground="#2B5D2A" Margin="0,0,0,16" />
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Fecha de Compra" Style="{StaticResource LabelTextStyle}"/>
-                                        <DatePicker x:Name="FechaCompraPicker" 
-                                                    SelectedDate="{Binding FechaCompra, UpdateSourceTrigger=PropertyChanged}"
-                                                    SelectedDateChanged="OnFechaCompra_SelectedDateChanged"
-                                                    Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Precio (COP)" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}"
-                                                 Style="{StaticResource InputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                        <!-- Sección: Clasificación y Proveedor -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="20"
-                                Margin="0,12,0,0">
-                            <StackPanel>
-                                <TextBlock Text="🏷️ Clasificación y Proveedor" FontSize="16" FontWeight="Bold" Foreground="#2B5D2A" Margin="0,0,0,16" />
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="2">
+                                <Border Style="{StaticResource CardSectionStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Clasificación y proveedor" Style="{StaticResource SectionHeaderStyle}"/>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Clasificación" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbClasificacion"
-                                                  IsEditable="True" IsTextSearchEnabled="False"
-                                                  ItemsSource="{Binding ClasificacionesFiltradas}"
-                                                  Text="{Binding FiltroClasificacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource InputStyle}"
-                                                  behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True">
-                                            <ComboBox.Resources>
-                                                <Style TargetType="TextBox" BasedOn="{StaticResource ComboEditableUpperTextBoxStyle}" />
-                                            </ComboBox.Resources>
-                                        </ComboBox>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Comprado a" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbCompradoA"
-                                                  IsEditable="True" IsTextSearchEnabled="False"
-                                                  ItemsSource="{Binding CompradoAFiltrados}"
-                                                  Text="{Binding FiltroCompradoA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Style="{StaticResource InputStyle}"
-                                                  behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True">
-                                            <ComboBox.Resources>
-                                                <Style TargetType="TextBox" BasedOn="{StaticResource ComboEditableUpperTextBoxStyle}" />
-                                            </ComboBox.Resources>
-                                        </ComboBox>
-                                    </StackPanel>
-                                </Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="Clasificación" Style="{StaticResource LabelTextStyle}"/>
+                                            <ComboBox x:Name="CmbClasificacion"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      ItemsSource="{Binding ClasificacionesFiltradas}"
+                                                      Text="{Binding FiltroClasificacion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      Style="{StaticResource ModernComboBoxStyle}"
+                                                      behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True"/>
+                                        </StackPanel>
 
-                                <!-- Frecuencia Mtto (span completo) -->
-                                <StackPanel Margin="0,16,0,0">
-                                    <TextBlock Text="Frecuencia de Mantenimiento" Style="{StaticResource LabelTextStyle}"/>
-                                    <ComboBox ItemsSource="{Binding FrecuenciasMantenimiento}"
-                                              SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
-                                              Style="{StaticResource InputStyle}"/>
-                                </StackPanel>
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Comprado a" Style="{StaticResource LabelTextStyle}"/>
+                                            <ComboBox x:Name="CmbCompradoA"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      ItemsSource="{Binding CompradoAFiltrados}"
+                                                      Text="{Binding FiltroCompradoA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      Style="{StaticResource ModernComboBoxStyle}"
+                                                      behaviors:ComboBoxEditableUpperBehavior.EnableUppercase="True"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Frecuencia de mantenimiento" Style="{StaticResource LabelTextStyle}"/>
+                                            <ComboBox ItemsSource="{Binding FrecuenciasMantenimiento}"
+                                                      SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
+                                                      Style="{StaticResource ModernComboBoxStyle}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource CardSectionStyle}" Margin="0,16,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Observaciones" Style="{StaticResource SectionHeaderStyle}"/>
+                                        <TextBox x:Name="TxtObservaciones"
+                                                 Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
+                                                 TextWrapping="Wrap"
+                                                 AcceptsReturn="True"
+                                                 VerticalContentAlignment="Top"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 Style="{StaticResource ModalTextBoxStyle}"
+                                                 Height="164"
+                                                 MaxLength="1000"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
-                        <!-- Sección: Observaciones -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="20"
-                                Margin="0,12,0,0">
-                            <StackPanel>
-                                <TextBlock Text="📝 Observaciones" FontSize="16" FontWeight="Bold" Foreground="#2B5D2A" Margin="0,0,0,16" />
-                                  <TextBox x:Name="TxtObservaciones" 
-                                         Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         Height="70"
-                                         VerticalContentAlignment="Top"
-                                         VerticalScrollBarVisibility="Auto"
-                                         Style="{StaticResource InputStyle}"
-                                         Margin="0,0,0,0"
-                                         MaxLength="1000"/>
-                            </StackPanel>
-                        </Border>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Footer Modal -->
-                <Border Grid.Row="2" Padding="24,12" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                <Border Grid.Row="2"
+                        Padding="26,16"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource HeaderBottomBorderBrush}"
+                        BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="Cancelar"
-                                Style="{StaticResource GhostButton}"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 Click="OnCancelar_Click"
-                                Margin="0,0,8,0"
-                                Width="110"
-                                Height="40"/>
-                        
+                                Margin="0,0,10,0"
+                                MinWidth="120"
+                                MinHeight="40"/>
+
                         <Button x:Name="BtnGuardar"
                                 Content="Guardar"
                                 Command="{Binding GuardarCommand}"
@@ -325,14 +297,11 @@
                                 IsDefault="True"
                                 IsEnabled="{Binding IsFormularioValido}"
                                 Style="{StaticResource PrimaryButtonStyle}"
-                                Width="110"
-                                Height="40"/>
+                                MinWidth="140"
+                                MinHeight="40"/>
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
     </Grid>
 </Window>
-
-
-

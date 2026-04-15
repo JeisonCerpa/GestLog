@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using GestLog.Modules.Shell.Views;
 using GestLog.Services.Core.Logging;
 using Microsoft.Extensions.Logging;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using GestLog.Messages;
+using Microsoft.Win32;
 
 namespace GestLog
 {
@@ -17,6 +20,12 @@ namespace GestLog
 /// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
+    private const int DWMWA_CAPTION_COLOR = 35;
+    private const int DWMWA_TEXT_COLOR = 36;
+    private const int DWMWA_BORDER_COLOR = 34;
+
     private readonly Stack<(System.Windows.Controls.UserControl view, string title)> _navigationStack;
     private System.Windows.Controls.UserControl? _currentView;
     private readonly IGestLogLogger _logger;
@@ -118,6 +127,83 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             throw;
         }
     }
+
+    private void Window_SourceInitialized(object? sender, EventArgs e)
+    {
+        ApplyWindowThemeToTitleBar();
+    }
+
+    private void ApplyWindowThemeToTitleBar()
+    {
+        try
+        {
+            var configService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
+            var theme = configService?.Current?.UI?.Theme ?? "Light";
+
+            bool isDarkMode = theme.Equals("Dark", StringComparison.OrdinalIgnoreCase)
+                              || (theme.Equals("Auto", StringComparison.OrdinalIgnoreCase) && IsSystemDarkMode());
+
+            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero)
+                return;
+
+            int useDarkMode = isDarkMode ? 1 : 0;
+            _ = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
+            _ = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, ref useDarkMode, sizeof(int));
+
+            var captionBrush = TryGetBrush("HeaderBackgroundBrush") ?? TryGetBrush("BackgroundSurfaceBrush") ?? System.Windows.Media.Brushes.White;
+            var textBrush = TryGetBrush("TextOnPrimaryBrush") ?? System.Windows.Media.Brushes.White;
+
+            int captionColor = ColorToDwmColor(captionBrush.Color);
+            int textColor = ColorToDwmColor(textBrush.Color);
+
+            _ = DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ref captionColor, sizeof(int));
+            _ = DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, ref textColor, sizeof(int));
+
+            int borderColor = ColorToDwmColor(((SolidColorBrush?)TryGetBrush("HeaderBottomBorderBrush"))?.Color ?? captionBrush.Color);
+            _ = DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref borderColor, sizeof(int));
+        }
+        catch
+        {
+            // No bloquear la ventana si el sistema no soporta el atributo.
+        }
+    }
+
+    private static SolidColorBrush? TryGetBrush(string resourceKey)
+    {
+        if (System.Windows.Application.Current?.TryFindResource(resourceKey) is SolidColorBrush brush)
+            return brush;
+
+        return null;
+    }
+
+    private static int ColorToDwmColor(System.Windows.Media.Color color)
+    {
+        return (color.R) | (color.G << 8) | (color.B << 16);
+    }
+
+    private static bool IsSystemDarkMode()
+    {
+        try
+        {
+            object? value = Registry.GetValue(
+                @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+                "AppsUseLightTheme",
+                1);
+
+            if (value is int intValue)
+                return intValue == 0;
+        }
+        catch
+        {
+            // Ignorar y usar modo claro por defecto
+        }
+
+        return false;
+    }
+
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
     public void NavigateToView(System.Windows.Controls.UserControl view, string title)
     {

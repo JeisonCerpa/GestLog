@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Cronograma de Mantenimiento" Height="480" Width="520" WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize" WindowStyle="SingleBorderWindow" Background="#FAFAFA">
-    <Border Margin="16" Background="White" CornerRadius="8" Padding="20" BorderBrush="#DDD" BorderThickness="1">
+        ResizeMode="NoResize" WindowStyle="SingleBorderWindow" Background="{DynamicResource BackgroundSurfaceBrush}">
+    <Border Margin="16" Background="{DynamicResource BackgroundSurfaceBrush}" CornerRadius="8" Padding="20" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1">
         <StackPanel>
-            <TextBlock Text="Datos del Cronograma" FontSize="20" FontWeight="Bold" Foreground="#118938" Margin="0,0,0,18"/>
+            <TextBlock Text="Datos del Cronograma" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,0,18"/>
             <Grid Margin="0,0,0,10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

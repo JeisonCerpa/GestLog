@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +15,8 @@ using GestLog.Modules.Usuarios.Interfaces;
 using System.Windows.Data;
 using System.ComponentModel;
 using GestLog.Models.Enums;
+using MaintenanceSede = GestLog.Modules.GestionMantenimientos.Models.Enums.Sede;
+using PersonaSede = GestLog.Modules.Personas.Models.Enums.Sede;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
 {    
@@ -32,6 +35,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         private ObservableCollection<MantenimientoSemanaEstadoDto> estadosMantenimientos = new();
           [ObservableProperty]
         private ICollectionView? estadosMantenimientosView;
+
+                [ObservableProperty]
+                private ObservableCollection<SedeFiltroOption> sedeFiltros = new();
+
+                [ObservableProperty]
+                private SedeFiltroOption? selectedSedeFiltro;
+
+                [ObservableProperty]
+                private MaintenanceSede? sedeSeleccionada;
           [ObservableProperty]
         private bool sedeOrdenTallerPrimero = true; // true = Taller primero (Ascending), false = Bayunca primero (Descending)
         
@@ -43,8 +55,27 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         partial void OnEstadosMantenimientosChanged(ObservableCollection<MantenimientoSemanaEstadoDto> value)
         {
             ActualizarPuedeRegistrarMantenimientos();
+            ActualizarSedesDisponibles();
+            AplicarSedePredeterminadaSiCorresponde();
             ConfigurarVistaConAgrupacion();
-        }        private void ConfigurarVistaConAgrupacion()
+        }
+
+        partial void OnSedeSeleccionadaChanged(MaintenanceSede? value)
+        {
+            SelectedSedeFiltro = SedeFiltros.FirstOrDefault(x => x.Value == value);
+            EstadosMantenimientosView?.Refresh();
+        }
+
+        partial void OnSelectedSedeFiltroChanged(SedeFiltroOption? value)
+        {
+            var nuevaSede = value?.Value;
+            if (SedeSeleccionada != nuevaSede)
+            {
+                SedeSeleccionada = nuevaSede;
+            }
+        }
+
+        private void ConfigurarVistaConAgrupacion()
         {
             if (EstadosMantenimientos == null)
                 return;
@@ -54,6 +85,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             {
                 view.GroupDescriptions.Clear();
                 view.GroupDescriptions.Add(new PropertyGroupDescription("Sede"));
+                view.Filter = FiltrarPorSede;
                 
                 // Aplicar ordenamiento: primero por estado (Pendiente, Preventivo, Correctivo), luego por Sede
                 view.SortDescriptions.Clear();
@@ -69,6 +101,87 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             }
             
             EstadosMantenimientosView = view;
+        }
+
+        private static MaintenanceSede? MapearSedePersonaAMantenimiento(PersonaSede? sede)
+        {
+            if (sede == null)
+                return null;
+
+            return Enum.TryParse<MaintenanceSede>(sede.Value.ToString(), out var sedeMantenimiento)
+                ? sedeMantenimiento
+                : null;
+        }
+
+        private static string ObtenerDescripcionSede(MaintenanceSede? sede)
+        {
+            if (sede == null)
+                return "Todas";
+
+            var name = Enum.GetName(typeof(MaintenanceSede), sede.Value) ?? sede.Value.ToString();
+            var field = typeof(MaintenanceSede).GetField(name);
+            var descAttr = field?.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault() as System.ComponentModel.DescriptionAttribute;
+            return descAttr?.Description ?? name;
+        }
+
+        private void ActualizarSedesDisponibles()
+        {
+            var counts = EstadosMantenimientos
+                .Where(e => e.Sede.HasValue)
+                .GroupBy(e => e.Sede!.Value)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var items = new ObservableCollection<SedeFiltroOption>
+            {
+                new SedeFiltroOption(null, "Todas", EstadosMantenimientos.Count)
+            };
+
+            foreach (MaintenanceSede sede in Enum.GetValues(typeof(MaintenanceSede)))
+            {
+                counts.TryGetValue(sede, out var count);
+                items.Add(new SedeFiltroOption(sede, ObtenerDescripcionSede(sede), count));
+            }
+
+            SedeFiltros = items;
+            SelectedSedeFiltro = SedeFiltros.FirstOrDefault(x => x.Value == SedeSeleccionada) ?? SedeFiltros.FirstOrDefault();
+        }
+
+        private void AplicarSedePredeterminadaSiCorresponde()
+        {
+            var sedeUsuario = MapearSedePersonaAMantenimiento(_currentUserService?.Current?.Sede);
+            if (sedeUsuario.HasValue)
+            {
+                SedeSeleccionada = sedeUsuario;
+                SelectedSedeFiltro = SedeFiltros.FirstOrDefault(x => x.Value == sedeUsuario);
+                return;
+            }
+
+            if (SedeSeleccionada == null && SedeFiltros.Count > 0)
+            {
+                SelectedSedeFiltro = SedeFiltros.FirstOrDefault();
+            }
+        }
+
+        private bool FiltrarPorSede(object item)
+        {
+            if (item is not MantenimientoSemanaEstadoDto estado)
+                return false;
+
+            return SedeSeleccionada == null || estado.Sede == SedeSeleccionada;
+        }
+
+        public sealed class SedeFiltroOption
+        {
+            public SedeFiltroOption(MaintenanceSede? value, string display, int count)
+            {
+                Value = value;
+                Display = display;
+                Count = count;
+            }
+
+            public MaintenanceSede? Value { get; }
+            public string Display { get; }
+            public int Count { get; }
         }
         
         [ObservableProperty]
@@ -197,6 +310,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
             VerSeguimientoCommand = new RelayCommand<MantenimientoSemanaEstadoDto?>(VerSeguimiento);
             RegistrarMantenimientoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(RegistrarMantenimientoAsync, CanExecuteRegistrarMantenimiento);
             MarcarAtrasadoCommand = new AsyncRelayCommand<MantenimientoSemanaEstadoDto?>(MarcarAtrasadoAsync, CanExecuteMarcarAtrasado);            
+            ActualizarSedesDisponibles();
+            AplicarSedePredeterminadaSiCorresponde();
             ActualizarPuedeRegistrarMantenimientos();
         }
 
@@ -213,6 +328,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         private void OnCurrentUserChanged(object? sender, CurrentUserInfo? user)
         {
             RecalcularPermisos();
+            ActualizarSedesDisponibles();
+            AplicarSedePredeterminadaSiCorresponde();
         }
 
         private void RecalcularPermisos()

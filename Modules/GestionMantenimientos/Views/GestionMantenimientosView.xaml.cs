@@ -20,8 +20,9 @@ namespace GestLog.Modules.GestionMantenimientos.Views
             InitializeComponent();
             
             // Cargar solo la primera pestaña inicialmente
-            LoadEquiposTab();
-            _equiposLoaded = true;
+            tabMantenimientos.SelectedIndex = 0;
+            LoadCronogramaTab();
+            _cronogramaLoaded = true;
         }
 
         private void OnTabChanged(object sender, SelectionChangedEventArgs e)
@@ -35,18 +36,18 @@ namespace GestLog.Modules.GestionMantenimientos.Views
             
             switch (header)
             {
-                case "Equipos":
-                    if (!_equiposLoaded)
-                    {
-                        LoadEquiposTab();
-                        _equiposLoaded = true;
-                    }
-                    break;
                 case "Cronograma":
                     if (!_cronogramaLoaded)
                     {
                         LoadCronogramaTab();
                         _cronogramaLoaded = true;
+                    }
+                    break;
+                case "Equipos":
+                    if (!_equiposLoaded)
+                    {
+                        LoadEquiposTab();
+                        _equiposLoaded = true;
                     }
                     break;
                 case "Seguimiento":
@@ -61,7 +62,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views
 
         private void LoadEquiposTab()
         {
-            var equiposTab = (TabItem)tabMantenimientos.Items[0];
+            var equiposTab = (TabItem)tabMantenimientos.Items[1];
             if (equiposTab.Content == null)
             {
                 equiposTab.Content = new EquiposView();
@@ -70,7 +71,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views
 
         private void LoadCronogramaTab()
         {
-            var cronogramaTab = (TabItem)tabMantenimientos.Items[1];
+            var cronogramaTab = (TabItem)tabMantenimientos.Items[0];
             if (cronogramaTab.Content == null)
             {
                 cronogramaTab.Content = new CronogramaView();

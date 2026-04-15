@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GestLog.Modules.Personas.Models.Enums;
 
 namespace GestLog.Modules.Usuarios.Models.Authentication
 {
@@ -13,6 +14,7 @@ namespace GestLog.Modules.Usuarios.Models.Authentication
         public required string Username { get; set; }
         public required string FullName { get; set; }
         public string Email { get; set; } = string.Empty;
+        public Sede? Sede { get; set; }
         public DateTime LoginTime { get; set; }
         public DateTime LastActivity { get; set; }
         public List<string> Roles { get; set; } = new();
