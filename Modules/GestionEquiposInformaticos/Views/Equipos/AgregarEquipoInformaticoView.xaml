@@ -24,9 +24,6 @@
         RenderOptions.ClearTypeHint="Enabled"
         >    <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>            
             <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter"/>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>

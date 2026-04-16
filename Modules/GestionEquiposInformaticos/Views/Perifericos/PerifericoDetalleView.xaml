@@ -14,10 +14,6 @@
     <Window.Resources>
         <!-- Referencia al diccionario estándar de modales -->
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
             <!-- Conversor local necesario para bindings de Visibility -->
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <!-- Converter para mapear estado a color de fondo en el badge -->

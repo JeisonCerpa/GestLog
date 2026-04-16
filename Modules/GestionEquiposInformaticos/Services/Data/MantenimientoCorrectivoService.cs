@@ -55,6 +55,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Services.Data
                     return MantenimientosADtos(mantenimientos);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                _logger.LogDebug("Obtención de mantenimientos correctivos cancelada");
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error obteniendo todos los mantenimientos correctivos");

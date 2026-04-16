@@ -22,9 +22,7 @@
         RenderOptions.ClearTypeHint="Enabled">
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Modules/GestionEquiposInformaticos/Views/Equipos/ModalWindowsStandard.xaml" />
-            </ResourceDictionary.MergedDictionaries>            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
+            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
