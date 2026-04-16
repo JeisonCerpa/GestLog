@@ -22,18 +22,20 @@
             <conv:BooleanToEmojiConverter x:Key="BooleanToEmojiConverter" />
             <conv:EstadoToColorConverter x:Key="EstadoToColorConverter" />
 
+            <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+            <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}" />
+
             <DataTemplate x:Key="RamItemTemplate">
                 <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="{Binding TipoMemoria, Mode=OneWay}"
                                    Style="{StaticResource ThemeCardTitleStyle}"
-                                   FontSize="16" />
+                                   FontSize="16"
+                                   Margin="0,0,0,10" />
 
-                        <Grid Margin="0,14,0,0">
+                        <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -41,23 +43,37 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Slot" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NumeroSlot, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="Slot" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding NumeroSlot, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Capacidad" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CapacidadGB, Mode=OneWay, StringFormat={}{0} GB}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="Capacidad" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding CapacidadGB, Mode=OneWay, StringFormat={}{0} GB}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Marca, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Marca, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Frecuencia" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Frecuencia, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Frecuencia" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Frecuencia, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
                         </Grid>
 
-                        <TextBlock Text="{Binding Observaciones, Mode=OneWay}"
-                                   Margin="0,12,0,0"
-                                   Style="{StaticResource ThemeBodyTextStyle}"
-                                   TextWrapping="Wrap" />
+                        <TextBox Text="{Binding Observaciones, Mode=OneWay}"
+                                 Margin="0,12,0,0"
+                                 Style="{StaticResource ThemeDetailCopyValueStyle}"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 MinHeight="42" />
                     </StackPanel>
                 </Border>
             </DataTemplate>
@@ -67,13 +83,12 @@
                     <StackPanel>
                         <TextBlock Text="{Binding NumeroDisco, Mode=OneWay, StringFormat=Disco {0}}"
                                    Style="{StaticResource ThemeCardTitleStyle}"
-                                   FontSize="16" />
+                                   FontSize="16"
+                                   Margin="0,0,0,10" />
 
-                        <Grid Margin="0,14,0,0">
+                        <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -81,17 +96,29 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Tipo" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Tipo, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="Tipo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Tipo, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Capacidad" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding CapacidadGB, Mode=OneWay, StringFormat={}{0} GB}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="Capacidad" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding CapacidadGB, Mode=OneWay, StringFormat={}{0} GB}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Marca, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Marca, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Modelo, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Modelo, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -100,26 +127,35 @@
             <DataTemplate x:Key="ConexionItemTemplate">
                 <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,10">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Adaptador, Mode=OneWay}"
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Adaptador, Mode=OneWay}"
                                        Style="{StaticResource ThemeCardTitleStyle}"
-                                       FontSize="16" />
-                            <Border Margin="12,0,0,0"
+                                       FontSize="16"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis" />
+
+                            <Border Grid.Column="1"
+                                    Margin="12,0,0,0"
                                     Padding="10,6"
                                     CornerRadius="10"
                                     Background="{Binding EstadoDescripcion, Mode=OneWay, Converter={StaticResource EstadoToColorConverter}}">
-                                <TextBlock Text="Activo"
+                                <TextBlock Text="{Binding EstadoDescripcion, Mode=OneWay}"
                                            Foreground="White"
                                            FontSize="12"
-                                           FontWeight="SemiBold" />
+                                           FontWeight="SemiBold"
+                                           TextWrapping="NoWrap" />
                             </Border>
-                        </StackPanel>
+                        </Grid>
 
                         <Grid Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -127,17 +163,29 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="IP" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DireccionIPv4, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="IP" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding DireccionIPv4, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="MAC" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding DireccionMAC, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="MAC" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding DireccionMAC, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Máscara" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MascaraSubred, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Máscara" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding MascaraSubred, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Gateway" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding PuertoEnlace, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Gateway" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding PuertoEnlace, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -146,26 +194,35 @@
             <DataTemplate x:Key="PerifericoItemTemplate">
                 <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,10">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Dispositivo, Mode=OneWay}"
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Dispositivo, Mode=OneWay}"
                                        Style="{StaticResource ThemeCardTitleStyle}"
-                                       FontSize="16" />
-                            <Border Margin="12,0,0,0"
+                                       FontSize="16"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis" />
+
+                            <Border Grid.Column="1"
+                                    Margin="12,0,0,0"
                                     Padding="12,7"
                                     CornerRadius="10"
                                     Background="{Binding EstadoDescripcion, Mode=OneWay, Converter={StaticResource EstadoToColorConverter}}">
                                 <TextBlock Text="{Binding EstadoDescripcion, Mode=OneWay}"
                                            Foreground="White"
                                            FontSize="12"
-                                           FontWeight="SemiBold" />
+                                           FontWeight="SemiBold"
+                                           TextWrapping="NoWrap" />
                             </Border>
-                        </StackPanel>
+                        </Grid>
 
                         <Grid Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -173,23 +230,37 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Código" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Codigo, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="Código" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Codigo, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
-                            <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Marca, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Marca, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Modelo, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Modelo, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Serial" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding SerialNumber, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,10,0,0" />
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Serial" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding SerialNumber, Mode=OneWay}"
+                                         Style="{StaticResource ThemeDetailCopyValueStyle}" />
+                            </StackPanel>
                         </Grid>
 
-                        <TextBlock Text="{Binding Observaciones, Mode=OneWay}"
-                                   Margin="0,12,0,0"
-                                   Style="{StaticResource ThemeBodyTextStyle}"
-                                   TextWrapping="Wrap" />
+                        <TextBox Text="{Binding Observaciones, Mode=OneWay}"
+                                 Margin="0,12,0,0"
+                                 Style="{StaticResource ThemeDetailCopyValueStyle}"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 MinHeight="42" />
                     </StackPanel>
                 </Border>
             </DataTemplate>
@@ -299,23 +370,38 @@
 
                                 <StackPanel Grid.Column="0" Margin="0,0,18,0">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding NombreEquipo, Mode=OneWay}"
-                                                   Style="{StaticResource ThemeCardTitleStyle}"
-                                                   FontSize="24" />
+                                        <TextBox Text="{Binding NombreEquipo, Mode=OneWay}"
+                                                 Style="{StaticResource ThemeDetailCopyValueStyle}"
+                                                 FontSize="24"
+                                                 BorderThickness="0"
+                                                 Margin="0"
+                                                 Padding="0"
+                                                 Background="Transparent"
+                                                 Width="Auto" />
                                         <Border Margin="14,0,0,0"
                                                 Padding="12,7"
                                                 CornerRadius="10"
                                                 Background="{Binding Estado, Mode=OneWay, Converter={StaticResource EstadoToColorConverter}}">
-                                            <TextBlock Text="{Binding Estado, Mode=OneWay}"
-                                                       Foreground="White"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold" />
+                                            <TextBox Text="{Binding Estado, Mode=OneWay}"
+                                                     Foreground="White"
+                                                     FontSize="12"
+                                                     FontWeight="SemiBold"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Padding="0"
+                                                     IsReadOnly="True"
+                                                     IsTabStop="False"
+                                                     Focusable="True"
+                                                     Cursor="IBeam"
+                                                     SelectionBrush="{DynamicResource PrimaryBrush}"
+                                                     SelectionOpacity="0.25"
+                                                     CaretBrush="Transparent" />
                                         </Border>
                                     </StackPanel>
 
-                                    <TextBlock Text="{Binding Codigo, Mode=OneWay, StringFormat=Código {0}}"
-                                               Style="{StaticResource ThemeSectionSubtitleStyle}"
-                                               Margin="0,6,0,0" />
+                                    <TextBox Text="{Binding Codigo, Mode=OneWay, StringFormat=Código {0}}"
+                                             Style="{StaticResource ThemeDetailCopyValueStyle}"
+                                             Margin="0,6,0,0" />
 
                                     <TextBlock Text="Resumen técnico del activo y su trazabilidad principal."
                                                Style="{StaticResource ThemeBodyTextStyle}"
@@ -336,42 +422,42 @@
                                         <Border Grid.Row="0" Grid.Column="0" Margin="0,0,12,12">
                                             <StackPanel>
                                                 <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding Marca, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding Marca, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Row="0" Grid.Column="1" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding Modelo, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding Modelo, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Row="1" Grid.Column="0" Margin="0,0,12,12">
                                             <StackPanel>
                                                 <TextBlock Text="Procesador" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding Procesador, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding Procesador, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Sistema operativo" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding SO, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding SO, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Row="2" Grid.Column="0" Margin="0,0,12,12">
                                             <StackPanel>
                                                 <TextBlock Text="Serial" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding SerialNumber, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding SerialNumber, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Border Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="AnyDesk" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding CodigoAnydesk, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                <TextBox Text="{Binding CodigoAnydesk, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
                                             </StackPanel>
                                         </Border>
 
@@ -381,9 +467,11 @@
                                                 BorderThickness="0,1,0,0">
                                             <StackPanel>
                                                 <TextBlock Text="Observaciones" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                <TextBlock Text="{Binding Observaciones, Mode=OneWay}"
-                                                           Style="{StaticResource ThemeBodyTextStyle}"
-                                                           TextWrapping="Wrap" />
+                                                <TextBox Text="{Binding Observaciones, Mode=OneWay}"
+                                                         Style="{StaticResource ThemeDetailCopyValueStyle}"
+                                                         TextWrapping="Wrap"
+                                                         AcceptsReturn="True"
+                                                         MinHeight="42" />
                                             </StackPanel>
                                         </Border>
                                     </Grid>
@@ -425,10 +513,10 @@
                                                     </Grid.RowDefinitions>
 
                                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Asignado a" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UsuarioAsignado, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding UsuarioAsignado, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
 
                                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Anterior" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,12,0,0" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UsuarioAsignadoAnterior, Mode=OneWay}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,12,0,0" />
+                                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding UsuarioAsignadoAnterior, Mode=OneWay}" Style="{StaticResource ThemeDetailCopyValueStyle}" Margin="0,12,0,0" />
                                                 </Grid>
                                             </StackPanel>
                                         </Border>
@@ -452,10 +540,10 @@
                                                     </Grid.RowDefinitions>
 
                                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Costo" Style="{StaticResource ThemeDetailLabelStyle}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Costo, Mode=OneWay, StringFormat={}{0:C}}" Style="{StaticResource ThemeDetailValueStyle}" />
+                                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Costo, Mode=OneWay, StringFormat={}{0:C}}" Style="{StaticResource ThemeDetailCopyValueStyle}" />
 
                                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Fecha" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,12,0,0" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FechaCompra, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" Style="{StaticResource ThemeDetailValueStyle}" Margin="0,12,0,0" />
+                                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding FechaCompra, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy}}" Style="{StaticResource ThemeDetailCopyValueStyle}" Margin="0,12,0,0" />
                                                 </Grid>
                                             </StackPanel>
                                         </Border>
@@ -489,16 +577,24 @@
                                             Margin="0,0,8,8"
                                             Background="{DynamicResource BackgroundSurfaceBrush}">
                                         <StackPanel>
-                                            <DockPanel LastChildFill="True">
-                                                <TextBlock Text="Memoria RAM"
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="Memoria RAM"
                                                            Style="{StaticResource ThemeSectionTitleStyle}"
                                                            FontSize="16"
-                                                           DockPanel.Dock="Left" />
-                                                <TextBlock Text="{Binding SlotsRam.Count, Mode=OneWay, StringFormat={}{0} slots}"
-                                                           DockPanel.Dock="Right"
-                                                           Style="{StaticResource ThemeDetailLabelStyle}"
                                                            VerticalAlignment="Center" />
-                                            </DockPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding SlotsRam.Count, Mode=OneWay, StringFormat={}{0} slots}"
+                                                           Style="{StaticResource ThemeDetailLabelStyle}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           TextAlignment="Right"
+                                                           Margin="16,0,0,0" />
+                                            </Grid>
                                             <ItemsControl ItemsSource="{Binding SlotsRam}"
                                                           ItemTemplate="{StaticResource RamItemTemplate}"
                                                           Margin="0,14,0,0" />
@@ -511,16 +607,24 @@
                                             Margin="8,0,0,8"
                                             Background="{DynamicResource BackgroundSurfaceBrush}">
                                         <StackPanel>
-                                            <DockPanel LastChildFill="True">
-                                                <TextBlock Text="Almacenamiento"
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="Almacenamiento"
                                                            Style="{StaticResource ThemeSectionTitleStyle}"
                                                            FontSize="16"
-                                                           DockPanel.Dock="Left" />
-                                                <TextBlock Text="{Binding Discos.Count, Mode=OneWay, StringFormat={}{0} discos}"
-                                                           DockPanel.Dock="Right"
-                                                           Style="{StaticResource ThemeDetailLabelStyle}"
                                                            VerticalAlignment="Center" />
-                                            </DockPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Discos.Count, Mode=OneWay, StringFormat={}{0} discos}"
+                                                           Style="{StaticResource ThemeDetailLabelStyle}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           TextAlignment="Right"
+                                                           Margin="16,0,0,0" />
+                                            </Grid>
                                             <ItemsControl ItemsSource="{Binding Discos}"
                                                           ItemTemplate="{StaticResource DiscoItemTemplate}"
                                                           Margin="0,14,0,0" />
@@ -533,16 +637,24 @@
                                             Margin="0,8,8,0"
                                             Background="{DynamicResource BackgroundSurfaceBrush}">
                                         <StackPanel>
-                                            <DockPanel LastChildFill="True">
-                                                <TextBlock Text="Conexiones de red"
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="Conexiones de red"
                                                            Style="{StaticResource ThemeSectionTitleStyle}"
                                                            FontSize="16"
-                                                           DockPanel.Dock="Left" />
-                                                <TextBlock Text="{Binding Conexiones.Count, Mode=OneWay, StringFormat={}{0} conexiones}"
-                                                           DockPanel.Dock="Right"
-                                                           Style="{StaticResource ThemeDetailLabelStyle}"
                                                            VerticalAlignment="Center" />
-                                            </DockPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Conexiones.Count, Mode=OneWay, StringFormat={}{0} conexiones}"
+                                                           Style="{StaticResource ThemeDetailLabelStyle}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           TextAlignment="Right"
+                                                           Margin="16,0,0,0" />
+                                            </Grid>
                                             <ItemsControl ItemsSource="{Binding Conexiones}"
                                                           ItemTemplate="{StaticResource ConexionItemTemplate}"
                                                           Margin="0,14,0,0" />
@@ -555,16 +667,24 @@
                                             Margin="8,8,0,0"
                                             Background="{DynamicResource BackgroundSurfaceBrush}">
                                         <StackPanel>
-                                            <DockPanel LastChildFill="True">
-                                                <TextBlock Text="Periféricos"
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="Periféricos"
                                                            Style="{StaticResource ThemeSectionTitleStyle}"
                                                            FontSize="16"
-                                                           DockPanel.Dock="Left" />
-                                                <TextBlock Text="{Binding Perifericos.Count, Mode=OneWay, StringFormat={}{0} periféricos}"
-                                                           DockPanel.Dock="Right"
-                                                           Style="{StaticResource ThemeDetailLabelStyle}"
                                                            VerticalAlignment="Center" />
-                                            </DockPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Perifericos.Count, Mode=OneWay, StringFormat={}{0} periféricos}"
+                                                           Style="{StaticResource ThemeDetailLabelStyle}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Right"
+                                                           TextAlignment="Right"
+                                                           Margin="16,0,0,0" />
+                                            </Grid>
                                             <ItemsControl ItemsSource="{Binding Perifericos}"
                                                           ItemTemplate="{StaticResource PerifericoItemTemplate}"
                                                           Margin="0,14,0,0" />
