@@ -64,9 +64,9 @@
                             VerticalAlignment="Center">
                     <Button Content="⭱ Exportar"
                             Style="{StaticResource ThemeHeaderActionButtonStyle}"
-                            Command="{Binding ExportarInteligenteCommand}"
-                            IsEnabled="{Binding CanExportEquipo}"
-                            Opacity="{Binding CanExportEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Command="{Binding ExportarEquiposCommand}"
+                            IsEnabled="{Binding CanExportarDatos}"
+                            Opacity="{Binding CanExportarDatos, Converter={StaticResource BooleanToOpacityConverter}}"
                             Margin="0,0,8,0"
                             MinHeight="38" />
 
@@ -78,9 +78,9 @@
 
                     <Button Content="＋ Nuevo equipo"
                             Style="{StaticResource ThemeHeaderPrimaryButtonStyle}"
-                            Command="{Binding AddEquipoCommand}"
-                            IsEnabled="{Binding CanAddEquipo}"
-                            Opacity="{Binding CanAddEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
+                            Command="{Binding AgregarEquipoCommand}"
+                            IsEnabled="{Binding CanCrearEquipo}"
+                            Opacity="{Binding CanCrearEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
                             MinHeight="38"
                             MinWidth="150" />
                 </StackPanel>
