@@ -4,56 +4,57 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
-        xmlns:modelsEntities="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Models.Entities"
         xmlns:local="clr-namespace:GestLog.Behaviors"
+        xmlns:modelsEntities="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Models.Entities"
         mc:Ignorable="d"
         Title="Agregar Equipo Informático"
-        Height="800" Width="1200"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
+        ShowInTaskbar="False"
         SizeToContent="Manual"
         WindowStartupLocation="Manual"
-        ShowInTaskbar="False"
+        Height="820"
+        Width="1360"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType"
         TextOptions.TextHintingMode="Fixed"
         RenderOptions.BitmapScalingMode="HighQuality"
-        RenderOptions.ClearTypeHint="Enabled"
-        >    <Window.Resources>
-        <ResourceDictionary>
-            <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter"/>
-            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-            <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
-            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter"/>
-            <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
-            <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter"/>
-            <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
-            <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
-            <conv:EstadoToBoolConverter x:Key="EstadoToEnReparacionConverter" TargetEstado="EnReparacion"/>
-            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion"/>
+        RenderOptions.ClearTypeHint="Enabled">
 
-            <!-- Estilo personalizado para tooltips con delay reducido -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <conv:TipoMemoriaTooltipConverter x:Key="TipoMemoriaTooltipConverter" />
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter" />
+            <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+            <conv:TipoDiscoToStringConverter x:Key="TipoDiscoToStringConverter" />
+            <conv:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter" />
+            <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter" />
+            <conv:EstadoToBoolConverter x:Key="EstadoToEnReparacionConverter" TargetEstado="EnReparacion" />
+            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion" />
+
             <Style x:Key="FastTooltipStyle" TargetType="ToolTip">
-                <Setter Property="OverridesDefaultStyle" Value="True"/>
-                <Setter Property="Background" Value="#333333"/>
-                <Setter Property="Foreground" Value="#FFFFFF"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Padding" Value="12,8,12,8"/>
-                <Setter Property="BorderBrush" Value="#666666"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="OverridesDefaultStyle" Value="True" />
+                <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="FontSize" Value="12" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ToolTip">
-                            <Border Background="{TemplateBinding Background}" 
+                            <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6"
+                                    CornerRadius="8"
                                     Padding="{TemplateBinding Padding}">
-                                <ContentPresenter TextBlock.Foreground="{TemplateBinding Foreground}"
-                                                  TextBlock.FontSize="{TemplateBinding FontSize}"/>
+                                <ContentPresenter />
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
@@ -61,322 +62,319 @@
             </Style>
 
             <DataTemplate x:Key="SlotRamTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
-                    UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <!-- Ahora la tarjeta tiene dos filas: fila 0 -> Slot + botón; fila 1 -> campos debajo -->
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Fila superior: Slot y número -->
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="Slot:" FontWeight="Bold" Foreground="#504F4E"
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBlock Text="{Binding NumeroSlot}" Foreground="#706F6F" Margin="8,0,0,0"
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                    </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="0,0,10,0">
+                                <TextBlock Text="RAM" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                            </Border>
+                            <TextBlock Text="Slot" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                            <TextBlock Text="{Binding NumeroSlot}" Margin="6,0,0,0" Style="{StaticResource ThemeCardTitleStyle}" FontSize="16" />
+                        </StackPanel>
 
-                    <!-- Botón eliminar en la misma fila, alineado a la derecha -->
-                    <Button Grid.Row="0" Grid.Column="1" Command="{Binding DataContext.EliminarRamCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}"
-                            Width="28" Height="28"
-                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                            Margin="0,0,0,0"
-                            ToolTip="Eliminar RAM"
-                            IsEnabled="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Opacity="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            Focusable="False"
-                            Panel.ZIndex="10">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="#C0392B" CornerRadius="16" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Viewbox Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Canvas Width="12" Height="12">
-                                <Path Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M2,2 L10,10 M10,2 L2,10" />
-                            </Canvas>
-                        </Viewbox>
-                    </Button>
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Command="{Binding DataContext.EliminarRamCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Content="Eliminar"
+                                Style="{StaticResource ThemeDangerButtonStyle}"
+                                Width="90"
+                                Height="32"
+                                FontSize="13"
+                                Padding="10,0"
+                                IsEnabled="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Opacity="{Binding DataContext.CanEliminarRam, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}" />
 
-                    <!-- Fila inferior: campos desplegados debajo (ocupan ambas columnas) -->
-                    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
-                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding TipoMemoria}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding CapacidadGB}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding Marca}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Frecuencia:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding Frecuencia}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Observaciones:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding Observaciones}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="No ocupado" Foreground="#C0392B" FontWeight="Bold" FontSize="14" 
-                                   Visibility="{Binding Ocupado, Converter={StaticResource InverseBooleanToVisibilityConverter}}" 
-                                   Margin="0,8,0,0" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </DataTemplate>
-        <DropShadowEffect x:Key="DropShadowEffect" Color="#504F4E" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
-        <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
-                    UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <!-- Estructura de dos filas: fila 0 -> Disco + botón; fila 1 -> campos debajo -->
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Fila superior: Disco y número -->
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="Disco:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBlock Text="{Binding NumeroDisco}" Foreground="#706F6F" Margin="8,0,0,0" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                    </StackPanel>
-
-                    <!-- Botón eliminar en la misma fila -->
-                    <Button Grid.Row="0" Grid.Column="1" Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}"
-                            Width="28" Height="28"
-                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                            Margin="0,0,0,0"
-                            ToolTip="Eliminar Disco"
-                            IsEnabled="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Opacity="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            Focusable="False"
-                            Panel.ZIndex="10">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="#C0392B" CornerRadius="16" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" SnapsToDevicePixels="True">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Viewbox Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Canvas Width="12" Height="12">
-                                <Path Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M2,2 L10,10 M10,2 L2,10" />
-                            </Canvas>
-                        </Viewbox>
-                    </Button>
-
-                    <!-- Fila inferior: campos debajo que ocupan ambas columnas -->
-                    <StackPanel Orientation="Vertical" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
-                        <TextBlock Text="Tipo:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <ComboBox ItemsSource="{Binding DataContext.TiposDisco, RelativeSource={RelativeSource AncestorType=Window}}"
-                                  SelectedItem="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  Margin="0,0,0,4" Background="#FAFAFA" 
-                                  SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Capacidad (GB):" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding CapacidadGB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Marca:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding Marca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                        <TextBlock Text="Modelo:" FontWeight="Bold" Foreground="#504F4E" 
-                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                 SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </DataTemplate>
-        <!-- Template para Conexiones de Red -->
-        <DataTemplate x:Key="ConexionTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
-                    UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <!-- Campos editables -->
-                    <StackPanel Orientation="Vertical" Grid.Column="0">
-                        <Grid>
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1*" MinWidth="120" />
+                                <ColumnDefinition Width="1*" MinWidth="120" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Text="Adaptador:" FontWeight="Bold" Foreground="#504F4E" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                <TextBox Text="{Binding Adaptador, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                         SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                <TextBlock Text="MAC:" FontWeight="Bold" Foreground="#504F4E" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                <TextBox Text="{Binding DireccionMAC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                         SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
+                                <TextBlock Text="Tipo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding TipoMemoria}" Style="{StaticResource ThemeTextBoxStyle}" Height="38" ToolTip="{Binding DataContext.TipoMemoriaTooltip, RelativeSource={RelativeSource AncestorType=Window}}" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                                <TextBlock Text="IPv4:" FontWeight="Bold" Foreground="#504F4E" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                <TextBox Text="{Binding DireccionIPv4, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                         SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                <TextBlock Text="Máscara:" FontWeight="Bold" Foreground="#504F4E" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                <TextBox Text="{Binding MascaraSubred, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                         SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,10">
+                                <TextBlock Text="Capacidad (GB)" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding CapacidadGB}" Style="{StaticResource ThemeTextBoxStyle}" Height="38" HorizontalContentAlignment="Right" />
                             </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Gateway:" FontWeight="Bold" Foreground="#504F4E" 
-                                           TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                <TextBox Text="{Binding PuertoEnlace, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" Background="#FAFAFA" 
-                                         SnapsToDevicePixels="True" UseLayoutRounding="True" />
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,0">
+                                <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Marca}" Style="{StaticResource ThemeTextBoxStyle}" Height="38" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0">
+                                <TextBlock Text="Frecuencia" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Frecuencia}" Style="{StaticResource ThemeTextBoxStyle}" Height="38" />
                             </StackPanel>
                         </Grid>
-                    </StackPanel>
-                    <!-- Botón eliminar -->
-                    <Button Content="Eliminar" Command="{Binding DataContext.EliminarConexionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Style="{StaticResource CardButtonStyle}" Width="80" Height="32" Grid.Column="1" Margin="8,0,0,0" 
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />                </Grid>
-            </Border>
-        </DataTemplate>
 
-        <!-- Template para Periférico Asignado -->
-        <DataTemplate x:Key="PerifericoAsignadoTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
-                    UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <!-- Información del periférico -->
-                    <StackPanel Orientation="Vertical" Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Código: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Codigo}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Dispositivo: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Dispositivo}" Margin="8,0,0,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,12,0,0">
+                            <TextBlock Text="Observaciones" Style="{StaticResource ThemeDetailLabelStyle}" />
+                            <TextBox Text="{Binding Observaciones}" Style="{StaticResource ThemeTextBoxStyle}" Height="76" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock Text="Marca: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Marca}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Modelo: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Modelo}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Estado: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding EstadoDescripcion}" Margin="8,0,0,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                        </StackPanel>
-                    </StackPanel>
-                    <!-- Botón desasignar -->
-                    <Button Content="Desasignar"
-                            Command="{Binding DataContext.DesasignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}"
-                            Style="{StaticResource CardButtonStyle}"
-                            Width="90" Height="32" Grid.Column="1" Margin="8,0,0,0"
-                            Background="#C0392B" Foreground="#FFFFFF" BorderBrush="#C0392B" BorderThickness="1"
-                            FontWeight="Bold" FontSize="14" Cursor="Hand" Padding="8,0,8,0"
-                            IsEnabled="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Opacity="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
-                        <Button.Effect>
-                            <DropShadowEffect Color="#C0392B" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
-                        </Button.Effect>
-                    </Button>
-                </Grid>
-            </Border>
-        </DataTemplate>
 
-        <!-- Template para Periférico Disponible -->
-        <DataTemplate x:Key="PerifericoDisponibleTemplate">
-            <Border Margin="4" Padding="8" Background="#FFFFFF" CornerRadius="8" BorderBrush="#DDD" BorderThickness="1"
-                    UseLayoutRounding="True" SnapsToDevicePixels="True">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <!-- Información del periférico -->
-                    <StackPanel Orientation="Vertical" Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Código: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Codigo}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Dispositivo: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Dispositivo}" Margin="8,0,0,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+                        <TextBlock Grid.Row="3" Grid.ColumnSpan="2"
+                                   Text="No ocupado"
+                                   Margin="0,12,0,0"
+                                   Foreground="{DynamicResource DangerBrush}"
+                                   FontWeight="SemiBold"
+                                   Visibility="{Binding Ocupado, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type modelsEntities:DiscoEntity}">
+                <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="0,0,10,0">
+                                <TextBlock Text="Disco" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                            </Border>
+                            <TextBlock Text="{Binding NumeroDisco, StringFormat='#{0}'}" Style="{StaticResource ThemeCardTitleStyle}" FontSize="16" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock Text="Marca: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Marca}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Modelo: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding Modelo}" Margin="8,0,16,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="Estado: " FontWeight="Bold" Foreground="#504F4E" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                            <TextBlock Text="{Binding EstadoDescripcion}" Margin="8,0,0,0" Foreground="#706F6F" 
-                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Content="Eliminar"
+                                Command="{Binding DataContext.EliminarDiscoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource ThemeDangerButtonStyle}"
+                                Width="90"
+                                Height="32"
+                                FontSize="13"
+                                Padding="10,0"
+                                IsEnabled="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Opacity="{Binding DataContext.CanEliminarDisco, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}" />
+
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" MinWidth="120" />
+                                <ColumnDefinition Width="1*" MinWidth="120" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
+                                <TextBlock Text="Tipo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <ComboBox ItemsSource="{Binding DataContext.TiposDisco, RelativeSource={RelativeSource AncestorType=Window}}"
+                                          SelectedItem="{Binding Tipo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Style="{StaticResource ThemeComboBoxStyle}"
+                                          Height="36" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,10">
+                                <TextBlock Text="Capacidad (GB)" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding CapacidadGB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" HorizontalContentAlignment="Right" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,0">
+                                <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Marca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0">
+                                <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Modelo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate x:Key="ConexionTemplate">
+                <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="0,0,10,0">
+                                <TextBlock Text="Red" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                            </Border>
+                            <TextBlock Text="{Binding Adaptador, TargetNullValue=Conexión}" Style="{StaticResource ThemeCardTitleStyle}" FontSize="16" TextWrapping="Wrap" />
                         </StackPanel>
-                    </StackPanel>
-                    <!-- Botón asignar -->
-                    <Button Content="Asignar" 
-                            Command="{Binding DataContext.AsignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                            CommandParameter="{Binding}" 
-                            Style="{StaticResource CardButtonStyle}" 
-                            Width="90" Height="32" Grid.Column="1" Margin="8,0,0,0" 
-                            Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1"
-                            FontWeight="Bold" FontSize="14" Cursor="Hand" Padding="8,0,8,0"
-                            IsEnabled="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Opacity="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}"
-                            SnapsToDevicePixels="True" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
-                        <Button.Effect>
-                            <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.18" />
-                        </Button.Effect>
-                    </Button>                </Grid>
-            </Border>
-        </DataTemplate>
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Content="Eliminar"
+                                Command="{Binding DataContext.EliminarConexionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource ThemeDangerButtonStyle}"
+                                Width="90"
+                                Height="32"
+                                FontSize="13"
+                                Padding="10,0" />
+
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" MinWidth="120" />
+                                <ColumnDefinition Width="1*" MinWidth="120" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
+                                <TextBlock Text="Adaptador" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding Adaptador, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,10">
+                                <TextBlock Text="MAC" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding DireccionMAC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,0">
+                                <TextBlock Text="IPv4" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding DireccionIPv4, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0">
+                                <TextBlock Text="Máscara / Gateway" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                <TextBox Text="{Binding MascaraSubred, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemeTextBoxStyle}" Height="36" ToolTip="Máscara de subred" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate x:Key="PerifericoAsignadoTemplate">
+                <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Codigo}" Style="{StaticResource ThemeCardTitleStyle}" FontSize="16" />
+                                    <TextBlock Text="{Binding Dispositivo}" Style="{StaticResource ThemeSectionSubtitleStyle}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Border Grid.Column="1" Style="{StaticResource ThemeDetailChipStyle}" VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding EstadoDescripcion}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                </Border>
+                            </Grid>
+
+                            <UniformGrid Columns="2" Margin="0,0,0,4">
+                                <TextBlock Text="{Binding Marca, StringFormat=Marca: {0}}" Style="{StaticResource ThemeSectionSubtitleStyle}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Modelo, StringFormat=Modelo: {0}}" Style="{StaticResource ThemeSectionSubtitleStyle}" TextWrapping="Wrap" />
+                            </UniformGrid>
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="Desasignar"
+                                Command="{Binding DataContext.DesasignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource ThemeDangerButtonStyle}"
+                                Width="110"
+                                Height="34"
+                                FontSize="13"
+                                Padding="10,0"
+                            Margin="16,0,0,0"
+                                VerticalAlignment="Top"
+                                IsEnabled="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Opacity="{Binding DataContext.CanDesasignarPeriferico, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate x:Key="PerifericoDisponibleTemplate">
+                <Border Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Codigo}" Style="{StaticResource ThemeCardTitleStyle}" FontSize="16" />
+                                    <TextBlock Text="{Binding Dispositivo}" Style="{StaticResource ThemeSectionSubtitleStyle}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <Border Grid.Column="1" Style="{StaticResource ThemeDetailChipStyle}" VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding EstadoDescripcion}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                </Border>
+                            </Grid>
+
+                            <UniformGrid Columns="2" Margin="0,0,0,4">
+                                <TextBlock Text="{Binding Marca, StringFormat=Marca: {0}}" Style="{StaticResource ThemeSectionSubtitleStyle}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Modelo, StringFormat=Modelo: {0}}" Style="{StaticResource ThemeSectionSubtitleStyle}" TextWrapping="Wrap" />
+                            </UniformGrid>
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="Asignar"
+                                Command="{Binding DataContext.AsignarPerifericoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource ThemePrimaryButtonStyle}"
+                                Width="110"
+                                Height="34"
+                                FontSize="13"
+                                Padding="10,0"
+                            Margin="16,0,0,0"
+                                VerticalAlignment="Top"
+                                IsEnabled="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Opacity="{Binding DataContext.CanGuardarEquipo, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToOpacityConverter}}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
 
-    <!-- Contenedor principal: Grid overlay modal -->
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <!-- Panel centrado modal -->
-        <Border x:Name="Card" Width="1200" MaxHeight="800" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
-                HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
-                UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
+    <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
+        <Border x:Name="Card"
+                Width="1340"
+                MaxHeight="900"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource BackgroundSurfaceBrush}"
+                BorderBrush="{DynamicResource BorderStrongBrush}"
+                BorderThickness="1"
+                CornerRadius="24"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -384,90 +382,120 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Header Modal -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,16" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                <Border Grid.Row="0"
+                        Style="{StaticResource ThemeHeaderContainerStyle}"
+                        CornerRadius="24,24,0,0"
+                        Padding="20,18">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" 
-                                    CornerRadius="8" 
-                                    Padding="8" 
-                                    Margin="0,0,12,0"
-                                    Width="42" 
-                                    Height="42"
-                                    Effect="{StaticResource SectionShadow}"
-                                    UseLayoutRounding="True"
-                                    SnapsToDevicePixels="True">
-                                <!-- Icono de equipo -->
-                                <TextBlock Text="💻" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeCardIconCircleStyle}" Width="52" Height="52" Margin="0,0,14,0">
+                                <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Style="{StaticResource ThemeCardIconTextStyle}" FontSize="20" />
                             </Border>
                             <StackPanel>
-                                <TextBlock Text="Agregar Equipo Informático" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Ingresa los datos completos del equipo y sus componentes" Style="{StaticResource SubHeaderTextStyle}" Foreground="White"/>
+                                <TextBlock Text="Agregar equipo informático"
+                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Visibility="{Binding IsEditing, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                <TextBlock Text="Editar equipo informático"
+                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <TextBlock Text="Completa identificación, datos técnicos y componentes."
+                                           Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                           FontSize="12"
+                                           Margin="0,4,0,0" />
+                                <Border Style="{StaticResource ThemeDetailChipStyle}"
+                                        Margin="0,10,0,0"
+                                        HorizontalAlignment="Left"
+                                        Visibility="{Binding IsLoadingRam, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True" Width="72" Height="6" Margin="0,0,10,0" />
+                                        <TextBlock Text="Obteniendo campos automáticos..."
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="1" x:Name="BtnCerrarHeader" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="6">
+                        <Button x:Name="BtnCerrarHeader"
+                                Grid.Column="1"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Width="38"
+                                Height="38"
+                                ToolTip="Cerrar (Esc)"
+                                Click="BtnCerrar_Click"
+                                VerticalAlignment="Center">
                             <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                             </Grid>
                         </Button>
                     </Grid>
-                </Border>                <!-- Contenido con ScrollViewer -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="24" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <!-- Sección principal -->
-                        <Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="24">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,18">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2.2*" />
-                                <ColumnDefinition Width="0.1*" />
-                                <ColumnDefinition Width="1.2*" />
+                                <ColumnDefinition Width="1*" />
                             </Grid.ColumnDefinitions>
-                            <!-- Datos del equipo -->
-                            <Border Grid.Column="0" Background="#FAFAFA" CornerRadius="8" Padding="24" Margin="0,24,0,24" BorderBrush="#DDD" BorderThickness="1">
+
+                            <Border Grid.Column="0" Style="{StaticResource ThemeDetailSectionCardStyle}">
                                 <StackPanel>
-                                    <TextBlock Text="Datos principales" FontSize="16" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,12" 
-                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                    <Separator Margin="0,0,0,12" />
-                                    <!-- Datos que llena el usuario, arriba -->
-                                    <Grid Margin="0,0,0,16">
+                                    <TextBlock Text="Datos de identificación" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                    <TextBlock Text="Código interno, usuario asignado, estado y fechas de compra." Style="{StaticResource ThemeSectionSubtitleStyle}" Margin="0,6,0,14" />
+
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="1*" />
+                                            <ColumnDefinition Width="1*" />
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                             <RowDefinition Height="Auto" />
                                         </Grid.RowDefinitions>
-                                        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                                            <TextBlock Text="Código *" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding Codigo}" CharacterCasing="Upper" Background="#FFFFFF" ToolTip="Código interno del equipo" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
+
+                                        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
+                                            <TextBlock Text="Código *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox Text="{Binding Codigo}" CharacterCasing="Upper" Style="{StaticResource ThemeTextBoxStyle}" Height="40" ToolTip="Código interno del equipo" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                                            <TextBlock Text="Conexión remota" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding CodigoAnydesk}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
+
+                                        <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,10">
+                                            <TextBlock Text="Conexión remota" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox Text="{Binding CodigoAnydesk}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
-                                            <TextBlock Text="Usuario Asignado *" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <ComboBox Height="32" IsEditable="True" ItemsSource="{Binding PersonasFiltradas}" SelectedItem="{Binding PersonaAsignada}" Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}" Background="#FFFFFF" ToolTip="Buscar y seleccionar usuario" DisplayMemberPath="NombreCompleto" 
-                                                      SnapsToDevicePixels="True" UseLayoutRounding="True" />
+
+                                        <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,10">
+                                            <TextBlock Text="Usuario asignado *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox IsEditable="True"
+                                                      ItemsSource="{Binding PersonasFiltradas}"
+                                                      SelectedItem="{Binding PersonaAsignada}"
+                                                      Text="{Binding FiltroPersonaAsignada, Mode=TwoWay}"
+                                                      DisplayMemberPath="NombreCompleto"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      Height="40"
+                                                      ToolTip="Buscar y seleccionar usuario" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
-                                            <TextBlock Text="Estado" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <ComboBox Height="32" SelectedValue="{Binding Estado, Mode=TwoWay}" SelectedValuePath="Content" Background="#FFFFFF" ToolTip="Seleccionar estado del equipo"
-                                                      SnapsToDevicePixels="True" UseLayoutRounding="True">
+
+                                        <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,10">
+                                            <TextBlock Text="Estado" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox SelectedValue="{Binding Estado, Mode=TwoWay}"
+                                                      SelectedValuePath="Content"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      Height="40">
                                                 <ComboBoxItem Content="Activo" />
                                                 <ComboBoxItem Content="Dado de baja" />
                                                 <ComboBoxItem Content="En reparación" />
@@ -475,322 +503,323 @@
                                                 <ComboBoxItem Content="Inactivo" />
                                             </ComboBox>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
-                                            <TextBlock Text="Costo" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" 
-                                                     Text="{Binding Costo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:C0}, ConverterCulture=es-CO}"
-                                                     Background="#FFFFFF" 
-                                                     HorizontalContentAlignment="Right"
-                                                     ToolTip="Costo en COP" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
+
+                                        <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,10,0">
+                                            <TextBlock Text="Costo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox Text="{Binding Costo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:C0}, ConverterCulture=es-CO}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     Height="40"
+                                                     HorizontalContentAlignment="Right" />
                                         </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="2" Margin="8,0,0,8">
-                                            <TextBlock Text="Fecha de Compra" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <Grid VerticalAlignment="Center">
+
+                                        <StackPanel Grid.Column="1" Grid.Row="2" Margin="10,0,0,0">
+                                            <TextBlock Text="Fecha de compra" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="140" />
                                                     <ColumnDefinition Width="8" />
-                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="48" />
                                                 </Grid.ColumnDefinitions>
-                                                <!-- TextBox único para entrada manual con máscara dd/MM/yyyy -->
-                                                <TextBox Grid.Column="0" Width="140" Height="32" 
-                                                         local:DateMaskBehavior.EnableMask="True"
+                                                <TextBox Grid.Column="0"
                                                          Text="{Binding FechaCompra, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DateTimeToStringConverter}}"
-                                                         Background="#FFFFFF" ToolTip="dd/MM/yyyy - puede escribirse manualmente o usar el calendario"
-                                                         HorizontalContentAlignment="Center" />
-                                                <!-- espacio -->
-                                                <StackPanel Grid.Column="1" />
-                                                <!-- DatePicker pequeño sincronizado -->
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                    <DatePicker Width="36" Height="32" SelectedDate="{Binding FechaCompra, Mode=TwoWay, StringFormat=dd/MM/yyyy}" Background="#FFFFFF" Margin="6,0,0,0" Language="es-ES">
-                                                        <DatePicker.Resources>
-                                                            <Style TargetType="DatePickerTextBox">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                            </Style>
-                                                        </DatePicker.Resources>
-                                                    </DatePicker>
-                                                </StackPanel>
+                                                         Style="{StaticResource ThemeTextBoxStyle}"
+                                                         Height="40"
+                                                         local:DateMaskBehavior.EnableMask="True"
+                                                         HorizontalContentAlignment="Center"
+                                                         ToolTip="dd/MM/yyyy" />
+                                                <DatePicker Grid.Column="2"
+                                                            SelectedDate="{Binding FechaCompra, Mode=TwoWay, StringFormat=dd/MM/yyyy}"
+                                                            Style="{StaticResource ThemeDatePickerStyle}"
+                                                            Height="40"
+                                                            Width="48"
+                                                            Language="es-ES">
+                                                    <DatePicker.Resources>
+                                                        <Style TargetType="DatePickerTextBox">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </Style>
+                                                    </DatePicker.Resources>
+                                                </DatePicker>
                                             </Grid>
-                                        </StackPanel>
-                                    </Grid>
-                                    <!-- Resto de campos debajo -->
-                                    <TextBlock Text="Información adicional" FontSize="15" FontWeight="Bold" Foreground="#2B8E3F" Margin="0,0,0,8" 
-                                               TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                                            <TextBlock Text="Nombre del Equipo *" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding NombreEquipo}" Background="#FFFFFF" ToolTip="Nombre visible en red" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
-                                            <TextBlock Text="Sede" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <ComboBox Height="32" SelectedValue="{Binding Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Content" Background="#FFFFFF" ToolTip="Seleccionar sede" SelectedIndex="0"
-                                                      SnapsToDevicePixels="True" UseLayoutRounding="True">
-                                                <ComboBoxItem Content="Administrativa - Barranquilla" />
-                                                <ComboBoxItem Content="Taller - Barranquilla" />
-                                                <ComboBoxItem Content="Bodega - Bayunca" />
-                                            </ComboBox>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,8,8">
-                                            <TextBlock Text="Marca" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding Marca}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,8,8">
-                                            <TextBlock Text="Modelo" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding Modelo}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                                            <TextBlock Text="Sistema Operativo" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding So}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
-                                            <TextBlock Text="Serial" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding SerialNumber}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="2" Margin="8,0,0,8">
-                                            <TextBlock Text="Procesador" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="32" Text="{Binding Procesador}" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Grid.Row="3" Margin="8,0,0,8">
-                                            <TextBlock Text="Observaciones" FontWeight="Bold" Foreground="#504F4E" 
-                                                       TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                            <TextBox Height="64" Text="{Binding Observaciones}" AcceptsReturn="True" Background="#FFFFFF" 
-                                                     SnapsToDevicePixels="True" UseLayoutRounding="True" />
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
                             </Border>
-                            <!-- Separador vertical -->
-                            <Rectangle Grid.Column="1" Width="1" Fill="#DDD" Margin="16,0" />
-                            <!-- Botones principales -->
-                            <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,24,0,24" Orientation="Vertical">
-                                <Button Content="Obtener campos automáticos" Width="Auto" MinWidth="200" Height="40" Margin="0,0,0,16"
-                                        Command="{Binding ObtenerCamposAutomaticosCommand}"
-                                        IsEnabled="{Binding CanObtenerCamposAutomaticos}"
-                                        Opacity="{Binding CanObtenerCamposAutomaticos, Converter={StaticResource BooleanToOpacityConverter}}"
-                                        Background="#118938" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#2B8E3F" BorderThickness="1"
-                                        Cursor="Hand"
-                                        Padding="24,0,24,0"
-                                        Style="{StaticResource CardButtonStyle}"
-                                        FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
-                                        ToolTip="Detectar marca, RAM, discos, conexiones y otros campos automáticamente">
-                                    <Button.Effect>
-                                        <DropShadowEffect Color="#118938" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                    </Button.Effect>
-                                </Button>
-                                <Button Content="Guardar" Width="Auto" MinWidth="200" Height="40" Command="{Binding GuardarCommand}" Click="BtnGuardar_Click"
-                                        IsEnabled="{Binding CanGuardarEquipo}"
-                                        Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
-                                        Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1" Margin="0,0,0,16"
-                                        Cursor="Hand"
-                                        Padding="24,0,24,0"
-                                        Style="{StaticResource CardButtonStyle}"
-                                        FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
-                                    <Button.Effect>
-                                        <DropShadowEffect Color="#2B8E3F" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                    </Button.Effect>
-                                </Button>                                <!-- Mostrar botón 'Dar de baja' sólo en modo edición -->
-                                <Grid Margin="0,0,0,16">
+
+                            <Border Grid.Column="1" Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="16,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Acciones rápidas" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                    <TextBlock Text="Detecta datos, valida permisos y ejecuta acciones sin salir del formulario." Style="{StaticResource ThemeSectionSubtitleStyle}" Margin="0,6,0,14" TextWrapping="Wrap" />
+
+                                    <Button Content="Obtener campos automáticos"
+                                            Command="{Binding ObtenerCamposAutomaticosCommand}"
+                                            IsEnabled="{Binding CanObtenerCamposAutomaticos}"
+                                            Opacity="{Binding CanObtenerCamposAutomaticos, Converter={StaticResource BooleanToOpacityConverter}}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}"
+                                            Height="40"
+                                            Margin="0,0,0,10"
+                                            ToolTip="Detectar marca, RAM, discos, conexiones y otros campos automáticamente" />
+
+                                    <Border Style="{StaticResource ThemeDetailItemCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Estado actual" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBlock Text="{Binding Estado, TargetNullValue=Activo}" Style="{StaticResource ThemeCardTitleStyle}" FontSize="18" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding DarDeBajaButtonTooltip, TargetNullValue=El equipo puede darse de baja desde esta pantalla.}"
+                                                       Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" />
+
+                                            <Button Content="Dar de baja"
+                                                    Command="{Binding DarDeBajaCommand}"
+                                                    Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    IsEnabled="{Binding Estado, Converter={StaticResource EstadoToButtonEnabledConverter}}"
+                                                    ToolTip="{Binding DarDeBajaButtonTooltip}"
+                                                    Style="{StaticResource ThemeDangerButtonStyle}"
+                                                    Height="38"
+                                                    Margin="0,14,0,0" />
+
+                                            <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="0,14,0,0">
+                                                <TextBlock Text="Guardado y baja mantienen la lógica existente" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" TextWrapping="Wrap" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="Datos técnicos" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                <TextBlock Text="Especificaciones generales del equipo, sin interferir con el flujo de captura." Style="{StaticResource ThemeSectionSubtitleStyle}" Margin="0,6,0,14" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,10">
+                                        <TextBlock Text="Nombre del equipo *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding NombreEquipo}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" ToolTip="Nombre visible en red" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,10">
+                                        <TextBlock Text="Sede" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <ComboBox SelectedValue="{Binding Sede, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedValuePath="Content"
+                                                  Style="{StaticResource ThemeComboBoxStyle}"
+                                                  Height="40"
+                                                  SelectedIndex="0">
+                                            <ComboBoxItem Content="Administrativa - Barranquilla" />
+                                            <ComboBoxItem Content="Taller - Barranquilla" />
+                                            <ComboBoxItem Content="Bodega - Bayunca" />
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,10">
+                                        <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding Marca}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,10">
+                                        <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding Modelo}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,10,10">
+                                        <TextBlock Text="Sistema operativo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding So}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Grid.Row="2" Margin="10,0,0,10">
+                                        <TextBlock Text="Serial" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding SerialNumber}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,10,0">
+                                        <TextBlock Text="Procesador" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding Procesador}" Style="{StaticResource ThemeTextBoxStyle}" Height="40" IsReadOnly="{Binding IsLoadingRam}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Grid.Row="3" Margin="10,0,0,0">
+                                        <TextBlock Text="Observaciones" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <TextBox Text="{Binding Observaciones}" Style="{StaticResource ThemeTextBoxStyle}" Height="92" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="1.1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,12,0" IsEnabled="{Binding IsLoadingRam, Converter={StaticResource InverseBooleanConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                                        <TextBlock Text="Memoria RAM" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                        <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="12,0,0,0">
+                                            <TextBlock Text="{Binding ListaRam.Count, StringFormat={}{0} módulos}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Button Content="Agregar RAM"
+                                            Command="{Binding AgregarRamCommand}"
+                                            IsEnabled="{Binding CanGuardarEquipo}"
+                                            Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}"
+                                            Height="36"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,12" />
+                                    <ItemsControl ItemsSource="{Binding ListaRam}" ItemTemplate="{StaticResource SlotRamTemplate}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,12,0" IsEnabled="{Binding IsLoadingRam, Converter={StaticResource InverseBooleanConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                                        <TextBlock Text="Discos" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                        <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="12,0,0,0">
+                                            <TextBlock Text="{Binding ListaDiscos.Count, StringFormat={}{0} discos}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Button Content="Agregar disco"
+                                            Command="{Binding AgregarDiscoManualCommand}"
+                                            IsEnabled="{Binding CanAgregarDiscoManual}"
+                                            Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}"
+                                            Height="36"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,12" />
+                                    <ItemsControl ItemsSource="{Binding ListaDiscos}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource ThemeDetailSectionCardStyle}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                                        <TextBlock Text="Conexiones de red" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                        <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="12,0,0,0">
+                                            <TextBlock Text="{Binding ListaConexiones.Count, StringFormat={}{0} conexiones}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Button Content="Agregar conexión manual"
+                                            Command="{Binding AgregarConexionManualCommand}"
+                                            IsEnabled="{Binding CanAgregarConexionManualFormulario}"
+                                            Opacity="{Binding CanAgregarConexionManualFormulario, Converter={StaticResource BooleanToOpacityConverter}}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}"
+                                            Height="36"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,12" />
+                                    <ItemsControl ItemsSource="{Binding ListaConexiones}" ItemTemplate="{StaticResource ConexionTemplate}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource ThemeDetailSectionCardStyle}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    
-                                    <Button Grid.Column="0" Content="Dar de baja" Width="Auto" MinWidth="200" Height="40" Command="{Binding DarDeBajaCommand}"
-                                            Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            IsEnabled="{Binding Estado, Converter={StaticResource EstadoToButtonEnabledConverter}}"
-                                            ToolTip="{Binding DarDeBajaButtonTooltip}"
-                                            Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
-                                            Cursor="Hand"
-                                            Padding="24,0,24,0"
-                                            Style="{StaticResource CardButtonStyle}"
-                                            FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"/>
-                                      <!-- Badge ícono de alerta cuando está en reparación -->
-                                    <Border Grid.Column="1" Margin="12,0,0,0" 
-                                            Visibility="{Binding Estado, Converter={StaticResource EstadoToVisibilityConverter}}"
-                                            Background="#FFC107" 
-                                            CornerRadius="50" 
-                                            Width="32" 
-                                            Height="32"
-                                            VerticalAlignment="Center"
-                                            ToolTip="{Binding DarDeBajaButtonTooltip}">
-                                        <TextBlock Text="⚠" 
-                                                   FontSize="18" 
-                                                   Foreground="#856404" 
-                                                   HorizontalAlignment="Center" 
-                                                   VerticalAlignment="Center" 
-                                                   FontWeight="Bold"/>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Periféricos" Style="{StaticResource ThemeSectionTitleStyle}" FontSize="16" />
+                                        <TextBlock Text="Asignados y disponibles en dos paneles paralelos para facilitar la revisión y la asignación."
+                                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                                   Margin="0,6,0,0"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1" Style="{StaticResource ThemeDetailChipStyle}" VerticalAlignment="Top">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding PerifericosAsignados.Count, StringFormat={}{0} asignados}"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0" />
+                                            <TextBlock Text=" / " Style="{StaticResource ThemeDetailLabelStyle}" Margin="6,0" />
+                                            <TextBlock Text="{Binding PerifericosDisponibles.Count, StringFormat={}{0} disponibles}"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0" />
+                                        </StackPanel>
                                     </Border>
                                 </Grid>
-                                <Button Content="Cancelar" Width="Auto" MinWidth="200" Height="40" Command="{Binding CancelarCommand}" Click="BtnCancelar_Click"
-                                        Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
-                                        Cursor="Hand"
-                                        Padding="24,0,24,0"
-                                        Style="{StaticResource CardButtonStyle}"
-                                        FontSize="16" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType">
-                                    <Button.Effect>
-                                        <DropShadowEffect Color="#C0392B" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                    </Button.Effect>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                        <!-- Sección RAM -->
-                        <GroupBox Header="Memoria RAM" Margin="32,0,32,0" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
-                                  UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel>
-                                <ItemsControl ItemsSource="{Binding ListaRam}" ItemTemplate="{StaticResource SlotRamTemplate}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                                <Button Content="Agregar RAM" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarRamCommand}" IsEnabled="{Binding CanGuardarEquipo}" Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
-                            </StackPanel>
-                        </GroupBox>
-                        <!-- Sección Discos -->
-                        <GroupBox Header="Discos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
-                                  UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel>
-                                <ItemsControl ItemsSource="{Binding ListaDiscos}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
-                                <Button Content="Agregar Disco" Width="120" Height="32" Margin="0,8,0,0" HorizontalAlignment="Left" Padding="8,0,8,0" Command="{Binding AgregarDiscoManualCommand}" IsEnabled="{Binding CanAgregarDiscoManual}" Opacity="{Binding CanAgregarDiscoManual, Converter={StaticResource BooleanToOpacityConverter}}" Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
-                            </StackPanel>
-                        </GroupBox>
 
-                        <!-- Sección Conexiones de Red -->
-                        <GroupBox Header="Conexiones de Red" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
-                                  UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel>
-                                <!-- Botones de acciones -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <Button Content="Agregar Manual" Width="120" Height="32" Margin="0,0,0,0" Padding="8,0,8,0" 
-                                            Command="{Binding AgregarConexionManualCommand}" 
-                                            IsEnabled="{Binding CanGuardarEquipo}" 
-                                            Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}" 
-                                            Style="{StaticResource CardButtonStyle}" Background="#2B8E3F" Foreground="#FFFFFF" BorderBrush="#118938" BorderThickness="1" FontWeight="Bold" FontSize="14" 
-                                            SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True" />
-                                </StackPanel>
-                                <!-- Lista de conexiones -->
-                                <ItemsControl ItemsSource="{Binding ListaConexiones}" ItemTemplate="{StaticResource ConexionTemplate}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource ThemeDetailItemCardStyle}" Margin="0,0,12,0">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                                                <TextBlock Text="Asignados" Style="{StaticResource ThemeCardTitleStyle}" FontSize="18" />
+                                                <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="12,0,0,0">
+                                                    <TextBlock Text="{Binding PerifericosAsignados.Count, StringFormat={}{0} items}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="No hay periféricos asignados"
+                                                       Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                                       Margin="0,0,0,10"
+                                                       Visibility="{Binding PerifericosAsignados.Count, Converter={StaticResource CountToVisibilityConverter}}" />
+                                            <ItemsControl ItemsSource="{Binding PerifericosAsignados}" ItemTemplate="{StaticResource PerifericoAsignadoTemplate}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Style="{StaticResource ThemeDetailItemCardStyle}" Margin="12,0,0,0">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                                                <TextBlock Text="Disponibles" Style="{StaticResource ThemeCardTitleStyle}" FontSize="18" />
+                                                <Border Style="{StaticResource ThemeDetailChipStyle}" Margin="12,0,0,0">
+                                                    <TextBlock Text="{Binding PerifericosDisponibles.Count, StringFormat={}{0} items}" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Selecciona un periférico para asignarlo al equipo"
+                                                       Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                                       Margin="0,0,0,10" />
+                                            <ItemsControl ItemsSource="{Binding PerifericosDisponibles}" ItemTemplate="{StaticResource PerifericoDisponibleTemplate}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
                             </StackPanel>
-                        </GroupBox>
-
-                        <!-- Sección Periféricos -->
-                        <GroupBox Header="Periféricos" Margin="32,0,32,24" Background="#FFFFFF" BorderBrush="#2B8E3F" BorderThickness="1" Effect="{DynamicResource DropShadowEffect}"
-                                  UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <StackPanel>
-                                <!-- Periféricos Asignados -->
-                                <Expander Header="Periféricos Asignados" IsExpanded="True" Background="#F7FFF7" Padding="6" Margin="0,0,0,8">
-                                    <StackPanel>
-                                        <TextBlock Text="Cantidad de periféricos asignados: " FontWeight="Bold" Foreground="#504F4E" 
-                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <TextBlock Text="{Binding PerifericosAsignados.Count, StringFormat='{}{0} periféricos'}" 
-                                                   Margin="0,0,0,8" Foreground="#706F6F" 
-                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-
-                                        <ItemsControl ItemsSource="{Binding PerifericosAsignados}" ItemTemplate="{StaticResource PerifericoAsignadoTemplate}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Vertical"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Expander>
-
-                                <!-- Periféricos Disponibles -->
-                                <Expander Header="Periféricos Disponibles" IsExpanded="False" Background="#FFF7F7" Padding="6">
-                                    <StackPanel>
-                                        <TextBlock Text="Cantidad de periféricos disponibles: " FontWeight="Bold" Foreground="#504F4E" 
-                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-                                        <TextBlock Text="{Binding PerifericosDisponibles.Count, StringFormat='{}{0} periféricos'}" 
-                                                   Margin="0,0,0,8" Foreground="#706F6F" 
-                                                   TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" />
-
-                                        <ItemsControl ItemsSource="{Binding PerifericosDisponibles}" ItemTemplate="{StaticResource PerifericoDisponibleTemplate}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Vertical"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>                                        </ItemsControl>
-                                    </StackPanel>
-                                </Expander>
-                            </StackPanel>
-                        </GroupBox>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Overlay translúcido de carga durante ObtenerCamposAutomaticosAsync -->
-                <Border Grid.Row="1" Background="#80000000" Visibility="{Binding IsLoadingRam, Converter={StaticResource BooleanToVisibilityConverter}}" Panel.ZIndex="50" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <!-- Evitar interacción con la UI subyacente -->
-                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Border Background="#FFFFFF" CornerRadius="8" Padding="20" Opacity="0.98" MinWidth="280" MinHeight="96">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <ProgressBar IsIndeterminate="True" Width="220" Height="8" />
-                                    <TextBlock Text="Detectando campos..." Foreground="#504F4E" FontSize="14" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Footer botones -->
-                <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,12,12" Padding="24,16" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button x:Name="BtnCancelar" Content="Cancelar" Command="{Binding CancelarCommand}" Click="BtnCancelar_Click"
-                                Background="#C0392B" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#C0392B" BorderThickness="1"
-                                Cursor="Hand" Padding="20,8,20,8" Margin="0,0,12,0"
-                                Style="{StaticResource CardButtonStyle}"
-                                Height="36" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True"/>
-                        <Button x:Name="BtnGuardar" Content="Guardar" Command="{Binding GuardarCommand}" Click="BtnGuardar_Click"
-                                IsEnabled="{Binding CanGuardarEquipo}"
-                                Opacity="{Binding CanGuardarEquipo, Converter={StaticResource BooleanToOpacityConverter}}"
-                                Background="#2B8E3F" Foreground="#FFFFFF" FontWeight="Bold" BorderBrush="#118938" BorderThickness="1"
-                                Cursor="Hand" Padding="20,8,20,8"
-                                Style="{StaticResource CardButtonStyle}"
-                                Height="36" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True"/>
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,24,24"
+                        Padding="22,16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnCancelar"
+                                Content="Cancelar"
+                                Command="{Binding CancelarCommand}"
+                                Click="BtnCancelar_Click"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                Height="38"
+                                MinWidth="130"
+                                Margin="0,0,12,0" />
+                        <Button x:Name="BtnGuardar"
+                                Content="Guardar"
+                                Command="{Binding GuardarCommand}"
+                                Click="BtnGuardar_Click"
+                                Style="{StaticResource ThemePrimaryButtonStyle}"
+                                Height="38"
+                                MinWidth="130"
+                            IsEnabled="{Binding CanGuardarFormulario}"
+                            Opacity="{Binding CanGuardarFormulario, Converter={StaticResource BooleanToOpacityConverter}}" />
                     </StackPanel>
                 </Border>
+
             </Grid>
         </Border>
     </Grid>

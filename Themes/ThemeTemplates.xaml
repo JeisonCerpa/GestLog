@@ -32,7 +32,7 @@
     <Thickness x:Key="ThemeMarginTopMediumBottomSmall">0,16,0,12</Thickness>
 
     <!-- Input controls -->
-    <Thickness x:Key="ThemeTextBoxPadding">12,10</Thickness>
+    <Thickness x:Key="ThemeTextBoxPadding">12,6</Thickness>
     <CornerRadius x:Key="ThemeTextBoxCornerRadius">6</CornerRadius>
 
     <Style x:Key="ThemeTextBoxStyle" TargetType="TextBox">

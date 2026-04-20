@@ -219,6 +219,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         [ObservableProperty]
         private bool canGuardarEquipo;
         [ObservableProperty]
+        private bool canGuardarFormulario;
+        [ObservableProperty]
         private bool canObtenerCamposAutomaticos;
         [ObservableProperty]
         private bool canObtenerDiscosAutomaticos;
@@ -233,6 +235,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
 
         [ObservableProperty]
         private bool canAgregarConexionManual;
+        [ObservableProperty]
+        private bool canAgregarConexionManualFormulario;
         [ObservableProperty]
         private bool canEliminarConexion;
 
@@ -316,6 +320,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         public void RecalcularPermisos()
         {
             CanGuardarEquipo = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanGuardarFormulario = CanGuardarEquipo && !IsLoadingRam;
             CanObtenerCamposAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanObtenerDiscosAutomaticos = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarDiscoManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
@@ -323,6 +328,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             CanEliminarDisco = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanEliminarRam = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
             CanAgregarConexionManual = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
+            CanAgregarConexionManualFormulario = CanAgregarConexionManual && !IsLoadingRam;
             CanEliminarConexion = _currentUser.HasPermission("EquiposInformaticos.CrearEquipo");
 
             // Permisos para gestión de periféricos
@@ -411,6 +417,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         [RelayCommand(CanExecute = nameof(CanGuardarEquipo))]
         public async Task GuardarEquipoAsync()
         {
+            if (IsLoadingRam)
+            {
+                _logger.LogWarning("Intento de guardar ignorado: la detección automática sigue en curso.");
+                return;
+            }
+
             // Evitar reentrada concurrente (por doble disparo del comando/handler)
             if (Interlocked.Exchange(ref _isSaving, 1) == 1)
             {
@@ -1028,7 +1040,12 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
         public async Task ObtenerCamposAutomaticosAsync()
         {
             if (IsLoadingRam) return;
+            var canObtenerAnterior = CanObtenerCamposAutomaticos;
             IsLoadingRam = true;
+            CanGuardarFormulario = false;
+            CanObtenerCamposAutomaticos = false;
+            GuardarCommand.NotifyCanExecuteChanged();
+            ObtenerCamposAutomaticosCommand.NotifyCanExecuteChanged();
             try
             {
                 _logger.LogInformation("[AgregarEquipoInformaticoViewModel] Iniciando ObtenerCamposAutomaticosAsync (overlay activado)");
@@ -1063,8 +1080,30 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos
             finally
             {
                 IsLoadingRam = false;
+                CanGuardarFormulario = CanGuardarEquipo;
+                CanObtenerCamposAutomaticos = canObtenerAnterior;
+                GuardarCommand.NotifyCanExecuteChanged();
+                ObtenerCamposAutomaticosCommand.NotifyCanExecuteChanged();
                 _logger.LogInformation("[AgregarEquipoInformaticoViewModel] ObtenerCamposAutomaticosAsync finalizado (overlay desactivado)");
             }
+        }
+
+        partial void OnCanGuardarEquipoChanged(bool value)
+        {
+            CanGuardarFormulario = value && !IsLoadingRam;
+            GuardarCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnIsLoadingRamChanged(bool value)
+        {
+            CanGuardarFormulario = CanGuardarEquipo && !value;
+            CanAgregarConexionManualFormulario = CanAgregarConexionManual && !value;
+            GuardarCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnCanAgregarConexionManualChanged(bool value)
+        {
+            CanAgregarConexionManualFormulario = value && !IsLoadingRam;
         }
         private void ObtenerCamposAutomaticos()
         {
