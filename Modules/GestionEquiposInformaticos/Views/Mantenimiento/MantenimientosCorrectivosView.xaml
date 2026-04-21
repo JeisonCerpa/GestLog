@@ -4,327 +4,350 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:GestLog.Converters"
-             xmlns:equiposViews="clr-namespace:GestLog.Modules.GestionEquiposInformaticos.Views.Equipos"
              x:Name="MantenimientosCorrectivosViewControl"
              mc:Ignorable="d"
-             d:DesignHeight="600" 
+             d:DesignHeight="600"
              d:DesignWidth="1000"
-             Background="#FAFAFA">    <UserControl.Resources>
-        <!-- Converters -->
+             Background="{DynamicResource BackgroundAppBrush}">
+
+    <UserControl.Resources>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <conv:EstadoToColorConverter x:Key="EstadoToColorConverter" />
         <conv:EstadoToActionButtonTextConverter x:Key="EstadoToActionButtonTextConverter" />
         <conv:EstadoToActionButtonColorConverter x:Key="EstadoToActionButtonColorConverter" />
         <conv:EstadoMantenimientoCountConverter x:Key="EstadoMantenimientoCountConverter" />
-        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
-        <conv:IsStringNullOrEmptyConverter x:Key="IsStringNullOrEmptyConverter" />
         <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
         <conv:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
         <conv:GarantiaStatusConverter x:Key="GarantiaStatusConverter" />
         <conv:GarantiaStatusToColorConverter x:Key="GarantiaStatusToColorConverter" />
-
-        <!-- Paleta corporativa GestLog -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#118938"/>
-        <SolidColorBrush x:Key="SecondaryBrush" Color="#2B8E3F"/>
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#504F4E"/>
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#706F6F"/>
-        <SolidColorBrush x:Key="TextMutedBrush" Color="#9D9D9C"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#E2E8F0"/>
-        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="ErrorBrush" Color="#C0392B"/>
-        <SolidColorBrush x:Key="WarningBrush" Color="#F9B233"/>
-        <SolidColorBrush x:Key="SuccessBrush" Color="#27AE60"/>
-
-        <!-- Estilos de texto -->
-        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style x:Key="SubHeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Opacity" Value="0.9"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style x:Key="StatsTextStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-        </Style>
-
-        <!-- Estilos de botones -->
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="CircularButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Width" Value="56"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="FontSize" Value="26"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderBrush" Value="#E5E5E5"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
-        </Style>
-
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-        </Style>
-
-        <!-- Estilo de texto para celdas DataGrid (como Periféricos) -->
-        <Style x:Key="DataGridTextBlockStyle" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="8,0,8,0"/>
-            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="TextWrapping" Value="NoWrap"/>
-        </Style>
-
-        <!-- Estilo de fila DataGrid -->
-        <Style x:Key="DataGridRowEstadoStyle" TargetType="DataGridRow">
-            <Setter Property="Opacity" Value="1"/>
-        </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Margin="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header con gradiente -->
-        <Border Grid.Row="0" Padding="24,16" Margin="16,16,16,0" CornerRadius="8,8,0,0">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#118938" Offset="0"/>
-                    <GradientStop Color="#2B8E3F" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,16,0" Width="56" Height="56">
-                        <TextBlock Text="🔧" FontFamily="Segoe UI Emoji" FontSize="26" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Mantenimientos Correctivos" Style="{StaticResource HeaderTextStyle}"/>
-                        <TextBlock Text="Gestión de reparaciones y mantenimientos reactivos" Style="{StaticResource SubHeaderTextStyle}"/>
-                    </StackPanel>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- Estadísticas -->
-        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+        <Border Grid.Row="0"
+                Style="{StaticResource ThemeHeaderContainerStyle}"
+                CornerRadius="14"
+                Margin="10,10,10,8"
+                Padding="18,14">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding Mantenimientos.Count}" Style="{StaticResource StatsTextStyle}"/>
-                    <TextBlock Text="Total" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=Pendiente}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource WarningBrush}"/>
-                    <TextBlock Text="Pendientes" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Style="{StaticResource ThemeCardIconCircleStyle}"
+                            Width="44"
+                            Height="44"
+                            Margin="0,0,12,0">
+                        <TextBlock Text="🔧"
+                                   FontFamily="Segoe UI Emoji"
+                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                   FontSize="18" />
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Mantenimientos Correctivos"
+                                   Style="{StaticResource ThemeSectionTitleStyle}"
+                                   Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                        <TextBlock Text="Gestión de reparaciones y mantenimientos reactivos"
+                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                   Margin="0,2,0,0"
+                                   Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                    </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=EnReparacion}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource PrimaryBrush}"/>
-                    <TextBlock Text="En Reparación" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <Button Content="↻ Refrescar"
+                            Command="{Binding RefreshCommand}"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Margin="0,0,8,0"
+                            MinHeight="38" />
 
-                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding Mantenimientos, Converter={StaticResource EstadoMantenimientoCountConverter}, ConverterParameter=Completado}" Style="{StaticResource StatsTextStyle}" Foreground="{StaticResource SuccessBrush}"/>
-                    <TextBlock Text="Completados" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="4" HorizontalAlignment="Right" Orientation="Horizontal" Margin="0,0,0,0">
-                    <!-- Botón Refrescar (círculo) -->
-                    <Button Content="&#xE72C;" Command="{Binding RefreshCommand}" ToolTip="Actualizar lista de mantenimientos" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0"/>
-                    <!-- Botón Agregar (círculo con glyph) - estilo consistente con otras vistas -->
-                    <Button Content="&#xE710;" Command="{Binding AgregarMantenimientoCommand}" ToolTip="Agregar mantenimiento" Style="{StaticResource CircularButtonStyle}" FontFamily="Segoe MDL2 Assets"/>
+                    <Button Content="＋ Agregar"
+                            Command="{Binding AgregarMantenimientoCommand}"
+                            Style="{StaticResource ThemeHeaderPrimaryButtonStyle}"
+                            MinHeight="38"
+                            MinWidth="140" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Contenido principal -->
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" Padding="20" Margin="16,0,16,16" CornerRadius="0,0,8,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,1,1">
+        <Border Grid.Row="1"
+                Style="{StaticResource ThemeElevatedCardStyle}"
+                Margin="10,0,10,8"
+                Padding="16,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Filtrar"
+                               Style="{StaticResource ThemeBodyTextStyle}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <TextBox Width="460"
+                             Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemeTextBoxStyle}"
+                             VerticalAlignment="Center"
+                             Tag="Filtrar por equipo, proveedor o texto libre" />
+                </StackPanel>
+
+                <WrapPanel Grid.Column="1"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center">
+                    <CheckBox Content="Pendientes"
+                              IsChecked="{Binding FiltrarPendientes, UpdateSourceTrigger=PropertyChanged}"
+                              Style="{StaticResource ThemeCheckBoxStyle}"
+                              Margin="8,0" />
+                    <CheckBox Content="Completados"
+                              IsChecked="{Binding FiltrarCompletados, UpdateSourceTrigger=PropertyChanged}"
+                              Style="{StaticResource ThemeCheckBoxStyle}"
+                              Margin="8,0" />
+                    <CheckBox Content="Cancelados"
+                              IsChecked="{Binding FiltrarCancelados, UpdateSourceTrigger=PropertyChanged}"
+                              Style="{StaticResource ThemeCheckBoxStyle}"
+                              Margin="8,0" />
+                    <CheckBox Content="En Reparación"
+                              IsChecked="{Binding FiltrarEnReparacion, UpdateSourceTrigger=PropertyChanged}"
+                              Style="{StaticResource ThemeCheckBoxStyle}"
+                              Margin="8,0" />
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Style="{StaticResource ThemeElevatedCardStyle}"
+                Margin="10,0,10,10"
+                Padding="16">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Filtros: TextBox a la izquierda; checkboxes a la derecha (sin botón refrescar) -->
-                <Grid Grid.Row="0" Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <TextBlock Grid.Row="0"
+                           Text="Lista de mantenimiento"
+                           Style="{StaticResource ThemeSectionTitleStyle}"
+                           FontSize="18"
+                           Margin="0,0,0,12" />
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-                        <TextBlock Text="Filtrar:" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="Medium"/>
-                        <TextBox Width="420" Padding="8" VerticalAlignment="Center" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" BorderBrush="{StaticResource BorderBrush}" ToolTip="Filtrar por equipo, proveedor o texto libre"/>
-                    </StackPanel>                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <CheckBox Content="Pendientes" IsChecked="{Binding FiltrarPendientes, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
-                        <CheckBox Content="Completados" IsChecked="{Binding FiltrarCompletados, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
-                        <CheckBox Content="Cancelados" IsChecked="{Binding FiltrarCancelados, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
-                        <CheckBox Content="En Reparación" IsChecked="{Binding FiltrarEnReparacion, UpdateSourceTrigger=PropertyChanged}" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- DataGrid (alineado a Periféricos) -->
                 <DataGrid Grid.Row="1"
                           ItemsSource="{Binding Mantenimientos}"
                           SelectedItem="{Binding SelectedMantenimiento}"
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="True"
+                          CanUserSortColumns="True"
                           SelectionMode="Single"
                           RowHeaderWidth="0"
                           GridLinesVisibility="Horizontal"
-                          HorizontalGridLinesBrush="{StaticResource BorderBrush}"
-                          AlternatingRowBackground="#F9F9F9"
-                          FontSize="13"
+                          HorizontalGridLinesBrush="{DynamicResource BorderDefaultBrush}"
+                          AlternatingRowBackground="{DynamicResource BackgroundHoverBrush}"
                           RowHeight="40"
-                          RowStyle="{StaticResource DataGridRowEstadoStyle}"
                           ColumnWidth="*"
-                          EnableColumnVirtualization="False"
+                          EnableColumnVirtualization="True"
+                          EnableRowVirtualization="True"
                           VirtualizingPanel.VirtualizationMode="Standard"
                           ScrollViewer.CanContentScroll="True"
+                          Style="{StaticResource ThemeDataGridStyle}"
+                          RowStyle="{StaticResource ThemeDataGridRowStyle}"
+                          BorderThickness="0"
+                          SnapsToDevicePixels="True"
+                          UseLayoutRounding="True"
                           Margin="0,0,0,16">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ThemeDataGridColumnHeaderStyle}" />
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource ThemeDataGridCellStyle}" />
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+                        <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}" />
+                    </DataGrid.Resources>
 
                     <DataGrid.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="Focusable" Value="False"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                        </Style>
-                    </DataGrid.CellStyle>                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Equipo" Binding="{Binding Codigo}" Width="SizeToCells" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Falla" Binding="{Binding DescripcionFalla}" Width="*" MinWidth="200" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" Width="*" MinWidth="180" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorAsignado}" Width="SizeToCells" MinWidth="130" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Fecha" Binding="{Binding FechaFalla, StringFormat=dd/MM/yyyy}" Width="SizeToCells" MinWidth="100" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Costo" Binding="{Binding CostoReparacion, Converter={StaticResource DecimalToCopCurrencyConverter}}" Width="SizeToCells" MinWidth="100" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>
-                        <DataGridTextColumn Header="Garantía" Binding="{Binding PeriodoGarantia, StringFormat='0d'}" Width="SizeToCells" MinWidth="80" IsReadOnly="True" ElementStyle="{StaticResource DataGridTextBlockStyle}"/>                        <DataGridTemplateColumn Header="Est. Garantía" Width="SizeToCells" MinWidth="110" IsReadOnly="True">
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource ThemeDataGridCellStyle}" />
+                    </DataGrid.CellStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Código"
+                                            Binding="{Binding Codigo}"
+                                            Width="SizeToCells"
+                                            MinWidth="140"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Falla"
+                                            Binding="{Binding DescripcionFalla}"
+                                            Width="*"
+                                            MinWidth="220"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Observaciones"
+                                            Binding="{Binding Observaciones}"
+                                            Width="*"
+                                            MinWidth="180"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Proveedor"
+                                            Binding="{Binding ProveedorAsignado}"
+                                            Width="SizeToCells"
+                                            MinWidth="150"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Fecha"
+                                            Binding="{Binding FechaFalla, StringFormat=dd/MM/yyyy}"
+                                            Width="SizeToCells"
+                                            MinWidth="110"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Costo"
+                                            Binding="{Binding CostoReparacion, Converter={StaticResource DecimalToCopCurrencyConverter}}"
+                                            Width="SizeToCells"
+                                            MinWidth="110"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTextColumn Header="Garantía"
+                                            Binding="{Binding PeriodoGarantia, StringFormat='0d'}"
+                                            Width="SizeToCells"
+                                            MinWidth="85"
+                                            IsReadOnly="True"
+                                            ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                        <DataGridTemplateColumn Header="Est. Garantía"
+                                                Width="SizeToCells"
+                                                MinWidth="130"
+                                                IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0">
-                                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,4,0" Stroke="#BFBFBF" StrokeThickness="0.5">
+                                    <StackPanel Orientation="Horizontal"
+                                                VerticalAlignment="Center"
+                                                ToolTip="Estado de garantía">
+                                        <Ellipse Width="10"
+                                                 Height="10"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,6,0"
+                                                 Stroke="{DynamicResource BorderDefaultBrush}"
+                                                 StrokeThickness="0.5">
                                             <Ellipse.Fill>
                                                 <MultiBinding Converter="{StaticResource GarantiaStatusToColorConverter}">
-                                                    <Binding Path="FechaCompletado"/>
-                                                    <Binding Path="PeriodoGarantia"/>
+                                                    <Binding Path="FechaCompletado" />
+                                                    <Binding Path="PeriodoGarantia" />
                                                 </MultiBinding>
                                             </Ellipse.Fill>
                                         </Ellipse>
-                                        <TextBlock VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium" FontSize="11">
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Style="{StaticResource ThemeDataGridTextStyle}"
+                                                   FontWeight="Medium"
+                                                   FontSize="11">
                                             <TextBlock.Text>
                                                 <MultiBinding Converter="{StaticResource GarantiaStatusConverter}">
-                                                    <Binding Path="FechaCompletado"/>
-                                                    <Binding Path="PeriodoGarantia"/>
+                                                    <Binding Path="FechaCompletado" />
+                                                    <Binding Path="PeriodoGarantia" />
                                                 </MultiBinding>
                                             </TextBlock.Text>
                                         </TextBlock>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Estado" Width="SizeToCells" MinWidth="110" IsReadOnly="True">
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Estado"
+                                                Width="SizeToCells"
+                                                MinWidth="100"
+                                                IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding Estado}">
-                                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}" Stroke="#BFBFBF" StrokeThickness="0.5"/>
-                                        <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}" Margin="4,0,0,0" VerticalAlignment="Center" Style="{StaticResource DataGridTextBlockStyle}" FontWeight="Medium" FontSize="11"/>
-                                    </StackPanel>
+                                    <Border HorizontalAlignment="Center"
+                                            Width="112"
+                                            Height="28"
+                                            Padding="8,4"
+                                            CornerRadius="6"
+                                            Margin="0,0,6,0"
+                                            BorderThickness="1"
+                                            Background="{DynamicResource BackgroundSurfaceBrush}">
+                                        <Border.BorderBrush>
+                                            <Binding Path="Estado" Converter="{StaticResource EstadoToColorConverter}" />
+                                        </Border.BorderBrush>
+                                        <StackPanel Orientation="Horizontal"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center">
+                                            <Ellipse Width="7"
+                                                 Height="7"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,6,0">
+                                                <Ellipse.Fill>
+                                                    <Binding Path="Estado" Converter="{StaticResource EstadoToColorConverter}" />
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <TextBlock Text="{Binding Estado, Converter={StaticResource EnumToDescriptionConverter}}"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="10"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap" />
+                                        </StackPanel>
+                                    </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>                        <DataGridTemplateColumn Header="Acción" Width="SizeToCells" MinWidth="100" IsReadOnly="True">
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="Acción"
+                                                Width="SizeToCells"
+                                                MinWidth="110"
+                                                IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>                                    <Button Content="{Binding Estado, Converter={StaticResource EstadoToActionButtonTextConverter}}"
+                                <DataTemplate>
+                                    <Button Content="{Binding Estado, Converter={StaticResource EstadoToActionButtonTextConverter}}"
                                             Background="{Binding Estado, Converter={StaticResource EstadoToActionButtonColorConverter}}"
-                                            Foreground="White"
+                                            Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                            Style="{StaticResource ThemePrimaryButtonStyle}"
                                             Command="{Binding DataContext.EjecutarAccionDinamicaCommand, ElementName=MantenimientosCorrectivosViewControl}"
                                             CommandParameter="{Binding}"
-                                            MinWidth="80" Width="Auto" Height="30" HorizontalAlignment="Center" Margin="2"
+                                            Width="112"
+                                            Height="30"
+                                            Margin="6,0,0,0"
+                                            HorizontalAlignment="Center"
                                             Focusable="False"
                                             ClickMode="Release"
-                                            FontWeight="SemiBold"
                                             FontSize="11"
-                                            Padding="6,2"
+                                            Padding="8,2"
                                             BorderThickness="0"
-                                            Cursor="Hand">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Opacity" Value="0.85"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
+                                            Cursor="Hand" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <!-- Pie de página -->
-                <Border Grid.Row="2" Background="#F5F5F5" Padding="8" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
-                    <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Total: {0} mantenimientos'}" 
-                               Foreground="{StaticResource TextSecondaryBrush}" 
-                               FontSize="11"/>
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                        Padding="8"
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}">
+                    <TextBlock Text="{Binding Mantenimientos.Count, StringFormat='Total: {0} mantenimientos'}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="11" />
                 </Border>
             </Grid>
         </Border>

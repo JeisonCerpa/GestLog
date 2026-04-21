@@ -14,208 +14,391 @@
         ShowInTaskbar="False"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        d:DesignHeight="600" d:DesignWidth="700">    <Window.Resources>
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed"
+        d:DesignHeight="760"
+        d:DesignWidth="1100">
+
+    <Window.Resources>
         <ResourceDictionary>
             <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             <conv:DateDifferenceToStringConverter x:Key="DateDifferenceToStringConverter" />
             <conv:DateAddDaysConverter x:Key="DateAddDaysConverter" />
-
-            <Style x:Key="DetailLabelStyle" TargetType="TextBlock">
-                <Setter Property="Foreground" Value="#666666"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="FontWeight" Value="Normal"/>
-                <Setter Property="Margin" Value="0,0,0,4"/>
-            </Style>
-
-            <Style x:Key="DetailValueStyle" TargetType="TextBlock">
-                <Setter Property="Foreground" Value="#333333"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Margin" Value="0,0,0,12"/>
-                <Setter Property="TextWrapping" Value="Wrap"/>
-            </Style>
-
-            <Style x:Key="CloseButton" TargetType="Button">
-                <Setter Property="MinHeight" Value="36" />
-                <Setter Property="Padding" Value="24,6" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Background" Value="#E0E0E0" />
-                <Setter Property="Foreground" Value="#333333" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="8" SnapsToDevicePixels="True">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
+            <conv:DecimalToCopCurrencyConverter x:Key="DecimalToCopCurrencyConverter" />
         </ResourceDictionary>
-    </Window.Resources>    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
-        <Border x:Name="Card" Width="750" MaxHeight="680"
-                Background="{StaticResource SurfaceBrush}"
-                CornerRadius="8" Padding="0"
-                HorizontalAlignment="Center" VerticalAlignment="Center"
-                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
+    </Window.Resources>
 
+    <Grid x:Name="RootGrid"
+          Background="{DynamicResource ModalOverlayBrush}"
+          MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True">
+
+        <Border x:Name="Card"
+                Width="1080"
+                MaxHeight="860"
+                Background="{DynamicResource BackgroundSurfaceBrush}"
+                CornerRadius="18"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                BorderThickness="1"
+                Effect="{DynamicResource WindowShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" Padding="24,16">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" Width="36" Height="36">
-                                <TextBlock Text="📋" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Grid.Row="0"
+                        Style="{StaticResource ThemeHeaderContainerStyle}"
+                        CornerRadius="18,18,0,0"
+                        Padding="22,18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeCardIconCircleStyle}"
+                                    Width="48"
+                                    Height="48"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="📋"
+                                           FontFamily="Segoe UI Emoji"
+                                           Style="{StaticResource ThemeCardIconTextStyle}"
+                                           FontSize="18" />
                             </Border>
+
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Detalles del Mantenimiento" Style="{StaticResource HeaderTextStyle}"/>
-                                <TextBlock Text="Información completa del mantenimiento realizado" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                                <TextBlock Text="Detalles del mantenimiento"
+                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                <TextBlock Text="Información completa del mantenimiento realizado"
+                                           Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                           Margin="0,3,0,0"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
                             </StackPanel>
                         </StackPanel>
-                    </DockPanel>
-                </Border>                <!-- Contenido principal -->
-                <ScrollViewer Grid.Row="1" Padding="24" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <!-- Sección 1: Información del Equipo -->
-                        <TextBlock Text="📱 Equipo Afectado" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
-                        
-                        <Border Background="#F9FAFB" CornerRadius="8" Padding="18" Margin="0,0,0,24" BorderThickness="1" BorderBrush="#E5E7EB">
+
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Width="36"
+                                Height="36"
+                                Padding="0"
+                                ToolTip="Cerrar"
+                                Click="CloseButton_Click" />
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Background="{DynamicResource BackgroundAppBrush}"
+                              Padding="20">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+                        <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}" />
+                    </ScrollViewer.Resources>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.08*" />
+                            <ColumnDefinition Width="0.92*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Style="{StaticResource ThemeDetailSectionCardStyle}"
+                                Margin="0,0,12,0">
                             <StackPanel>
-                                <StackPanel Margin="0,0,0,14">
-                                    <TextBlock Text="Código del Equipo" Style="{StaticResource DetailLabelStyle}"/>
-                                    <TextBlock Text="{Binding Mantenimiento.Codigo}" Style="{StaticResource DetailValueStyle}"/>
-                                </StackPanel>
+                                <DockPanel Margin="0,0,0,16">
+                                    <Border DockPanel.Dock="Left"
+                                            Style="{StaticResource ThemeCardIconCircleStyle}"
+                                            Width="36"
+                                            Height="36"
+                                            Margin="0,0,12,0">
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                                   FontSize="14" />
+                                    </Border>
+                                    <TextBlock Text="Resumen del caso"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               VerticalAlignment="Center" />
+                                </DockPanel>
 
-                                <StackPanel>
-                                    <TextBlock Text="Descripción de la Falla" Style="{StaticResource DetailLabelStyle}"/>
-                                    <TextBlock Text="{Binding Mantenimiento.DescripcionFalla}" Style="{StaticResource DetailValueStyle}" MinHeight="60" FontSize="12"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Código del equipo"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Mantenimiento.Codigo}"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
 
-                        <!-- Sección 2: Cronología -->
-                        <TextBlock Text="📅 Cronología del Mantenimiento" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
-                        
-                        <Grid Margin="0,0,0,24">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Descripción de la falla"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Mantenimiento.DescripcionFalla}"
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap"
+                                                   MaxHeight="140" />
+                                    </StackPanel>
+                                </Border>
 
-                            <!-- Fila 1 -->
-                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,12,0">
-                                <TextBlock Text="Estado Actual" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.Estado}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,12,0">
-                                <TextBlock Text="Fecha de Inicio" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.FechaInicio, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Grid.Row="0">
-                                <TextBlock Text="Fecha Completado" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.FechaCompletado, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                            </StackPanel>
-
-                            <!-- Fila 2 -->
-                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,12,0">
-                                <TextBlock Text="Duración Total" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding DuracionTotalDias, StringFormat='0 \\ días'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#118938"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,12,0">
-                                <TextBlock Text="Período de Garantía" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding Mantenimiento.PeriodoGarantia, StringFormat='0 \\ días'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Grid.Row="1">
-                                <TextBlock Text="Vencimiento Garantía" Style="{StaticResource DetailLabelStyle}"/>
-                                <TextBlock Text="{Binding FechaVencimientoGarantia, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#C0392B"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Sección 3: Detalles de Reparación -->
-                        <TextBlock Text="🔧 Detalles de Reparación" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
-                        
-                        <Border Background="#F9FAFB" CornerRadius="8" Padding="18" Margin="0,0,0,24" BorderThickness="1" BorderBrush="#E5E7EB">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,16">
+                                <Grid Margin="0,0,0,14">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="Proveedor" Style="{StaticResource DetailLabelStyle}"/>
-                                        <TextBlock Text="{Binding Mantenimiento.ProveedorAsignado}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                                    </StackPanel>
+                                    <Border Grid.Column="0"
+                                            Style="{StaticResource ThemeDetailItemCardStyle}"
+                                            Margin="0,0,8,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Estado actual"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <TextBlock Text="{Binding Mantenimiento.Estado}"
+                                                       Style="{StaticResource ThemeSectionTitleStyle}"
+                                                       FontSize="18"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
 
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Costo de Reparación" Style="{StaticResource DetailLabelStyle}"/>
-                                        <TextBlock Text="{Binding Mantenimiento.CostoReparacion, StringFormat='C'}" Style="{StaticResource DetailValueStyle}" FontSize="12" Foreground="#059669" FontWeight="Bold"/>
-                                    </StackPanel>
+                                    <Border Grid.Column="1"
+                                            Style="{StaticResource ThemeDetailItemCardStyle}"
+                                            Margin="8,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Duración total"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <TextBlock Text="{Binding DuracionTotalDias, StringFormat='0 días'}"
+                                                       Style="{StaticResource ThemeSectionTitleStyle}"
+                                                       FontSize="18"
+                                                       Foreground="{DynamicResource PrimaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
                                 </Grid>
 
-                                <Border BorderThickness="0,1,0,0" BorderBrush="#E5E7EB" Padding="0,16,0,0" Margin="0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                    <TextBlock Text="Estado de Garantía" Style="{StaticResource DetailLabelStyle}"/>
-                                    <TextBlock Style="{StaticResource DetailValueStyle}" FontSize="12">
-                                        <Run Text="{Binding EmojiGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}"/>
-                                        <Run Text=" " />
-                                        <Run Text="{Binding EstadoGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}"/>
-                                    </TextBlock>
-                                </StackPanel>
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Cronología"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,8" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1*" />
+                                                <ColumnDefinition Width="1*" />
+                                                <ColumnDefinition Width="1*" />
+                                            </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="Fecha de Vencimiento" Style="{StaticResource DetailLabelStyle}"/>
-                                            <TextBlock Text="{Binding FechaVencimientoGarantia, StringFormat='dd/MM/yyyy'}" Style="{StaticResource DetailValueStyle}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Grid>
+                                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                                <TextBlock Text="Inicio" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,4" />
+                                                <TextBlock Text="{Binding Mantenimiento.FechaInicio, StringFormat='dd/MM/yyyy'}"
+                                                           Style="{StaticResource ThemeDetailValueStyle}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                                <TextBlock Text="Completado" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,4" />
+                                                <TextBlock Text="{Binding Mantenimiento.FechaCompletado, StringFormat='dd/MM/yyyy'}"
+                                                           Style="{StaticResource ThemeDetailValueStyle}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Vencimiento garantía" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,4" />
+                                                <TextBlock Text="{Binding FechaVencimientoGarantia, StringFormat='dd/MM/yyyy'}"
+                                                           Style="{StaticResource ThemeDetailValueStyle}"
+                                                           Foreground="{DynamicResource DangerBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Garantía"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,8" />
+                                        <TextBlock Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap">
+                                            <Run Text="{Binding EmojiGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}" />
+                                            <Run Text=" " />
+                                            <Run Text="{Binding EstadoGarantia, Mode=OneWay}" Foreground="{Binding ColorGarantia, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Observaciones"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Mantenimiento.Observaciones}"
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   MaxHeight="180" />
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
                         </Border>
 
-                        <!-- Sección 4: Historial de Observaciones -->
-                        <TextBlock Text="📝 Historial de Observaciones" FontWeight="SemiBold" Margin="0,0,0,14" Foreground="#333333" FontSize="14"/>
-                        <Border Background="#FAFBFC" CornerRadius="8" Padding="16" Margin="0,0,0,16" MinHeight="120" BorderThickness="1" BorderBrush="#E5E7EB">
-                            <TextBlock Text="{Binding Mantenimiento.Observaciones}" 
-                                       Foreground="#333333" 
-                                       VerticalAlignment="Top" 
-                                       TextWrapping="Wrap" 
-                                       FontFamily="Courier New" 
-                                       FontSize="11"
-                                       LineHeight="18"/>
+                        <Border Grid.Column="1"
+                                Style="{StaticResource ThemeDetailSectionCardStyle}"
+                                Margin="12,0,0,0">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,16">
+                                    <Border DockPanel.Dock="Left"
+                                            Style="{StaticResource ThemeCardIconCircleStyle}"
+                                            Width="36"
+                                            Height="36"
+                                            Margin="0,0,12,0">
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                                   FontSize="14" />
+                                    </Border>
+                                    <TextBlock Text="Detalles de reparación"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <Border Style="{StaticResource ThemeInfoNoticeStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Resumen del mantenimiento"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="Datos clave para una revisión rápida."
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Estado general"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Mantenimiento.Estado}"
+                                                   Style="{StaticResource ThemeSectionTitleStyle}"
+                                                   FontSize="18"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0"
+                                            Style="{StaticResource ThemeDetailItemCardStyle}"
+                                            Margin="0,0,8,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Costo final"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <TextBlock Text="{Binding Mantenimiento.CostoReparacion, Converter={StaticResource DecimalToCopCurrencyConverter}}"
+                                                       Style="{StaticResource ThemeSectionTitleStyle}"
+                                                       FontSize="18"
+                                                       Foreground="{DynamicResource PrimaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1"
+                                            Style="{StaticResource ThemeDetailItemCardStyle}"
+                                            Margin="8,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Garantía"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <TextBlock Text="{Binding Mantenimiento.PeriodoGarantia, StringFormat='0 días'}"
+                                                       Style="{StaticResource ThemeSectionTitleStyle}"
+                                                       FontSize="18"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Proveedor"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="{Binding Mantenimiento.ProveedorAsignado}"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Sugerencia"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,8" />
+                                        <TextBlock Text="• Estado, costo y proveedor resumen el cierre"
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="• La fecha de completado ya queda en la cronología"
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </Border>
-                    </StackPanel>
+                    </Grid>
                 </ScrollViewer>
 
-                <!-- Botones de acción -->
-                <Border Grid.Row="2" Background="{StaticResource SurfaceElevatedBrush}" CornerRadius="0,0,8,8" Padding="24,16" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="CloseButton" 
-                                Content="Cerrar" 
-                                Style="{StaticResource CloseButton}"
-                                Click="CloseButton_Click"/>
-                    </StackPanel>
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BackgroundElevatedBrush}"
+                        CornerRadius="0,0,18,18"
+                        Padding="20,16"
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource BorderLightBrush}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Detalles de solo lectura"
+                                       Style="{StaticResource ThemeBodyTextStyle}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <Button x:Name="CloseButton"
+                                    Content="Cerrar"
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                    Width="120"
+                                    Height="38"
+                                    Click="CloseButton_Click" />
+                        </StackPanel>
+                    </DockPanel>
                 </Border>
             </Grid>
         </Border>

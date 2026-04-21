@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:conv="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
         Title="Crear Mantenimiento Correctivo"
         WindowStyle="None"
@@ -14,127 +13,301 @@
         ShowInTaskbar="False"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        d:DesignHeight="520" d:DesignWidth="720">
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        TextOptions.TextHintingMode="Fixed"
+        d:DesignHeight="680"
+        d:DesignWidth="1020">
 
-    <Window.Resources>
-        <ResourceDictionary>
-            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-            <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    <Grid x:Name="RootGrid"
+          Background="{DynamicResource ModalOverlayBrush}"
+          MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True">
 
-            <!-- Estilo: botones con esquinas redondeadas -->
-            <Style x:Key="RoundedButton" TargetType="Button">
-                <Setter Property="MinHeight" Value="36" />
-                <Setter Property="Padding" Value="10,6" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
-                <Setter Property="Foreground" Value="White" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                    BorderThickness="{TemplateBinding BorderThickness}" 
-                                    CornerRadius="8" SnapsToDevicePixels="True">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </ResourceDictionary>
-    </Window.Resources>
-
-    <!-- OVERLAY MODAL - Fondo oscuro semitransparente -->
-    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
-          UseLayoutRounding="True" SnapsToDevicePixels="True">
-
-        <!-- CARD CENTRADA -->
-        <Border x:Name="Card" Width="750" MaxHeight="700"
-                Background="{StaticResource SurfaceBrush}"
-                CornerRadius="8" Padding="0"
-                HorizontalAlignment="Center" VerticalAlignment="Center"
-                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
-                Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown">
-
+        <Border x:Name="Card"
+                Width="1000"
+                MaxHeight="820"
+                Background="{DynamicResource BackgroundSurfaceBrush}"
+                CornerRadius="18"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                BorderThickness="1"
+                Effect="{DynamicResource WindowShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- HEADER - Barra superior con gradiente -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="8,8,0,0" 
-                        Padding="24,16" Effect="{StaticResource HeaderShadow}">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" CornerRadius="6" Padding="6" Margin="0,0,16,0" 
-                                    Width="36" Height="36" Effect="{StaticResource SectionShadow}">
-                                <TextBlock Text="🔧" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Grid.Row="0"
+                        Style="{StaticResource ThemeHeaderContainerStyle}"
+                        CornerRadius="18,18,0,0"
+                        Padding="22,18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Border Style="{StaticResource ThemeCardIconCircleStyle}"
+                                    Width="48"
+                                    Height="48"
+                                    Margin="0,0,14,0">
+                                <TextBlock Text="🔧"
+                                           FontFamily="Segoe UI Emoji"
+                                           Style="{StaticResource ThemeCardIconTextStyle}"
+                                           FontSize="18" />
                             </Border>
+
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Crear mantenimiento correctivo" Style="{StaticResource HeaderTextStyle}"/>
-                                <TextBlock Text="Registrar una nueva reparación o incidencia" Style="{StaticResource SubHeaderTextStyle}" Margin="0,3,0,0"/>
+                                <TextBlock Text="Crear mantenimiento correctivo"
+                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                <TextBlock Text="Registrar una nueva reparación o incidencia"
+                                           Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                           Margin="0,3,0,0"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- Botón Cerrar removido intencionalmente -->
-                    </DockPanel>
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Width="36"
+                                Height="36"
+                                Padding="0"
+                                ToolTip="Cerrar"
+                                Click="CancelarButton_Click" />
+                    </Grid>
                 </Border>
 
-                <!-- CONTENIDO - Scrolleable -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,20" 
-                              Background="{StaticResource LightGrayBrush}">
-                    <StackPanel>
-                        <!-- Formulario -->
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Top" Width="680">
-                            <TextBlock Text="Entidad (Equipo / Periférico)" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <StackPanel.Resources>
-                                    <conv:StringEqualsConverter x:Key="StringEqualsConverter" />
-                                </StackPanel.Resources>
-                                <RadioButton Content="Equipo" GroupName="EntidadGroup" Margin="0,0,12,0"
-                                             IsChecked="{Binding TipoEntidad, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Equipo, Mode=TwoWay}"/>
-                                <RadioButton Content="Periférico" GroupName="EntidadGroup"
-                                             IsChecked="{Binding TipoEntidad, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Periférico, Mode=TwoWay}"/>
-                            </StackPanel>                            <TextBlock Text="Código Equipo / Periférico" FontWeight="SemiBold" Margin="0,12,0,6"/>
-                            <ComboBox ItemsSource="{Binding CodigoSugerencias}" IsEditable="True" IsTextSearchEnabled="False"
-                                      SelectedItem="{Binding SelectedCodigoSuggestion, Mode=TwoWay}"
-                                      Text="{Binding CodigoEntidad, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      Padding="8" BorderBrush="{StaticResource BorderBrush}" Width="360"
-                                      MaxDropDownHeight="240" StaysOpenOnEdit="False">
-                                <!-- Mostrar las sugerencias con formato: "Código(Code) - Nombre(Name)" -->
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock TextTrimming="CharacterEllipsis">
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0} - {1}">
-                                                    <Binding Path="Code" />
-                                                    <Binding Path="Name" />
-                                                </MultiBinding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Background="{DynamicResource BackgroundAppBrush}"
+                              Padding="20">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+                        <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}" />
+                    </ScrollViewer.Resources>
 
-                            <TextBlock Text="Fecha falla" FontWeight="SemiBold" Margin="0,12,0,6"/>
-                            <DatePicker SelectedDate="{Binding FechaFalla}" Width="160"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.15*" />
+                            <ColumnDefinition Width="0.85*" />
+                        </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="Descripción de la falla" FontWeight="SemiBold" Margin="0,12,0,6"/>
-                            <TextBox Text="{Binding DescripcionFalla, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="100" TextWrapping="Wrap" Padding="8" BorderBrush="{StaticResource BorderBrush}" VerticalScrollBarVisibility="Auto"/>
-                        </StackPanel>
-                    </StackPanel>
+                        <Border Grid.Column="0"
+                                Style="{StaticResource ThemeDetailSectionCardStyle}"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,16">
+                                    <Border DockPanel.Dock="Left"
+                                            Style="{StaticResource ThemeCardIconCircleStyle}"
+                                            Width="36"
+                                            Height="36"
+                                            Margin="0,0,12,0">
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                                   FontSize="14" />
+                                    </Border>
+                                    <TextBlock Text="Datos del activo"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Entidad"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding EntidadTipos}"
+                                                  SelectedItem="{Binding TipoEntidad, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource ThemeComboBoxStyle}"
+                                                  ToolTip="Seleccionar si el mantenimiento corresponde a un equipo o periférico" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Código Equipo / Periférico"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding CodigoSugerencias}"
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="False"
+                                                  SelectedItem="{Binding SelectedCodigoSuggestion, Mode=TwoWay}"
+                                                  Text="{Binding CodigoEntidad, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource ThemeComboBoxStyle}"
+                                                  ToolTip="Escribe el código y selecciona una sugerencia">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0} - {1}">
+                                                                <Binding Path="Code" />
+                                                                <Binding Path="Name" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Incidencia"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}" />
+
+                                        <StackPanel Margin="0,0,0,14">
+                                            <TextBlock Text="Fecha de falla"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <DatePicker SelectedDate="{Binding FechaFalla}"
+                                                        Style="{StaticResource ThemeDatePickerStyle}"
+                                                        ToolTip="Fecha en la que ocurrió la falla" />
+                                        </StackPanel>
+
+                                        <StackPanel>
+                                            <TextBlock Text="Descripción de la falla"
+                                                       Style="{StaticResource ThemeDetailLabelStyle}"
+                                                       Margin="0,0,0,6" />
+                                            <TextBox Text="{Binding DescripcionFalla, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     AcceptsReturn="True"
+                                                     Height="160"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     TextWrapping="Wrap"
+                                                     ToolTip="Describe el motivo del mantenimiento correctivo" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource ThemeDetailSectionCardStyle}"
+                                Margin="12,0,0,0">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,16">
+                                    <Border DockPanel.Dock="Left"
+                                            Style="{StaticResource ThemeCardIconCircleStyle}"
+                                            Width="36"
+                                            Height="36"
+                                            Margin="0,0,12,0">
+                                        <TextBlock Text=""
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   Style="{StaticResource ThemeCardIconTextStyle}"
+                                                   FontSize="14" />
+                                    </Border>
+                                    <TextBlock Text="Ayuda del formulario"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <Border Style="{StaticResource ThemeInfoNoticeStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="El panel izquierdo ya muestra los datos capturados en tiempo real."
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="Este espacio queda para indicar qué completar y cómo dejar listo el registro."
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,6,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Qué debes completar"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,8" />
+
+                                        <TextBlock Text="• Selecciona si corresponde a un equipo o periférico"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="• Busca o escribe el código exacto del activo"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="• Registra una fecha real de la falla"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="• Describe el problema con suficiente contexto"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}"
+                                        Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Flujo rápido"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,8" />
+
+                                        <TextBlock Text="1. Completa el código"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="2. Revisa la sugerencia autocompletada"
+                                                   Style="{StaticResource ThemeDetailValueStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="3. Escribe la descripción y crea el registro"
+                                                   Style="{StaticResource ThemeDetailValueStyle}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource ThemeDetailItemCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Nota"
+                                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                                   Margin="0,0,0,6" />
+                                        <TextBlock Text="El botón Crear se habilita cuando existan código y descripción."
+                                                   Style="{StaticResource ThemeBodyTextStyle}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </ScrollViewer>
 
-                <!-- FOOTER - Botones de acción -->
-                <Border Grid.Row="2" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" 
-                        CornerRadius="0,0,8,8" Padding="24,16">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Style="{StaticResource RoundedButton}" Content="Cancelar" Width="120" Background="#EEEEEE" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Click="CancelarButton_Click"/>
-                        <Button Style="{StaticResource RoundedButton}" Content="Crear" Width="120" Margin="12,0,0,0" Background="{StaticResource PrimaryBrush}" Foreground="White" BorderThickness="0" FontSize="13" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Opacity="{Binding CanSave, Converter={StaticResource BooleanToOpacityConverter}}"/>
+                <Border Grid.Row="2"
+                        Background="{DynamicResource BackgroundSurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderLightBrush}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,18,18"
+                        Padding="20,16">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right">
+                        <Button Content="Cancelar"
+                                Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                Width="120"
+                                Height="38"
+                                Click="CancelarButton_Click"
+                                Margin="0,0,10,0" />
+
+                        <Button Content="Crear"
+                                Style="{StaticResource ThemePrimaryButtonStyle}"
+                                Width="130"
+                                Height="38"
+                                Command="{Binding SaveCommand}"
+                                IsEnabled="{Binding CanSave}" />
                     </StackPanel>
                 </Border>
             </Grid>
