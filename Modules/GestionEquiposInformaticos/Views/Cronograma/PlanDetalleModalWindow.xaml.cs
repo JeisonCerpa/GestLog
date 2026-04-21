@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Forms;
+using System.Windows.Controls;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
@@ -37,7 +38,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
                 _lastScreenOwner = screen;
 
                 // Para un overlay modal, siempre maximizar para cubrir toda la pantalla
-                // Esto evita problemas de DPI, pantallas múltiples y posicionamiento
+                // Esto evita problemas de DPI, pantallas mï¿½ltiples y posicionamiento
                 this.WindowState = WindowState.Maximized;
             }
             catch
@@ -72,6 +73,33 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
             Close();
         }
 
+        private void ChecklistGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var scrollViewer = FindParentScrollViewer(sender as DependencyObject);
+            if (scrollViewer == null)
+                return;
+
+            if (e.Delta < 0)
+                scrollViewer.LineDown();
+            else
+                scrollViewer.LineUp();
+
+            e.Handled = true;
+        }
+
+        private static ScrollViewer? FindParentScrollViewer(DependencyObject? child)
+        {
+            while (child != null)
+            {
+                if (child is ScrollViewer scrollViewer)
+                    return scrollViewer;
+
+                child = VisualTreeHelper.GetParent(child);
+            }
+
+            return null;
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             if (this.Owner != null)
@@ -93,11 +121,11 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
                     // Siempre maximizar para mantener el overlay cubriendo toda la pantalla
                     this.WindowState = WindowState.Maximized;
                     
-                    // Detectar si el Owner cambió de pantalla
+                    // Detectar si el Owner cambiï¿½ de pantalla
                     var interopHelper = new System.Windows.Interop.WindowInteropHelper(this.Owner);
                     var currentScreen = System.Windows.Forms.Screen.FromHandle(interopHelper.Handle);
 
-                    // Si cambió de pantalla, actualizar la referencia
+                    // Si cambiï¿½ de pantalla, actualizar la referencia
                     if (_lastScreenOwner == null || !_lastScreenOwner.DeviceName.Equals(currentScreen.DeviceName))
                     {
                         _lastScreenOwner = currentScreen;
@@ -105,7 +133,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
                 }
                 catch
                 {
-                    // En caso de error, asegurar que la ventana está maximizada
+                    // En caso de error, asegurar que la ventana estï¿½ maximizada
                     this.WindowState = WindowState.Maximized;
                 }
             });
