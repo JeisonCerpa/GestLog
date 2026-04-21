@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:GestLog.Converters"
         mc:Ignorable="d"
-        Title="{Binding TituloDialog}" 
-        Height="700" Width="900"
+        Title="{Binding TituloDialog}"
+        Height="760"
+        Width="1040"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -22,336 +23,394 @@
         RenderOptions.ClearTypeHint="Enabled">
     <Window.Resources>
         <ResourceDictionary>
-            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter"/>
-            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:EnumToDescriptionConverter x:Key="EnumToDescriptionConverter" />
+            <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
-            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter"/>
-            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion"/>
-            
-            <!-- Estilo personalizado para tooltips con delay reducido -->
-            <Style x:Key="FastTooltipStyle" TargetType="ToolTip">
-                <Setter Property="Background" Value="#333333"/>
-                <Setter Property="Foreground" Value="#FFFFFF"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Padding" Value="12,8,12,8"/>
-            </Style>
+            <conv:EstadoToButtonEnabledConverter x:Key="EstadoToButtonEnabledConverter" />
+            <conv:EstadoToVisibilityConverter x:Key="EstadoToVisibilityConverter" TargetEstado="EnReparacion" />
         </ResourceDictionary>
-    </Window.Resources>    <Grid x:Name="RootGrid" Background="#80000000" MouseLeftButtonDown="Overlay_MouseLeftButtonDown" UseLayoutRounding="True" SnapsToDevicePixels="True">
-        <!-- Panel centrado modal -->
-        <Border x:Name="Card" Width="900" MaxHeight="700" Background="{StaticResource SurfaceBrush}" CornerRadius="12" Padding="0"
-                HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource WindowShadow}" MouseLeftButtonDown="Panel_MouseLeftButtonDown"
-                UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid"
+          Background="#80000000"
+          MouseLeftButtonDown="Overlay_MouseLeftButtonDown"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True">
+
+        <Border x:Name="Card"
+                Width="1040"
+                MaxHeight="760"
+                Background="{DynamicResource BackgroundAppBrush}"
+                CornerRadius="20"
+                Padding="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Effect="{StaticResource ThemeCardShadow}"
+                MouseLeftButtonDown="Panel_MouseLeftButtonDown"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>                <!-- Header Modal -->
-                <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,0,0" Padding="24,16" Effect="{StaticResource HeaderShadow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Style="{StaticResource ThemeHeaderContainerStyle}"
+                        Background="{DynamicResource HeaderBackgroundBrush}"
+                        CornerRadius="20,20,0,0"
+                        Padding="24,18">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="White" 
-                                    CornerRadius="8" 
-                                    Padding="8" 
-                                    Margin="0,0,12,0"
-                                    Width="42" 
-                                    Height="42"
-                                    Effect="{StaticResource SectionShadow}"
-                                    UseLayoutRounding="True"
-                                    SnapsToDevicePixels="True">
-                                <!-- Icono de periférico -->
-                                <TextBlock Text="🖥" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Border Width="50"
+                                    Height="50"
+                                    Margin="0,0,14,0"
+                                    CornerRadius="14"
+                                    Background="{DynamicResource PrimaryLightBrush}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="🖥"
+                                           FontSize="22"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Border>
-                            <StackPanel>
-                                <TextBlock Text="{Binding TituloDialog}" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Gestiona información detallada del periférico" Style="{StaticResource SubHeaderTextStyle}" Foreground="White"/>
+
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TituloDialog}"
+                                           Style="{StaticResource ThemeSectionTitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                <TextBlock Text="Diseño premium y consistente para gestionar el periférico"
+                                           Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                           Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                           Opacity="0.88" />
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="1" x:Name="BtnCerrarHeader" Style="{StaticResource CloseButton}" Click="BtnCerrar_Click" ToolTip="Cerrar (Esc)" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="6">
-                            <Grid Width="14" Height="14">
-                                <Line X1="0" Y1="0" X2="14" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                <Line X1="14" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            </Grid>
+                        <Button Grid.Column="1"
+                                x:Name="BtnCerrarHeader"
+                                Style="{StaticResource ThemeCloseButtonStyle}"
+                                Click="BtnCerrar_Click"
+                                ToolTip="Cerrar (Esc)"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="✕"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextOnPrimaryBrush}" />
                         </Button>
                     </Grid>
-                </Border>                <!-- Contenido -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24" UseLayoutRounding="True" SnapsToDevicePixels="True">
-                    <StackPanel UseLayoutRounding="True" SnapsToDevicePixels="True">
-                        <!-- Sección: Información Básica -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24">
-                            <StackPanel>
-                                <TextBlock Text="📋 Información Básica" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Fila 1: Código y Dispositivo -->
-                                    <StackPanel Grid.Row="0" Grid.Column="0">
-                                        <TextBlock Text="Código *" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtCodigo" 
-                                                 Text="{Binding PerifericoActual.Codigo, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}" 
-                                                 IsReadOnly="{Binding IsReadOnlyMode}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="0" Grid.Column="2">
-                                        <TextBlock Text="Dispositivo *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbDispositivo" 
-                                                  Text="{Binding FiltroDispositivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  ItemsSource="{Binding DispositivosFiltrados}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  Style="{StaticResource InputStyle}"
-                                                  IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Fila 2: Marca y Modelo -->
-                                    <StackPanel Grid.Row="1" Grid.Column="0">
-                                        <TextBlock Text="Marca" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbMarca" 
-                                                  Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  ItemsSource="{Binding MarcasFiltradas}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  Style="{StaticResource InputStyle}"
-                                                  IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Row="1" Grid.Column="2">
-                                        <TextBlock Text="Modelo" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtModelo" 
-                                                 Text="{Binding PerifericoActual.Modelo, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"
-                                                 IsReadOnly="{Binding IsReadOnlyMode}"/>
-                                    </StackPanel>
-                                    
-                                    <!-- Fila 3: Serial (span completo) -->
-                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
-                                        <TextBlock Text="Número de Serie" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtSerial" 
-                                                 Text="{Binding PerifericoActual.Serial, UpdateSourceTrigger=PropertyChanged}"
-                                                 Style="{StaticResource InputStyle}"
-                                                 IsReadOnly="{Binding IsReadOnlyMode}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                </Border>
 
-                        <!-- Sección: Información Financiera -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24"
-                                Margin="0,20,0,0">
-                            <StackPanel>
-                                <TextBlock Text="💰 Información Financiera" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Fecha de Compra" Style="{StaticResource LabelTextStyle}"/>
-                                        <DatePicker x:Name="DpFechaCompra" 
-                                                    SelectedDate="{Binding PerifericoActual.FechaCompra, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource InputStyle}"
-                                                    IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Costo (COP)" Style="{StaticResource LabelTextStyle}"/>
-                                        <TextBox x:Name="TxtCosto" 
-                                                 Text="{Binding PerifericoActual.Costo, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}"
-                                                 Style="{StaticResource InputStyle}"
-                                                 IsReadOnly="{Binding IsReadOnlyMode}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                <ScrollViewer Grid.Row="1"
+                              Margin="24"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="0"
+                              UseLayoutRounding="True"
+                              SnapsToDevicePixels="True">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}" />
+                        <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}" />
+                    </ScrollViewer.Resources>
 
-                        <!-- Sección: Ubicación y Estado -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24"
-                                Margin="0,20,0,0">
-                            <StackPanel>
-                                <TextBlock Text="📍 Ubicación y Estado" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="16"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Fila 1: Sede y Estado -->
-                                    <StackPanel Grid.Row="0" Grid.Column="0">
-                                        <TextBlock Text="Sede *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbSede" 
-                                                  ItemsSource="{Binding SedesDisponibles}"
-                                                  SelectedItem="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                  Style="{StaticResource InputStyle}"
-                                                  IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="0" Grid.Column="2">
-                                        <TextBlock Text="Estado *" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbEstado" 
-                                                  ItemsSource="{Binding EstadosDisponibles}"
-                                                  SelectedItem="{Binding PerifericoActual.Estado, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                  Style="{StaticResource InputStyle}"
-                                                  IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                    </StackPanel>
-                                      <!-- Fila 2: Usuario Asignado (span completo) -->
-                                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
-                                        <TextBlock Text="Usuario Asignado" Style="{StaticResource LabelTextStyle}"/>
-                                        <ComboBox x:Name="CmbUsuarioAsignado"
-                                                  Height="40"
-                                                  IsEditable="True"
-                                                  ItemsSource="{Binding PersonasConEquipoFiltradas}"
-                                                  SelectedItem="{Binding PersonaConEquipoSeleccionada, Mode=TwoWay}"
-                                                  Text="{Binding FiltroUsuarioAsignado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  DisplayMemberPath="DisplayText"
-                                                  IsTextSearchEnabled="False"
-                                                  Style="{StaticResource InputStyle}"
-                                                  Background="{StaticResource SurfaceBrush}"
-                                                  BorderBrush="{StaticResource BorderBrush}"
-                                                  ToolTip="Buscar y seleccionar usuario con equipo asignado. Formato: Nombre Completo (Código Equipo)"
-                                                  IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                        <StackPanel>
+                            <Border Style="{StaticResource ThemeDetailSectionCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Información básica"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="19"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,18" />
 
-                        <!-- Sección: Observaciones -->
-                        <Border Background="{StaticResource SurfaceBrush}" 
-                                CornerRadius="8" 
-                                BorderBrush="{StaticResource BorderBrush}" 
-                                BorderThickness="1"
-                                Effect="{StaticResource CardShadow}"
-                                Padding="24"
-                                Margin="0,20,0,0">
-                            <StackPanel>
-                                <TextBlock Text="📝 Observaciones Adicionales" Style="{StaticResource SectionHeaderStyle}"/>
-                                
-                                <TextBox x:Name="TxtObservaciones" 
-                                         Text="{Binding PerifericoActual.Observaciones, UpdateSourceTrigger=PropertyChanged}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         Height="100"
-                                         VerticalContentAlignment="Top"
-                                         VerticalScrollBarVisibility="Auto"
-                                         Style="{StaticResource InputStyle}"
-                                         Margin="0,0,0,0"
-                                         ToolTip="Ingrese cualquier información adicional relevante sobre el periférico"
-                                         IsReadOnly="{Binding IsReadOnlyMode}"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                            <TextBlock Text="Código *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox x:Name="TxtCodigo"
+                                                     Text="{Binding PerifericoActual.Codigo, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     IsReadOnly="{Binding IsReadOnlyMode}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="2">
+                                            <TextBlock Text="Dispositivo *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox x:Name="CmbDispositivo"
+                                                      Text="{Binding FiltroDispositivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding DispositivosFiltrados}"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}" />
+                                            <TextBlock Text="Escribe para buscar y seleccionar un dispositivo existente."
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,0,0">
+                                            <TextBlock Text="Marca" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox x:Name="CmbMarca"
+                                                      Text="{Binding FiltroMarca, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding MarcasFiltradas}"
+                                                      IsEditable="True"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
+                                            <TextBlock Text="Modelo" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox x:Name="TxtModelo"
+                                                     Text="{Binding PerifericoActual.Modelo, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     IsReadOnly="{Binding IsReadOnlyMode}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                                            <TextBlock Text="Número de serie" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox x:Name="TxtSerial"
+                                                     Text="{Binding PerifericoActual.Serial, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     IsReadOnly="{Binding IsReadOnlyMode}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Información financiera"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,14" />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Fecha de compra" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <DatePicker x:Name="DpFechaCompra"
+                                                        SelectedDate="{Binding PerifericoActual.FechaCompra, UpdateSourceTrigger=PropertyChanged}"
+                                                        Style="{StaticResource ThemeDatePickerStyle}"
+                                                        IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Costo (COP)" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <TextBox x:Name="TxtCosto"
+                                                     Text="{Binding PerifericoActual.Costo, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     IsReadOnly="{Binding IsReadOnlyMode}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Ubicación, estado y asignación"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,14" />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                            <TextBlock Text="Sede *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox x:Name="CmbSede"
+                                                      ItemsSource="{Binding SedesDisponibles}"
+                                                      SelectedItem="{Binding PerifericoActual.Sede, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Text="Selecciona la sede donde quedará asignado el periférico."
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="2">
+                                            <TextBlock Text="Estado *" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox x:Name="CmbEstado"
+                                                      ItemsSource="{Binding EstadosDisponibles}"
+                                                      SelectedItem="{Binding PerifericoActual.Estado, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDescriptionConverter}}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                                            <TextBlock Text="Usuario asignado" Style="{StaticResource ThemeDetailLabelStyle}" />
+                                            <ComboBox x:Name="CmbUsuarioAsignado"
+                                                      Height="40"
+                                                      IsEditable="True"
+                                                      ItemsSource="{Binding PersonasConEquipoFiltradas}"
+                                                      SelectedItem="{Binding PersonaConEquipoSeleccionada, Mode=TwoWay}"
+                                                      Text="{Binding FiltroUsuarioAsignado, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      DisplayMemberPath="DisplayText"
+                                                      IsTextSearchEnabled="False"
+                                                      Style="{StaticResource ThemeComboBoxStyle}"
+                                                      ToolTip="Buscar y seleccionar usuario con equipo asignado. Formato: Nombre Completo (Código Equipo)"
+                                                      IsEnabled="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanConverter}}" />
+                                            <TextBlock Text="Opcional: busca por nombre o código del equipo para dejarlo vinculado."
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource ThemeDetailSectionCardStyle}" Margin="0,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Observaciones"
+                                               Style="{StaticResource ThemeSectionTitleStyle}"
+                                               FontSize="17"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,14" />
+
+                                    <TextBox x:Name="TxtObservaciones"
+                                             Text="{Binding PerifericoActual.Observaciones, UpdateSourceTrigger=PropertyChanged}"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             Height="140"
+                                             VerticalContentAlignment="Top"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Style="{StaticResource ThemeTextBoxStyle}"
+                                             ToolTip="Ingrese cualquier información adicional relevante sobre el periférico"
+                                             IsReadOnly="{Binding IsReadOnlyMode}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
                 </ScrollViewer>
 
-                <!-- Footer Modal -->
-                <Border Grid.Row="2" Padding="24,12" Background="Transparent" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="Eliminar" 
-                                Command="{Binding EliminarCommand}"
-                                Visibility="{Binding ShowDeleteButton, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Style="{StaticResource DangerButtonStyle}"
-                                Margin="0,0,8,0"/>
-                          <!-- Editar: visible solo en modo solo lectura -->
-                        <Button Content="Editar"
-                                Command="{Binding EditarCommand}"
-                                Visibility="{Binding IsReadOnlyMode, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Style="{StaticResource GhostButton}"
-                                Margin="0,0,8,0"/>
-                        
-                        <!-- Dar de Baja: con badge visual cuando está en reparación -->
-                        <Grid Margin="0,0,8,0" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <Button Grid.Column="0" 
-                                    Content="Dar de Baja"
+                <Border Grid.Row="2"
+                    Padding="20,14"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                            <Button Content="Eliminar"
+                                    Command="{Binding EliminarCommand}"
+                                    Visibility="{Binding ShowDeleteButton, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Style="{StaticResource ThemeDangerButtonStyle}"
+                                    Margin="0,0,10,0" />
+
+                            <Button Content="Editar"
+                                    Command="{Binding EditarCommand}"
+                                    Visibility="{Binding IsReadOnlyMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                    Margin="0,0,10,0" />
+
+                            <Grid Margin="0,0,10,0" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0"
+                                    Content="Dar de baja"
                                     Command="{Binding DarDeBajaCommand}"
                                     IsEnabled="{Binding PerifericoActual.Estado, Converter={StaticResource EstadoToButtonEnabledConverter}}"
                                     ToolTip="{Binding DarDeBajaButtonTooltip}"
-                                    Style="{StaticResource GhostButton}"/>
-                            
-                            <!-- Badge de advertencia cuando está en reparación -->
-                            <Border Grid.Column="1" 
-                                    Visibility="{Binding PerifericoActual.Estado, Converter={StaticResource EstadoToVisibilityConverter}}"
-                                    Background="#FFC107" 
-                                    CornerRadius="50" 
-                                    Width="24" 
-                                    Height="24"
-                                    Margin="-12,0,0,0"
-                                    ToolTip="{Binding DarDeBajaButtonTooltip}"
-                                    VerticalAlignment="Top">
-                                <TextBlock Text="⚠" FontSize="12" Foreground="#856404" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
-                        
-                        <Button Content="Cancelar"
-                                Style="{StaticResource GhostButton}"
-                                Click="BtnCerrar_Click"
-                                Margin="0,0,8,0"/>
-                        
-                        <Button x:Name="BtnGuardar"
-                                Command="{Binding GuardarCommand}"
-                                IsDefault="True"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Visibility="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="💾" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding TextoBotonPrincipal}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                    MinWidth="128"
+                                    ToolTipService.ShowOnDisabled="True"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                                <Border Grid.Column="1"
+                                        Visibility="{Binding PerifericoActual.Estado, Converter={StaticResource EstadoToVisibilityConverter}}"
+                                        Background="{DynamicResource WarningBrush}"
+                                        CornerRadius="999"
+                                        Width="22"
+                                        Height="22"
+                                        Margin="-11,1,0,0"
+                                        ToolTip="{Binding DarDeBajaButtonTooltip}"
+                                        VerticalAlignment="Top">
+                                    <TextBlock Text="⚠"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+
+                            <Button Content="Cancelar"
+                                    Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                    Click="BtnCerrar_Click"
+                                    Margin="0,0,10,0" />
+
+                            <Button x:Name="BtnGuardar"
+                                    Command="{Binding GuardarCommand}"
+                                    IsDefault="True"
+                                    Style="{StaticResource ThemePrimaryButtonStyle}"
+                                    MinWidth="170"
+                                    MinHeight="42"
+                                    Visibility="{Binding IsReadOnlyMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="💾" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding TextoBotonPrincipal}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>

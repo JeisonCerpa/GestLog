@@ -657,6 +657,31 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     entity = existingEntity;
                 }
 
+                var usuarioIngresado = string.IsNullOrWhiteSpace(dto?.UsuarioAsignado) ? null : dto?.UsuarioAsignado?.Trim();
+                var equipoIngresado = string.IsNullOrWhiteSpace(dto?.CodigoEquipoAsignado) ? null : dto?.CodigoEquipoAsignado?.Trim();
+                var nombreEquipoIngresado = string.IsNullOrWhiteSpace(dto?.NombreEquipoAsignado) ? null : dto?.NombreEquipoAsignado?.Trim();
+                var tieneAsignacion = !string.IsNullOrWhiteSpace(usuarioIngresado)
+                                      || !string.IsNullOrWhiteSpace(equipoIngresado)
+                                      || !string.IsNullOrWhiteSpace(nombreEquipoIngresado);
+                var esDadoDeBaja = dto?.Estado == EstadoPeriferico.DadoDeBaja;
+
+                if (esDadoDeBaja)
+                {
+                    if (string.IsNullOrWhiteSpace(dto?.UsuarioAsignadoAnterior) && !string.IsNullOrWhiteSpace(entity.UsuarioAsignado))
+                        dto.UsuarioAsignadoAnterior = entity.UsuarioAsignado;
+
+                    if (string.IsNullOrWhiteSpace(dto?.CodigoEquipoAsignadoAnterior) && !string.IsNullOrWhiteSpace(entity.CodigoEquipoAsignado))
+                        dto.CodigoEquipoAsignadoAnterior = entity.CodigoEquipoAsignado;
+
+                    usuarioIngresado = null;
+                    equipoIngresado = null;
+                    nombreEquipoIngresado = null;
+                }
+                else if (tieneAsignacion)
+                {
+                    dto.Estado = EstadoPeriferico.EnUso;
+                }
+
                 // Si el código (PK) cambió, EF no permite marcar la PK como modificada en una entidad trackeada.
                 // Hacemos un UPDATE directo en la BD y recargamos la entidad.
                 var didPkChange = !esNuevo && !string.IsNullOrWhiteSpace(originalNonNull) &&
@@ -671,8 +696,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     var equipoAnterior = entity.CodigoEquipoAsignado;
                     
                     // Detectar cambios en asignaciones
-                    bool usuarioCambio = !string.Equals(usuarioAnterior, dto?.UsuarioAsignado, StringComparison.OrdinalIgnoreCase);
-                    bool equipoCambio = !string.Equals(equipoAnterior, dto?.CodigoEquipoAsignado, StringComparison.OrdinalIgnoreCase);
+                    bool usuarioCambio = !string.Equals(usuarioAnterior, usuarioIngresado, StringComparison.OrdinalIgnoreCase);
+                    bool equipoCambio = !string.Equals(equipoAnterior, equipoIngresado, StringComparison.OrdinalIgnoreCase);
                     
                     // Ejecutar UPDATE directo para cambiar PK y demás campos en una sola operación atómica
                     await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
@@ -684,8 +709,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                             Marca = {dto.Marca ?? string.Empty},
                             Modelo = {dto.Modelo ?? string.Empty},
                             SerialNumber = {dto.Serial ?? string.Empty},
-                            CodigoEquipoAsignado = {(string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
-                            UsuarioAsignado = {(string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
+                            CodigoEquipoAsignado = {equipoIngresado},
+                            UsuarioAsignado = {usuarioIngresado},
                             UsuarioAsignadoAnterior = {(usuarioCambio && !string.IsNullOrWhiteSpace(usuarioAnterior) ? usuarioAnterior : null)},
                             CodigoEquipoAsignadoAnterior = {(equipoCambio && !string.IsNullOrWhiteSpace(equipoAnterior) ? equipoAnterior : null)},
                             Sede = {dto.Sede},
@@ -699,31 +724,6 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     if (equipoCambio)
                         _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", equipoAnterior ?? "(ninguno)", codigo);
                     
-                    // Ejecutar UPDATE directo para cambiar PK y demás campos en una sola operación atómica
-                    await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
-                        UPDATE PerifericosEquiposInformaticos
-                        SET Codigo = {actualCodigoNonNull},
-                            Dispositivo = {dto.Dispositivo ?? string.Empty},
-                            FechaCompra = {dto.FechaCompra},
-                            Costo = {dto.Costo},
-                            Marca = {dto.Marca ?? string.Empty},
-                            Modelo = {dto.Modelo ?? string.Empty},
-                            SerialNumber = {dto.Serial ?? string.Empty},
-                            CodigoEquipoAsignado = {(string.IsNullOrWhiteSpace(dto.CodigoEquipoAsignado) ? null : dto.CodigoEquipoAsignado)},
-                            UsuarioAsignado = {(string.IsNullOrWhiteSpace(dto.UsuarioAsignado) ? null : dto.UsuarioAsignado)},
-                            UsuarioAsignadoAnterior = {(usuarioCambio && !string.IsNullOrWhiteSpace(usuarioAnterior) ? usuarioAnterior : null)},
-                            CodigoEquipoAsignadoAnterior = {(equipoCambio && !string.IsNullOrWhiteSpace(equipoAnterior) ? equipoAnterior : null)},
-                            Sede = {dto.Sede},
-                            Estado = {dto.Estado},
-                            Observaciones = {dto.Observaciones ?? string.Empty},
-                            FechaModificacion = {DateTime.Now}
-                        WHERE Codigo = {originalNonNull}");
-
-                    if (usuarioCambio)
-                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Usuario anterior={Anterior} para periférico {Codigo}", usuarioAnterior ?? "(ninguno)", codigo);
-                    if (equipoCambio)
-                        _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", equipoAnterior ?? "(ninguno)", codigo);;
-
                     // Recargar la entidad actualizada
                     var reloadKey = actualCodigoNonNull;
                     entity = await dbContext.PerifericosEquiposInformaticos.FirstOrDefaultAsync(p => p.Codigo == reloadKey);
@@ -739,7 +739,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                 {
                     // ✅ AUDITORÍA: Guardar valores anteriores ANTES de actualizar
                     // Si cambió el usuario asignado, guardar el anterior
-                    if (!string.Equals(entity.UsuarioAsignado, dto?.UsuarioAsignado, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(entity.UsuarioAsignado, usuarioIngresado, StringComparison.OrdinalIgnoreCase))
                     {
                         entity.UsuarioAsignadoAnterior = entity.UsuarioAsignado;
                         _logger.LogInformation("[PerifericosViewModel] Auditoria: Usuario anterior={Anterior} para periférico {Codigo}", 
@@ -747,7 +747,7 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     }
 
                     // Si cambió el equipo asignado, guardar el anterior
-                    if (!string.Equals(entity.CodigoEquipoAsignado, dto?.CodigoEquipoAsignado, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(entity.CodigoEquipoAsignado, equipoIngresado, StringComparison.OrdinalIgnoreCase))
                     {
                         entity.CodigoEquipoAsignadoAnterior = entity.CodigoEquipoAsignado;
                         _logger.LogInformation("[PerifericosViewModel] Auditoria: Equipo anterior={Anterior} para periférico {Codigo}", 
@@ -761,8 +761,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Perifericos
                     entity.Marca = dto?.Marca;
                     entity.Modelo = dto?.Modelo;
                     entity.SerialNumber = dto?.Serial;
-                    entity.CodigoEquipoAsignado = string.IsNullOrWhiteSpace(dto?.CodigoEquipoAsignado) ? null : dto?.CodigoEquipoAsignado;
-                    entity.UsuarioAsignado = string.IsNullOrWhiteSpace(dto?.UsuarioAsignado) ? null : dto?.UsuarioAsignado;
+                    entity.CodigoEquipoAsignado = equipoIngresado;
+                    entity.UsuarioAsignado = usuarioIngresado;
+                    if (esDadoDeBaja)
+                    {
+                        entity.CodigoEquipoAsignadoAnterior ??= equipoAnterior;
+                        entity.UsuarioAsignadoAnterior ??= usuarioAnterior;
+                        entity.CodigoEquipoAsignado = null;
+                        entity.UsuarioAsignado = null;
+                    }
                     entity.Sede = dto?.Sede ?? entity.Sede;
                     entity.Estado = dto?.Estado ?? entity.Estado;
                     entity.Observaciones = dto?.Observaciones;

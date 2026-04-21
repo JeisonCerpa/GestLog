@@ -365,6 +365,8 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 // Mantener UsuarioAsignado en el DTO como el nombre (para persistencia), pero mostrar en el TextBox el nombre + equipo
                 PerifericoActual.UsuarioAsignado = personaSeleccionada?.NombreCompleto ?? string.Empty;
                 PerifericoActual.CodigoEquipoAsignado = personaSeleccionada?.CodigoEquipo ?? string.Empty;
+                PerifericoActual.NombreEquipoAsignado = personaSeleccionada?.NombreEquipo ?? string.Empty;
+                PerifericoActual.Estado = EstadoPeriferico.EnUso;
                 
                 // Mostrar nombre completo + información del equipo en el TextBox (DisplayText)
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
@@ -449,6 +451,9 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 Serial = periferico.Serial,
                 UsuarioAsignado = periferico.UsuarioAsignado,
                 CodigoEquipoAsignado = periferico.CodigoEquipoAsignado,
+                NombreEquipoAsignado = periferico.NombreEquipoAsignado,
+                UsuarioAsignadoAnterior = periferico.UsuarioAsignadoAnterior,
+                CodigoEquipoAsignadoAnterior = periferico.CodigoEquipoAsignadoAnterior,
                 Sede = periferico.Sede,
                 Estado = periferico.Estado,
                 Observaciones = periferico.Observaciones
@@ -468,12 +473,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
 
             _suppressFiltroDispositivoChanged = true;
             _suppressFiltroMarcaChanged = true;
+            _suppressFiltroUsuarioChanged = true;
             
             FiltroDispositivo = periferico.Dispositivo ?? string.Empty;
             FiltroMarca = periferico.Marca ?? string.Empty;
+            FiltroUsuarioAsignado = !string.IsNullOrWhiteSpace(periferico.TextoAsignacion)
+                ? periferico.TextoAsignacion
+                : (periferico.UsuarioAsignado ?? string.Empty);
             
             _suppressFiltroDispositivoChanged = false;
             _suppressFiltroMarcaChanged = false;            
+            _suppressFiltroUsuarioChanged = false;
             TituloDialog = "Editar Periférico";
             TextoBotonPrincipal = "Actualizar";
             IsEditing = true;
@@ -697,17 +707,20 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 {
                     PerifericoActual.UsuarioAsignado = personaEncontrada.NombreCompleto ?? string.Empty;
                     PerifericoActual.CodigoEquipoAsignado = personaEncontrada.CodigoEquipo ?? string.Empty;
+                    PerifericoActual.NombreEquipoAsignado = personaEncontrada.NombreEquipo ?? string.Empty;
                 }
                 else
                 {
                     PerifericoActual.UsuarioAsignado = textoFiltro ?? string.Empty;
                     PerifericoActual.CodigoEquipoAsignado = string.Empty;
+                    PerifericoActual.NombreEquipoAsignado = string.Empty;
                 }
             }
             else
             {
                 PerifericoActual.UsuarioAsignado = string.Empty;
                 PerifericoActual.CodigoEquipoAsignado = string.Empty;
+                PerifericoActual.NombreEquipoAsignado = string.Empty;
             }
 
             // Log: estado final del DTO justo antes de validar/aceptar
@@ -892,6 +905,17 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
 
                 if (entity != null)
                 {
+                    if (!string.IsNullOrWhiteSpace(entity.UsuarioAsignado))
+                        entity.UsuarioAsignadoAnterior = entity.UsuarioAsignado;
+
+                    if (!string.IsNullOrWhiteSpace(entity.CodigoEquipoAsignado))
+                        entity.CodigoEquipoAsignadoAnterior = entity.CodigoEquipoAsignado;
+
+                    entity.UsuarioAsignado = null;
+                    entity.CodigoEquipoAsignado = null;
+                    PerifericoActual.UsuarioAsignado = null;
+                    PerifericoActual.CodigoEquipoAsignado = null;
+                    PerifericoActual.NombreEquipoAsignado = null;
                     entity.Estado = EstadoPeriferico.DadoDeBaja;
                     entity.FechaModificacion = DateTime.Now;
                     
@@ -976,9 +1000,16 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Perifericos
                 await ViewModel.CargarPersonasConEquipoAsync();
                 
                 // Si se está editando, buscar la persona preseleccionada DESPUÉS de cargar la lista
-                if (ViewModel.IsEditing && !string.IsNullOrWhiteSpace(ViewModel.PerifericoActual.UsuarioAsignado))
+                if (ViewModel.IsEditing)
                 {
-                    ViewModel.BuscarPersonaConEquipoExistente(ViewModel.PerifericoActual.UsuarioAsignado);
+                    var textoInicial = !string.IsNullOrWhiteSpace(ViewModel.PerifericoActual.UsuarioAsignado)
+                        ? ViewModel.PerifericoActual.UsuarioAsignado
+                        : ViewModel.PerifericoActual.TextoAsignacion;
+
+                    if (!string.IsNullOrWhiteSpace(textoInicial))
+                    {
+                        ViewModel.BuscarPersonaConEquipoExistente(textoInicial);
+                    }
                 }
                 
                 // Si tiene Owner, sincronizar cambios de tamaño

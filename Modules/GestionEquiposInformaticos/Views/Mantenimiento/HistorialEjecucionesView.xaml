@@ -62,8 +62,7 @@
                 Style="{StaticResource ThemeHeaderContainerStyle}"
                 CornerRadius="14"
                 Margin="10,10,10,8"
-            Padding="18,14"
-            MinHeight="96">
+            Padding="18,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -71,25 +70,26 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Style="{StaticResource ThemeCardIconCircleStyle}"
-                            Width="44"
+                    <Border Width="44"
                             Height="44"
+                            CornerRadius="22"
+                            Background="{DynamicResource PrimaryLightBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
                             Margin="0,0,12,0">
                         <TextBlock Text=""
                                    FontFamily="Segoe MDL2 Assets"
-                                   Style="{StaticResource ThemeCardIconTextStyle}"
-                                   FontSize="18" />
+                                   FontSize="18"
+                                   Foreground="{DynamicResource PrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
                     </Border>
 
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Historial de Ejecuciones"
-                                   Style="{StaticResource ThemeSectionTitleStyle}"
-                                   FontSize="18"
-                                   Foreground="{DynamicResource TextOnPrimaryBrush}" />
+                                   Style="{StaticResource ThemeSectionTitleStyle}" />
                         <TextBlock Text="Registro completo de mantenimientos ejecutados"
                                    Style="{StaticResource ThemeSectionSubtitleStyle}"
-                                   FontSize="12"
-                                   Foreground="{DynamicResource TextOnPrimaryBrush}"
                                    Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
@@ -99,16 +99,16 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
                     <Button Content="⭱ Exportar"
-                        Command="{Binding ExportarItemsCommand}"
-                        ToolTip="Exportar historial"
-                        Style="{StaticResource ThemeHeaderActionButtonStyle}"
-                        Margin="0,0,8,0"
-                        MinHeight="38" />
+                            Command="{Binding ExportarItemsCommand}"
+                            ToolTip="Exportar historial"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Margin="0,0,8,0"
+                            MinHeight="38" />
                     <Button Content="↻ Refrescar"
-                        Command="{Binding CargarItemsCommand}"
-                        ToolTip="Actualizar historial"
-                        Style="{StaticResource ThemeHeaderActionButtonStyle}"
-                        MinHeight="38" />
+                            Command="{Binding CargarItemsCommand}"
+                            ToolTip="Actualizar historial"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            MinHeight="38" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -116,49 +116,72 @@
         <Border Grid.Row="1"
                 Style="{StaticResource ThemeElevatedCardStyle}"
                 Margin="10,0,10,8"
-                Padding="16,10"
-                MinHeight="96">
+                Padding="16,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <WrapPanel Grid.Column="0" VerticalAlignment="Center" ItemHeight="76">
-                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="Código" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,2" />
+                <WrapPanel Grid.Column="0"
+                           VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                        <TextBlock Text="Código"
+                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
                         <TextBox Width="160"
                                  Text="{Binding FiltroCodigo, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Filtrar por código"
                                  Style="{StaticResource ThemeTextBoxStyle}" />
                     </StackPanel>
 
-                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="Nombre de equipo" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,2" />
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                        <TextBlock Text="Nombre de equipo"
+                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
                         <TextBox Width="220"
                                  Text="{Binding FiltroNombre, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Filtrar por nombre de equipo"
                                  Style="{StaticResource ThemeTextBoxStyle}" />
                     </StackPanel>
 
-                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="Usuario / Asignación" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,2" />
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                        <TextBlock Text="Usuario / Asignación"
+                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
                         <TextBox Width="200"
                                  Text="{Binding FiltroUsuario, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Filtrar por usuario/asignación"
                                  Style="{StaticResource ThemeTextBoxStyle}" />
                     </StackPanel>
 
-                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="Semana" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,2" />
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                        <TextBlock Text="Semana"
+                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
                         <TextBox Width="100"
                                  Text="{Binding FiltroSemana, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Filtrar por semana"
                                  Style="{StaticResource ThemeTextBoxStyle}" />
                     </StackPanel>
 
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Año" Style="{StaticResource ThemeDetailLabelStyle}" Margin="0,0,0,2" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Año"
+                                   Style="{StaticResource ThemeDetailLabelStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
                         <ComboBox Width="120"
                                   Height="40"
                                   ItemsSource="{Binding Years}"
