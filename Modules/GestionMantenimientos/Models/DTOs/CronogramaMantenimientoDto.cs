@@ -26,6 +26,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public bool EsPlanSemanal { get; set; } = false; // NUEVO
         // Indica si el plan semanal ya fue ejecutado en la semana seleccionada
         public bool PlanEjecutadoSemana { get; set; } = false; // NUEVO
+        // Indica si debe mostrarse el botón de ejecutar en la UI
+        public bool MostrarBotonEjecutar { get; set; } = true;
         // NUEVO: derivado para color atrasado
         public bool EsAtrasadoSemana { get; set; } = false;
         // NUEVO: derivado para color no realizado (Estado = 3)
@@ -47,6 +49,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             IsCodigoEnabled = false;
             EsPlanSemanal = other.EsPlanSemanal; // copiar
             PlanEjecutadoSemana = other.PlanEjecutadoSemana; // copiar
+            MostrarBotonEjecutar = other.MostrarBotonEjecutar;
             EsAtrasadoSemana = other.EsAtrasadoSemana; // copiar
             EsNoRealizadoSemana = other.EsNoRealizadoSemana; // copiar
         }

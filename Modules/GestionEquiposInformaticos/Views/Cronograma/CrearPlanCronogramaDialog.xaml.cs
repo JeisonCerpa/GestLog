@@ -3,6 +3,7 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos;
 using GestLog.Modules.GestionEquiposInformaticos.Models.Entities;
+using System.Windows.Input;
 
 namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
 {
@@ -45,16 +46,42 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
             };
         }
 
+        private void CrearPlanCronogramaDialog_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                CloseDialog(false);
+            }
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource == RootGrid)
+            {
+                CloseDialog(false);
+            }
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void OnPlanCreado(PlanCronogramaEquipo plan)
         {
             PlanCreado = plan;
-            DialogResult = true;
-            Close();
+            CloseDialog(true);
         }
 
         private void BtnCancelar_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            CloseDialog(false);
+        }
+
+        private void CloseDialog(bool result)
+        {
+            DialogResult = result;
             Close();
         }
 

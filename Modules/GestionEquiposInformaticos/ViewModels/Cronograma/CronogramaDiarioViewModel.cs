@@ -251,6 +251,14 @@ namespace GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma
                         EsNoRealizadoSemana = plan.Ejecuciones?.Any(e => e.AnioISO == SelectedYear && e.SemanaISO == SelectedWeek && e.Estado == 3) == true
                     };
 
+                    int semanaActual = System.Globalization.ISOWeek.GetWeekOfYear(DateTime.Now);
+                    int anioActual = System.Globalization.ISOWeek.GetYear(DateTime.Now);
+                    // En la semana actual el botón debe seguir visible aunque el día programado ya haya pasado.
+                    // El estado de atraso se usa para contraste/estado visual, no para ocultar la acción principal.
+                    planDto.MostrarBotonEjecutar = !planDto.PlanEjecutadoSemana
+                                                  && SelectedYear == anioActual
+                                                  && SelectedWeek == semanaActual;
+
                     int dayIndex = plan.DiaProgramado - 1; // Convertir a 0-based index
                     if (dayIndex >= 0 && dayIndex < Days.Count)
                     {

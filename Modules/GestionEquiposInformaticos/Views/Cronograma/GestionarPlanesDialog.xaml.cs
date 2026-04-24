@@ -1,6 +1,7 @@
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Cronograma;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using GestLog.Modules.GestionEquiposInformaticos.Interfaces.Data;
 using GestLog.Services.Core.Logging;
 using System.Collections.ObjectModel;
@@ -207,8 +208,62 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Cronograma
 
         private void CerrarButton_Click(object sender, RoutedEventArgs e)
         {
+            CloseModal();
+        }
+
+        private void GestionarPlanesDialog_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                CloseModal();
+            }
+        }
+
+        private void Overlay_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource == RootGrid)
+            {
+                CloseModal();
+            }
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void CloseModal()
+        {
             DialogResult = true;
-        }        private async void EditarButton_Click(object sender, RoutedEventArgs e)
+        }
+
+        private async void NuevoPlanButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new CrearPlanCronogramaDialog();
+                dialog.Owner = this;
+
+                var result = dialog.ShowDialog();
+                if (result == true && dialog.PlanCreado != null)
+                {
+                    StatusMessage = $"Plan creado para {dialog.PlanCreado.CodigoEquipo}";
+                    await CargarPlanesAsync();
+                }
+                else
+                {
+                    StatusMessage = "Creación de plan cancelada";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[GestionarPlanesDialog] Error al crear nuevo plan");
+                StatusMessage = "Error al abrir creación de plan";
+            }
+        }
+
+        private async void EditarButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {

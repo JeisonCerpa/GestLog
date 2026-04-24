@@ -25,33 +25,7 @@
             <TabItem Header="Cronograma">
                 <Border Background="{DynamicResource BackgroundSurfaceBrush}" Padding="0" CornerRadius="0 0 8 8">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>                        <cronogramaViews:CronogramaDiarioView x:Name="cronogramaView" DataContext="{Binding CronogramaVm}" /><!-- Indicador de estadísticas de planes -->
-                        <DockPanel Grid.Row="1" Margin="8">
-                            <!-- Contador de planes (izquierda) -->
-                            <TextBlock Text="{Binding DataContext.StatusMessage, ElementName=cronogramaView}" 
-                                       FontWeight="Medium" 
-                                       VerticalAlignment="Center" 
-                                       Foreground="{DynamicResource TextBodyBrush}"
-                                       FontSize="12" 
-                                       DockPanel.Dock="Left" />
-                            
-                            <!-- Leyenda (derecha) -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                                <TextBlock Text="Leyenda:" FontWeight="SemiBold" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource TextBodyBrush}" FontSize="11" />
-                                <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="2" Padding="3,1" Margin="0,0,6,0">
-                                    <TextBlock Text="Pendiente" FontSize="9" Foreground="{DynamicResource TextBodyBrush}" />
-                                </Border>
-                                <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="2" Padding="3,1" Margin="0,0,6,0">
-                                    <TextBlock Text="Atrasado" FontSize="9" Foreground="{DynamicResource TextBodyBrush}" />
-                                </Border>
-                                <Border Background="{DynamicResource BackgroundElevatedBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" CornerRadius="2" Padding="3,1">
-                                    <TextBlock Text="Ejecutado" FontSize="9" Foreground="{DynamicResource TextBodyBrush}" />
-                                </Border>
-                            </StackPanel>
-                        </DockPanel>
+                        <cronogramaViews:CronogramaDiarioView x:Name="cronogramaView" DataContext="{Binding CronogramaVm}" />
                     </Grid>
                 </Border>
             </TabItem>
