@@ -1,3 +1,3 @@
-## v1.2.2
+## v1.2.3
 
-- Migración de vista faltante y arreglos menores.
+- Arreglo en el pool de conexiones a la base de datos y cambios en la reconexión.

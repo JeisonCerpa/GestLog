@@ -14,6 +14,7 @@ using GestLog.Modules.Usuarios.Interfaces;
 using GestLog.ViewModels.Base;
 using GestLog.Services.Interfaces;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -54,6 +55,7 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
     private bool _isRefreshing = false;
     private bool _isLoadingData = false;
     private int _isGroupingFlag = 0;
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
 
     [ObservableProperty]
     private ObservableCollection<SemanaViewModel> semanas = new();
@@ -119,8 +121,17 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     if (!_isInitialized) return;
                 }
                 
+                var acquired = await _refreshGate.WaitAsync(0);
+                if (!acquired)
+                {
+                    _logger.LogInformation("[CronogramaViewModel] Refresco omitido: ya existe una actualización en curso");
+                    return;
+                }
+
                 try
                 {
+                    if (_isRefreshing) return;
+                    _isRefreshing = true;
                     await _cronogramaService.EnsureAllCronogramasUpToDateAsync();
                     await _cronogramaService.GenerarSeguimientosFaltantesAsync();
                     await LoadCronogramasAsync();
@@ -129,6 +140,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "[CronogramaViewModel] Error en mensaje EquiposActualizados");
+                }
+                finally
+                {
+                    _isRefreshing = false;
+                    _refreshGate.Release();
                 }
             });            IsLoading = true;
             StatusMessage = "Cargando cronogramas...";
@@ -429,7 +445,11 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         // Evitar mltiples refrescos simultneos
-        if (IsLoading) return;
+        if (IsLoading || _isRefreshing) return;
+
+        var acquired = await _refreshGate.WaitAsync(0, cancellationToken);
+        if (!acquired)
+            return;
 
         //  Ejecutar en background thread para NO bloquear la UI
         await Task.Run(async () =>
@@ -536,6 +556,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
                     _isRefreshing = false;
                     PlaceholderSemanas.Clear();
                 });
+                if (_refreshGate.CurrentCount == 0)
+                    _refreshGate.Release();
             }
         }, cancellationToken);
     }    [RelayCommand(CanExecute = nameof(CanExportCronograma))]

@@ -25,7 +25,8 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Migración de vista faltante y arreglos menores.",
+                "• Arreglo en el pool de conexiones a la base de datos.\n" +
+                "• Cambios en la reconexión.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

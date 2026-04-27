@@ -24,6 +24,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
     public class CronogramaService : ICronogramaService
     {        private readonly IGestLogLogger _logger;
         private readonly IDbContextFactory<GestLogDbContext> _dbContextFactory;
+        private static readonly SemaphoreSlim _cronogramaUpdateGate = new(1, 1);
         public CronogramaService(IGestLogLogger logger, IDbContextFactory<GestLogDbContext> dbContextFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -664,20 +665,30 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
         /// </summary>
         public async Task GenerarSeguimientosFaltantesAsync()
         {
-            using var dbContext = _dbContextFactory.CreateDbContext();
-            var cronogramas = dbContext.Cronogramas.ToList();
-            int totalAgregados = 0;
-
-            foreach (var cronograma in cronogramas)
+            await _cronogramaUpdateGate.WaitAsync();
+            try
             {
-                for (int i = 0; i < cronograma.Semanas.Length; i++)
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var cronogramas = await dbContext.Cronogramas.ToListAsync();
+                var seguimientosExistentes = await dbContext.Seguimientos
+                    .Select(s => new { s.Codigo, s.Semana, s.Anio })
+                    .ToListAsync();
+                var clavesExistentes = seguimientosExistentes
+                    .Select(s => (s.Codigo, s.Semana, s.Anio))
+                    .ToHashSet();
+                int totalAgregados = 0;
+
+                foreach (var cronograma in cronogramas)
                 {
-                    if (cronograma.Semanas[i])
+                    for (int i = 0; i < cronograma.Semanas.Length; i++)
                     {
-                        int semana = i + 1;
-                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == cronograma.Codigo && s.Semana == semana && s.Anio == cronograma.Anio);
-                        if (!existe)
+                        if (cronograma.Semanas[i])
                         {
+                            int semana = i + 1;
+                            var clave = (cronograma.Codigo, semana, cronograma.Anio);
+                            if (clavesExistentes.Contains(clave))
+                                continue;
+
                             // Calcular el lunes de la semana correspondiente
                             var fechaLunes = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(cronograma.Anio, 1, 1), semana - 1);
                             dbContext.Seguimientos.Add(new Models.Entities.SeguimientoMantenimiento
@@ -690,44 +701,64 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                                 Responsable = string.Empty,
                                 FechaRegistro = fechaLunes
                             });
+                            clavesExistentes.Add(clave);
                             totalAgregados++;
                         }
                     }
                 }
+
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
+            }
+            finally
+            {
+                _cronogramaUpdateGate.Release();
             }
 
-            await dbContext.SaveChangesAsync();
-            _logger.LogInformation($"[MIGRACION] Seguimientos generados: {totalAgregados}");
-            // Notificar actualización de seguimientos
+            // Notificar actualización de seguimientos fuera del bloqueo para evitar cascadas en paralelo
             WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }        /// <summary>
         /// Asegura que todos los equipos activos tengan cronogramas completos desde su año de registro hasta el actual (y el siguiente si es octubre o más).
         /// </summary>
         public async Task EnsureAllCronogramasUpToDateAsync()
         {
-            _logger.LogInformation("[CRONOGRAMA] 🔄 EnsureAllCronogramasUpToDateAsync INICIANDO...");
-            var now = DateTime.Now;
-            int anioActual = now.Year;
-            int anioLimite = anioActual;
-            if (now.Month >= 10) // Octubre o más, también crear el del siguiente año
-                anioLimite = anioActual + 1;            using var dbContext = _dbContextFactory.CreateDbContext();
-            var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaCompra != null && e.FrecuenciaMtto != null).ToListAsync();
-            
-            _logger.LogInformation($"[CRONOGRAMA] ✓ Equipos activos encontrados: {equipos.Count}, Años a procesar: {anioActual} a {anioLimite}");            
-            int totalCronogramasCreados = 0;            foreach (var equipo in equipos)
+            await _cronogramaUpdateGate.WaitAsync();
+            try
             {
-                _logger.LogDebug($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
-                int anioRegistro = equipo.FechaCompra!.Value.Year;
-                int semanaRegistro = CalcularSemanaISO8601(equipo.FechaCompra.Value);
-                _logger.LogDebug($"[CRONOGRAMA] FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
-                
-                for (int anio = anioRegistro; anio <= anioLimite; anio++)
+                _logger.LogInformation("[CRONOGRAMA] 🔄 EnsureAllCronogramasUpToDateAsync INICIANDO...");
+                var now = DateTime.Now;
+                int anioActual = now.Year;
+                int anioLimite = anioActual;
+                if (now.Month >= 10) // Octubre o más, también crear el del siguiente año
+                    anioLimite = anioActual + 1;
+
+                using var dbContext = _dbContextFactory.CreateDbContext();
+                var equipos = await dbContext.Equipos.Where(e => e.Estado == Models.Enums.EstadoEquipo.Activo && e.FechaCompra != null && e.FrecuenciaMtto != null).ToListAsync();
+                var cronogramasExistentes = await dbContext.Cronogramas
+                    .Select(c => new { c.Codigo, c.Anio })
+                    .ToListAsync();
+                var clavesCronogramas = cronogramasExistentes
+                    .Select(c => (c.Codigo, c.Anio))
+                    .ToHashSet();
+
+                _logger.LogInformation($"[CRONOGRAMA] ✓ Equipos activos encontrados: {equipos.Count}, Años a procesar: {anioActual} a {anioLimite}");            
+                int totalCronogramasCreados = 0;            foreach (var equipo in equipos)
                 {
-                    bool existe = await dbContext.Cronogramas.AnyAsync(c => c.Codigo == equipo.Codigo && c.Anio == anio);                    if (existe)
+                    _logger.LogDebug($"[CRONOGRAMA] 📋 Procesando equipo: {equipo.Codigo}");
+                    int anioRegistro = equipo.FechaCompra!.Value.Year;
+                    int semanaRegistro = CalcularSemanaISO8601(equipo.FechaCompra.Value);
+                    _logger.LogDebug($"[CRONOGRAMA] FechaCompra={equipo.FechaCompra:yyyy-MM-dd}, SemanaCompra={semanaRegistro}, Frecuencia={equipo.FrecuenciaMtto}");
+                    
+                    for (int anio = anioRegistro; anio <= anioLimite; anio++)
                     {
-                        _logger.LogDebug($"[CRONOGRAMA] ↩️ Cronograma existe para {equipo.Codigo} año {anio}, saltando");
-                        continue;
-                    }                    _logger.LogDebug($"[CRONOGRAMA] ✅ Creando cronograma para {equipo.Codigo} año {anio}");
+                        var claveCronograma = (equipo.Codigo, anio);
+                        if (clavesCronogramas.Contains(claveCronograma))
+                        {
+                            _logger.LogDebug($"[CRONOGRAMA] ↩️ Cronograma existe para {equipo.Codigo} año {anio}, saltando");
+                            continue;
+                        }
+
+                        _logger.LogDebug($"[CRONOGRAMA] ✅ Creando cronograma para {equipo.Codigo} año {anio}");
                     int semanaInicio;
                     if (anio == anioRegistro)
                     {
@@ -941,16 +972,22 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         Semanas = semanas,
                         Anio = anio
                     };                    dbContext.Cronogramas.Add(nuevo);
+                        clavesCronogramas.Add(claveCronograma);
 
                     // Guardar inmediatamente para que esté disponible en la siguiente iteración
                     await dbContext.SaveChangesAsync();
                     totalCronogramasCreados++;
                 }
             }
-            
-            _logger.LogInformation($"[CRONOGRAMA] ✅ EnsureAllCronogramasUpToDateAsync FINALIZADO - Total cronogramas creados: {totalCronogramasCreados}");
-            
-            // Al final del método, notificar actualización de seguimientos
+
+                _logger.LogInformation($"[CRONOGRAMA] ✅ EnsureAllCronogramasUpToDateAsync FINALIZADO - Total cronogramas creados: {totalCronogramasCreados}");
+            }
+            finally
+            {
+                _cronogramaUpdateGate.Release();
+            }
+
+            // Al final del método, notificar actualización de seguimientos fuera del bloqueo
             WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
         }        private int CalcularSemanaISO8601(DateTime fecha)
         {

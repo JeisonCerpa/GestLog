@@ -18,6 +18,9 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
     private readonly IGestLogLogger _logger;
     private readonly IConfiguration _configuration;
     private readonly IEnvironmentDetectionService _environmentService;
+    private readonly object _connectionStringLock = new();
+    private string? _cachedConnectionString;
+    private string? _cachedEnvironment;
 
     // Environment variable names
     private const string ENV_DB_SERVER = "GESTLOG_DB_SERVER";
@@ -42,6 +45,15 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
     {
         try
         {
+            lock (_connectionStringLock)
+            {
+                if (!string.IsNullOrWhiteSpace(_cachedConnectionString))
+                {
+                    _logger.LogDebug("🔁 Reutilizando cadena de conexión en caché para el entorno {Environment}", _cachedEnvironment ?? "desconocido");
+                    return _cachedConnectionString;
+                }
+            }
+
             _logger.LogDebug("🔧 Construyendo cadena de conexión unificada...");
 
             var currentEnv = await _environmentService.DetectEnvironmentAsync(cancellationToken);
@@ -69,15 +81,27 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
 
                 if (devConfig.IsComplete)
                 {
-                    _logger.LogInformation("✅ Configuración de desarrollo obtenida de archivo específico: {Environment}", currentEnv);
-                    return BuildConnectionString(devConfig);
+                    var connectionString = BuildConnectionString(devConfig);
+                    lock (_connectionStringLock)
+                    {
+                        _cachedEnvironment = currentEnv;
+                        _cachedConnectionString = connectionString;
+                    }
+                    _logger.LogDebug("✅ Configuración de desarrollo obtenida de archivo específico: {Environment}", currentEnv);
+                    return connectionString;
                 }
 
                 var fallbackDevConfig = GetConfigFromFallbackSettings();
                 if (fallbackDevConfig.IsComplete)
                 {
-                    _logger.LogInformation("✅ Configuración de desarrollo obtenida de valores fallback");
-                    return BuildConnectionString(fallbackDevConfig);
+                    var connectionString = BuildConnectionString(fallbackDevConfig);
+                    lock (_connectionStringLock)
+                    {
+                        _cachedEnvironment = currentEnv;
+                        _cachedConnectionString = connectionString;
+                    }
+                    _logger.LogDebug("✅ Configuración de desarrollo obtenida de valores fallback");
+                    return connectionString;
                 }
             }
 
@@ -86,23 +110,41 @@ public class UnifiedDatabaseConfigurationService : IUnifiedDatabaseConfiguration
             if (config.IsComplete)
             {
                 _logger.LogDebug("✅ Configuración obtenida de variables de entorno");
-                return BuildConnectionString(config);
+                var connectionString = BuildConnectionString(config);
+                lock (_connectionStringLock)
+                {
+                    _cachedEnvironment = currentEnv;
+                    _cachedConnectionString = connectionString;
+                }
+                return connectionString;
             }
 
             // Prioridad 2: Archivo específico del entorno
             config = await GetConfigFromEnvironmentFileAsync(currentEnv, cancellationToken);
             if (config.IsComplete)
             {
-                _logger.LogInformation("✅ Configuración obtenida de archivo específico: {Environment}", currentEnv);
-                return BuildConnectionString(config);
+                var connectionString = BuildConnectionString(config);
+                lock (_connectionStringLock)
+                {
+                    _cachedEnvironment = currentEnv;
+                    _cachedConnectionString = connectionString;
+                }
+                _logger.LogDebug("✅ Configuración obtenida de archivo específico: {Environment}", currentEnv);
+                return connectionString;
             }
 
             // Prioridad 3: Valores fallback de appsettings.json
             config = GetConfigFromFallbackSettings();
             if (config.IsComplete)
             {
-                _logger.LogInformation("✅ Configuración obtenida de valores fallback");
-                return BuildConnectionString(config);
+                var connectionString = BuildConnectionString(config);
+                lock (_connectionStringLock)
+                {
+                    _cachedEnvironment = currentEnv;
+                    _cachedConnectionString = connectionString;
+                }
+                _logger.LogDebug("✅ Configuración obtenida de valores fallback");
+                return connectionString;
             }
 
             throw new DatabaseConfigurationException(

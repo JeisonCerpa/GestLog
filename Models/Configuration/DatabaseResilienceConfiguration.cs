@@ -93,7 +93,7 @@ public class HealthCheckConfig
     /// <summary>
     /// Intervalo entre health checks
     /// </summary>
-    public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(2);
+    public TimeSpan Interval { get; set; } = TimeSpan.FromMinutes(5);
     
     /// <summary>
     /// Timeout para health checks
