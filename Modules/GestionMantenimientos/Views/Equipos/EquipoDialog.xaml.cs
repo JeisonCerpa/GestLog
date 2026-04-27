@@ -289,8 +289,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 get => Equipo.Nombre; 
                 set 
                 { 
-                    // Forzar mayúsculas y trim
-                    Equipo.Nombre = value?.ToUpperInvariant().Trim();
+                    // Forzar mayúsculas, pero permitir que el usuario escriba espacios sin que se borren al instante
+                    Equipo.Nombre = value?.ToUpperInvariant();
                     RaisePropertyChanged(nameof(Nombre));
                     RaisePropertyChanged(nameof(IsNombreVacio));
                     RaisePropertyChanged(nameof(IsFormularioValido));
@@ -304,7 +304,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 {
                     // Forzar mayúsculas y mantener término de búsqueda original
                     var original = value ?? string.Empty;
-                    Equipo.Marca = original.ToUpperInvariant().Trim();
+                    Equipo.Marca = original.ToUpperInvariant();
                     // Actualizar filtro mostrado en mayúsculas
                     _suppressFiltroMarcaChanged = true;
                     filtroMarca = Equipo.Marca ?? string.Empty;
@@ -345,7 +345,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 set
                 {
                     var original = value ?? string.Empty;
-                    Equipo.Clasificacion = original.ToUpperInvariant().Trim();
+                    Equipo.Clasificacion = original.ToUpperInvariant();
 
                     _suppressFiltroClasificacionChanged = true;
                     filtroClasificacion = Equipo.Clasificacion ?? string.Empty;
@@ -362,7 +362,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
                 set
                 {
                     var original = value ?? string.Empty;
-                    Equipo.CompradoA = original.ToUpperInvariant().Trim();
+                    Equipo.CompradoA = original.ToUpperInvariant();
 
                     _suppressFiltroCompradoAChanged = true;
                     filtroCompradoA = Equipo.CompradoA ?? string.Empty;

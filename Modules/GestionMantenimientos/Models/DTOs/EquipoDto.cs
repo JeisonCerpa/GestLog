@@ -32,7 +32,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             get => _nombre;
             set
             {
-                var normalized = value?.ToUpperInvariant().Trim();
+                var normalized = value?.ToUpperInvariant();
                 if (_nombre != normalized)
                 {
                     _nombre = normalized;
@@ -47,7 +47,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             get => _marca;
             set
             {
-                var normalized = value?.ToUpperInvariant().Trim();
+                var normalized = value?.ToUpperInvariant();
                 if (_marca != normalized)
                 {
                     _marca = normalized;
@@ -80,7 +80,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             get => _clasificacion;
             set
             {
-                var normalized = value?.ToUpperInvariant().Trim();
+                var normalized = value?.ToUpperInvariant();
                 if (_clasificacion != normalized)
                 {
                     _clasificacion = normalized;
@@ -95,7 +95,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             get => _compradoA;
             set
             {
-                var normalized = value?.ToUpperInvariant().Trim();
+                var normalized = value?.ToUpperInvariant();
                 if (_compradoA != normalized)
                 {
                     _compradoA = normalized;

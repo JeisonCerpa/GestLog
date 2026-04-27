@@ -2,6 +2,7 @@ using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Mantenimiento;
 // filepath: e:\Softwares\GestLog\Views\Tools\GestionEquipos\RegistroEjecucionPlanDialog.xaml.cs
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using GestLog.Modules.GestionEquiposInformaticos.ViewModels.Equipos;
 
@@ -66,6 +67,15 @@ namespace GestLog.Modules.GestionEquiposInformaticos.Views.Mantenimiento
         {
             // Evitar que clics dentro del panel cierren la ventana
             e.Handled = true;
+        }
+
+        private void ChecklistScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (sender is ScrollViewer scrollViewer)
+            {
+                scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - e.Delta);
+                e.Handled = true;
+            }
         }
     }
 }

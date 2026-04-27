@@ -147,6 +147,9 @@
                       UseLayoutRounding="True">
 
                 <DataGrid.Resources>
+                    <Style TargetType="DataGridCell" BasedOn="{StaticResource ThemeDataGridCellStyle}">
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                    </Style>
                     <Style TargetType="ScrollBar" BasedOn="{StaticResource ThemeScrollBarStyle}"/>
                     <Style TargetType="Thumb" BasedOn="{StaticResource ThemeScrollBarThumbStyle}"/>
                     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource ThemeDataGridColumnHeaderStyle}"/>
@@ -157,37 +160,43 @@
                                         Binding="{Binding Codigo}"
                                         Width="SizeToCells"
                                         MinWidth="110"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTextColumn Header="Nombre"
                                         Binding="{Binding Nombre}"
                                         Width="*"
                                         MinWidth="240"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTextColumn Header="Marca"
                                         Binding="{Binding Marca}"
                                         Width="SizeToCells"
                                         MinWidth="130"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTextColumn Header="Clasificación"
                                         Binding="{Binding Clasificacion}"
                                         Width="SizeToCells"
                                         MinWidth="150"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTextColumn Header="Sede"
                                         Binding="{Binding Sede}"
                                         Width="SizeToCells"
                                         MinWidth="130"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTextColumn Header="Frecuencia Mtto"
                                         Binding="{Binding FrecuenciaMtto}"
                                         Width="SizeToCells"
                                         MinWidth="140"
-                                        IsReadOnly="True"/>
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
                     <DataGridTemplateColumn Header="Estado"
                                             Width="SizeToCells"
@@ -228,6 +237,7 @@
                                         Height="34"
                                         Padding="12,6"
                                         HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
                                         Focusable="False"
                                         ToolTip="Ver detalles del equipo"/>
                             </DataTemplate>
