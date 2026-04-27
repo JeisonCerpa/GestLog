@@ -89,287 +89,20 @@ public partial class App : System.Windows.Application
             {
                 splash.ShowStatus("Conexión a la base de datos OK");
                 await System.Threading.Tasks.Task.Delay(500);
-            }            splash.ShowStatus("Verificando actualizaciones...");
-            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
-            bool hayActualizacion = false;
-            if (updateService != null)
-            {
-                var updateCheckResult = await updateService.CheckForUpdatesAsync();
-                hayActualizacion = updateCheckResult.HasUpdatesAvailable && !updateCheckResult.HasAccessError;
             }
-            
-            if (hayActualizacion)
-            {
-                splash.ShowStatus("¡Actualización disponible!");
-                await System.Threading.Tasks.Task.Delay(1000);
-                
-                // ✅ CERRAR el splash ANTES de mostrar el diálogo modal
-                splash.Close();
-                
-                // Mostrar diálogo y procesar actualización
-                if (updateService != null)
-                {
-                    var updatedAndRestarting = await updateService.NotifyAndPromptForUpdateAsync();
-                    if (updatedAndRestarting)
-                    {
-                        // La aplicación se reiniciará automáticamente, no continuar
-                        return;
-                    }
-                }
-                
-                // Si el usuario rechaza la actualización, recrear el splash para continuar
-                splash = new GestLog.Modules.Shell.Views.SplashScreen();
-                splash.Show();
-                await System.Threading.Tasks.Task.Delay(300);
-            }
-            else
-            {
-                splash.ShowStatus("No hay actualizaciones");
-                await System.Threading.Tasks.Task.Delay(500);
-            }            // Inicializar conexión a base de datos con monitoreo automático
-            splash.ShowStatus("Inicializando servicio de base de datos...");
-
-            // Sincronizar variables de entorno automáticamente ANTES de conectar
-            splash.ShowStatus("Sincronizando variables de entorno...");
-            try
-            {
-                var envVarService = LoggingService.GetService<GestLog.Services.Core.IEnvironmentVariableService>();
-                if (envVarService != null)
-                {
-                    var syncResult = await envVarService.SyncEnvironmentVariablesAsync();
-                    _logger?.Logger.LogInformation("📊 Resultado de sincronización: {Created} creadas, {Updated} actualizadas, {Unchanged} sin cambios, {Failed} errores",
-                        syncResult.Created, syncResult.Updated, syncResult.Unchanged, syncResult.Failed);
-                    
-                    if (syncResult.Failed > 0)
-                    {
-                        _logger?.Logger.LogWarning("⚠️ Hubo errores al sincronizar variables de entorno");
-                    }
-                    
-                    splash.ShowStatus("Variables de entorno sincronizadas");
-                    await System.Threading.Tasks.Task.Delay(500);
-                }
-            }
-            catch (Exception exEnvVars)
-            {
-                _logger?.Logger.LogError(exEnvVars, "⚠️ Error al sincronizar variables de entorno (continuando)");
-                // No es crítico, continuar con los valores actuales
-            }
-
-            // Aplicar migraciones pendientes automáticamente ANTES de cualquier acceso a la BD
-            splash.ShowStatus("Aplicando migraciones de base de datos...");
-            GestLog.Services.Core.IMigrationService? migrationService = LoggingService.GetService<GestLog.Services.Core.IMigrationService>();
-            try
-            {
-                if (migrationService != null)
-                {
-                    // Ejecutar migraciones en un task de fondo y proteger con timeout para no bloquear la UI
-                    var migrationTask = Task.Run(async () => await migrationService.EnsureDatabaseUpdatedAsync());
-                    var completed = await Task.WhenAny(migrationTask, Task.Delay(TimeSpan.FromSeconds(30)));
-
-                    if (completed != migrationTask)
-                    {
-                        _logger?.Logger.LogWarning("⚠️ Timeout aplicando migraciones (30s). Continuando sin bloquear la UI.");
-                        splash.ShowStatus("Aplicación de migraciones excedió el tiempo. Continuando sin migrar.");
-                        await System.Threading.Tasks.Task.Delay(500);
-                    }
-                    else
-                    {
-                        // Si el task falló, esta await propagará la excepción para manejarla abajo
-                        await migrationTask;
-                        splash.ShowStatus("Migraciones aplicadas exitosamente");
-                        await System.Threading.Tasks.Task.Delay(500);
-                    }
-                }
-                else
-                {
-                    _logger?.Logger.LogWarning("⚠️ Servicio de migraciones no disponible");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger?.Logger.LogWarning("⚠️ Migraciones canceladas por token");
-                splash.ShowStatus("Migraciones canceladas. Continuando...");
-                await System.Threading.Tasks.Task.Delay(500);
-            }
-            catch (Exception exMigrations)
-            {
-                _logger?.Logger.LogError(exMigrations, "❌ Error al aplicar migraciones de base de datos");
-                // Mostrar diálogo con opciones para que el usuario decida sin bloquear indefinidamente
-                var mbResult = System.Windows.MessageBox.Show(
-                    $"Error al aplicar migraciones:\n{exMigrations.Message}\n\nSeleccione Sí para reintentar, No para continuar sin migrar, Cancelar para salir.",
-                    "Error de Migraciones",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Warning);
-
-                if (mbResult == MessageBoxResult.Yes)
-                {
-                    _logger?.Logger.LogInformation("Usuario eligió reintentar migraciones");
-                    try
-                    {
-                        // Reintento (una única vez) en background con timeout
-                        var retryTask = Task.Run(async () => await migrationService!.EnsureDatabaseUpdatedAsync());
-                        var completedRetry = await Task.WhenAny(retryTask, Task.Delay(TimeSpan.FromSeconds(30)));
-                        if (completedRetry != retryTask)
-                        {
-                            _logger?.Logger.LogWarning("⚠️ Timeout en reintento de migraciones");
-                            System.Windows.MessageBox.Show("Reintento de migraciones excedió el tiempo. Se continuará sin aplicar migraciones.", "Reintento Timeout", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
-                        else
-                        {
-                            await retryTask; // propagará excepción si falla
-                            splash.ShowStatus("Migraciones aplicadas exitosamente (reintento)");
-                            await System.Threading.Tasks.Task.Delay(500);
-                        }
-                    }
-                    catch (Exception retryEx)
-                    {
-                        _logger?.Logger.LogError(retryEx, "❌ Reintento de migraciones falló");
-                        System.Windows.MessageBox.Show($"Reintento falló: {retryEx.Message}", "Migraciones fallidas", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                else if (mbResult == MessageBoxResult.No)
-                {
-                    _logger?.Logger.LogWarning("Usuario eligió continuar sin aplicar migraciones");
-                    // Continuar la aplicación sin migrar
-                }
-                else
-                {
-                    _logger?.Logger.LogCritical("Usuario eligió cerrar la aplicación por error en migraciones");
-                    splash.Close();
-                    System.Windows.Application.Current.Shutdown(1);
-                    return;
-                }
-            }
-
-            // Crear un CTS con timeout para no bloquear indefinidamente el splash
-            using (var dbInitCts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
-            {
-                // Reutilizar la variable `databaseService` ya declarada más arriba
-                databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
-
-                EventHandler<GestLog.Models.Events.DatabaseConnectionStateChangedEventArgs>? localDbStateHandler = null;
-
-                // Contador para mostrar tiempo restante en el splash
-                var initTimeout = TimeSpan.FromSeconds(15);
-                var endTime = DateTime.UtcNow + initTimeout;
-                var countdown = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-                System.EventHandler? countdownTickHandler = null;
-                countdownTickHandler = (s, ev) =>
-                {
-                    try
-                    {
-                        var remaining = endTime - DateTime.UtcNow;
-                        if (remaining <= TimeSpan.Zero)
-                        {
-                            // Timeout alcanzado: detener timer
-                            countdown.Stop();
-                            return;
-                        }
-
-                        // Solo mostrar el contador si aún no hay estado claro de conexión
-                        var showCount = databaseService == null ||
-                            databaseService.CurrentState == GestLog.Models.Events.DatabaseConnectionState.Unknown ||
-                            databaseService.CurrentState == GestLog.Models.Events.DatabaseConnectionState.Connecting;
-
-                        if (showCount)
-                        {
-                            var secs = (int)Math.Ceiling(remaining.TotalSeconds);
-                            splash.Dispatcher.Invoke(() => splash.ShowStatus($"Inicializando servicio de base de datos... ({secs}s restantes)"));
-                        }
-                    }
-                    catch { /* no romper el timer por excepciones */ }
-                };
-                countdown.Tick += countdownTickHandler;
-
-                if (databaseService != null)
-                {
-                    // Suscribir un handler local para actualizar el splash en tiempo real
-                    localDbStateHandler = (sender, evt) =>
-                    {
-                        try
-                        {
-                            var statusText = evt.CurrentState switch
-                            {
-                                GestLog.Models.Events.DatabaseConnectionState.Connected => "Conexión a la base de datos establecida",
-                                GestLog.Models.Events.DatabaseConnectionState.Connecting => "Conectando a la base de datos...",
-                                GestLog.Models.Events.DatabaseConnectionState.Reconnecting => "Reconectando a la base de datos...",
-                                GestLog.Models.Events.DatabaseConnectionState.Disconnected => "Sin conexión a la base de datos",
-                                GestLog.Models.Events.DatabaseConnectionState.Error => $"Error en conexión: {evt.Message ?? "Sin detalles"}",
-                                _ => "Inicializando servicio de base de datos..."
-                            };
-
-                            // Asegurar actualización en el hilo de la UI
-                            splash.Dispatcher.Invoke(() => splash.ShowStatus(statusText));
-                        }
-                        catch { /* evitar que el handler tire */ }
-                    };
-
-                    databaseService.ConnectionStateChanged += localDbStateHandler;
-                }
-
-                try
-                {
-                    // Iniciar el contador antes de llamar a la inicialización
-                    countdown.Start();
-
-                    // Pasar el token con timeout a la inicialización
-                    await InitializeDatabaseConnectionAsync(dbInitCts.Token);
-                    splash.ShowStatus("Servicio de base de datos inicializado");
-                    await System.Threading.Tasks.Task.Delay(500);
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger?.Logger.LogWarning("⚠️ Timeout durante inicialización del servicio de base de datos");
-                    splash.ShowStatus("Inicialización de la base de datos excedió el tiempo. Continuando sin BD");
-                    await System.Threading.Tasks.Task.Delay(1500);
-                }
-                catch (Exception exDbInit)
-                {
-                    _logger?.Logger.LogError(exDbInit, "❌ Error durante InitializeDatabaseConnectionAsync");
-                    splash.ShowStatus($"Error inicializando BD: {exDbInit.Message}");
-                    await System.Threading.Tasks.Task.Delay(1500);
-                }
-                finally
-                {
-                    // Desuscribir el handler local si fue registrado
-                    try
-                    {
-                        if (databaseService != null && localDbStateHandler != null)
-                            databaseService.ConnectionStateChanged -= localDbStateHandler;
-                    }
-                    catch { }
-
-                    try
-                    {
-                        countdown.Stop();
-                        if (countdownTickHandler != null)
-                            countdown.Tick -= countdownTickHandler;
-                        // endTime no requiere pararse
-                    }
-                    catch { }
-                }
-            }
+            splash.ShowStatus("Cargando interfaz principal...");
+            await System.Threading.Tasks.Task.Delay(300);
 
             // Bloque try-catch adicional para inicialización de ventana principal y restauración de sesión
             try
             {
-                var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>() as GestLog.Modules.Usuarios.Services.CurrentUserService;
-                currentUserService?.RestoreSessionIfExists();
                 var mainWindow = new MainWindow();
                 this.MainWindow = mainWindow;
-                string nombrePersona = currentUserService?.Current?.FullName ?? string.Empty;
-                if (mainWindow.DataContext is GestLog.ViewModels.MainWindowViewModel vm)
-                {
-                    vm.SetAuthenticated(currentUserService?.IsAuthenticated ?? false, nombrePersona);
-                    vm.NotificarCambioNombrePersona();
-                }
-                if (currentUserService?.IsAuthenticated == true)
-                {
-                    mainWindow.LoadHomeView();
-                }
                 mainWindow.Show();
                 this.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 splash.Close();
+
+                _ = Task.Run(async () => await RunDeferredStartupTasksAsync());
             }
             catch (Exception exWin)
             {
@@ -488,6 +221,65 @@ public partial class App : System.Windows.Application
         {
             _logger?.Logger.LogError(ex, "❌ Error al inicializar la conexión a base de datos");
             // No es crítico, la aplicación puede continuar sin BD
+        }
+    }
+
+    /// <summary>
+    /// Ejecuta tareas no críticas después de mostrar la interfaz principal.
+    /// </summary>
+    private async Task RunDeferredStartupTasksAsync()
+    {
+        try
+        {
+            _logger?.Logger.LogInformation("🚀 Iniciando tareas diferidas de arranque...");
+
+            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
+            if (updateService != null)
+            {
+                var updateCheckResult = await updateService.CheckForUpdatesAsync();
+                if (updateCheckResult.HasUpdatesAvailable && !updateCheckResult.HasAccessError)
+                {
+                    await updateService.NotifyAndPromptForUpdateAsync();
+                }
+            }
+
+            var envVarService = LoggingService.GetService<GestLog.Services.Core.IEnvironmentVariableService>();
+            if (envVarService != null)
+            {
+                var syncResult = await envVarService.SyncEnvironmentVariablesAsync();
+                _logger?.Logger.LogInformation("📊 Resultado diferido de sincronización: {Created} creadas, {Updated} actualizadas, {Unchanged} sin cambios, {Failed} errores",
+                    syncResult.Created, syncResult.Updated, syncResult.Unchanged, syncResult.Failed);
+            }
+
+            var migrationService = LoggingService.GetService<GestLog.Services.Core.IMigrationService>();
+            if (migrationService != null)
+            {
+                using var migrationTimeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var migrationTask = Task.Run(async () => await migrationService.EnsureDatabaseUpdatedAsync(), migrationTimeoutCts.Token);
+                var completed = await Task.WhenAny(migrationTask, Task.Delay(TimeSpan.FromSeconds(30), migrationTimeoutCts.Token));
+
+                if (completed == migrationTask)
+                {
+                    await migrationTask;
+                    _logger?.Logger.LogInformation("✅ Migraciones verificadas en segundo plano");
+                }
+                else
+                {
+                    _logger?.Logger.LogWarning("⚠️ Migraciones en segundo plano excedieron el tiempo. Se continuará sin bloquear la UI.");
+                }
+            }
+
+            var databaseService = LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
+            if (databaseService != null)
+            {
+                await InitializeDatabaseConnectionAsync();
+            }
+
+            _logger?.Logger.LogInformation("✅ Tareas diferidas de arranque completadas");
+        }
+        catch (Exception ex)
+        {
+            _logger?.Logger.LogError(ex, "❌ Error en tareas diferidas de arranque");
         }
     }
 

@@ -86,8 +86,13 @@ namespace GestLog.ViewModels
             });
             // --- NUEVO: Forzar notificación inicial para refrescar el binding en el primer render ---
             OnPropertyChanged(nameof(NombrePersonaActual));
+        }
 
-            // Suscribirse al servicio de BD para alimentar el badge
+        /// <summary>
+        /// Inicializa suscripciones y estado de base de datos después de que la UI ya fue mostrada.
+        /// </summary>
+        public async System.Threading.Tasks.Task InitializeAsync()
+        {
             try
             {
                 var databaseService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Interfaces.IDatabaseConnectionService>();
@@ -96,16 +101,14 @@ namespace GestLog.ViewModels
                     databaseService.ConnectionStateChanged += OnDatabaseConnectionStateChanged;
                     databaseService.NetworkConnectivityChanged += OnNetworkConnectivityChanged;
 
-                    // Iniciar con el estado conocido y lanzar health-check inicial en background
                     UpdateDatabaseStatusFromState(databaseService.CurrentState, "Inicial");
-
-                    _ = InitializeDatabaseStatusAsync(databaseService);
+                    await InitializeDatabaseStatusAsync(databaseService);
                 }
             }
             catch (System.Exception ex)
             {
                 var logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindowViewModel>();
-                logger.Logger.LogWarning(ex, "⚠️ No se pudo suscribir al servicio de base de datos para estado");
+                logger.Logger.LogWarning(ex, "⚠️ No se pudo inicializar el estado de base de datos del ViewModel");
                 UpdateDatabaseStatusFromState(DatabaseConnectionState.Unknown, "Servicio no disponible");
             }
         }

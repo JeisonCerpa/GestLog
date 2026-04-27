@@ -25,7 +25,11 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Arreglo al agregar un equipo en mantenimiento.",
+                "• Apertura más rápida de la ventana principal.\n" +
+                "• Tareas no críticas de arranque ejecutadas en segundo plano.\n" +
+                "• Inicialización optimizada del login y del estado de base de datos.\n" +
+                "• Arreglo al agregar un equipo en mantenimiento.\n" +
+                "• Corrección de un error en Cronograma Diario.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

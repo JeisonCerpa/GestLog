@@ -26,7 +26,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private const int DWMWA_TEXT_COLOR = 36;
     private const int DWMWA_BORDER_COLOR = 34;
 
-    private readonly Stack<(System.Windows.Controls.UserControl view, string title)> _navigationStack;
+    private readonly Stack<(System.Windows.Controls.UserControl view, string title)> _navigationStack = new();
     private System.Windows.Controls.UserControl? _currentView;
     private readonly IGestLogLogger _logger;
     private bool _isAuthenticated = false;
@@ -52,42 +52,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         // Actualizar Title automáticamente desde BuildVersion
         Title = $"GestLog - Sistema de Gestión {BuildVersion.VersionLabel}";
+        _logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();
+
+        Loaded += MainWindow_Loaded;
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
         try
         {
+            await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
+
             var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+
             var loginViewModel = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.ViewModels.LoginViewModel)) as GestLog.Modules.Usuarios.ViewModels.LoginViewModel;
             var currentUserService = serviceProvider.GetRequiredService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
-            var mainWindowViewModel = new GestLog.ViewModels.MainWindowViewModel(loginViewModel!, currentUserService);
-            DataContext = mainWindowViewModel;
-            _navigationStack = new Stack<(System.Windows.Controls.UserControl, string)>();
-            _logger = GestLog.Services.Core.Logging.LoggingService.GetLogger<MainWindow>();
+            DataContext = new GestLog.ViewModels.MainWindowViewModel(loginViewModel!, currentUserService);
+
             SubscribeToDatabaseStatusChanges();
+
             var loginView = new GestLog.Modules.Usuarios.Views.Authentication.LoginView();
-            loginView.LoginSuccessful += (s, e) =>
+            loginView.LoginSuccessful += (s, ev) =>
             {
                 if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
                 {
-                    var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
-                    var currentUserService = serviceProvider.GetService(typeof(GestLog.Modules.Usuarios.Services.CurrentUserService)) as GestLog.Modules.Usuarios.Services.CurrentUserService;
                     string nombrePersona = currentUserService?.GetCurrentUserFullName() ?? string.Empty;
                     vm.SetAuthenticated(true, nombrePersona);
-                    vm.NotificarCambioNombrePersona(); // Forzar actualización del binding
+                    vm.NotificarCambioNombrePersona();
                 }
                 LoadHomeView();
             };
+
             contentPanel.Content = loginView;
             _currentView = loginView;
             txtCurrentView.Text = "Login";
             btnBack.Visibility = Visibility.Collapsed;
+
             if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
                 vm2.SetAuthenticated(false);
+
             CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<GestLog.Messages.ShowLoginViewMessage>(this, (r, m) => MostrarLoginView());
 
-            // Leer configuración para ventana maximizada
             var configService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
             bool startMaximized = configService?.Current?.General?.StartMaximized ?? true;
             this.WindowState = startMaximized ? WindowState.Maximized : WindowState.Normal;
-            _logger.LogDebug($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
+            _logger?.LogDebug($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
+
+            var currentUserServiceConcrete = currentUserService as GestLog.Modules.Usuarios.Services.CurrentUserService;
+            currentUserServiceConcrete?.RestoreSessionIfExists();
+
+            if (currentUserService?.IsAuthenticated == true)
+            {
+                if (DataContext is GestLog.ViewModels.MainWindowViewModel vmAuth)
+                {
+                    vmAuth.SetAuthenticated(true, currentUserService.GetCurrentUserFullName());
+                    vmAuth.NotificarCambioNombrePersona();
+                }
+                LoadHomeView();
+            }
+
+            var vmInit = DataContext as GestLog.ViewModels.MainWindowViewModel;
+            if (vmInit != null)
+            {
+                _ = vmInit.InitializeAsync();
+            }
         }
         catch (System.Exception ex)
         {
