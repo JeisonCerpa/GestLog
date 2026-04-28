@@ -25,8 +25,7 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Arreglo en el pool de conexiones a la base de datos.\n" +
-                "• Cambios en la reconexión.",
+                "• El desplegable del ComboBox ahora no se cierra.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

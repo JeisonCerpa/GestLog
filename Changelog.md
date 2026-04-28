@@ -1,3 +1,3 @@
-## v1.2.3
+## v1.2.4
 
-- Arreglo en el pool de conexiones a la base de datos y cambios en la reconexión.
+- Cambio al desplegable del ComboBox para que no se cierre.

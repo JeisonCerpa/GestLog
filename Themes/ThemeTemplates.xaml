@@ -107,6 +107,7 @@
         <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="StaysOpenOnEdit" Value="True"/>
         <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
