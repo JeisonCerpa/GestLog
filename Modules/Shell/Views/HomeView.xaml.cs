@@ -25,7 +25,7 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• El desplegable del ComboBox ahora no se cierra.",
+                "• Inicio de sesión y verificación de actualizaciones más rápidos, sin esperas innecesarias.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

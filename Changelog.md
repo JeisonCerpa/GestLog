@@ -1,3 +1,3 @@
-## v1.2.4
+## v1.2.5
 
-- Cambio al desplegable del ComboBox para que no se cierre.
+- Se mejoró el inicio de sesión y la comprobación de actualizaciones para que la aplicación abra más rápido, sin esperas innecesarias.

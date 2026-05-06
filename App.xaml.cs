@@ -45,7 +45,6 @@ public partial class App : System.Windows.Application
         // Mostrar SplashScreen antes de cualquier lógica
         var splash = new GestLog.Modules.Shell.Views.SplashScreen();
         splash.Show();
-        await System.Threading.Tasks.Task.Delay(500); // Permitir renderizado
 
         base.OnStartup(e); // Llamar primero según buenas prácticas WPF
         this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -83,15 +82,44 @@ public partial class App : System.Windows.Application
             if (!conexionOk)
             {
                 splash.ShowStatus("Sin conexión a la base de datos");
-                await System.Threading.Tasks.Task.Delay(1500);
             }
             else
             {
                 splash.ShowStatus("Conexión a la base de datos OK");
-                await System.Threading.Tasks.Task.Delay(500);
             }
+
+            splash.ShowStatus("Verificando sesión guardada...");
+            var currentUserService = LoggingService.GetService<GestLog.Modules.Usuarios.Interfaces.ICurrentUserService>();
+            if (currentUserService != null)
+            {
+                currentUserService.RestoreSessionIfExists();
+
+                if (currentUserService.IsAuthenticated)
+                {
+                    splash.ShowStatus("Sesión encontrada. Preparando acceso...");
+                }
+                else
+                {
+                    splash.ShowStatus("Sin sesión guardada. Mostrando acceso...");
+                }
+            }
+
+            splash.ShowStatus("Verificando actualizaciones...");
+            var configurationService = LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
+            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
+            if (configurationService?.Current?.Updater?.Enabled == true &&
+                !string.IsNullOrWhiteSpace(configurationService.Current.Updater.UpdateServerPath) &&
+                updateService != null)
+            {
+                var updateHandled = await updateService.NotifyAndPromptForUpdateAsync();
+                if (updateHandled)
+                {
+                    splash.Close();
+                    return;
+                }
+            }
+
             splash.ShowStatus("Cargando interfaz principal...");
-            await System.Threading.Tasks.Task.Delay(300);
 
             // Bloque try-catch adicional para inicialización de ventana principal y restauración de sesión
             try
@@ -232,16 +260,6 @@ public partial class App : System.Windows.Application
         try
         {
             _logger?.Logger.LogInformation("🚀 Iniciando tareas diferidas de arranque...");
-
-            var updateService = LoggingService.GetService<GestLog.Services.VelopackUpdateService>();
-            if (updateService != null)
-            {
-                var updateCheckResult = await updateService.CheckForUpdatesAsync();
-                if (updateCheckResult.HasUpdatesAvailable && !updateCheckResult.HasAccessError)
-                {
-                    await updateService.NotifyAndPromptForUpdateAsync();
-                }
-            }
 
             var envVarService = LoggingService.GetService<GestLog.Services.Core.IEnvironmentVariableService>();
             if (envVarService != null)

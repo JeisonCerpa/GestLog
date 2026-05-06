@@ -71,26 +71,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             SubscribeToDatabaseStatusChanges();
 
-            var loginView = new GestLog.Modules.Usuarios.Views.Authentication.LoginView();
-            loginView.LoginSuccessful += (s, ev) =>
-            {
-                if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
-                {
-                    string nombrePersona = currentUserService?.GetCurrentUserFullName() ?? string.Empty;
-                    vm.SetAuthenticated(true, nombrePersona);
-                    vm.NotificarCambioNombrePersona();
-                }
-                LoadHomeView();
-            };
-
-            contentPanel.Content = loginView;
-            _currentView = loginView;
-            txtCurrentView.Text = "Login";
-            btnBack.Visibility = Visibility.Collapsed;
-
-            if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
-                vm2.SetAuthenticated(false);
-
             CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<GestLog.Messages.ShowLoginViewMessage>(this, (r, m) => MostrarLoginView());
 
             var configService = GestLog.Services.Core.Logging.LoggingService.GetService<GestLog.Services.Configuration.IConfigurationService>();
@@ -99,7 +79,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _logger?.LogDebug($"🪟 Ventana configurada para iniciar: {(startMaximized ? "MAXIMIZADA" : "NORMAL")}");
 
             var currentUserServiceConcrete = currentUserService as GestLog.Modules.Usuarios.Services.CurrentUserService;
-            currentUserServiceConcrete?.RestoreSessionIfExists();
+            if (!currentUserService.IsAuthenticated)
+            {
+                currentUserServiceConcrete?.RestoreSessionIfExists();
+            }
 
             if (currentUserService?.IsAuthenticated == true)
             {
@@ -108,7 +91,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     vmAuth.SetAuthenticated(true, currentUserService.GetCurrentUserFullName());
                     vmAuth.NotificarCambioNombrePersona();
                 }
+                txtCurrentView.Text = "Home";
+                btnBack.Visibility = Visibility.Collapsed;
                 LoadHomeView();
+            }
+            else
+            {
+                var loginView = new GestLog.Modules.Usuarios.Views.Authentication.LoginView();
+                loginView.LoginSuccessful += (s, ev) =>
+                {
+                    if (DataContext is GestLog.ViewModels.MainWindowViewModel vm)
+                    {
+                        string nombrePersona = currentUserService?.GetCurrentUserFullName() ?? string.Empty;
+                        vm.SetAuthenticated(true, nombrePersona);
+                        vm.NotificarCambioNombrePersona();
+                    }
+                    LoadHomeView();
+                };
+
+                contentPanel.Content = loginView;
+                _currentView = loginView;
+                txtCurrentView.Text = "Login";
+                btnBack.Visibility = Visibility.Collapsed;
+
+                if (DataContext is GestLog.ViewModels.MainWindowViewModel vm2)
+                    vm2.SetAuthenticated(false);
             }
 
             var vmInit = DataContext as GestLog.ViewModels.MainWindowViewModel;
