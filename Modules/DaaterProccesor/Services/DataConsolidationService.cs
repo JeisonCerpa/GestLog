@@ -112,10 +112,10 @@ public class DataConsolidationService : IDataConsolidationService
         consolidatedData.Columns.Add("SIGNIFICADO SUB-PARTIDA NIVEL 1", typeof(string));
         consolidatedData.Columns.Add("SIGNIFICADO SUB-SUB-PARTIDA NIVEL 2", typeof(string));
         consolidatedData.Columns.Add("SIGNIFICADO SUB-SUB-PARTIDA NIVEL 3", typeof(string));
-        consolidatedData.Columns.Add("PESO NETO", typeof(double));
-        consolidatedData.Columns.Add("PESO TON", typeof(double));
-        consolidatedData.Columns.Add("VALOR FOB(USD)", typeof(double));
-        consolidatedData.Columns.Add("FOB POR TON", typeof(double));
+consolidatedData.Columns.Add("PESO NETO", typeof(string));   // sin tratamiento
+consolidatedData.Columns.Add("PESO TON", typeof(double));    // calculado
+consolidatedData.Columns.Add("VALOR FOB(USD)", typeof(string)); // sin tratamiento
+consolidatedData.Columns.Add("FOB POR TON", typeof(double)); // calculado
         consolidatedData.Columns.Add("DESCRIPCION MERCANCIA", typeof(string));        int fileCount = excelFiles.Length;
         int fileIndex = 0;
         var totalRowsProcessed = 0;
@@ -360,22 +360,21 @@ public class DataConsolidationService : IDataConsolidationService
                         significadoSubSubPartidaNivel2 = partidaData[4];
                         significadoSubSubPartidaNivel3 = partidaData[5];
                     }
-                    double pesoNetoValue = 0;
-                    if (!string.IsNullOrWhiteSpace(pesoNeto))
-                    {
-                        pesoNeto = pesoNeto.Replace(",", "");
-                        if (double.TryParse(pesoNeto, out var parsedPesoNeto))
-                            pesoNetoValue = parsedPesoNeto;
-                    }
-                    double pesoTonValue = pesoNetoValue / 1000;
-                    double valorFobUsdValue = 0;
-                    if (!string.IsNullOrWhiteSpace(valorFobUsd))
-                    {
-                        valorFobUsd = valorFobUsd.Replace(",", "");
-                        if (double.TryParse(valorFobUsd, out var parsedValorFobUsd))
-                            valorFobUsdValue = parsedValorFobUsd;                    }
-                    double fobPorTonValue = pesoTonValue > 0 ? valorFobUsdValue / pesoTonValue : 0;
-                      // Validación de duplicados basada en partida arancelaria y número de declaración
+// Leer valores crudos (sin tratamiento) para las columnas PESO NETO y VALOR FOB
+var pesoNetoValue = pesoNeto;       // string crudo
+var valorFobUsdValue = valorFobUsd; // string crudo
+
+// Versiones numéricas solo para calcular PESO TON y FOB POR TON
+double pesoNetoNumerico = 0;
+if (!string.IsNullOrWhiteSpace(pesoNeto))
+    double.TryParse(pesoNeto.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out pesoNetoNumerico);
+
+double valorFobNumerico = 0;
+if (!string.IsNullOrWhiteSpace(valorFobUsd))
+    double.TryParse(valorFobUsd.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out valorFobNumerico);
+
+double pesoTonValue = pesoNetoNumerico / 1000;
+double fobPorTonValue = pesoTonValue > 0 ? valorFobNumerico / pesoTonValue : 0;                      // Validación de duplicados basada en partida arancelaria y número de declaración
                     var recordKey = (numeroPartidaArancelaria, numeroDeclaracion);
                     
                     if (settings.EnableDuplicateValidation && seenRecords.Contains(recordKey))

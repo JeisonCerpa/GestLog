@@ -198,6 +198,11 @@ ClientBin/
 *.jfm
 *.pfx
 *.publishsettings
+
+# Graphify artifacts
+graphifyout/
+graphify-out/
+.graphifyignore
 orleans.codegen.cs
 
 # Including strong name files can present a security risk
