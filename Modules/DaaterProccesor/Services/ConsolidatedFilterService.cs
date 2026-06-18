@@ -137,7 +137,7 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
             }
         }
         
-        _logger.LogDebug("🔎 Aplicando filtro LAMINAS con FOB POR TON entre 0 y 1000...");
+        _logger.LogDebug("🔎 Aplicando filtro LAMINAS con FOB POR TON entre 0 y 2000...");
         
         var filtrados = consolidatedTable.AsEnumerable()
             .Where(row =>
@@ -158,11 +158,11 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
                 if (significadoSubPartidaNivel1 == "De espesor inferior a 3 mm")
                     return false;
                 
-                // 4. Filtro por FOB POR TON: entre 0 y 1000 (> 0 y < 1000)
+                // 4. Filtro por FOB POR TON: entre 0 y 2000 (> 0 y < 2000)
                 var fobPorTonValue = row[colFOBPorTon];
                 if (fobPorTonValue != null && decimal.TryParse(fobPorTonValue.ToString(), out var fobPorTon))
                 {
-                    if (fobPorTon <= 0 || fobPorTon >= 1000)
+                    if (fobPorTon <= 0 || fobPorTon >= 2000)
                         return false;
                 }
                 else
@@ -209,7 +209,7 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
             }
         }
         
-        _logger.LogDebug("🔎 Aplicando filtro ROLLOS con FOB POR TON entre 0 y 1000...");
+        _logger.LogDebug("🔎 Aplicando filtro ROLLOS con FOB POR TON entre 0 y 2000...");
         
         var filtrados = consolidatedTable.AsEnumerable()
             .Where(row =>
@@ -232,11 +232,11 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
                 if (significadoSubPartidaNivel1 == "De espesor inferior a 3 mm")
                     return false;
                 
-                // 4. Filtro por FOB POR TON: entre 0 y 1000 (> 0 y < 1000)
+                // 4. Filtro por FOB POR TON: entre 0 y 2000 (> 0 y < 2000)
                 var fobPorTonValue = row[colFOBPorTon];
                 if (fobPorTonValue != null && decimal.TryParse(fobPorTonValue.ToString(), out var fobPorTon))
                 {
-                    if (fobPorTon <= 0 || fobPorTon >= 1000)
+                    if (fobPorTon <= 0 || fobPorTon >= 2000)
                         return false;
                 }
                 else
@@ -282,7 +282,7 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
             }
         }
         
-        _logger.LogDebug("🔎 Aplicando filtro ANGULOS con FOB POR TON entre 0 y 1000...");
+        _logger.LogDebug("🔎 Aplicando filtro ANGULOS con FOB POR TON entre 0 y 2000...");
         
         var filtrados = consolidatedTable.AsEnumerable()
             .Where(row =>
@@ -299,11 +299,11 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
                 if (!subPartidaValida)
                     return false;
                 
-                // 3. Filtro por FOB POR TON: entre 0 y 1000 (> 0 y < 1000)
+                // 3. Filtro por FOB POR TON: entre 0 y 2000 (> 0 y < 2000)
                 var fobPorTonValue = row[colFOBPorTon];
                 if (fobPorTonValue != null && decimal.TryParse(fobPorTonValue.ToString(), out var fobPorTon))
                 {
-                    if (fobPorTon <= 0 || fobPorTon >= 1000)
+                    if (fobPorTon <= 0 || fobPorTon >= 2000)
                         return false;
                 }
                 else
@@ -349,7 +349,7 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
             }
         }
         
-        _logger.LogDebug("🔎 Aplicando filtro CANALES con FOB POR TON entre 0 y 1000...");
+        _logger.LogDebug("🔎 Aplicando filtro CANALES con FOB POR TON entre 0 y 2000...");
         
         var filtrados = consolidatedTable.AsEnumerable()
             .Where(row =>
@@ -364,11 +364,11 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
                 if (significadoSubPartidaNivel1 != "Perfiles en U (Canales)")
                     return false;
                 
-                // 3. Filtro por FOB POR TON: entre 0 y 1000 (> 0 y < 1000)
+                // 3. Filtro por FOB POR TON: entre 0 y 2000 (> 0 y < 2000)
                 var fobPorTonValue = row[colFOBPorTon];
                 if (fobPorTonValue != null && decimal.TryParse(fobPorTonValue.ToString(), out var fobPorTon))
                 {
-                    if (fobPorTon <= 0 || fobPorTon >= 1000)
+                    if (fobPorTon <= 0 || fobPorTon >= 2000)
                         return false;
                 }
                 else
@@ -414,7 +414,7 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
             }
         }
         
-        _logger.LogDebug("🔎 Aplicando filtro VIGAS con FOB POR TON entre 0 y 1000...");
+        _logger.LogDebug("🔎 Aplicando filtro VIGAS con FOB POR TON entre 0 y 2000...");
         
         var filtrados = consolidatedTable.AsEnumerable()
             .Where(row =>
@@ -431,11 +431,11 @@ public class ConsolidatedFilterService : IConsolidatedFilterService
                 if (!subPartidaValida)
                     return false;
                 
-                // 3. Filtro por FOB POR TON: entre 0 y 1000 (> 0 y < 1000)
+                // 3. Filtro por FOB POR TON: entre 0 y 2000 (> 0 y < 2000)
                 var fobPorTonValue = row[colFOBPorTon];
                 if (fobPorTonValue != null && decimal.TryParse(fobPorTonValue.ToString(), out var fobPorTon))
                 {
-                    if (fobPorTon <= 0 || fobPorTon >= 1000)
+                    if (fobPorTon <= 0 || fobPorTon >= 2000)
                         return false;
                 }
                 else
