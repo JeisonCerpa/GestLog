@@ -25,7 +25,8 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Inicio de sesión y verificación de actualizaciones más rápidos, sin esperas innecesarias.",
+                "• Consolidación: rangos de FOB por tonelada ampliados (hasta 2000) y ajuste en columnas de peso y valor FOB.\n" +
+                "• Exportación de Seguimientos: texto ajustado en Descripción y Observaciones, con encabezado y columnas Equipo/Nombre fijos al desplazarse.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
