@@ -368,8 +368,14 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     try
                     {
                         wsSeguimientos.Columns("A", "K").AdjustToContents();
+                        // Descripción (col E) y Observaciones (col K): ancho fijo para que el texto se ajuste (WrapText) en vez de ensanchar la columna
+                        wsSeguimientos.Column(5).Width = 45;
+                        wsSeguimientos.Column(11).Width = 45;
                     }
                     catch { }
+
+                    // Congelar filas 1-3 (encabezado/título) y columnas A-B (Equipo/Nombre)
+                    wsSeguimientos.SheetView.Freeze(3, 2);
 
                     wsSeguimientos.PageSetup.PageOrientation = XLPageOrientation.Landscape;
                     wsSeguimientos.PageSetup.AdjustTo(100);
