@@ -575,6 +575,19 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
                 StatusMessage += " (Ver logs para detalles de filas ignoradas.)";
             }
+
+            var resumen = $"Nuevos: {importResult.ImportedCount}\nActualizados: {importResult.UpdatedCount}\nIgnorados: {importResult.IgnoredCount}";
+            if (importResult.IgnoredRows.Any())
+            {
+                var detalle = importResult.IgnoredRows.Take(20)
+                    .Select(i => i.Row > 0 ? $"• Fila {i.Row}: {i.Reason}" : $"• {i.Reason}");
+                resumen += "\n\nFilas ignoradas:\n" + string.Join("\n", detalle);
+                if (importResult.IgnoredRows.Count > 20)
+                    resumen += $"\n… y {importResult.IgnoredRows.Count - 20} más (ver logs).";
+            }
+            System.Windows.MessageBox.Show(resumen, "Importación de seguimientos",
+                System.Windows.MessageBoxButton.OK,
+                importResult.IgnoredRows.Any() ? System.Windows.MessageBoxImage.Warning : System.Windows.MessageBoxImage.Information);
         }
         catch (OperationCanceledException)
         {

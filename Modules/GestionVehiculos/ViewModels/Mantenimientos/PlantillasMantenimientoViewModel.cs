@@ -36,6 +36,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         [ObservableProperty]
         private PlantillaMantenimientoDto? selectedPlantilla;
 
+        // Objetivo de edición del diálogo. null = creación. Separado de SelectedPlantilla
+        // (que es solo la fila de la grilla) para que "Nueva" no herede una selección vieja.
+        [ObservableProperty]
+        private PlantillaMantenimientoDto? plantillaEnEdicion;
+
         [ObservableProperty]
         private string nuevaPlantillaNombre = string.Empty;
 
@@ -180,10 +185,12 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         [RelayCommand]
         public void OpenCrearPlantilla()
         {
+            PlantillaEnEdicion = null;
             NuevaPlantillaNombre = string.Empty;
             NuevaPlantillaDescripcion = string.Empty;
             NuevoIntervaloKm = 5000;
             NuevoIntervaloDias = 180;
+            NuevoTipoIntervalo = 1;
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
         }
@@ -231,34 +238,36 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                 }
 
                 IsLoading = true;
-                bool esEdicion = SelectedPlantilla != null;
+                bool esEdicion = PlantillaEnEdicion != null;
 
-                // Si hay plantilla seleccionada, actualizamos. Si no, creamos nueva
                 if (esEdicion)
                 {
-                    // MODO EDICIÓN
-                    var plantillaActual = SelectedPlantilla;
-                    if (plantillaActual == null)
+                    // MODO EDICIÓN: editar sobre una copia de trabajo; la fila de la
+                    // grilla solo se reemplaza si el guardado fue exitoso.
+                    var original = PlantillaEnEdicion!;
+                    var clon = new PlantillaMantenimientoDto
                     {
-                        ErrorMessage = "No hay plantilla seleccionada para editar.";
-                        return;
-                    }
+                        Id = original.Id,
+                        Nombre = NuevaPlantillaNombre.Trim(),
+                        Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim(),
+                        IntervaloKM = NuevoIntervaloKm,
+                        IntervaloDias = NuevoIntervaloDias,
+                        TipoIntervalo = NuevoTipoIntervalo,
+                        Activo = original.Activo,
+                        FechaCreacion = original.FechaCreacion,
+                        FechaActualizacion = original.FechaActualizacion
+                    };
 
-                    plantillaActual.Nombre = NuevaPlantillaNombre.Trim();
-                    plantillaActual.Descripcion = string.IsNullOrWhiteSpace(NuevaPlantillaDescripcion) ? null : NuevaPlantillaDescripcion.Trim();
-                    plantillaActual.IntervaloKM = NuevoIntervaloKm;
-                    plantillaActual.IntervaloDias = NuevoIntervaloDias;
-                    plantillaActual.TipoIntervalo = NuevoTipoIntervalo;
+                    var actualizada = await _plantillaService.UpdateAsync(clon.Id, clon, cancellationToken);
 
-                    var actualizada = await _plantillaService.UpdateAsync(plantillaActual.Id, plantillaActual, cancellationToken);
-
-                    var index = Plantillas.IndexOf(plantillaActual);
+                    var index = Plantillas.IndexOf(original);
+                    if (index < 0)
+                        index = Plantillas.ToList().FindIndex(p => p.Id == actualizada.Id);
                     if (index >= 0)
-                    {
                         Plantillas[index] = actualizada;
-                    }
 
                     SelectedPlantilla = actualizada;
+                    PlantillaEnEdicion = null;
                     RefreshFilteredPlantillas();
                     SuccessMessage = "Plantilla actualizada correctamente";
                 }
@@ -299,62 +308,6 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
             {
                 ErrorMessage = "Error al procesar plantilla";
                 _logger.LogError(ex, "Error procesando plantilla de mantenimiento");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        [RelayCommand]
-        public async Task GuardarCambiosPlantillaAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                ErrorMessage = string.Empty;
-                SuccessMessage = string.Empty;
-
-                if (SelectedPlantilla == null)
-                {
-                    ErrorMessage = "Debe seleccionar una plantilla";
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(SelectedPlantilla.Nombre))
-                {
-                    ErrorMessage = "El nombre de la plantilla es obligatorio";
-                    return;
-                }
-
-                if (SelectedPlantilla.IntervaloKM <= 0 && SelectedPlantilla.IntervaloDias <= 0)
-                {
-                    ErrorMessage = "Debe definir al menos un intervalo (KM o días) mayor que 0";
-                    return;
-                }
-
-                IsLoading = true;
-
-                var actualizada = await _plantillaService.UpdateAsync(SelectedPlantilla.Id, SelectedPlantilla, cancellationToken);
-
-                var index = Plantillas.IndexOf(SelectedPlantilla);
-                if (index >= 0)
-                {
-                    Plantillas[index] = actualizada;
-                }
-
-                SelectedPlantilla = actualizada;
-                RefreshFilteredPlantillas();
-                SuccessMessage = "Plantilla actualizada correctamente";
-            }
-            catch (OperationCanceledException)
-            {
-                ErrorMessage = "Operación cancelada";
-                _logger.LogWarning("Actualización de plantilla cancelada");
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "Error al actualizar plantilla";
-                _logger.LogError(ex, "Error actualizando plantilla de mantenimiento");
             }
             finally
             {

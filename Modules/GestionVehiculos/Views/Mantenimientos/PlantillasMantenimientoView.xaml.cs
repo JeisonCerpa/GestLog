@@ -46,7 +46,11 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                     viewModel.NuevaPlantillaDescripcion = plantilla.Descripcion ?? string.Empty;
                     viewModel.NuevoIntervaloKm = plantilla.IntervaloKM;
                     viewModel.NuevoIntervaloDias = plantilla.IntervaloDias;
+                    viewModel.NuevoTipoIntervalo = plantilla.TipoIntervalo;
                     viewModel.SelectedPlantilla = plantilla;
+                    viewModel.PlantillaEnEdicion = plantilla;
+                    viewModel.ErrorMessage = string.Empty;
+                    viewModel.SuccessMessage = string.Empty;
                 }
 
                 var dialog = new CrearEditarPlantillaDialog

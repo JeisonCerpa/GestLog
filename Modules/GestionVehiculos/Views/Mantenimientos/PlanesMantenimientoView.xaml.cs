@@ -54,7 +54,38 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                 ? System.Windows.Application.Current.Windows[0]
                 : System.Windows.Application.Current?.MainWindow;
             dialog.Owner = owner;
-            dialog.ShowDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                await RefreshParentVehicleDetailsAsync();
+            }
+        }
+
+        // Recarga el detalle del vehículo padre para reflejar el kilometraje actualizado al guardar el plan.
+        // Mismo patrón que RefreshAllVehicleViewsAsync en EjecucionesMantenimientoView.
+        private async Task RefreshParentVehicleDetailsAsync()
+        {
+            var detailsView = FindParentVehicleDetailsView();
+            if (detailsView?.DataContext is ViewModels.Vehicles.VehicleDetailsViewModel detailsVm
+                && detailsVm.Id != Guid.Empty)
+            {
+                await detailsVm.LoadAsync(detailsVm.Id);
+            }
+        }
+
+        private Views.Vehicles.VehicleDetailsView? FindParentVehicleDetailsView()
+        {
+            DependencyObject? parent = this;
+            while (parent != null)
+            {
+                if (parent is Views.Vehicles.VehicleDetailsView detailsView)
+                {
+                    return detailsView;
+                }
+
+                parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+            }
+
+            return null;
         }
 
         private string TryResolvePlateFromParent()
@@ -95,7 +126,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             }
         }
 
-        private void MenuItem_Edit_Click(object sender, RoutedEventArgs e)
+        private async void MenuItem_Edit_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem mi && mi.CommandParameter is GestLog.Modules.GestionVehiculos.Models.DTOs.PlanMantenimientoVehiculoDto plan)
             {
@@ -107,12 +138,15 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
 
                     // Abrir dialogo de edición inmediatamente
                     vm.PrepareEditPlan(plan);
-                var dialog = new PlanMantenimientoDialog(vm);
+                    var dialog = new PlanMantenimientoDialog(vm);
                     var owner = System.Windows.Application.Current?.Windows.Count > 0
                         ? System.Windows.Application.Current.Windows[0]
                         : System.Windows.Application.Current?.MainWindow;
                     dialog.Owner = owner;
-                    dialog.ShowDialog();
+                    if (dialog.ShowDialog() == true)
+                    {
+                        await RefreshParentVehicleDetailsAsync();
+                    }
                 }
             }
         }

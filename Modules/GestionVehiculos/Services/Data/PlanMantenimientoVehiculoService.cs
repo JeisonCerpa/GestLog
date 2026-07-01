@@ -143,6 +143,8 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 context.Add(plan);
                 await context.SaveChangesAsync(cancellationToken);
 
+                await SyncVehicleMileageIfHigherAsync(context, dto.PlacaVehiculo, dto.UltimoKMRegistrado, cancellationToken);
+
                 _logger.LogInformation("Plan de mantenimiento creado para vehículo: {PlacaVehiculo}", dto.PlacaVehiculo);
 
                 return MapToDto(plan);
@@ -180,6 +182,8 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 context.Update(plan);
                 await context.SaveChangesAsync(cancellationToken);
 
+                await SyncVehicleMileageIfHigherAsync(context, dto.PlacaVehiculo, dto.UltimoKMRegistrado, cancellationToken);
+
                 return MapToDto(plan);
             }
             catch (Exception ex)
@@ -187,6 +191,32 @@ namespace GestLog.Modules.GestionVehiculos.Services.Data
                 _logger.LogError(ex, "Error al actualizar plan de mantenimiento: {PlanId}", id);
                 throw;
             }
+        }
+
+        // Sube el kilometraje del vehículo al último KM del plan si lo supera (el km solo aumenta).
+        // Mismo patrón que EjecucionMantenimientoService/ConsumoCombustibleService.
+        private static async Task SyncVehicleMileageIfHigherAsync(
+            GestLogDbContext context,
+            string placaVehiculo,
+            long? ultimoKmRegistrado,
+            CancellationToken cancellationToken)
+        {
+            if (!ultimoKmRegistrado.HasValue || ultimoKmRegistrado.Value <= 0)
+                return;
+
+            var placa = (placaVehiculo ?? string.Empty).Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(placa))
+                return;
+
+            var vehiculo = await context.Vehicles
+                .FirstOrDefaultAsync(v => !v.IsDeleted && v.Plate == placa, cancellationToken);
+
+            if (vehiculo == null || ultimoKmRegistrado.Value <= vehiculo.Mileage)
+                return;
+
+            vehiculo.Mileage = ultimoKmRegistrado.Value;
+            vehiculo.UpdatedAt = DateTimeOffset.UtcNow;
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

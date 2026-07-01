@@ -56,16 +56,10 @@ Modules/GestionVehiculos/
 │       ├── VehicleType.cs
 │       └── DocumentStatus.cs
 │
-├── Messages/ ✅ (estructura por dominio)
-│   ├── Vehicles/
-│   │   ├── VehicleStateChangedMessage.cs
-│   │   ├── VehicleUpdatedMessage.cs
-│   │   └── VehicleDeletedMessage.cs
-│   ├── Documents/
-│   │   ├── VehicleDocumentUploadProgressMessage.cs
-│   │   └── VehicleDocumentCreatedMessage.cs
-│   └── UI/
-│       └── NotificationMessage.cs
+├── Messages/
+│   └── Documents/
+│       ├── VehicleDocumentUploadProgressMessage.cs
+│       └── VehicleDocumentCreatedMessage.cs
 │
 ├── Utilities/ ✅ (nuevo)
 │   ├── VehicleStateUtils.cs

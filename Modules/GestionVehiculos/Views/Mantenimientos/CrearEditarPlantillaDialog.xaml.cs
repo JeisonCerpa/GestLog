@@ -37,18 +37,24 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
             Close();
         }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        private async void BtnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // Limpiar campos y resetear selección al cancelar
             if (DataContext is GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos.PlantillasMantenimientoViewModel vm)
             {
-                vm.NuevaPlantillaNombre = string.Empty;
-                vm.NuevaPlantillaDescripcion = string.Empty;
-                vm.NuevoIntervaloKm = 5000;
-                vm.NuevoIntervaloDias = 180;
-                vm.ErrorMessage = string.Empty;
-                vm.SuccessMessage = string.Empty;
-                vm.SelectedPlantilla = null;
+                await vm.CrearPlantillaCommand.ExecuteAsync(null);
+                if (string.IsNullOrEmpty(vm.ErrorMessage))
+                {
+                    Close();
+                }
+            }
+        }
+
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            // Limpiar campos y resetear modo de edición al cancelar
+            if (DataContext is GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos.PlantillasMantenimientoViewModel vm)
+            {
+                vm.OpenCrearPlantillaCommand.Execute(null);
             }
             Close();
         }
@@ -85,31 +91,7 @@ namespace GestLog.Modules.GestionVehiculos.Views.Mantenimientos
                         WindowState = WindowState.Maximized;
                     }
                 };
-
-                // Observar cambios en el SuccessMessage para cerrar automáticamente después de guardar
-                if (DataContext is GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos.PlantillasMantenimientoViewModel vm)
-                {
-                    vm.PropertyChanged += (s, e) =>
-                    {
-                        if (e.PropertyName == nameof(vm.SuccessMessage) && 
-                            !string.IsNullOrEmpty(vm.SuccessMessage) && 
-                            string.IsNullOrEmpty(vm.ErrorMessage))
-                        {
-                            Dispatcher.BeginInvoke(() =>
-                            {
-                                System.Threading.Thread.Sleep(500);
-                                // Limpiar campos antes de cerrar
-                                vm.NuevaPlantillaNombre = string.Empty;
-                                vm.NuevaPlantillaDescripcion = string.Empty;
-                                vm.NuevoIntervaloKm = 5000;
-                                vm.NuevoIntervaloDias = 180;
-                                vm.ErrorMessage = string.Empty;
-                                vm.SuccessMessage = string.Empty;
-                                Close();
-                            });
-                        }
-                    };
-                }
+                // El cierre tras guardar lo decide BtnGuardar_Click (sin Thread.Sleep ni hack de PropertyChanged).
             };
         }
     }

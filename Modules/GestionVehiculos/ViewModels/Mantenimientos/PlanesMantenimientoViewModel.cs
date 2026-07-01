@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -84,6 +85,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
 
         [ObservableProperty]
         private string filterPlaca = string.Empty;
+
+        // Kilometraje actual del vehículo (solo lectura) — referencia para el "último KM".
+        [ObservableProperty]
+        private long kilometrajeActualVehiculo;
 
         [ObservableProperty]
         private ObservableCollection<PlantillaMantenimientoDto> plantillasDisponibles = new();
@@ -388,13 +393,32 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     return;
                 }
 
-                IsLoading = true;
+                // Pasada 1: validar TODAS las configuraciones y construir los DTOs antes de
+                // persistir nada (evita guardados parciales y planes duplicados al reintentar).
+                var aGuardar = new List<(PlantillaPlanSelectionItem config, PlanMantenimientoVehiculoDto dto)>();
 
                 foreach (var configuracion in configuracionesSeleccionadas)
                 {
-                    var ultimoKmRegistrado = ParseOptionalNonNegativeLong(
-                        configuracion.UltimoKMRegistradoInput,
-                        $"último KM de {configuracion.NombrePlantilla}") ?? 0;
+                    long ultimoKmRegistrado;
+                    int? intervaloKmPersonalizado;
+                    int? intervaloDiasPersonalizado;
+                    try
+                    {
+                        ultimoKmRegistrado = ParseOptionalNonNegativeLong(
+                            configuracion.UltimoKMRegistradoInput,
+                            $"último KM de {configuracion.NombrePlantilla}") ?? 0;
+                        intervaloKmPersonalizado = ParseOptionalPositiveInt(
+                            configuracion.IntervaloKMPersonalizadoInput,
+                            $"intervalo KM de {configuracion.NombrePlantilla}");
+                        intervaloDiasPersonalizado = ParseOptionalPositiveInt(
+                            configuracion.IntervaloDiasPersonalizadoInput,
+                            $"intervalo en días de {configuracion.NombrePlantilla}");
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        ErrorMessage = ex.Message;
+                        return;
+                    }
 
                     var ultimaFecha = configuracion.UltimaFechaMantenimiento.HasValue
                         ? new DateTimeOffset(configuracion.UltimaFechaMantenimiento.Value.Date)
@@ -418,18 +442,8 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         return;
                     }
 
-                    if (ultimoKmRegistrado > vehiculo.Mileage)
-                    {
-                        ErrorMessage = $"En '{configuracion.NombrePlantilla}', el último KM ({ultimoKmRegistrado:N0}) no puede ser mayor al kilometraje actual ({vehiculo.Mileage:N0})";
-                        return;
-                    }
-
-                    var intervaloKmPersonalizado = ParseOptionalPositiveInt(
-                        configuracion.IntervaloKMPersonalizadoInput,
-                        $"intervalo KM de {configuracion.NombrePlantilla}");
-                    var intervaloDiasPersonalizado = ParseOptionalPositiveInt(
-                        configuracion.IntervaloDiasPersonalizadoInput,
-                        $"intervalo en días de {configuracion.NombrePlantilla}");
+                    // Nota: ya NO se bloquea cuando el último KM supera el Mileage guardado.
+                    // El servicio sube el kilometraje del vehículo a ese valor (el km solo aumenta).
 
                     var dto = new PlanMantenimientoVehiculoDto
                     {
@@ -446,6 +460,14 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         Activo = true
                     };
 
+                    aGuardar.Add((configuracion, dto));
+                }
+
+                IsLoading = true;
+
+                // Pasada 2: persistir solo después de validar todo.
+                foreach (var (configuracion, dto) in aGuardar)
+                {
                     if (configuracion.PlanIdExistente.HasValue)
                     {
                         await _planService.UpdateAsync(configuracion.PlanIdExistente.Value, dto, cancellationToken);
@@ -462,10 +484,10 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                         var planObj = Planes.FirstOrDefault(p => p.Id == EditingPlanId.Value);
                         if (planObj != null)
                         {
-                            var baseKm = ultimoKmRegistrado;
-                            var baseFecha = ultimaFecha ?? planObj.FechaInicio;
-                            var intervaloKm = intervaloKmPersonalizado ?? planObj.IntervaloKMPersonalizado ?? 0;
-                            var intervaloDias = intervaloDiasPersonalizado ?? planObj.IntervaloDiasPersonalizado ?? 0;
+                            var baseKm = dto.UltimoKMRegistrado ?? 0;
+                            var baseFecha = dto.UltimaFechaMantenimiento ?? planObj.FechaInicio;
+                            var intervaloKm = dto.IntervaloKMPersonalizado ?? planObj.IntervaloKMPersonalizado ?? 0;
+                            var intervaloDias = dto.IntervaloDiasPersonalizado ?? planObj.IntervaloDiasPersonalizado ?? 0;
                             planObj.ProximoKMEjecucion = baseKm + intervaloKm;
                             planObj.ProximaFechaEjecucion = baseFecha.AddDays(intervaloDias);
                         }
@@ -518,8 +540,11 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
                     await LoadPlantillasDisponiblesAsync(cancellationToken);
                 }
 
+                var vehiculo = await _vehicleService.GetByPlateAsync(FilterPlaca, cancellationToken);
+                KilometrajeActualVehiculo = vehiculo?.Mileage ?? 0;
+
                 var planes = (await _planService.GetByPlacaListAsync(FilterPlaca, cancellationToken)).ToList();
-                
+
                 Planes.Clear();
                 foreach (var plan in planes)
                 {
@@ -599,6 +624,16 @@ namespace GestLog.Modules.GestionVehiculos.ViewModels.Mantenimientos
         public async Task DeletePlanAsync(PlanMantenimientoVehiculoDto plan, CancellationToken cancellationToken = default)
         {
             if (plan == null) return;
+
+            var nombrePlan = plan.PlantillaNombre ?? $"Plantilla #{plan.PlantillaId}";
+            var confirmacion = System.Windows.MessageBox.Show(
+                $"¿Desea eliminar el plan '{nombrePlan}' del vehículo?\n\nEsta acción no se puede deshacer.",
+                "Confirmar eliminación",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+
+            if (confirmacion != System.Windows.MessageBoxResult.Yes)
+                return;
 
             try
             {

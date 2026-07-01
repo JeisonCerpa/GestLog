@@ -17,6 +17,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="{DynamicResource ModalOverlayBrush}" MouseLeftButtonDown="Overlay_MouseLeftButtonDown">
@@ -45,8 +46,20 @@
                                 <TextBlock Text="🛠" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" Style="{StaticResource ModalTextBlockBase}"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Configurar plan preventivo" Style="{StaticResource HeaderTextStyle}" Foreground="White"/>
-                                <TextBlock Text="Define plantilla, intervalos y línea base" Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"/>
+                                <TextBlock Foreground="White">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource HeaderTextStyle}">
+                                            <Setter Property="Text" Value="Configurar plan de mantenimiento"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEditingSinglePlan}" Value="True">
+                                                    <Setter Property="Text" Value="Editar plan de mantenimiento"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Style="{StaticResource SubHeaderTextStyle}" Foreground="White" Opacity="0.95" Margin="0,3,0,0"
+                                           Text="{Binding KilometrajeActualVehiculo, StringFormat=Kilometraje actual del vehículo: {0:N0} km}"/>
                             </StackPanel>
                         </StackPanel>
 
@@ -205,15 +218,13 @@
                             </Border>
 
                             <Border Background="{DynamicResource DangerBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,12"
-                                    Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    Opacity="0.15">
-                                <TextBlock Text="{Binding ErrorMessage}" Foreground="White" FontSize="12" TextWrapping="Wrap" />
+                                    Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ErrorMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
                             </Border>
 
                             <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,12"
-                                    Visibility="{Binding SuccessMessage, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    Opacity="0.15">
-                                <TextBlock Text="{Binding SuccessMessage}" Foreground="White" FontSize="12" TextWrapping="Wrap" />
+                                    Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                                <TextBlock Text="{Binding SuccessMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
                             </Border>
                         </StackPanel>
                     </Grid>
