@@ -25,8 +25,9 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Consolidación: rangos de FOB por tonelada ampliados (hasta 2000) y ajuste en columnas de peso y valor FOB.\n" +
-                "• Exportación de Seguimientos: texto ajustado en Descripción y Observaciones, con encabezado y columnas Equipo/Nombre fijos al desplazarse.",
+                "• Exportación de Seguimientos: nueva tabla de cumplimiento por sede (conteos, % cumplido/incumplido y costo total).\n" +
+                "• Indicadores de cumplimiento corregidos: pendientes fuera del denominador y atrasados contados como incumplidos.\n" +
+                "• Nueva tarjeta de Incumplimiento y fila propia para el estado Atrasado en el análisis por estado.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
