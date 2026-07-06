@@ -116,6 +116,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                                       && columnMap.TryGetValue("FechaRegistro", out var colFechaReg)
                                       && worksheet.Cell(row, colFechaReg).TryGetValue(out fechaRealizacion)))
                                 {
+                                    var razonOmision = $"Sin Fecha Realización (Estado='{estadoStr}'): no se importa";
+                                    result.IgnoredRows.Add((row, razonOmision));
+                                    result.IgnoredCount++;
+                                    _logger.LogWarning("[SeguimientoImportService] Fila {Row} - {Reason}", row, razonOmision);
                                     progress?.Report(CalcProgress(row, lastRow));
                                     continue;
                                 }
@@ -131,8 +135,17 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                             }
                         }
 
-                        var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-                        int semana = cal.GetWeekOfYear(fechaRealizacion, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+                        // Respetar la Semana del archivo (viene del export): si se recalculara desde la fecha,
+                        // una fecha corregida que cae en otra semana crearía un registro nuevo en vez de actualizar el original
+                        int semana;
+                        if (!(columnMap.TryGetValue("Semana", out var colSemana)
+                              && worksheet.Cell(row, colSemana).TryGetValue(out int semanaExcel)
+                              && semanaExcel >= 1 && semanaExcel <= 53))
+                        {
+                            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+                            semanaExcel = cal.GetWeekOfYear(fechaRealizacion, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+                        }
+                        semana = semanaExcel;
                         int anio = fechaRealizacion.Year;
 
                         var dto = new SeguimientoMantenimientoDto
@@ -334,7 +347,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
             var opcionales = new Dictionary<string,string[]>
             {
                 ["Estado"] = new[] { "Estado" },
-                ["FechaRegistro"] = new[] { "FechaRegistro", "Fecha Registro" }
+                ["FechaRegistro"] = new[] { "FechaRegistro", "Fecha Registro" },
+                ["Semana"] = new[] { "Semana" }
             };
             Func<string,string> Normalizar = s => string.IsNullOrWhiteSpace(s) ? string.Empty : System.Text.RegularExpressions.Regex.Replace(s.ToLowerInvariant(), "[^a-z0-9]", "");
 
