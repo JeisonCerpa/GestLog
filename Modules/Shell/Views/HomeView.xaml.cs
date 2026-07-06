@@ -25,9 +25,11 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Exportación de Seguimientos: nueva tabla de cumplimiento por sede (conteos, % cumplido/incumplido y costo total).\n" +
-                "• Indicadores de cumplimiento corregidos: pendientes fuera del denominador y atrasados contados como incumplidos.\n" +
-                "• Nueva tarjeta de Incumplimiento y fila propia para el estado Atrasado en el análisis por estado.",
+                "• Exportación de Seguimientos legible en pantalla, con columna Sede y anchos ajustados.\n" +
+                "• El archivo exportado ahora se puede corregir en Excel y volver a importar directamente.\n" +
+                "• Importación: filas \"Realizado en tiempo\" sin Fecha Realización usan su Fecha Registro; barra de progreso visible.\n" +
+                "• Al exportar se pregunta si desea abrir el archivo generado.\n" +
+                "• Plantilla de importación con el mismo formato del export y columna Sede en la tabla de seguimientos.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

@@ -1,3 +1,13 @@
+## v1.2.8
+
+- Exportación de Seguimientos legible en pantalla: la columna Nombre ya no se ensancha sin límite (texto ajustado) y ahora se muestra la Sede de cada equipo.
+- El archivo exportado ahora es directamente importable: puede exportar, corregir los datos en Excel y volver a importar el mismo archivo (los encabezados, fechas y el bloque de indicadores se reconocen automáticamente).
+- Importación: si una fila "Realizado en tiempo" no tiene Fecha Realización, se usa su Fecha Registro en lugar de descartarla.
+- Al exportar, la aplicación pregunta si desea abrir el archivo Excel generado.
+- Al importar se muestra una barra de progreso sobre la tabla.
+- "Descargar plantilla" ahora genera la plantilla con el mismo formato del export (12 columnas con Sede y una fila de ejemplo).
+- La tabla de seguimientos en pantalla ahora incluye la columna Sede.
+
 ## v1.2.7
 
 - Exportación de Seguimientos: nueva tabla "Cumplimiento por Sede" con conteos por estado, % cumplido/incumplido y costo total por sede (en el export de seguimientos y en la hoja de seguimientos del cronograma).
