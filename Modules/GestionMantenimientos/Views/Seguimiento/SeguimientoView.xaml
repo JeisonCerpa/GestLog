@@ -168,7 +168,24 @@
                 Style="{StaticResource ThemeElevatedCardStyle}"
                 Margin="10,0,10,10"
                 Padding="16">
-            <DataGrid ItemsSource="{Binding SeguimientosView}"
+            <DockPanel>
+                <ProgressBar DockPanel.Dock="Top"
+                             Height="5"
+                             Margin="0,0,0,10"
+                             Maximum="100"
+                             Value="{Binding ProgressValue, Mode=OneWay}">
+                    <ProgressBar.Style>
+                        <Style TargetType="ProgressBar">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ProgressValue}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+                <DataGrid ItemsSource="{Binding SeguimientosView}"
                       SelectedItem="{Binding SelectedSeguimiento, Mode=TwoWay}"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
@@ -224,7 +241,14 @@
                     <DataGridTextColumn Header="Nombre"
                                         Binding="{Binding Nombre}"
                                         Width="*"
-                                        MinWidth="180"
+                                        MinWidth="160"
+                                        IsReadOnly="True"
+                                        ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
+
+                    <DataGridTextColumn Header="Sede"
+                                        Binding="{Binding Sede, TargetNullValue=-}"
+                                        Width="SizeToCells"
+                                        MinWidth="100"
                                         IsReadOnly="True"
                                         ElementStyle="{StaticResource ThemeDataGridTextStyle}" />
 
@@ -287,7 +311,8 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
-            </DataGrid>
+                </DataGrid>
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

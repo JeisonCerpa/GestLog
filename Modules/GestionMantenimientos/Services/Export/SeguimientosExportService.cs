@@ -69,86 +69,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                     int currentRowSeg = 3;
 
-                    var headersSeg = new[] { "Equipo", "Nombre", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
-                    for (int col = 1; col <= headersSeg.Length; col++)
-                    {
-                        var headerCell = wsSeguimientos.Cell(currentRowSeg, col);
-                        headerCell.Value = headersSeg[col - 1];
-                        headerCell.Style.Font.Bold = true;
-                        headerCell.Style.Font.FontColor = XLColor.White;
-                        headerCell.Style.Fill.BackgroundColor = XLColor.FromArgb(0x118938);
-                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                        headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-                    }
-                    wsSeguimientos.Row(currentRowSeg).Height = 22;
-                    currentRowSeg++;
-
-                    int rowCountSeg = 0;
-                    foreach (var seg in seguimientosList.OrderBy(s => s.Semana).ThenBy(s => s.Codigo))
-                    {
-                        ct.ThrowIfCancellationRequested();
-
-                        wsSeguimientos.Cell(currentRowSeg, 1).Value = seg.Codigo;
-                        wsSeguimientos.Cell(currentRowSeg, 2).Value = seg.Nombre;
-                        wsSeguimientos.Cell(currentRowSeg, 3).Value = seg.Semana;
-                        wsSeguimientos.Cell(currentRowSeg, 4).Value = seg.TipoMtno?.ToString() ?? "-";
-
-                        var descCell = wsSeguimientos.Cell(currentRowSeg, 5);
-                        descCell.Value = seg.Descripcion;
-                        descCell.Style.Alignment.WrapText = true;
-                        wsSeguimientos.Cell(currentRowSeg, 6).Value = seg.Responsable;
-
-                        var estadoCell = wsSeguimientos.Cell(currentRowSeg, 7);
-                        estadoCell.Value = EstadoToTexto(seg.Estado);
-                        if (seg.TipoMtno == TipoMantenimiento.Correctivo)
-                        {
-                            estadoCell.Style.Fill.BackgroundColor = EstadoSeguimientoUtils.XLColorFromTipo(TipoMantenimiento.Correctivo);
-                            estadoCell.Value = "Correctivo";
-                        }
-                        else
-                        {
-                            estadoCell.Style.Fill.BackgroundColor = XLColorFromEstado(seg.Estado);
-                        }
-                        estadoCell.Style.Font.FontColor = XLColor.White;
-                        estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-                        wsSeguimientos.Cell(currentRowSeg, 8).Value = seg.FechaRegistro?.ToString("dd/MM/yyyy HH:mm") ?? "-";
-                        wsSeguimientos.Cell(currentRowSeg, 9).Value = seg.FechaRealizacion?.ToString("dd/MM/yyyy HH:mm") ?? "-";
-
-                        var costoCell = wsSeguimientos.Cell(currentRowSeg, 10);
-                        costoCell.Value = seg.Costo ?? 0;
-                        costoCell.Style.NumberFormat.Format = "$#,##0";
-
-                        var obsCell = wsSeguimientos.Cell(currentRowSeg, 11);
-                        obsCell.Value = seg.Observaciones ?? "-";
-                        obsCell.Style.Alignment.WrapText = true;
-                        obsCell.Style.Alignment.Indent = 2;
-
-                        if (rowCountSeg % 2 == 0)
-                        {
-                            for (int col = 1; col <= 11; col++)
-                            {
-                                if (col != 7)
-                                    wsSeguimientos.Cell(currentRowSeg, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
-                            }
-                        }
-
-                        wsSeguimientos.Cell(currentRowSeg, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        wsSeguimientos.Cell(currentRowSeg, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                        wsSeguimientos.Cell(currentRowSeg, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-                        wsSeguimientos.Row(currentRowSeg).Height = 30;
-
-                        currentRowSeg++;
-                        rowCountSeg++;
-                    }
-
-                    if (seguimientosList.Count > 0)
-                    {
-                        int headerRow = currentRowSeg - seguimientosList.Count - 1;
-                        wsSeguimientos.Range(headerRow, 1, currentRowSeg - 1, 11).SetAutoFilter();
-                    }
+                    currentRowSeg = SeguimientosKpiSection.EscribirTabla(wsSeguimientos, seguimientosList, currentRowSeg, ct);
 
                     if (seguimientosList.Count > 0)
                     {
@@ -162,17 +83,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     footerCellSeg.Style.Font.Italic = true;
                     footerCellSeg.Style.Font.FontSize = 9;
                     footerCellSeg.Style.Font.FontColor = XLColor.Gray;
-                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 11).Merge();
-                    wsSeguimientos.Range(1, 1, currentRowSeg, 11).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
+                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 12).Merge();
+                    wsSeguimientos.Range(1, 1, currentRowSeg, 12).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 
-                    try
-                    {
-                        wsSeguimientos.Columns("A", "K").AdjustToContents();
-                        // Descripción (col E) y Observaciones (col K): ancho fijo para que el texto se ajuste (WrapText) en vez de ensanchar la columna
-                        wsSeguimientos.Column(5).Width = 45;
-                        wsSeguimientos.Column(11).Width = 45;
-                    }
-                    catch { }
+                    SeguimientosKpiSection.AjustarAnchosTabla(wsSeguimientos);
 
                     // Congelar filas 1-3 (encabezado/título) y columnas A-B (Equipo/Nombre)
                     wsSeguimientos.SheetView.Freeze(3, 2);
@@ -200,16 +114,6 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     throw;
                 }
             }, ct);
-        }
-
-        private string EstadoToTexto(EstadoSeguimientoMantenimiento estado)
-        {
-            return EstadoSeguimientoUtils.EstadoToTexto(estado);
-        }
-
-        private XLColor XLColorFromEstado(EstadoSeguimientoMantenimiento estado)
-        {
-            return EstadoSeguimientoUtils.XLColorFromEstado(estado);
         }
     }
 }

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using ClosedXML.Excel;
 using GestLog.Models.Enums;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
@@ -44,6 +46,129 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                 prev.Count(s => s.Estado == EstadoSeguimientoMantenimiento.NoRealizado),
                 prev.Count(s => s.Estado == EstadoSeguimientoMantenimiento.Pendiente),
                 lista.Sum(s => s.Costo ?? 0));
+        }
+
+        /// <summary>
+        /// Escribe la tabla de datos de seguimientos (encabezados en la fila indicada + filas + autofiltro)
+        /// y devuelve la fila siguiente. Las fechas se escriben como fechas reales de Excel y los encabezados
+        /// son compatibles con la importación de seguimientos (exportar → corregir → importar).
+        /// </summary>
+        public static int EscribirTabla(IXLWorksheet ws, List<SeguimientoMantenimientoDto> seguimientos, int headerRow, CancellationToken ct)
+        {
+            var headers = new[] { "Equipo", "Nombre", "Sede", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+            for (int col = 1; col <= headers.Length; col++)
+            {
+                var headerCell = ws.Cell(headerRow, col);
+                headerCell.Value = headers[col - 1];
+                headerCell.Style.Font.Bold = true;
+                headerCell.Style.Font.FontColor = XLColor.White;
+                headerCell.Style.Fill.BackgroundColor = ColorTituloKpi;
+                headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                headerCell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                headerCell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            }
+            ws.Row(headerRow).Height = 22;
+
+            int row = headerRow + 1;
+            int rowCount = 0;
+            foreach (var seg in seguimientos.OrderBy(s => s.Semana).ThenBy(s => s.Codigo))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                ws.Cell(row, 1).Value = seg.Codigo;
+
+                var nombreCell = ws.Cell(row, 2);
+                nombreCell.Value = seg.Nombre;
+                nombreCell.Style.Alignment.WrapText = true;
+
+                ws.Cell(row, 3).Value = seg.Sede?.ToString() ?? "-";
+                ws.Cell(row, 4).Value = seg.Semana;
+                ws.Cell(row, 5).Value = seg.TipoMtno?.ToString() ?? "-";
+
+                var descCell = ws.Cell(row, 6);
+                descCell.Value = seg.Descripcion;
+                descCell.Style.Alignment.WrapText = true;
+
+                ws.Cell(row, 7).Value = seg.Responsable;
+
+                var estadoCell = ws.Cell(row, 8);
+                estadoCell.Value = EstadoSeguimientoUtils.EstadoToTexto(seg.Estado);
+                if (seg.TipoMtno == TipoMantenimiento.Correctivo)
+                {
+                    estadoCell.Style.Fill.BackgroundColor = EstadoSeguimientoUtils.XLColorFromTipo(TipoMantenimiento.Correctivo);
+                    estadoCell.Value = "Correctivo";
+                }
+                else
+                {
+                    estadoCell.Style.Fill.BackgroundColor = EstadoSeguimientoUtils.XLColorFromEstado(seg.Estado);
+                }
+                estadoCell.Style.Font.FontColor = XLColor.White;
+                estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                EscribirFecha(ws.Cell(row, 9), seg.FechaRegistro);
+                EscribirFecha(ws.Cell(row, 10), seg.FechaRealizacion);
+
+                var costoCell = ws.Cell(row, 11);
+                costoCell.Value = seg.Costo ?? 0;
+                costoCell.Style.NumberFormat.Format = "$#,##0";
+
+                var obsCell = ws.Cell(row, 12);
+                obsCell.Value = seg.Observaciones ?? "-";
+                obsCell.Style.Alignment.WrapText = true;
+                obsCell.Style.Alignment.Indent = 2;
+
+                if (rowCount % 2 == 0)
+                {
+                    for (int col = 1; col <= 12; col++)
+                    {
+                        if (col != 8)
+                            ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
+                    }
+                }
+
+                ws.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                ws.Row(row).Height = 30;
+
+                row++;
+                rowCount++;
+            }
+
+            if (seguimientos.Count > 0)
+                ws.Range(headerRow, 1, row - 1, 12).SetAutoFilter();
+
+            return row;
+        }
+
+        private static void EscribirFecha(IXLCell cell, DateTime? fecha)
+        {
+            if (fecha.HasValue)
+            {
+                cell.Value = fecha.Value;
+                cell.Style.DateFormat.Format = "dd/MM/yyyy HH:mm";
+            }
+            else
+            {
+                cell.Value = "-";
+            }
+            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        }
+
+        /// <summary>
+        /// Ajusta anchos de columna de la hoja de seguimientos para que quepa en pantalla:
+        /// las columnas de texto largo quedan con ancho fijo y el contenido se ajusta (WrapText).
+        /// </summary>
+        public static void AjustarAnchosTabla(IXLWorksheet ws)
+        {
+            try
+            {
+                ws.Columns("A", "L").AdjustToContents();
+                ws.Column(2).Width = Math.Min(ws.Column(2).Width, 28);   // Nombre
+                ws.Column(6).Width = 40;                                  // Descripción
+                ws.Column(12).Width = 40;                                 // Observaciones
+            }
+            catch { }
         }
 
         /// <summary>Escribe el bloque completo de KPIs a partir de la fila indicada y devuelve la fila siguiente a la última escrita.</summary>

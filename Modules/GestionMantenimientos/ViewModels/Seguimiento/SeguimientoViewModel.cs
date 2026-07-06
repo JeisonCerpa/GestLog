@@ -18,6 +18,7 @@ using Microsoft.Win32;
 using GestLog.Modules.GestionMantenimientos.Utilities;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Export;
 using GestLog.Modules.GestionMantenimientos.Interfaces.Import;
+using GestLog.Modules.GestionMantenimientos.Services.Export;
 using ClosedXML.Excel;
 
 namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento;
@@ -509,6 +510,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             await _seguimientosExportService.ExportAsync(datosAExportar, AnioSeleccionado, saveFileDialog.FileName, CancellationToken.None);
 
             StatusMessage = $"Exportación completada: {saveFileDialog.FileName} ({datosAExportar.Count} seguimientos)";
+
+            var abrir = System.Windows.MessageBox.Show(
+                $"Exportación completada ({datosAExportar.Count} seguimientos).\n\n¿Desea abrir el archivo?",
+                "Exportar seguimientos",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Information);
+            if (abrir == System.Windows.MessageBoxResult.Yes)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(saveFileDialog.FileName) { UseShellExecute = true });
         }
         catch (Exception ex)
         {
@@ -635,25 +644,26 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                 using var wb = new XLWorkbook();
                 var ws = wb.Worksheets.Add("Plantilla");
 
-                var headers = new[] { "Codigo", "Nombre", "TipoMtno", "Descripcion", "Responsable", "Costo", "Observaciones", "FechaRealizacion" };
-                for (int i = 0; i < headers.Length; i++)
+                // Mismo formato que la exportación: la plantilla y el archivo exportado son intercambiables al importar
+                var hoy = DateTime.Now;
+                var ejemplo = new SeguimientoMantenimientoDto
                 {
-                    ws.Cell(1, i + 1).Value = headers[i];
-                }
+                    Codigo = "EQP-0001",
+                    Nombre = "Equipo ejemplo (reemplazar)",
+                    TipoMtno = TipoMantenimiento.Preventivo,
+                    Descripcion = "Descripción de ejemplo",
+                    Responsable = "Técnico Ejemplo",
+                    Costo = 0,
+                    Observaciones = "Sin observaciones",
+                    FechaRegistro = hoy,
+                    FechaRealizacion = hoy,
+                    Semana = System.Globalization.ISOWeek.GetWeekOfYear(hoy),
+                    Anio = hoy.Year,
+                    Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo
+                };
 
-                // Ejemplo de fila
-                ws.Cell(2, 1).Value = "EQP-0001";
-                ws.Cell(2, 2).Value = "Equipo ejemplo";
-                ws.Cell(2, 3).Value = "Preventivo";
-                ws.Cell(2, 4).Value = "Descripción de ejemplo";
-                ws.Cell(2, 5).Value = "Técnico Ejemplo";
-                ws.Cell(2, 6).Value = 0;
-                ws.Cell(2, 7).Value = "Sin observaciones";
-                ws.Cell(2, 8).Value = DateTime.Now.ToString("dd/MM/yyyy");
-
-                // Formato de encabezado
-                ws.Row(1).Style.Font.Bold = true;
-                ws.Columns().AdjustToContents();
+                SeguimientosKpiSection.EscribirTabla(ws, new List<SeguimientoMantenimientoDto> { ejemplo }, 1, CancellationToken.None);
+                SeguimientosKpiSection.AjustarAnchosTabla(ws);
 
                 wb.SaveAs(saveFileDialog.FileName);
             });

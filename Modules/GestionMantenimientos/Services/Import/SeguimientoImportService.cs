@@ -53,7 +53,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                 using var workbook = new XLWorkbook(filePath);
                 var worksheet = workbook.Worksheets.First();
 
-                var columnMap = MapearColumnasExcel(worksheet);
+                var (columnMap, headerRow) = MapearColumnasExcel(worksheet);
                 var codigosValidos = await ObtenerCodigosEquiposValidosAsync();
 
                 var rangeUsed = worksheet.RangeUsed();
@@ -61,7 +61,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
 
                 using var dbContext = _dbContextFactory.CreateDbContext();
 
-                for (int row = 2; row <= lastRow; row++)
+                for (int row = headerRow + 1; row <= lastRow; row++)
                 {
                     if (cancellationToken.IsCancellationRequested)
                         throw new OperationCanceledException(cancellationToken);
@@ -75,6 +75,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                             progress?.Report(CalcProgress(row, lastRow));
                             continue; // fila vacía
                         }
+
+                        if (codigo.StartsWith("INDICADORES", StringComparison.OrdinalIgnoreCase))
+                            break; // bloque de KPIs del archivo exportado: no hay más filas de datos
 
                         if (!codigosValidos.Contains(codigo))
                         {
@@ -100,12 +103,32 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                         if (!worksheet.Cell(row, columnMap["FechaRealizacion"]).TryGetValue(out DateTime fechaRealizacion))
                         {
                             var fechaStr = worksheet.Cell(row, columnMap["FechaRealizacion"]).GetString()?.Trim() ?? string.Empty;
-                            var razon = "Fecha Realizacion no es una fecha válida";
-                            result.IgnoredRows.Add((row, razon));
-                            result.IgnoredCount++;
-                            _logger.LogWarning("[SeguimientoImportService] Fila {Row} - FechaRealizacion='{FechaStr}' - {Reason}", row, fechaStr, razon);
-                            progress?.Report(CalcProgress(row, lastRow));
-                            continue;
+                            if (string.IsNullOrEmpty(fechaStr) || fechaStr == "-")
+                            {
+                                // Sin fecha de realización: si el estado dice "Realizado en tiempo", usar la fecha de registro;
+                                // si no (p.ej. pendiente en el archivo exportado), se omite sin reportarla
+                                var estadoStr = columnMap.TryGetValue("Estado", out var colEstado)
+                                    ? worksheet.Cell(row, colEstado).GetString()?.Trim().Replace(" ", string.Empty) ?? string.Empty
+                                    : string.Empty;
+                                bool esRealizadoEnTiempo = estadoStr.Equals("RealizadoEnTiempo", StringComparison.OrdinalIgnoreCase);
+
+                                if (!(esRealizadoEnTiempo
+                                      && columnMap.TryGetValue("FechaRegistro", out var colFechaReg)
+                                      && worksheet.Cell(row, colFechaReg).TryGetValue(out fechaRealizacion)))
+                                {
+                                    progress?.Report(CalcProgress(row, lastRow));
+                                    continue;
+                                }
+                            }
+                            else if (!DateTime.TryParse(fechaStr, CultureInfo.CurrentCulture, DateTimeStyles.None, out fechaRealizacion))
+                            {
+                                var razon = "Fecha Realizacion no es una fecha válida";
+                                result.IgnoredRows.Add((row, razon));
+                                result.IgnoredCount++;
+                                _logger.LogWarning("[SeguimientoImportService] Fila {Row} - FechaRealizacion='{FechaStr}' - {Reason}", row, fechaStr, razon);
+                                progress?.Report(CalcProgress(row, lastRow));
+                                continue;
+                            }
                         }
 
                         var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
@@ -293,35 +316,56 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
             return new HashSet<string>(codigos, StringComparer.OrdinalIgnoreCase);
         }
 
-        private Dictionary<string,int> MapearColumnasExcel(IXLWorksheet worksheet)
+        private (Dictionary<string,int> columnMap, int headerRow) MapearColumnasExcel(IXLWorksheet worksheet)
         {
-            var columnMap = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
-            var columnasRequeridas = new[] { "Codigo","Nombre","TipoMtno","Descripcion","Responsable","Costo","Observaciones","FechaRealizacion" };
+            // Alias por columna: acepta la plantilla clásica y los encabezados del archivo exportado por GestLog
+            var aliases = new Dictionary<string,string[]>
+            {
+                ["Codigo"] = new[] { "Codigo", "Código", "Equipo" },
+                ["Nombre"] = new[] { "Nombre" },
+                ["TipoMtno"] = new[] { "TipoMtno", "Tipo" },
+                ["Descripcion"] = new[] { "Descripcion", "Descripción" },
+                ["Responsable"] = new[] { "Responsable" },
+                ["Costo"] = new[] { "Costo" },
+                ["Observaciones"] = new[] { "Observaciones" },
+                ["FechaRealizacion"] = new[] { "FechaRealizacion", "Fecha Realización", "Fecha Realizacion" }
+            };
+            // Columnas opcionales (presentes en el archivo exportado): no bloquean la importación si faltan
+            var opcionales = new Dictionary<string,string[]>
+            {
+                ["Estado"] = new[] { "Estado" },
+                ["FechaRegistro"] = new[] { "FechaRegistro", "Fecha Registro" }
+            };
             Func<string,string> Normalizar = s => string.IsNullOrWhiteSpace(s) ? string.Empty : System.Text.RegularExpressions.Regex.Replace(s.ToLowerInvariant(), "[^a-z0-9]", "");
 
             var rangeUsed = worksheet.RangeUsed();
             if (rangeUsed == null)
                 throw new GestionMantenimientosDomainException("El archivo Excel está vacío.");
 
-            for (int col = 1; col <= rangeUsed.ColumnCount(); col++)
+            // El archivo exportado tiene logo/título arriba: buscar la fila de encabezados en las primeras 10 filas
+            int lastHeaderRow = Math.Min(10, rangeUsed.LastRow().RowNumber());
+            for (int row = 1; row <= lastHeaderRow; row++)
             {
-                var header = worksheet.Cell(1,col).GetString()?.Trim() ?? string.Empty;
-                var headerNorm = Normalizar(header);
-                foreach (var req in columnasRequeridas)
+                var columnMap = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
+                for (int col = 1; col <= rangeUsed.ColumnCount(); col++)
                 {
-                    if (headerNorm == Normalizar(req))
-                        columnMap[req] = col;
+                    var headerNorm = Normalizar(worksheet.Cell(row, col).GetString()?.Trim() ?? string.Empty);
+                    if (headerNorm.Length == 0) continue;
+                    foreach (var kvp in aliases.Concat(opcionales))
+                    {
+                        if (!columnMap.ContainsKey(kvp.Key) && kvp.Value.Any(a => Normalizar(a) == headerNorm))
+                            columnMap[kvp.Key] = col;
+                    }
+                }
+
+                if (aliases.Keys.All(columnMap.ContainsKey))
+                {
+                    _logger.LogInformation("[SeguimientoImportService] Encabezados en fila {Row}. ColumnMap: {Map}", row, string.Join(",", columnMap.Select(kvp => $"{kvp.Key}={kvp.Value}")));
+                    return (columnMap, row);
                 }
             }
 
-            foreach (var req in columnasRequeridas)
-            {
-                if (!columnMap.ContainsKey(req))
-                    throw new GestionMantenimientosDomainException($"No se encontró la columna '{req}' en el Excel. Columnas requeridas: {string.Join(",",columnasRequeridas)}");
-            }
-
-            _logger.LogInformation("[SeguimientoImportService] ColumnMap: {Map}", string.Join(",", columnMap.Select(kvp => $"{kvp.Key}={kvp.Value}")));
-            return columnMap;
+            throw new GestionMantenimientosDomainException($"No se encontró una fila de encabezados válida en las primeras 10 filas. Columnas requeridas: {string.Join(",", aliases.Keys)}");
         }
 
         private async Task CrearCronogramasDesdeSeguidmientosAsync()
