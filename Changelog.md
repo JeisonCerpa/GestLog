@@ -1,3 +1,8 @@
+## v1.2.9
+
+- Importación de Seguimientos corregida: ahora se respeta la columna Semana del archivo. Antes, si la fecha corregida caía en otra semana calendario, se creaba un registro duplicado en esa semana y el original quedaba sin actualizar.
+- Las filas sin Fecha Realización que antes se descartaban en silencio ahora aparecen como ignoradas con su razón, tanto en el resumen de la importación como en los logs.
+
 ## v1.2.8
 
 - Exportación de Seguimientos legible en pantalla: la columna Nombre ya no se ensancha sin límite (texto ajustado) y ahora se muestra la Sede de cada equipo.

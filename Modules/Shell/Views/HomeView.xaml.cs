@@ -25,11 +25,8 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Exportación de Seguimientos legible en pantalla, con columna Sede y anchos ajustados.\n" +
-                "• El archivo exportado ahora se puede corregir en Excel y volver a importar directamente.\n" +
-                "• Importación: filas \"Realizado en tiempo\" sin Fecha Realización usan su Fecha Registro; barra de progreso visible.\n" +
-                "• Al exportar se pregunta si desea abrir el archivo generado.\n" +
-                "• Plantilla de importación con el mismo formato del export y columna Sede en la tabla de seguimientos.",
+                "• Importación de Seguimientos corregida: se respeta la columna Semana del archivo, evitando duplicados y registros sin actualizar.\n" +
+                "• Las filas sin Fecha Realización ya no se descartan en silencio: aparecen como ignoradas con su razón en el resumen y en los logs.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
