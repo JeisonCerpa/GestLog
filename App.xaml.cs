@@ -523,8 +523,9 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            // Para errores serios, usar el manejador normal
-            errorHandler.HandleException(e.Exception, "TaskScheduler.UnobservedTaskException");
+            // Registrar sin diálogo: una excepción no observada viene de una tarea en segundo plano
+            // que ningún flujo de usuario esperaba; un MessageBox aquí nunca es accionable
+            errorHandler.HandleException(e.Exception, "TaskScheduler.UnobservedTaskException", showToUser: false);
             e.SetObserved(); // Marcar como observada para evitar el cierre de la aplicación
         };
 

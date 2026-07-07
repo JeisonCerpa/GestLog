@@ -174,6 +174,8 @@ public class NetworkMonitoringService : IDisposable
         {
             using var client = new TcpClient();
             var connectTask = client.ConnectAsync(_config.ConnectivityCheckHost, _config.ConnectivityCheckPort);
+            // Observar el fallo si gana el timeout: evita UnobservedTaskException del finalizer
+            _ = connectTask.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
             var timeoutTask = Task.Delay(_config.ConnectivityCheckTimeout);
 
             var completedTask = await Task.WhenAny(connectTask, timeoutTask);

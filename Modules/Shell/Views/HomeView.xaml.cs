@@ -25,8 +25,8 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Importación de Seguimientos corregida: se respeta la columna Semana del archivo, evitando duplicados y registros sin actualizar.\n" +
-                "• Las filas sin Fecha Realización ya no se descartan en silencio: aparecen como ignoradas con su razón en el resumen y en los logs.",
+                "• Corrección para sedes con red inestable: ya no aparecen diálogos de error repetidos por tareas en segundo plano.\n" +
+                "• Los errores de red se registran en el log sin interrumpir al usuario; el estado de conexión se sigue viendo en el indicador de la barra superior.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

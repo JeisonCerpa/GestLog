@@ -1,3 +1,7 @@
+## v1.2.10
+
+- Corrección para sedes con red inestable: ya no aparecen diálogos de error repetidos ("A Task's exception(s) were not observed... host no accesible"). Los errores de tareas en segundo plano ahora se registran en el log sin interrumpir al usuario; el estado de la conexión se sigue viendo en el indicador de la barra superior.
+
 ## v1.2.9
 
 - Importación de Seguimientos corregida: ahora se respeta la columna Semana del archivo. Antes, si la fecha corregida caía en otra semana calendario, se creaba un registro duplicado en esa semana y el original quedaba sin actualizar.
