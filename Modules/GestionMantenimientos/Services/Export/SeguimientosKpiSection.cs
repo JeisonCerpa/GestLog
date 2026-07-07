@@ -55,7 +55,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
         /// </summary>
         public static int EscribirTabla(IXLWorksheet ws, List<SeguimientoMantenimientoDto> seguimientos, int headerRow, CancellationToken ct)
         {
-            var headers = new[] { "Equipo", "Nombre", "Sede", "Semana", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
+            var headers = new[] { "Equipo", "Nombre", "Sede", "Semana", "Año", "Tipo", "Descripción", "Responsable", "Estado", "Fecha Registro", "Fecha Realización", "Costo", "Observaciones" };
             for (int col = 1; col <= headers.Length; col++)
             {
                 var headerCell = ws.Cell(headerRow, col);
@@ -83,15 +83,16 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                 ws.Cell(row, 3).Value = seg.Sede?.ToString() ?? "-";
                 ws.Cell(row, 4).Value = seg.Semana;
-                ws.Cell(row, 5).Value = seg.TipoMtno?.ToString() ?? "-";
+                ws.Cell(row, 5).Value = seg.Anio;
+                ws.Cell(row, 6).Value = seg.TipoMtno?.ToString() ?? "-";
 
-                var descCell = ws.Cell(row, 6);
+                var descCell = ws.Cell(row, 7);
                 descCell.Value = seg.Descripcion;
                 descCell.Style.Alignment.WrapText = true;
 
-                ws.Cell(row, 7).Value = seg.Responsable;
+                ws.Cell(row, 8).Value = seg.Responsable;
 
-                var estadoCell = ws.Cell(row, 8);
+                var estadoCell = ws.Cell(row, 9);
                 estadoCell.Value = EstadoSeguimientoUtils.EstadoToTexto(seg.Estado);
                 if (seg.TipoMtno == TipoMantenimiento.Correctivo)
                 {
@@ -105,29 +106,30 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                 estadoCell.Style.Font.FontColor = XLColor.White;
                 estadoCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                EscribirFecha(ws.Cell(row, 9), seg.FechaRegistro);
-                EscribirFecha(ws.Cell(row, 10), seg.FechaRealizacion);
+                EscribirFecha(ws.Cell(row, 10), seg.FechaRegistro);
+                EscribirFecha(ws.Cell(row, 11), seg.FechaRealizacion);
 
-                var costoCell = ws.Cell(row, 11);
+                var costoCell = ws.Cell(row, 12);
                 costoCell.Value = seg.Costo ?? 0;
                 costoCell.Style.NumberFormat.Format = "$#,##0";
 
-                var obsCell = ws.Cell(row, 12);
+                var obsCell = ws.Cell(row, 13);
                 obsCell.Value = seg.Observaciones ?? "-";
                 obsCell.Style.Alignment.WrapText = true;
                 obsCell.Style.Alignment.Indent = 2;
 
                 if (rowCount % 2 == 0)
                 {
-                    for (int col = 1; col <= 12; col++)
+                    for (int col = 1; col <= 13; col++)
                     {
-                        if (col != 8)
+                        if (col != 9)
                             ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
                     }
                 }
 
                 ws.Cell(row, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 ws.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 ws.Row(row).Height = 30;
 
@@ -136,7 +138,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
             }
 
             if (seguimientos.Count > 0)
-                ws.Range(headerRow, 1, row - 1, 12).SetAutoFilter();
+                ws.Range(headerRow, 1, row - 1, 13).SetAutoFilter();
 
             return row;
         }
@@ -163,10 +165,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
         {
             try
             {
-                ws.Columns("A", "L").AdjustToContents();
+                ws.Columns("A", "M").AdjustToContents();
                 ws.Column(2).Width = Math.Min(ws.Column(2).Width, 28);   // Nombre
-                ws.Column(6).Width = 40;                                  // Descripción
-                ws.Column(12).Width = 40;                                 // Observaciones
+                ws.Column(7).Width = 40;                                  // Descripción
+                ws.Column(13).Width = 40;                                 // Observaciones
             }
             catch { }
         }

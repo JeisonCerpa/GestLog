@@ -100,6 +100,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                             continue;
                         }
 
+                        bool fechaDesdeRegistro = false;
                         if (!worksheet.Cell(row, columnMap["FechaRealizacion"]).TryGetValue(out DateTime fechaRealizacion))
                         {
                             var fechaStr = worksheet.Cell(row, columnMap["FechaRealizacion"]).GetString()?.Trim() ?? string.Empty;
@@ -123,6 +124,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                                     progress?.Report(CalcProgress(row, lastRow));
                                     continue;
                                 }
+                                fechaDesdeRegistro = true;
                             }
                             else if (!DateTime.TryParse(fechaStr, CultureInfo.CurrentCulture, DateTimeStyles.None, out fechaRealizacion))
                             {
@@ -135,18 +137,61 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                             }
                         }
 
-                        // Respetar la Semana del archivo (viene del export): si se recalculara desde la fecha,
-                        // una fecha corregida que cae en otra semana crearía un registro nuevo en vez de actualizar el original
-                        int semana;
-                        if (!(columnMap.TryGetValue("Semana", out var colSemana)
-                              && worksheet.Cell(row, colSemana).TryGetValue(out int semanaExcel)
-                              && semanaExcel >= 1 && semanaExcel <= 53))
+                        // Semana/Año del archivo (vienen del export) para actualizar el registro original;
+                        // si faltan, se derivan de la fecha de realización (semana ISO 8601)
+                        int semana, anio;
+                        if (columnMap.TryGetValue("Semana", out var colSemana)
+                            && worksheet.Cell(row, colSemana).TryGetValue(out int semanaExcel)
+                            && semanaExcel >= 1 && semanaExcel <= 53)
                         {
-                            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
-                            semanaExcel = cal.GetWeekOfYear(fechaRealizacion, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+                            semana = semanaExcel;
+                            if (columnMap.TryGetValue("Anio", out var colAnio)
+                                && worksheet.Cell(row, colAnio).TryGetValue(out int anioExcel)
+                                && anioExcel >= 2000 && anioExcel <= 2100)
+                            {
+                                anio = anioExcel;
+                            }
+                            else
+                            {
+                                // Archivos sin columna Año: elegir el año cuya semana quede más cerca de la fecha
+                                // (cubre el borde de año: semana 52/53 realizada en enero)
+                                anio = new[] { fechaRealizacion.Year - 1, fechaRealizacion.Year, fechaRealizacion.Year + 1 }
+                                    .OrderBy(a => Math.Abs((ISOWeek.ToDateTime(a, Math.Min(semana, ISOWeek.GetWeeksInYear(a)), DayOfWeek.Monday) - fechaRealizacion).TotalDays))
+                                    .First();
+                            }
                         }
-                        semana = semanaExcel;
-                        int anio = fechaRealizacion.Year;
+                        else
+                        {
+                            semana = ISOWeek.GetWeekOfYear(fechaRealizacion);
+                            anio = ISOWeek.GetYear(fechaRealizacion);
+                        }
+
+                        // Estado derivado de la fecha contra la semana programada (misma regla del cronograma):
+                        // dentro de la semana → en tiempo; antes o después → fuera de tiempo; correctivos → Correctivo.
+                        // Si la fecha vino del respaldo de Fecha Registro, se respeta el "Realizado en tiempo" del archivo.
+                        EstadoSeguimientoMantenimiento estado;
+                        if (tipoMtno == TipoMantenimiento.Correctivo)
+                        {
+                            estado = EstadoSeguimientoMantenimiento.Correctivo;
+                        }
+                        else if (fechaDesdeRegistro)
+                        {
+                            estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                        }
+                        else
+                        {
+                            var inicioSemana = ISOWeek.ToDateTime(anio, Math.Min(semana, ISOWeek.GetWeeksInYear(anio)), DayOfWeek.Monday);
+                            var finSemana = inicioSemana.AddDays(7).AddTicks(-1);
+                            estado = fechaRealizacion >= inicioSemana && fechaRealizacion <= finSemana
+                                ? EstadoSeguimientoMantenimiento.RealizadoEnTiempo
+                                : EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+                        }
+
+                        // Fecha Registro del archivo si existe (no pisarla con la fecha de realización)
+                        DateTime fechaRegistro = fechaRealizacion;
+                        if (columnMap.TryGetValue("FechaRegistro", out var colRegistro)
+                            && worksheet.Cell(row, colRegistro).TryGetValue(out DateTime fechaRegistroExcel))
+                            fechaRegistro = fechaRegistroExcel;
 
                         var dto = new SeguimientoMantenimientoDto
                         {
@@ -157,11 +202,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                             Responsable = worksheet.Cell(row, columnMap["Responsable"]).GetString()?.Trim() ?? string.Empty,
                             Costo = worksheet.Cell(row, columnMap["Costo"]).GetValue<decimal?>() ?? 0m,
                             Observaciones = worksheet.Cell(row, columnMap["Observaciones"]).GetString()?.Trim() ?? string.Empty,
-                            FechaRegistro = fechaRealizacion,
+                            FechaRegistro = fechaRegistro,
                             FechaRealizacion = fechaRealizacion,
                             Semana = semana,
                             Anio = anio,
-                            Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo
+                            Estado = estado
                         };
 
                         ValidarDto(dto);
@@ -203,9 +248,18 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
                         {
                             int updated = 0;
                             int added = 0;
+                            var clavesVistas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                             foreach (var seg in result.ImportedItems)
                             {
                                 cancellationToken.ThrowIfCancellationRequested();
+                                if (!clavesVistas.Add($"{seg.Codigo}|{seg.Semana}|{seg.Anio}|{seg.TipoMtno}"))
+                                {
+                                    var razonDup = $"Fila duplicada en el archivo: {seg.Codigo} Semana {seg.Semana}/{seg.Anio}";
+                                    result.IgnoredRows.Add((-1, razonDup));
+                                    result.IgnoredCount++;
+                                    _logger.LogWarning("[SeguimientoImportService] {Reason}", razonDup);
+                                    continue;
+                                }
                                 var existente = await dbContextTx.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seg.Codigo && s.Semana == seg.Semana && s.Anio == seg.Anio && s.TipoMtno == seg.TipoMtno, cancellationToken);
                                 if (existente == null)
                                 {
@@ -348,7 +402,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Import
             {
                 ["Estado"] = new[] { "Estado" },
                 ["FechaRegistro"] = new[] { "FechaRegistro", "Fecha Registro" },
-                ["Semana"] = new[] { "Semana" }
+                ["Semana"] = new[] { "Semana" },
+                ["Anio"] = new[] { "Anio", "Año" }
             };
             Func<string,string> Normalizar = s => string.IsNullOrWhiteSpace(s) ? string.Empty : System.Text.RegularExpressions.Regex.Replace(s.ToLowerInvariant(), "[^a-z0-9]", "");
 

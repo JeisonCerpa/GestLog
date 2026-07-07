@@ -658,7 +658,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
                     FechaRegistro = hoy,
                     FechaRealizacion = hoy,
                     Semana = System.Globalization.ISOWeek.GetWeekOfYear(hoy),
-                    Anio = hoy.Year,
+                    Anio = System.Globalization.ISOWeek.GetYear(hoy),
                     Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo
                 };
 

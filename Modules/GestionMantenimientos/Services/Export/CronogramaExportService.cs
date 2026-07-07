@@ -322,8 +322,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     footerCellSeg.Style.Font.Italic = true;
                     footerCellSeg.Style.Font.FontSize = 9;
                     footerCellSeg.Style.Font.FontColor = XLColor.Gray;
-                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 12).Merge();
-                    wsSeguimientos.Range(1, 1, currentRowSeg, 12).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
+                    wsSeguimientos.Range(currentRowSeg, 1, currentRowSeg, 13).Merge();
+                    wsSeguimientos.Range(1, 1, currentRowSeg, 13).Style.Border.OutsideBorder = XLBorderStyleValues.Thick;
 
                     SeguimientosKpiSection.AjustarAnchosTabla(wsSeguimientos);
 
