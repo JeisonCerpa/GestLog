@@ -215,36 +215,5 @@ namespace GestLog.Modules.Usuarios.ViewModels
             }
         }
 
-        [RelayCommand]
-        private void AbrirGestionPermisosRol()
-        {            try
-            {
-                var serviceProvider = LoggingService.GetServiceProvider();
-                var viewModel = serviceProvider.GetService(typeof(GestionPermisosRolViewModel));
-                if (viewModel == null)
-                {
-                    _logger.LogWarning("❌ GestionPermisosRolViewModel no se pudo resolver desde DI");
-                    System.Windows.MessageBox.Show("Error: No se pudo cargar el módulo de Gestión de Permisos por Rol", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                    return;
-                }
-                var view = new GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Permisos.GestionPermisosRolView();
-                view.DataContext = viewModel;
-                var mainWindow = System.Windows.Application.Current.MainWindow as GestLog.MainWindow;
-                if (mainWindow != null)
-                {
-                    _logger.LogInformation("✅ Navegando a vista de Gestión de Permisos por Rol");
-                    mainWindow.NavigateToView(view as System.Windows.Controls.UserControl, "Gestión de Permisos por Rol");
-                }
-                else
-                {
-                    _logger.LogWarning("❌ MainWindow no encontrada");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error al abrir Gestión de Permisos por Rol");
-                System.Windows.MessageBox.Show($"Error al abrir Gestión de Permisos por Rol: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
     }
 }

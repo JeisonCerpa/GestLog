@@ -81,16 +81,6 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12">
-                        <StackPanel>
-                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}">
-                                <TextBlock Text="🔧" Style="{DynamicResource ThemeCardIconTextStyle}"/>
-                            </Border>
-                            <TextBlock Text="Asignación de Permisos" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Asignar permisos a roles dinámicamente con toggle switches." Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
-                            <Button Content="Asignar Permisos" Command="{Binding AbrirGestionPermisosRolCommand}" Style="{DynamicResource ThemePrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
                 </UniformGrid>
             </StackPanel>
         </ScrollViewer>
