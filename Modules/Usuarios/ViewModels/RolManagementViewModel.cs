@@ -37,8 +37,82 @@ namespace Modules.Usuarios.ViewModels
         public Rol? RolSeleccionado
         {
             get => _rolSeleccionado;
-            set { _rolSeleccionado = value; OnPropertyChanged(); }
-        }        private string _mensajeEstado = string.Empty;
+            set
+            {
+                _rolSeleccionado = value;
+                OnPropertyChanged();
+                _ = CargarDetalleRolAsync(value);
+            }
+        }
+
+        // Vista filtrada para la lista maestro-detalle
+        private System.ComponentModel.ICollectionView? _rolesFiltrados;
+        public System.ComponentModel.ICollectionView RolesFiltrados
+        {
+            get
+            {
+                if (_rolesFiltrados == null)
+                {
+                    _rolesFiltrados = System.Windows.Data.CollectionViewSource.GetDefaultView(_roles);
+                    _rolesFiltrados.Filter = FiltrarRol;
+                }
+                return _rolesFiltrados;
+            }
+        }
+
+        private string _filtroRoles = string.Empty;
+        public string FiltroRoles
+        {
+            get => _filtroRoles;
+            set { _filtroRoles = value; OnPropertyChanged(); _rolesFiltrados?.Refresh(); }
+        }
+
+        private bool FiltrarRol(object obj)
+        {
+            if (string.IsNullOrWhiteSpace(_filtroRoles)) return true;
+            return obj is Rol r &&
+                ((r.Nombre?.Contains(_filtroRoles, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                 (r.Descripcion?.Contains(_filtroRoles, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        private int _totalPermisosSeleccionado;
+        public int TotalPermisosSeleccionado
+        {
+            get => _totalPermisosSeleccionado;
+            set { _totalPermisosSeleccionado = value; OnPropertyChanged(); }
+        }
+
+        private async Task CargarDetalleRolAsync(Rol? rol)
+        {
+            if (rol == null)
+            {
+                PermisosPorModuloVer = new ObservableCollection<PermisosModuloGroup>();
+                TotalPermisosSeleccionado = 0;
+                return;
+            }
+            try
+            {
+                var permisos = await _rolService.ObtenerPermisosDeRolAsync(rol.IdRol);
+                // Descartar si la selección cambió mientras cargaba
+                if (_rolSeleccionado?.IdRol != rol.IdRol) return;
+                var grupos = permisos
+                    .GroupBy(p => p.Modulo)
+                    .OrderBy(g => g.Key)
+                    .Select(g => new PermisosModuloGroup
+                    {
+                        Modulo = g.Key,
+                        Permisos = new ObservableCollection<Permiso>(g)
+                    });
+                PermisosPorModuloVer = new ObservableCollection<PermisosModuloGroup>(grupos);
+                TotalPermisosSeleccionado = permisos.Count();
+            }
+            catch (Exception ex)
+            {
+                MensajeEstado = $"Error al cargar permisos del rol: {ex.Message}";
+            }
+        }
+
+        private string _mensajeEstado = string.Empty;
         public string MensajeEstado
         {
             get => _mensajeEstado;
@@ -190,18 +264,15 @@ namespace Modules.Usuarios.ViewModels
                 // Asegurar que la actualización de la UI se haga en el hilo principal
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
+                    var seleccionAnterior = RolSeleccionado?.IdRol;
                     Roles.Clear();
-                    int count = 0;
                     foreach (var rol in roles)
-                    {
                         Roles.Add(rol);
-                        System.Diagnostics.Debug.WriteLine($"Rol agregado a ObservableCollection: {rol.IdRol} - {rol.Nombre}");
-                        count++;
-                    }
-                    System.Diagnostics.Debug.WriteLine($"Total roles en ObservableCollection: {Roles.Count}");
                     // Forzar notificación de PropertyChanged para la propiedad Roles
                     OnPropertyChanged(nameof(Roles));
-                    MensajeEstado = $"Se cargaron {Roles.Count} roles.";
+                    // Restaurar la selección previa o auto-seleccionar el primero
+                    RolSeleccionado = Roles.FirstOrDefault(r => r.IdRol == seleccionAnterior) ?? Roles.FirstOrDefault();
+                    MensajeEstado = string.Empty;
                 });
             }
             catch (Exception ex)

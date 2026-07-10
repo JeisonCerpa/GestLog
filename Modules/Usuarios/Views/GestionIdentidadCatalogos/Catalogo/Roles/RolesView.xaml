@@ -4,103 +4,280 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
-    <Grid Background="#FAFAFA">
-        <Border Background="White" CornerRadius="8" Padding="32" Margin="40" Effect="{DynamicResource DropShadowEffect}">            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <!-- Header con título y botón alineado a la derecha -->
-                <Grid Margin="0,0,0,24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
-                        <TextBlock Text="🛡️" FontSize="40" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                        <StackPanel>
-                            <TextBlock Text="Gestión de Roles" FontFamily="Segoe UI" FontSize="28" FontWeight="Bold" Foreground="#504F4E"/>
-                            <TextBlock Text="Administra los roles del sistema y sus permisos" FontFamily="Segoe UI" FontSize="16" Foreground="#706F6F"/>
-                        </StackPanel>
-                    </StackPanel>                    <Button Content="+ Nuevo Rol"
+             d:DesignHeight="700" d:DesignWidth="1100"
+             Background="{DynamicResource BackgroundAppBrush}">
+
+    <Grid Background="{DynamicResource BackgroundAppBrush}"
+          UseLayoutRounding="True"
+          SnapsToDevicePixels="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Style="{StaticResource ThemeHeaderContainerStyle}"
+                CornerRadius="14"
+                Margin="10,10,10,8"
+                Padding="18,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="44" Height="44" CornerRadius="22"
+                            Background="{DynamicResource PrimaryLightBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
+                            Margin="0,0,12,0">
+                        <TextBlock Text="🛡"
+                                   FontFamily="Segoe UI Emoji"
+                                   FontSize="20"
+                                   Foreground="{DynamicResource PrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Gestión de Roles"
+                                   Style="{StaticResource ThemeSectionTitleStyle}"/>
+                        <TextBlock Text="Administra los roles del sistema y sus permisos"
+                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="↻ Refrescar"
+                            Command="{Binding BuscarRolesCommand}"
+                            Style="{StaticResource ThemeHeaderActionButtonStyle}"
+                            Margin="0,0,8,0"
+                            MinHeight="38"
+                            ToolTip="Actualizar lista de roles"/>
+                    <Button Content="＋ Nuevo Rol"
                             Click="BtnNuevoRol_Click"
-                            Height="44" Width="180"
-                            Background="#118938"
-                            Foreground="White"
-                            FontWeight="SemiBold"
-                            FontSize="16"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Margin="0,0,0,0"
-                            Padding="0,0,0,0"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Grid.Column="1"/>
+                            Style="{StaticResource ThemeHeaderPrimaryButtonStyle}"
+                            IsEnabled="{Binding CanCreateRole}"
+                            MinHeight="38"
+                            MinWidth="140"
+                            ToolTip="Crear un nuevo rol"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenido maestro-detalle -->
+        <Grid Grid.Row="1" Margin="10,0,10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Lista de roles -->
+            <Border Grid.Column="0"
+                    Style="{StaticResource ThemeElevatedCardStyle}"
+                    Padding="14"
+                    Margin="0,0,8,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0"
+                             Text="{Binding FiltroRoles, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource ThemeTextBoxStyle}"
+                             Tag="Buscar rol..."
+                             Margin="0,0,0,10"/>
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding RolesFiltrados}"
+                             SelectedItem="{Binding RolSeleccionado, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Margin" Value="0,0,0,6"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="ItemBorder"
+                                                    Background="Transparent"
+                                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="10"
+                                                    Padding="12,10">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource BackgroundHoverBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource PrimaryLightBrush}"/>
+                                                    <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Nombre}"
+                                               FontFamily="Segoe UI"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Descripcion}"
+                                               FontFamily="Segoe UI"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,0">
-                    <Grid>
+            </Border>
+
+            <!-- Panel de detalle -->
+            <Border Grid.Column="1"
+                    Style="{StaticResource ThemeElevatedCardStyle}"
+                    Padding="24,20">
+                <Grid>
+                    <!-- Estado vacío -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Visibility="{Binding RolSeleccionado, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=invert}">
+                        <Border Style="{StaticResource ThemeCardIconCircleStyle}">
+                            <TextBlock Text="🛡" Style="{StaticResource ThemeCardIconTextStyle}" FontFamily="Segoe UI Emoji"/>
+                        </Border>
+                        <TextBlock Text="Selecciona un rol para ver su detalle"
+                                   Style="{StaticResource ThemeSectionSubtitleStyle}"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Detalle del rol seleccionado -->
+                    <Grid Visibility="{Binding RolSeleccionado, Converter={StaticResource NullToVisibilityConverter}}">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <!-- Encabezados -->
-                        <Grid Grid.Row="0" Background="#F3F3F3" Margin="0,0,0,6">
+
+                        <!-- Encabezado del detalle -->
+                        <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="40"/>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="3*"/>
-                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="" Grid.Column="0"/>
-                            <TextBlock Text="Nombre" Grid.Column="1" FontWeight="Bold" Padding="8,4"/>
-                            <TextBlock Text="Descripción" Grid.Column="2" FontWeight="Bold" Padding="8,4"/>
-                            <TextBlock Text="Acciones" Grid.Column="3" FontWeight="Bold" Padding="8,4" HorizontalAlignment="Center"/>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding RolSeleccionado.Nombre}"
+                                           Style="{StaticResource ThemeCardTitleStyle}"/>
+                                <TextBlock Text="{Binding RolSeleccionado.Descripcion}"
+                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Content="✏ Editar"
+                                        Click="BtnEditarRol_Click"
+                                        Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                        IsEnabled="{Binding CanEditRole}"
+                                        Margin="0,0,8,0"
+                                        MinHeight="36"/>
+                                <Button Content="🗑 Eliminar"
+                                        Command="{Binding EliminarRolCommand}"
+                                        CommandParameter="{Binding RolSeleccionado}"
+                                        Style="{StaticResource ThemeDangerButtonStyle}"
+                                        MinHeight="36"/>
+                            </StackPanel>
                         </Grid>
-                        <!-- Filas de roles -->
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Roles}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,10" Background="White" CornerRadius="6" Padding="0" Effect="{DynamicResource DropShadowEffect}">
-                                        <Grid Height="60" VerticalAlignment="Center">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="40"/>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="3*"/>
-                                                <ColumnDefinition Width="160"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="🛡️" FontSize="22" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Nombre}" Grid.Column="1" FontSize="17" VerticalAlignment="Center" Padding="8,0" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Descripcion}" Grid.Column="2" FontSize="15" Foreground="#706F6F" TextWrapping="Wrap" VerticalAlignment="Center" Padding="8,0"/>
-                                            <!-- Botones de acción estilo Gestión de Personas -->                                            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
-                                                <Button x:Name="BtnEditarRol" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Editar" Margin="0,0,8,0"
-                                                        Click="BtnEditarRol_Click">
-                                                    <TextBlock Text="✏️" FontSize="18"/>
-                                                </Button>
-                                                <Button x:Name="BtnVerRol" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Ver detalles" Margin="0,0,8,0"
-                                                        Click="BtnVerRol_Click">
-                                                    <TextBlock Text="👁️" FontSize="18"/>
-                                                </Button>
-                                                <Button Command="{Binding DataContext.EliminarRolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Style="{StaticResource ActionIconButtonStyle}" ToolTip="Eliminar">
-                                                    <TextBlock Text="🗑️" FontSize="18"/>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>                </ScrollViewer>
-                
-                <!-- Mensaje de estado/validación debajo de la tabla de roles -->
-                <TextBlock Grid.Row="2" Text="{Binding MensajeEstado}"
-                           Foreground="#C0392B"
-                           FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"                           HorizontalAlignment="Left"
-                           Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"/>
-            </Grid>
-        </Border>
+
+                        <!-- Separador -->
+                        <Border Grid.Row="1" Height="1"
+                                Background="{DynamicResource BorderDefaultBrush}"
+                                Margin="0,16,0,16"/>
+
+                        <!-- Título de permisos -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="Permisos"
+                                       FontFamily="Segoe UI"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <Border Style="{StaticResource ThemePillBadgeStyle}"
+                                    Background="{DynamicResource PrimaryLightBrush}"
+                                    BorderBrush="{DynamicResource PrimaryBrush}"
+                                    Padding="10,3"
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalPermisosSeleccionado}"
+                                           FontFamily="Segoe UI"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryBrush}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Chips de permisos por módulo -->
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding PermisosPorModuloVer}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,10,0,4">
+                                            <TextBlock Text="{Binding Modulo}"
+                                                       FontFamily="Segoe UI"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <ItemsControl ItemsSource="{Binding Permisos}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Style="{StaticResource ThemeDetailChipStyle}"
+                                                                Margin="0,6,6,0"
+                                                                ToolTip="{Binding Descripcion}">
+                                                            <TextBlock Text="{Binding Nombre}"
+                                                                       FontFamily="Segoe UI"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextBodyBrush}"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Mensaje de estado -->
+        <TextBlock Grid.Row="2"
+                   Text="{Binding MensajeEstado}"
+                   FontFamily="Segoe UI"
+                   FontSize="13"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   Margin="12,6,12,10"
+                   Visibility="{Binding MensajeEstado, Converter={StaticResource StringToVisibilityConverter}}"/>
     </Grid>
 </UserControl>
-

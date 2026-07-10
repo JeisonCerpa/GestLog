@@ -12,24 +12,35 @@ using System.Runtime.CompilerServices;
 
 namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Roles
 {
-    public partial class CrearRolWindow : Window
+    /// <summary>
+    /// Ventana modal unificada para crear y editar roles (rol null = crear).
+    /// </summary>
+    public partial class RolFormWindow : Window
     {
-        private CrearRolViewModel _viewModel;
+        private readonly RolFormViewModel _viewModel;
 
-        public CrearRolWindow()
+        public RolFormWindow(Rol? rol = null)
         {
             InitializeComponent();
-            _viewModel = new CrearRolViewModel();
+            _viewModel = new RolFormViewModel(rol);
             DataContext = _viewModel;
-            
-            // Cargar permisos al inicializar
+
+            try
+            {
+                Owner = System.Windows.Application.Current?.MainWindow;
+                WindowState = WindowState.Maximized;
+            }
+            catch
+            {
+                // No crítico
+            }
+
             Loaded += async (s, e) => await _viewModel.CargarPermisosAsync();
         }
 
-        private async void BtnCrear_Click(object sender, RoutedEventArgs e)
+        private async void BtnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            var resultado = await _viewModel.CrearRolAsync();
-            if (resultado)
+            if (await _viewModel.GuardarAsync())
             {
                 DialogResult = true;
                 Close();
@@ -41,13 +52,32 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
             DialogResult = false;
             Close();
         }
+
+        private void Overlay_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        private void Panel_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
     }
 
-    public class CrearRolViewModel : INotifyPropertyChanged
+    public class RolFormViewModel : INotifyPropertyChanged
     {
         private readonly IRolService _rolService;
         private readonly IPermisoService _permisoService;
         private readonly IGestLogLogger _logger;
+        private readonly Rol? _rolOriginal; // null = crear
+
+        public bool EsEdicion => _rolOriginal != null;
+        public string Titulo => EsEdicion ? "Editar Rol" : "Nuevo Rol";
+        public string Subtitulo => EsEdicion
+            ? "Modifique la información del rol y sus permisos asignados"
+            : "Defina el nombre, la descripción y los permisos del nuevo rol";
+        public string TextoGuardar => EsEdicion ? "Guardar Cambios" : "Crear Rol";
 
         private string _nombre = string.Empty;
         public string Nombre
@@ -77,14 +107,51 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
             set { _permisosPorModulo = value; OnPropertyChanged(); }
         }
 
-        public CrearRolViewModel()
+        // Lista completa sin filtrar; los checkboxes comparten instancias, así que el estado se conserva al filtrar
+        private List<ModuloPermisosInfo> _gruposCompletos = new();
+
+        private string _filtroPermisos = string.Empty;
+        public string FiltroPermisos
         {
+            get => _filtroPermisos;
+            set { _filtroPermisos = value; OnPropertyChanged(); AplicarFiltroPermisos(); }
+        }
+
+        private void AplicarFiltroPermisos()
+        {
+            if (string.IsNullOrWhiteSpace(_filtroPermisos))
+            {
+                PermisosPorModulo = new ObservableCollection<ModuloPermisosInfo>(_gruposCompletos);
+                return;
+            }
+            var filtrados = _gruposCompletos
+                .Select(g => new ModuloPermisosInfo
+                {
+                    Modulo = g.Modulo,
+                    Permisos = new ObservableCollection<PermisoSeleccionInfo>(
+                        g.Modulo.Contains(_filtroPermisos, StringComparison.OrdinalIgnoreCase)
+                            ? g.Permisos
+                            : g.Permisos.Where(p =>
+                                p.Nombre.Contains(_filtroPermisos, StringComparison.OrdinalIgnoreCase) ||
+                                p.Descripcion.Contains(_filtroPermisos, StringComparison.OrdinalIgnoreCase)))
+                })
+                .Where(g => g.Permisos.Count > 0);
+            PermisosPorModulo = new ObservableCollection<ModuloPermisosInfo>(filtrados);
+        }
+
+        public RolFormViewModel(Rol? rol)
+        {
+            _rolOriginal = rol;
+            Nombre = rol?.Nombre ?? string.Empty;
+            Descripcion = rol?.Descripcion ?? string.Empty;
+
             try
             {
                 var serviceProvider = LoggingService.GetServiceProvider();
                 _rolService = serviceProvider.GetRequiredService<IRolService>();
                 _permisoService = serviceProvider.GetRequiredService<IPermisoService>();
-                _logger = serviceProvider.GetRequiredService<IGestLogLogger>();            }
+                _logger = serviceProvider.GetRequiredService<IGestLogLogger>();
+            }
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Error al inicializar servicios: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
@@ -96,9 +163,12 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
         {
             try
             {
-                var permisos = await _permisoService.ObtenerTodosAsync();
-                
-                var grupos = permisos
+                var todosLosPermisos = await _permisoService.ObtenerTodosAsync();
+                var idsAsignados = _rolOriginal == null
+                    ? new HashSet<Guid>()
+                    : (await _rolService.ObtenerPermisosDeRolAsync(_rolOriginal.IdRol)).Select(p => p.IdPermiso).ToHashSet();
+
+                var grupos = todosLosPermisos
                     .GroupBy(p => p.Modulo)
                     .Select(g => new ModuloPermisosInfo
                     {
@@ -109,26 +179,26 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
                                 IdPermiso = p.IdPermiso,
                                 Nombre = p.Nombre,
                                 Descripcion = p.Descripcion,
-                                EstaSeleccionado = false
+                                EstaSeleccionado = idsAsignados.Contains(p.IdPermiso)
                             })
                         )
                     })
                     .OrderBy(m => m.Modulo);
 
-                PermisosPorModulo = new ObservableCollection<ModuloPermisosInfo>(grupos);
+                _gruposCompletos = grupos.ToList();
+                AplicarFiltroPermisos();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cargando permisos para crear rol");
+                _logger.LogError(ex, "Error cargando permisos para el formulario de rol");
                 MensajeValidacion = "Error al cargar permisos disponibles";
             }
         }
 
-        public async Task<bool> CrearRolAsync()
+        public async Task<bool> GuardarAsync()
         {
             MensajeValidacion = string.Empty;
 
-            // Validaciones
             if (string.IsNullOrWhiteSpace(Nombre))
             {
                 MensajeValidacion = "El nombre del rol es obligatorio";
@@ -137,40 +207,49 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
 
             try
             {
-                // Crear el rol
-                var nuevoRol = new Rol
+                var rol = new Rol
                 {
+                    IdRol = _rolOriginal?.IdRol ?? Guid.Empty,
                     Nombre = Nombre.Trim(),
                     Descripcion = Descripcion?.Trim() ?? string.Empty
                 };
 
-                var rolCreado = await _rolService.CrearRolAsync(nuevoRol);
+                Guid idRol;
+                if (EsEdicion)
+                {
+                    await _rolService.EditarRolAsync(rol);
+                    idRol = rol.IdRol;
+                }
+                else
+                {
+                    var rolCreado = await _rolService.CrearRolAsync(rol);
+                    idRol = rolCreado.IdRol;
+                }
 
-                // Asignar permisos seleccionados
-                var permisosSeleccionados = PermisosPorModulo
+                // Leer de la lista completa: con un filtro activo, PermisosPorModulo solo contiene los visibles
+                var permisosSeleccionados = _gruposCompletos
                     .SelectMany(m => m.Permisos)
                     .Where(p => p.EstaSeleccionado)
                     .Select(p => p.IdPermiso)
                     .ToList();
 
-                if (permisosSeleccionados.Any())
-                {
-                    await _rolService.AsignarPermisosARolAsync(rolCreado.IdRol, permisosSeleccionados);
-                }
+                // En edición siempre se sincroniza (permite quitar todos los permisos)
+                if (EsEdicion || permisosSeleccionados.Any())
+                    await _rolService.AsignarPermisosARolAsync(idRol, permisosSeleccionados);
 
-                _logger.LogInformation($"Rol creado exitosamente: {rolCreado.Nombre} con {permisosSeleccionados.Count} permisos");
+                _logger.LogInformation($"Rol {(EsEdicion ? "editado" : "creado")} exitosamente: {rol.Nombre} con {permisosSeleccionados.Count} permisos");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear rol");
-                MensajeValidacion = $"Error al crear rol: {ex.Message}";
+                _logger.LogError(ex, "Error al guardar rol");
+                MensajeValidacion = $"Error al guardar rol: {ex.Message}";
                 return false;
             }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -197,11 +276,10 @@ namespace GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Catalogo.Role
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
-
