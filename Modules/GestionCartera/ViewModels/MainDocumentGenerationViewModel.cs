@@ -37,12 +37,11 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
           // Obtener servicios del contenedor DI
         var serviceProvider = LoggingService.GetServiceProvider();
         _configurationService = serviceProvider.GetRequiredService<IConfigurationService>();
-        var credentialService = serviceProvider.GetRequiredService<ICredentialService>();
         var smtpPersistenceService = serviceProvider.GetRequiredService<ISmtpPersistenceService>();
         var excelEmailService = serviceProvider.GetService<IExcelEmailService>();        // Inicializar ViewModels especializados
         PdfGeneration = new PdfGenerationViewModel(pdfGenerator, logger);
         DocumentManagement = new DocumentManagementViewModel(logger);
-        SmtpConfiguration = new SmtpConfigurationViewModel(emailService, _configurationService, credentialService, logger, smtpPersistenceService);
+        SmtpConfiguration = new SmtpConfigurationViewModel(emailService, _configurationService, logger, smtpPersistenceService);
         AutomaticEmail = new AutomaticEmailViewModel(emailService, excelEmailService, logger);
 
         // Suscribirse a eventos de los ViewModels

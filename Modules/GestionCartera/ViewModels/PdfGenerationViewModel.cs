@@ -421,17 +421,40 @@ public partial class PdfGenerationViewModel : BaseDocumentGenerationViewModel
                 // Guardar lista de documentos generados
                 await SaveGeneratedDocumentsList();
                 
+                var warnings = _pdfGenerator.LastGenerationWarnings;
+
                 // Mostrar panel de finalización con mensaje personalizado
                 CompletionMessage = $"🎉 ¡Generación completada exitosamente!\n\n" +
                                    $"📊 Documentos generados: {TotalDocuments}\n" +
                                    $"📁 Ubicación: {OutputFolderPath}\n\n" +
                                    $"💡 Siguiente paso: Configure el envío automático de correos para entregar " +
                                    $"los documentos directamente a sus clientes.";
+
+                if (warnings.Count > 0)
+                {
+                    StatusMessage = $"⚠️ Generación con {warnings.Count} empresa(s) sin PDF de {TotalDocuments + warnings.Count}";
+                    CompletionMessage += $"\n\n⚠️ {warnings.Count} empresa(s) NO se generaron:\n- " +
+                                         string.Join("\n- ", warnings);
+                    LogText += $"\n⚠️ {warnings.Count} empresa(s) sin PDF:\n- {string.Join("\n- ", warnings)}\n";
+                }
+
                 ShowCompletionPanel = true;
             }
             else
             {
-                StatusMessage = "❌ Error en la generación";
+                var warnings = _pdfGenerator.LastGenerationWarnings;
+                if (warnings.Count > 0)
+                {
+                    StatusMessage = "❌ Ningún documento se pudo generar";
+                    CompletionMessage = $"⚠️ No se generó ningún documento.\n\n" +
+                                        $"Empresas con error:\n- {string.Join("\n- ", warnings)}";
+                    LogText += $"\n❌ Ningún PDF generado:\n- {string.Join("\n- ", warnings)}\n";
+                    ShowCompletionPanel = true;
+                }
+                else
+                {
+                    StatusMessage = "❌ Error en la generación";
+                }
                 _logger.LogWarning("❌ Error en la generación de documentos");
             }
         }        catch (OperationCanceledException)

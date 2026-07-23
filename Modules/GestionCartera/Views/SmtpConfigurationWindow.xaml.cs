@@ -30,7 +30,6 @@ namespace GestLog.Modules.GestionCartera.Views
     public partial class SmtpConfigurationWindow : Window
     {
         private readonly IEmailService _emailService;
-        private readonly ICredentialService _credentialService;
         private readonly IConfigurationService _configurationService;
         private readonly ISmtpPersistenceService _smtpPersistenceService;
         private readonly IGestLogLogger _logger;
@@ -48,13 +47,11 @@ namespace GestLog.Modules.GestionCartera.Views
 
         public SmtpConfigurationWindow(
             IEmailService emailService,
-            ICredentialService credentialService,
             IConfigurationService configurationService,
             ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
         {
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
-            _credentialService = credentialService ?? throw new ArgumentNullException(nameof(credentialService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _smtpPersistenceService = smtpPersistenceService ?? throw new ArgumentNullException(nameof(smtpPersistenceService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -89,11 +86,10 @@ namespace GestLog.Modules.GestionCartera.Views
         public SmtpConfigurationWindow(
             SmtpSettings settings,
             IEmailService emailService,
-            ICredentialService credentialService,
             IConfigurationService configurationService,
             ISmtpPersistenceService smtpPersistenceService,
             IGestLogLogger logger)
-            : this(emailService, credentialService, configurationService, smtpPersistenceService, logger)
+            : this(emailService, configurationService, smtpPersistenceService, logger)
         {
             _currentSettings = settings ?? new SmtpSettings();
             LoadConfigurationToUI();
@@ -239,7 +235,7 @@ namespace GestLog.Modules.GestionCartera.Views
             {
                 _isLoadingConfiguration = true;
 
-                var latestConfig = _configurationService?.Current?.Modules?.GestionCartera?.Smtp;
+                var latestConfig = _smtpPersistenceService.LoadSmtpConfigurationAsync().GetAwaiter().GetResult();
                 if (latestConfig != null)
                 {
                     _currentSettings = latestConfig;
@@ -275,22 +271,13 @@ namespace GestLog.Modules.GestionCartera.Views
                     CcEmails.Add(email);
                 }
 
-                if (_currentSettings.UseAuthentication && !string.IsNullOrEmpty(_currentSettings.Username))
+                if (_currentSettings.UseAuthentication && !string.IsNullOrEmpty(_currentSettings.Password))
                 {
-                    var credentialTarget = $"SMTP_{_currentSettings.Server}_{_currentSettings.Username}";
-                    var credentials = _credentialService.GetCredentials(credentialTarget);
+                    if (saveCredentialsCheckBox != null)
+                        saveCredentialsCheckBox.IsChecked = true;
 
-                    if (!string.IsNullOrEmpty(credentials.username) &&
-                        !string.IsNullOrEmpty(credentials.password))
-                    {
-                        if (saveCredentialsCheckBox != null)
-                            saveCredentialsCheckBox.IsChecked = true;
-
-                        if (passwordBox != null)
-                            passwordBox.Password = credentials.password;
-
-                        _currentSettings.Password = credentials.password;
-                    }
+                    if (passwordBox != null)
+                        passwordBox.Password = _currentSettings.Password;
                 }
 
                 UpdateCopyCounters();
@@ -382,18 +369,18 @@ namespace GestLog.Modules.GestionCartera.Views
                     Password = passwordBox?.Password ?? string.Empty
                 };
 
-                await _emailService.ConfigureSmtpAsync(testConfig);
-                var isValid = await _emailService.ValidateConfigurationAsync();
+                // Prueba real: abre conexión y autentica contra el servidor SIN enviar correo.
+                var result = await _emailService.TestConnectionAsync(testConfig);
 
-                if (isValid)
+                if (result.IsSuccess)
                 {
                     _isTestSuccessful = true;
-                    UpdateStatus("✅ Configuración válida", ResolveStatusBrush("SuccessBrush"));
+                    UpdateStatus("✅ " + result.Message, ResolveStatusBrush("SuccessBrush"));
                 }
                 else
                 {
                     _isTestSuccessful = false;
-                    UpdateStatus("❌ Error en la configuración", ResolveStatusBrush("DangerBrush"));
+                    UpdateStatus("❌ " + result.Message, ResolveStatusBrush("DangerBrush"));
                 }
             }
             catch (Exception ex)
@@ -460,6 +447,8 @@ namespace GestLog.Modules.GestionCartera.Views
                     BccEmail = bccEmail,
                     CcEmail = ccEmail,
                     UseSSL = sslCheckBox?.IsChecked ?? true,
+                    // La contraseña solo se persiste si el usuario pidió recordarla; el almacén la guarda.
+                    Password = shouldSaveCredentials ? password : string.Empty,
                     Timeout = 120000,
                     IsConfigured = true
                 };
@@ -474,18 +463,6 @@ namespace GestLog.Modules.GestionCartera.Views
                     MessageBox.Show("Error al guardar la configuración SMTP",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }
-
-                if (shouldSaveCredentials && _connectionDirty && !string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
-                {
-                    var credentialTarget = $"GestionCartera_SMTP_{smtpConfiguration.Server}_{email}";
-                    _credentialService.DeleteCredentials(credentialTarget);
-
-                    var savedCreds = _credentialService.SaveCredentials(credentialTarget, email, password);
-                    if (!savedCreds)
-                    {
-                        _logger.LogWarning("Error guardando credenciales SMTP en Credential Manager");
-                    }
                 }
 
                 UpdateStatus("Configuración guardada exitosamente", ResolveStatusBrush("SuccessBrush"));

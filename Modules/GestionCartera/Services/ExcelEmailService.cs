@@ -448,6 +448,17 @@ namespace GestLog.Modules.GestionCartera.Services
                         new[] { "TIPO_DOC", "NUM_ID", "DIGITO_VER", "EMPRESA", "EMAIL" });
                 }
 
+                // ¿El Excel de clientes/correos está abierto en otra aplicación? Responder sí/no antes de leer.
+                // missingColumns vacío => ValidateExcelStructureAsync usa el mensaje tal cual (no "columnas faltantes").
+                if (FileAccessHelper.IsLocked(excelFilePath))
+                {
+                    return ExcelValidationResult.Invalid(
+                        $"El archivo Excel de clientes está abierto en otra aplicación (Excel). Ciérrelo e intente de nuevo: {Path.GetFileName(excelFilePath)}",
+                        new[] { "TIPO_DOC", "NUM_ID", "DIGITO_VER", "EMPRESA", "EMAIL" },
+                        Array.Empty<string>(),
+                        Array.Empty<string>());
+                }
+
                 return await Task.Run(() =>
                 {
                     try

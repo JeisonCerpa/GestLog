@@ -54,4 +54,10 @@ public interface IPdfGeneratorService
     /// Obtiene una vista previa de las empresas que se encontraron en el Excel
     /// </summary>
     Task<IEnumerable<string>> GetCompaniesPreviewAsync(string excelFilePath);
+
+    /// <summary>
+    /// Advertencias de la última generación: empresas cuyo PDF NO se pudo generar y por qué
+    /// (p. ej. el archivo PDF estaba abierto en otra aplicación). Vacío si todo salió bien.
+    /// </summary>
+    IReadOnlyList<string> LastGenerationWarnings { get; }
 }

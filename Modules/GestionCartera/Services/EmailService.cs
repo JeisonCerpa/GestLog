@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using GestLog.Modules.GestionCartera.Exceptions;
@@ -132,7 +133,7 @@ namespace GestLog.Modules.GestionCartera.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error inesperado al enviar correo con adjunto");
-                return EmailResult.Error("Error inesperado al enviar correo", ex.Message);
+                return EmailResult.Error(DescribeSmtpError(ex), ex.Message);
             }
         }
 
@@ -203,7 +204,7 @@ namespace GestLog.Modules.GestionCartera.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error inesperado al enviar correo con múltiples adjuntos");
-                return EmailResult.Error("Error inesperado al enviar correo", ex.Message);
+                return EmailResult.Error(DescribeSmtpError(ex), ex.Message);
             }
         }
 
@@ -238,7 +239,7 @@ namespace GestLog.Modules.GestionCartera.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al enviar correo de prueba");
-                return EmailResult.Error("Error al enviar correo de prueba", ex.Message);
+                return EmailResult.Error(DescribeSmtpError(ex), ex.Message);
             }
         }
 
@@ -279,7 +280,7 @@ namespace GestLog.Modules.GestionCartera.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al enviar correo de prueba con BCC");
-                return EmailResult.Error("Error al enviar correo de prueba", ex.Message);
+                return EmailResult.Error(DescribeSmtpError(ex), ex.Message);
             }
         }        public async Task<bool> ValidateConfigurationAsync(CancellationToken cancellationToken = default)
         {
@@ -319,6 +320,92 @@ namespace GestLog.Modules.GestionCartera.Services
                 _logger.LogError(ex, "Error al validar configuración SMTP");
                 return false;
             }
+        }
+
+        public async Task<EmailResult> TestConnectionAsync(SmtpConfiguration configuration, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (configuration == null)
+                    throw new ArgumentNullException(nameof(configuration));
+
+                // Validación de campos (lanza SmtpConfigurationException con mensaje claro).
+                await ValidateSmtpConfigurationAsync(configuration, cancellationToken);
+
+                var timeout = configuration.Timeout <= 0 ? 30000 : configuration.Timeout;
+                var (ok, message) = await SmtpConnectionTester.TestAsync(
+                    configuration.SmtpServer, configuration.Port, configuration.EnableSsl,
+                    configuration.Username, configuration.Password, timeout, cancellationToken);
+
+                if (ok)
+                    _logger.LogInformation("✅ Prueba de conexión SMTP exitosa - {Server}:{Port}", configuration.SmtpServer, configuration.Port);
+                else
+                    _logger.LogWarning("⚠️ Prueba de conexión SMTP falló - {Server}:{Port}: {Message}", configuration.SmtpServer, configuration.Port, message);
+
+                return ok ? EmailResult.Success(message, 0) : EmailResult.Error(message);
+            }
+            catch (SmtpConfigurationException ex)
+            {
+                return EmailResult.Error(ex.Message, ex.ToString());
+            }
+            catch (SocketException ex)
+            {
+                _logger.LogWarning(ex, "No se pudo conectar al servidor SMTP");
+                return EmailResult.Error($"No se pudo conectar a {configuration.SmtpServer}:{configuration.Port}. Verifique el nombre del servidor, el puerto y su conexión a internet.", ex.Message);
+            }
+            catch (System.Security.Authentication.AuthenticationException ex)
+            {
+                return EmailResult.Error("No se pudo establecer el canal seguro (SSL/TLS) con el servidor. Verifique el puerto y que el servidor soporte SSL.", ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error probando conexión SMTP");
+                return EmailResult.Error(DescribeSmtpError(ex), ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Traduce las excepciones de envío/conexión a un mensaje claro en español para el usuario.
+        /// </summary>
+        private static string DescribeSmtpError(Exception ex)
+        {
+            switch (ex)
+            {
+                case SmtpFailedRecipientsException fre:
+                {
+                    var addrs = string.Join(", ", fre.InnerExceptions.Select(e => e.FailedRecipient));
+                    return $"El servidor rechazó estos destinatarios (revise los correos de destino, BCC y CC): {addrs}";
+                }
+                case SmtpFailedRecipientException fr:
+                    return $"El servidor rechazó el destinatario: {fr.FailedRecipient}. Verifique que el correo exista y esté bien escrito.";
+                case SmtpException se:
+                {
+                    var msg = se.Message ?? string.Empty;
+                    if (se.StatusCode == SmtpStatusCode.MailboxBusy || se.StatusCode == SmtpStatusCode.TransactionFailed)
+                        return "El servidor de correo está ocupado. Intente nuevamente más tarde.";
+                    if (se.StatusCode == SmtpStatusCode.InsufficientStorage)
+                        return "El buzón del destinatario está lleno.";
+                    if (ContainsAny(msg, "5.7", "not authenticated", "authentication", "auth", "username and password", "invalid login", "credentials", "password not accepted"))
+                        return "Usuario o contraseña del correo incorrectos, o el servidor rechazó la autenticación. Verifique el correo y la contraseña (algunos servidores requieren una 'contraseña de aplicación').";
+                    if (ContainsAny(msg, "command unrecognized", "syntax error", "starttls", "must issue a starttls"))
+                        return "El puerto o el cifrado (SSL/TLS) no son compatibles con el servidor. Para la mayoría de servidores use el puerto 587 con SSL activado.";
+                    return $"El servidor de correo rechazó la solicitud: {msg}";
+                }
+                case System.Security.Authentication.AuthenticationException:
+                    return "No se pudo establecer el canal seguro (SSL/TLS) con el servidor de correo. Verifique el puerto y que el servidor soporte SSL.";
+                case IOException:
+                    return "No se pudo leer un archivo adjunto; puede estar abierto en otra aplicación. Ciérrelo e intente de nuevo.";
+                default:
+                    return $"Error inesperado al enviar el correo: {ex.Message}";
+            }
+        }
+
+        private static bool ContainsAny(string source, params string[] terms)
+        {
+            foreach (var t in terms)
+                if (source.IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            return false;
         }
 
         public string GetEmailHtmlTemplate(string textContent)

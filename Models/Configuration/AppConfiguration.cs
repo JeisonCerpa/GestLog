@@ -11,7 +11,6 @@ public class AppConfiguration : INotifyPropertyChanged
 {    private GeneralSettings _general = new();
     private UISettings _ui = new();
     private LoggingSettings _logging = new();
-    private SmtpSettings _smtp = new();
     private ModulesConfiguration _modules = new();
     private UpdaterSettings _updater = new();
 
@@ -40,13 +39,6 @@ public class AppConfiguration : INotifyPropertyChanged
     {
         get => _logging;
         set => SetProperty(ref _logging, value);
-    }    /// <summary>
-    /// Configuraciones del servidor SMTP para envío de emails
-    /// </summary>
-    public SmtpSettings Smtp
-    {
-        get => _smtp;
-        set => SetProperty(ref _smtp, value);
     }    /// <summary>
     /// Configuraciones de módulos específicos
     /// </summary>

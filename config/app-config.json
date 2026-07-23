@@ -17,19 +17,7 @@
     "logDirectory": "Logs",
     "maxLogFiles": 30
   },
-  "smtp": {
-    "server": "smtp.gmail.com",
-    "port": 587,
-    "useSSL": true,
-    "useAuthentication": true,
-    "username": "test@gmail.com",
-    "fromEmail": "test@gmail.com",
-    "fromName": "SIMICS GROUP",
-    "timeout": 30000,
-    "isConfigured": true,
-    "bccEmail": "backup@simicsgroup.com",
-    "ccEmail": "admin@simicsgroup.com"
-  },  "modules": {
+  "modules": {
     "gestionCartera": {
       "enabled": true,
       "outputFolder": "Output",

@@ -60,6 +60,15 @@ namespace GestLog.Modules.GestionCartera.Services
         Task<bool> ValidateConfigurationAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Prueba la conexión SMTP realmente (handshake + autenticación) SIN enviar correo.
+        /// Detecta servidor/puerto/SSL incorrectos y usuario/contraseña inválidos.
+        /// </summary>
+        /// <param name="configuration">Configuración a probar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con mensaje claro para el usuario</returns>
+        Task<EmailResult> TestConnectionAsync(SmtpConfiguration configuration, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene la plantilla HTML para correos profesionales
         /// </summary>
         /// <param name="textContent">Contenido del texto a incluir</param>

@@ -264,9 +264,6 @@ public class ConfigurationService : IConfigurationService
                     case "logging":
                         _current.Logging = new LoggingSettings();
                         break;
-                    case "smtp":
-                        _current.Smtp = new SmtpSettings();
-                        break;
                     case "modules":
                         _current.Modules = new ModulesConfiguration();
                         break;
@@ -304,25 +301,6 @@ public class ConfigurationService : IConfigurationService
             // Validar configuraciones de logging
             if (_current.Logging.MaxLogFiles < 1)
                 errors.Add("El número máximo de archivos de log debe ser mayor a 0");
-
-            // Validar configuraciones SMTP
-            if (_current.Smtp.IsConfigured)
-            {
-                if (string.IsNullOrWhiteSpace(_current.Smtp.Server))
-                    errors.Add("El servidor SMTP es requerido");
-
-                if (_current.Smtp.Port <= 0 || _current.Smtp.Port > 65535)
-                    errors.Add("El puerto SMTP debe estar entre 1 y 65535");
-
-                if (string.IsNullOrWhiteSpace(_current.Smtp.FromEmail))
-                    errors.Add("El email del remitente es requerido");
-
-                if (_current.Smtp.UseAuthentication && string.IsNullOrWhiteSpace(_current.Smtp.Username))
-                    errors.Add("El usuario SMTP es requerido cuando la autenticación está habilitada");
-
-                if (_current.Smtp.Timeout < 1000)
-                    errors.Add("El timeout SMTP debe ser mayor a 1000ms");
-            }
 
             _logger.LogDebug("🔍 Validación completada. {ErrorCount} errores encontrados", errors.Count);
         }
@@ -405,7 +383,6 @@ public class ConfigurationService : IConfigurationService
         config.General.PropertyChanged += OnConfigurationPropertyChanged;
         config.UI.PropertyChanged += OnConfigurationPropertyChanged;
         config.Logging.PropertyChanged += OnConfigurationPropertyChanged;
-        config.Smtp.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.DaaterProcessor.PropertyChanged += OnConfigurationPropertyChanged;
         config.Modules.ErrorLog.PropertyChanged += OnConfigurationPropertyChanged;

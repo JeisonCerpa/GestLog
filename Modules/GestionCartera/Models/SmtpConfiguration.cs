@@ -80,11 +80,6 @@ namespace GestLog.Modules.GestionCartera.Models
         public string StatusMessage { get; set; } = "No configurado";
 
         /// <summary>
-        /// Target único para almacenar credenciales
-        /// </summary>
-        public string CredentialTarget => $"{SmtpServer}_{Port}_{Username}".Replace(".", "_").Replace("@", "_");
-
-        /// <summary>
         /// Configuraciones predefinidas comunes
         /// </summary>
         public static class Presets

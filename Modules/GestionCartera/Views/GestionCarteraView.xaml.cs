@@ -65,7 +65,6 @@ namespace GestLog.Modules.GestionCartera.Views
             try
             {                var serviceProvider = LoggingService.GetServiceProvider();
                 var emailService = serviceProvider.GetRequiredService<IEmailService>();
-                var credentialService = serviceProvider.GetRequiredService<ICredentialService>();
                 var configurationService = serviceProvider.GetRequiredService<IConfigurationService>();
                 var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
                 var viewModel = DataContext as DocumentGenerationViewModel;                // Crear configuración actual del ViewModel
@@ -82,9 +81,8 @@ namespace GestLog.Modules.GestionCartera.Views
                 };                // Abrir ventana de configuración
                 var smtpPersistenceService = LoggingService.GetService<ISmtpPersistenceService>();
                 var configWindow = new SmtpConfigurationWindow(
-                    currentSettings, 
-                    emailService, 
-                    credentialService, 
+                    currentSettings,
+                    emailService,
                     configurationService,
                     smtpPersistenceService,
                     logger)

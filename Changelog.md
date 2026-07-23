@@ -1,3 +1,12 @@
+## v1.2.11
+
+- Gestión de Cartera — "Probar configuración" ahora prueba de verdad: se conecta al servidor de correo y valida usuario y contraseña sin enviar ningún correo. Antes solo revisaba que los campos no estuvieran vacíos y daba "correcto" aunque la contraseña fuera incorrecta.
+- Mensajes de error claros al enviar correos: contraseña o usuario incorrectos, destinatarios o BCC rechazados, y puerto/SSL incompatibles (la causa de la falla "Syntax error, command unrecognized" con el puerto 465) se explican en español en vez del mensaje técnico del servidor.
+- Archivos abiertos: si el Excel de estado de cartera o el de clientes está abierto en Excel, se avisa explícitamente antes de procesar. Al generar los PDF, las empresas cuyo archivo no se pudo escribir (por estar abierto en un visor) ahora se reportan en el resumen; antes se saltaban en silencio y el usuario no se enteraba.
+- Configuración de correo de Cartera unificada: servidor, puerto, SSL, usuario, contraseña, BCC y CC se guardan y leen desde un único lugar. Al reabrir la ventana de configuración todos los campos se repueblan, incluida la contraseña, que antes aparecía vacía.
+- Gestión de Roles rediseñada con vista maestro-detalle y tema visual centralizado.
+- Se eliminó la pantalla "Asignación de Permisos", redundante con la gestión de roles.
+
 ## v1.2.10
 
 - Corrección para sedes con red inestable: ya no aparecen diálogos de error repetidos ("A Task's exception(s) were not observed... host no accesible"). Los errores de tareas en segundo plano ahora se registran en el log sin interrumpir al usuario; el estado de la conexión se sigue viendo en el indicador de la barra superior.

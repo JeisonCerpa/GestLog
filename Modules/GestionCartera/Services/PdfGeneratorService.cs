@@ -88,7 +88,11 @@ public class PdfGeneratorService : IPdfGeneratorService
 {
     private readonly IGestLogLogger _logger;
     private readonly List<GeneratedPdfInfo> _generatedPdfs = new();
+    private readonly List<string> _generationWarnings = new();
     private const int EXCEL_HEADER_ROW = 4; // La fila 4 es el encabezado en el formato original
+
+    /// <inheritdoc/>
+    public IReadOnlyList<string> LastGenerationWarnings => _generationWarnings.AsReadOnly();
 
     public PdfGeneratorService(IGestLogLogger logger)
     {
@@ -276,15 +280,25 @@ public class PdfGeneratorService : IPdfGeneratorService
         CancellationToken cancellationToken = default)
     {
         _generatedPdfs.Clear();
-        
+        _generationWarnings.Clear();
+
         try
         {
             _logger.LogInformation("🎯 Iniciando generación de estados de cuenta desde: {ExcelFilePath}", excelFilePath);
-            
+
             // Validar archivo de entrada
             if (!File.Exists(excelFilePath))
             {
                 throw new FileNotFoundException($"No se encontró el archivo Excel: {excelFilePath}");
+            }
+
+            // ¿El Excel de estado de cartera está abierto en otra aplicación? Responder sí/no antes de leer.
+            if (FileAccessHelper.IsLocked(excelFilePath))
+            {
+                throw new DocumentValidationException(
+                    $"El archivo Excel de estado de cartera está abierto en otra aplicación (Excel). Ciérrelo e intente de nuevo: {Path.GetFileName(excelFilePath)}",
+                    excelFilePath,
+                    "FILE_LOCKED");
             }
 
             // Crear directorio de salida si no existe
@@ -356,11 +370,19 @@ public class PdfGeneratorService : IPdfGeneratorService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error al generar PDF para empresa {Company}", clientGroup.Value.Nombre);
+                    var motivo = FileAccessHelper.IsLockException(ex)
+                        ? "el archivo PDF está abierto en otra aplicación (ciérrelo e intente de nuevo)"
+                        : ex.Message;
+                    _generationWarnings.Add($"{clientGroup.Value.Nombre}: {motivo}");
+                    _logger.LogError(ex, "❌ Error al generar PDF para empresa {Company}: {Motivo}", clientGroup.Value.Nombre, motivo);
                 }
             }
 
             progress?.Report((total, total, "Generación completada"));
+
+            if (_generationWarnings.Count > 0)
+                _logger.LogWarning("⚠️ {Count} empresa(s) sin PDF por errores. Detalle: {Detalle}",
+                    _generationWarnings.Count, string.Join(" | ", _generationWarnings));
             
             _logger.LogInformation("📄 Resumen de procesamiento:");
             _logger.LogInformation("📄 Total de clientes únicos: {ClientCount}", clientGroups.Count);
@@ -687,8 +709,10 @@ public class PdfGeneratorService : IPdfGeneratorService
             }
             catch (Exception ex)
             {
+                // No silenciar: propagar para que el bucle registre la empresa fallida y su causa
+                // (p. ej. el PDF abierto en otra aplicación). Los "omitir" legítimos ya retornaron null antes.
                 _logger.LogError(ex, "❌ Error al generar documento para {ClientName}", clientName);
-                return null;
+                throw;
             }
 
         }, cancellationToken);
