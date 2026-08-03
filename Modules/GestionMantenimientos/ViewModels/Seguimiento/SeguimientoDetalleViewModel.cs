@@ -43,6 +43,12 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
         [ObservableProperty]
         private decimal? costoEditable;
 
+        [ObservableProperty]
+        private string? responsableEditable;
+
+        [ObservableProperty]
+        private DateTime? fechaRealizacionEditable;
+
         public SeguimientoDetalleViewModel(SeguimientoMantenimientoDto seguimientoDto)
         {
             if (seguimientoDto == null)
@@ -91,6 +97,15 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
             {
                 PuedeEditarOEliminar = false;
                 MensajeDeshabilitacion = "Seguimiento no disponible";
+                return;
+            }
+
+            // Un correctivo no tiene semana programada, así que la restricción de "semana actual ± 1"
+            // (pensada para preventivos del cronograma) no aplica: debe poder corregirse siempre.
+            if (Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
+            {
+                PuedeEditarOEliminar = true;
+                MensajeDeshabilitacion = null;
                 return;
             }
 
@@ -164,6 +179,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
             DescripcionEditable = Seguimiento.Descripcion;
             ObservacionesEditable = Seguimiento.Observaciones;
             CostoEditable = Seguimiento.Costo;
+            ResponsableEditable = Seguimiento.Responsable;
+            FechaRealizacionEditable = Seguimiento.FechaRealizacion;
 
             EnModoEdicion = true;
         }
@@ -187,9 +204,26 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
 
             // Actualizar datos del seguimiento
             Seguimiento.Descripcion = DescripcionEditable;
-            ObservacionesEditable = Seguimiento.Observaciones;
-            CostoEditable = CostoEditable;
+            Seguimiento.Observaciones = ObservacionesEditable;
+            Seguimiento.Costo = CostoEditable;
+            Seguimiento.Responsable = ResponsableEditable; // el setter del DTO ya normaliza a mayúsculas
 
+            // La semana/año salen de la fecha de realización: al moverla, el registro debe
+            // cambiar de semana en el cronograma. .Date evita que una realización de domingo
+            // por la tarde caiga fuera del rango de su propia semana.
+            if (FechaRealizacionEditable.HasValue)
+            {
+                var fechaRealizacion = FechaRealizacionEditable.Value.Date;
+                Seguimiento.FechaRealizacion = fechaRealizacion;
+                Seguimiento.Semana = System.Globalization.ISOWeek.GetWeekOfYear(fechaRealizacion);
+                Seguimiento.Anio = System.Globalization.ISOWeek.GetYear(fechaRealizacion);
+
+                // Un correctivo se registra ya ejecutado: no tiene semana programada contra la cual llegar tarde
+                if (Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
+                    Seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            }
+
+            ActualizarNombresVisuales();
             EnModoEdicion = false;
             LimpiarCopias();
         }
@@ -202,6 +236,8 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
             DescripcionEditable = null;
             ObservacionesEditable = null;
             CostoEditable = null;
+            ResponsableEditable = null;
+            FechaRealizacionEditable = null;
         }
 
         /// <summary>

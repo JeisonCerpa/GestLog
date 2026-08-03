@@ -1,3 +1,18 @@
+## v1.3.0
+
+- Auditoría automática en todos los módulos: cada creación, modificación y eliminación queda registrada con quién la hizo, cuándo y qué cambió exactamente (por ejemplo "Sede: 'Administrativa - Barranquilla' → 'Taller - Barranquilla'"). Cubre equipos informáticos, periféricos, mantenimientos correctivos, equipos y mantenimientos ejecutados, cronogramas, vehículos y sus planes, y todo Identidad y Catálogos (usuarios, personas, cargos, roles, permisos y tipos de documento).
+- Nueva pantalla "Auditoría" en Identidad y Catálogos: consulta del historial con filtros por tipo de registro, usuario, rango de fechas y búsqueda de texto. Cada evento se abre en una ventana de detalle con la información completa y opción de copiarla.
+- Los registros identifican el equipo por su código y su nombre, no por el identificador interno de la base de datos, y usan los nombres de campo del negocio ("Sistema operativo", "Comprado a", "Usuario asignado").
+- Solo se registran los campos que cambiaron realmente: un valor vacío que pasa a nulo ya no aparece como modificación.
+- Las contraseñas nunca se escriben en el historial: el restablecimiento queda como acción propia, sin exponer datos cifrados.
+- Los cronogramas generados automáticamente por el sistema no ensucian el historial: solo se registra quién los modifica después. Las importaciones masivas se resumen en una sola entrada en lugar de una por fila.
+- Registrar mantenimientos en el cronograma ya no está limitado a la semana actual y la anterior: se puede registrar cualquier semana pasada. Por el momento todo registro queda como "Realizado en tiempo".
+- Los mantenimientos correctivos se registran en la fecha de realización que escribe la persona, no en la de hoy. Antes el registro quedaba archivado en la semana en que se guardaba, aparecía como "Pendiente" y desaparecía de la hoja de vida del equipo.
+- La hoja de vida del equipo muestra la fecha de realización del mantenimiento, no la fecha en que se guardó el registro.
+- Un correctivo ya no se pierde en el detalle de semana cuando el equipo tiene además un preventivo programado esa misma semana: el cronograma y el detalle muestran el mismo número de mantenimientos.
+- "Detalles de registro" permite editar la fecha de realización, el responsable, el costo y las observaciones. Al cambiar la fecha, el mantenimiento se mueve a la semana correcta del cronograma. Antes el costo y las observaciones se descartaban al guardar sin avisar.
+- Eliminar un mantenimiento borra solo ese registro. Antes borraba el historial completo de mantenimientos del equipo.
+
 ## v1.2.11
 
 - Gestión de Cartera — "Probar configuración" ahora prueba de verdad: se conecta al servidor de correo y valida usuario y contraseña sin enviar ningún correo. Antes solo revisaba que los campos no estuvieran vacíos y daba "correcto" aunque la contraseña fuera incorrecta.

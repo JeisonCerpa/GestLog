@@ -7,6 +7,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
 {
     public class SeguimientoMantenimientoDto
     {
+        public int Id { get; set; } // Identificador de la fila; permite editar/eliminar sin depender de (Codigo, Semana, Anio)
         [Required(ErrorMessage = "El código del equipo es obligatorio.")]
         public string? Codigo { get; set; }
         public string? Nombre { get; set; }
@@ -97,6 +98,7 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public SeguimientoMantenimientoDto(SeguimientoMantenimientoDto other)
         {
             if (other == null) throw new ArgumentNullException(nameof(other));
+            Id = other.Id;
             Codigo = other.Codigo;
             Nombre = other.Nombre;
             FechaRegistro = other.FechaRegistro;

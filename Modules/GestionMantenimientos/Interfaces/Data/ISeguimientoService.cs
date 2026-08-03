@@ -10,7 +10,7 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces.Data
         Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo);
         Task AddAsync(SeguimientoMantenimientoDto seguimiento);
         Task UpdateAsync(SeguimientoMantenimientoDto seguimiento);
-        Task DeleteAsync(string codigo);
+        Task DeleteAsync(int id);
         Task ExportarAExcelAsync(string filePath);
         Task BackupAsync();
         Task<List<SeguimientoMantenimientoDto>> GetSeguimientosAsync();

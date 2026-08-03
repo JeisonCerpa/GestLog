@@ -171,12 +171,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             {
                 try
                 {
-                    // Validar que el código no sea nulo
-                    if (string.IsNullOrWhiteSpace(viewModel.Seguimiento.Codigo))
-                    {
-                        throw new InvalidOperationException("El código del seguimiento no puede estar vacío.");
-                    }
-                      // Verificar si es preventivo o correctivo
+                    // Verificar si es preventivo o correctivo
                     bool esPreventivo = viewModel.Seguimiento.TipoMtno == TipoMantenimiento.Preventivo;
                     
                     if (esPreventivo)
@@ -194,8 +189,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
                     }
                     else
                     {
-                        // Para correctivos: eliminar completamente
-                        await _seguimientoService.DeleteAsync(viewModel.Seguimiento.Codigo);
+                        // Para correctivos: eliminar completamente (solo esta fila, no el historial del equipo)
+                        await _seguimientoService.DeleteAsync(viewModel.Seguimiento.Id);
                         
                         MessageBox.Show(
                             "Seguimiento eliminado correctamente.",

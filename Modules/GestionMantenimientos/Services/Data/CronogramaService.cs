@@ -1054,7 +1054,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             int semanaActual = ISOWeek.GetWeekOfYear(hoy);
             int anioActual = hoy.Year;            foreach (var c in cronogramasConMantenimiento)
             {
-                var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo);
+                // Excluir correctivos: el cronograma programa preventivos, y el correctivo se lista
+                // como fila propia más abajo. Sin esto, un correctivo se tomaría como si fuera el
+                // preventivo de la semana y además aparecería duplicado.
+                var seguimiento = seguimientos.FirstOrDefault(s => s.Codigo == c.Codigo && s.TipoMtno != TipoMantenimiento.Correctivo);
                 var sede = ParseSede(c.Sede);
                 var estado = new MantenimientoSemanaEstadoDto
                 {
@@ -1196,7 +1199,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             // Agregar estados para seguimientos manuales (no programados) de esa semana/año que no esté ya en la lista
             var codigosProgramados = cronogramasConMantenimiento.Select(c => c.Codigo).ToHashSet();            foreach (var seguimiento in seguimientos)
             {
-                if (!codigosProgramados.Contains(seguimiento.Codigo))
+                // Un correctivo nunca es "el" mantenimiento programado de la semana: se lista aparte
+                // aunque el equipo ya tenga un preventivo en el cronograma de esa misma semana.
+                if (!codigosProgramados.Contains(seguimiento.Codigo) || seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
                 {
                     var sede = equiposDict.ContainsKey(seguimiento.Codigo) ? equiposDict[seguimiento.Codigo] : null;
                     var estado = new MantenimientoSemanaEstadoDto

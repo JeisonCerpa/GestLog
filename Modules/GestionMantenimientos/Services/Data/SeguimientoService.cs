@@ -39,6 +39,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             
             return seguimientos.Select(s => new SeguimientoMantenimientoDto
             {
+                Id = s.Id,
                 Codigo = s.Codigo,
                 Nombre = s.Nombre,
                 Sede = equipos.ContainsKey(s.Codigo) ? equipos[s.Codigo] : null,
@@ -64,6 +65,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             
             return new SeguimientoMantenimientoDto
             {
+                Id = entity.Id,
                 Codigo = entity.Codigo,
                 Nombre = entity.Nombre,
                 Sede = equipo?.Sede,
@@ -189,8 +191,11 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
 
                 ValidarSeguimiento(seguimiento);
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                // Buscar por clave compuesta: Codigo, Semana, Anio
-                var entity = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
+                // Buscar por Id cuando viene (permite mover el seguimiento de semana);
+                // si no, caer a la clave compuesta para los llamadores que aún no lo traen
+                var entity = seguimiento.Id > 0
+                    ? await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Id == seguimiento.Id)
+                    : await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Codigo == seguimiento.Codigo && s.Semana == seguimiento.Semana && s.Anio == seguimiento.Anio);
                 if (entity == null)
                     throw new GestionMantenimientosDomainException("No se encontrÃ³ el seguimiento a actualizar.");
                 // No permitir cambiar el cÃ³digo
@@ -202,6 +207,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 entity.Observaciones = seguimiento.Observaciones ?? string.Empty;
                 entity.FechaRegistro = seguimiento.FechaRegistro ?? DateTime.Now;
                 entity.FechaRealizacion = seguimiento.FechaRealizacion;
+                entity.Semana = seguimiento.Semana;
+                entity.Anio = seguimiento.Anio;
                 entity.Estado = seguimiento.Estado;
                 entity.Frecuencia = seguimiento.Frecuencia;
                 await dbContext.SaveChangesAsync();
@@ -219,21 +226,22 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             }
         }
 
-        public async Task DeleteAsync(string codigo)
+        public async Task DeleteAsync(int id)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(codigo))
-                    throw new GestionMantenimientosDomainException("El cÃ³digo del seguimiento es obligatorio para eliminar.");
+                if (id <= 0)
+                    throw new GestionMantenimientosDomainException("El identificador del seguimiento es obligatorio para eliminar.");
 
                 using var dbContext = _dbContextFactory.CreateDbContext();
-                var seguimientos = await dbContext.Seguimientos.Where(s => s.Codigo == codigo).ToListAsync();
-                if (seguimientos.Count == 0)
-                    throw new GestionMantenimientosDomainException("No se encontraron seguimientos con ese cÃ³digo.");
+                var seguimiento = await dbContext.Seguimientos.FirstOrDefaultAsync(s => s.Id == id);
+                if (seguimiento == null)
+                    throw new GestionMantenimientosDomainException("No se encontrÃ³ el seguimiento a eliminar.");
 
-                dbContext.Seguimientos.RemoveRange(seguimientos);
+                dbContext.Seguimientos.Remove(seguimiento);
                 await dbContext.SaveChangesAsync();
-                _logger.LogInformation("[SeguimientoService] Seguimientos eliminados para cÃ³digo: {Codigo}", codigo);
+                _logger.LogInformation("[SeguimientoService] Seguimiento eliminado: Id {Id} CÃ³digo {Codigo} Semana {Semana} AÃ±o {Anio}",
+                    id, seguimiento.Codigo, seguimiento.Semana, seguimiento.Anio);
             }
             catch (GestionMantenimientosDomainException ex)
             {

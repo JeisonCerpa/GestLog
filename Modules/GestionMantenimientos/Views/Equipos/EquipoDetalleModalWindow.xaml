@@ -349,7 +349,7 @@
 
                                                         <StackPanel Grid.Column="1" Margin="12,0,0,0">
                                                             <TextBlock Text="Realizado" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2"/>
-                                                            <TextBlock Text="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding FechaRealizacion, StringFormat=dd/MM/yyyy}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" FontWeight="SemiBold"/>
                                                         </StackPanel>
                                                     </Grid>
 

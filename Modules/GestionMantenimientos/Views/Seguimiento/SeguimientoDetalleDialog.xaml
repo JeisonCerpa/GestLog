@@ -287,7 +287,16 @@
 
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Responsable" Style="{StaticResource LabelTextStyle}" />
-                                            <TextBlock Text="{Binding Seguimiento.Responsable}" Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Seguimiento.Responsable}"
+                                                       Style="{StaticResource ThemeBodyTextStyle}"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap"
+                                                       Visibility="{Binding EnModoEdicion, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                            <TextBox Text="{Binding ResponsableEditable, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource ThemeTextBoxStyle}"
+                                                     Height="40"
+                                                     CharacterCasing="Upper"
+                                                     Visibility="{Binding EnModoEdicion, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </StackPanel>
                                     </Grid>
 
@@ -304,7 +313,12 @@
 
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Fecha de realización" Style="{StaticResource LabelTextStyle}" />
-                                            <TextBlock Text="{Binding Seguimiento.FechaRealizacion, StringFormat='{}{0:dd/MM/yyyy}'}" Style="{StaticResource ThemeBodyTextStyle}" FontSize="13" />
+                                            <TextBlock Text="{Binding Seguimiento.FechaRealizacion, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                                       Style="{StaticResource ThemeBodyTextStyle}"
+                                                       FontSize="13"
+                                                       Visibility="{Binding EnModoEdicion, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                            <DatePicker SelectedDate="{Binding FechaRealizacionEditable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Visibility="{Binding EnModoEdicion, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </StackPanel>
                                     </Grid>
                                 </Grid>

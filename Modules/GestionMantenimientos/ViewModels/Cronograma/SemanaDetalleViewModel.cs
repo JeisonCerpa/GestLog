@@ -204,33 +204,41 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Cronograma
         
         public bool PuedeRegistrarMantenimiento(int semana, int anio)
         {
+            // TEMPORAL: se desactivó la ventana de 2 semanas. Solo se bloquean semanas futuras
+            // (misma regla que valida SeguimientoService.AddAsync).
             int semanaActual = GetSemanaActual();
             int anioActual = GetAnioActual();
-            var hoy = DateTime.Now;
-            var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
-            var lunesSiguiente = primerDiaSemana.AddDays(7); // lunes siguiente
-            var viernesSiguiente = primerDiaSemana.AddDays(11); // viernes siguiente
-            // Permitir registro en la semana actual y la anterior, hasta el viernes de la semana siguiente
-            if (anio == anioActual && (semana == semanaActual || semana == semanaActual - 1))
-            {
-                if (hoy.Date <= viernesSiguiente.Date)
-                    return true;
-            }
-            return false;
+            return anio < anioActual || (anio == anioActual && semana <= semanaActual);
+
+            // --- Restricción original (restaurar cuando se reactive la ventana de 2 semanas) ---
+            //var hoy = DateTime.Now;
+            //var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
+            //var viernesSiguiente = primerDiaSemana.AddDays(11); // viernes siguiente
+            //// Permitir registro en la semana actual y la anterior, hasta el viernes de la semana siguiente
+            //if (anio == anioActual && (semana == semanaActual || semana == semanaActual - 1))
+            //{
+            //    if (hoy.Date <= viernesSiguiente.Date)
+            //        return true;
+            //}
+            //return false;
         }
 
         // Determina el estado de registro segÃºn la fecha actual
         public Models.Enums.EstadoSeguimientoMantenimiento CalcularEstadoRegistro(int semana, int anio)
         {
-            var hoy = DateTime.Now;
-            var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
-            var lunesSiguiente = primerDiaSemana.AddDays(7);
-            var viernesSiguiente = primerDiaSemana.AddDays(11);
-            if (hoy.Date <= lunesSiguiente.Date)
-                return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
-            if (hoy.Date > lunesSiguiente.Date && hoy.Date <= viernesSiguiente.Date)
-                return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
-            return Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
+            // TEMPORAL: todo registro manual queda como RealizadoEnTiempo.
+            return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+
+            // --- Cálculo original por fechas (restaurar junto con la ventana de 2 semanas) ---
+            //var hoy = DateTime.Now;
+            //var primerDiaSemana = FirstDateOfWeekISO8601(anio, semana);
+            //var lunesSiguiente = primerDiaSemana.AddDays(7);
+            //var viernesSiguiente = primerDiaSemana.AddDays(11);
+            //if (hoy.Date <= lunesSiguiente.Date)
+            //    return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+            //if (hoy.Date > lunesSiguiente.Date && hoy.Date <= viernesSiguiente.Date)
+            //    return Models.Enums.EstadoSeguimientoMantenimiento.RealizadoFueraDeTiempo;
+            //return Models.Enums.EstadoSeguimientoMantenimiento.Atrasado;
         }
 
         // Utilidad para obtener el primer dÃ­a de la semana ISO 8601

@@ -294,6 +294,14 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
             foreach (var s in lista)
             {
+                // Un correctivo no tiene semana programada: su estado no se deriva del cronograma.
+                // Recalcularlo lo degradaría a "No realizado"/"fuera de tiempo" según en qué semana quedó archivado.
+                if (s.TipoMtno == TipoMantenimiento.Correctivo)
+                {
+                    s.RefrescarCacheFiltro();
+                    continue;
+                }
+
                 var estadoCalculado = CalcularEstadoSeguimiento(s, semanaActual, anioActual, hoy);
                 if (s.Estado != estadoCalculado)
                 {
@@ -470,7 +478,7 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
 
         try
         {
-            await _seguimientoService.DeleteAsync(SelectedSeguimiento.Codigo!);
+            await _seguimientoService.DeleteAsync(SelectedSeguimiento.Id);
             WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
             StatusMessage = "Seguimiento eliminado correctamente.";
         }
