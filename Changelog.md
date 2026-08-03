@@ -1,3 +1,11 @@
+## v1.3.1
+
+- Los mantenimientos correctivos se registran en la fecha de realización que escribe la persona, no en la de hoy. Antes el registro quedaba archivado en la semana en que se guardaba, aparecía como "Pendiente" y desaparecía de la hoja de vida del equipo.
+- La hoja de vida del equipo muestra la fecha de realización del mantenimiento, no la fecha en que se guardó el registro.
+- Un correctivo ya no se pierde en el detalle de semana cuando el equipo tiene además un preventivo programado esa misma semana: el cronograma y el detalle muestran el mismo número de mantenimientos.
+- "Detalles de registro" permite editar la fecha de realización, el responsable, el costo y las observaciones. Al cambiar la fecha, el mantenimiento se mueve a la semana correcta del cronograma. Antes el costo y las observaciones se descartaban al guardar sin avisar.
+- Eliminar un mantenimiento borra solo ese registro. Antes borraba el historial completo de mantenimientos del equipo.
+
 ## v1.3.0
 
 - Auditoría automática en todos los módulos: cada creación, modificación y eliminación queda registrada con quién la hizo, cuándo y qué cambió exactamente (por ejemplo "Sede: 'Administrativa - Barranquilla' → 'Taller - Barranquilla'"). Cubre equipos informáticos, periféricos, mantenimientos correctivos, equipos y mantenimientos ejecutados, cronogramas, vehículos y sus planes, y todo Identidad y Catálogos (usuarios, personas, cargos, roles, permisos y tipos de documento).
@@ -7,11 +15,6 @@
 - Las contraseñas nunca se escriben en el historial: el restablecimiento queda como acción propia, sin exponer datos cifrados.
 - Los cronogramas generados automáticamente por el sistema no ensucian el historial: solo se registra quién los modifica después. Las importaciones masivas se resumen en una sola entrada en lugar de una por fila.
 - Registrar mantenimientos en el cronograma ya no está limitado a la semana actual y la anterior: se puede registrar cualquier semana pasada. Por el momento todo registro queda como "Realizado en tiempo".
-- Los mantenimientos correctivos se registran en la fecha de realización que escribe la persona, no en la de hoy. Antes el registro quedaba archivado en la semana en que se guardaba, aparecía como "Pendiente" y desaparecía de la hoja de vida del equipo.
-- La hoja de vida del equipo muestra la fecha de realización del mantenimiento, no la fecha en que se guardó el registro.
-- Un correctivo ya no se pierde en el detalle de semana cuando el equipo tiene además un preventivo programado esa misma semana: el cronograma y el detalle muestran el mismo número de mantenimientos.
-- "Detalles de registro" permite editar la fecha de realización, el responsable, el costo y las observaciones. Al cambiar la fecha, el mantenimiento se mueve a la semana correcta del cronograma. Antes el costo y las observaciones se descartaban al guardar sin avisar.
-- Eliminar un mantenimiento borra solo ese registro. Antes borraba el historial completo de mantenimientos del equipo.
 
 ## v1.2.11
 
