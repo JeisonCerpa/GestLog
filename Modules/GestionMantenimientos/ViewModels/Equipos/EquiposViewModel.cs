@@ -967,14 +967,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
                 else
                     dialog.Seguimiento.Frecuencia = FrecuenciaMantenimiento.Anual;
 
-                // La semana/año del registro salen de la fecha de realización, no de hoy.
-                // .Date evita que una realización de domingo por la tarde caiga fuera del rango de su propia semana.
-                var fechaRealizacion = (dialog.Seguimiento.FechaRealizacion ?? DateTime.Now).Date;
-                dialog.Seguimiento.FechaRealizacion = fechaRealizacion;
-                dialog.Seguimiento.Semana = System.Globalization.ISOWeek.GetWeekOfYear(fechaRealizacion);
-                dialog.Seguimiento.Anio = System.Globalization.ISOWeek.GetYear(fechaRealizacion);
-                // Un correctivo se registra ya ejecutado: no tiene semana programada contra la cual llegar tarde
-                dialog.Seguimiento.Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+                // La semana/año del registro salen de la fecha de realización, no de hoy
+                dialog.Seguimiento.AplicarFechaRealizacion(dialog.Seguimiento.FechaRealizacion ?? DateTime.Now);
 
                 await _seguimientoService.AddAsync(dialog.Seguimiento);
                 StatusMessage = "Mantenimiento registrado exitosamente.";

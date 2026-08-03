@@ -1,3 +1,10 @@
+## v1.3.2
+
+- Al cambiar la fecha de realización de un mantenimiento ya guardado, el registro se mueve a la semana que le corresponde en el cronograma. Antes la fecha se guardaba pero el mantenimiento se quedaba en la semana anterior.
+- Se corrige el error "No se encontró el seguimiento a actualizar" al guardar cambios desde "Detalles de registro" cuando se abría desde el detalle de semana del cronograma.
+- Agregar un seguimiento desde la vista de Seguimientos vuelve a funcionar: antes fallaba siempre con "Error al agregar seguimiento".
+- Los mensajes de validación se muestran tal como son (por ejemplo "Solo se permite registrar mantenimientos en semanas anteriores o la actual") en lugar de un "Error al..." genérico.
+
 ## v1.3.1
 
 - Los mantenimientos correctivos se registran en la fecha de realización que escribe la persona, no en la de hoy. Antes el registro quedaba archivado en la semana en que se guardaba, aparecía como "Pendiente" y desaparecía de la hoja de vida del equipo.

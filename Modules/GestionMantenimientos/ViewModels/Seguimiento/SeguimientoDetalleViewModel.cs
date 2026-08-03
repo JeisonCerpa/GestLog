@@ -209,19 +209,9 @@ namespace GestLog.Modules.GestionMantenimientos.ViewModels.Seguimiento
             Seguimiento.Responsable = ResponsableEditable; // el setter del DTO ya normaliza a mayúsculas
 
             // La semana/año salen de la fecha de realización: al moverla, el registro debe
-            // cambiar de semana en el cronograma. .Date evita que una realización de domingo
-            // por la tarde caiga fuera del rango de su propia semana.
+            // cambiar de semana en el cronograma
             if (FechaRealizacionEditable.HasValue)
-            {
-                var fechaRealizacion = FechaRealizacionEditable.Value.Date;
-                Seguimiento.FechaRealizacion = fechaRealizacion;
-                Seguimiento.Semana = System.Globalization.ISOWeek.GetWeekOfYear(fechaRealizacion);
-                Seguimiento.Anio = System.Globalization.ISOWeek.GetYear(fechaRealizacion);
-
-                // Un correctivo se registra ya ejecutado: no tiene semana programada contra la cual llegar tarde
-                if (Seguimiento.TipoMtno == TipoMantenimiento.Correctivo)
-                    Seguimiento.Estado = Models.Enums.EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
-            }
+                Seguimiento.AplicarFechaRealizacion(FechaRealizacionEditable.Value);
 
             ActualizarNombresVisuales();
             EnModoEdicion = false;

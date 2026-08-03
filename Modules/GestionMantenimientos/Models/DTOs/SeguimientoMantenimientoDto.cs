@@ -93,6 +93,24 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             return s;
         }
 
+        /// <summary>
+        /// Fija la fecha de realización y deriva de ella la semana y el año ISO del registro.
+        /// Es la única fuente de verdad de esa relación: llamarlo desde todo flujo que permita
+        /// escribir o cambiar la fecha, o el seguimiento queda archivado en la semana equivocada.
+        /// </summary>
+        public void AplicarFechaRealizacion(DateTime fecha)
+        {
+            // .Date evita que una realización de domingo por la tarde caiga fuera de su propia semana
+            var normalizada = fecha.Date;
+            FechaRealizacion = normalizada;
+            Semana = System.Globalization.ISOWeek.GetWeekOfYear(normalizada);
+            Anio = System.Globalization.ISOWeek.GetYear(normalizada);
+
+            // Un correctivo se registra ya ejecutado: no tiene semana programada contra la cual llegar tarde
+            if (TipoMtno == TipoMantenimiento.Correctivo)
+                Estado = EstadoSeguimientoMantenimiento.RealizadoEnTiempo;
+        }
+
         public SeguimientoMantenimientoDto() { }
 
         public SeguimientoMantenimientoDto(SeguimientoMantenimientoDto other)

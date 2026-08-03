@@ -433,9 +433,18 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             var nuevo = dialog.Seguimiento;
             try
             {
+                // El diálogo se abre con un DTO vacío: sin esto, Semana/Anio quedan en 0 y la validación lo rechaza
+                nuevo.AplicarFechaRealizacion(nuevo.FechaRealizacion ?? DateTime.Now);
+                nuevo.FechaRegistro = DateTime.Now;
+
                 await _seguimientoService.AddAsync(nuevo);
                 WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 StatusMessage = "Seguimiento agregado correctamente.";
+            }
+            catch (GestionMantenimientos.Models.Exceptions.GestionMantenimientosDomainException ex)
+            {
+                _logger.LogWarning(ex, "Validación al agregar seguimiento");
+                StatusMessage = ex.Message;
             }
             catch (System.Exception ex)
             {
@@ -458,9 +467,18 @@ public partial class SeguimientoViewModel : DatabaseAwareViewModel, IDisposable
             var editado = dialog.Seguimiento;
             try
             {
+                // Al cambiar la fecha, el registro debe moverse a la semana que le corresponde
+                if (editado.FechaRealizacion.HasValue)
+                    editado.AplicarFechaRealizacion(editado.FechaRealizacion.Value);
+
                 await _seguimientoService.UpdateAsync(editado);
                 WeakReferenceMessenger.Default.Send(new SeguimientosActualizadosMessage());
                 StatusMessage = "Seguimiento editado correctamente.";
+            }
+            catch (GestionMantenimientos.Models.Exceptions.GestionMantenimientosDomainException ex)
+            {
+                _logger.LogWarning(ex, "Validación al editar seguimiento");
+                StatusMessage = ex.Message;
             }
             catch (System.Exception ex)
             {

@@ -25,10 +25,10 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Los mantenimientos correctivos se registran en la fecha de realización que escribe la persona, no en la de hoy. Antes quedaban como \"Pendiente\" y desaparecían de la hoja de vida del equipo.\n" +
-                "• La hoja de vida del equipo muestra la fecha de realización, y un correctivo ya no se pierde en el detalle de semana cuando el equipo también tiene un preventivo esa semana.\n" +
-                "• \"Detalles de registro\" permite editar fecha de realización, responsable, costo y observaciones; al cambiar la fecha el mantenimiento se mueve a la semana correcta.\n" +
-                "• Eliminar un mantenimiento borra solo ese registro, no el historial completo del equipo.",
+                "• Al cambiar la fecha de realización de un mantenimiento ya guardado, el registro se mueve a la semana que le corresponde en el cronograma. Antes la fecha se guardaba pero el mantenimiento se quedaba en la semana anterior.\n" +
+                "• Se corrige el error \"No se encontró el seguimiento a actualizar\" al guardar desde \"Detalles de registro\" abierto desde el detalle de semana.\n" +
+                "• Agregar un seguimiento desde la vista de Seguimientos vuelve a funcionar: antes fallaba siempre.\n" +
+                "• Los mensajes de validación se muestran tal como son, en lugar de un \"Error al...\" genérico.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

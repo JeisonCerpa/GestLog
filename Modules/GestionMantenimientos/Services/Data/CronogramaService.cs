@@ -1012,6 +1012,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             if (s == null) return null;
             return new SeguimientoMantenimientoDto
             {
+                Id = s.Id, // sin esto, editar desde el detalle de semana no encuentra la fila al cambiarle la semana
                 Codigo = s.Codigo,
                 Nombre = s.Nombre,
                 TipoMtno = s.TipoMtno,
@@ -1023,7 +1024,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 FechaRealizacion = s.FechaRealizacion,
                 Semana = s.Semana,
                 Anio = s.Anio,
-                Estado = s.Estado
+                Estado = s.Estado,
+                Frecuencia = s.Frecuencia
             };
         }        public async Task<List<MantenimientoSemanaEstadoDto>> GetEstadoMantenimientosSemanaAsync(int semana, int anio)
         {
