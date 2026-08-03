@@ -45,15 +45,6 @@ namespace Modules.Personas.Services
                 var result = await _personaRepository.AgregarAsync(persona);
                 _logger.LogInformation($"[PersonaService] RegistrarPersonaAsync - Sede guardada: {result.Sede}");
                 _logger.LogInformation($"Person registered: {persona.NumeroDocumento}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Persona",
-                    IdEntidad = result.IdPersona,
-                    Accion = "Crear",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Registro de persona: {result.Nombres} {result.Apellidos}, Documento: {result.TipoDocumento}-{result.NumeroDocumento}"
-                });
                 return result;
             }
             catch (CorreoDuplicadoException)
@@ -93,15 +84,6 @@ namespace Modules.Personas.Services
                 persona.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(persona.Apellidos.ToLower());
                 var result = await _personaRepository.ActualizarAsync(persona);
                 _logger.LogInformation($"Person edited: {persona.NumeroDocumento}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Persona",
-                    IdEntidad = result.IdPersona,
-                    Accion = "Editar",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Edición de persona: {result.Nombres} {result.Apellidos}, Documento: {result.TipoDocumento}-{result.NumeroDocumento}"
-                });
                 return result;
             }
             catch (PersonaNotFoundException)
@@ -131,15 +113,6 @@ namespace Modules.Personas.Services
                 }
                 await _personaRepository.DesactivarAsync(idPersona);
                 _logger.LogInformation($"Person deactivated: {idPersona}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Persona",
-                    IdEntidad = idPersona,
-                    Accion = "Desactivar",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Desactivación de persona: {existente.Nombres} {existente.Apellidos}, Documento: {existente.TipoDocumento}-{existente.NumeroDocumento}"
-                });
             }
             catch (PersonaNotFoundException)
             {

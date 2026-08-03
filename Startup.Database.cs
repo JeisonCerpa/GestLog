@@ -16,8 +16,12 @@ namespace GestLog
 
             var dbSection = configuration.GetSection("Database");
             string connectionString = BuildConnectionString(dbSection);
-            services.AddDbContextFactory<GestLogDbContext>(options =>
+            // Interceptor de auditoría: registra automáticamente los cambios de las entidades auditables
+            services.AddSingleton<global::Modules.Usuarios.Services.AuditoriaSaveChangesInterceptor>();
+
+            services.AddDbContextFactory<GestLogDbContext>((provider, options) =>
             {
+                options.AddInterceptors(provider.GetRequiredService<global::Modules.Usuarios.Services.AuditoriaSaveChangesInterceptor>());
                 options.UseSqlServer(connectionString, sqlOptions =>
                 {
                     // Configurar resiliencia para errores transitorios

@@ -122,6 +122,10 @@ namespace GestLog.Modules.DatabaseConnection
                 entity.Property(e => e.Detalle).IsRequired();
                 entity.Property(e => e.FechaHora).IsRequired();
                 entity.Property(e => e.IdEntidad).IsRequired();
+                entity.Property(e => e.ClaveEntidad).HasMaxLength(100);
+                entity.Property(e => e.DescripcionEntidad).HasMaxLength(200);
+                entity.HasIndex(e => new { e.EntidadAfectada, e.ClaveEntidad });
+                entity.HasIndex(e => new { e.EntidadAfectada, e.IdEntidad });
             });            modelBuilder.Entity<GestLog.Modules.Personas.Models.Persona>(entity =>
             {
                 entity.ToTable("GestionPersonas_Personas");

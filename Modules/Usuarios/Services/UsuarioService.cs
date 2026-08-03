@@ -37,15 +37,13 @@ namespace Modules.Usuarios.Services
                 await _usuarioRepository.RestablecerContrasenaAsync(idUsuario, hash, salt);
                 _logger.LogInformation($"Password reset for user: {idUsuario}");
                 
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Usuario",
-                    IdEntidad = idUsuario,
-                    Accion = "RestablecerContrasena",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Restablecimiento de contraseña para usuario: {idUsuario}"
-                });
+                // Se registra a mano: el interceptor no puede ver la intención, solo campos cifrados
+                var afectado = await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+                await _auditoriaService.RegistrarCambioAsync(
+                    "Usuario",
+                    afectado?.NombreUsuario ?? idUsuario.ToString(),
+                    "RestablecerContrasena",
+                    "Restablecimiento de contraseña");
             }
             catch (Exception ex)
             {
@@ -91,15 +89,6 @@ namespace Modules.Usuarios.Services
                     throw new UsuarioDuplicadoException(usuario.NombreUsuario);
                 var result = await _usuarioRepository.AgregarAsync(usuario);
                 _logger.LogInformation($"User registered: {usuario.NombreUsuario}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Usuario",
-                    IdEntidad = result.IdUsuario,
-                    Accion = "Crear",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Registro de usuario: {result.NombreUsuario} para persona {result.PersonaId}"
-                });
                 return result;
             }
             catch (UsuarioDuplicadoException)
@@ -120,15 +109,6 @@ namespace Modules.Usuarios.Services
             {
                 var result = await _usuarioRepository.ActualizarAsync(usuario);
                 _logger.LogInformation($"User edited: {usuario.NombreUsuario}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Usuario",
-                    IdEntidad = result.IdUsuario,
-                    Accion = "Editar",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Edición de usuario: {result.NombreUsuario} para persona {result.PersonaId}"
-                });
                 return result;
             }
             catch (Exception ex)
@@ -144,15 +124,6 @@ namespace Modules.Usuarios.Services
             {
                 await _usuarioRepository.DesactivarAsync(idUsuario);
                 _logger.LogInformation($"User deactivated: {idUsuario}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Usuario",
-                    IdEntidad = idUsuario,
-                    Accion = "Desactivar",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Desactivación de usuario: {idUsuario}"
-                });
             }
             catch (Exception ex)
             {
@@ -193,15 +164,6 @@ namespace Modules.Usuarios.Services
             {
                 await _usuarioRepository.EliminarAsync(idUsuario);
                 _logger.LogInformation($"Usuario eliminado: {idUsuario}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Usuario",
-                    IdEntidad = idUsuario,
-                    Accion = "Eliminar",
-                    UsuarioResponsable = "admin", // Reemplazar por usuario real
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Eliminación completa de usuario y relaciones: {idUsuario}"
-                });
             }
             catch (Exception ex)
             {

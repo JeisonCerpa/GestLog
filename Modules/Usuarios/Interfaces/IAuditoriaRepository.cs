@@ -12,6 +12,16 @@ namespace Modules.Usuarios.Interfaces
     {
         Task RegistrarAsync(Auditoria auditoria);
         Task<IEnumerable<Auditoria>> ObtenerPorEntidadAsync(string entidadAfectada, Guid idEntidad);
+        Task<IEnumerable<Auditoria>> ObtenerPorClaveAsync(string entidadAfectada, string claveEntidad);
         Task<IEnumerable<Auditoria>> ObtenerPorUsuarioAsync(string usuarioResponsable);
+
+        /// <summary>
+        /// Búsqueda con filtros combinables; cualquier parámetro nulo o vacío no filtra.
+        /// </summary>
+        Task<IEnumerable<Auditoria>> BuscarAsync(string? entidadAfectada, string? usuarioResponsable,
+            DateTime? desde, DateTime? hasta, string? texto, int maxResultados = 500);
+
+        /// <summary>Entidades presentes en el historial, para poblar filtros.</summary>
+        Task<IEnumerable<string>> ObtenerEntidadesAsync();
     }
 }

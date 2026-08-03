@@ -32,16 +32,6 @@ namespace Modules.Usuarios.Services
                 }
                 var result = await _cargoRepository.AgregarAsync(cargo);
                 _logger.LogInformation($"Role registered: {cargo.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Cargo",
-                    IdEntidad = result.IdCargo,
-                    Accion = "Crear",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Cargo creado: {cargo.Nombre} ({cargo.IdCargo})"
-                });
                 return result;
             }
             catch (CargoDuplicadoException)
@@ -72,16 +62,6 @@ namespace Modules.Usuarios.Services
                 }
                 var result = await _cargoRepository.ActualizarAsync(cargo);
                 _logger.LogInformation($"Role edited: {cargo.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Cargo",
-                    IdEntidad = result.IdCargo,
-                    Accion = "Editar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Cargo editado: {cargo.Nombre} ({cargo.IdCargo})"
-                });
                 return result;
             }
             catch (CargoDuplicadoException)
@@ -107,16 +87,6 @@ namespace Modules.Usuarios.Services
                 }
                 await _cargoRepository.EliminarAsync(idCargo);
                 _logger.LogInformation($"Role deleted: {idCargo}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Cargo",
-                    IdEntidad = idCargo,
-                    Accion = "Eliminar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Cargo eliminado: {existente.Nombre} ({idCargo})"
-                });
             }
             catch (Exception ex)
             {

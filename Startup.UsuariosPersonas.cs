@@ -71,6 +71,7 @@ namespace GestLog
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.LoginViewModel>(); // LoginViewModel puede seguir siendo transient ya que se crea por sesiÃ³n
             services.AddSingleton<GestLog.Modules.Usuarios.ViewModels.IdentidadCatalogosHomeViewModel>();
             services.AddSingleton<CatalogosManagementViewModel>();
+            services.AddTransient<GestLog.Modules.Usuarios.ViewModels.AuditoriaViewModel>();
               // ðŸ” ViewModels para gestiÃ³n de contraseÃ±a
             services.AddTransient<GestLog.Modules.Usuarios.ViewModels.ChangePasswordViewModel>(sp =>
             {

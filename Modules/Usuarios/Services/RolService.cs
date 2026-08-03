@@ -38,16 +38,6 @@ namespace Modules.Usuarios.Services
                 }
                 var result = await _rolRepository.AgregarAsync(rol);
                 _logger.LogInformation($"Role registered: {rol.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Rol",
-                    IdEntidad = result.IdRol,
-                    Accion = "Crear",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Rol creado: {rol.Nombre} ({rol.IdRol})"
-                });
                 return result;
             }
             catch (RolDuplicadoException)
@@ -78,16 +68,6 @@ namespace Modules.Usuarios.Services
                 }
                 var result = await _rolRepository.ActualizarAsync(rol);
                 _logger.LogInformation($"Role edited: {rol.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Rol",
-                    IdEntidad = result.IdRol,
-                    Accion = "Editar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Rol editado: {rol.Nombre} ({rol.IdRol})"
-                });
                 return result;
             }
             catch (RolDuplicadoException)
@@ -113,16 +93,6 @@ namespace Modules.Usuarios.Services
                 }
                 await _rolRepository.EliminarAsync(idRol);
                 _logger.LogInformation($"Role deleted: {idRol}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Rol",
-                    IdEntidad = idRol,
-                    Accion = "Eliminar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Rol eliminado: {existente.Nombre} ({idRol})"
-                });
             }
             catch (Exception ex)
             {

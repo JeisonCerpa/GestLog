@@ -25,11 +25,12 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Cartera: \"Probar configuración\" ahora se conecta de verdad al servidor y valida la contraseña, sin enviar correos.\n" +
-                "• Mensajes claros al enviar: contraseña incorrecta, BCC rechazado o puerto/SSL mal configurado se explican en español.\n" +
-                "• Se avisa si el Excel de cartera o de clientes está abierto, y las empresas cuyo PDF no se pudo generar ahora se reportan (antes se omitían en silencio).\n" +
-                "• La configuración de correo de Cartera se guarda en un solo lugar: al reabrir la ventana se repueblan todos los campos, incluida la contraseña.\n" +
-                "• Gestión de Roles rediseñada (maestro-detalle) y se eliminó la pantalla redundante de Asignación de Permisos.",
+                "• Auditoría automática en todos los módulos: cada creación, modificación y eliminación queda registrada con quién la hizo, cuándo y qué campos cambiaron.\n" +
+                "• Nueva pantalla \"Auditoría\" en Identidad y Catálogos: filtros por tipo de registro, usuario y fechas, con ventana de detalle para ver y copiar el evento completo.\n" +
+                "• Los eventos identifican el equipo por su código y nombre, y usan los nombres de campo del negocio (\"Sistema operativo\", \"Comprado a\").\n" +
+                "• Solo se registran los campos que cambiaron realmente; las contraseñas nunca se escriben en el historial.\n" +
+                "• Los cronogramas generados automáticamente no ensucian el historial y las importaciones masivas se resumen en una sola entrada.\n" +
+                "• Cronograma: registrar mantenimientos ya no se limita a la semana actual y la anterior; se puede registrar cualquier semana pasada y queda como \"Realizado en tiempo\".",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

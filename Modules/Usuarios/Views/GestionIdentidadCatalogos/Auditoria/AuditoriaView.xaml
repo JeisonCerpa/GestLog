@@ -1,0 +1,236 @@
+<UserControl x:Class="GestLog.Modules.Usuarios.Views.GestionIdentidadCatalogos.Auditoria.AuditoriaView"
+    x:Name="AuditoriaRoot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:GestLog.Converters"
+    UseLayoutRounding="True"
+    SnapsToDevicePixels="True"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType">
+
+    <UserControl.Resources>
+        <conv:NombreEntidadAuditadaConverter x:Key="NombreEntidadConverter"/>
+        <Style x:Key="AuditoriaAccionButtonStyle" TargetType="Button" BasedOn="{StaticResource ThemeTableActionButtonStyle}">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource TableHeaderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Style="{DynamicResource ThemeRootGridStyle}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <Border Grid.Row="0" Style="{DynamicResource ThemeWelcomeCardStyle}" Margin="24,20,24,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Width="68" Height="68" CornerRadius="34"
+                        Background="{DynamicResource BackgroundElevatedBrush}"
+                        BorderBrush="{DynamicResource BorderDefaultBrush}"
+                        BorderThickness="1"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="🔍" FontSize="26"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="Historial de auditoría"
+                               Style="{DynamicResource ThemeSectionTitleStyle}"
+                               FontSize="24" Margin="0,0,0,6"/>
+                    <TextBlock Text="Quién creó, modificó o eliminó cada registro, en todos los módulos"
+                               Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filtros -->
+        <Border Grid.Row="1" Style="{DynamicResource ThemeElevatedCardStyle}" Margin="24,0,24,14" Padding="16,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Entidad" Style="{DynamicResource ThemeDetailLabelStyle}" Margin="0,0,0,4"/>
+                <ComboBox Grid.Row="1" Grid.Column="0"
+                          Style="{DynamicResource ThemeComboBoxStyle}"
+                          ItemsSource="{Binding Entidades}"
+                          SelectedItem="{Binding EntidadSeleccionada, Mode=TwoWay}"
+                          IsEditable="False">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource NombreEntidadConverter}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Usuario" Style="{DynamicResource ThemeDetailLabelStyle}" Margin="0,0,0,4"/>
+                <TextBox Grid.Row="1" Grid.Column="2"
+                         Style="{DynamicResource ThemeTextBoxStyle}"
+                         Text="{Binding UsuarioFiltro, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="4" Text="Desde" Style="{DynamicResource ThemeDetailLabelStyle}" Margin="0,0,0,4"/>
+                <DatePicker Grid.Row="1" Grid.Column="4"
+                            Style="{DynamicResource ThemeDatePickerStyle}"
+                            SelectedDate="{Binding Desde, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="6" Text="Hasta" Style="{DynamicResource ThemeDetailLabelStyle}" Margin="0,0,0,4"/>
+                <DatePicker Grid.Row="1" Grid.Column="6"
+                            Style="{DynamicResource ThemeDatePickerStyle}"
+                            SelectedDate="{Binding Hasta, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="8" Text="Buscar (código, registro o detalle)" Style="{DynamicResource ThemeDetailLabelStyle}" Margin="0,0,0,4"/>
+                <TextBox Grid.Row="1" Grid.Column="8"
+                         Style="{DynamicResource ThemeTextBoxStyle}"
+                         Text="{Binding TextoFiltro, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <StackPanel Grid.Row="1" Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Buscar"
+                            Command="{Binding BuscarCommand}"
+                            Style="{DynamicResource ThemePrimaryButtonStyle}"
+                            Width="110" Margin="0,0,8,0"/>
+                    <Button Content="Limpiar"
+                            Command="{Binding LimpiarFiltrosCommand}"
+                            Style="{DynamicResource ThemeSecondaryButtonStyle}"
+                            Width="100"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Resultados -->
+        <Border Grid.Row="2" Style="{DynamicResource ThemeElevatedCardStyle}" Margin="24,0,24,10" Padding="12">
+            <DataGrid x:Name="GridAuditoria"
+                      ItemsSource="{Binding Registros}"
+                      MouseDoubleClick="Grid_MouseDoubleClick"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      RowHeight="38"
+                      HeadersVisibility="Column"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      SelectionMode="Single"
+                      Background="{DynamicResource BackgroundSurfaceBrush}"
+                      BorderBrush="{DynamicResource BorderDefaultBrush}"
+                      BorderThickness="1">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Fecha y hora"
+                                        Binding="{Binding FechaHora, StringFormat=dd/MM/yyyy HH:mm}"
+                                        Width="130"/>
+                    <DataGridTextColumn Header="Usuario"
+                                        Binding="{Binding UsuarioResponsable}"
+                                        Width="130"/>
+                    <DataGridTextColumn Header="Entidad"
+                                        Binding="{Binding EntidadAfectada, Converter={StaticResource NombreEntidadConverter}}"
+                                        Width="170"/>
+                    <DataGridTextColumn Header="Código"
+                                        Binding="{Binding ClaveEntidad}"
+                                        Width="120"/>
+                    <DataGridTextColumn Header="Registro"
+                                        Binding="{Binding DescripcionEntidad}"
+                                        Width="180">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="ToolTip" Value="{Binding DescripcionEntidad}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Acción"
+                                        Binding="{Binding Accion}"
+                                        Width="110"/>
+                    <DataGridTextColumn Header="Detalle"
+                                        Binding="{Binding Detalle}"
+                                        Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Ver" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource AuditoriaAccionButtonStyle}"
+                                        Click="BtnVerDetalle_Click"
+                                        ToolTip="Ver detalle completo">
+                                    <TextBlock Text="🔍" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Estado -->
+        <TextBlock Grid.Row="4"
+                   Text="{Binding StatusMessage}"
+                   Style="{DynamicResource ThemeSectionSubtitleStyle}"
+                   Margin="28,0,24,18"/>
+    </Grid>
+</UserControl>

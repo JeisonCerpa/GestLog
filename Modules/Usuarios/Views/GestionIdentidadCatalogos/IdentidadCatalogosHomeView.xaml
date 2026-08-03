@@ -81,6 +81,17 @@
                         </StackPanel>
                     </Border>
 
+                    <Border Style="{DynamicResource ThemeInteractiveCardStyle}" Margin="12">
+                        <StackPanel>
+                            <Border Style="{DynamicResource ThemeCardIconCircleStyle}">
+                                <TextBlock Text="🔍" Style="{DynamicResource ThemeCardIconTextStyle}"/>
+                            </Border>
+                            <TextBlock Text="Auditoría" Style="{DynamicResource ThemeCardTitleStyle}" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="Consulta quién creó, modificó o eliminó cada registro." Style="{DynamicResource ThemeBodyTextStyle}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,20"/>
+                            <Button Content="Ver Historial" Command="{Binding AbrirAuditoriaCommand}" Style="{DynamicResource ThemePrimaryButtonStyle}" Width="200" HorizontalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                 </UniformGrid>
             </StackPanel>
         </ScrollViewer>

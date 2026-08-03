@@ -32,16 +32,6 @@ namespace Modules.Usuarios.Services
                 }
                 var result = await _permisoRepository.AgregarAsync(permiso);
                 _logger.LogInformation($"Permission registered: {permiso.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Permiso",
-                    IdEntidad = result.IdPermiso,
-                    Accion = "Crear",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Permiso creado: {permiso.Nombre} ({permiso.IdPermiso})"
-                });
                 return result;
             }
             catch (PermisoDuplicadoException)
@@ -69,16 +59,6 @@ namespace Modules.Usuarios.Services
                 existente.Descripcion = permiso.Descripcion;
                 var result = await _permisoRepository.ActualizarAsync(existente);
                 _logger.LogInformation($"Permission updated: {result.Nombre}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Permiso",
-                    IdEntidad = result.IdPermiso,
-                    Accion = "Editar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Permiso editado: {permiso.Nombre} ({permiso.IdPermiso})"
-                });
                 return result;
             }
             catch (Exception ex)
@@ -100,16 +80,6 @@ namespace Modules.Usuarios.Services
                 }
                 await _permisoRepository.EliminarAsync(idPermiso);
                 _logger.LogInformation($"Permission deleted: {idPermiso}");
-                await _auditoriaService.RegistrarEventoAsync(new Auditoria
-                {
-                    IdAuditoria = Guid.NewGuid(),
-                    EntidadAfectada = "Permiso",
-                    IdEntidad = idPermiso,
-                    Accion = "Eliminar",
-                    UsuarioResponsable = "Sistema",
-                    FechaHora = DateTime.UtcNow,
-                    Detalle = $"Permiso eliminado: {existente.Nombre} ({idPermiso})"
-                });
             }
             catch (Exception ex)
             {
