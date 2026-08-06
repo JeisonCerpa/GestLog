@@ -1,3 +1,10 @@
+## v1.3.3
+
+- Gestión de Cartera — el BCC y el CC que se guardan en la configuración de correo son los que se usan al enviar. Antes, al cambiar el BCC (por ejemplo de un correo de pruebas al real), la pantalla mostraba el nuevo pero los correos seguían saliendo con copia oculta al anterior hasta reiniciar el programa.
+- Se corrige el error "El subproceso que realiza la llamada no puede obtener acceso a este objeto" al guardar la configuración de correo, que dejaba la configuración cargada a medias aunque el log dijera que todo salió bien.
+- Nuevo botón "Borrar configuración" en la ventana de configuración de correo: elimina de una vez el servidor, puerto, usuario, BCC, CC y la contraseña guardada en Windows, para volver a configurar desde cero.
+- Al cerrar la ventana de configuración, los datos se releen del archivo guardado en lugar de copiarse campo por campo, que era la causa de que el BCC y el CC se quedaran atrás.
+
 ## v1.3.2
 
 - Al cambiar la fecha de realización de un mantenimiento ya guardado, el registro se mueve a la semana que le corresponde en el cronograma. Antes la fecha se guardaba pero el mantenimiento se quedaba en la semana anterior.

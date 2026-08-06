@@ -41,7 +41,7 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         var excelEmailService = serviceProvider.GetService<IExcelEmailService>();        // Inicializar ViewModels especializados
         PdfGeneration = new PdfGenerationViewModel(pdfGenerator, logger);
         DocumentManagement = new DocumentManagementViewModel(logger);
-        SmtpConfiguration = new SmtpConfigurationViewModel(emailService, _configurationService, logger, smtpPersistenceService);
+        SmtpConfiguration = new SmtpConfigurationViewModel(logger, smtpPersistenceService);
         AutomaticEmail = new AutomaticEmailViewModel(emailService, excelEmailService, logger);
 
         // Suscribirse a eventos de los ViewModels
@@ -94,11 +94,7 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         // Eventos de configuración SMTP
         SmtpConfiguration.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(SmtpConfiguration.StatusMessage))
-            {
-                GlobalStatusMessage = SmtpConfiguration.StatusMessage;
-            }
-            else if (e.PropertyName == nameof(SmtpConfiguration.IsEmailConfigured))
+            if (e.PropertyName == nameof(SmtpConfiguration.IsEmailConfigured))
             {
                 // Sincronizar configuración con el ViewModel de email automático
                 AutomaticEmail.UpdateEmailConfiguration(SmtpConfiguration.IsEmailConfigured);
@@ -129,11 +125,11 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
     }    /// <summary>
     /// Maneja cambios en la configuración
     /// </summary>
-    private async void OnConfigurationChanged(object? sender, EventArgs e)
+    private void OnConfigurationChanged(object? sender, EventArgs e)
     {        try
         {
             // Recargar configuración en los ViewModels correspondientes
-            await SmtpConfiguration.LoadSmtpConfigurationAsync();
+            SmtpConfiguration.LoadSmtpConfiguration();
         }
         catch (Exception ex)
         {
@@ -201,7 +197,7 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         try
         {
             // Cargar configuración SMTP
-            await SmtpConfiguration.LoadSmtpConfigurationAsync();
+            SmtpConfiguration.LoadSmtpConfiguration();
             
             // NOTA: Los documentos se cargarán cuando se seleccione el archivo Excel de emails
             // await DocumentManagement.LoadPreviouslyGeneratedDocuments();
@@ -227,7 +223,6 @@ public partial class MainDocumentGenerationViewModel : ObservableObject
         try
         {
             _configurationService.ConfigurationChanged -= OnConfigurationChanged;
-              SmtpConfiguration?.Cleanup();
             AutomaticEmail?.Cleanup();
             
             _logger.LogInformation("MainDocumentGenerationViewModel limpiado correctamente");

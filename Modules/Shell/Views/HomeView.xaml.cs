@@ -25,10 +25,10 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Al cambiar la fecha de realización de un mantenimiento ya guardado, el registro se mueve a la semana que le corresponde en el cronograma. Antes la fecha se guardaba pero el mantenimiento se quedaba en la semana anterior.\n" +
-                "• Se corrige el error \"No se encontró el seguimiento a actualizar\" al guardar desde \"Detalles de registro\" abierto desde el detalle de semana.\n" +
-                "• Agregar un seguimiento desde la vista de Seguimientos vuelve a funcionar: antes fallaba siempre.\n" +
-                "• Los mensajes de validación se muestran tal como son, en lugar de un \"Error al...\" genérico.",
+                "• Gestión de Cartera: el BCC y el CC guardados en la configuración de correo son los que se usan al enviar. Antes, al cambiar el BCC, la pantalla mostraba el nuevo pero los correos seguían saliendo con copia oculta al anterior hasta reiniciar.\n" +
+                "• Se corrige el error de acceso desde otro subproceso al guardar la configuración de correo, que la dejaba cargada a medias.\n" +
+                "• Nuevo botón \"Borrar configuración\" en la ventana de configuración de correo: elimina servidor, puerto, usuario, BCC, CC y la contraseña guardada en Windows.\n" +
+                "• Al cerrar la ventana de configuración, los datos se releen del archivo guardado en vez de copiarse campo por campo.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

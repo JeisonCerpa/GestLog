@@ -76,6 +76,11 @@ namespace GestLog.Modules.GestionCartera.Services
         string GetEmailHtmlTemplate(string textContent);
 
         /// <summary>
+        /// Descarta la configuración SMTP en memoria: el servicio queda sin configurar.
+        /// </summary>
+        void ClearConfiguration();
+
+        /// <summary>
         /// Información de configuración actual (solo lectura)
         /// </summary>
         SmtpConfiguration? CurrentConfiguration { get; }

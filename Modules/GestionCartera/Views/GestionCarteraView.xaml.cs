@@ -67,21 +67,11 @@ namespace GestLog.Modules.GestionCartera.Views
                 var emailService = serviceProvider.GetRequiredService<IEmailService>();
                 var configurationService = serviceProvider.GetRequiredService<IConfigurationService>();
                 var logger = serviceProvider.GetRequiredService<IGestLogLogger>();
-                var viewModel = DataContext as DocumentGenerationViewModel;                // Crear configuración actual del ViewModel
-                var currentSettings = new GestLog.Models.Configuration.SmtpSettings
-                {
-                    Server = viewModel?.SmtpServer ?? string.Empty,
-                    Port = viewModel?.SmtpPort ?? 587,
-                    UseSSL = viewModel?.EnableSsl ?? true,
-                    Username = viewModel?.SmtpUsername ?? string.Empty,
-                    Password = viewModel?.SmtpPassword ?? string.Empty,
-                    UseAuthentication = !string.IsNullOrEmpty(viewModel?.SmtpUsername),
-                    FromEmail = viewModel?.SmtpUsername ?? string.Empty,
-                    IsConfigured = viewModel?.IsEmailConfigured ?? false
-                };                // Abrir ventana de configuración
+                var viewModel = DataContext as DocumentGenerationViewModel;
+
+                // La ventana lee su estado del almacén único; no hay que pasarle una copia.
                 var smtpPersistenceService = LoggingService.GetService<ISmtpPersistenceService>();
                 var configWindow = new SmtpConfigurationWindow(
-                    currentSettings,
                     emailService,
                     configurationService,
                     smtpPersistenceService,
@@ -90,21 +80,11 @@ namespace GestLog.Modules.GestionCartera.Views
                     Owner = Window.GetWindow(this)
                 };
 
-                if (configWindow.ShowDialog() == true)
+                if (configWindow.ShowDialog() == true && viewModel != null)
                 {
-                    // Actualizar ViewModel con la nueva configuración
-                    var newSettings = configWindow.Settings;
-                    if (viewModel != null)
-                    {
-                        viewModel.SmtpServer = newSettings.Server;
-                        viewModel.SmtpPort = newSettings.Port;
-                        viewModel.EnableSsl = newSettings.UseSSL;
-                        viewModel.SmtpUsername = newSettings.Username;
-                        viewModel.SmtpPassword = newSettings.Password;
-                        viewModel.IsEmailConfigured = newSettings.IsConfigured;
-
-                        logger.LogInformation("Configuración SMTP actualizada desde ventana de configuración");
-                    }
+                    // Recargar desde el almacén en vez de copiar campo a campo (así BCC/CC no quedan atrás).
+                    viewModel.ReloadSmtpConfigurationCommand.Execute(null);
+                    logger.LogInformation("Configuración SMTP actualizada desde ventana de configuración");
                 }
             }
             catch (System.Exception ex)

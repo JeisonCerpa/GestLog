@@ -680,10 +680,11 @@ public partial class AutomaticEmailViewModel : ObservableObject, IDisposable
     {
         if (_emailService == null) return;
 
-        // 🔐 Asegurar que la contraseña esté cargada desde Credential Manager antes de usarla
-        _logger.LogInformation("🔍 [AutomaticEmailViewModel.ConfigureSmtpFromConfigAsync] Verificando contraseña SMTP antes de configurar...");
-        config.EnsurePasswordLoaded();
-        
+        // 🔐 Releer del almacén (JSON + Credential Manager) justo antes de enviar: el ViewModel
+        // guarda una copia y la ventana de configuración puede haberla dejado obsoleta (BCC/CC).
+        _logger.LogInformation("🔍 [AutomaticEmailViewModel.ConfigureSmtpFromConfigAsync] Recargando configuración SMTP antes de configurar...");
+        config.LoadSmtpConfiguration();
+
         if (string.IsNullOrWhiteSpace(config.SmtpPassword))
         {
             _logger.LogWarning("⚠️ La contraseña SMTP sigue vacía después de intentar recargar desde Credential Manager. Esto causará un error de validación.");
@@ -830,9 +831,6 @@ public partial class AutomaticEmailViewModel : ObservableObject, IDisposable
         if (emailsFailed > 0)
         {
             LogText += $" | ❌ {emailsFailed} fallidos";
-        }
-        {
-            LogText += $", {emailsFailed} fallos";
         }
 
         return emailsSent > 0 || orphansSent > 0;

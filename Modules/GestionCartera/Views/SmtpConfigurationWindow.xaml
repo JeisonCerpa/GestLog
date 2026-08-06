@@ -312,19 +312,27 @@
                         BorderThickness="1,1,1,0"
                         Padding="18"
                         CornerRadius="0,0,16,16">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancelar"
-                                Style="{DynamicResource ThemeSecondaryButtonStyle}"
-                                Margin="0,0,10,0"
-                                Click="Cancel_Click"
+                    <DockPanel LastChildFill="False">
+                        <Button Content="🗑️ Borrar configuración"
+                                DockPanel.Dock="Left"
+                                Style="{DynamicResource ThemeDangerButtonStyle}"
+                                Click="ClearAll_Click"
+                                ToolTip="Borra el servidor, usuario, BCC/CC y la contraseña guardada en Windows"
                                 Padding="18,9"/>
-                        <Button x:Name="SaveButton"
-                                Content="Guardar configuración"
-                                Style="{DynamicResource ThemePrimaryButtonStyle}"
-                                Click="Save_Click"
-                                IsEnabled="False"
-                                Padding="18,9"/>
-                    </StackPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Cancelar"
+                                    Style="{DynamicResource ThemeSecondaryButtonStyle}"
+                                    Margin="0,0,10,0"
+                                    Click="Cancel_Click"
+                                    Padding="18,9"/>
+                            <Button x:Name="SaveButton"
+                                    Content="Guardar configuración"
+                                    Style="{DynamicResource ThemePrimaryButtonStyle}"
+                                    Click="Save_Click"
+                                    IsEnabled="False"
+                                    Padding="18,9"/>
+                        </StackPanel>
+                    </DockPanel>
                 </Border>
             </Grid>
         </Border>

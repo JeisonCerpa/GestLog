@@ -77,7 +77,19 @@ namespace GestLog.Modules.GestionCartera.Services
                 _logger.LogError(ex, "Error al configurar servicio SMTP");
                 throw new SmtpConfigurationException("No se pudo configurar el servicio SMTP", ex);
             }
-        }        public async Task<EmailResult> SendEmailWithAttachmentAsync(EmailInfo emailInfo, string attachmentPath, CancellationToken cancellationToken = default)
+        }
+
+        public void ClearConfiguration()
+        {
+            lock (_configurationLock)
+            {
+                _smtpConfiguration = null;
+            }
+
+            _logger.LogInformation("🗑️ Configuración SMTP en memoria descartada");
+        }
+
+        public async Task<EmailResult> SendEmailWithAttachmentAsync(EmailInfo emailInfo, string attachmentPath, CancellationToken cancellationToken = default)
         {
             try
             {

@@ -40,6 +40,14 @@ public class SmtpPersistenceService : ISmtpPersistenceService
     private static string CredentialTarget(string server, string username)
         => $"GestionCartera_SMTP_{server}_{username}";
 
+    /// <summary>Llave unificada primero, luego las antiguas que aún pueden existir en el equipo.</summary>
+    private static string[] CredentialTargets(string server, string username) => new[]
+    {
+        CredentialTarget(server, username),
+        $"SMTP_{server}_{username}",
+        "SMTP_smtppro.zoho.com_cartera@simicsgroup.com"
+    };
+
     public Task<SmtpSettings?> LoadSmtpConfigurationAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -52,7 +60,11 @@ public class SmtpPersistenceService : ISmtpPersistenceService
             }
 
             // La contraseña nunca está en JSON ([JsonIgnore]); se rellena desde Credential Manager.
-            smtp.Password = LoadPassword(smtp.Server, smtp.Username);
+            // Si no hay credencial guardada, se conserva la que ya esté en memoria (el usuario pudo
+            // escribirla sin marcar "recordar"): recargar no debe borrarla.
+            var password = LoadPassword(smtp.Server, smtp.Username);
+            if (!string.IsNullOrWhiteSpace(password))
+                smtp.Password = password;
 
             _logger.LogInformation("📖 [SmtpPersistenceService] Config SMTP cargada - {Server}:{Port}, usuario {User}, contraseña {HasPwd}",
                 smtp.Server, smtp.Port, string.IsNullOrWhiteSpace(smtp.Username) ? "(vacío)" : smtp.Username,
@@ -120,6 +132,35 @@ public class SmtpPersistenceService : ISmtpPersistenceService
         }
     }
 
+    public async Task<bool> ClearSmtpConfigurationAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var gestionCartera = _configurationService.Current?.Modules?.GestionCartera;
+            var smtp = gestionCartera?.Smtp;
+
+            // Borrar la contraseña del Credential Manager antes de perder servidor/usuario.
+            if (smtp != null)
+            {
+                foreach (var target in CredentialTargets(smtp.Server, smtp.Username))
+                    _credentialService.DeleteCredentials(target);
+            }
+
+            if (gestionCartera != null)
+                gestionCartera.Smtp = new SmtpSettings();
+
+            await _configurationService.SaveAsync().ConfigureAwait(false);
+
+            _logger.LogWarning("🗑️ [SmtpPersistenceService] Configuración SMTP de Cartera borrada por completo");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ [SmtpPersistenceService] Error borrando la configuración SMTP");
+            return false;
+        }
+    }
+
     public bool ValidateConfiguration(SmtpSettings? configuration)
     {
         if (configuration == null)
@@ -157,13 +198,7 @@ public class SmtpPersistenceService : ISmtpPersistenceService
             return _credentialService.GetCredentials(target).password;
 
         // Migración desde formatos antiguos.
-        var legacyTargets = new[]
-        {
-            $"SMTP_{server}_{username}",
-            "SMTP_smtppro.zoho.com_cartera@simicsgroup.com"
-        };
-
-        foreach (var legacy in legacyTargets)
+        foreach (var legacy in CredentialTargets(server, username).Skip(1))
         {
             if (!_credentialService.CredentialsExist(legacy))
                 continue;

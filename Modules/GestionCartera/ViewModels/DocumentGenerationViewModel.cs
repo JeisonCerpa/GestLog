@@ -76,7 +76,7 @@ public partial class DocumentGenerationViewModel : ObservableObject
             await _mainViewModel.InitializeAsync();
             
             // 🔧 Verificar que la configuración SMTP se haya cargado correctamente
-            await EnsureSmtpConfigurationLoaded();
+            EnsureSmtpConfigurationLoaded();
               // Suscribirse a eventos de cambio de propiedad de los sub-ViewModels
             _mainViewModel.PdfGeneration.PropertyChanged += (s, e) => 
             {
@@ -121,17 +121,12 @@ public partial class DocumentGenerationViewModel : ObservableObject
     }    /// <summary>
     /// Asegura que la configuración SMTP esté completamente cargada
     /// </summary>
-    private async Task EnsureSmtpConfigurationLoaded()
+    private void EnsureSmtpConfigurationLoaded()
     {
         try
         {
             _logger.LogInformation("Verificando carga de configuración SMTP");
-            
-            // Usar el SmtpConfiguration del MainViewModel (correcto)
-            await _mainViewModel.SmtpConfiguration.LoadSmtpConfigurationAsync();
-            
-            // Dar tiempo para que se procesen los cambios de propiedad
-            await Task.Delay(100);
+            _mainViewModel.SmtpConfiguration.LoadSmtpConfiguration();
         }
         catch (Exception ex)
         {
@@ -335,9 +330,6 @@ public partial class DocumentGenerationViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanGenerateDocuments))]
     private async Task GenerateDocuments() => await _mainViewModel.PdfGeneration.GenerateDocumentsCommand.ExecuteAsync(null);
 
-    [RelayCommand(CanExecute = nameof(CanConfigureSmtp))]
-    private async Task ConfigureSmtp() => await _mainViewModel.SmtpConfiguration.ConfigureSmtpCommand.ExecuteAsync(null);
-
     // Otros comandos
     [RelayCommand(CanExecute = nameof(CanSelectExcelFile))]
     private void SelectExcelFile() => _mainViewModel.PdfGeneration.SelectExcelFileCommand.Execute(null);
@@ -363,24 +355,20 @@ public partial class DocumentGenerationViewModel : ObservableObject
     private async Task SendDocumentsAutomatically() => await _mainViewModel.SendDocumentsAutomaticallyCommand.ExecuteAsync(null);
     [RelayCommand(CanExecute = nameof(CanSendEmails))]
     private void CancelEmailSending() => _mainViewModel.AutomaticEmail.CancelEmailSendingCommand.Execute(null);
-    [RelayCommand(CanExecute = nameof(CanTestSmtp))]
-    private async Task TestSmtpConnection() => await _mainViewModel.SmtpConfiguration.TestSmtpConnectionCommand.ExecuteAsync(null);
 
     /// <summary>
     /// Comando para recargar manualmente la configuración SMTP
-        /// <summary>
-    /// Comando para recargar manualmente la configuración SMTP
     /// </summary>
     [RelayCommand]
-    private async Task ReloadSmtpConfiguration()
+    private void ReloadSmtpConfiguration()
     {
         try
         {
             _logger.LogInformation("Recargando configuración SMTP manualmente desde DocumentGenerationViewModel...");
             StatusMessage = "Recargando configuración SMTP...";
-            
-            await EnsureSmtpConfigurationLoaded();
-            
+
+            EnsureSmtpConfigurationLoaded();
+
             StatusMessage = $"✅ Configuración SMTP recargada - Servidor: {_mainViewModel.SmtpConfiguration.SmtpServer}";
             _logger.LogInformation("✅ Configuración SMTP recargada exitosamente");
         }

@@ -143,7 +143,9 @@ public static class LoggingService
                 Modules.DaaterProccesor.Services.ConsolidatedFilterService>();            // Servicios de Gestión de Cartera
             services.AddTransient<Modules.GestionCartera.Services.IPdfGeneratorService, 
                 Modules.GestionCartera.Services.PdfGeneratorService>();
-            services.AddTransient<Modules.GestionCartera.Services.IEmailService, 
+            // Singleton: guarda la configuración SMTP activa en memoria; con Transient cada
+            // consumidor recibía una instancia sin configurar y borrarla no afectaba al envío.
+            services.AddSingleton<Modules.GestionCartera.Services.IEmailService,
                 Modules.GestionCartera.Services.EmailService>();
             services.AddTransient<Modules.GestionCartera.Services.IExcelEmailService, 
                 Modules.GestionCartera.Services.ExcelEmailService>();

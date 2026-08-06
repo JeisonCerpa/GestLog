@@ -28,4 +28,10 @@ public interface ISmtpPersistenceService
     /// Valida que la configuración tenga los datos mínimos y correos BCC/CC válidos.
     /// </summary>
     bool ValidateConfiguration(SmtpSettings? configuration);
+
+    /// <summary>
+    /// Borra TODA la configuración SMTP de Cartera: los datos del JSON y la contraseña
+    /// del Credential Manager (llave unificada y llaves antiguas).
+    /// </summary>
+    Task<bool> ClearSmtpConfigurationAsync(CancellationToken cancellationToken = default);
 }

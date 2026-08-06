@@ -43,8 +43,6 @@ namespace GestLog.Modules.GestionCartera.Views
         public ObservableCollection<string> BccEmails { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> CcEmails { get; } = new ObservableCollection<string>();
 
-        public SmtpSettings Settings => _currentSettings;
-
         public SmtpConfigurationWindow(
             IEmailService emailService,
             IConfigurationService configurationService,
@@ -81,18 +79,6 @@ namespace GestLog.Modules.GestionCartera.Views
                 UpdatePlaceholderVisibility();
                 UpdateUI();
             };
-        }
-
-        public SmtpConfigurationWindow(
-            SmtpSettings settings,
-            IEmailService emailService,
-            IConfigurationService configurationService,
-            ISmtpPersistenceService smtpPersistenceService,
-            IGestLogLogger logger)
-            : this(emailService, configurationService, smtpPersistenceService, logger)
-        {
-            _currentSettings = settings ?? new SmtpSettings();
-            LoadConfigurationToUI();
         }
 
         #region Event Handlers
@@ -150,6 +136,32 @@ namespace GestLog.Modules.GestionCartera.Views
         private async void Save_Click(object sender, RoutedEventArgs e)
         {
             await SaveConfigurationAsync();
+        }
+
+        private async void ClearAll_Click(object sender, RoutedEventArgs e)
+        {
+            var confirmacion = MessageBox.Show(
+                "Se borrará TODA la configuración SMTP: servidor, puerto, usuario, BCC, CC y la contraseña guardada en Windows.\n\n" +
+                "Después habrá que configurarla de nuevo para poder enviar correos.\n\n¿Continuar?",
+                "Borrar configuración SMTP", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+
+            if (confirmacion != MessageBoxResult.Yes)
+                return;
+
+            if (!await _smtpPersistenceService.ClearSmtpConfigurationAsync())
+            {
+                UpdateStatus("Error al borrar la configuración", ResolveStatusBrush("DangerBrush"));
+                MessageBox.Show("No se pudo borrar la configuración SMTP.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Memoria del servicio de envío: si no se descarta, seguiría enviando con lo anterior.
+            _emailService.ClearConfiguration();
+
+            // Cerrar con éxito para que la vista recargue el ViewModel y quede en "No configurado".
+            DialogResult = true;
+            Close();
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
