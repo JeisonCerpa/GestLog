@@ -266,9 +266,9 @@
                                                         IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Border Background="{DynamicResource BackgroundSurfaceBrush}"
-                                                    BorderBrush="{Binding Seguimiento.TipoMtno, Converter={StaticResource TipoMantenimientoToColorConverter}}"
-                                                    BorderThickness="1"
+                                            <!-- ponytail: chip relleno en vez de texto coloreado; los colores del converter son fijos y en tema oscuro (#161C19) el verde de Preventivo quedaba ilegible como Foreground -->
+                                            <Border Background="{Binding Seguimiento.TipoMtno, Converter={StaticResource TipoMantenimientoToColorConverter}}"
+                                                    BorderThickness="0"
                                                     CornerRadius="3"
                                                     Padding="5,1"
                                                     HorizontalAlignment="Left"
@@ -282,7 +282,7 @@
                                                        TextTrimming="CharacterEllipsis"
                                                            FontWeight="SemiBold"
                                                            VerticalAlignment="Center"
-                                                           Foreground="{Binding Seguimiento.TipoMtno, Converter={StaticResource TipoMantenimientoToColorConverter}}" />
+                                                           Foreground="{DynamicResource TextOnPrimaryBrush}" />
                                             </Border>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

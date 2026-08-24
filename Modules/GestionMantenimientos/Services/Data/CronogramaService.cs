@@ -123,7 +123,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     {
                         int semana = i + 1;
                         // Verificar si ya existe seguimiento para este equipo, semana y año
-                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio);
+                        // Un correctivo en esa semana no cuenta como el preventivo programado: la lectura
+                        // (GetEstadoMantenimientosSemanaAsync) lo excluye, asi que si aqui bloqueara la
+                        // generacion la celda quedaria sin preventivo y sin forma de recuperarlo.
+                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio && s.TipoMtno != TipoMantenimiento.Correctivo);
                         if (!existe)
                         {
                             dbContext.Seguimientos.Add(new SeguimientoMantenimiento
@@ -178,7 +181,10 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     if (entity.Semanas[i])
                     {
                         int semana = i + 1;
-                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio);
+                        // Un correctivo en esa semana no cuenta como el preventivo programado: la lectura
+                        // (GetEstadoMantenimientosSemanaAsync) lo excluye, asi que si aqui bloqueara la
+                        // generacion la celda quedaria sin preventivo y sin forma de recuperarlo.
+                        bool existe = dbContext.Seguimientos.Any(s => s.Codigo == entity.Codigo && s.Semana == semana && s.Anio == entity.Anio && s.TipoMtno != TipoMantenimiento.Correctivo);
                         if (!existe)
                         {
                             dbContext.Seguimientos.Add(new SeguimientoMantenimiento
@@ -671,6 +677,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 using var dbContext = _dbContextFactory.CreateDbContext();
                 var cronogramas = await dbContext.Cronogramas.ToListAsync();
                 var seguimientosExistentes = await dbContext.Seguimientos
+                    .Where(s => s.TipoMtno != TipoMantenimiento.Correctivo)
                     .Select(s => new { s.Codigo, s.Semana, s.Anio })
                     .ToListAsync();
                 var clavesExistentes = seguimientosExistentes
@@ -689,8 +696,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                             if (clavesExistentes.Contains(clave))
                                 continue;
 
-                            // Calcular el lunes de la semana correspondiente
-                            var fechaLunes = System.Globalization.CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(cronograma.Anio, 1, 1), semana - 1);
+                            // Calcular el lunes de la semana correspondiente (ISO 8601, igual que el resto del modulo)
+                            var fechaLunes = FirstDateOfWeekISO8601(cronograma.Anio, semana);
                             dbContext.Seguimientos.Add(new Models.Entities.SeguimientoMantenimiento
                             {                                Codigo = cronograma.Codigo,
                                 Nombre = cronograma.Nombre,
