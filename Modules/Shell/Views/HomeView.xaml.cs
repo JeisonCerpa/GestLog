@@ -25,10 +25,13 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Gestión de Cartera: el BCC y el CC guardados en la configuración de correo son los que se usan al enviar. Antes, al cambiar el BCC, la pantalla mostraba el nuevo pero los correos seguían saliendo con copia oculta al anterior hasta reiniciar.\n" +
-                "• Se corrige el error de acceso desde otro subproceso al guardar la configuración de correo, que la dejaba cargada a medias.\n" +
-                "• Nuevo botón \"Borrar configuración\" en la ventana de configuración de correo: elimina servidor, puerto, usuario, BCC, CC y la contraseña guardada en Windows.\n" +
-                "• Al cerrar la ventana de configuración, los datos se releen del archivo guardado en vez de copiarse campo por campo.",
+                "• Gestión de Mantenimientos: nuevas rutinas por horómetro para equipos que se atienden por horas de uso, como los compresores de tornillo AXP. Se indica cada cuántas horas toca servicio y el sistema calcula qué rutina del manual corresponde (INICIAL, A, B, C o D).\n" +
+                "• Al registrar el mantenimiento aparece el campo \"Horómetro\" con la última lectura tomada; al escribir la actual, el sistema dice qué rutina toca y llena la descripción con sus tareas y repuestos.\n" +
+                "• Si se guarda una lectura que ya cumple para una rutina sin registrarla, el programa avisa antes de continuar.\n" +
+                "• El detalle del equipo muestra la última lectura y el próximo servicio con las horas que faltan; la lista de equipos resalta en rojo los que están vencidos.\n" +
+                "• Las exportaciones y la hoja de vida incluyen el horómetro y la rutina dentro del texto del registro.\n" +
+                "• Nuevo botón para abrir el documento del equipo (manual o ficha técnica) desde su detalle.\n" +
+                "• Los equipos que no se atienden por horas quedan igual que antes.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information

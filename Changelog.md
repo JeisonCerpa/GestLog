@@ -1,3 +1,14 @@
+## v1.3.4
+
+- Gestión de Mantenimientos — nuevas rutinas por horómetro para equipos que se atienden por horas de uso y no solo por calendario, como los compresores de tornillo AXP. En la ficha del equipo se indica cada cuántas horas toca servicio y el sistema calcula cuál de las rutinas del manual corresponde (INICIAL, A, B, C o D), sabiendo que cada 3 servicios toca B, cada 6 C y cada 10 D. El servicio se dispara por horas acumuladas o por 12 meses, lo que ocurra primero.
+- Al registrar un mantenimiento de uno de esos equipos aparece el campo "Horómetro", que muestra de entrada la última lectura tomada. Al escribir la lectura actual, el sistema dice qué rutina toca y con un botón llena la descripción con las tareas y los repuestos de esa rutina.
+- Si se va a guardar una lectura que ya cumple para una rutina sin haberla registrado, el programa avisa y permite aplicarla, guardar solo la lectura o volver al formulario. Así la cuenta de servicios no se desalinea sin que nadie se entere.
+- El detalle del equipo muestra el intervalo de servicio, la última lectura con su fecha y el próximo servicio con las horas que faltan (o cuántas horas lleva vencido). Cada mantenimiento del historial muestra su horómetro y la rutina ejecutada.
+- La lista de equipos tiene la columna "Servicio por horas", que resalta en rojo los equipos con el servicio vencido.
+- Las exportaciones de seguimientos y la hoja de vida incluyen la lectura del horómetro y la rutina dentro del texto del registro, sin cambiar el formato de columnas de siempre.
+- Nuevo botón para abrir el documento del equipo (manual o ficha técnica) desde su detalle. La ruta se configura en la ficha del equipo y admite archivos en la red, locales o una dirección web.
+- Los equipos que no se atienden por horas quedan exactamente igual que antes: el campo de horómetro ni siquiera aparece.
+
 ## v1.3.3
 
 - Gestión de Cartera — el BCC y el CC que se guardan en la configuración de correo son los que se usan al enviar. Antes, al cambiar el BCC (por ejemplo de un correo de pruebas al real), la pantalla mostraba el nuevo pero los correos seguían saliendo con copia oculta al anterior hasta reiniciar el programa.
