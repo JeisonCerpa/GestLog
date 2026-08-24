@@ -56,6 +56,20 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             this.KeyDown += EquipoDialog_KeyDown;
         }
 
+        private void ExaminarDocumento_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Seleccionar el documento del equipo",
+                Filter = "Documentos (*.pdf;*.doc;*.docx;*.xls;*.xlsx)|*.pdf;*.doc;*.docx;*.xls;*.xlsx|Todos los archivos (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() == true && DataContext is EquipoDialogViewModel viewModel)
+            {
+                viewModel.Equipo.RutaDocumento = dialog.FileName;
+                viewModel.RaiseDocumentoChanged();
+            }
+        }
+
         private void EquipoDialog_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
@@ -255,6 +269,8 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             }
 
             public EquipoDto Equipo { get; set; }
+
+            public void RaiseDocumentoChanged() => RaisePropertyChanged(nameof(Equipo));
             public IEnumerable<EstadoEquipo> EstadosEquipo { get; set; } = new EstadoEquipo[0];
             public IEnumerable<Sede> Sedes { get; set; } = new Sede[0];
             public IEnumerable<FrecuenciaMantenimiento> FrecuenciasMantenimiento { get; set; } = new FrecuenciaMantenimiento[0];

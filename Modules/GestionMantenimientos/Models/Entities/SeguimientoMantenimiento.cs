@@ -30,5 +30,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public EstadoSeguimientoMantenimiento Estado { get; set; } // Estado calculado del seguimiento
         public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
         public FrecuenciaMantenimiento? Frecuencia { get; set; } // NUEVO: para correctivo/predictivo
+        public int? Horometro { get; set; } // Lectura del horómetro del equipo al momento del mantenimiento
+        [StringLength(10)]
+        public string? Rutina { get; set; } // Rutina escalonada ejecutada (INICIAL/A/B/C/D); null si no aplica
     }
 }

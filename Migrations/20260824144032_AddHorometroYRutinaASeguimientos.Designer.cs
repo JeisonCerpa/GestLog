@@ -4,6 +4,7 @@ using GestLog.Modules.DatabaseConnection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestLog.Migrations
 {
     [DbContext(typeof(GestLogDbContext))]
-    partial class GestLogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260824144032_AddHorometroYRutinaASeguimientos")]
+    partial class AddHorometroYRutinaASeguimientos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -510,9 +513,6 @@ namespace GestLog.Migrations
                     b.Property<int?>("FrecuenciaMtto")
                         .HasColumnType("int");
 
-                    b.Property<int?>("HorasPorServicio")
-                        .HasColumnType("int");
-
                     b.Property<string>("Marca")
                         .HasColumnType("nvarchar(max)");
 
@@ -527,10 +527,6 @@ namespace GestLog.Migrations
                     b.Property<decimal?>("Precio")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("RutaDocumento")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("Sede")
                         .HasColumnType("int");

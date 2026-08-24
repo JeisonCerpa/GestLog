@@ -5,6 +5,7 @@ using System;
 // se usan tipos WPF fully-qualified para evitar ambigüedad con WinForms
 using GestLog.Modules.GestionMantenimientos.Models;
 using GestLog.Modules.GestionMantenimientos.Models.DTOs;
+using GestLog.Modules.GestionMantenimientos.Interfaces.Data;
 using GestLog.Models.Enums;
 using FrecuenciaMantenimiento = GestLog.Modules.GestionMantenimientos.Models.Enums.FrecuenciaMantenimiento;
 
@@ -68,8 +69,10 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             return tipo == TipoMantenimiento.Preventivo || tipo == TipoMantenimiento.Correctivo || tipo == TipoMantenimiento.Predictivo;
         }
         
-        private void SeguimientoDialog_OnLoaded(object sender, RoutedEventArgs e)
+        private async void SeguimientoDialog_OnLoaded(object sender, RoutedEventArgs e)
         {
+            await MostrarHorometroSiAplicaAsync();
+
             // Si no tiene Owner, usar la ventana principal como Owner
             if (this.Owner == null)
             {
@@ -188,6 +191,89 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             }
         }
 
+        /// <summary>
+        /// El campo de horómetro solo aparece en equipos marcados con HorasPorServicio.
+        /// </summary>
+        private async System.Threading.Tasks.Task MostrarHorometroSiAplicaAsync()
+        {
+            if (string.IsNullOrWhiteSpace(Seguimiento.Codigo))
+                return;
+            try
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var seguimientoService = (ISeguimientoService)serviceProvider.GetService(typeof(ISeguimientoService))!;
+                var estado = await seguimientoService.ConsultarRutinaAsync(Seguimiento.Codigo!, Seguimiento.Horometro ?? 0);
+                HorometroRow.Visibility = estado == null ? Visibility.Collapsed : Visibility.Visible;
+                if (estado?.UltimaLectura is int ultima)
+                    RutinaSugeridaText.Text = $"Última lectura: {ultima:N0} h el {estado.FechaUltimaLectura:dd/MM/yyyy}.";
+            }
+            catch
+            {
+                // Si no se puede consultar, el diálogo sigue siendo el de siempre
+            }
+        }
+
+        // Rutina propuesta para la lectura actual; se aplica solo si el usuario pulsa el botón
+        private string? _descripcionRutinaSugerida;
+
+        /// <summary>
+        /// Al leer el horómetro, consulta qué rutina escalonada toca en este equipo.
+        /// ponytail: la escalera es la del compresor AXP y aplica a cualquier equipo con horómetro;
+        /// si aparece otro modelo con intervalos distintos, mover la escalera a una columna del equipo.
+        /// </summary>
+        private async void Horometro_LostFocus(object sender, RoutedEventArgs e)
+        {
+            _descripcionRutinaSugerida = null;
+            AplicarRutinaButton.Visibility = Visibility.Collapsed;
+            RutinaSugeridaText.Text = string.Empty;
+
+            if (Seguimiento.Horometro is not int horometro || horometro <= 0 || string.IsNullOrWhiteSpace(Seguimiento.Codigo))
+                return;
+
+            try
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var seguimientoService = (ISeguimientoService)serviceProvider.GetService(typeof(ISeguimientoService))!;
+                var estado = await seguimientoService.ConsultarRutinaAsync(Seguimiento.Codigo!, horometro);
+                if (estado == null)
+                    return;
+
+                if (estado.Toca)
+                {
+                    _descripcionRutinaSugerida = estado.Descripcion;
+                    RutinaSugeridaText.Text = $"Toca RUTINA {estado.Letra} (servicio n.º {estado.NumeroServicio}).";
+                    AplicarRutinaButton.Content = $"Aplicar rutina {estado.Letra}";
+                    AplicarRutinaButton.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    RutinaSugeridaText.Text = $"Aún no toca rutina: faltan {estado.HorasRestantes} h (o hasta cumplir 12 meses).";
+                }
+            }
+            catch (Exception ex)
+            {
+                // La lectura del horómetro se guarda igual aunque no se pueda consultar la escalera
+                RutinaSugeridaText.Text = "No se pudo consultar la rutina: " + ex.Message;
+            }
+        }
+
+        private void AplicarRutina_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_descripcionRutinaSugerida))
+                return;
+
+            // "RUTINA B — tarea; tarea; ..." -> la letra va a su columna, las tareas a la descripción
+            var separador = _descripcionRutinaSugerida.IndexOf('—');
+            Seguimiento.Rutina = _descripcionRutinaSugerida.Substring(0, separador).Replace("RUTINA", "").Trim();
+            Seguimiento.Descripcion = _descripcionRutinaSugerida;
+
+            if (this.FindName("DescripcionTextBox") is System.Windows.Controls.TextBox tb)
+                tb.Text = Seguimiento.Descripcion;
+
+            AplicarRutinaButton.Visibility = Visibility.Collapsed;
+            RutinaSugeridaText.Text = $"Rutina {Seguimiento.Rutina} aplicada a la descripción.";
+        }
+
         private void Owner_SizeOrLocationChanged(object? sender, System.EventArgs e)
         {
             if (this.Owner == null) return;
@@ -231,7 +317,7 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
             args.Accepted = TipoMantenimientoFilterPredicate(args.Item);
         }
 
-        private void Aceptar_Click(object sender, RoutedEventArgs e)
+        private async void Aceptar_Click(object sender, RoutedEventArgs e)
         {
             var errores = new List<string>();
             // Tipo de mantenimiento obligatorio
@@ -269,8 +355,59 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Seguimiento
                 }
             }
 
+            if (!await ConfirmarRutinaPendienteAsync())
+                return;
+
             DialogResult = true;
             Close();
+        }
+
+        /// <summary>
+        /// Si la lectura ya dispara una rutina y el registro se guarda sin ella, la escalera se
+        /// desalinea en silencio. Antes de cerrar se pregunta en vez de dejarlo pasar.
+        /// </summary>
+        private async System.Threading.Tasks.Task<bool> ConfirmarRutinaPendienteAsync()
+        {
+            if (HorometroRow.Visibility != Visibility.Visible)
+                return true;
+            if (Seguimiento.Horometro is not int horometro || horometro <= 0)
+                return true;
+            if (!string.IsNullOrWhiteSpace(Seguimiento.Rutina))
+                return true;
+
+            try
+            {
+                var serviceProvider = GestLog.Services.Core.Logging.LoggingService.GetServiceProvider();
+                var seguimientoService = (ISeguimientoService)serviceProvider.GetService(typeof(ISeguimientoService))!;
+                var estado = await seguimientoService.ConsultarRutinaAsync(Seguimiento.Codigo!, horometro);
+                if (estado == null || !estado.Toca)
+                    return true;
+
+                var respuesta = System.Windows.MessageBox.Show(
+                    $"Con {horometro:N0} h este equipo cumple para la RUTINA {estado.Letra} (servicio n.º {estado.NumeroServicio}), " +
+                    "y el registro se va a guardar sin ella." + Environment.NewLine + Environment.NewLine +
+                    $"Sí: aplicar la RUTINA {estado.Letra} y guardar." + Environment.NewLine +
+                    "No: guardar solo la lectura del horómetro." + Environment.NewLine +
+                    "Cancelar: volver al formulario.",
+                    "Rutina sin registrar",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (respuesta == MessageBoxResult.Cancel)
+                    return false;
+
+                if (respuesta == MessageBoxResult.Yes)
+                {
+                    _descripcionRutinaSugerida = estado.Descripcion;
+                    AplicarRutina_Click(this, new RoutedEventArgs());
+                }
+                return true;
+            }
+            catch
+            {
+                // Un fallo consultando la escalera no puede impedir guardar el mantenimiento
+                return true;
+            }
         }
 
         // Utilidad para obtener el primer día de la semana ISO 8601

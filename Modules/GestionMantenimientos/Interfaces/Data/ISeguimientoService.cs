@@ -17,6 +17,7 @@ namespace GestLog.Modules.GestionMantenimientos.Interfaces.Data
         Task DeletePendientesByEquipoCodigoAsync(string codigoEquipo);
         Task ActualizarObservacionesPendientesAsync();
         Task CrearCronogramasDesdeSeguidmientosAsync();
+        Task<EstadoRutina?> ConsultarRutinaAsync(string codigo, int horometroActual);
     }
 }
 

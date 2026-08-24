@@ -146,6 +146,7 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Text="Datos base"
@@ -202,6 +203,36 @@
                                             <TextBox Text="{Binding Costo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalToCopCurrencyConverter}}"
                                                      Style="{StaticResource InputStyle}"
                                                      HorizontalContentAlignment="Right" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid x:Name="HorometroRow" Grid.Row="4" Margin="0,6,0,0" Visibility="Collapsed">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="0.8*" />
+                                            <ColumnDefinition Width="1.2*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="Horómetro (h)" Style="{StaticResource LabelTextStyle}" />
+                                            <TextBox x:Name="HorometroTextBox"
+                                                     Text="{Binding Horometro, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=''}"
+                                                     Style="{StaticResource InputStyle}"
+                                                     HorizontalContentAlignment="Right"
+                                                     LostFocus="Horometro_LostFocus" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Bottom">
+                                            <TextBlock x:Name="RutinaSugeridaText"
+                                                       Text=""
+                                                       TextWrapping="Wrap"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       Margin="0,0,0,4" />
+                                            <Button x:Name="AplicarRutinaButton"
+                                                    Content="Aplicar rutina"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Visibility="Collapsed"
+                                                    HorizontalAlignment="Left"
+                                                    Padding="10,4"
+                                                    Click="AplicarRutina_Click" />
                                         </StackPanel>
                                     </Grid>
                                 </Grid>

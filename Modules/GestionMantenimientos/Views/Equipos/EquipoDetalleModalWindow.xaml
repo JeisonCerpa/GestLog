@@ -245,6 +245,44 @@
                                                 </TextBlock>
                                             </StackPanel>
                                         </Border>
+
+                                        <Border Margin="0,16,0,0"
+                                                Padding="14"
+                                                CornerRadius="14"
+                                                Background="{DynamicResource BackgroundSurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderDefaultBrush}"
+                                                BorderThickness="1"
+                                                Visibility="{Binding TieneHorometro, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <StackPanel>
+                                                <TextBlock Text="Mantenimiento por horómetro" Style="{StaticResource ThemeSectionSubtitleStyle}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                                                <TextBlock Text="{Binding HorometroIntervalo}"
+                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,8"/>
+                                                <TextBlock Text="Última lectura" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                                                <TextBlock Text="{Binding HorometroUltimaLectura}"
+                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                           FontWeight="SemiBold"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,8"/>
+                                                <TextBlock Text="Próximo servicio" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                                                <TextBlock Text="{Binding HorometroProximoServicio}"
+                                                           Style="{StaticResource ThemeBodyTextStyle}"
+                                                           FontWeight="SemiBold"
+                                                           TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Button Content="📄 Ver documento del equipo"
+                                                Margin="0,16,0,0"
+                                                Padding="12,8"
+                                                HorizontalAlignment="Stretch"
+                                                Style="{StaticResource ThemeSecondaryButtonStyle}"
+                                                Click="VerDocumento_Click"
+                                                Visibility="{Binding SelectedEquipo.TieneDocumento, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                ToolTip="{Binding SelectedEquipo.RutaDocumento}"/>
                                     </StackPanel>
                                 </Border>
 
@@ -350,6 +388,8 @@
                                                         <StackPanel Grid.Column="1" Margin="12,0,0,0">
                                                             <TextBlock Text="Realizado" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,2"/>
                                                             <TextBlock Text="{Binding FechaRealizacion, StringFormat=dd/MM/yyyy}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding Horometro, StringFormat='Horómetro: {0:N0} h'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,4,0,0"/>
+                                                            <TextBlock Text="{Binding Rutina, StringFormat='Rutina {0}'}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
                                                         </StackPanel>
                                                     </Grid>
 

@@ -42,6 +42,9 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         public int Anio { get; set; }   // Año del seguimiento
         public DateTime? FechaRealizacion { get; set; } // Fecha real de ejecución del mantenimiento
         public FrecuenciaMantenimiento? Frecuencia { get; set; } // NUEVO: para correctivo/predictivo
+        [Range(0, int.MaxValue, ErrorMessage = "El horómetro no puede ser negativo.")]
+        public int? Horometro { get; set; } // Lectura del horómetro del equipo al momento del mantenimiento
+        public string? Rutina { get; set; } // Rutina escalonada ejecutada (INICIAL/A/B/C/D); null si no aplica
 
         // Propiedades auxiliares para la UI (no persistentes)
         public bool IsCodigoReadOnly { get; set; } = false;
@@ -130,6 +133,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             Anio = other.Anio;
             FechaRealizacion = other.FechaRealizacion;
             Frecuencia = other.Frecuencia;
+            Horometro = other.Horometro;
+            Rutina = other.Rutina;
             IsCodigoReadOnly = true;
             IsCodigoEnabled = false;
         }

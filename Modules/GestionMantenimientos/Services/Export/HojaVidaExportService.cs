@@ -171,7 +171,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
                     {
                         worksheet.Cell(currentRow, 1).Value = mtto.FechaRegistro?.ToString("dd/MM/yyyy");
                         worksheet.Cell(currentRow, 2).Value = mtto.TipoMtno?.ToString() ?? "";
-                        worksheet.Cell(currentRow, 3).Value = mtto.Descripcion;
+                        worksheet.Cell(currentRow, 3).Value = GestLog.Modules.GestionMantenimientos.Services.Data.SeguimientoService.ConHorometro(mtto.Descripcion, mtto.Horometro, mtto.Rutina);
                         worksheet.Cell(currentRow, 4).Value = mtto.Responsable;
                         worksheet.Cell(currentRow, 5).Value = mtto.Costo ?? 0;
                         worksheet.Cell(currentRow, 5).Style.NumberFormat.Format = "$#,##0";

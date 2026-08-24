@@ -45,6 +45,31 @@ namespace GestLog.Modules.GestionMantenimientos.Views.Equipos
             this.Close();
         }
 
+        /// <summary>
+        /// Abre el documento del equipo con la aplicación asociada del sistema.
+        /// Sirve igual para una ruta de red, un archivo local o una URL.
+        /// </summary>
+        private void VerDocumento_Click(object sender, RoutedEventArgs e)
+        {
+            dynamic? viewModel = this.DataContext;
+            string? ruta = viewModel?.SelectedEquipo?.RutaDocumento as string;
+            if (string.IsNullOrWhiteSpace(ruta))
+                return;
+
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ruta) { UseShellExecute = true });
+            }
+            catch (System.Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    "No se pudo abrir el documento:" + System.Environment.NewLine + ruta + System.Environment.NewLine + System.Environment.NewLine + ex.Message,
+                    "Documento no disponible",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
             try

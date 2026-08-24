@@ -24,6 +24,18 @@ namespace GestLog.Modules.GestionMantenimientos.Models.Entities
         public string? Clasificacion { get; set; }
         public string? CompradoA { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
+        /// <summary>
+        /// Horas de uso entre servicios de la escalera de rutinas (4.000 en los compresores AXP).
+        /// Null = el equipo no lleva mantenimiento por horómetro; es lo que marca cuáles sí.
+        /// </summary>
+        [Range(1, int.MaxValue, ErrorMessage = "Las horas por servicio deben ser mayores a cero.")]
+        public int? HorasPorServicio { get; set; }
+        /// <summary>
+        /// Ruta o URL del documento original del equipo (manual, ficha técnica). Se abre con la
+        /// aplicación asociada del sistema; el archivo vive donde ya está, no se copia a la base.
+        /// </summary>
+        [StringLength(500)]
+        public string? RutaDocumento { get; set; }
         public DateTime? FechaBaja { get; set; }
         // SemanaInicioMtto eliminado: se calcula a partir de FechaRegistro
     }

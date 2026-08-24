@@ -67,6 +67,19 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
         
         public Sede? Sede { get; set; }
         public FrecuenciaMantenimiento? FrecuenciaMtto { get; set; }
+        /// <summary>Resumen del servicio por horas para la lista; se calcula al cargar, no se persiste.</summary>
+        public string HorometroResumen { get; set; } = string.Empty;
+        /// <summary>True cuando el equipo ya pasó las horas de su próximo servicio.</summary>
+        public bool HorometroVencido { get; set; }
+
+        /// <summary>Horas entre servicios de la escalera por horómetro. Null = el equipo no la usa.</summary>
+        [Range(1, int.MaxValue, ErrorMessage = "Las horas por servicio deben ser mayores a cero.")]
+        public int? HorasPorServicio { get; set; }
+        /// <summary>Ruta o URL del documento original del equipo (manual, ficha técnica).</summary>
+        [StringLength(500)]
+        public string? RutaDocumento { get; set; }
+        /// <summary>True cuando hay documento que abrir; controla la visibilidad del botón.</summary>
+        public bool TieneDocumento => !string.IsNullOrWhiteSpace(RutaDocumento);
         public DateTime? FechaRegistro { get; set; } // Fecha de alta del equipo
         public DateTime? FechaCompra { get; set; }   // Fecha de compra - usada como referencia para generar cronogramas
         [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
@@ -154,6 +167,8 @@ namespace GestLog.Modules.GestionMantenimientos.Models.DTOs
             CompradoA = other.CompradoA;
             FechaRegistro = other.FechaRegistro;
             FrecuenciaMtto = other.FrecuenciaMtto;
+            HorasPorServicio = other.HorasPorServicio;
+            RutaDocumento = other.RutaDocumento;
             FechaBaja = other.FechaBaja;
             FechaCompra = other.FechaCompra;
             // Copiar el historial de mantenimientos

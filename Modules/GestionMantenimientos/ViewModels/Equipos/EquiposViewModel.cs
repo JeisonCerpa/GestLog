@@ -130,6 +130,92 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
     }    /// <summary>
     /// Se ejecuta cuando cambia el equipo seleccionado. Carga el historial de mantenimientos realizados.
     /// </summary>
+    /// <summary>
+    /// Llena la columna de servicio por horas de la lista. Una sola consulta para todos los
+    /// equipos marcados; los que no llevan horómetro quedan con la celda vacía.
+    /// </summary>
+    private async Task CalcularResumenHorometroAsync(IEnumerable<EquipoDto> equipos)
+    {
+        var conEscalera = equipos.Where(e => e.HorasPorServicio is int h && h > 0 && !string.IsNullOrWhiteSpace(e.Codigo)).ToList();
+        if (conEscalera.Count == 0)
+            return;
+
+        try
+        {
+            var seguimientos = await _seguimientoService.GetSeguimientosAsync();
+            var porEquipo = seguimientos
+                .Where(s => s.Horometro.HasValue)
+                .GroupBy(s => s.Codigo!)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.Horometro).ToList());
+
+            foreach (var equipo in conEscalera)
+            {
+                int horasPorServicio = equipo.HorasPorServicio!.Value;
+                porEquipo.TryGetValue(equipo.Codigo!, out var lecturas);
+
+                int ultimaLectura = lecturas?.FirstOrDefault()?.Horometro ?? 0;
+                int baseHorometro = lecturas?.FirstOrDefault(s => !string.IsNullOrEmpty(s.Rutina))?.Horometro ?? 0;
+                int proximo = baseHorometro + horasPorServicio;
+                string letra = RutinaCompresor.LetraPara(RutinaCompresor.NumeroServicio(proximo, horasPorServicio));
+                int faltan = proximo - ultimaLectura;
+
+                equipo.HorometroVencido = faltan <= 0;
+                equipo.HorometroResumen = faltan <= 0
+                    ? $"RUTINA {letra} vencida ({-faltan:N0} h)"
+                    : $"RUTINA {letra} en {faltan:N0} h";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al calcular el resumen de horómetro de los equipos");
+        }
+    }
+
+    /// <summary>Resumen de la escalera por horómetro; vacío en equipos que no la usan.</summary>
+    [ObservableProperty]
+    private bool _tieneHorometro;
+
+    [ObservableProperty]
+    private string _horometroUltimaLectura = string.Empty;
+
+    [ObservableProperty]
+    private string _horometroProximoServicio = string.Empty;
+
+    [ObservableProperty]
+    private string _horometroIntervalo = string.Empty;
+
+    /// <summary>
+    /// Arma el panel de horómetro del detalle a partir de los seguimientos ya cargados.
+    /// </summary>
+    private void ActualizarResumenHorometro()
+    {
+        TieneHorometro = SelectedEquipo?.HorasPorServicio is int hs && hs > 0;
+        if (!TieneHorometro || SelectedEquipo == null)
+            return;
+
+        int horasPorServicio = SelectedEquipo.HorasPorServicio!.Value;
+        var conLectura = SelectedEquipo.MantenimientosRealizados.Where(m => m.Horometro.HasValue).ToList();
+        var ultimaLectura = conLectura.OrderByDescending(m => m.Horometro).FirstOrDefault();
+        var ultimoServicio = conLectura.Where(m => !string.IsNullOrEmpty(m.Rutina)).OrderByDescending(m => m.Horometro).FirstOrDefault();
+
+        HorometroIntervalo = $"Rutinas cada {horasPorServicio:N0} h de uso (o 12 meses, lo que ocurra primero)";
+
+        HorometroUltimaLectura = ultimaLectura == null
+            ? "Sin lecturas registradas"
+            : $"{ultimaLectura.Horometro:N0} h · {ultimaLectura.FechaRealizacion:dd/MM/yyyy}"
+              + (string.IsNullOrEmpty(ultimaLectura.Rutina) ? "" : $" · rutina {ultimaLectura.Rutina}");
+
+        // El próximo servicio cae un intervalo después del último ejecutado, no de la última lectura
+        int baseHorometro = ultimoServicio?.Horometro ?? 0;
+        int proximo = baseHorometro + horasPorServicio;
+        string letra = RutinaCompresor.LetraPara(RutinaCompresor.NumeroServicio(proximo, horasPorServicio));
+        int faltan = proximo - (ultimaLectura?.Horometro ?? 0);
+
+        HorometroProximoServicio = faltan > 0
+            ? $"RUTINA {letra} a las {proximo:N0} h — faltan {faltan:N0} h"
+            : $"RUTINA {letra} a las {proximo:N0} h — vencida, tocaba hace {-faltan:N0} h";
+    }
+
     partial void OnSelectedEquipoChanged(EquipoDto? value)
     {
         if (value == null)
@@ -141,6 +227,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         // Resetear paginación
         HistorialPaginaActual = 1;
         ActualizarHistorialVisible();
+        ActualizarResumenHorometro();
     }
 
     /// <summary>
@@ -173,6 +260,7 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
             }
 
             ActualizarHistorialVisible();
+            ActualizarResumenHorometro();
         }
         catch (Exception ex)
         {
@@ -460,7 +548,8 @@ public partial class EquiposViewModel : DatabaseAwareViewModel, IDisposable
         try
         {        
             var lista = await _equipoService.GetAllAsync();
-            
+            await CalcularResumenHorometroAsync(lista);
+
             if (cancellationToken.IsCancellationRequested)
                 return;
 

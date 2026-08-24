@@ -86,7 +86,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
 
                 // ===== ENCABEZADOS DE TABLA =====
                 int currentRow = 3;
-                var headers = new[] { "Código", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "Clasificación", "Comprado a" };
+                var headers = new[] { "Código", "Nombre", "Marca", "Estado", "Sede", "Frecuencia", "Precio", "Fecha Registro", "Clasificación", "Comprado a", "Horas por servicio" };
                 ConfigurarEncabezados(ws, currentRow, headers);
                 currentRow++;
 
@@ -172,11 +172,12 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Export
             ws.Cell(row, 8).Value = eq.FechaRegistro?.ToString("dd/MM/yyyy") ?? "";
             ws.Cell(row, 9).Value = eq.Clasificacion ?? "";
             ws.Cell(row, 10).Value = eq.CompradoA ?? "";
+            ws.Cell(row, 11).Value = eq.HorasPorServicio;
 
             // Filas alternas con color gris claro
             if (rowCount % 2 == 0)
             {
-                for (int col = 1; col <= 10; col++)
+                for (int col = 1; col <= 11; col++)
                 {
                     ws.Cell(row, col).Style.Fill.BackgroundColor = XLColor.FromArgb(0xFAFBFC);
                 }

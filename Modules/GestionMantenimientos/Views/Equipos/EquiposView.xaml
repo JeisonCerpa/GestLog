@@ -198,7 +198,32 @@
                                         IsReadOnly="True"
                                         ElementStyle="{StaticResource ThemeDataGridTextStyle}"/>
 
-                    <DataGridTemplateColumn Header="Estado"
+<DataGridTemplateColumn Header="Servicio por horas"
+                                            Width="SizeToCells"
+                                            MinWidth="170"
+                                            IsReadOnly="True"
+                                            SortMemberPath="HorometroResumen">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding HorometroResumen}"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextBodyBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HorometroVencido}" Value="True">
+                                                    <Setter Property="Foreground" Value="#C0392B"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="Estado"
                                             Width="SizeToCells"
                                             MinWidth="160"
                                             IsReadOnly="True"

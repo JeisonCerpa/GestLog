@@ -255,6 +255,37 @@
                                                       SelectedItem="{Binding FrecuenciaMtto, UpdateSourceTrigger=PropertyChanged}"
                                                       Style="{StaticResource ModernComboBoxStyle}"/>
                                         </StackPanel>
+
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Horas por servicio (horómetro)" Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBox Text="{Binding Equipo.HorasPorServicio, UpdateSourceTrigger=LostFocus, TargetNullValue=''}"
+                                                     Style="{StaticResource ModalTextBoxStyle}"/>
+                                            <TextBlock Text="Dejar vacío si el equipo no lleva rutinas por horómetro. Ej.: 4000 en compresores de tornillo AXP."
+                                                       TextWrapping="Wrap" FontSize="10" Margin="0,4,0,0"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,16,0,0">
+                                            <TextBlock Text="Documento original (manual, ficha técnica)" Style="{StaticResource LabelTextStyle}"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0"
+                                                         Text="{Binding Equipo.RutaDocumento, UpdateSourceTrigger=LostFocus}"
+                                                         Style="{StaticResource ModalTextBoxStyle}"
+                                                         MaxLength="500"/>
+                                                <Button Grid.Column="1"
+                                                        Content="Examinar…"
+                                                        Margin="8,0,0,0"
+                                                        Padding="12,6"
+                                                        Click="ExaminarDocumento_Click"/>
+                                            </Grid>
+                                            <TextBlock Text="Ruta de red, archivo local o URL. El archivo no se copia: se abre desde donde está."
+                                                       TextWrapping="Wrap" FontSize="10" Margin="0,4,0,0"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
 

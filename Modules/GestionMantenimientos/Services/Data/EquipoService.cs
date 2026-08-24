@@ -47,6 +47,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 CompradoA = e.CompradoA,
                 FechaRegistro = e.FechaRegistro,
                 FrecuenciaMtto = e.FrecuenciaMtto,
+                HorasPorServicio = e.HorasPorServicio,
+                RutaDocumento = e.RutaDocumento,
                 FechaBaja = e.FechaBaja,
                 FechaCompra = e.FechaCompra
                 // SemanaInicioMtto eliminado
@@ -71,6 +73,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 CompradoA = equipo.CompradoA,
                 FechaRegistro = equipo.FechaRegistro,
                 FrecuenciaMtto = equipo.FrecuenciaMtto,
+                HorasPorServicio = equipo.HorasPorServicio,
+                RutaDocumento = equipo.RutaDocumento,
                 FechaBaja = equipo.FechaBaja,
                 FechaCompra = equipo.FechaCompra
                 // SemanaInicioMtto eliminado
@@ -128,6 +132,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     Precio = equipo.Precio,
                     Observaciones = equipo.Observaciones,
                     FrecuenciaMtto = equipo.FrecuenciaMtto,
+                    HorasPorServicio = equipo.HorasPorServicio,
+                    RutaDocumento = equipo.RutaDocumento,
                     FechaBaja = equipo.FechaBaja,
                     FechaCompra = fechaCompra
                     // SemanaInicioMtto eliminado
@@ -354,6 +360,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 entity.FechaRegistro = equipo.FechaRegistro ?? entity.FechaRegistro;
                 entity.FechaCompra = equipo.FechaCompra; // Persistir Fecha de Compra al actualizar
                 entity.FrecuenciaMtto = equipo.FrecuenciaMtto;
+                entity.HorasPorServicio = equipo.HorasPorServicio;
+                entity.RutaDocumento = equipo.RutaDocumento;
                 entity.FechaBaja = equipo.FechaBaja;
                 // SemanaInicioMtto eliminado
                 await dbContext.SaveChangesAsync();

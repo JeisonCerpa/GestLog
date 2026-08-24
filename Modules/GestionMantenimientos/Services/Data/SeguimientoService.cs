@@ -31,7 +31,69 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
             _cronogramaService = cronogramaService ?? throw new ArgumentNullException(nameof(cronogramaService));
-        }public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
+        }
+
+        /// <summary>
+        /// Dada la lectura actual del horómetro, dice qué rutina escalonada toca en este equipo.
+        /// Devuelve null si el equipo no lleva mantenimiento por horómetro (HorasPorServicio sin definir).
+        /// El disparo es lo que ocurra primero: horas acumuladas o 12 meses desde el último servicio.
+        /// </summary>
+        /// <summary>
+        /// Antepone la lectura del horómetro al texto exportado. Va dentro del campo y no en una
+        /// columna aparte para no alterar el formato de los reportes que ya se usan.
+        /// </summary>
+        public static string ConHorometro(string? texto, int? horometro, string? rutina)
+        {
+            if (horometro is not int h)
+                return texto ?? string.Empty;
+
+            var marca = string.IsNullOrWhiteSpace(rutina)
+                ? $"[Horómetro: {h:N0} h]"
+                : $"[Horómetro: {h:N0} h · Rutina {rutina}]";
+            return string.IsNullOrWhiteSpace(texto) ? marca : $"{marca} {texto}";
+        }
+
+        public async Task<EstadoRutina?> ConsultarRutinaAsync(string codigo, int horometroActual)
+        {
+            using var dbContext = _dbContextFactory.CreateDbContext();
+            var equipo = await dbContext.Equipos.FirstOrDefaultAsync(e => e.Codigo == codigo);
+            if (equipo?.HorasPorServicio is not int horasPorServicio || horasPorServicio <= 0)
+                return null;
+
+            // El disparo se mide desde el último servicio de la escalera...
+            var ultimo = await dbContext.Seguimientos
+                .Where(s => s.Codigo == codigo && s.Rutina != null)
+                .OrderBy(s => s.Horometro)
+                .LastOrDefaultAsync();
+
+            // ...pero la lectura de referencia es la más alta registrada, lleve rutina o no
+            var ultimaLectura = await dbContext.Seguimientos
+                .Where(s => s.Codigo == codigo && s.Horometro != null)
+                .OrderBy(s => s.Horometro)
+                .LastOrDefaultAsync();
+
+            int horometroUltimo = ultimo?.Horometro ?? 0;
+            // Sin servicios previos, el reloj de los 12 meses corre desde el alta del equipo
+            DateTime fechaUltimo = ultimo?.FechaRealizacion
+                ?? ultimo?.FechaRegistro
+                ?? equipo.FechaRegistro
+                ?? DateTime.Today;
+
+            bool toca = RutinaCompresor.TocaServicio(horometroActual, horometroUltimo, fechaUltimo, DateTime.Today, horasPorServicio);
+            int numeroServicio = RutinaCompresor.NumeroServicio(horometroActual, horasPorServicio);
+            int restantes = Math.Max(0, horometroUltimo + horasPorServicio - horometroActual);
+
+            return new EstadoRutina(
+                toca,
+                RutinaCompresor.LetraPara(numeroServicio),
+                RutinaCompresor.DescripcionPara(numeroServicio),
+                restantes,
+                numeroServicio,
+                ultimaLectura?.Horometro,
+                ultimaLectura?.FechaRealizacion ?? ultimaLectura?.FechaRegistro);
+        }
+
+        public async Task<IEnumerable<SeguimientoMantenimientoDto>> GetAllAsync()
         {
             using var dbContext = _dbContextFactory.CreateDbContext();
             var seguimientos = await dbContext.Seguimientos.ToListAsync();
@@ -53,7 +115,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 Semana = s.Semana,
                 Anio = s.Anio,
                 Estado = s.Estado,
-                Frecuencia = s.Frecuencia
+                Frecuencia = s.Frecuencia,
+                Horometro = s.Horometro,
+                Rutina = s.Rutina
             });
         }        public async Task<SeguimientoMantenimientoDto?> GetByCodigoAsync(string codigo)
         {
@@ -79,7 +143,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 Semana = entity.Semana,
                 Anio = entity.Anio,
                 Estado = entity.Estado,
-                Frecuencia = entity.Frecuencia
+                Frecuencia = entity.Frecuencia,
+                Horometro = entity.Horometro,
+                Rutina = entity.Rutina
             };
         }
 
@@ -132,6 +198,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                     existentePrevio.FechaRealizacion = seguimiento.Estado == EstadoSeguimientoMantenimiento.NoRealizado ? null : seguimiento.FechaRealizacion;
                     existentePrevio.Estado = seguimiento.Estado;
                     existentePrevio.Frecuencia = seguimiento.Frecuencia;
+                    existentePrevio.Horometro = seguimiento.Horometro;
+                    existentePrevio.Rutina = seguimiento.Rutina;
 
                     await dbContext.SaveChangesAsync();
                     _logger.LogInformation("[SeguimientoService] Seguimiento actualizado: {Codigo} Tipo {Tipo} Semana {Semana} AÃ±o {Anio}",
@@ -158,7 +226,9 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         Semana = seguimiento.Semana,
                         Anio = seguimiento.Anio,
                         Estado = seguimiento.Estado,
-                        Frecuencia = seguimiento.Frecuencia
+                        Frecuencia = seguimiento.Frecuencia,
+                        Horometro = seguimiento.Horometro,
+                        Rutina = seguimiento.Rutina
                     };
                     dbContext.Seguimientos.Add(nuevo);
 
@@ -211,6 +281,8 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                 entity.Anio = seguimiento.Anio;
                 entity.Estado = seguimiento.Estado;
                 entity.Frecuencia = seguimiento.Frecuencia;
+                entity.Horometro = seguimiento.Horometro;
+                entity.Rutina = seguimiento.Rutina;
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation("[SeguimientoService] Seguimiento actualizado correctamente: {Codigo} Semana {Semana} AÃ±o {Anio}", seguimiento.Codigo ?? "", seguimiento.Semana, seguimiento.Anio);
             }
@@ -453,7 +525,7 @@ namespace GestLog.Modules.GestionMantenimientos.Services.Data
                         worksheet.Cell(row, 4).Value = s.Descripcion;
                         worksheet.Cell(row, 5).Value = s.Responsable;
                         worksheet.Cell(row, 6).Value = s.Costo;
-                        worksheet.Cell(row, 7).Value = s.Observaciones;
+                        worksheet.Cell(row, 7).Value = ConHorometro(s.Observaciones, s.Horometro, s.Rutina);
                         worksheet.Cell(row, 8).Value = s.FechaRegistro;
                         worksheet.Cell(row, 9).Value = SepararCamelCase(s.Estado.ToString());
                         row++;
