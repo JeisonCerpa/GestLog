@@ -1,3 +1,10 @@
+## v1.3.5
+
+- Gestión de Mantenimientos — cuando un equipo tenía un correctivo registrado en una semana, el preventivo programado de esa misma semana nunca llegaba a crearse: la casilla quedaba como "No realizado", sin tipo de mantenimiento y sin manera de registrarla. Ahora ambos conviven y el preventivo se genera igual.
+- Las casillas que ya habían quedado así por este motivo se recuperaron; el cronograma vuelve a mostrar el total real de mantenimientos programados.
+- En el detalle de semana, la etiqueta con el tipo de mantenimiento (Preventivo o Correctivo) ya se lee en el tema oscuro. Antes el texto quedaba del mismo tono que el fondo y parecía una casilla vacía.
+- La fecha con la que se crea un mantenimiento programado corresponde al lunes correcto de su semana. En algunas semanas del año quedaba corrida un día.
+
 ## v1.3.4
 
 - Gestión de Mantenimientos — nuevas rutinas por horómetro para equipos que se atienden por horas de uso y no solo por calendario, como los compresores de tornillo AXP. En la ficha del equipo se indica cada cuántas horas toca servicio y el sistema calcula cuál de las rutinas del manual corresponde (INICIAL, A, B, C o D), sabiendo que cada 3 servicios toca B, cada 6 C y cada 10 D. El servicio se dispara por horas acumuladas o por 12 meses, lo que ocurra primero.

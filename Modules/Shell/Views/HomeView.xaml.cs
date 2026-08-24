@@ -25,13 +25,10 @@ namespace GestLog.Modules.Shell.Views
         {
             System.Windows.MessageBox.Show(
                 $"GestLog {BuildVersion.VersionLabel}\n\n" +
-                "• Gestión de Mantenimientos: nuevas rutinas por horómetro para equipos que se atienden por horas de uso, como los compresores de tornillo AXP. Se indica cada cuántas horas toca servicio y el sistema calcula qué rutina del manual corresponde (INICIAL, A, B, C o D).\n" +
-                "• Al registrar el mantenimiento aparece el campo \"Horómetro\" con la última lectura tomada; al escribir la actual, el sistema dice qué rutina toca y llena la descripción con sus tareas y repuestos.\n" +
-                "• Si se guarda una lectura que ya cumple para una rutina sin registrarla, el programa avisa antes de continuar.\n" +
-                "• El detalle del equipo muestra la última lectura y el próximo servicio con las horas que faltan; la lista de equipos resalta en rojo los que están vencidos.\n" +
-                "• Las exportaciones y la hoja de vida incluyen el horómetro y la rutina dentro del texto del registro.\n" +
-                "• Nuevo botón para abrir el documento del equipo (manual o ficha técnica) desde su detalle.\n" +
-                "• Los equipos que no se atienden por horas quedan igual que antes.",
+                "• Gestión de Mantenimientos: si un equipo tenía un correctivo en una semana, el preventivo programado de esa misma semana nunca se creaba y la casilla quedaba como \"No realizado\", sin tipo y sin poder registrarse. Ahora ambos conviven.\n" +
+                "• Las casillas que ya habían quedado así se recuperaron: el cronograma muestra de nuevo el total real de mantenimientos programados.\n" +
+                "• En el detalle de semana, la etiqueta con el tipo de mantenimiento ya se lee en el tema oscuro; antes quedaba del mismo tono que el fondo.\n" +
+                "• La fecha con la que se crea un mantenimiento programado corresponde al lunes correcto de su semana.",
                 "Información del Sistema",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
